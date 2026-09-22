@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python 3.11 - Test and Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Upgrade packaging tools
+        run: python -m pip install --upgrade pip setuptools wheel
+
+      - name: Install project with development dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: Run Ruff
+        run: python -m ruff check src tests
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Verify package import
+        run: |
+          python -c "import ztf_classifier; print(ztf_classifier.__file__)"
