@@ -1,0 +1,44 @@
+ZTF CLASSIFIER — v0.2 SCIENTIFIC BASELINE FREEZE
+
+Repository:
+  ztf-classifier
+
+Frozen commit:
+  7358975
+
+Historical baseline commit:
+  33441e0
+
+Python:
+  3.11.16
+
+Dataset:
+  150 objects
+  42 frozen model features
+  56 total columns
+
+Artifacts:
+
+features_v0.2.parquet
+SHA256:
+d08543cffe5db141d6a7e4ee429264acdaa50c6e4fd01f1b0fa2a36aa42a6a85
+
+final_feature_set_v0.2.parquet
+SHA256:
+fed07fc291070ecbdc7bbc597fad5aac6a3f4a1746feb12a9f4c2407108af329
+
+final_model_config_v0.2.json
+SHA256:
+c01c3e9c27b4d8170082c6c755b4361d21c9706063bc83a4cc2509aff971fdd7
+
+reproducibility_manifest_v0.2.json
+SHA256:
+b83ba2123fff6f0ca3470891f2f671187d05d80d77100107b323a434855074cd7
+
+Freeze policy:
+  v0.2 scientific artifacts are immutable.
+  Production development must not overwrite them.
+  Improvements must be versioned separately.
+
+Status:
+  FROZEN
