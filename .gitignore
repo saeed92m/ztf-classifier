@@ -34,7 +34,7 @@ data/interim/*
 !data/interim/.gitkeep
 
 # Local model binaries
-models/
+/models/
 *.pkl
 *.joblib
 *.onnx
