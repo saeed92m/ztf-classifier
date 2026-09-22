@@ -1,0 +1,128 @@
+{
+  "project": "ZTF Classifier",
+  "version": "v0.2",
+  "status": "FINALIZED",
+  "dataset": {
+    "objects": 150,
+    "classes": 15,
+    "frozen_features": 42,
+    "benchmark_source": "ALeRCE ZTF classifier labels",
+    "labels_are_ground_truth": false
+  },
+  "model": {
+    "algorithm": "XGBoost",
+    "objective": "multi:softprob",
+    "cv": "StratifiedKFold",
+    "folds": 5,
+    "random_state": 42,
+    "n_estimators": 300,
+    "max_depth": 4,
+    "learning_rate": 0.05,
+    "subsample": 0.85,
+    "colsample_bytree": 0.85,
+    "tree_method": "hist"
+  },
+  "baseline_oof": {
+    "accuracy": 0.5533333333333333,
+    "balanced_accuracy": 0.5533333333333333,
+    "macro_f1": 0.547477,
+    "weighted_f1": 0.547477,
+    "log_loss": 1.320907,
+    "brier": 0.590338,
+    "ece": 0.106749,
+    "mce": 0.207675
+  },
+  "calibration": {
+    "temperature": 1.02685019,
+    "log_loss": 1.32035,
+    "brier": 0.588872,
+    "ece": 0.064279,
+    "mce": 0.171363
+  },
+  "conformal": {
+    "alpha_0.05": {
+      "coverage": 0.9533,
+      "threshold": 0.978005,
+      "mean_set_size": 4.84,
+      "singleton_rate": 0.0733
+    },
+    "alpha_0.10": {
+      "coverage": 0.9067,
+      "threshold": 0.963177,
+      "mean_set_size": 3.44,
+      "singleton_rate": 0.14
+    },
+    "alpha_0.20": {
+      "coverage": 0.8067,
+      "threshold": 0.918114,
+      "mean_set_size": 2.14,
+      "singleton_rate": 0.3133
+    }
+  },
+  "ood": {
+    "flagged_count": 13,
+    "flagged_fraction": 0.0867,
+    "top_10_percent_count": 15,
+    "top_5_percent_count": 7,
+    "top_1_percent_count": 2
+  },
+  "temporal_evaluation": {
+    "train_n": 118,
+    "test_n": 32,
+    "accuracy": 0.46875,
+    "balanced_accuracy": 0.646154,
+    "macro_f1": 0.479762,
+    "weighted_f1": 0.382812,
+    "log_loss": 2.390014
+  },
+  "historical_evaluation": {
+    "evaluated_folds": 4,
+    "skipped_folds": 1,
+    "objects_evaluated": 94,
+    "mean_accuracy": 0.4683,
+    "mean_balanced_accuracy": 0.4801,
+    "mean_macro_f1": 0.4173,
+    "mean_weighted_f1": 0.42,
+    "mean_log_loss": 1.5587
+  },
+  "paired_history": {
+    "paired_objects": 94,
+    "historical_accuracy": 0.46808510638297873,
+    "full_history_accuracy": 0.5425531914893617,
+    "full_minus_historical": 0.07446808510638292,
+    "historical_correct": 44,
+    "full_history_correct": 51,
+    "lost_correct": 20,
+    "gained_correct": 13,
+    "unchanged": 61
+  },
+  "integrity": {
+    "oid_overlap_check": "PASS",
+    "duplicate_check": "PASS",
+    "label_consistency_check": "PASS",
+    "frozen_feature_count_check": "PASS",
+    "fold_assignment_check": "PASS"
+  },
+  "artifacts": {
+    "features": "data/processed/features_v0.2.parquet",
+    "feature_schema": "reports/tables/final_feature_set_v0.2.parquet",
+    "model_config": "reports/tables/final_model_config_v0.2.json",
+    "fold_assignments": "reports/tables/stratified_cv_fold_assignments_v0.1.parquet",
+    "historical_metrics": "reports/tables/strict_historical_fold_metrics_v0.2.parquet",
+    "historical_predictions": "reports/tables/strict_historical_predictions_v0.2.parquet",
+    "historical_vs_full": "reports/tables/historical_vs_full_class_analysis_v0.2.parquet",
+    "paired_history": "reports/tables/paired_historical_vs_full_v0.2.parquet",
+    "reproducibility_manifest": "reports/tables/reproducibility_manifest_v0.2.json"
+  },
+  "sha256": {
+    "features": "d08543cffe5db141d6a7e4ee429264acdaa50c6e4fd01f1b0fa2a36aa42a6a85",
+    "feature_schema": "fed07fc291070ecbdc7bbc597fad5aac6a3f4a1746feb12a9f4c2407108af329",
+    "model_config": "c01c3e9c27b4d8170082c6c755b4361d21c9706063bc83a4cc2509aff971fdd7",
+    "fold_assignments": "6289a728a597c9bb7a2ed9e06e52f66ad886a65e031f5c30c1309b0f2b65976a",
+    "historical_metrics": "2d18e9b8a4cb9b86b42d651c5af1a9c407eb3b4d8a41938427123bc0587bfbe0",
+    "historical_predictions": "7548d7daa64beae6248086c4b799ca25d18224aaa4144c01c5084de9baa7bfbc",
+    "historical_vs_full": "3e76f4c9914159ef6e3ff10a63ef726ba5c3b4256b72aaf025071f291d3c3e4e",
+    "paired_history": "b60b9ff624eebc38afe127feb11216ed4ea299040b5ee14bfb9f341c970aaa29",
+    "reproducibility_manifest": "026b09375656062260ea9320e8a3966aa710361e756763e930004eb62896d702"
+  }
+}

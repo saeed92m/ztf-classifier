@@ -1,0 +1,104 @@
+{
+  "project": "ZTF Classifier",
+  "experiment": "v0.2 frozen baseline",
+  "created_utc": "2026-09-22T11:39:29.930473+00:00",
+  "dataset": {
+    "feature_file": "data/processed/features_v0.2.parquet",
+    "n_objects": 150,
+    "n_features": 42,
+    "n_classes": 15,
+    "class_names": [
+      "AGN",
+      "Blazar",
+      "CEP",
+      "CV/Nova",
+      "DSCT",
+      "E",
+      "LPV",
+      "Periodic-Other",
+      "QSO",
+      "RRL",
+      "SLSN",
+      "SNII",
+      "SNIa",
+      "SNIbc",
+      "YSO"
+    ],
+    "feature_sha256": "d08543cffe5db141d6a7e4ee429264acdaa50c6e4fd01f1b0fa2a36aa42a6a85",
+    "fold_file": "reports/tables/stratified_cv_fold_assignments_v0.1.parquet",
+    "fold_sha256": "6289a728a597c9bb7a2ed9e06e52f66ad886a65e031f5c30c1309b0f2b65976a"
+  },
+  "feature_set": {
+    "version": "v0.2_frozen",
+    "n_features": 42,
+    "groups": {
+      "cross_band": 2,
+      "observation_quality": 8,
+      "periodicity": 12,
+      "photometric_level": 20
+    },
+    "no_imputation": true,
+    "native_nan_handling": true
+  },
+  "labels": {
+    "source": "ALeRCE",
+    "type": "benchmark",
+    "ground_truth": false,
+    "probability_preserved": true
+  },
+  "validation": {
+    "method": "StratifiedKFold",
+    "n_splits": 5,
+    "shuffle": true,
+    "random_state": 42,
+    "fold_ids": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "fold_distribution": {
+      "1": 30,
+      "2": 30,
+      "3": 30,
+      "4": 30,
+      "5": 30
+    }
+  },
+  "temporal_validation": {
+    "available": true,
+    "interpretation": "object_level_chronological_distribution_shift",
+    "strict_historical_backtest": false,
+    "full_light_curves_used": true
+  },
+  "calibration": {
+    "temperature_scaling": true,
+    "fitted_on_oof_predictions": true,
+    "deployment_calibration_status": "diagnostic"
+  },
+  "uncertainty": {
+    "conformal_diagnostic": true,
+    "deployment_coverage_guarantee": false
+  },
+  "ood": {
+    "method": "IsolationForest",
+    "target_used": false,
+    "ground_truth_ood_labels": false,
+    "status": "diagnostic"
+  },
+  "software": {
+    "python": "3.11.16 (main, Sep 22 2026, 11:08:44) [GCC 15.2.0]",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "scikit_learn": "1.9.1",
+    "xgboost": "3.2.0"
+  },
+  "reproducibility": {
+    "random_seed": 42,
+    "feature_selection_tuning": false,
+    "hyperparameter_tuning": false,
+    "dataset_mutation": false
+  }
+}

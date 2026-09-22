@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ztf-classifier"
+version = "0.2.0"
+description = "Machine-learning classification of astronomical transient and variable objects using ZTF light curves."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+license = {text = "Proprietary"}
+authors = [
+    {name = "Alpha Team"}
+]
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "astropy",
+    "astroquery",
+    "pyarrow",
+    "scikit-learn",
+    "xgboost",
+    "lightgbm",
+    "shap",
+    "requests",
+]
+
+[project.optional-dependencies]
+notebook = [
+    "jupyterlab",
+    "ipykernel",
+]
+web = [
+    "fastapi",
+    "uvicorn",
+    "plotly",
+    "streamlit",
+]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

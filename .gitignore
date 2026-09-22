@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Large / local astronomical raw data
+data/raw/*
+!data/raw/.gitkeep
+
+# Temporary/intermediate data
+data/interim/*
+!data/interim/.gitkeep
+
+# Local model binaries
+models/
+*.pkl
+*.joblib
+*.onnx
+
+# Local temporary files
+*.tmp
+*.temp
+*.log

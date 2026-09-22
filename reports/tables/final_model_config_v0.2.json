@@ -1,0 +1,20 @@
+{
+  "model_family": "XGBoost",
+  "model_version": "baseline_v0.2",
+  "objective": "multi:softprob",
+  "num_classes": 15,
+  "n_estimators": 300,
+  "max_depth": 4,
+  "learning_rate": 0.05,
+  "subsample": 0.85,
+  "colsample_bytree": 0.85,
+  "min_child_weight": 2,
+  "reg_alpha": 0,
+  "reg_lambda": 1,
+  "eval_metric": "mlogloss",
+  "tree_method": "hist",
+  "random_state": 42,
+  "n_jobs": 4,
+  "missing_value_strategy": "native_xgboost_nan",
+  "hyperparameter_tuning": false
+}
