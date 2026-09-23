@@ -10,6 +10,7 @@ from typing import Any
 
 import pandas as pd
 
+from ztf_classifier.application.batch import BatchInferenceService
 from ztf_classifier.application.errors import ApplicationError
 from ztf_classifier.application.schemas import PredictionResponse
 from ztf_classifier.application.service import ApplicationService
@@ -55,6 +56,32 @@ def _build_parser() -> argparse.ArgumentParser:
         required=True,
         type=Path,
         help="Path to the JSON prediction output.",
+    )
+
+    batch = subparsers.add_parser(
+        "batch",
+        help="Run batch production prediction and write Parquet output.",
+    )
+
+    batch.add_argument(
+        "--artifact",
+        required=True,
+        type=Path,
+        help="Path to the production model artifact directory.",
+    )
+
+    batch.add_argument(
+        "--input",
+        required=True,
+        type=Path,
+        help="Path to the input feature Parquet file.",
+    )
+
+    batch.add_argument(
+        "--output",
+        required=True,
+        type=Path,
+        help="Path to the output prediction Parquet file.",
     )
 
     return parser
@@ -153,6 +180,39 @@ def _run_predict(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_batch(args: argparse.Namespace) -> int:
+    """Run the batch command."""
+
+    if not args.input.is_file():
+        raise FileNotFoundError(
+            f"Input dataset does not exist: {args.input}"
+        )
+
+    if args.output.exists():
+        raise FileExistsError(
+            f"Output file already exists: {args.output}"
+        )
+
+    dataset = pd.read_parquet(args.input)
+
+    result = BatchInferenceService().predict(
+        dataset=dataset,
+        artifact_dir=args.artifact,
+    )
+
+    args.output.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    result.predictions.to_parquet(
+        args.output,
+        index=False,
+    )
+
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the ZTF Classifier command-line interface."""
 
@@ -162,6 +222,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "predict":
             return _run_predict(args)
+
+        if args.command == "batch":
+            return _run_batch(args)
 
         parser.error(
             f"Unsupported command: {args.command}"
@@ -174,7 +237,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
-    except (FileNotFoundError, ValueError, OSError) as exc:
+    except (FileNotFoundError, FileExistsError, ValueError, OSError) as exc:
         print(
             f"error: {exc}",
             file=sys.stderr,
