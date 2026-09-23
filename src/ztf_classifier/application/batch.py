@@ -38,6 +38,10 @@ class BatchPredictionResult:
             raise TypeError(
                 "predictions must be a pandas DataFrame."
             )
+        if self.predictions.empty:
+            raise ValueError(
+                "predictions must not be empty."
+            )
 
         if not self.model_version:
             raise ValueError(

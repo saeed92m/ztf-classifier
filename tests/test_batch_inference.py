@@ -225,7 +225,7 @@ def test_batch_result_rejects_invalid_schema_and_flags() -> None:
 
     with pytest.raises(ValueError, match="Unsupported batch schema"):
         BatchPredictionResult(
-            predictions=pd.DataFrame(),
+            predictions=pd.DataFrame({"x": [1]}),
             model_version="v1",
             model_family="XGBoost",
             has_calibration=True,
@@ -236,7 +236,7 @@ def test_batch_result_rejects_invalid_schema_and_flags() -> None:
 
     with pytest.raises(TypeError, match="has_ood must be a bool"):
         BatchPredictionResult(
-            predictions=pd.DataFrame(),
+            predictions=pd.DataFrame({"x": [1]}),
             model_version="v1",
             model_family="XGBoost",
             has_calibration=True,
