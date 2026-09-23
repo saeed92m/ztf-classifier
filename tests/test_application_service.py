@@ -70,6 +70,15 @@ def test_prediction_request_rejects_file_as_artifact_directory(
         )
 
 
+class FakeModelArtifact:
+    model_version = "test_version"
+    model_family = "TestFamily"
+
+
+class FakeLoadedArtifact:
+    model_artifact = FakeModelArtifact()
+
+
 def test_prediction_response_exposes_sample_count(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -86,6 +95,7 @@ def test_prediction_response_exposes_sample_count(
     class FakeProductionService:
         def __init__(self, artifact_dir: Path) -> None:
             assert artifact_dir == tmp_path.resolve()
+            self.loaded_artifact = FakeLoadedArtifact()
 
         def predict(self, dataset: pd.DataFrame) -> PredictionResult:
             assert list(dataset.columns) == ["feature"]
@@ -151,6 +161,7 @@ def test_predict_dataframe_matches_request_based_api(
     class FakeProductionService:
         def __init__(self, artifact_dir: Path) -> None:
             captured["artifact_dir"] = artifact_dir
+            self.loaded_artifact = FakeLoadedArtifact()
 
         def predict(self, dataset: pd.DataFrame) -> PredictionResult:
             captured["dataset"] = dataset

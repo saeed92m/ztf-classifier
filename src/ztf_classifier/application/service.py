@@ -33,13 +33,18 @@ class ApplicationService:
             )
 
             result = service.predict(request.dataset)
+            model_artifact = service.loaded_artifact.model_artifact
 
         except Exception as exc:
             raise ApplicationInferenceError(
                 "Production prediction failed."
             ) from exc
 
-        return PredictionResponse(result=result)
+        return PredictionResponse(
+            result=result,
+            model_version=model_artifact.model_version,
+            model_family=model_artifact.model_family,
+        )
 
     def predict_dataframe(
         self,

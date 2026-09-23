@@ -44,9 +44,20 @@ class PredictionRequest:
 
 @dataclass(frozen=True)
 class PredictionResponse:
-    """Application response containing the production result."""
+    """Application response containing prediction and model metadata."""
 
     result: PredictionResult
+    model_version: str
+    model_family: str
+
+    def __post_init__(self) -> None:
+        """Validate response metadata."""
+
+        if not self.model_version:
+            raise ValueError("model_version must not be empty.")
+
+        if not self.model_family:
+            raise ValueError("model_family must not be empty.")
 
     @property
     def sample_count(self) -> int:

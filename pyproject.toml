@@ -27,6 +27,9 @@ dependencies = [
     "requests",
 ]
 
+[project.scripts]
+ztf-classifier = "ztf_classifier.cli.main:main"
+
 [project.optional-dependencies]
 notebook = [
     "jupyterlab",
