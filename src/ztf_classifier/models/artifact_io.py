@@ -15,6 +15,7 @@ from ztf_classifier.models.artifact import ModelArtifact
 from ztf_classifier.models.calibration_artifact import CalibrationArtifact
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.contracts import ModelContract
+from ztf_classifier.models.provenance import ModelProvenance
 
 ARTIFACT_SCHEMA_VERSION = "1.0"
 REQUIRED_FILES = (
@@ -22,6 +23,7 @@ REQUIRED_FILES = (
     "model_contract",
     "feature_schema",
     "calibration",
+    "provenance",
 )
 
 
@@ -66,6 +68,7 @@ class LoadedModelArtifact:
 
     model_artifact: ModelArtifact
     calibration: CalibrationArtifact
+    provenance: ModelProvenance
 
 
 @dataclass(frozen=True)
@@ -79,6 +82,7 @@ class ModelArtifactWriter:
         output_dir: Path,
         feature_schema_path: Path,
         calibration: CalibrationArtifact,
+        provenance: ModelProvenance,
     ) -> Path:
         """Write and return the artifact directory."""
 
@@ -102,12 +106,59 @@ class ModelArtifactWriter:
                 "Feature schema SHA-256 does not match the model artifact."
             )
 
+        if artifact.model_version != provenance.model_version:
+            raise ValueError(
+                "Model artifact model_version does not match provenance."
+            )
+
+        if artifact.model_family != provenance.model_family:
+            raise ValueError(
+                "Model artifact model_family does not match provenance."
+            )
+
+        if (
+            artifact.feature_schema_version
+            != provenance.feature_schema_version
+        ):
+            raise ValueError(
+                "Model artifact feature_schema_version "
+                "does not match provenance."
+            )
+
+        if artifact.dataset_sha256 != provenance.dataset_sha256:
+            raise ValueError(
+                "Model artifact dataset SHA-256 does not match provenance."
+            )
+
+        if (
+            artifact.feature_schema_sha256
+            != provenance.feature_schema_sha256
+        ):
+            raise ValueError(
+                "Model artifact feature schema SHA-256 "
+                "does not match provenance."
+            )
+
+        if calibration.method != provenance.calibration_method:
+            raise ValueError(
+                "Calibration method does not match provenance."
+            )
+
+        if (
+            calibration.temperature
+            != provenance.calibration_temperature
+        ):
+            raise ValueError(
+                "Calibration temperature does not match provenance."
+            )
+
         output_dir.mkdir(parents=True)
 
         model_path = output_dir / "model.json"
         contract_path = output_dir / "model_contract.json"
         schema_path = output_dir / "feature_schema.parquet"
         calibration_path = output_dir / "calibration.json"
+        provenance_path = output_dir / "provenance.json"
 
         artifact.model.save_model(model_path)
 
@@ -131,6 +182,7 @@ class ModelArtifactWriter:
         )
 
         calibration.write(calibration_path)
+        provenance.write(provenance_path)
 
         manifest = {
             "artifact_schema_version": ARTIFACT_SCHEMA_VERSION,
@@ -161,6 +213,10 @@ class ModelArtifactWriter:
                 "calibration": {
                     "path": "calibration.json",
                     "sha256": _sha256(calibration_path),
+                },
+                "provenance": {
+                    "path": "provenance.json",
+                    "sha256": _sha256(provenance_path),
                 },
             },
         }
@@ -272,6 +328,81 @@ class ModelArtifactLoader:
             paths["calibration"]
         )
 
+        provenance_data = json.loads(
+            paths["provenance"].read_text(
+                encoding="utf-8"
+            )
+        )
+
+        provenance = ModelProvenance(
+            schema_version=str(
+                provenance_data["provenance_schema_version"]
+            ),
+            artifact_version=str(
+                provenance_data["artifact_version"]
+            ),
+            model_version=str(
+                provenance_data["model"]["version"]
+            ),
+            model_family=str(
+                provenance_data["model"]["family"]
+            ),
+            dataset_version=str(
+                provenance_data["dataset"]["version"]
+            ),
+            dataset_path=str(
+                provenance_data["dataset"]["path"]
+            ),
+            dataset_sha256=str(
+                provenance_data["dataset"]["sha256"]
+            ),
+            feature_schema_version=str(
+                provenance_data["feature_schema"]["version"]
+            ),
+            feature_schema_path=str(
+                provenance_data["feature_schema"]["path"]
+            ),
+            feature_schema_sha256=str(
+                provenance_data["feature_schema"]["sha256"]
+            ),
+            model_config_path=str(
+                provenance_data["model_configuration"]["path"]
+            ),
+            model_config_sha256=str(
+                provenance_data["model_configuration"]["sha256"]
+            ),
+            calibration_method=str(
+                provenance_data["calibration"]["method"]
+            ),
+            calibration_temperature=float(
+                provenance_data["calibration"]["temperature"]
+            ),
+            calibration_source_path=str(
+                provenance_data["calibration"]["source_path"]
+            ),
+            calibration_source_sha256=str(
+                provenance_data["calibration"]["source_sha256"]
+            ),
+            git_commit=str(
+                provenance_data["source_control"]["git_commit"]
+            ),
+            git_dirty=bool(
+                provenance_data["source_control"]["git_dirty"]
+            ),
+            python_version=str(
+                provenance_data["runtime"]["python_version"]
+            ),
+            platform=str(
+                provenance_data["runtime"]["platform"]
+            ),
+            machine=str(
+                provenance_data["runtime"]["machine"]
+            ),
+            dependencies=dict(
+                provenance_data["dependencies"]
+            ),
+        )
+
         from xgboost import XGBClassifier
 
         model: Any = XGBClassifier()
@@ -304,6 +435,7 @@ class ModelArtifactLoader:
         return LoadedModelArtifact(
             model_artifact=artifact,
             calibration=calibration,
+            provenance=provenance,
         )
 
     @staticmethod

@@ -5,7 +5,6 @@ import pandas as pd
 
 from ztf_classifier.models.ood import IsolationForestOOD
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 FEATURE_PATH = ROOT / "data/processed/features_v0.2.parquet"
@@ -151,7 +150,7 @@ def test_ood_requires_42_features():
 
 
 def test_ood_frozen_v02_summary_parity():
-    X, folds, historical = _load_inputs()
+    X, folds, _historical = _load_inputs()
 
     result = IsolationForestOOD().fit_predict(X, folds)
 
