@@ -12,6 +12,7 @@ from typing import Any
 import pandas as pd
 
 from ztf_classifier.models.artifact import ModelArtifact
+from ztf_classifier.models.calibration_artifact import CalibrationArtifact
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.contracts import ModelContract
 
@@ -20,6 +21,7 @@ REQUIRED_FILES = (
     "model",
     "model_contract",
     "feature_schema",
+    "calibration",
 )
 
 
@@ -59,6 +61,14 @@ def _validate_sha256(value: Any, field_name: str) -> str:
 
 
 @dataclass(frozen=True)
+class LoadedModelArtifact:
+    """Complete production artifact loaded from disk."""
+
+    model_artifact: ModelArtifact
+    calibration: CalibrationArtifact
+
+
+@dataclass(frozen=True)
 class ModelArtifactWriter:
     """Write a fitted model and its immutable metadata package."""
 
@@ -68,6 +78,7 @@ class ModelArtifactWriter:
         artifact: ModelArtifact,
         output_dir: Path,
         feature_schema_path: Path,
+        calibration: CalibrationArtifact,
     ) -> Path:
         """Write and return the artifact directory."""
 
@@ -96,6 +107,7 @@ class ModelArtifactWriter:
         model_path = output_dir / "model.json"
         contract_path = output_dir / "model_contract.json"
         schema_path = output_dir / "feature_schema.parquet"
+        calibration_path = output_dir / "calibration.json"
 
         artifact.model.save_model(model_path)
 
@@ -117,6 +129,8 @@ class ModelArtifactWriter:
             feature_schema_path,
             schema_path,
         )
+
+        calibration.write(calibration_path)
 
         manifest = {
             "artifact_schema_version": ARTIFACT_SCHEMA_VERSION,
@@ -144,6 +158,10 @@ class ModelArtifactWriter:
                     "path": "feature_schema.parquet",
                     "sha256": _sha256(schema_path),
                 },
+                "calibration": {
+                    "path": "calibration.json",
+                    "sha256": _sha256(calibration_path),
+                },
             },
         }
 
@@ -169,7 +187,7 @@ class ModelArtifactLoader:
     def load(
         self,
         artifact_dir: Path,
-    ) -> ModelArtifact:
+    ) -> LoadedModelArtifact:
         """Load and validate an artifact package."""
 
         artifact_dir = Path(artifact_dir).resolve()
@@ -250,6 +268,10 @@ class ModelArtifactLoader:
             manifest,
         )
 
+        calibration = CalibrationArtifact.read(
+            paths["calibration"]
+        )
+
         from xgboost import XGBClassifier
 
         model: Any = XGBClassifier()
@@ -279,7 +301,10 @@ class ModelArtifactLoader:
             ),
         )
 
-        return artifact
+        return LoadedModelArtifact(
+            model_artifact=artifact,
+            calibration=calibration,
+        )
 
     @staticmethod
     def _validate_manifest(
@@ -471,6 +496,7 @@ class ModelArtifactLoader:
 
 
 __all__ = [
+    "LoadedModelArtifact",
     "ModelArtifactLoader",
     "ModelArtifactWriter",
 ]
