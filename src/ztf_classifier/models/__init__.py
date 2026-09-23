@@ -26,6 +26,9 @@ from ztf_classifier.models.ood import (
     IsolationForestOOD,
     OODResult,
 )
+from ztf_classifier.models.production_inference import (
+    ProductionInferenceService,
+)
 from ztf_classifier.models.result_builder import (
     PredictionResultBuilder,
 )
@@ -48,6 +51,7 @@ __all__ = [
     "OODResult",
     "PredictionResult",
     "PredictionResultBuilder",
+    "ProductionInferenceService",
     "TemperatureScaler",
     "XGBoostInferenceEngine",
 ]
