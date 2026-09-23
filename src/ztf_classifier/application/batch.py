@@ -125,6 +125,39 @@ class BatchInferenceService:
                 probabilities[:, index]
             )
 
+        if result.conformal is not None:
+            for diagnostic in result.conformal.results:
+                alpha = str(diagnostic.alpha).replace(".", "p")
+                output[f"conformal_{alpha}_threshold"] = (
+                    diagnostic.threshold
+                )
+                output[f"conformal_{alpha}_prediction_set"] = (
+                    diagnostic.prediction_set_labels
+                )
+                output[f"conformal_{alpha}_prediction_set_size"] = (
+                    diagnostic.prediction_sets.sum(axis=1).astype("int64")
+                )
+
+        if result.ood is not None:
+            output["ood_anomaly_score"] = result.ood.anomaly_score
+            output["ood_normality_score"] = result.ood.normality_score
+            output["ood_anomaly_percentile"] = (
+                result.ood.anomaly_percentile
+            )
+            output["ood_isolation_forest_label"] = (
+                result.ood.isolation_forest_label
+            )
+            output["ood_anomaly_rank"] = result.ood.anomaly_rank
+            output["ood_is_top_1pct_anomaly"] = (
+                result.ood.is_top_1pct_anomaly
+            )
+            output["ood_is_top_5pct_anomaly"] = (
+                result.ood.is_top_5pct_anomaly
+            )
+            output["ood_is_top_10pct_anomaly"] = (
+                result.ood.is_top_10pct_anomaly
+            )
+
         output["model_version"] = response.model_version
         output["model_family"] = response.model_family
 

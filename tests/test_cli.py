@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
+from collections.abc import Iterator
 from pathlib import Path
 
 import numpy as np
@@ -258,3 +261,142 @@ def test_main_writes_prediction_json(
     assert payload["model_family"] == "XGBoost"
     assert payload["sample_count"] == 2
     assert payload["predictions"][0]["oid"] == "ZTF001"
+
+
+@pytest.fixture(scope="session")
+def e2e_diagnostic_artifact(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[Path]:
+    token = tmp_path_factory.mktemp("4c").name
+    output_dir = Path(f"tmp-test-model-pipeline-{token}")
+
+    try:
+        from ztf_classifier.pipeline.model import ModelPipeline
+
+        result = ModelPipeline(
+            project_root=Path("."),
+            dataset_path=Path("data/processed/features_v0.2.parquet"),
+            fold_assignments_path=Path(
+                "reports/tables/stratified_cv_fold_assignments_v0.1.parquet"
+            ),
+            feature_schema_path=Path(
+                "reports/tables/final_feature_set_v0.2.parquet"
+            ),
+            model_config_path=Path(
+                "reports/tables/final_model_config_v0.2.json"
+            ),
+            output_dir=output_dir,
+        ).run()
+
+        yield result.artifact_dir
+    finally:
+        shutil.rmtree(output_dir, ignore_errors=True)
+
+
+def test_cli_predict_e2e_with_diagnostics(
+    e2e_diagnostic_artifact: Path,
+    tmp_path: Path,
+) -> None:
+    input_path = Path("data/processed/features_v0.2.parquet")
+    output_path = tmp_path / "prediction.json"
+
+    result = subprocess.run(
+        [
+            "ztf-classifier",
+            "predict",
+            "--artifact",
+            str(e2e_diagnostic_artifact),
+            "--input",
+            str(input_path),
+            "--output",
+            str(output_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert output_path.exists()
+
+    payload = json.loads(output_path.read_text())
+
+    assert payload["schema_version"] == "1.1"
+    assert payload["sample_count"] > 0
+    assert payload["has_conformal"] is True
+    assert payload["has_ood"] is True
+    assert len(payload["predictions"]) == payload["sample_count"]
+
+    prediction = payload["predictions"][0]
+
+    assert prediction["predicted_class"] in MODEL_CLASSES
+    assert len(prediction["probabilities"]) == len(MODEL_CLASSES)
+
+    assert prediction["conformal"]
+    conformal = prediction["conformal"][0]
+    assert 0.0 < conformal["alpha"] < 1.0
+    assert 0.0 <= conformal["threshold"] <= 1.0
+    assert conformal["prediction_set_size"] >= 0
+
+    ood = prediction["ood"]
+    assert set(ood) == {
+        "anomaly_score",
+        "normality_score",
+        "anomaly_percentile",
+        "isolation_forest_label",
+        "anomaly_rank",
+        "is_top_1pct_anomaly",
+        "is_top_5pct_anomaly",
+        "is_top_10pct_anomaly",
+    }
+
+
+def test_cli_batch_e2e_with_diagnostics(
+    e2e_diagnostic_artifact: Path,
+    tmp_path: Path,
+) -> None:
+    input_path = Path("data/processed/features_v0.2.parquet")
+    output_path = tmp_path / "batch.parquet"
+
+    result = subprocess.run(
+        [
+            "ztf-classifier",
+            "batch",
+            "--artifact",
+            str(e2e_diagnostic_artifact),
+            "--input",
+            str(input_path),
+            "--output",
+            str(output_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert output_path.exists()
+
+    frame = pd.read_parquet(output_path)
+
+    assert len(frame) > 0
+    assert "predicted_class" in frame.columns
+    assert "predicted_class_index" in frame.columns
+
+    assert any(
+        column.startswith("conformal_")
+        for column in frame.columns
+    )
+
+    assert {
+        "ood_anomaly_score",
+        "ood_normality_score",
+        "ood_anomaly_percentile",
+        "ood_isolation_forest_label",
+        "ood_anomaly_rank",
+        "ood_is_top_1pct_anomaly",
+        "ood_is_top_5pct_anomaly",
+        "ood_is_top_10pct_anomaly",
+    }.issubset(frame.columns)
+
+    assert frame["predicted_class"].notna().all()
