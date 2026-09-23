@@ -26,6 +26,12 @@ from ztf_classifier.models.ood import (
     IsolationForestOOD,
     OODResult,
 )
+from ztf_classifier.models.result_builder import (
+    PredictionResultBuilder,
+)
+from ztf_classifier.models.results import (
+    PredictionResult,
+)
 
 __all__ = [
     "CLASS_TO_INDEX",
@@ -40,6 +46,8 @@ __all__ = [
     "IsolationForestOOD",
     "ModelContract",
     "OODResult",
+    "PredictionResult",
+    "PredictionResultBuilder",
     "TemperatureScaler",
     "XGBoostInferenceEngine",
 ]
