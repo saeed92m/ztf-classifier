@@ -4,6 +4,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from ztf_classifier.dataset.features import (
+    FEATURE_DATASET_METADATA_COLUMNS,
+)
 from ztf_classifier.dataset.manifest import ObjectManifest
 from ztf_classifier.dataset.validation import (
     DatasetArtifactValidator,
@@ -286,4 +289,181 @@ def test_dataset_artifact_validator_rejects_non_deterministic_order(
         DatasetArtifactValidator().validate(
             artifact_path=artifact_copy,
             manifest_path=manifest_copy,
+        )
+
+
+def test_dataset_artifact_validator_rejects_metadata_null(
+    tmp_path: Path,
+) -> None:
+    data = pd.read_parquet(ARTIFACT)
+    data.loc[0, "class"] = None
+
+    artifact_copy = tmp_path / "features.parquet"
+    data.to_parquet(artifact_copy, index=False)
+
+    manifest_copy = tmp_path / "dataset_manifest.json"
+    manifest_copy.write_text(
+        MANIFEST.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="null metadata values: class",
+    ):
+        DatasetArtifactValidator().validate(
+            artifact_path=artifact_copy,
+            manifest_path=manifest_copy,
+        )
+
+
+def test_dataset_artifact_validator_rejects_probability_out_of_range(
+    tmp_path: Path,
+) -> None:
+    data = pd.read_parquet(ARTIFACT)
+    data.loc[0, "probability"] = 1.5
+
+    artifact_copy = tmp_path / "features.parquet"
+    data.to_parquet(artifact_copy, index=False)
+
+    manifest_copy = tmp_path / "dataset_manifest.json"
+    manifest_copy.write_text(
+        MANIFEST.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="out-of-range probability values: probability",
+    ):
+        DatasetArtifactValidator().validate(
+            artifact_path=artifact_copy,
+            manifest_path=manifest_copy,
+        )
+
+
+def test_dataset_artifact_validator_allows_feature_nan() -> None:
+    result = DatasetArtifactValidator().validate(
+        artifact_path=ARTIFACT,
+        manifest_path=MANIFEST,
+    )
+
+    assert result.object_count == 150
+    assert result.feature_count == 42
+
+
+def test_dataset_artifact_validator_rejects_feature_inf(
+    tmp_path: Path,
+) -> None:
+    data = pd.read_parquet(ARTIFACT)
+    data.loc[0, "g_mean_mag"] = float("inf")
+
+    artifact_copy = tmp_path / "features.parquet"
+    data.to_parquet(artifact_copy, index=False)
+
+    manifest_copy = tmp_path / "dataset_manifest.json"
+    manifest_copy.write_text(
+        MANIFEST.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="non-finite feature values",
+    ):
+        DatasetArtifactValidator().validate(
+            artifact_path=artifact_copy,
+            manifest_path=manifest_copy,
+        )
+
+
+def test_dataset_artifact_validator_rejects_dataset_version_mismatch(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match="dataset_version does not match expected version",
+    ):
+        DatasetArtifactValidator().validate(
+            artifact_path=ARTIFACT,
+            manifest_path=MANIFEST,
+            expected_dataset_version="wrong.version",
+        )
+
+
+def test_dataset_artifact_validator_rejects_feature_schema_version_mismatch(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match="feature_schema_version does not match expected version",
+    ):
+        DatasetArtifactValidator().validate(
+            artifact_path=ARTIFACT,
+            manifest_path=MANIFEST,
+            expected_feature_schema_version="wrong.version",
+        )
+
+
+def test_dataset_artifact_validator_rejects_input_manifest_hash_mismatch(
+    tmp_path: Path,
+) -> None:
+    input_manifest = tmp_path / "object_manifest.parquet"
+
+    pd.read_parquet(ARTIFACT)[
+        list(FEATURE_DATASET_METADATA_COLUMNS)
+    ].to_parquet(
+        input_manifest,
+        index=False,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Input object manifest SHA-256 does not match",
+    ):
+        DatasetArtifactValidator().validate(
+            artifact_path=ARTIFACT,
+            manifest_path=MANIFEST,
+            input_manifest_path=input_manifest,
+        )
+
+
+def test_dataset_artifact_validator_rejects_input_manifest_identity_mismatch(
+    tmp_path: Path,
+) -> None:
+    input_manifest = tmp_path / "object_manifest.parquet"
+
+    object_manifest = pd.read_parquet(ARTIFACT)[
+        list(FEATURE_DATASET_METADATA_COLUMNS)
+    ].copy()
+
+    object_manifest.loc[0, "class"] = "WRONG_CLASS"
+
+    object_manifest.to_parquet(
+        input_manifest,
+        index=False,
+    )
+
+    manifest = json.loads(
+        MANIFEST.read_text(encoding="utf-8")
+    )
+
+    from ztf_classifier.dataset.artifact import sha256_file
+
+    manifest["input_manifest_sha256"] = sha256_file(input_manifest)
+
+    manifest_copy = tmp_path / "dataset_manifest.json"
+    manifest_copy.write_text(
+        json.dumps(manifest),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Input object manifest does not match",
+    ):
+        DatasetArtifactValidator().validate(
+            artifact_path=ARTIFACT,
+            manifest_path=manifest_copy,
+            input_manifest_path=input_manifest,
         )

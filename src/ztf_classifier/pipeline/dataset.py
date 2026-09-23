@@ -100,6 +100,9 @@ class DatasetPipeline:
         artifact_validation = DatasetArtifactValidator().validate(
             artifact_path=artifact.artifact_path,
             manifest_path=artifact.manifest_path,
+            expected_dataset_version=dataset.dataset_version,
+            expected_feature_schema_version=dataset.feature_schema_version,
+            input_manifest_path=self._output_dir / "object_manifest.parquet",
         )
 
         reproducibility_manifest_path = (

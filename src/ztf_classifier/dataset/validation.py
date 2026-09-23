@@ -1,11 +1,13 @@
-"""Validation contracts for canonical dataset manifests."""
+"""Validation contracts for canonical dataset manifests and artifacts."""
 
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from ztf_classifier.dataset.artifact import sha256_file
@@ -15,12 +17,27 @@ from ztf_classifier.dataset.features import (
 from ztf_classifier.dataset.manifest import ObjectManifest
 from ztf_classifier.features.pipeline import V0_2_FEATURES
 
+NON_EMPTY_METADATA_COLUMNS = (
+    "oid",
+    "class",
+    "classifier",
+    "label_source",
+    "label_type",
+    "classifier_version",
+    "survey",
+)
+
+PROBABILITY_COLUMNS = (
+    "probability",
+    "label_probability",
+)
+
 
 def validate_against_historical_objects(
     manifest: ObjectManifest,
     historical: pd.DataFrame,
 ) -> None:
-    """Validate a production object manifest against the frozen object artifact."""
+    """Validate a production object manifest against a frozen object artifact."""
 
     required = {
         "oid",
@@ -80,9 +97,10 @@ def validate_against_historical_objects(
             "Historical probability and label_probability are inconsistent"
         )
 
+
 @dataclass(frozen=True)
 class DatasetArtifactValidationResult:
-    """Validation result for a persisted dataset artifact."""
+    """Validation result for a persisted canonical dataset artifact."""
 
     artifact_path: Path
     manifest_path: Path
@@ -98,6 +116,10 @@ class DatasetArtifactValidator:
         self,
         artifact_path: Path,
         manifest_path: Path,
+        *,
+        expected_dataset_version: str | None = None,
+        expected_feature_schema_version: str | None = None,
+        input_manifest_path: Path | None = None,
     ) -> DatasetArtifactValidationResult:
         if not artifact_path.is_file():
             raise ValueError(
@@ -128,6 +150,84 @@ class DatasetArtifactValidator:
         if data["oid"].duplicated().any():
             raise ValueError(
                 "Dataset artifact contains duplicate OIDs."
+            )
+
+        if data["oid"].isna().any():
+            raise ValueError(
+                "Dataset artifact contains null OIDs."
+            )
+
+        if (
+            data["oid"]
+            .astype("string")
+            .str.strip()
+            .eq("")
+            .any()
+        ):
+            raise ValueError(
+                "Dataset artifact contains empty OIDs."
+            )
+
+        for column in NON_EMPTY_METADATA_COLUMNS:
+            if data[column].isna().any():
+                raise ValueError(
+                    f"Dataset artifact contains null metadata values: {column}"
+                )
+
+            if (
+                data[column]
+                .astype("string")
+                .str.strip()
+                .eq("")
+                .any()
+            ):
+                raise ValueError(
+                    f"Dataset artifact contains empty metadata values: {column}"
+                )
+
+        for column in PROBABILITY_COLUMNS:
+            values = pd.to_numeric(
+                data[column],
+                errors="coerce",
+            )
+
+            if values.isna().any():
+                raise ValueError(
+                    f"Dataset artifact contains invalid probability values: {column}"
+                )
+
+            if not values.map(math.isfinite).all():
+                raise ValueError(
+                    f"Dataset artifact contains non-finite probability values: {column}"
+                )
+
+            if ((values < 0.0) | (values > 1.0)).any():
+                raise ValueError(
+                    f"Dataset artifact contains out-of-range probability values: {column}"
+                )
+
+        probability = pd.to_numeric(
+            data["probability"],
+            errors="coerce",
+        )
+        label_probability = pd.to_numeric(
+            data["label_probability"],
+            errors="coerce",
+        )
+
+        if not probability.equals(label_probability):
+            raise ValueError(
+                "Dataset artifact probability and label_probability are inconsistent."
+            )
+
+        feature_values = data[list(V0_2_FEATURES)].to_numpy(dtype=float)
+
+        finite_mask = np.isfinite(feature_values)
+        non_finite_mask = ~finite_mask & ~np.isnan(feature_values)
+
+        if non_finite_mask.any():
+            raise ValueError(
+                "Dataset artifact contains non-finite feature values."
             )
 
         if manifest["object_count"] != len(data):
@@ -186,12 +286,75 @@ class DatasetArtifactValidator:
                 "Dataset artifact is not deterministically ordered by OID."
             )
 
+        if (
+            expected_dataset_version is not None
+            and manifest.get("dataset_version") != expected_dataset_version
+        ):
+            raise ValueError(
+                "Dataset manifest dataset_version does not match expected version."
+            )
+
+        if (
+            expected_feature_schema_version is not None
+            and manifest.get("feature_schema_version")
+            != expected_feature_schema_version
+        ):
+            raise ValueError(
+                "Dataset manifest feature_schema_version does not match expected version."
+            )
+
+        if manifest.get("feature_schema_version") != "v0.2":
+            raise ValueError(
+                "Unsupported feature schema version."
+            )
+
         actual_hash = sha256_file(artifact_path)
 
         if actual_hash != manifest["artifact_sha256"]:
             raise ValueError(
                 "Artifact SHA-256 does not match manifest."
             )
+
+        if input_manifest_path is not None:
+            if not input_manifest_path.is_file():
+                raise ValueError(
+                    f"Input object manifest does not exist: {input_manifest_path}"
+                )
+
+            input_hash = sha256_file(input_manifest_path)
+
+            if input_hash != manifest["input_manifest_sha256"]:
+                raise ValueError(
+                    "Input object manifest SHA-256 does not match dataset manifest."
+                )
+
+            object_manifest = pd.read_parquet(input_manifest_path)
+
+            required_metadata = list(
+                FEATURE_DATASET_METADATA_COLUMNS
+            )
+
+            if tuple(object_manifest.columns) != tuple(required_metadata):
+                raise ValueError(
+                    "Input object manifest columns do not match canonical metadata schema."
+                )
+
+            artifact_identity = (
+                data[required_metadata]
+                .sort_values("oid")
+                .reset_index(drop=True)
+            )
+
+            manifest_identity = (
+                object_manifest[required_metadata]
+                .sort_values("oid")
+                .reset_index(drop=True)
+            )
+
+            if not artifact_identity.equals(manifest_identity):
+                raise ValueError(
+                    "Input object manifest does not match dataset artifact metadata."
+                )
 
         return DatasetArtifactValidationResult(
             artifact_path=artifact_path,
