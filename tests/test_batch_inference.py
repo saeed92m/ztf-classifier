@@ -217,3 +217,29 @@ def test_batch_prediction_class_matches_index(
     assert list(
         result.predictions["predicted_class_index"]
     ) == [0, 0]
+
+
+def test_batch_result_rejects_invalid_schema_and_flags() -> None:
+    """Batch result must reject invalid contract metadata."""
+    from ztf_classifier.application.batch import BatchPredictionResult
+
+    with pytest.raises(ValueError, match="Unsupported batch schema"):
+        BatchPredictionResult(
+            predictions=pd.DataFrame(),
+            model_version="v1",
+            model_family="XGBoost",
+            has_calibration=True,
+            has_conformal=True,
+            has_ood=True,
+            schema_version="9.9",
+        )
+
+    with pytest.raises(TypeError, match="has_ood must be a bool"):
+        BatchPredictionResult(
+            predictions=pd.DataFrame(),
+            model_version="v1",
+            model_family="XGBoost",
+            has_calibration=True,
+            has_conformal=True,
+            has_ood="true",
+        )

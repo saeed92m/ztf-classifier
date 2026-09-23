@@ -48,6 +48,18 @@ class BatchPredictionResult:
             raise ValueError(
                 "model_family must not be empty."
             )
+        if self.schema_version != BATCH_SCHEMA_VERSION:
+            raise ValueError(
+                f"Unsupported batch schema version: {self.schema_version}"
+            )
+
+        for name in (
+            "has_calibration",
+            "has_conformal",
+            "has_ood",
+        ):
+            if not isinstance(getattr(self, name), bool):
+                raise TypeError(f"{name} must be a bool.")
 
 
 class BatchInferenceService:
