@@ -229,6 +229,29 @@ class XGBoostTrainingEngine:
             fold_metrics=fold_metrics,
         )
 
+    def fit_full(
+        self,
+        dataset: pd.DataFrame,
+    ) -> XGBClassifier:
+        """Fit the frozen XGBoost model on the complete dataset."""
+
+        X = self.prepare_features(dataset)
+        y, _ = self.prepare_target(dataset)
+
+        if len(X) != len(y):
+            raise ValueError(
+                "Feature and target row counts do not match."
+            )
+
+        model = self._build_model()
+
+        model.fit(
+            X,
+            y,
+        )
+
+        return model
+
     def _load_feature_names(
         self,
         dataset: pd.DataFrame,
