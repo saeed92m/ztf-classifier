@@ -46,3 +46,6 @@ data/interim/*
 
 # Local production run artifacts
 runs/
+
+# Build artifacts
+dist/
