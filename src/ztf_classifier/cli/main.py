@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 from ztf_classifier.application.batch import BatchInferenceService
 from ztf_classifier.application.errors import ApplicationError
@@ -198,9 +200,38 @@ def _run_batch(args: argparse.Namespace) -> int:
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
-    result.predictions.to_parquet(
+    table = pa.Table.from_pandas(
+        result.predictions,
+        preserve_index=False,
+    )
+
+    metadata = dict(table.schema.metadata or {})
+    metadata.update(
+        {
+            b"ztf_classifier.schema_version": (
+                result.schema_version.encode("utf-8")
+            ),
+            b"ztf_classifier.model_version": (
+                result.model_version.encode("utf-8")
+            ),
+            b"ztf_classifier.model_family": (
+                result.model_family.encode("utf-8")
+            ),
+            b"ztf_classifier.has_calibration": (
+                str(result.has_calibration).lower().encode("utf-8")
+            ),
+            b"ztf_classifier.has_conformal": (
+                str(result.has_conformal).lower().encode("utf-8")
+            ),
+            b"ztf_classifier.has_ood": (
+                str(result.has_ood).lower().encode("utf-8")
+            ),
+        }
+    )
+
+    pq.write_table(
+        table.replace_schema_metadata(metadata),
         args.output,
-        index=False,
     )
 
     return 0

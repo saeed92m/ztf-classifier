@@ -16,7 +16,7 @@ from ztf_classifier.application.schemas import (
 from ztf_classifier.application.service import ApplicationService
 from ztf_classifier.models.classes import MODEL_CLASSES
 
-BATCH_SCHEMA_VERSION = "1.0"
+BATCH_SCHEMA_VERSION = "1.1"
 
 
 @dataclass(frozen=True)
@@ -26,6 +26,9 @@ class BatchPredictionResult:
     predictions: pd.DataFrame
     model_version: str
     model_family: str
+    has_calibration: bool
+    has_conformal: bool
+    has_ood: bool
     schema_version: str = BATCH_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -127,7 +130,8 @@ class BatchInferenceService:
 
         if result.conformal is not None:
             for diagnostic in result.conformal.results:
-                alpha = str(diagnostic.alpha).replace(".", "p")
+                alpha = f"{diagnostic.alpha:.6f}".rstrip("0").rstrip(".")
+                alpha = alpha.replace(".", "p")
                 output[f"conformal_{alpha}_threshold"] = (
                     diagnostic.threshold
                 )
@@ -165,6 +169,9 @@ class BatchInferenceService:
             predictions=output.reset_index(drop=True),
             model_version=response.model_version,
             model_family=response.model_family,
+            has_calibration=result.has_calibration,
+            has_conformal=result.has_conformal,
+            has_ood=result.has_ood,
         )
 
 

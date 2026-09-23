@@ -10,6 +10,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 import pytest
 
 from ztf_classifier.application.schemas import PredictionResponse
@@ -349,6 +350,99 @@ def test_cli_predict_e2e_with_diagnostics(
         "is_top_5pct_anomaly",
         "is_top_10pct_anomaly",
     }
+
+
+def test_cli_batch_e2e_parquet_contract(
+    e2e_diagnostic_artifact: Path,
+    tmp_path: Path,
+) -> None:
+    """Batch Parquet output must satisfy the production output contract."""
+
+    input_path = Path("data/processed/features_v0.2.parquet")
+    output_path = tmp_path / "batch.parquet"
+
+    result = subprocess.run(
+        [
+            "ztf-classifier",
+            "batch",
+            "--artifact",
+            str(e2e_diagnostic_artifact),
+            "--input",
+            str(input_path),
+            "--output",
+            str(output_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert output_path.exists()
+
+    schema = pq.read_schema(output_path)
+    metadata = schema.metadata or {}
+
+    expected_metadata = {
+        b"ztf_classifier.schema_version": b"1.1",
+        b"ztf_classifier.model_version": b"baseline_v0.2",
+        b"ztf_classifier.model_family": b"XGBoost",
+        b"ztf_classifier.has_calibration": b"true",
+        b"ztf_classifier.has_conformal": b"true",
+        b"ztf_classifier.has_ood": b"true",
+    }
+
+    for key, expected in expected_metadata.items():
+        assert metadata.get(key) == expected
+
+    table = pq.read_table(output_path)
+
+    required_columns = {
+        "predicted_class",
+        "predicted_class_index",
+        "model_version",
+        "model_family",
+        "ood_anomaly_score",
+        "ood_normality_score",
+        "ood_anomaly_percentile",
+        "ood_isolation_forest_label",
+        "ood_anomaly_rank",
+        "ood_is_top_1pct_anomaly",
+        "ood_is_top_5pct_anomaly",
+        "ood_is_top_10pct_anomaly",
+    }
+
+    assert required_columns.issubset(table.column_names)
+
+    conformal_columns = [
+        name
+        for name in table.column_names
+        if name.startswith("conformal_")
+    ]
+
+    assert conformal_columns
+
+    conformal_prefixes = {
+        name.split("_")[1]
+        for name in conformal_columns
+    }
+
+    assert conformal_prefixes
+
+    for alpha_key in conformal_prefixes:
+        assert alpha_key
+        assert all(
+            character.isdigit() or character == "p"
+            for character in alpha_key
+        )
+
+        expected_columns = {
+            f"conformal_{alpha_key}_threshold",
+            f"conformal_{alpha_key}_prediction_set",
+            f"conformal_{alpha_key}_prediction_set_size",
+        }
+
+        assert expected_columns.issubset(set(conformal_columns))
 
 
 def test_cli_batch_e2e_with_diagnostics(
