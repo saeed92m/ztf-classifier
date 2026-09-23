@@ -699,3 +699,144 @@ def test_model_artifact_loader_rejects_provenance_path_escape(
 
     with pytest.raises(ValueError, match="path escapes artifact directory"):
         ModelArtifactLoader().load(output_dir)
+
+def _rewrite_manifest_file_hash(
+    output_dir: Path,
+    file_key: str,
+) -> None:
+    import hashlib
+
+    manifest_path = output_dir / "artifact_manifest.json"
+    target_path = output_dir / f"{file_key}.json"
+
+    digest = hashlib.sha256()
+
+    with target_path.open("rb") as handle:
+        for chunk in iter(
+            lambda: handle.read(1024 * 1024),
+            b"",
+        ):
+            digest.update(chunk)
+
+    manifest = json.loads(
+        manifest_path.read_text(encoding="utf-8")
+    )
+
+    manifest["files"][file_key]["sha256"] = digest.hexdigest()
+
+    manifest_path.write_text(
+        json.dumps(
+            manifest,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def test_model_artifact_loader_rejects_semantically_tampered_provenance(
+    tmp_path: Path,
+) -> None:
+    artifact, _dataset = _build_artifact()
+
+    output_dir = tmp_path / "baseline_v0.2"
+
+    calibration = CalibrationArtifact(
+        method="temperature_scaling",
+        temperature=1.0268501887,
+    )
+
+    provenance = _build_provenance()
+
+    ModelArtifactWriter().write(
+        artifact=artifact,
+        output_dir=output_dir,
+        feature_schema_path=FEATURE_SCHEMA_PATH,
+        calibration=calibration,
+        provenance=provenance,
+    )
+
+    provenance_path = output_dir / "provenance.json"
+
+    data = json.loads(
+        provenance_path.read_text(encoding="utf-8")
+    )
+
+    data["model"]["version"] = "tampered_model"
+
+    provenance_path.write_text(
+        json.dumps(
+            data,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    _rewrite_manifest_file_hash(
+        output_dir,
+        "provenance",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Provenance model_version does not match artifact.",
+    ):
+        ModelArtifactLoader().load(output_dir)
+
+
+def test_model_artifact_loader_rejects_semantically_tampered_calibration_provenance(
+    tmp_path: Path,
+) -> None:
+    artifact, _dataset = _build_artifact()
+
+    output_dir = tmp_path / "baseline_v0.2"
+
+    calibration = CalibrationArtifact(
+        method="temperature_scaling",
+        temperature=1.0268501887,
+    )
+
+    provenance = _build_provenance()
+
+    ModelArtifactWriter().write(
+        artifact=artifact,
+        output_dir=output_dir,
+        feature_schema_path=FEATURE_SCHEMA_PATH,
+        calibration=calibration,
+        provenance=provenance,
+    )
+
+    provenance_path = output_dir / "provenance.json"
+
+    data = json.loads(
+        provenance_path.read_text(encoding="utf-8")
+    )
+
+    data["calibration"]["temperature"] = 1.5
+
+    provenance_path.write_text(
+        json.dumps(
+            data,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    _rewrite_manifest_file_hash(
+        output_dir,
+        "provenance",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Provenance calibration temperature does not match "
+            "calibration artifact."
+        ),
+    ):
+        ModelArtifactLoader().load(output_dir)

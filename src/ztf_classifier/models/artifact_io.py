@@ -403,6 +403,12 @@ class ModelArtifactLoader:
             ),
         )
 
+        self._validate_provenance(
+            manifest=manifest,
+            calibration=calibration,
+            provenance=provenance,
+        )
+
         from xgboost import XGBClassifier
 
         model: Any = XGBClassifier()
@@ -437,6 +443,63 @@ class ModelArtifactLoader:
             calibration=calibration,
             provenance=provenance,
         )
+
+    @staticmethod
+    def _validate_provenance(
+        *,
+        manifest: dict[str, Any],
+        calibration: CalibrationArtifact,
+        provenance: ModelProvenance,
+    ) -> None:
+        """Validate semantic consistency across artifact metadata."""
+
+        if provenance.model_version != manifest["model_version"]:
+            raise ValueError(
+                "Provenance model_version does not match artifact."
+            )
+
+        if provenance.model_family != manifest["model_family"]:
+            raise ValueError(
+                "Provenance model_family does not match artifact."
+            )
+
+        if (
+            provenance.feature_schema_version
+            != manifest["feature_schema_version"]
+        ):
+            raise ValueError(
+                "Provenance feature_schema_version "
+                "does not match artifact."
+            )
+
+        if provenance.dataset_sha256 != manifest["dataset_sha256"]:
+            raise ValueError(
+                "Provenance dataset SHA-256 does not match artifact."
+            )
+
+        if (
+            provenance.feature_schema_sha256
+            != manifest["feature_schema_source_sha256"]
+        ):
+            raise ValueError(
+                "Provenance feature schema SHA-256 "
+                "does not match artifact."
+            )
+
+        if provenance.calibration_method != calibration.method:
+            raise ValueError(
+                "Provenance calibration method does not match "
+                "calibration artifact."
+            )
+
+        if (
+            provenance.calibration_temperature
+            != calibration.temperature
+        ):
+            raise ValueError(
+                "Provenance calibration temperature does not match "
+                "calibration artifact."
+            )
 
     @staticmethod
     def _validate_manifest(
