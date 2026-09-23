@@ -9,6 +9,11 @@ from ztf_classifier.models.classes import (
     MODEL_CLASSES,
     NUM_CLASSES,
 )
+from ztf_classifier.models.conformal import (
+    ConformalResult,
+    ConformalSummary,
+    EmpiricalConformalPredictor,
+)
 from ztf_classifier.models.contracts import (
     DEFAULT_MODEL_CONTRACT,
     ModelContract,
@@ -24,6 +29,9 @@ __all__ = [
     "MODEL_CLASSES",
     "NUM_CLASSES",
     "CalibrationResult",
+    "ConformalResult",
+    "ConformalSummary",
+    "EmpiricalConformalPredictor",
     "InferenceResult",
     "ModelContract",
     "TemperatureScaler",
