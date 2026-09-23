@@ -10,8 +10,10 @@ from ztf_classifier.models.classes import (
     MODEL_CLASSES,
     NUM_CLASSES,
 )
-from ztf_classifier.models.conformal import ConformalResult
 from ztf_classifier.models.ood import OODResult
+from ztf_classifier.models.production_conformal import (
+    ProductionConformalDiagnostics,
+)
 
 
 @dataclass(frozen=True)
@@ -26,7 +28,7 @@ class PredictionResult:
     calibrated_predicted_class_indices: np.ndarray | None = None
     calibrated_predicted_labels: tuple[str, ...] | None = None
 
-    conformal: ConformalResult | None = None
+    conformal: ProductionConformalDiagnostics | None = None
     ood: OODResult | None = None
 
     def __post_init__(self) -> None:

@@ -8,6 +8,9 @@ from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.conformal import ConformalResult
 from ztf_classifier.models.inference import InferenceResult
 from ztf_classifier.models.ood import OODResult
+from ztf_classifier.models.production_conformal import (
+    ProductionConformalDiagnostics,
+)
 from ztf_classifier.models.results import PredictionResult
 
 
@@ -19,7 +22,9 @@ class PredictionResultBuilder:
         inference: InferenceResult,
         *,
         calibrated_probabilities: np.ndarray | None = None,
-        conformal: ConformalResult | None = None,
+        conformal: (
+        ConformalResult | ProductionConformalDiagnostics | None
+    ) = None,
         ood: OODResult | None = None,
     ) -> PredictionResult:
         """Build a unified prediction result."""

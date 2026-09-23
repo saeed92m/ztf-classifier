@@ -19,6 +19,10 @@ from ztf_classifier.models.calibration import TemperatureScaler
 from ztf_classifier.models.calibration_artifact import CalibrationArtifact
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.config import ModelConfig
+from ztf_classifier.models.conformal import EmpiricalConformalPredictor
+from ztf_classifier.models.conformal_artifact import ConformalArtifact
+from ztf_classifier.models.ood_artifact import OODArtifact
+from ztf_classifier.models.ood_production import OODProductionModel
 from ztf_classifier.models.provenance import (
     ModelProvenance,
     ModelProvenanceBuilder,
@@ -43,6 +47,9 @@ class ModelPipelineResult:
     provenance: ModelProvenance
     artifact_dir: Path
     loaded_artifact: LoadedModelArtifact
+    conformal: ConformalArtifact
+    ood: OODArtifact
+    ood_model: OODProductionModel
 
 
 class ModelPipeline:
@@ -58,7 +65,7 @@ class ModelPipeline:
         model_config_path: Path,
         output_dir: Path,
         dataset_version: str = "features_v0.2",
-        artifact_version: str = "1.0",
+        artifact_version: str = "1.1",
     ) -> None:
         self._project_root = Path(project_root).resolve()
         self._dataset_path = Path(dataset_path).resolve()
@@ -132,10 +139,36 @@ class ModelPipeline:
             ),
         )
 
+        conformal_results = EmpiricalConformalPredictor().fit_all(
+            oof_result.probabilities,
+            oof_result.true_indices,
+        )
+
+        conformal = ConformalArtifact.from_results(
+            conformal_results,
+        )
+
         model = engine.fit_full(dataset)
 
-        feature_names = tuple(
-            engine.prepare_features(dataset).columns
+        features = engine.prepare_features(dataset)
+
+        feature_names = tuple(features.columns)
+
+        ood_model = OODProductionModel(
+            self._config.ood,
+        ).fit(
+            features.to_numpy(dtype=np.float64),
+        )
+
+        if ood_model.reference_anomaly_scores is None:
+            raise RuntimeError(
+                "Fitted OOD production model has no reference "
+                "anomaly scores."
+            )
+
+        ood = OODArtifact.from_config(
+            self._config.ood,
+            ood_model.reference_anomaly_scores,
         )
 
         dataset_sha256 = self._sha256(self._dataset_path)
@@ -179,6 +212,9 @@ class ModelPipeline:
             feature_schema_path=self._feature_schema_path,
             calibration=calibration,
             provenance=provenance,
+            conformal=conformal,
+            ood=ood,
+            ood_model=ood_model,
         )
 
         loaded_artifact = ModelArtifactLoader().load(
@@ -190,6 +226,9 @@ class ModelPipeline:
             engine=engine,
             model_artifact=model_artifact,
             calibration=calibration,
+            conformal=conformal,
+            ood=ood,
+            ood_model=ood_model,
             loaded_artifact=loaded_artifact,
         )
 
@@ -204,6 +243,9 @@ class ModelPipeline:
             provenance=provenance,
             artifact_dir=artifact_dir,
             loaded_artifact=loaded_artifact,
+            conformal=conformal,
+            ood=ood,
+            ood_model=ood_model,
         )
 
     def _validate_inputs(self) -> None:
@@ -483,6 +525,9 @@ class ModelPipeline:
         engine: XGBoostTrainingEngine,
         model_artifact: ModelArtifact,
         calibration: CalibrationArtifact,
+        conformal: ConformalArtifact,
+        ood: OODArtifact,
+        ood_model: OODProductionModel,
         loaded_artifact: LoadedModelArtifact,
     ) -> None:
         """Verify that the serialized model preserves predictions."""
@@ -540,6 +585,52 @@ class ModelPipeline:
                 "Reloaded calibration temperature does not match "
                 "the in-memory calibration."
             )
+
+        if loaded_artifact.conformal is None:
+            raise ValueError(
+                "Reloaded conformal artifact is missing."
+            )
+
+        if loaded_artifact.ood is None:
+            raise ValueError(
+                "Reloaded OOD artifact is missing."
+            )
+
+        if loaded_artifact.ood_model is None:
+            raise ValueError(
+                "Reloaded OOD production model is missing."
+            )
+
+        if loaded_artifact.conformal != conformal:
+            raise ValueError(
+                "Reloaded conformal artifact does not match "
+                "the in-memory conformal artifact."
+            )
+
+        if loaded_artifact.ood != ood:
+            raise ValueError(
+                "Reloaded OOD artifact does not match "
+                "the in-memory OOD artifact."
+            )
+
+        if (
+            loaded_artifact.ood_model.reference_anomaly_scores is None
+            or ood_model.reference_anomaly_scores is None
+        ):
+            raise ValueError(
+                "Reloaded OOD model has no reference anomaly scores."
+            )
+
+        np.testing.assert_allclose(
+            loaded_artifact.ood_model.reference_anomaly_scores,
+            ood_model.reference_anomaly_scores,
+            rtol=0.0,
+            atol=0.0,
+            err_msg=(
+                "Reloaded OOD reference anomaly scores do not match "
+                "the in-memory OOD model."
+            ),
+        )
 
     @staticmethod
     def _sha256(path: Path) -> str:

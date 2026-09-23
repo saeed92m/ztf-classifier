@@ -21,6 +21,7 @@ dependencies = [
     "astroquery",
     "pyarrow",
     "scikit-learn",
+    "joblib",
     "xgboost",
     "lightgbm",
     "shap",

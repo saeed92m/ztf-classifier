@@ -9,21 +9,34 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from ztf_classifier.models.artifact import ModelArtifact
 from ztf_classifier.models.calibration_artifact import CalibrationArtifact
 from ztf_classifier.models.classes import MODEL_CLASSES
+from ztf_classifier.models.conformal_artifact import ConformalArtifact
 from ztf_classifier.models.contracts import ModelContract
+from ztf_classifier.models.ood_artifact import OODArtifact
+from ztf_classifier.models.ood_production import OODProductionModel
 from ztf_classifier.models.provenance import ModelProvenance
 
-ARTIFACT_SCHEMA_VERSION = "1.0"
-REQUIRED_FILES = (
+ARTIFACT_SCHEMA_VERSION = "1.1"
+LEGACY_ARTIFACT_SCHEMA_VERSION = "1.0"
+
+REQUIRED_FILES_V1_0 = (
     "model",
     "model_contract",
     "feature_schema",
     "calibration",
     "provenance",
+)
+
+REQUIRED_FILES_V1_1 = (
+    *REQUIRED_FILES_V1_0,
+    "conformal",
+    "ood",
+    "ood_model",
 )
 
 
@@ -69,6 +82,9 @@ class LoadedModelArtifact:
     model_artifact: ModelArtifact
     calibration: CalibrationArtifact
     provenance: ModelProvenance
+    conformal: ConformalArtifact | None = None
+    ood: OODArtifact | None = None
+    ood_model: OODProductionModel | None = None
 
 
 @dataclass(frozen=True)
@@ -83,6 +99,9 @@ class ModelArtifactWriter:
         feature_schema_path: Path,
         calibration: CalibrationArtifact,
         provenance: ModelProvenance,
+        conformal: ConformalArtifact | None = None,
+        ood: OODArtifact | None = None,
+        ood_model: OODProductionModel | None = None,
     ) -> Path:
         """Write and return the artifact directory."""
 
@@ -152,6 +171,74 @@ class ModelArtifactWriter:
                 "Calibration temperature does not match provenance."
             )
 
+        diagnostics = (
+            conformal is not None
+            or ood is not None
+            or ood_model is not None
+        )
+
+        if diagnostics and not (
+            conformal is not None
+            and ood is not None
+            and ood_model is not None
+        ):
+            raise ValueError(
+                "Conformal artifact, OOD artifact, and OOD production "
+                "model must be provided together."
+            )
+
+        if (
+            ood is not None
+            and ood_model is not None
+        ):
+            if (
+                ood.feature_count
+                != len(artifact.feature_names)
+            ):
+                raise ValueError(
+                    "OOD artifact feature count does not match "
+                    "the model feature count."
+                )
+
+            if (
+                ood_model.config.method
+                != ood.method
+                or ood_model.config.n_estimators
+                != ood.n_estimators
+                or ood_model.config.contamination
+                != ood.contamination
+                or ood_model.config.random_state
+                != ood.random_state
+                or ood_model.config.n_jobs
+                != ood.n_jobs
+            ):
+                raise ValueError(
+                    "OOD production model configuration does not "
+                    "match the OOD artifact."
+                )
+
+            if ood_model.reference_anomaly_scores is None:
+                raise ValueError(
+                    "OOD production model has no reference anomaly scores."
+                )
+
+            np.testing.assert_allclose(
+                np.asarray(
+                    ood.reference_anomaly_scores,
+                    dtype=np.float64,
+                ),
+                np.asarray(
+                    ood_model.reference_anomaly_scores,
+                    dtype=np.float64,
+                ),
+                rtol=0.0,
+                atol=0.0,
+                err_msg=(
+                    "OOD artifact reference anomaly scores do not "
+                    "match the persisted OOD model."
+                ),
+            )
+
         output_dir.mkdir(parents=True)
 
         model_path = output_dir / "model.json"
@@ -159,6 +246,9 @@ class ModelArtifactWriter:
         schema_path = output_dir / "feature_schema.parquet"
         calibration_path = output_dir / "calibration.json"
         provenance_path = output_dir / "provenance.json"
+        conformal_path = output_dir / "conformal.json"
+        ood_path = output_dir / "ood.json"
+        ood_model_path = output_dir / "ood_model.joblib"
 
         artifact.model.save_model(model_path)
 
@@ -184,8 +274,39 @@ class ModelArtifactWriter:
         calibration.write(calibration_path)
         provenance.write(provenance_path)
 
+        if diagnostics:
+            assert conformal is not None
+            assert ood is not None
+            assert ood_model is not None
+
+            conformal_path.write_text(
+                json.dumps(
+                    conformal.to_dict(),
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            ood_path.write_text(
+                json.dumps(
+                    ood.to_dict(),
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            ood_model.save(ood_model_path)
+
         manifest = {
-            "artifact_schema_version": ARTIFACT_SCHEMA_VERSION,
+            "artifact_schema_version": (
+                ARTIFACT_SCHEMA_VERSION
+                if diagnostics
+                else LEGACY_ARTIFACT_SCHEMA_VERSION
+            ),
             "model_version": artifact.model_version,
             "model_family": artifact.model_family,
             "feature_schema_version": artifact.feature_schema_version,
@@ -220,6 +341,20 @@ class ModelArtifactWriter:
                 },
             },
         }
+
+        if diagnostics:
+            manifest["files"]["conformal"] = {
+                "path": "conformal.json",
+                "sha256": _sha256(conformal_path),
+            }
+            manifest["files"]["ood"] = {
+                "path": "ood.json",
+                "sha256": _sha256(ood_path),
+            }
+            manifest["files"]["ood_model"] = {
+                "path": "ood_model.joblib",
+                "sha256": _sha256(ood_model_path),
+            }
 
         manifest_path = output_dir / "artifact_manifest.json"
 
@@ -266,10 +401,18 @@ class ModelArtifactLoader:
 
         self._validate_manifest(manifest)
 
+        schema_version = manifest["artifact_schema_version"]
+
+        required_files = (
+            REQUIRED_FILES_V1_1
+            if schema_version == ARTIFACT_SCHEMA_VERSION
+            else REQUIRED_FILES_V1_0
+        )
+
         files = manifest["files"]
         paths: dict[str, Path] = {}
 
-        for key in REQUIRED_FILES:
+        for key in required_files:
             metadata = files[key]
             relative_path = metadata["path"]
             expected_hash = metadata["sha256"]
@@ -409,6 +552,69 @@ class ModelArtifactLoader:
             provenance=provenance,
         )
 
+        conformal = None
+        ood = None
+        ood_model = None
+
+        if schema_version == ARTIFACT_SCHEMA_VERSION:
+            conformal_payload = json.loads(
+                paths["conformal"].read_text(
+                    encoding="utf-8"
+                )
+            )
+
+            ood_payload = json.loads(
+                paths["ood"].read_text(
+                    encoding="utf-8"
+                )
+            )
+
+            conformal = ConformalArtifact.from_dict(
+                conformal_payload
+            )
+
+            ood = OODArtifact.from_dict(
+                ood_payload
+            )
+
+            ood_model = OODProductionModel.load(
+                paths["ood_model"]
+            )
+
+            if (
+                ood_model.config.method != ood.method
+                or ood_model.config.n_estimators != ood.n_estimators
+                or ood_model.config.contamination != ood.contamination
+                or ood_model.config.random_state != ood.random_state
+                or ood_model.config.n_jobs != ood.n_jobs
+            ):
+                raise ValueError(
+                    "Persisted OOD model configuration does not "
+                    "match OOD artifact."
+                )
+
+            if ood_model.reference_anomaly_scores is None:
+                raise ValueError(
+                    "Persisted OOD model has no reference anomaly scores."
+                )
+
+            np.testing.assert_allclose(
+                np.asarray(
+                    ood.reference_anomaly_scores,
+                    dtype=np.float64,
+                ),
+                np.asarray(
+                    ood_model.reference_anomaly_scores,
+                    dtype=np.float64,
+                ),
+                rtol=0.0,
+                atol=0.0,
+                err_msg=(
+                    "Persisted OOD model reference anomaly scores "
+                    "do not match OOD artifact."
+                ),
+            )
+
         from xgboost import XGBClassifier
 
         model: Any = XGBClassifier()
@@ -442,6 +648,9 @@ class ModelArtifactLoader:
             model_artifact=artifact,
             calibration=calibration,
             provenance=provenance,
+            conformal=conformal,
+            ood=ood,
+            ood_model=ood_model,
         )
 
     @staticmethod
@@ -512,9 +721,14 @@ class ModelArtifactLoader:
                 "Artifact manifest must be a dictionary."
             )
 
-        if manifest.get(
+        schema_version = manifest.get(
             "artifact_schema_version"
-        ) != ARTIFACT_SCHEMA_VERSION:
+        )
+
+        if schema_version not in (
+            LEGACY_ARTIFACT_SCHEMA_VERSION,
+            ARTIFACT_SCHEMA_VERSION,
+        ):
             raise ValueError(
                 "Unsupported model artifact schema version."
             )
@@ -576,7 +790,13 @@ class ModelArtifactLoader:
                 "Artifact manifest contains invalid file metadata."
             )
 
-        for key in REQUIRED_FILES:
+        required_files = (
+            REQUIRED_FILES_V1_1
+            if schema_version == ARTIFACT_SCHEMA_VERSION
+            else REQUIRED_FILES_V1_0
+        )
+
+        for key in required_files:
             metadata = files.get(key)
 
             if not isinstance(metadata, dict):
