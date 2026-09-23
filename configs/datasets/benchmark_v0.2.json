@@ -1,0 +1,29 @@
+{
+  "dataset_version": "benchmark_v0.2",
+  "survey": "ztf",
+  "source": "ALeRCE",
+  "classifier": "lc_classifier",
+  "classifier_version": "hierarchical_random_forest_1.0.0",
+  "classes": [
+    "SNIa",
+    "SNIbc",
+    "SNII",
+    "SLSN",
+    "QSO",
+    "AGN",
+    "Blazar",
+    "CV/Nova",
+    "YSO",
+    "LPV",
+    "E",
+    "DSCT",
+    "RRL",
+    "CEP",
+    "Periodic-Other"
+  ],
+  "samples_per_class": 10,
+  "probability_min": 0.9,
+  "fallback_probability": 0.5,
+  "page_size": 10,
+  "selection_strategy": "historical_full_requery"
+}

@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
 from ztf_classifier.dataset.artifact import (
     DatasetArtifact,
     DatasetArtifactWriter,
@@ -18,7 +16,7 @@ from ztf_classifier.dataset.features import (
     FeatureDataset,
     FeatureDatasetBuilder,
 )
-from ztf_classifier.dataset.selector import ObjectSelector
+from ztf_classifier.dataset.selection import ObjectSelectionPolicy
 from ztf_classifier.dataset.validation import (
     DatasetArtifactValidationResult,
     DatasetArtifactValidator,
@@ -151,37 +149,16 @@ class DatasetPipeline:
         )
 
     def _build_object_manifest(self) -> Any:
-        """Acquire objects for every configured class and build the manifest."""
+        """Acquire objects using the configured selection policy."""
 
-        frames: list[pd.DataFrame] = []
-
-        for request in ObjectSelector(self._config).requests():
-            result = self._object_acquisition_backend.acquire(request)
-
-            if len(result.objects) != 1:
-                raise ValueError(
-                    "Object-acquisition backend must return exactly one "
-                    "object payload per request."
-                )
-
-            payload = result.objects[0]
-
-            if not isinstance(payload, pd.DataFrame):
-                raise TypeError(
-                    "Object-acquisition backend payload must be a pandas "
-                    "DataFrame."
-                )
-
-            frames.append(payload)
-
-        if not frames:
-            raise ValueError("Object acquisition returned no object records.")
-
-        objects = pd.concat(
-            frames,
-            axis=0,
-            ignore_index=True,
+        objects = ObjectSelectionPolicy(
+            self._config
+        ).acquire_all(
+            backend=self._object_acquisition_backend,
         )
+
+        if objects.empty:
+            raise ValueError("Object acquisition returned no object records.")
 
         return ObjectManifestBuilder(self._config).build(objects)
 
