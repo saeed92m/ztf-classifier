@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 from xgboost import XGBClassifier
 
 from ztf_classifier.models.classes import MODEL_CLASSES
@@ -172,3 +173,52 @@ def test_inference_rejects_missing_model() -> None:
         raise AssertionError(
             "Inference engine must reject a missing model."
         )
+
+
+def test_inference_result_arrays_are_read_only() -> None:
+    """InferenceResult must expose semantically immutable arrays."""
+    from ztf_classifier.models.inference import InferenceResult
+
+    result = InferenceResult(
+        probabilities=np.array(
+            [[1.0] + [0.0] * 14],
+            dtype=np.float64,
+        ),
+        predicted_class_indices=np.array([0], dtype=np.int64),
+        predicted_labels=("AGN",),
+    )
+
+    assert result.probabilities.flags.writeable is False
+    assert result.predicted_class_indices.flags.writeable is False
+
+    with pytest.raises(ValueError):
+        result.probabilities[0, 0] = 0.5
+
+    with pytest.raises(ValueError):
+        result.predicted_class_indices[0] = 1
+
+
+def test_inference_result_owns_array_memory() -> None:
+    """InferenceResult must not share mutable input array memory."""
+    from ztf_classifier.models.inference import InferenceResult
+
+    probabilities = np.array(
+        [[1.0] + [0.0] * 14],
+        dtype=np.float64,
+    )
+    indices = np.array([0], dtype=np.int64)
+
+    result = InferenceResult(
+        probabilities=probabilities,
+        predicted_class_indices=indices,
+        predicted_labels=("AGN",),
+    )
+
+    assert not np.shares_memory(
+        result.probabilities,
+        probabilities,
+    )
+    assert not np.shares_memory(
+        result.predicted_class_indices,
+        indices,
+    )

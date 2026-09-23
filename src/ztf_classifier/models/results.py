@@ -32,15 +32,19 @@ class PredictionResult:
     def __post_init__(self) -> None:
         """Validate the result contract."""
 
-        raw_probabilities = np.asarray(
+        raw_probabilities = np.array(
             self.raw_probabilities,
             dtype=np.float64,
+            copy=True,
         )
+        raw_probabilities.setflags(write=False)
 
-        raw_indices = np.asarray(
+        raw_indices = np.array(
             self.raw_predicted_class_indices,
             dtype=np.int64,
+            copy=True,
         )
+        raw_indices.setflags(write=False)
 
         object.__setattr__(
             self,
@@ -77,10 +81,12 @@ class PredictionResult:
             )
 
         if self.calibrated_probabilities is not None:
-            calibrated = np.asarray(
+            calibrated = np.array(
                 self.calibrated_probabilities,
                 dtype=np.float64,
+                copy=True,
             )
+            calibrated.setflags(write=False)
 
             object.__setattr__(
                 self,
@@ -102,10 +108,12 @@ class PredictionResult:
                     "predictions."
                 )
 
-            calibrated_indices = np.asarray(
+            calibrated_indices = np.array(
                 self.calibrated_predicted_class_indices,
                 dtype=np.int64,
+                copy=True,
             )
+            calibrated_indices.setflags(write=False)
 
             object.__setattr__(
                 self,

@@ -284,3 +284,84 @@ def test_arrays_are_normalized_to_expected_dtypes() -> None:
 
     assert result.raw_probabilities.dtype == np.float64
     assert result.raw_predicted_class_indices.dtype == np.int64
+
+
+def test_prediction_result_raw_arrays_are_read_only() -> None:
+    """PredictionResult raw arrays must be semantically immutable."""
+    result = PredictionResult(
+        raw_probabilities=np.array(
+            [[1.0] + [0.0] * 14],
+            dtype=np.float64,
+        ),
+        raw_predicted_class_indices=np.array(
+            [0],
+            dtype=np.int64,
+        ),
+        raw_predicted_labels=("AGN",),
+    )
+
+    assert result.raw_probabilities.flags.writeable is False
+    assert result.raw_predicted_class_indices.flags.writeable is False
+
+    with pytest.raises(ValueError):
+        result.raw_probabilities[0, 0] = 0.5
+
+    with pytest.raises(ValueError):
+        result.raw_predicted_class_indices[0] = 1
+
+
+def test_prediction_result_calibrated_arrays_are_read_only() -> None:
+    """PredictionResult calibrated arrays must be semantically immutable."""
+    result = PredictionResult(
+        raw_probabilities=np.array(
+            [[1.0] + [0.0] * 14],
+            dtype=np.float64,
+        ),
+        raw_predicted_class_indices=np.array(
+            [0],
+            dtype=np.int64,
+        ),
+        raw_predicted_labels=("AGN",),
+        calibrated_probabilities=np.array(
+            [[0.9, 0.1] + [0.0] * 13],
+            dtype=np.float64,
+        ),
+        calibrated_predicted_class_indices=np.array(
+            [0],
+            dtype=np.int64,
+        ),
+        calibrated_predicted_labels=("AGN",),
+    )
+
+    assert result.calibrated_probabilities.flags.writeable is False
+    assert result.calibrated_predicted_class_indices.flags.writeable is False
+
+    with pytest.raises(ValueError):
+        result.calibrated_probabilities[0, 0] = 0.5
+
+    with pytest.raises(ValueError):
+        result.calibrated_predicted_class_indices[0] = 1
+
+
+def test_prediction_result_owns_array_memory() -> None:
+    """PredictionResult must not share mutable input array memory."""
+    probabilities = np.array(
+        [[1.0] + [0.0] * 14],
+        dtype=np.float64,
+    )
+    indices = np.array([0], dtype=np.int64)
+
+    result = PredictionResult(
+        raw_probabilities=probabilities,
+        raw_predicted_class_indices=indices,
+        raw_predicted_labels=("AGN",),
+    )
+
+    assert not np.shares_memory(
+        result.raw_probabilities,
+        probabilities,
+    )
+    assert not np.shares_memory(
+        result.raw_predicted_class_indices,
+        indices,
+    )

@@ -15,6 +15,21 @@ from ztf_classifier.models.classes import (
 )
 
 
+def _immutable_array(
+    value: np.ndarray,
+    *,
+    dtype: np.dtype,
+) -> np.ndarray:
+    """Return an owned, read-only NumPy array."""
+    array = np.array(
+        value,
+        dtype=dtype,
+        copy=True,
+    )
+    array.setflags(write=False)
+    return array
+
+
 @dataclass(frozen=True)
 class InferenceResult:
     """Deterministic multiclass inference result."""
@@ -22,6 +37,25 @@ class InferenceResult:
     probabilities: np.ndarray
     predicted_class_indices: np.ndarray
     predicted_labels: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        """Own and freeze result arrays."""
+        object.__setattr__(
+            self,
+            "probabilities",
+            _immutable_array(
+                self.probabilities,
+                dtype=np.dtype(np.float64),
+            ),
+        )
+        object.__setattr__(
+            self,
+            "predicted_class_indices",
+            _immutable_array(
+                self.predicted_class_indices,
+                dtype=np.dtype(np.int64),
+            ),
+        )
 
     @property
     def row_count(self) -> int:
