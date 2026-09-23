@@ -22,6 +22,10 @@ from ztf_classifier.models.inference import (
     InferenceResult,
     XGBoostInferenceEngine,
 )
+from ztf_classifier.models.ood import (
+    IsolationForestOOD,
+    OODResult,
+)
 
 __all__ = [
     "CLASS_TO_INDEX",
@@ -33,7 +37,9 @@ __all__ = [
     "ConformalSummary",
     "EmpiricalConformalPredictor",
     "InferenceResult",
+    "IsolationForestOOD",
     "ModelContract",
+    "OODResult",
     "TemperatureScaler",
     "XGBoostInferenceEngine",
 ]
