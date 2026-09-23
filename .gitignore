@@ -43,3 +43,6 @@ data/interim/*
 *.tmp
 *.temp
 *.log
+
+# Local production run artifacts
+runs/
