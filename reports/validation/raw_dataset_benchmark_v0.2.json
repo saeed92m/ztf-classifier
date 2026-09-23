@@ -1,0 +1,148 @@
+{
+  "report_type": "raw_dataset_validation",
+  "run": {
+    "created_utc": "2026-09-23T10:19:34.671415+00:00",
+    "git_branch": "main",
+    "git_commit": "c98bb371bedfc73fc6796d16adb659597d05b188",
+    "git_dirty": true
+  },
+  "schema_version": "1.0",
+  "source": {
+    "canonical_dataset": "data/processed/benchmark_v0.2/features.parquet",
+    "canonical_dataset_manifest": "data/processed/benchmark_v0.2/dataset_manifest.json",
+    "canonical_dataset_manifest_sha256": "9e1bb86b497d068420aabaee2e974dce0e63a02f64349cc628a901e3d36e829b",
+    "canonical_dataset_sha256": "53bbe20bf18bbf955d80563200b06dcc20f9aab94edc5553259a54e1ff7e00f5",
+    "feature_schema": "reports/tables/final_feature_set_v0.2.parquet",
+    "feature_schema_sha256": "fed07fc291070ecbdc7bbc597fad5aac6a3f4a1746feb12a9f4c2407108af329",
+    "raw_cache": "data/raw/alerce"
+  },
+  "status": "PASS",
+  "validation": {
+    "cache_objects": 151,
+    "canonical_objects": 150,
+    "corrected_statistics": {
+      "corrected_false": 1066,
+      "corrected_true": 27379
+    },
+    "detection_row_statistics": {
+      "count": 150,
+      "max": 1732,
+      "mean": 189.63333333333333,
+      "median": 74.0,
+      "min": 4
+    },
+    "detection_schema": [
+      "tid",
+      "mjd",
+      "candid",
+      "fid",
+      "pid",
+      "diffmaglim",
+      "isdiffpos",
+      "nid",
+      "distnr",
+      "magpsf",
+      "magpsf_corr",
+      "magpsf_corr_ext",
+      "magap",
+      "magap_corr",
+      "sigmapsf",
+      "sigmapsf_corr",
+      "sigmapsf_corr_ext",
+      "sigmagap",
+      "sigmagap_corr",
+      "ra",
+      "dec",
+      "rb",
+      "rbversion",
+      "drb",
+      "magapbig",
+      "sigmagapbig",
+      "rfid",
+      "has_stamp",
+      "corrected",
+      "dubious",
+      "candid_alert",
+      "step_id_corr",
+      "phase",
+      "parent_candid"
+    ],
+    "errors": [],
+    "extra_oids": [
+      "ZTF18aauelee"
+    ],
+    "fid_distribution": {
+      "1": 142,
+      "2": 142,
+      "3": 44
+    },
+    "fid_set_distribution": {
+      "1": 6,
+      "1,2": 94,
+      "1,2,3": 40,
+      "1,3": 2,
+      "2": 6,
+      "2,3": 2
+    },
+    "incomplete_pairs": [],
+    "invalid_required_values": [],
+    "low_observation_objects_lt10": [
+      "ZTF18adayaxg"
+    ],
+    "low_observation_objects_lt30": [
+      "ZTF18abatgbn",
+      "ZTF18abyrzgu",
+      "ZTF18acbwgin",
+      "ZTF18adayaxg",
+      "ZTF19aacwbmb",
+      "ZTF19aaedyht",
+      "ZTF19aaggork",
+      "ZTF19aalfsrm",
+      "ZTF19aavoiyc",
+      "ZTF19aavpvzf",
+      "ZTF19aawqowd",
+      "ZTF19aawsaom",
+      "ZTF19abclzsc",
+      "ZTF20aaieyuw",
+      "ZTF20aallmea",
+      "ZTF20abhvnzc",
+      "ZTF21aasgmrt",
+      "ZTF21acgrnzr",
+      "ZTF22aafctmu",
+      "ZTF22aahiien",
+      "ZTF22aakqvzc",
+      "ZTF22abfwihc",
+      "ZTF22abnqpwe",
+      "ZTF22abtcyiu",
+      "ZTF23aacgtky",
+      "ZTF23aadozop",
+      "ZTF23aadtlyv",
+      "ZTF23aaixylr",
+      "ZTF23aajadng",
+      "ZTF23abhzekh",
+      "ZTF23abofwba"
+    ],
+    "missing_oids": [],
+    "non_detection_row_statistics": {
+      "count": 150,
+      "max": 1918,
+      "mean": 313.4266666666667,
+      "median": 210.5,
+      "min": 6
+    },
+    "non_detection_schema": [
+      "tid",
+      "mjd",
+      "fid",
+      "diffmaglim"
+    ],
+    "ordering": {
+      "detection_ordering_failures": [],
+      "detections_sorted_by_mjd": true,
+      "non_detection_ordering_failures": [],
+      "non_detections_sorted_by_mjd": true
+    },
+    "schema_mismatches": [],
+    "status": "PASS"
+  }
+}
