@@ -1,6 +1,7 @@
 """ALeRCE light-curve ingestion and normalization."""
 
 from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 
