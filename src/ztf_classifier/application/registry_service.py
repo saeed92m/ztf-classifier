@@ -1,4 +1,4 @@
-"""Registry-backed application service for production inference."""
+""""Registry-backed application service for production inference."""
 
 from __future__ import annotations
 
@@ -47,6 +47,7 @@ class RegisteredApplicationService:
             entry = self._registry.get(request.model_version)
             service = ProductionInferenceService(entry.artifact_dir)
             result = service.predict(request.dataset)
+            provenance = service.loaded_artifact.provenance
         except Exception as exc:
             raise ApplicationInferenceError(
                 "Registered production prediction failed."
@@ -56,6 +57,7 @@ class RegisteredApplicationService:
             result=result,
             model_version=entry.model_version,
             model_family=entry.model_family,
+            provenance=provenance,
         )
 
     def predict_dataframe(
@@ -77,3 +79,4 @@ __all__ = [
     "RegisteredApplicationService",
     "RegisteredPredictionRequest",
 ]
+"
