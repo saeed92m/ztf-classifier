@@ -194,9 +194,6 @@ class ObjectSelectionPolicy:
     def _limit_samples(self, frame: pd.DataFrame) -> pd.DataFrame:
         """Limit a result to the configured samples per class."""
 
-        return frame.sort_values(
-            ["probability", "oid"],
-            ascending=[False, True],
-        ).head(
-            self._config.samples_per_class
-        ).reset_index(drop=True)
+        return frame.head(self._config.samples_per_class).reset_index(
+            drop=True
+        )
