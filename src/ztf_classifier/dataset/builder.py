@@ -18,20 +18,40 @@ class ObjectManifestBuilder:
         self._config = config
 
     def build(self, objects: pd.DataFrame) -> ObjectManifest:
-        """Build a canonical manifest from validated object records."""
+        """Build a canonical manifest from object records."""
         if not isinstance(objects, pd.DataFrame):
             raise TypeError("Object records must be a pandas DataFrame.")
 
-        missing = set(REQUIRED_OBJECT_COLUMNS) - set(objects.columns)
-        if missing:
+        base_required_columns = {
+            "oid",
+            "class",
+            "classifier",
+            "probability",
+        }
+
+        missing_base = base_required_columns - set(objects.columns)
+        if missing_base:
             raise ValueError(
-                f"Object records are missing columns: {sorted(missing)}"
+                f"Object records are missing columns: {sorted(missing_base)}"
             )
 
         if objects.empty:
             raise ValueError("Object records must not be empty.")
 
-        manifest_objects = objects.loc[
+        manifest_objects = objects.copy()
+
+        manifest_objects["label_source"] = self._config.source
+        manifest_objects["label_type"] = "classifier"
+        manifest_objects["label_probability"] = pd.to_numeric(
+            manifest_objects["probability"],
+            errors="raise",
+        )
+        manifest_objects["classifier_version"] = (
+            self._config.classifier_version
+        )
+        manifest_objects["survey"] = self._config.survey
+
+        manifest_objects = manifest_objects.loc[
             :, list(REQUIRED_OBJECT_COLUMNS)
         ].copy()
 
