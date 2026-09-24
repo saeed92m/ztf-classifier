@@ -13,7 +13,6 @@ from ztf_classifier.io.alerce import alerce_to_internal_lc_robust
 RAW_DIR = Path("data/raw/alerce")
 FROZEN_PATH = Path("data/processed/features_v0.2.parquet")
 
-import pytest
 
 if not (
     FROZEN_PATH.is_file()
