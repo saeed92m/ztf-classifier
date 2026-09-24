@@ -6,6 +6,45 @@ import numpy as np
 import pandas as pd
 
 
+_REQUIRED_COLUMNS = {
+    "mjd",
+    "fid",
+    "magpsf_corr",
+    "sigmapsf_corr_ext",
+    "magpsf",
+    "sigmapsf",
+    "ra",
+    "dec",
+    "dubious",
+    "corrected",
+}
+
+
+def _coerce_bool_series(
+    series: pd.Series,
+    *,
+    column_name: str,
+) -> pd.Series:
+    """Parse boolean-like ALeRCE values without silent string coercion."""
+    values = series.astype("string").str.strip().str.lower()
+    truthy = values.isin({"true", "1", "yes", "y", "t"})
+    falsy = values.isin({"false", "0", "no", "n", "f", ""})
+    unknown = ~(truthy | falsy | values.isna())
+
+    if unknown.any():
+        bad_values = values[unknown].dropna().unique()[:10]
+        raise ValueError(
+            f"Column '{column_name}' contains non-boolean values: "
+            f"{bad_values.tolist()}"
+        )
+
+    return pd.Series(
+        truthy.fillna(False).to_numpy(dtype=bool),
+        index=series.index,
+        dtype=bool,
+    )
+
+
 def alerce_to_internal_lc_robust(
     detections: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -17,6 +56,13 @@ def alerce_to_internal_lc_robust(
 
     Raw ALeRCE columns are never overwritten.
     """
+
+    missing = _REQUIRED_COLUMNS - set(detections.columns)
+    if missing:
+        raise ValueError(
+            "ALeRCE detections are missing required columns: "
+            f"{sorted(missing)}"
+        )
 
     lc = detections.copy()
 
@@ -77,8 +123,14 @@ def alerce_to_internal_lc_robust(
                 lc["dec"],
                 errors="coerce",
             ).astype(float),
-            "dubious": lc["dubious"].astype(bool),
-            "corrected": lc["corrected"].astype(bool),
+            "dubious": _coerce_bool_series(
+                lc["dubious"],
+                column_name="dubious",
+            ),
+            "corrected": _coerce_bool_series(
+                lc["corrected"],
+                column_name="corrected",
+            ),
             "source": "ALeRCE",
         }
     )
