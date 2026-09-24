@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from ztf_classifier.features.pipeline import (
     V0_2_FEATURES,
@@ -11,6 +12,18 @@ from ztf_classifier.io.alerce import alerce_to_internal_lc_robust
 
 RAW_DIR = Path("data/raw/alerce")
 FROZEN_PATH = Path("data/processed/features_v0.2.parquet")
+
+import pytest
+
+if not (
+    FROZEN_PATH.is_file()
+    and RAW_DIR.is_dir()
+    and next(RAW_DIR.glob("*_detections.parquet"), None) is not None
+):
+    pytest.skip(
+        "frozen feature artifact or raw detection cache is not present",
+        allow_module_level=True,
+    )
 
 
 def test_production_pipeline_matches_frozen_v0_2():
