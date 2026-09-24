@@ -41,8 +41,6 @@ class AlerceObjectBackend(ObjectAcquisitionBackend):
 
         required_api_columns = {
             "oid",
-            "class",
-            "classifier",
             "probability",
         }
         missing = sorted(
@@ -55,8 +53,15 @@ class AlerceObjectBackend(ObjectAcquisitionBackend):
             )
 
         objects["oid"] = objects["oid"].astype(str)
-        objects["class"] = objects["class"].astype(str)
-        objects["classifier"] = objects["classifier"].astype(str)
+        if "class" not in objects.columns:
+            objects["class"] = request.class_name
+        else:
+            objects["class"] = objects["class"].astype(str)
+
+        if "classifier" not in objects.columns:
+            objects["classifier"] = request.classifier
+        else:
+            objects["classifier"] = objects["classifier"].astype(str)
         objects["probability"] = pd.to_numeric(
             objects["probability"],
             errors="coerce",
