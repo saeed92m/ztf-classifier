@@ -225,6 +225,14 @@ def _run_predict(args: argparse.Namespace) -> int:
 
     dataset = pd.read_parquet(args.input)
 
+    if args.artifact is not None and (
+        args.registry_dir is not None or args.model_version is not None
+    ):
+        raise ValueError(
+            "Model selection is ambiguous: use --artifact or "
+            "--registry-dir with --model-version, not both."
+        )
+
     service = ApplicationService()
     if args.artifact is not None:
         response = service.predict_dataframe(
@@ -275,6 +283,14 @@ def _run_batch(args: argparse.Namespace) -> int:
         )
 
     dataset = pd.read_parquet(args.input)
+
+    if args.artifact is not None and (
+        args.registry_dir is not None or args.model_version is not None
+    ):
+        raise ValueError(
+            "Model selection is ambiguous: use --artifact or "
+            "--registry-dir with --model-version, not both."
+        )
 
     service = BatchInferenceService()
 
