@@ -43,6 +43,7 @@ def test_alerce_object_backend_normalizes_label_provenance() -> None:
 
     assert client.calls == [
         {
+            "survey": "ZTF",
             "classifier": "lc_classifier",
             "class_name": "QSO",
             "probability": 0.90,
