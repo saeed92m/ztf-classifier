@@ -78,8 +78,43 @@ def test_builder_preserves_probability() -> None:
     ]
 
 
-def test_builder_rejects_missing_columns() -> None:
-    objects = make_objects().drop(columns=["label_source"])
+def test_builder_enriches_provenance_from_config() -> None:
+    objects = make_objects().drop(
+        columns=[
+            "label_source",
+            "label_type",
+            "label_probability",
+            "classifier_version",
+            "survey",
+        ]
+    )
+
+    manifest = ObjectManifestBuilder(make_config()).build(objects)
+
+    assert manifest.objects["label_source"].tolist() == [
+        "ALeRCE",
+        "ALeRCE",
+    ]
+    assert manifest.objects["label_type"].tolist() == [
+        "classifier",
+        "classifier",
+    ]
+    assert manifest.objects["label_probability"].tolist() == [
+        0.500001,
+        0.501002,
+    ]
+    assert manifest.objects["classifier_version"].tolist() == [
+        "unknown",
+        "unknown",
+    ]
+    assert manifest.objects["survey"].tolist() == [
+        "ZTF",
+        "ZTF",
+    ]
+
+
+def test_builder_rejects_missing_base_columns() -> None:
+    objects = make_objects().drop(columns=["oid"])
 
     with pytest.raises(ValueError, match="missing columns"):
         ObjectManifestBuilder(make_config()).build(objects)
