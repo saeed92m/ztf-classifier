@@ -15,6 +15,7 @@ jobs:
   test:
     name: Python 3.11 - Test and Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -23,7 +24,7 @@ jobs:
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.11.16"
           cache: pip
 
       - name: Upgrade packaging tools
@@ -31,6 +32,9 @@ jobs:
 
       - name: Install project with development dependencies
         run: python -m pip install -e ".[dev]"
+
+      - name: Verify installed dependencies
+        run: python -m pip check
 
       - name: Run Ruff
         run: python -m ruff check src tests
