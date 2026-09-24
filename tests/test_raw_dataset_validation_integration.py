@@ -9,7 +9,6 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE = PROJECT_ROOT / "data/processed/benchmark_v0.2/features.parquet"
 CACHE = PROJECT_ROOT / "data/raw/alerce"
 
-import pytest
 
 if not (
     SOURCE.is_file()
