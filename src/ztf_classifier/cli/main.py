@@ -41,7 +41,9 @@ def _build_parser() -> argparse.ArgumentParser:
         "predict",
         help="Run production prediction on a Parquet dataset.",
     )
-    predict.add_argument("--artifact", required=True, type=Path)
+    predict.add_argument("--artifact", type=Path)
+    predict.add_argument("--registry-dir", type=Path)
+    predict.add_argument("--model-version")
     predict.add_argument("--input", required=True, type=Path)
     predict.add_argument("--output", required=True, type=Path)
 
@@ -49,7 +51,9 @@ def _build_parser() -> argparse.ArgumentParser:
         "batch",
         help="Run batch production prediction and write Parquet output.",
     )
-    batch.add_argument("--artifact", required=True, type=Path)
+    batch.add_argument("--artifact", type=Path)
+    batch.add_argument("--registry-dir", type=Path)
+    batch.add_argument("--model-version")
     batch.add_argument("--input", required=True, type=Path)
     batch.add_argument("--output", required=True, type=Path)
 
@@ -192,6 +196,17 @@ def _prediction_payload(
         "schema_version": CLI_SCHEMA_VERSION,
         "model_version": response.model_version,
         "model_family": response.model_family,
+        "provenance": {
+            "artifact_version": response.provenance.artifact_version,
+            "feature_schema_version": response.provenance.feature_schema_version,
+            "dataset_version": response.provenance.dataset_version,
+            "dataset_sha256": response.provenance.dataset_sha256,
+            "feature_schema_sha256": (
+                response.provenance.feature_schema_sha256
+            ),
+            "git_commit": response.provenance.git_commit,
+            "git_dirty": response.provenance.git_dirty,
+        },
         "sample_count": result.sample_count,
         "has_calibration": result.has_calibration,
         "has_conformal": result.has_conformal,
@@ -210,10 +225,23 @@ def _run_predict(args: argparse.Namespace) -> int:
 
     dataset = pd.read_parquet(args.input)
 
-    response = ApplicationService().predict_dataframe(
-        dataset=dataset,
-        artifact_dir=args.artifact,
-    )
+    service = ApplicationService()
+    if args.artifact is not None:
+        response = service.predict_dataframe(
+            dataset=dataset,
+            artifact_dir=args.artifact,
+        )
+    else:
+        if args.registry_dir is None or args.model_version is None:
+            raise ValueError(
+                "Provide --artifact or both --registry-dir and "
+                "--model-version."
+            )
+        response = service.predict_registered_dataframe(
+            dataset=dataset,
+            registry_dir=args.registry_dir,
+            model_version=args.model_version,
+        )
 
     payload = _prediction_payload(dataset, response)
 
@@ -247,6 +275,11 @@ def _run_batch(args: argparse.Namespace) -> int:
         )
 
     dataset = pd.read_parquet(args.input)
+
+    if args.artifact is None:
+        raise ValueError(
+            "Batch inference currently requires --artifact."
+        )
 
     result = BatchInferenceService().predict(
         dataset=dataset,
