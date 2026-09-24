@@ -49,3 +49,6 @@ runs/
 
 # Build artifacts
 dist/
+
+# Generated dataset artifacts
+artifacts/
