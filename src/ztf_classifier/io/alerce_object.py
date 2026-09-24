@@ -25,6 +25,7 @@ class AlerceObjectBackend(ObjectAcquisitionBackend):
         request: ObjectSelectionRequest,
     ) -> ObjectAcquisitionResult:
         result = self._client.query_objects(
+            survey=request.survey,
             classifier=request.classifier,
             class_name=request.class_name,
             probability=request.probability,
