@@ -16,6 +16,7 @@ class ObjectSelectionRequest:
     class_name: str
     probability: float
     page_size: int
+    classifier_version: str = "unknown"
 
 
 class ObjectSelector:
@@ -33,6 +34,7 @@ class ObjectSelector:
                 class_name=class_name,
                 probability=self._config.probability_min,
                 page_size=self._config.samples_per_class,
+                classifier_version=self._config.classifier_version,
             )
             for class_name in self._config.classes
         )

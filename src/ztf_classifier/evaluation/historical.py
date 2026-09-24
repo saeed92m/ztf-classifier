@@ -25,7 +25,6 @@ from ztf_classifier.io.detection_acquisition import (
     DetectionAcquisitionRequest,
 )
 from ztf_classifier.models.classes import (
-    CLASS_TO_INDEX,
     MODEL_CLASSES,
     NUM_CLASSES,
 )
@@ -393,7 +392,7 @@ class HistoricalBacktestEvaluator:
                 row.update(features)
                 rows.append(row)
 
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 errors.append(
                     {
                         "oid": oid,

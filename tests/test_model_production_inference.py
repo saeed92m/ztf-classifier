@@ -25,6 +25,19 @@ DATASET = Path(
     "data/processed/features_v0.2.parquet"
 )
 
+_MODEL_INPUTS = (
+    LEGACY_ARTIFACT,
+    DATASET,
+    Path("reports/tables/stratified_cv_fold_assignments_v0.1.parquet"),
+    Path("reports/tables/final_feature_set_v0.2.parquet"),
+    Path("reports/tables/final_model_config_v0.2.json"),
+)
+if not all(path.exists() for path in _MODEL_INPUTS):
+    pytest.skip(
+        "production model artifact/dataset inputs are not present in this checkout",
+        allow_module_level=True,
+    )
+
 
 def _load_dataset() -> pd.DataFrame:
     return pd.read_parquet(DATASET)

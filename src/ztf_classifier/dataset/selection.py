@@ -57,7 +57,7 @@ class ObjectSelectionPolicy:
         *,
         backend: ObjectAcquisitionBackend,
     ) -> pd.DataFrame:
-        """Acquire objects for every configured class."""
+        """Acquire and canonicalize objects for every configured class."""
 
         frames: list[pd.DataFrame] = []
 
@@ -74,13 +74,27 @@ class ObjectSelectionPolicy:
                 frames.append(frame)
 
         if not frames:
-            return pd.DataFrame()
+            return pd.DataFrame(columns=("oid", "class", "probability"))
 
-        return pd.concat(
+        combined = pd.concat(
             frames,
             axis=0,
             ignore_index=True,
         )
+
+        if combined["oid"].duplicated().any():
+            duplicates = sorted(
+                combined.loc[
+                    combined["oid"].duplicated(keep=False),
+                    "oid",
+                ].astype(str).unique()
+            )
+            raise ValueError(
+                "Object selection produced duplicate OIDs: "
+                + ", ".join(duplicates)
+            )
+
+        return combined.reset_index(drop=True)
 
     def _run_historical_availability_check(
         self,
@@ -139,11 +153,19 @@ class ObjectSelectionPolicy:
             class_name=class_name,
             probability=probability,
             page_size=self._config.effective_page_size,
+            classifier_version=self._config.classifier_version,
         )
 
         result = backend.acquire(request)
-
         frame = self._extract_dataframe(result.objects)
+
+        if frame.empty:
+            return frame
+
+        if "oid" not in frame.columns:
+            raise ValueError(
+                "Object-acquisition backend returned data without an OID column."
+            )
 
         return self._limit_samples(frame)
 
