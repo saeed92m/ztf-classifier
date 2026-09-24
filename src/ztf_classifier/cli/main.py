@@ -11,19 +11,17 @@ from typing import Any
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+from alerce.core import Alerce
 
 from ztf_classifier.application.batch import BatchInferenceService
 from ztf_classifier.application.errors import ApplicationError
 from ztf_classifier.application.schemas import PredictionResponse
 from ztf_classifier.application.service import ApplicationService
-from ztf_classifier.models.classes import MODEL_CLASSES
-
-from alerce.core import Alerce
-
 from ztf_classifier.dataset.config import DatasetConfig
 from ztf_classifier.io.alerce_detection import AlerceDetectionBackend
 from ztf_classifier.io.alerce_object import AlerceObjectBackend
 from ztf_classifier.io.parquet_detection_store import ParquetDetectionStore
+from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.pipeline.dataset import DatasetPipeline
 
 CLI_SCHEMA_VERSION = "1.1"
