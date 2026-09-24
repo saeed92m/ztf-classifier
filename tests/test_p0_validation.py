@@ -54,3 +54,95 @@ def test_alerce_preserves_nan_boolean_as_false() -> None:
     )
 
     assert result["dubious"].tolist() == [False, False]
+
+
+def _feature_schema() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "feature_order": list(range(1, 43)),
+            "feature": [f"feature_{index}" for index in range(1, 43)],
+        }
+    )
+
+
+def _inference_engine(tmp_path):
+    from ztf_classifier.models.inference import XGBoostInferenceEngine
+
+    schema_path = tmp_path / "feature_schema.parquet"
+    _feature_schema().to_parquet(schema_path, index=False)
+    return XGBoostInferenceEngine(
+        model=object(),
+        feature_schema_path=schema_path,
+    )
+
+
+def test_inference_rejects_rows_with_all_features_missing(tmp_path) -> None:
+    engine = _inference_engine(tmp_path)
+    dataset = pd.DataFrame(
+        {
+            f"feature_{index}": [np.nan]
+            for index in range(1, 43)
+        }
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="all model features missing",
+    ):
+        engine.prepare_features(dataset)
+
+
+def test_inference_rejects_duplicate_feature_order(tmp_path) -> None:
+    schema = _feature_schema()
+    schema.loc[1, "feature_order"] = schema.loc[0, "feature_order"]
+
+    schema_path = tmp_path / "duplicate_order.parquet"
+    schema.to_parquet(schema_path, index=False)
+
+    from ztf_classifier.models.inference import XGBoostInferenceEngine
+
+    engine = XGBoostInferenceEngine(
+        model=object(),
+        feature_schema_path=schema_path,
+    )
+
+    dataset = pd.DataFrame(
+        {
+            f"feature_{index}": [float(index)]
+            for index in range(1, 43)
+        }
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="duplicate feature_order",
+    ):
+        engine.prepare_features(dataset)
+
+
+def test_inference_rejects_non_contract_feature_order(tmp_path) -> None:
+    schema = _feature_schema()
+    schema.loc[0, "feature_order"] = 0
+
+    schema_path = tmp_path / "invalid_order.parquet"
+    schema.to_parquet(schema_path, index=False)
+
+    from ztf_classifier.models.inference import XGBoostInferenceEngine
+
+    engine = XGBoostInferenceEngine(
+        model=object(),
+        feature_schema_path=schema_path,
+    )
+
+    dataset = pd.DataFrame(
+        {
+            f"feature_{index}": [float(index)]
+            for index in range(1, 43)
+        }
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="1 through 42",
+    ):
+        engine.prepare_features(dataset)
