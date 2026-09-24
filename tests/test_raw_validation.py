@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pandas as pd
 
 from ztf_classifier.dataset.raw_validation import RawDatasetValidator
