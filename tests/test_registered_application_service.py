@@ -7,10 +7,8 @@ import pandas as pd
 import pytest
 
 from ztf_classifier.application.errors import ApplicationInferenceError
-from ztf_classifier.application.registry_service import (
-    RegisteredApplicationService,
-    RegisteredPredictionRequest,
-)
+from ztf_classifier.application.registry_service import RegisteredApplicationService, RegisteredPredictionRequest
+from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.registry import ModelRegistryEntry
 from ztf_classifier.models.results import PredictionResult
 
@@ -24,11 +22,7 @@ def _entry(tmp_path: Path) -> ModelRegistryEntry:
         artifact_schema_version="1.1",
         feature_schema_version="v0.2",
         feature_count=42,
-        classes=(
-            "SNIa", "SNIbc", "SNII", "SLSN", "QSO", "AGN", "Blazar",
-            "CV/Nova", "YSO", "LPV", "E", "DSCT", "RRL", "CEP",
-            "Periodic-Other",
-        ),
+        classes=MODEL_CLASSES,
         dataset_sha256="a" * 64,
         feature_schema_sha256="b" * 64,
         artifact_dir=artifact_dir,
@@ -37,18 +31,12 @@ def _entry(tmp_path: Path) -> ModelRegistryEntry:
 
 def test_registered_request_validates_model_version() -> None:
     with pytest.raises(ValueError, match="model_version"):
-        RegisteredPredictionRequest(
-            dataset=pd.DataFrame({"feature": [1.0]}),
-            model_version=" ",
-        )
+        RegisteredPredictionRequest(dataset=pd.DataFrame({"feature": [1.0]}), model_version=" ")
 
 
 def test_registered_request_rejects_non_dataframe() -> None:
     with pytest.raises(TypeError, match="pandas DataFrame"):
-        RegisteredPredictionRequest(
-            dataset=[1.0],  # type: ignore[arg-type]
-            model_version="baseline_v0.2",
-        )
+        RegisteredPredictionRequest(dataset=[1.0], model_version="baseline_v0.2")  # type: ignore[arg-type]
 
 
 def test_registered_service_resolves_explicit_model_version(
@@ -58,7 +46,7 @@ def test_registered_service_resolves_explicit_model_version(
     expected = PredictionResult(
         raw_probabilities=np.eye(15, dtype=np.float64)[:1],
         raw_predicted_class_indices=np.array([0]),
-        raw_predicted_labels=("SNIa",),
+        raw_predicted_labels=(MODEL_CLASSES[0],),
     )
     entry = _entry(tmp_path)
     captured: dict[str, object] = {}
@@ -83,8 +71,7 @@ def test_registered_service_resolves_explicit_model_version(
 
     dataset = pd.DataFrame({"feature": [1.0]})
     response = RegisteredApplicationService(FakeRegistry()).predict_dataframe(
-        dataset,
-        "baseline_v0.2",
+        dataset, "baseline_v0.2"
     )
 
     assert response.result is expected
@@ -96,10 +83,9 @@ def test_registered_service_resolves_explicit_model_version(
 
 
 def test_registered_service_wraps_registry_or_inference_errors(
-    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    entry = _entry(tmp_path)
+    _entry(tmp_path)
 
     class FailingRegistry:
         def get(self, model_version: str) -> ModelRegistryEntry:
@@ -112,7 +98,7 @@ def test_registered_service_wraps_registry_or_inference_errors(
         RegisteredApplicationService(FailingRegistry()).predict(
             RegisteredPredictionRequest(
                 dataset=pd.DataFrame({"feature": [1.0]}),
-                model_version=entry.model_version,
+                model_version="baseline_v0.2",
             )
         )
 
