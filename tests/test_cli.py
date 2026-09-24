@@ -21,6 +21,7 @@ from ztf_classifier.cli.main import (
     main,
 )
 from ztf_classifier.models.classes import MODEL_CLASSES
+from ztf_classifier.models.provenance import ModelProvenance
 from ztf_classifier.models.results import PredictionResult
 
 
@@ -66,10 +67,36 @@ def _prediction_response(
             ),
         )
 
+    provenance = ModelProvenance(
+        schema_version="1.0",
+        artifact_version="1.1",
+        model_version="baseline_v0.2",
+        model_family="XGBoost",
+        dataset_version="baseline_v0.2",
+        dataset_path="data/processed/features_v0.2.parquet",
+        dataset_sha256="a" * 64,
+        feature_schema_version="v0.2",
+        feature_schema_path="reports/tables/final_feature_set_v0.2.parquet",
+        feature_schema_sha256="b" * 64,
+        model_config_path="reports/tables/final_model_config_v0.2.json",
+        model_config_sha256="c" * 64,
+        calibration_method="temperature_scaling",
+        calibration_temperature=1.0,
+        calibration_source_path="reports/tables/calibration.json",
+        calibration_source_sha256="d" * 64,
+        git_commit="e" * 40,
+        git_dirty=False,
+        python_version="3.11.16",
+        platform="test",
+        machine="test",
+        dependencies={},
+    )
+
     return PredictionResponse(
         result=result,
         model_version="baseline_v0.2",
         model_family="XGBoost",
+        provenance=provenance,
     )
 
 
@@ -124,6 +151,8 @@ def test_prediction_payload_uses_calibrated_predictions() -> None:
     assert payload["model_version"] == "baseline_v0.2"
     assert payload["model_family"] == "XGBoost"
     assert payload["sample_count"] == 2
+    assert payload["provenance"]["artifact_version"] == "1.1"
+    assert payload["provenance"]["feature_schema_version"] == "v0.2"
 
     first = payload["predictions"][0]
 

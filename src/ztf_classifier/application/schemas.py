@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from ztf_classifier.models.provenance import ModelProvenance
 from ztf_classifier.models.results import PredictionResult
 
 
@@ -15,7 +16,9 @@ class PredictionRequest:
     """Request for production prediction."""
 
     dataset: pd.DataFrame
-    artifact_dir: Path
+    artifact_dir: Path | None = None
+    registry_dir: Path | None = None
+    model_version: str | None = None
 
     def __post_init__(self) -> None:
         """Validate the application request."""
@@ -23,32 +26,64 @@ class PredictionRequest:
         if not isinstance(self.dataset, pd.DataFrame):
             raise TypeError("dataset must be a pandas DataFrame.")
 
-        artifact_dir = Path(self.artifact_dir)
-
-        if not artifact_dir.exists():
+        if self.artifact_dir is None and self.registry_dir is None:
             raise ValueError(
-                f"Artifact directory does not exist: {artifact_dir}"
+                "Either artifact_dir or registry_dir must be provided."
             )
 
-        if not artifact_dir.is_dir():
+        if self.artifact_dir is not None and (
+            self.registry_dir is not None or self.model_version is not None
+        ):
             raise ValueError(
-                f"Artifact path is not a directory: {artifact_dir}"
+                "artifact_dir cannot be combined with registry selection."
             )
 
-        object.__setattr__(
-            self,
-            "artifact_dir",
-            artifact_dir.resolve(),
-        )
+        if self.registry_dir is not None and not self.model_version:
+            raise ValueError(
+                "model_version is required when registry_dir is provided."
+            )
+
+        if self.artifact_dir is not None:
+            artifact_dir = Path(self.artifact_dir)
+            if not artifact_dir.exists():
+                raise ValueError(
+                    f"Artifact directory does not exist: {artifact_dir}"
+                )
+            if not artifact_dir.is_dir():
+                raise ValueError(
+                    f"Artifact path is not a directory: {artifact_dir}"
+                )
+            object.__setattr__(
+                self,
+                "artifact_dir",
+                artifact_dir.resolve(),
+            )
+
+        if self.registry_dir is not None:
+            registry_dir = Path(self.registry_dir)
+            if not registry_dir.exists():
+                raise ValueError(
+                    f"Model registry directory does not exist: {registry_dir}"
+                )
+            if not registry_dir.is_dir():
+                raise ValueError(
+                    f"Model registry path is not a directory: {registry_dir}"
+                )
+            object.__setattr__(
+                self,
+                "registry_dir",
+                registry_dir.resolve(),
+            )
 
 
 @dataclass(frozen=True)
 class PredictionResponse:
-    """Application response containing prediction and model metadata."""
+    """Application response containing prediction and model provenance."""
 
     result: PredictionResult
     model_version: str
     model_family: str
+    provenance: ModelProvenance
 
     def __post_init__(self) -> None:
         """Validate response metadata."""
@@ -58,6 +93,16 @@ class PredictionResponse:
 
         if not self.model_family:
             raise ValueError("model_family must not be empty.")
+
+        if self.provenance.model_version != self.model_version:
+            raise ValueError(
+                "Provenance model_version does not match response."
+            )
+
+        if self.provenance.model_family != self.model_family:
+            raise ValueError(
+                "Provenance model_family does not match response."
+            )
 
     @property
     def sample_count(self) -> int:
