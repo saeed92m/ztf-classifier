@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 from pandas.testing import assert_frame_equal
 
 from ztf_classifier.dataset.features import (
@@ -21,6 +22,18 @@ SOURCE_ARTIFACT = (
 )
 
 RAW_CACHE = PROJECT_ROOT / "data" / "raw" / "alerce"
+
+import pytest
+
+if not (
+    SOURCE_ARTIFACT.is_file()
+    and RAW_CACHE.is_dir()
+    and next(RAW_CACHE.glob("*_detections.parquet"), None) is not None
+):
+    pytest.skip(
+        "offline benchmark artifact or raw detection cache is not present",
+        allow_module_level=True,
+    )
 
 
 def test_offline_feature_dataset_reproduces_frozen_v0_2() -> None:
