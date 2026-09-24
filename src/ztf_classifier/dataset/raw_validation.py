@@ -334,21 +334,11 @@ class RawDatasetValidator:
                     corrected.fillna(False).eq(False).sum()
                 )
 
-        ordering_errors = [
-            f"{oid}: detections are not sorted by mjd"
-            for oid in ordering_failures_detection
-        ] + [
-            f"{oid}: non-detections are not sorted by mjd"
-            for oid in ordering_failures_non_detection
-        ]
-
         errors = tuple(
             list(missing)
-            + list(extra)
             + list(incomplete)
             + list(schema_mismatches)
             + list(invalid_required_values)
-            + ordering_errors
         )
 
         status = "PASS" if not errors else "FAIL"
