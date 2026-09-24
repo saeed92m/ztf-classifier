@@ -4,8 +4,8 @@ A CPU-oriented machine-learning research pipeline for classification of astronom
 
 ## Project status
 
-**Version:** v0.2.0
-**Status:** Validated research prototype / reproducible benchmark pipeline
+**Version:** v0.3.0
+**Status:** Production-oriented research pipeline with registry-backed inference and validated CLI E2E paths
 
 The v0.2 core pipeline includes:
 
