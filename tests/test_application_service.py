@@ -80,8 +80,14 @@ class FakeProvenance:
     model_family = "TestFamily"
 
 
+class FakeProvenance:
+    model_version = "test_version"
+    model_family = "TestFamily"
+
+
 class FakeLoadedArtifact:
     model_artifact = FakeModelArtifact()
+    provenance = FakeProvenance()
     provenance = FakeProvenance()
 
 
@@ -120,6 +126,7 @@ def test_prediction_response_exposes_sample_count(
     assert isinstance(response, PredictionResponse)
     assert response.result is expected
     assert response.sample_count == 1
+    assert response.provenance is FakeLoadedArtifact.provenance
     assert response.provenance is FakeLoadedArtifact.provenance
 
 
@@ -189,6 +196,62 @@ def test_predict_dataframe_matches_request_based_api(
     assert response.result is expected
     assert captured["artifact_dir"] == tmp_path.resolve()
     assert captured["dataset"] is dataset
+    assert response.provenance is FakeLoadedArtifact.provenance
+    assert response.provenance is FakeLoadedArtifact.provenance
+
+
+def test_registered_prediction_resolves_explicit_model_version(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    probabilities = np.zeros((1, 15), dtype=np.float64)
+    probabilities[0, 0] = 1.0
+
+    expected = PredictionResult(
+        raw_probabilities=probabilities,
+        raw_predicted_class_indices=np.array([0]),
+        raw_predicted_labels=("AGN",),
+    )
+
+    artifact_dir = tmp_path / "baseline_v0.2" / "artifact"
+    artifact_dir.mkdir(parents=True)
+
+    class FakeEntry:
+        artifact_dir = artifact_dir
+
+    class FakeRegistry:
+        def __init__(self, registry_dir: Path) -> None:
+            assert registry_dir == tmp_path.resolve()
+
+        def get(self, model_version: str) -> FakeEntry:
+            assert model_version == "baseline_v0.2"
+            return FakeEntry()
+
+    class FakeProductionService:
+        def __init__(self, selected_artifact_dir: Path) -> None:
+            assert selected_artifact_dir == artifact_dir.resolve()
+            self.loaded_artifact = FakeLoadedArtifact()
+
+        def predict(self, dataset: pd.DataFrame) -> PredictionResult:
+            return expected
+
+    monkeypatch.setattr(
+        "ztf_classifier.application.service.FilesystemModelRegistry",
+        FakeRegistry,
+    )
+    monkeypatch.setattr(
+        "ztf_classifier.application.service.ProductionInferenceService",
+        FakeProductionService,
+    )
+
+    response = ApplicationService().predict_registered_dataframe(
+        pd.DataFrame({"feature": [1.0]}),
+        tmp_path,
+        "baseline_v0.2",
+    )
+
+    assert response.result is expected
+    assert response.model_version == "test_version"
     assert response.provenance is FakeLoadedArtifact.provenance
 
 
