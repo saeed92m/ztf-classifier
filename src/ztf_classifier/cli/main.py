@@ -18,6 +18,14 @@ from ztf_classifier.application.schemas import PredictionResponse
 from ztf_classifier.application.service import ApplicationService
 from ztf_classifier.models.classes import MODEL_CLASSES
 
+from alerce.core import Alerce
+
+from ztf_classifier.dataset.config import DatasetConfig
+from ztf_classifier.io.alerce_detection import AlerceDetectionBackend
+from ztf_classifier.io.alerce_object import AlerceObjectBackend
+from ztf_classifier.io.parquet_detection_store import ParquetDetectionStore
+from ztf_classifier.pipeline.dataset import DatasetPipeline
+
 CLI_SCHEMA_VERSION = "1.1"
 
 
@@ -46,6 +54,55 @@ def _build_parser() -> argparse.ArgumentParser:
     batch.add_argument("--artifact", required=True, type=Path)
     batch.add_argument("--input", required=True, type=Path)
     batch.add_argument("--output", required=True, type=Path)
+
+    dataset = subparsers.add_parser(
+        "dataset",
+        help="Build canonical scientific datasets.",
+    )
+
+    dataset_subparsers = dataset.add_subparsers(
+        dest="dataset_command",
+        required=True,
+    )
+
+    build = dataset_subparsers.add_parser(
+        "build",
+        help="Build and validate a canonical dataset.",
+    )
+
+    build.add_argument(
+        "--config",
+        required=True,
+        type=Path,
+    )
+
+    build.add_argument(
+        "--output",
+        required=True,
+        type=Path,
+    )
+
+    build.add_argument(
+        "--project-root",
+        type=Path,
+        default=Path("."),
+    )
+
+    build.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=Path("data/raw/alerce"),
+    )
+
+    build.add_argument(
+        "--feature-schema",
+        type=Path,
+        default=Path(
+            "runs/model_baseline_v0.2_production/artifact/"
+            "feature_schema.parquet"
+        ),
+    )
+
 
     return parser
 
@@ -237,6 +294,84 @@ def _run_batch(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_dataset_build(args: argparse.Namespace) -> int:
+    """Build and validate a canonical dataset."""
+
+    if not args.config.is_file():
+        raise FileNotFoundError(
+            f"Dataset configuration does not exist: {args.config}"
+        )
+
+    config = DatasetConfig.from_json(args.config)
+
+    project_root = args.project_root.resolve()
+    output_dir = args.output.resolve()
+
+    if not args.feature_schema.is_file():
+        raise FileNotFoundError(
+            f"Feature schema does not exist: {args.feature_schema}"
+        )
+
+    feature_schema_path = args.feature_schema.resolve()
+
+    client = Alerce()
+
+    object_backend = AlerceObjectBackend(client)
+
+    detection_store = ParquetDetectionStore(
+        args.cache_dir.resolve()
+    )
+
+    detection_backend = AlerceDetectionBackend(
+        client=client,
+        store=detection_store,
+    )
+
+    command = (
+        "ztf-classifier dataset build "
+        f"--config {args.config} "
+        f"--output {args.output}"
+    )
+
+    result = DatasetPipeline(
+        config=config,
+        object_acquisition_backend=object_backend,
+        detection_acquisition_backend=detection_backend,
+        project_root=project_root,
+        output_dir=output_dir,
+        feature_schema_path=feature_schema_path,
+    ).run(
+        command=command,
+        configuration={
+            "config_path": str(args.config.resolve()),
+            "cache_dir": str(args.cache_dir.resolve()),
+            "feature_schema_path": str(feature_schema_path),
+        },
+    )
+
+    print(
+        f"dataset_version={result.dataset.dataset_version}"
+    )
+    print(
+        f"object_count={result.dataset.object_count}"
+    )
+    print(
+        f"feature_count={result.dataset.feature_count}"
+    )
+    print(
+        f"artifact={result.artifact.artifact_path}"
+    )
+    print(
+        f"manifest={result.artifact.manifest_path}"
+    )
+    print(
+        "reproducibility_manifest="
+        f"{output_dir / 'reproducibility_manifest.json'}"
+    )
+
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the ZTF Classifier command-line interface."""
 
@@ -249,6 +384,12 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.command == "batch":
             return _run_batch(args)
+
+        if (
+            args.command == "dataset"
+            and args.dataset_command == "build"
+        ):
+            return _run_dataset_build(args)
 
         parser.error(f"Unsupported command: {args.command}")
 
