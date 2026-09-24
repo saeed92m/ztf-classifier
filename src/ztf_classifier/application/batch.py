@@ -86,7 +86,7 @@ class BatchInferenceService:
         dataset: pd.DataFrame,
         artifact_dir: Path,
     ) -> BatchPredictionResult:
-        """Run batch inference and return a tabular result."""
+        """Run batch inference from a direct artifact directory."""
 
         if not isinstance(dataset, pd.DataFrame):
             raise TypeError(
@@ -96,6 +96,30 @@ class BatchInferenceService:
         response = self._application_service.predict_dataframe(
             dataset=dataset,
             artifact_dir=artifact_dir,
+        )
+
+        return self._build_result(
+            dataset,
+            response,
+        )
+
+    def predict_registered(
+        self,
+        dataset: pd.DataFrame,
+        registry_dir: Path,
+        model_version: str,
+    ) -> BatchPredictionResult:
+        """Run batch inference from an explicitly selected registry model."""
+
+        if not isinstance(dataset, pd.DataFrame):
+            raise TypeError(
+                "dataset must be a pandas DataFrame."
+            )
+
+        response = self._application_service.predict_registered_dataframe(
+            dataset=dataset,
+            registry_dir=registry_dir,
+            model_version=model_version,
         )
 
         return self._build_result(
