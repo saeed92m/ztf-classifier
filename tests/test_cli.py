@@ -538,6 +538,78 @@ def test_cli_batch_e2e_parquet_contract(
         assert expected_columns.issubset(set(conformal_columns))
 
 
+def test_cli_predict_e2e_with_registry_selection(
+    e2e_diagnostic_artifact: Path,
+    tmp_path: Path,
+) -> None:
+    """Registry-backed predict must execute the real production loader."""
+
+    input_path = Path("data/processed/features_v0.2.parquet")
+    output_path = tmp_path / "prediction-registry.json"
+    registry_dir = e2e_diagnostic_artifact.parent
+
+    result = subprocess.run(
+        [
+            "ztf-classifier",
+            "predict",
+            "--registry-dir",
+            str(registry_dir),
+            "--model-version",
+            "baseline_v0.2",
+            "--input",
+            str(input_path),
+            "--output",
+            str(output_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["model_version"] == "baseline_v0.2"
+    assert payload["sample_count"] > 0
+    assert payload["has_conformal"] is True
+    assert payload["has_ood"] is True
+
+
+def test_cli_batch_e2e_with_registry_selection(
+    e2e_diagnostic_artifact: Path,
+    tmp_path: Path,
+) -> None:
+    """Registry-backed batch must execute the real production loader."""
+
+    input_path = Path("data/processed/features_v0.2.parquet")
+    output_path = tmp_path / "batch-registry.parquet"
+    registry_dir = e2e_diagnostic_artifact.parent
+
+    result = subprocess.run(
+        [
+            "ztf-classifier",
+            "batch",
+            "--registry-dir",
+            str(registry_dir),
+            "--model-version",
+            "baseline_v0.2",
+            "--input",
+            str(input_path),
+            "--output",
+            str(output_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    frame = pd.read_parquet(output_path)
+    assert len(frame) > 0
+    assert frame["model_version"].eq("baseline_v0.2").all()
+    assert frame["model_family"].eq("XGBoost").all()
+    assert frame["predicted_class"].isin(MODEL_CLASSES).all()
+
+
 def test_cli_batch_e2e_with_diagnostics(
     e2e_diagnostic_artifact: Path,
     tmp_path: Path,
