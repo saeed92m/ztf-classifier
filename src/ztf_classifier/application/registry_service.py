@@ -1,4 +1,4 @@
-""""Registry-backed application service for production inference."""
+"""Registry-backed application service for production inference."""
 
 from __future__ import annotations
 
@@ -79,4 +79,3 @@ __all__ = [
     "RegisteredApplicationService",
     "RegisteredPredictionRequest",
 ]
-"
