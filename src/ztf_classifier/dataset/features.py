@@ -77,8 +77,16 @@ class FeatureDatasetBuilder:
         self._acquisition_backend = acquisition_backend
         self._feature_schema_version = feature_schema_version
 
-    def build(self) -> FeatureDataset:
-        """Build the canonical feature dataset deterministically."""
+    def build(
+        self,
+        cutoff_mjd: float | None = None,
+    ) -> FeatureDataset:
+        """Build the canonical feature dataset deterministically.
+
+        When ``cutoff_mjd`` is provided, only observations with
+        ``mjd <= cutoff_mjd`` are used for feature extraction.
+        """
+
 
         rows: list[dict[str, object]] = []
 
@@ -100,7 +108,10 @@ class FeatureDatasetBuilder:
                 result.detections
             )
 
-            features = extract_v0_2_features(internal)
+            features = extract_v0_2_features(
+                internal,
+                cutoff_mjd=cutoff_mjd,
+            )
             validate_v0_2_feature_vector(features)
 
             row = {

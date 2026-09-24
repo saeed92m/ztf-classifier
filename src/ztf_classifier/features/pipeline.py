@@ -76,6 +76,7 @@ def _prefixed_basic_features(
 
 def extract_v0_2_features(
     internal_lc: pd.DataFrame,
+    cutoff_mjd: float | None = None,
 ) -> dict[str, float]:
     """Extract the canonical 42-feature v0.2 feature vector.
 
@@ -98,9 +99,24 @@ def extract_v0_2_features(
             f"Missing required columns: {sorted(missing)}"
         )
 
+    if cutoff_mjd is not None:
+        cutoff_mjd = float(cutoff_mjd)
+
+        if not np.isfinite(cutoff_mjd):
+            raise ValueError("cutoff_mjd must be finite.")
+
+        working_lc = internal_lc.loc[
+            pd.to_numeric(
+                internal_lc["mjd"],
+                errors="coerce",
+            ) <= cutoff_mjd
+        ].copy()
+    else:
+        working_lc = internal_lc.copy()
+
     # Reuse the canonical preprocessing path.
-    g = prepare_band_lightcurve(internal_lc, fid=1)
-    r = prepare_band_lightcurve(internal_lc, fid=2)
+    g = prepare_band_lightcurve(working_lc, fid=1)
+    r = prepare_band_lightcurve(working_lc, fid=2)
 
     features: dict[str, float] = {
         name: np.nan for name in V0_2_FEATURES
