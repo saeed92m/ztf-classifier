@@ -118,9 +118,9 @@ class ObjectManifestBuilder:
                 "Object manifest contains an unexpected survey."
             )
 
-        if manifest_objects["classifier_version"].astype(str).ne(
-            self._config.classifier_version
-        ).any():
+        if self._config.classifier_version != "unknown" and manifest_objects[
+            "classifier_version"
+        ].astype(str).ne(self._config.classifier_version).any():
             raise ValueError(
                 "Object manifest contains an unexpected classifier version."
             )
