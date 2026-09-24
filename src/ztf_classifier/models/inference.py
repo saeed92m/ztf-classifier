@@ -131,6 +131,11 @@ class XGBoostInferenceEngine:
                 "Frozen v0.2 model requires exactly 42 features."
             )
 
+        if X.isnull().all(axis=1).any():
+            raise ValueError(
+                "Dataset contains rows with all model features missing."
+            )
+
         return X
 
     def _load_feature_names(
@@ -159,7 +164,12 @@ class XGBoostInferenceEngine:
 
         ordered = schema.sort_values(
             "feature_order"
-        )
+        ).copy()
+
+        if ordered["feature_order"].duplicated().any():
+            raise ValueError(
+                "Frozen feature schema contains duplicate feature_order values."
+            )
 
         feature_names = ordered["feature"].astype(str).tolist()
 
