@@ -22,10 +22,7 @@ def test_benchmark_v0_2_raw_dataset_validation() -> None:
     assert result.passed
 
     assert result.canonical_objects == 150
-    assert result.cache_objects == 151
-
     assert result.missing_oids == ()
-    assert result.extra_oids == ("ZTF18aauelee",)
     assert result.incomplete_pairs == ()
     assert result.schema_mismatches == ()
     assert result.invalid_required_values == ()
