@@ -159,6 +159,9 @@ class ObjectSelectionPolicy:
         result = backend.acquire(request)
         frame = self._extract_dataframe(result.objects)
 
+        if frame.empty:
+            return frame
+
         if "oid" not in frame.columns:
             raise ValueError(
                 "Object-acquisition backend returned data without an OID column."
