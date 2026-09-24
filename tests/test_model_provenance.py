@@ -112,7 +112,7 @@ def test_build_captures_expected_provenance():
 
     assert provenance.dependencies[
         "ztf-classifier"
-    ] == "0.2.0"
+    ] == "0.3.0"
 
     assert provenance.dependencies["numpy"] == "2.4.6"
     assert provenance.dependencies["pandas"] == "3.0.6"
