@@ -5,7 +5,6 @@ from __future__ import annotations
 import pandas as pd
 
 from ztf_classifier.dataset.config import DatasetConfig
-from ztf_classifier.dataset.manifest import REQUIRED_OBJECT_COLUMNS
 from ztf_classifier.dataset.selector import ObjectSelectionRequest
 from ztf_classifier.io.object_acquisition import ObjectAcquisitionBackend
 
@@ -75,7 +74,7 @@ class ObjectSelectionPolicy:
                 frames.append(frame)
 
         if not frames:
-            return pd.DataFrame(columns=tuple(REQUIRED_OBJECT_COLUMNS))
+            return pd.DataFrame(columns=("oid", "class", "probability"))
 
         combined = pd.concat(
             frames,
@@ -95,7 +94,7 @@ class ObjectSelectionPolicy:
                 + ", ".join(duplicates)
             )
 
-        return combined.sort_values("oid").reset_index(drop=True)
+        return combined.reset_index(drop=True)
 
     def _run_historical_availability_check(
         self,
@@ -160,7 +159,7 @@ class ObjectSelectionPolicy:
         result = backend.acquire(request)
         frame = self._extract_dataframe(result.objects)
 
-        required = set(REQUIRED_OBJECT_COLUMNS)
+        required = {"oid", "class", "probability"}
         missing = sorted(required - set(frame.columns))
         if missing:
             raise ValueError(
