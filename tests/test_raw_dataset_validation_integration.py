@@ -1,12 +1,24 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from ztf_classifier.dataset.raw_validation import RawDatasetValidator
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE = PROJECT_ROOT / "data/processed/benchmark_v0.2/features.parquet"
 CACHE = PROJECT_ROOT / "data/raw/alerce"
+
+
+if not (
+    SOURCE.is_file()
+    and CACHE.is_dir()
+    and next(CACHE.glob("*_detections.parquet"), None) is not None
+):
+    pytest.skip(
+        "benchmark artifact or raw detection cache is not present",
+        allow_module_level=True,
+    )
 
 
 def test_benchmark_v0_2_raw_dataset_validation() -> None:
