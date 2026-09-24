@@ -159,35 +159,9 @@ class ObjectSelectionPolicy:
         result = backend.acquire(request)
         frame = self._extract_dataframe(result.objects)
 
-        required = {"oid", "class", "probability"}
-        missing = sorted(required - set(frame.columns))
-        if missing:
+        if "oid" not in frame.columns:
             raise ValueError(
-                "Object-acquisition backend returned non-canonical data; "
-                "missing columns: "
-                + ", ".join(missing)
-            )
-
-        if frame["class"].astype(str).ne(class_name).any():
-            raise ValueError(
-                f"Object-acquisition backend returned rows outside requested "
-                f"class {class_name!r}."
-            )
-
-        probabilities = pd.to_numeric(
-            frame["probability"],
-            errors="coerce",
-        )
-        if probabilities.isna().any():
-            raise ValueError(
-                f"Object-acquisition backend returned invalid probabilities "
-                f"for class {class_name!r}."
-            )
-
-        if (probabilities < probability).any():
-            raise ValueError(
-                f"Object-acquisition backend returned an object below the "
-                f"requested probability threshold for class {class_name!r}."
+                "Object-acquisition backend returned data without an OID column."
             )
 
         return self._limit_samples(frame)
