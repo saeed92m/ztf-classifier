@@ -202,6 +202,70 @@ def test_prediction_payload_works_without_oid() -> None:
     assert "oid" not in payload["predictions"][0]
 
 
+def test_main_rejects_ambiguous_predict_model_selection(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Predict must reject simultaneous direct and registry selection."""
+
+    input_path = tmp_path / "input.parquet"
+    output_path = tmp_path / "prediction.json"
+    pd.DataFrame({"oid": ["ZTF001"]}).to_parquet(input_path)
+
+    exit_code = main(
+        [
+            "predict",
+            "--artifact",
+            str(tmp_path / "artifact"),
+            "--registry-dir",
+            str(tmp_path / "registry"),
+            "--model-version",
+            "baseline_v0.2",
+            "--input",
+            str(input_path),
+            "--output",
+            str(output_path),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "Model selection is ambiguous" in captured.err
+    assert not output_path.exists()
+
+
+def test_main_rejects_ambiguous_batch_model_selection(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Batch must reject simultaneous direct and registry selection."""
+
+    input_path = tmp_path / "input.parquet"
+    output_path = tmp_path / "batch.parquet"
+    pd.DataFrame({"oid": ["ZTF001"]}).to_parquet(input_path)
+
+    exit_code = main(
+        [
+            "batch",
+            "--artifact",
+            str(tmp_path / "artifact"),
+            "--registry-dir",
+            str(tmp_path / "registry"),
+            "--model-version",
+            "baseline_v0.2",
+            "--input",
+            str(input_path),
+            "--output",
+            str(output_path),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "Model selection is ambiguous" in captured.err
+    assert not output_path.exists()
+
+
 def test_main_returns_error_for_missing_input(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
