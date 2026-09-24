@@ -23,7 +23,6 @@ SOURCE_ARTIFACT = (
 
 RAW_CACHE = PROJECT_ROOT / "data" / "raw" / "alerce"
 
-import pytest
 
 if not (
     SOURCE_ARTIFACT.is_file()
