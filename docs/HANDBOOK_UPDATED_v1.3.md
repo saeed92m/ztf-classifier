@@ -161,3 +161,78 @@ Scientific artifacts should have an external backup containing, as applicable:
 - handbook and release metadata
 
 Do not rely on an untracked local WSL directory as the only copy of a scientific artifact.
+
+
+## 11. Product vision and data architecture
+
+The project scope is now explicitly broader than a fixed benchmark classifier. The long-term product is an astronomical data analysis and discovery platform whose ML classifier is a core analysis engine.
+
+The system must not require bundling large scientific source datasets into the Git repository. Scientific data is external to the source tree and may enter through:
+
+1. user-provided datasets;
+2. supported external scientific archives/APIs;
+3. scheduled or continuous ingestion from supported sources.
+
+Canonical flow:
+
+user/external source -> ingestion -> validation/QC -> normalization -> feature extraction -> ML inference -> uncertainty/OOD -> cross-match/enrichment -> database -> report/catalog/API/web publication.
+
+The ingestion layer must preserve source provenance, acquisition metadata, schema/version information, and enough lineage to reproduce or audit derived results.
+
+The benchmark dataset remains a controlled validation asset, not the intended production data boundary.
+
+## 12. Continuous analysis platform
+
+The planned production system may operate continuously against supported online sources.
+
+Required architectural capabilities for this phase include:
+
+- incremental ingestion rather than repeated full reprocessing;
+- source-specific connectors and rate/availability handling;
+- deduplication and object identity resolution;
+- quality-control gates before scientific inference;
+- persistent analysis provenance;
+- repeatable model-version selection;
+- report generation;
+- machine-readable catalog/export generation;
+- database persistence of derived scientific results;
+- retry/error handling for source and analysis jobs.
+
+The architecture must separate raw/source data, normalized observations, derived features, model predictions, scientific reports, and publication/catalog records.
+
+## 13. Public, catalog, and commercial data layer
+
+The product may expose different access levels, for example:
+
+- public/basic object information;
+- detailed derived scientific results;
+- bulk datasets;
+- programmatic/API access;
+- paid access to eligible derived datasets or analysis products.
+
+Commercial publication or redistribution of external-source data is subject to the source's license, terms of use, attribution requirements, and applicable law. The product should therefore distinguish source-owned/raw material from analysis-derived products and retain licensing/provenance metadata.
+
+A future commercial workflow is:
+
+source data -> analysis/enrichment -> persisted derived record -> quality/review state -> catalog/report/API publication -> access control/billing -> authorized data delivery.
+
+Payment and access control must never be treated as a substitute for scientific provenance or data licensing validation.
+
+## 14. Product roadmap after v0.3.0
+
+The implementation sequence is:
+
+1. v0.3.0 release closeout;
+2. production Web/API layer around the existing inference engine;
+3. ingestion/connectors for user-provided and supported external data;
+4. persistent scientific database and job/analysis orchestration;
+5. Web application for single-object, batch, report, catalog, and analysis workflows;
+6. continuous/incremental source processing;
+7. publication/catalog integrations;
+8. commercial access, billing, entitlements, and secure data delivery;
+9. production observability, security, deployment, and MLOps;
+10. larger-scale scientific validation and ML v0.4+.
+
+The database is not a prerequisite for the current local inference core, but it becomes a required product component once persistent analysis history, continuous ingestion, catalogs, or commercial delivery are implemented.
+
+Large external datasets must remain outside Git. Repository size and application size are therefore intentionally decoupled from scientific-data volume.
