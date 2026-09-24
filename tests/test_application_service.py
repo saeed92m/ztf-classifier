@@ -217,7 +217,8 @@ def test_registered_prediction_resolves_explicit_model_version(
     artifact_dir.mkdir(parents=True)
 
     class FakeEntry:
-        artifact_dir = artifact_dir
+        def __init__(self) -> None:
+            self.artifact_dir = artifact_dir
 
     class FakeRegistry:
         def __init__(self, registry_dir: Path) -> None:
