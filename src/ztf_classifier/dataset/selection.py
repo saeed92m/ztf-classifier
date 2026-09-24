@@ -5,6 +5,7 @@ from __future__ import annotations
 import pandas as pd
 
 from ztf_classifier.dataset.config import DatasetConfig
+from ztf_classifier.dataset.manifest import REQUIRED_OBJECT_COLUMNS
 from ztf_classifier.dataset.selector import ObjectSelectionRequest
 from ztf_classifier.io.object_acquisition import ObjectAcquisitionBackend
 
@@ -57,7 +58,7 @@ class ObjectSelectionPolicy:
         *,
         backend: ObjectAcquisitionBackend,
     ) -> pd.DataFrame:
-        """Acquire objects for every configured class."""
+        """Acquire and canonicalize objects for every configured class."""
 
         frames: list[pd.DataFrame] = []
 
@@ -74,13 +75,27 @@ class ObjectSelectionPolicy:
                 frames.append(frame)
 
         if not frames:
-            return pd.DataFrame()
+            return pd.DataFrame(columns=tuple(REQUIRED_OBJECT_COLUMNS))
 
-        return pd.concat(
+        combined = pd.concat(
             frames,
             axis=0,
             ignore_index=True,
         )
+
+        if combined["oid"].duplicated().any():
+            duplicates = sorted(
+                combined.loc[
+                    combined["oid"].duplicated(keep=False),
+                    "oid",
+                ].astype(str).unique()
+            )
+            raise ValueError(
+                "Object selection produced duplicate OIDs: "
+                + ", ".join(duplicates)
+            )
+
+        return combined.sort_values("oid").reset_index(drop=True)
 
     def _run_historical_availability_check(
         self,
@@ -139,11 +154,42 @@ class ObjectSelectionPolicy:
             class_name=class_name,
             probability=probability,
             page_size=self._config.effective_page_size,
+            classifier_version=self._config.classifier_version,
         )
 
         result = backend.acquire(request)
-
         frame = self._extract_dataframe(result.objects)
+
+        required = set(REQUIRED_OBJECT_COLUMNS)
+        missing = sorted(required - set(frame.columns))
+        if missing:
+            raise ValueError(
+                "Object-acquisition backend returned non-canonical data; "
+                "missing columns: "
+                + ", ".join(missing)
+            )
+
+        if frame["class"].astype(str).ne(class_name).any():
+            raise ValueError(
+                f"Object-acquisition backend returned rows outside requested "
+                f"class {class_name!r}."
+            )
+
+        probabilities = pd.to_numeric(
+            frame["probability"],
+            errors="coerce",
+        )
+        if probabilities.isna().any():
+            raise ValueError(
+                f"Object-acquisition backend returned invalid probabilities "
+                f"for class {class_name!r}."
+            )
+
+        if (probabilities < probability).any():
+            raise ValueError(
+                f"Object-acquisition backend returned an object below the "
+                f"requested probability threshold for class {class_name!r}."
+            )
 
         return self._limit_samples(frame)
 
@@ -172,6 +218,9 @@ class ObjectSelectionPolicy:
     def _limit_samples(self, frame: pd.DataFrame) -> pd.DataFrame:
         """Limit a result to the configured samples per class."""
 
-        return frame.head(self._config.samples_per_class).reset_index(
-            drop=True
-        )
+        return frame.sort_values(
+            ["probability", "oid"],
+            ascending=[False, True],
+        ).head(
+            self._config.samples_per_class
+        ).reset_index(drop=True)
