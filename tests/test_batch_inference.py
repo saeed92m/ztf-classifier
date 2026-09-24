@@ -73,6 +73,18 @@ class StubApplicationService:
         self.artifact_dir = artifact_dir
         return self.response
 
+    def predict_registered_dataframe(
+        self,
+        dataset: pd.DataFrame,
+        registry_dir: Path,
+        model_version: str,
+    ) -> PredictionResponse:
+        """Return the configured response for registry inference."""
+        self.dataset = dataset
+        self.artifact_dir = registry_dir
+        self.model_version = model_version
+        return self.response
+
 
 def test_batch_preserves_oid_and_row_count(tmp_path: Path) -> None:
     stub = StubApplicationService(_response(2))
@@ -138,3 +150,19 @@ def test_batch_result_rejects_invalid_schema_and_flags() -> None:
             model_family="XGBoost", has_calibration=True, has_conformal=True,
             has_ood="true",
         )
+
+
+def test_batch_registered_uses_registry_selection(tmp_path: Path) -> None:
+    stub = StubApplicationService(_response(2))
+    dataset = pd.DataFrame({"oid": ["ZTF001", "ZTF002"]})
+
+    result = BatchInferenceService(stub).predict_registered(
+        dataset=dataset,
+        registry_dir=tmp_path,
+        model_version="baseline_v0.2",
+    )
+
+    assert len(result.predictions) == 2
+    assert stub.dataset is dataset
+    assert stub.artifact_dir == tmp_path
+    assert stub.model_version == "baseline_v0.2"

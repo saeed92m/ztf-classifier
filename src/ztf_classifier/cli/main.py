@@ -276,15 +276,24 @@ def _run_batch(args: argparse.Namespace) -> int:
 
     dataset = pd.read_parquet(args.input)
 
-    if args.artifact is None:
-        raise ValueError(
-            "Batch inference currently requires --artifact."
-        )
+    service = BatchInferenceService()
 
-    result = BatchInferenceService().predict(
-        dataset=dataset,
-        artifact_dir=args.artifact,
-    )
+    if args.artifact is not None:
+        result = service.predict(
+            dataset=dataset,
+            artifact_dir=args.artifact,
+        )
+    else:
+        if args.registry_dir is None or args.model_version is None:
+            raise ValueError(
+                "Provide --artifact or both --registry-dir and "
+                "--model-version."
+            )
+        result = service.predict_registered(
+            dataset=dataset,
+            registry_dir=args.registry_dir,
+            model_version=args.model_version,
+        )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
