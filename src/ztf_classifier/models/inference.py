@@ -171,6 +171,14 @@ class XGBoostInferenceEngine:
                 "Frozen feature schema contains duplicate feature_order values."
             )
 
+        expected_order = list(range(1, 43))
+        actual_order = ordered["feature_order"].tolist()
+        if actual_order != expected_order:
+            raise ValueError(
+                "Frozen feature schema must use feature_order values "
+                "1 through 42."
+            )
+
         feature_names = ordered["feature"].astype(str).tolist()
 
         if len(feature_names) != 42:
