@@ -19,6 +19,7 @@ dependencies = [
     "matplotlib",
     "astropy",
     "astroquery",
+    "alerce==2.3.1",
     "pyarrow",
     "scikit-learn",
     "joblib",
