@@ -154,10 +154,35 @@ The CLI is available as:
 ztf-classifier {predict,batch}
 ```
 
+### Model selection
+
+Production inference requires exactly one explicit model-selection mode:
+
+**Direct artifact**
+
+```bash
+ztf-classifier predict \
+  --artifact PATH_TO_ARTIFACT \
+  --input INPUT.parquet \
+  --output OUTPUT.json
+```
+
+**Registry-backed selection**
+
+```bash
+ztf-classifier predict \
+  --registry-dir PATH_TO_REGISTRY \
+  --model-version baseline_v0.2 \
+  --input INPUT.parquet \
+  --output OUTPUT.json
+```
+
+Do not supply `--artifact` together with `--registry-dir` / `--model-version`; ambiguous model selection is rejected.
+
 ### Single prediction output
 
 ```bash
-python -m ztf_classifier.cli.main predict \
+ztf-classifier predict \
   --artifact PATH_TO_ARTIFACT \
   --input INPUT.parquet \
   --output OUTPUT.json
@@ -180,8 +205,18 @@ The JSON output uses CLI schema **1.1** and contains:
 ### Batch prediction output
 
 ```bash
-python -m ztf_classifier.cli.main batch \
+ztf-classifier batch \
   --artifact PATH_TO_ARTIFACT \
+  --input INPUT.parquet \
+  --output OUTPUT.parquet
+```
+
+Registry-backed batch inference uses the same explicit selection contract:
+
+```bash
+ztf-classifier batch \
+  --registry-dir PATH_TO_REGISTRY \
+  --model-version baseline_v0.2 \
   --input INPUT.parquet \
   --output OUTPUT.parquet
 ```
@@ -230,13 +265,9 @@ Current validated areas include:
 * batch schema and flag validation;
 * rejection of empty batch outputs.
 
-The latest focused validation for the batch/CLI layer is:
+The full test suite is the release gate. CI runs installation, dependency verification, Ruff, the complete pytest suite, and package import verification. Registry-backed prediction and batch paths are covered by real subprocess E2E tests.
 
-```text
-17 passed
-```
-
-Full-suite regression is intentionally executed as a separate validation stage rather than as part of every focused contract change.
+The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the software package milestone is `v0.3.0`.
 
 ## Repository structure
 
@@ -259,7 +290,7 @@ reports/                Frozen benchmark specifications and tables
 
 ## Scope and scientific limitations
 
-This repository is a research prototype and benchmark pipeline.
+This repository is a production-oriented research pipeline and benchmark foundation. It provides validated production inference interfaces, but the benchmark itself remains intentionally limited and is not a claim of population-level ZTF performance.
 
 The benchmark is intentionally small and balanced. Its labels originate from ALeRCE and therefore should not be interpreted as independent astrophysical ground truth.
 
