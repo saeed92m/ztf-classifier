@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Protocol
 
 from ztf_classifier.models.artifact_io import (
     LoadedModelArtifact,
@@ -29,10 +28,10 @@ class ModelNotFoundError(ModelRegistryError):
 class ModelRegistry(Protocol):
     """Application-facing interface for immutable model discovery."""
 
-    def list_models(self) -> tuple["ModelRegistryEntry", ...]:
+    def list_models(self) -> tuple[ModelRegistryEntry, ...]:
         """Return registered model metadata in deterministic order."""
 
-    def get(self, model_version: str) -> "ModelRegistryEntry":
+    def get(self, model_version: str) -> ModelRegistryEntry:
         """Resolve an explicitly requested model version."""
 
     def load(self, model_version: str) -> LoadedModelArtifact:
@@ -89,9 +88,7 @@ class ModelRegistryEntry:
             try:
                 int(value, 16)
             except ValueError as exc:
-                raise ValueError(
-                    f"{name} must be hexadecimal."
-                ) from exc
+                raise ValueError(f"{name} must be hexadecimal.") from exc
 
         artifact_dir = Path(self.artifact_dir).resolve()
         if not artifact_dir.is_dir():
@@ -128,7 +125,10 @@ class FilesystemModelRegistry:
         """Return all valid model entries in deterministic order."""
         entries: list[ModelRegistryEntry] = []
 
-        for artifact_dir in sorted(self.root_dir.iterdir(), key=lambda p: p.name):
+        for artifact_dir in sorted(
+            self.root_dir.iterdir(),
+            key=lambda p: p.name,
+        ):
             if not artifact_dir.is_dir():
                 continue
 
@@ -251,9 +251,7 @@ class FilesystemModelRegistry:
             model_version=str(manifest["model_version"]),
             model_family=str(manifest["model_family"]),
             artifact_schema_version=str(schema_version),
-            feature_schema_version=str(
-                manifest["feature_schema_version"]
-            ),
+            feature_schema_version=str(manifest["feature_schema_version"]),
             feature_count=int(manifest["feature_count"]),
             classes=tuple(manifest["classes"]),
             dataset_sha256=str(manifest["dataset_sha256"]),
