@@ -2,7 +2,6 @@ import pandas as pd
 
 from ztf_classifier.dataset.raw_validation import RawDatasetValidator
 
-
 DETECTION_COLUMNS = (
     "tid",
     "mjd",
