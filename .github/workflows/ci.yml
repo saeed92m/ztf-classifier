@@ -86,4 +86,11 @@ jobs:
         run: python -c "import ztf_classifier; print(ztf_classifier.__file__)"
 
       - name: Audit dependencies
-        run: python -m pip_audit
+        run: |
+          for attempt in 1 2 3; do
+            python -m pip_audit && exit 0
+            if [ "$attempt" -lt 3 ]; then
+              sleep 10
+            fi
+          done
+          exit 1
