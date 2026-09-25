@@ -7,6 +7,7 @@ import pandas as pd
 from fastapi.testclient import TestClient
 
 from ztf_classifier.api.app import create_app
+from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.application.schemas import PredictionResponse
 from ztf_classifier.domain.observations import (
