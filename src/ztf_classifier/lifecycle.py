@@ -103,14 +103,13 @@ def validate_cycle_record(record: dict[str, Any]) -> list[str]:
         errors.append("measurement must be an object")
 
     validation = record.get("validation")
-    if isinstance(validation, dict):
-        if validation.get("scientific_gate_affected") is True and not validation.get(
-            "evidence"
-        ):
-            errors.append(
-                "scientific-gate changes require validation evidence or an explicit "
-                "blocker"
-            )
+    if isinstance(validation, dict) and validation.get(
+        "scientific_gate_affected"
+    ) is True and not validation.get("evidence"):
+        errors.append(
+            "scientific-gate changes require validation evidence or an explicit "
+            "blocker"
+        )
 
     return errors
 
