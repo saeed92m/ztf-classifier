@@ -75,6 +75,10 @@ def _sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _md5_bytes(payload: bytes) -> str:
+    return hashlib.md5(payload).hexdigest()
+
+
 def _looks_like_html(payload: bytes) -> bool:
     sample = payload.lstrip()[:512].lower()
     return sample.startswith((b"<!doctype html", b"<html", b"<head", b"<body"))
@@ -162,6 +166,8 @@ def acquire_source(
             digest = _sha256_bytes(payload)
             if expected and digest != expected:
                 raise AcquisitionError(f"SHA-256 mismatch for {url}: expected {expected}, got {digest}")
+            if source.expected_md5 and _md5_bytes(payload) != source.expected_md5:
+                raise AcquisitionError(f"MD5 mismatch for {url}: expected {source.expected_md5}, got {_md5_bytes(payload)}")
             destination.parent.mkdir(parents=True, exist_ok=True)
             part = destination.with_suffix(destination.suffix + ".part")
             part.write_bytes(payload)
