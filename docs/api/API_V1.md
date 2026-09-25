@@ -12,6 +12,7 @@ The server reads:
 
 - `ZTF_API_REGISTRY_DIR`: filesystem model registry visible to the server.
 - `ZTF_API_DEFAULT_MODEL_VERSION`: optional default registered model.
+- `ZTF_API_KEY`: optional bearer credential protecting versioned `/v1/` endpoints when configured.
 
 Clients never submit arbitrary artifact or registry filesystem paths.
 
@@ -22,6 +23,7 @@ Clients never submit arbitrary artifact or registry filesystem paths.
 | GET | `/health` | Liveness |
 | GET | `/ready` | Model-registry readiness |
 | GET | `/v1/model` | Default model metadata |
+| GET | `/v1/features/backends` | Registered scientific feature backend metadata |
 | POST | `/v1/predict` | Synchronous inference |
 | POST | `/v1/batch` | Synchronous multi-row inference |
 | GET | `/v1/objects/{oid}` | Normalized object summary |
@@ -137,3 +139,20 @@ Completed jobs persist their scientific payload through `ScientificResultStore`.
 **GET** `/v1/objects/{oid}/results/latest?survey=ztf`
 
 Returns the newest persisted scientific result for the object and survey. The endpoint reads only from the canonical `ScientificResultStore`; it does not execute inference. If no durable result exists, the API returns `404 scientific_result_not_found`.
+
+
+## Scientific feature backend selection
+
+Object-analysis and asynchronous job requests may provide:
+
+- feature_backend: registered ScientificFeatureEngine backend name;
+- feature_parameters: backend-specific deterministic parameters.
+
+The default backend is native, preserving the frozen v0.2 42-feature contract. Backend selection is recorded in feature provenance and the durable result payload.
+
+
+## Security boundary
+
+When ZTF_API_KEY is configured, versioned API endpoints require Authorization: Bearer <key>. Liveness/readiness endpoints remain public for deployment probes. The API never returns the configured credential.
+
+Every HTTP response receives an X-Request-ID. Clients may provide one; otherwise the server generates a UUID. The request ID is also included in stable API error envelopes.

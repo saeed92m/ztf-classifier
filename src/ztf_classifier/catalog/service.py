@@ -47,6 +47,9 @@ class ScientificCatalogService:
             raise ValueError(
                 "created_after/created_before must be ISO-8601 timestamps"
             ) from exc
+        for parsed in (parsed_after, parsed_before):
+            if parsed is not None and parsed.tzinfo is None:
+                raise ValueError("catalog timestamps must include a timezone")
         if (
             parsed_after is not None
             and parsed_before is not None
@@ -100,7 +103,7 @@ class ScientificCatalogService:
                 "created_at",
                 "payload_json",
             ],
-            lineterminator="\n",
+            lineterminator=chr(10),
         )
         writer.writeheader()
         for record in page.items:

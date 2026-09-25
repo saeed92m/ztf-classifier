@@ -1,4 +1,8 @@
+import csv
+import io
 from pathlib import Path
+
+import pytest
 
 from ztf_classifier.catalog import ScientificCatalogService
 from ztf_classifier.results import ScientificResultStore
@@ -45,9 +49,11 @@ def test_catalog_csv_export_is_deterministic(tmp_path: Path) -> None:
         ScientificCatalogService(store).query(limit=1)
     )
 
+    rows = list(csv.DictReader(io.StringIO(csv_text)))
     assert csv_text.splitlines()[0].startswith("result_id,job_id,oid,survey")
-    assert "ZTF17a" in csv_text
-    assert '"{""label"":""AGN"",""value"":1}"' in csv_text
+    assert len(rows) == 1
+    assert rows[0]["oid"] == "ZTF17a"
+    assert rows[0]["payload_json"] == '{"label":"AGN","value":1}'
 
 
 def test_catalog_query_rejects_invalid_limit(tmp_path: Path) -> None:
@@ -73,3 +79,10 @@ def test_catalog_query_rejects_invalid_time_window(tmp_path: Path) -> None:
         assert "not be later" in str(exc)
     else:
         raise AssertionError("invalid catalog time window was accepted")
+
+
+def test_catalog_query_rejects_naive_timestamp(tmp_path: Path) -> None:
+    service = ScientificCatalogService(_store(tmp_path))
+
+    with pytest.raises(ValueError, match="timezone"):
+        service.query(created_after="2026-09-25T12:00:00")

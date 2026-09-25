@@ -39,7 +39,7 @@ class FakeObservationService:
 
 
 class FakeFeatureEngine:
-    def compute(self, observations, *, backend: str = "native"):
+    def compute(self, observations, *, backend: str = "native", parameters=None):
         return FeatureResult(
             values={"feature_1": 1.0, "feature_2": 2.0},
             feature_schema_version="v0.2",
@@ -47,7 +47,7 @@ class FakeFeatureEngine:
                 backend=backend,
                 software_version="test",
                 feature_schema_version="v0.2",
-                parameters={},
+                parameters=parameters or {},
                 input_observation_sha256="a" * 64,
             ),
         )
@@ -163,3 +163,51 @@ def test_source_backed_executor_translates_expected_application_errors():
 
     with pytest.raises(AnalysisJobExecutionError):
         executor(job)
+
+
+def test_source_backed_executor_passes_feature_backend_and_parameters(
+    monkeypatch,
+):
+    from ztf_classifier.api.config import ApiSettings
+
+    settings = ApiSettings(
+        registry_dir=Path("/models"),
+        default_model_version="baseline_v0.2",
+    )
+    captured = {}
+
+    class CapturingFeatureEngine(FakeFeatureEngine):
+        def compute(self, observations, *, backend="native", parameters=None):
+            captured["backend"] = backend
+            captured["parameters"] = parameters
+            return super().compute(
+                observations,
+                backend=backend,
+                parameters=parameters,
+            )
+
+    monkeypatch.setattr(
+        "ztf_classifier.jobs.executor.FilesystemModelRegistry",
+        FakeRegistry,
+    )
+    executor = SourceBackedAnalysisExecutor(
+        settings,
+        observation_service=FakeObservationService(),
+        application_service=FakeApplicationService(),
+        feature_engine=CapturingFeatureEngine(),
+    )
+
+    result = executor.execute(
+        oid="ZTF17test",
+        survey="ztf",
+        model_version="baseline_v0.2",
+        feature_backend="native",
+        feature_parameters={"cutoff_mjd": 60000.5},
+    )
+
+    assert result["feature_backend"] == "native"
+    assert result["feature_parameters"] == {"cutoff_mjd": 60000.5}
+    assert captured == {
+        "backend": "native",
+        "parameters": {"cutoff_mjd": 60000.5},
+    }

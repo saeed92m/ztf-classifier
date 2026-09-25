@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import secrets
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 import pandas as pd
 from alerce.core import Alerce
@@ -19,6 +21,8 @@ from ztf_classifier.api.schemas import (
     AnalysisJobRequest,
     AnalysisJobResponse,
     ErrorResponse,
+    FeatureBackendListResponse,
+    FeatureBackendResponse,
     ModelResponse,
     ObjectAnalysisRequest,
     ObjectAnalysisResponse,
@@ -35,6 +39,7 @@ from ztf_classifier.application.errors import ApplicationInferenceError
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.application.service import ApplicationService
 from ztf_classifier.catalog import ScientificCatalogService
+from ztf_classifier.features import ScientificFeatureEngine
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
 from ztf_classifier.jobs.store import JobStore
 from ztf_classifier.models.classes import MODEL_CLASSES
@@ -225,6 +230,7 @@ def create_app(
     application_service: ApplicationService | None = None,
     observation_service: ObservationService | None = None,
     analysis_executor: SourceBackedAnalysisExecutor | None = None,
+    feature_engine: ScientificFeatureEngine | None = None,
 ) -> FastAPI:
     """Create the production API application."""
     api_settings = settings or ApiSettings.from_environment()
@@ -245,10 +251,12 @@ def create_app(
     results = ScientificResultStore(api_settings.result_store_path)
     catalog = ScientificCatalogService(results)
     reports = ScientificReportService()
+    selected_feature_engine = feature_engine or ScientificFeatureEngine()
     executor = analysis_executor or SourceBackedAnalysisExecutor(
         api_settings,
         observation_service=observations,
         application_service=service,
+        feature_engine=selected_feature_engine,
     )
 
     static_dir = Path(__file__).resolve().parents[1] / "web" / "static"
@@ -258,6 +266,32 @@ def create_app(
             StaticFiles(directory=static_dir, html=True),
             name="workbench",
         )
+
+    @app.middleware("http")
+    async def security_and_request_id_middleware(
+        request: Request,
+        call_next,
+    ) -> JSONResponse:
+        """Apply optional API-key protection and a stable request ID boundary."""
+        request_id = request.headers.get("X-Request-ID") or str(uuid4())
+        if api_settings.api_key and request.url.path.startswith("/v1/"):
+            authorization = request.headers.get("Authorization", "")
+            expected = f"Bearer {api_settings.api_key}"
+            if not secrets.compare_digest(authorization, expected):
+                response = _error_response(
+                    ApiContractError(
+                        "authentication_required",
+                        "Valid API credentials are required.",
+                        status_code=401,
+                    ),
+                    request_id=request_id,
+                )
+                response.headers["WWW-Authenticate"] = "Bearer"
+                response.headers["X-Request-ID"] = request_id
+                return response
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
 
     @app.exception_handler(ApiContractError)
     async def api_contract_error_handler(
@@ -329,6 +363,20 @@ def create_app(
         )
 
     @app.get(
+        "/v1/features/backends",
+        response_model=FeatureBackendListResponse,
+        tags=["features"],
+    )
+    def list_feature_backends() -> FeatureBackendListResponse:
+        """Return registered scientific feature backend metadata."""
+        return FeatureBackendListResponse(
+            backends=[
+                FeatureBackendResponse(**metadata)
+                for metadata in selected_feature_engine.all_backend_metadata()
+            ]
+        )
+
+    @app.get(
         "/v1/model",
         response_model=ModelResponse,
         tags=["models"],
@@ -387,10 +435,18 @@ def create_app(
         request: AnalysisJobRequest,
     ) -> AnalysisJobResponse:
         """Persist an analysis request for asynchronous execution."""
+        if request.feature_backend not in selected_feature_engine.list_backends():
+            raise ApiContractError(
+                "feature_backend_not_found",
+                f"Feature backend is not registered: {request.feature_backend}",
+                status_code=404,
+            )
         record = jobs.create(
             oid=oid,
             survey=request.survey,
             model_version=request.model_version,
+            feature_backend=request.feature_backend,
+            feature_parameters=request.feature_parameters,
         )
         return AnalysisJobResponse(**record.to_dict())
 
@@ -622,11 +678,19 @@ def create_app(
         request: ObjectAnalysisRequest,
     ) -> ObjectAnalysisResponse:
         """Run source-backed observations through the shared scientific executor."""
+        if request.feature_backend not in selected_feature_engine.list_backends():
+            raise ApiContractError(
+                "feature_backend_not_found",
+                f"Feature backend is not registered: {request.feature_backend}",
+                status_code=404,
+            )
         try:
             result = executor.execute(
                 oid=oid,
                 survey=request.survey,
                 model_version=request.model_version,
+                feature_backend=request.feature_backend,
+                feature_parameters=request.feature_parameters,
             )
         except ApiContractError:
             raise
@@ -652,6 +716,8 @@ def create_app(
             observations=result["observations"],
             features=result["features"],
             feature_schema_version=result["feature_schema_version"],
+            feature_backend=result["feature_backend"],
+            feature_parameters=result["feature_parameters"],
             feature_provenance=result["feature_provenance"],
             prediction=prediction,
             model_version=result["model_version"],

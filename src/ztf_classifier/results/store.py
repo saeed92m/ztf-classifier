@@ -299,6 +299,35 @@ class ScientificResultStore:
             raise KeyError(job_id)
         return self._decode(row)
 
+    def query_after_cursor(
+        self,
+        *,
+        created_at: str | None = None,
+        result_id: str | None = None,
+        limit: int = 100,
+    ) -> list[ScientificResultRecord]:
+        """Return results strictly after a persisted chronological cursor."""
+        if limit < 1 or limit > 1000:
+            raise ValueError("limit must be between 1 and 1000")
+        if (created_at is None) != (result_id is None):
+            raise ValueError("created_at and result_id must be provided together")
+
+        query = """
+            SELECT result_id, job_id, oid, survey, model_version,
+                   schema_version, created_at, payload_json
+            FROM scientific_results
+        """
+        parameters: list[Any] = []
+        if created_at is not None and result_id is not None:
+            query += " WHERE created_at > ? OR (created_at = ? AND result_id > ?)"
+            parameters.extend((created_at, created_at, result_id))
+        query += " ORDER BY created_at ASC, result_id ASC LIMIT ?"
+        parameters.append(limit)
+
+        with sqlite3.connect(self.path) as connection:
+            rows = connection.execute(query, parameters).fetchall()
+        return [self._decode(row) for row in rows]
+
     def latest_for_object(
         self,
         oid: str,
