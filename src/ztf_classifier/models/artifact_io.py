@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from ztf_classifier.models.artifact import ModelArtifact
+from ztf_classifier.reproducibility.checksums import sha256_file
 from ztf_classifier.models.calibration_artifact import CalibrationArtifact
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.conformal_artifact import ConformalArtifact
@@ -85,6 +87,8 @@ class LoadedModelArtifact:
     conformal: ConformalArtifact | None = None
     ood: OODArtifact | None = None
     ood_model: OODProductionModel | None = None
+    artifact_hash: str = ""
+    integrity_warnings: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -411,11 +415,12 @@ class ModelArtifactLoader:
 
         files = manifest["files"]
         paths: dict[str, Path] = {}
+        integrity_warnings: list[str] = []
 
         for key in required_files:
             metadata = files[key]
             relative_path = metadata["path"]
-            expected_hash = metadata["sha256"]
+            expected_hash = metadata.get("sha256")
 
             candidate = (
                 artifact_dir / relative_path
@@ -436,7 +441,14 @@ class ModelArtifactLoader:
 
             actual_hash = _sha256(candidate)
 
-            if actual_hash != expected_hash:
+            if expected_hash is None:
+                message = (
+                    f"Artifact file '{key}' has no checksum; "
+                    "legacy integrity status is unverified."
+                )
+                integrity_warnings.append(message)
+                warnings.warn(message, UserWarning, stacklevel=2)
+            elif actual_hash != expected_hash:
                 raise ValueError(
                     f"Artifact integrity check failed for '{key}'."
                 )
@@ -651,6 +663,8 @@ class ModelArtifactLoader:
             conformal=conformal,
             ood=ood,
             ood_model=ood_model,
+            artifact_hash=sha256_file(manifest_path),
+            integrity_warnings=tuple(integrity_warnings),
         )
 
     @staticmethod
@@ -816,8 +830,14 @@ class ModelArtifactLoader:
                     f"Empty path metadata for '{key}'."
                 )
 
+            checksum = metadata.get("sha256")
+            if (
+                checksum is None
+                and schema_version == LEGACY_ARTIFACT_SCHEMA_VERSION
+            ):
+                continue
             _validate_sha256(
-                metadata.get("sha256"),
+                checksum,
                 f"files.{key}.sha256",
             )
 
