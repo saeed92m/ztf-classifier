@@ -1,7 +1,7 @@
 """Canonical external sources used by the scientific-validation product gate.
 
-This module deliberately contains source metadata and acquisition contracts only.
-It never treats a mutable live service as an immutable benchmark snapshot.
+This module contains source metadata and acquisition contracts only. A landing
+page is never silently treated as a benchmark artifact.
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ class ValidationSource:
     url: str
     provenance_role: str
     acquisition: str
+    acquisition_url: str | None = None
     immutable_evidence_required: bool = True
 
 
@@ -31,7 +32,7 @@ SOURCES: tuple[ValidationSource, ...] = (
         version="2026-05 dataset snapshot",
         url="https://huggingface.co/datasets/StarEmbed/ZTF_40k",
         provenance_role="ground_truth",
-        acquisition="Hugging Face dataset snapshot; record split/schema/content hashes.",
+        acquisition="Resolve the four split Parquet artifacts from the Hugging Face dataset repository/API; record exact file URLs and hashes.",
     ),
     ValidationSource(
         source_id="ztf_periodic_781k",
@@ -39,8 +40,9 @@ SOURCES: tuple[ValidationSource, ...] = (
         source_type="catalog",
         version="v1 published 2020-06-11",
         url="https://zenodo.org/records/3886372",
+        acquisition_url="https://zenodo.org/records/3886372/files/Table2.txt.zip?download=1",
         provenance_role="ground_truth",
-        acquisition="Zenodo release; record attachment hashes and catalog row/object counts.",
+        acquisition="Zenodo v1 Table2 attachment; record attachment checksum and catalog row/object counts.",
     ),
     ValidationSource(
         source_id="ztf_periodic_730k",
@@ -49,22 +51,16 @@ SOURCES: tuple[ValidationSource, ...] = (
         version="derived subset from Zenodo 3886372 / ZTF DR2",
         url="https://doi.org/10.3847/1538-4357/ac69d4",
         provenance_role="ground_truth",
-        acquisition=(
-            "Derive only from the pinned 781,602-object CPVS snapshot using the "
-            "published g/r detection criteria; record parent hash and selection code version."
-        ),
+        acquisition="Derive only from the pinned 781,602-object CPVS snapshot plus the required published g/r detection-quality evidence; record parent hash and selection code version.",
     ),
     ValidationSource(
         source_id="ztf_dr24_source_subset",
         name="ZTF Data Release 24",
         source_type="survey_release",
-        version="DR24",
+        version="DR24 (2026-01-22)",
         url="https://irsa.ipac.caltech.edu/data/ZTF/docs/releases/dr24/",
         provenance_role="ground_truth",
-        acquisition=(
-            "Use the official DR24 archive/API; pin release metadata, source/object IDs, "
-            "query parameters, and returned-artifact hashes."
-        ),
+        acquisition="Use the official DR24 archive/API; pin release metadata, source/object IDs, query parameters, and returned-artifact hashes.",
     ),
     ValidationSource(
         source_id="alerce_reference",
@@ -73,10 +69,7 @@ SOURCES: tuple[ValidationSource, ...] = (
         version="live service; pin response manifest per run",
         url="https://tap.alerce.online/tap",
         provenance_role="reference_system",
-        acquisition=(
-            "Query the ALeRCE TAP service through an explicit query manifest; store "
-            "query text, retrieval timestamp, response hashes, and schema metadata."
-        ),
+        acquisition="Query the ALeRCE TAP service through an explicit query manifest; store query text, retrieval timestamp, response hashes, and schema metadata.",
     ),
 )
 
