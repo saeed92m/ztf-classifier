@@ -165,3 +165,12 @@ class ScientificCatalogResponse(BaseModel):
     limit: int
     offset: int
     has_next: bool
+
+
+class AnalysisJobListResponse(BaseModel):
+    """Bounded durable analysis-job listing."""
+
+    schema_version: str = "1.0"
+    items: list[AnalysisJobResponse]
+    limit: int
+    offset: int
