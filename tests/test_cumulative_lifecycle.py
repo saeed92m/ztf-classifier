@@ -11,9 +11,9 @@ def valid_record():
         "measurement": {
             "metrics": {
                 "correctness": {
-                    "before": "NOT_MEASURED",
-                    "after": "NOT_MEASURED",
-                    "status": "NOT_MEASURED",
+                    "before": 0.9,
+                    "after": 0.95,
+                    "status": "MEASURED",
                 }
             }
         },
@@ -47,8 +47,30 @@ def test_cycle_requires_measurement_evidence_shape():
     assert any("runtime needs before/after" in error for error in validate_cycle_record(record))
 
 
-def test_scientific_cycle_requires_validation_evidence():
+def test_scientific_cycle_requires_validation_evidence_or_blocker():
     record = valid_record()
     record["validation"] = {"scientific_gate_affected": True}
     errors = validate_cycle_record(record)
     assert any("scientific-gate changes require validation evidence" in error for error in errors)
+
+
+def test_accepted_cycle_cannot_hide_regression():
+    record = valid_record()
+    record["regression"] = {"status": "BLOCKED", "open_blockers": ["benchmark"}
+    errors = validate_cycle_record(record)
+    assert any("ACCEPT decisions require" in error for error in errors)
+
+
+def test_scientific_blocker_is_explicitly_allowed():
+    record = valid_record()
+    record["validation"] = {
+        "scientific_gate_affected": True,
+        "status": "BLOCKED",
+        "blocker": "immutable source evidence unavailable",
+    }
+    record["regression"] = {
+        "status": "BLOCKED",
+        "open_blockers": ["scientific-gate"],
+    }
+    record["decision"] = "BLOCKED"
+    assert validate_cycle_record(record) == []
