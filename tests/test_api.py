@@ -205,3 +205,32 @@ def test_invalid_request_has_stable_error(tmp_path: Path) -> None:
     response = client.post("/v1/predict", json={"records": []})
     assert response.status_code == 422
     assert response.json()["code"] == "request_validation_failed"
+
+def test_openapi_exposes_versioned_contract(tmp_path: Path) -> None:
+    _make_registry(tmp_path)
+    client = TestClient(
+        create_app(
+            ApiSettings(
+                registry_dir=tmp_path,
+                default_model_version="baseline_v0.2",
+            )
+        )
+    )
+
+    schema = client.get("/openapi.json").json()
+    assert "/v1/predict" in schema["paths"]
+    assert "/v1/batch" in schema["paths"]
+    assert "/v1/model" in schema["paths"]
+
+
+def test_missing_model_configuration_has_stable_error() -> None:
+    client = TestClient(create_app(ApiSettings()))
+
+    response = client.get("/ready", headers={"X-Request-ID": "req-456"})
+    assert response.status_code == 503
+    assert response.json() == {
+        "code": "model_not_configured",
+        "message": "No model registry is configured for this API instance.",
+        "request_id": "req-456",
+        "details": [],
+    }
