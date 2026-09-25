@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Callable, Iterable
 from urllib.parse import urlparse
 
+from ztf_classifier.validation.adapters import build_adapter_plan
 from ztf_classifier.validation.evidence import EvidenceArtifact, EvidenceManifest, write_evidence_manifest
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.sources import get_source
@@ -176,24 +177,29 @@ def request_from_benchmark(
     urls: tuple[str, ...],
     query_manifest: dict[str, object] | None = None,
     expected_sha256: str | None = None,
+    parent_evidence_sha256: str | None = None,
 ) -> AcquisitionRequest:
     """Construct an acquisition request from the canonical benchmark manifest."""
     manifest = BenchmarkRegistry(registry_dir).load(benchmark_id)
-    source = get_source(str(manifest.input_contract["adapter"]))
-    if manifest.version != source.version:
+    try:
+        plan = build_adapter_plan(manifest)
+    except (KeyError, ValueError) as exc:
         raise AcquisitionError(
-            f"benchmark/source version drift for {benchmark_id}: benchmark={manifest.version!r}, canonical={source.version!r}"
-        )
-    if manifest.input_contract["adapter"] != source.source_id:
+            f"invalid canonical adapter contract for {benchmark_id}: {exc}"
+        ) from exc
+
+    if parent_evidence_sha256 is None and plan.parent_benchmark_id:
         raise AcquisitionError(
-            f"benchmark adapter/source mismatch: {manifest.input_contract['adapter']!r} != {source.source_id!r}"
+            f"{benchmark_id} requires parent_evidence_sha256 for {plan.parent_benchmark_id}"
         )
+
     return AcquisitionRequest(
         benchmark_id=manifest.benchmark_id,
-        source_id=source.source_id,
-        source_version=source.version,
+        source_id=plan.source_id,
+        source_version=plan.source_version,
         destination=Path(destination),
-        urls=urls,
+        urls=urls or plan.urls,
         expected_sha256=expected_sha256,
-        query_manifest=query_manifest,
+        parent_evidence_sha256=parent_evidence_sha256,
+        query_manifest=query_manifest if query_manifest is not None else plan.query_manifest,
     )
