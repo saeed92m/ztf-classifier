@@ -443,3 +443,43 @@ PR #23 merged the first complete source-backed object analysis workflow at main 
 The versioned endpoint `POST /v1/objects/{oid}/analysis` connects ALeRCE observations, normalization/QC, the unified ScientificFeatureEngine, the registered production model, calibration/conformal/OOD diagnostics, and a unified scientific response. The response preserves observations, feature values and provenance, classification diagnostics, model provenance, and observation provenance. No synthetic observations are introduced and clients cannot provide model artifact paths.
 
 The next major product layer is persistent jobs and storage for long-running analysis.
+
+## 25. Persistent analysis jobs — completed implementation
+
+The persistent analysis-job layer is now implemented and merged after green CI validation.
+
+Implemented capabilities:
+
+- SQLite-backed durable job records;
+- explicit lifecycle: queued -> running -> succeeded/failed;
+- atomic queue claiming using SQLite `BEGIN IMMEDIATE`;
+- dependency-injected worker execution boundary;
+- source-backed executor connecting:
+  ALeRCE -> normalized observations -> ScientificFeatureEngine -> registered model inference;
+- persisted observations, features, prediction diagnostics, and provenance in the job result;
+- stable failure codes without exposing internal exception details;
+- explicit `AnalysisJobExecutionError` boundary for expected execution failures;
+- unexpected programmer errors remain visible rather than being silently converted to failed jobs;
+- production worker entry point: `ztf-classifier-worker`;
+- scheduler-safe worker exit code: non-zero when any drained job fails;
+- contract tests for the worker, source-backed executor, and runner exit semantics.
+
+Merged implementation milestones:
+
+- PR #26: persistent analysis job worker;
+- PR #27: source-backed executor contract tests;
+- PR #28: scheduler-safe worker exit contract.
+
+The scientific baseline `v0.2.0` remains immutable.
+
+The current architecture therefore has a real asynchronous execution path, but the queue is intentionally still SQLite-backed and local-process oriented. A database-backed scientific history/catalog layer remains the next persistence expansion for continuous ingestion, long-lived analysis history, reports, catalogs, and multi-process product deployment.
+
+## 26. Immediate next implementation sequence
+
+1. replace the remaining duplicated object-analysis orchestration in the HTTP layer with the shared source-backed application/executor service;
+2. expose job-result retrieval through the same versioned scientific response contract without duplicating serialization logic;
+3. add durable retry/lease semantics for interrupted running jobs;
+4. introduce the persistent scientific-result repository/database boundary;
+5. connect Workbench jobs and analysis views to the durable result contract;
+6. continue toward catalog/report and continuous incremental analysis.
+
