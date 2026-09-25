@@ -37,7 +37,7 @@ def test_workbench_light_curve_uses_observation_api() -> None:
     response = client.get("/workbench/app.js")
     assert response.status_code == 200
     assert "/v1/objects/" in response.text
-    assert "/observations?survey=" in response.text
+    assert "/observations?survey=ztf" in response.text
 
 
 def test_workbench_uses_durable_result_api_without_fabricated_values() -> None:
@@ -51,5 +51,18 @@ def test_workbench_uses_durable_result_api_without_fabricated_values() -> None:
     assert "38.7%" not in page.text
     assert "267.1124" not in page.text
     assert "32.4198" not in page.text
+    assert "α = 0.10" not in page.text
     assert "baseline_v0.2" not in page.text
     assert "267.1124" not in response.text
+
+
+def test_workbench_workspace_views_use_real_catalog_job_and_report_contracts() -> None:
+    client = TestClient(create_app())
+    response = client.get("/workbench/app.js")
+
+    assert response.status_code == 200
+    assert "/v1/catalog/results?limit=100" in response.text
+    assert "/v1/jobs?limit=100" in response.text
+    assert "/v1/results/" in response.text
+    assert "/report" in response.text
+    assert "Reports not yet enabled" not in response.text
