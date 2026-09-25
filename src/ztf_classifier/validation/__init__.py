@@ -26,3 +26,7 @@ __all__ = [
     "write_release_gate_report",\n    "write_evidence_manifest",
     "write_scientific_validation_report",
 ]
+
+
+# Source-backed acquisition API is exported from ztf_classifier.validation.acquisition.
+from ztf_classifier.validation.acquisition import AcquisitionRequest, AcquisitionResult, acquire_all, acquire_source
