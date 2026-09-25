@@ -5,8 +5,9 @@ from __future__ import annotations
 import csv
 import io
 import json
-from dataclasses import dataclass
 from datetime import datetime
+from dataclasses import dataclass
+from typing import Any
 
 from ztf_classifier.results import ScientificResultRecord, ScientificResultStore
 
@@ -44,14 +45,11 @@ class ScientificCatalogService:
             if created_before is not None:
                 parsed_before = datetime.fromisoformat(created_before)
         except ValueError as exc:
-            raise ValueError(
-                "created_after/created_before must be ISO-8601 timestamps"
-            ) from exc
-        if (
-            parsed_after is not None
-            and parsed_before is not None
-            and parsed_after > parsed_before
-        ):
+            raise ValueError("created_after/created_before must be ISO-8601 timestamps") from exc
+        for parsed in (parsed_after, parsed_before):
+            if parsed is not None and parsed.tzinfo is None:
+                raise ValueError("catalog timestamps must include a timezone")
+        if parsed_after is not None and parsed_before is not None and parsed_after > parsed_before:
             raise ValueError("created_after must not be later than created_before")
 
     def query(
@@ -100,7 +98,8 @@ class ScientificCatalogService:
                 "created_at",
                 "payload_json",
             ],
-            lineterminator="\n",
+            lineterminator="
+",
         )
         writer.writeheader()
         for record in page.items:
