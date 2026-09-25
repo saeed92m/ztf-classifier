@@ -53,16 +53,33 @@ jobs:
         run: python -m pytest -q tests/test_cumulative_lifecycle.py
 
   scheduled-scientific-validation:
-    name: Scheduled scientific validation readiness
+    name: Source provenance acquisition and scientific gate readiness
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
-      - name: Verify external benchmark gate is explicit
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: pip
+
+      - name: Install locked dependencies
         run: |
-          grep -q "Scientific Validation" docs/PRODUCTION_ACCEPTANCE_CHECKLIST.md
-          grep -q "NOT VERIFIED" docs/PRODUCTION_ACCEPTANCE_CHECKLIST.md
-          grep -q "Cumulative Learning" docs/PRODUCTION_ACCEPTANCE_CHECKLIST.md
-          echo "Heavy source-backed benchmark adapters remain scheduled/manual and release-blocking."
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Probe source provenance endpoints
+        run: python -m ztf_classifier.validation.source_probe reports/scientific_validation/source_probe.json
+
+      - name: Preserve fail-closed scientific gate
+        run: |
+          python -m ztf_classifier.validation gate             --evidence-dir reports/scientific_validation             --output reports/scientific_validation/release_gate.json || test "$?" -eq 2
+
+      - name: Upload provenance and gate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: scientific-validation-provenance
+          path: reports/scientific_validation/*.json
