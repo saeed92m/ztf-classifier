@@ -51,8 +51,8 @@ notebook = [
     "ipykernel",
 ]
 web = [
-    "fastapi",
-    "uvicorn",
+    "fastapi>=0.141.1,<0.142",
+    "uvicorn>=0.53.0,<0.54",
     "plotly",
     "streamlit",
 ]
