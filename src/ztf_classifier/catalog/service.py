@@ -44,8 +44,14 @@ class ScientificCatalogService:
             if created_before is not None:
                 parsed_before = datetime.fromisoformat(created_before)
         except ValueError as exc:
-            raise ValueError("created_after/created_before must be ISO-8601 timestamps") from exc
-        if parsed_after is not None and parsed_before is not None and parsed_after > parsed_before:
+            raise ValueError(
+                "created_after/created_before must be ISO-8601 timestamps"
+            ) from exc
+        if (
+            parsed_after is not None
+            and parsed_before is not None
+            and parsed_after > parsed_before
+        ):
             raise ValueError("created_after must not be later than created_before")
 
     def query(
