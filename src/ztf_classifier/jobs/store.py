@@ -43,7 +43,9 @@ class JobRecord:
 class JobStore:
     """Durable local job store with explicit state transitions."""
 
-    _STATUSES: ClassVar[frozenset[str]] = frozenset({"queued", "running", "succeeded", "failed"})
+    _STATUSES: ClassVar[frozenset[str]] = frozenset(
+        {"queued", "running", "succeeded", "failed"}
+    )
 
     def __init__(self, path: Path) -> None:
         self.path = path
