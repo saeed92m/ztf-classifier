@@ -9,6 +9,7 @@ from .schema import REMOVED_V02_FEATURES, V02_FEATURES, select_v02_features
 __all__ = [
     "NativeV0_2Backend",
     "REMOVED_V02_FEATURES",
+    "ScientificFeatureEngine",
     "V02_FEATURES",
     "basic_band_features",
     "basic_cross_band_features",
@@ -17,5 +18,4 @@ __all__ = [
     "phase_fold",
     "phase_morphology_features",
     "select_v02_features",
-    "ScientificFeatureEngine",
 ]
