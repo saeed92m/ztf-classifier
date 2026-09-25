@@ -22,6 +22,7 @@ Clients never submit arbitrary artifact or registry filesystem paths.
 | GET | `/health` | Liveness |
 | GET | `/ready` | Model-registry readiness |
 | GET | `/v1/model` | Default model metadata |
+| GET | `/v1/features/backends` | Registered scientific feature backend metadata |
 | POST | `/v1/predict` | Synchronous inference |
 | POST | `/v1/batch` | Synchronous multi-row inference |
 | GET | `/v1/objects/{oid}` | Normalized object summary |
