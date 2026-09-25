@@ -28,10 +28,14 @@ Clients never submit arbitrary artifact or registry filesystem paths.
 | GET | `/v1/objects/{oid}/observations` | Normalized observation stream |
 | POST | `/v1/objects/{oid}/analysis` | Source-backed object analysis |
 | POST | `/v1/objects/{oid}/jobs` | Durable analysis job submission |
+| GET | `/v1/jobs` | Bounded durable analysis-job listing |
 | GET | `/v1/jobs/{job_id}` | Durable analysis job state |
 | GET | `/v1/jobs/{job_id}/result` | Canonical durable job result |
 | GET | `/v1/results/{result_id}` | Durable result by stable ID |
 | GET | `/v1/objects/{oid}/results/latest` | Latest durable result for an object |
+| GET | `/v1/catalog/results` | Paginated scientific catalog query |
+| GET | `/v1/catalog/results.csv` | Deterministic catalog CSV export |
+| GET | `/v1/results/{result_id}/report` | Deterministic Markdown scientific report |
 
 OpenAPI is generated directly by FastAPI from the versioned HTTP schemas.
 
