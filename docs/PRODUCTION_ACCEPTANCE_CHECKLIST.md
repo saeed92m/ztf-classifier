@@ -58,7 +58,6 @@ The engineering/platform gates are implemented and CI-covered. The independent s
 
 The release is accepted only after all engineering gates and the mandatory scientific-validation gate have executable evidence. CI success alone does not satisfy the scientific-validation gate. The release workflow enforces this boundary and must fail closed while any required scientific-validation item remains `NOT VERIFIED`.
 
-
 ## Scientific Validation — permanent Product-Level Gate
 
 - [x] Benchmark Registry exists under `configs/benchmarks/`.
@@ -75,7 +74,6 @@ The release is accepted only after all engineering gates and the mandatory scien
 - [ ] No unresolved benchmark regression remains.
 
 The scientific gate remains **NOT VERIFIED** until the unchecked source-backed and leakage/evidence items above are completed. Engineering CI success alone cannot satisfy this gate.
-
 
 ## Definition of Done — Scientific Validation Gate
 
@@ -94,19 +92,20 @@ A product release is scientifically complete only when all applicable conditions
 
 A benchmark passing is evidence for its declared scope, not proof of universal correctness.
 
-
 ## Cumulative Learning & Continuous Improvement — permanent product process gate
 
 - [x] Cumulative-learning principle is documented as a lifecycle requirement.
 - [x] Mandatory lifecycle includes Audit, Previous Knowledge Retrieval, Baseline, Implementation, Test, Measure, Validate, Root Cause, Knowledge Extraction, Knowledge Update, Regression Update, Baseline Comparison, and Accept/Revise.
-- [x] Operational Knowledge Layer exists under docs/knowledge/.
+- [x] Operational Knowledge Layer exists under `docs/knowledge/`.
 - [x] Cumulative Improvement Ledger exists and is version-controlled.
 - [x] Knowledge statuses are explicitly classified as FACT, VERIFIED, SUPPORTED, HYPOTHESIS, ASSUMPTION, UNRESOLVED, or REJECTED.
-- [x] Executable lifecycle contract exists in ztf_classifier.lifecycle.
+- [x] Executable lifecycle contract exists in `ztf_classifier.lifecycle`.
 - [x] Lifecycle contract has regression tests.
 - [x] Multi-objective quality vector is defined for relevant changes.
 - [x] Performance baseline dimensions are defined and NOT_MEASURED is allowed when evidence is unavailable or not applicable.
 - [x] Local optimization cannot override scientific validity, reproducibility, or release integrity.
+- [x] Every meaningful pull request must carry a validated machine-readable cycle record under `configs/process/cycles/`.
+- [x] CI validates all cycle records and includes the cumulative lifecycle gate in the merge gate.
 - [ ] Every future product stage has a completed cumulative cycle record and measured evidence.
 - [ ] Process-performance trends are measured over enough cycles to establish a meaningful baseline.
 
