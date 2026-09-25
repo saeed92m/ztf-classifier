@@ -409,6 +409,8 @@ def create_app(
             oid=oid,
             survey=request.survey,
             model_version=request.model_version,
+            feature_backend=request.feature_backend,
+            feature_parameters=request.feature_parameters,
         )
         return AnalysisJobResponse(**record.to_dict())
 
@@ -643,6 +645,8 @@ def create_app(
                 oid=oid,
                 survey=request.survey,
                 model_version=request.model_version,
+                feature_backend=request.feature_backend,
+                feature_parameters=request.feature_parameters,
             )
         except ApiContractError:
             raise
@@ -668,6 +672,8 @@ def create_app(
             observations=result["observations"],
             features=result["features"],
             feature_schema_version=result["feature_schema_version"],
+            feature_backend=result["feature_backend"],
+            feature_parameters=result["feature_parameters"],
             feature_provenance=result["feature_provenance"],
             prediction=prediction,
             model_version=result["model_version"],
