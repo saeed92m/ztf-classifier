@@ -380,6 +380,7 @@ def create_app(
         if probe_path.is_file():
             try:
                 import json
+
                 source_probe = json.loads(probe_path.read_text(encoding="utf-8"))
             except (OSError, ValueError):
                 source_probe = {"status": "INVALID_EVIDENCE"}
