@@ -138,3 +138,13 @@ Completed jobs persist their scientific payload through `ScientificResultStore`.
 **GET** `/v1/objects/{oid}/results/latest?survey=ztf`
 
 Returns the newest persisted scientific result for the object and survey. The endpoint reads only from the canonical `ScientificResultStore`; it does not execute inference. If no durable result exists, the API returns `404 scientific_result_not_found`.
+
+
+## Scientific feature backend selection
+
+Object-analysis and asynchronous job requests may provide:
+
+- feature_backend: registered ScientificFeatureEngine backend name;
+- feature_parameters: backend-specific deterministic parameters.
+
+The default backend is native, preserving the frozen v0.2 42-feature contract. Backend selection is recorded in feature provenance and the durable result payload.
