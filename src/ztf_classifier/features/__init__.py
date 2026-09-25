@@ -7,10 +7,10 @@ from .periodicity import lomb_scargle_features
 from .schema import REMOVED_V02_FEATURES, V02_FEATURES, select_v02_features
 
 __all__ = [
-    "REMOVED_V02_FEATURES",
-    "V02_FEATURES",
     "NativeV0_2Backend",
+    "REMOVED_V02_FEATURES",
     "ScientificFeatureEngine",
+    "V02_FEATURES",
     "basic_band_features",
     "basic_cross_band_features",
     "extract_features_for_object",
