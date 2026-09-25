@@ -35,7 +35,7 @@ jobs:
         with:
           ref: ${{ steps.ref.outputs.tag }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11.16"
           cache: pip
