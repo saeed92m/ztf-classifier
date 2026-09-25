@@ -76,29 +76,38 @@ def _star_embed_plan(manifest: BenchmarkManifest) -> AdapterPlan:
         raise AdapterContractError(
             f"benchmark/source version drift: benchmark={manifest.version!r}, source={source.version!r}"
         )
-    revision = "18db85e"
+    revision = manifest.input_contract.get("revision")
+    if not isinstance(revision, str) or len(revision) != 40:
+        raise AdapterContractError(
+            "StarEmbed adapter requires a verified 40-character Hugging Face commit SHA in input_contract.revision"
+        )
+    if any(ch not in "0123456789abcdef" for ch in revision.lower()):
+        raise AdapterContractError("StarEmbed revision must be a hexadecimal commit SHA")
     base = f"https://huggingface.co/datasets/StarEmbed/ZTF_40k/resolve/{revision}/data"
-    urls = (
-        f"{base}/train-00000-of-00002.parquet",
-        f"{base}/train-00001-of-00002.parquet",
-        f"{base}/validation-00000-of-00001.parquet",
-        f"{base}/test-00000-of-00001.parquet",
-        f"{base}/anom-00000-of-00001.parquet",
+    artifact_names = (
+        "train-00000-of-00002.parquet",
+        "train-00001-of-00002.parquet",
+        "validation-00000-of-00001.parquet",
+        "test-00000-of-00001.parquet",
+        "anom-00000-of-00001.parquet",
     )
     plan = AdapterPlan(
         benchmark_id=manifest.benchmark_id,
         source_id=source.source_id,
         source_version=source.version,
         role=manifest.evaluation_role,
-        urls=urls,
+        urls=tuple(f"{base}/{name}" for name in artifact_names),
         destination_name=f"{manifest.benchmark_id}.snapshot",
-        artifact_names=("train-00000-of-00002.parquet","train-00001-of-00002.parquet","validation-00000-of-00001.parquet","test-00000-of-00001.parquet","anom-00000-of-00001.parquet"),
-        expected_sha256=("6a84a4fe8706fa6cff2a908a2b3a0a89bab6e7d564fb53ebd56491757a8746bc","73cdd608cc3c8e102817317e51fc079fff52de6f46bdcd0ed9a3a4e708cd672d","7652e00b09babff33f7a0ebcd3294e4854963b59f0c0d533115300c2aee64726","4ef77d676d399f8ceb2d6ab9caa652206309e590ebf7196f4477443fb8fe7d2c","716f053acf17ff7697ec07fc886d75bc1440545f3c84459373541b566a0c83b1"),
-        query_manifest={"provider":"huggingface","dataset":"StarEmbed/ZTF_40k","revision":revision,"splits":["train","validation","test","anom"]},
+        artifact_names=artifact_names,
+        query_manifest={
+            "provider": "huggingface",
+            "dataset": "StarEmbed/ZTF_40k",
+            "revision": revision,
+            "splits": ["train", "validation", "test", "anom"],
+        },
     )
     plan.validate()
     return plan
-
 def _derived_730k_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     source = get_source("ztf_periodic_730k")
     if manifest.input_contract.get("adapter") != source.source_id:
