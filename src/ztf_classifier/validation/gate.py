@@ -70,9 +70,22 @@ def evaluate_release_gate(
                 manifest_blockers.append("scientific checks are missing or invalid")
                 checks = {}
             for check in REQUIRED_SCIENTIFIC_CHECKS:
-                if checks.get(check) != "PASS":
+                value = checks.get(check, "NOT_EXECUTED")
+                status = value.get("status") if isinstance(value, dict) else value
+                if status != "PASS":
                     manifest_blockers.append(
-                        f"scientific check {check} is {checks.get(check, 'NOT_EXECUTED')}"
+                        f"scientific check {check} is {status}"
+                    )
+            provenance_check = checks.get("provenance")
+            if provenance_check is not None:
+                provenance_status = (
+                    provenance_check.get("status")
+                    if isinstance(provenance_check, dict)
+                    else provenance_check
+                )
+                if provenance_status != "PASS":
+                    manifest_blockers.append(
+                        f"scientific check provenance is {provenance_status}"
                     )
             if not report.get("provenance_complete", False):
                 manifest_blockers.append("provenance is incomplete")

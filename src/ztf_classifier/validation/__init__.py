@@ -1,6 +1,20 @@
 """Scientific validation and external benchmark infrastructure."""
 
-from ztf_classifier.validation.evidence import (\n    EvidenceArtifact,\n    EvidenceManifest,\n    sha256_file,\n    write_evidence_manifest,\n)\nfrom ztf_classifier.validation.gate import (
+from ztf_classifier.validation.acquisition import (
+    AcquisitionRequest,
+    AcquisitionResult,
+    acquire_all,
+    acquire_source,
+    request_from_benchmark,
+)
+from ztf_classifier.validation.checks import CheckResult, run_scientific_checks
+from ztf_classifier.validation.evidence import (
+    EvidenceArtifact,
+    EvidenceManifest,
+    sha256_file,
+    write_evidence_manifest,
+)
+from ztf_classifier.validation.gate import (
     evaluate_release_gate,
     write_release_gate_report,
 )
@@ -14,21 +28,26 @@ from ztf_classifier.validation.runner import BenchmarkRunResult, run_table_bench
 from ztf_classifier.validation.sources import ValidationSource, get_source, source_ids
 
 __all__ = [
-    "BenchmarkManifest",\n    "EvidenceArtifact",\n    "EvidenceManifest",
+    "AcquisitionRequest",
+    "AcquisitionResult",
+    "BenchmarkManifest",
     "BenchmarkRegistry",
     "BenchmarkRunResult",
+    "CheckResult",
+    "EvidenceArtifact",
+    "EvidenceManifest",
     "ValidationSource",
-    "evaluate_release_gate",\n    "sha256_file",
-    "render_scientific_validation_report",
-    "run_table_benchmark",
+    "acquire_all",
+    "acquire_source",
+    "evaluate_release_gate",
     "get_source",
+    "render_scientific_validation_report",
+    "request_from_benchmark",
+    "run_scientific_checks",
+    "run_table_benchmark",
+    "sha256_file",
     "source_ids",
-    "write_release_gate_report",\n    "write_evidence_manifest",
+    "write_evidence_manifest",
+    "write_release_gate_report",
     "write_scientific_validation_report",
 ]
-
-
-# Source-backed acquisition API is exported from ztf_classifier.validation.acquisition.
-from ztf_classifier.validation.acquisition import AcquisitionRequest, AcquisitionResult, acquire_all, acquire_source
-
-from ztf_classifier.validation.acquisition import request_from_benchmark
