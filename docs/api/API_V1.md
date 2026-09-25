@@ -90,3 +90,11 @@ The future Scientific Analysis Workbench consumes this API contract. UI visual i
 The endpoints use the existing ALeRCE acquisition adapter, Parquet cache, and strict light-curve normalization/QC contract. Observation responses preserve MJD, filter id, magnitude/error, corrected/raw photometry where available, coordinates, QC flags, and source provenance.
 
 Server-side observation caching is configured with ZTF_API_OBSERVATION_CACHE_DIR. Clients cannot provide filesystem paths.
+
+
+## Complete object analysis
+
+- `POST /v1/objects/{oid}/analysis` runs the source-backed observation stream through the unified scientific feature engine and the explicitly selected registered production model.
+- The response contains normalized observations, feature values and provenance, calibrated classification output, conformal/OOD diagnostics, model provenance, and source provenance.
+- The model is selected by server-side registry version; clients cannot submit artifact filesystem paths.
+- The workflow fails explicitly when observations cannot be acquired or validated; it does not fabricate scientific observations or features.
