@@ -502,6 +502,16 @@ def test_latest_object_scientific_result_retrieval(tmp_path: Path) -> None:
     assert response.json()["result_id"] == stored.result_id
 
 
+def test_latest_object_scientific_result_missing_is_stable_not_found(tmp_path: Path) -> None:
+    settings = ApiSettings(result_store_path=tmp_path / "results.sqlite3")
+    client = TestClient(create_app(settings))
+
+    response = client.get("/v1/objects/ZTF17missing/results/latest?survey=ztf")
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "scientific_result_not_found"
+
+
 def test_scientific_result_id_retrieval_has_stable_not_found_error(
     tmp_path: Path,
 ) -> None:
