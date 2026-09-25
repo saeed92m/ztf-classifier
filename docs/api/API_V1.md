@@ -2,6 +2,8 @@
 
 ## Scope
 
+This contract is part of the v1 Web/API foundation milestone.
+
 The API is the HTTP adapter around the existing application inference service. It does not own scientific inference logic, model artifact loading rules, feature semantics, or provenance construction.
 
 ## Server configuration
