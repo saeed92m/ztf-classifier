@@ -139,3 +139,5 @@ class AnalysisJobResponse(BaseModel):
     updated_at: str
     result: dict[str, Any] | None = None
     error: dict[str, Any] | None = None
+    lease_expires_at: str | None = None
+    scientific_result_id: str | None = None
