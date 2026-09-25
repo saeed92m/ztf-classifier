@@ -331,7 +331,15 @@ class FakeAnalysisService:
 
 def test_object_analysis_contract_uses_shared_executor(tmp_path: Path) -> None:
     class FakeExecutor:
-        def execute(\n            self,\n            *,\n            oid: str,\n            survey: str,\n            model_version: str | None,\n            feature_backend: str = "native",\n            feature_parameters: dict | None = None,\n        ):
+        def execute(
+            self,
+            *,
+            oid: str,
+            survey: str,
+            model_version: str | None,
+            feature_backend: str = "native",
+            feature_parameters: dict | None = None,
+        ):
             assert oid == "ZTF17test"
             assert survey == "ztf"
             assert model_version is None
