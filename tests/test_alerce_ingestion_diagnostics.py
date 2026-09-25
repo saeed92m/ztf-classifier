@@ -21,15 +21,22 @@ def _row(**overrides):
 
 
 def test_alerce_diagnostics_count_invalid_rows_and_fallbacks() -> None:
-    detections = pd.DataFrame([
-        _row(),
-        _row(mjd=-1),
-        _row(fid=9),
-        _row(magpsf_corr=None, sigmapsf_corr_ext=None),
-        _row(magpsf_corr=None, sigmapsf_corr_ext=None, magpsf=20.2, sigmapsf=0.2),
-        _row(ra=400),
-        _row(),
-    ])
+    detections = pd.DataFrame(
+        [
+            _row(),
+            _row(mjd=-1),
+            _row(fid=9),
+            _row(magpsf_corr=None, sigmapsf_corr_ext=None),
+            _row(
+                magpsf_corr=None,
+                sigmapsf_corr_ext=None,
+                magpsf=20.2,
+                sigmapsf=0.2,
+            ),
+            _row(ra=400),
+            _row(),
+        ]
+    )
     output, diagnostics = alerce_to_internal_lc_robust(
         detections,
         return_diagnostics=True,
