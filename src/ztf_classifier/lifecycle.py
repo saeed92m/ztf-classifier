@@ -86,9 +86,7 @@ def validate_cycle_record(record: dict[str, Any]) -> list[str]:
         errors.append("previous_knowledge_consumed must be a list")
 
     expected = record.get("expected_improvement")
-    if expected is not None and (
-        not isinstance(expected, list) or not expected
-    ):
+    if expected is not None and (not isinstance(expected, list) or not expected):
         errors.append("expected_improvement must be a non-empty list")
 
     carried = record.get("knowledge_carried_forward")
@@ -183,7 +181,9 @@ def validate_cycle_file(path: str | Path) -> None:
 
 
 def _main() -> int:
-    parser = argparse.ArgumentParser(description="Validate cumulative lifecycle records")
+    parser = argparse.ArgumentParser(
+        description="Validate cumulative lifecycle records"
+    )
     parser.add_argument("command", choices=("validate",))
     parser.add_argument("paths", nargs="+")
     args = parser.parse_args()
