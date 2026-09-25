@@ -22,6 +22,8 @@ class JobRecord:
     status: str
     created_at: str
     updated_at: str
+    feature_backend: str = "native"
+    feature_parameters: dict | None = None
     result: dict | None = None
     error: dict | None = None
     lease_expires_at: str | None = None
@@ -34,6 +36,8 @@ class JobRecord:
             "oid": self.oid,
             "survey": self.survey,
             "model_version": self.model_version,
+            "feature_backend": self.feature_backend,
+            "feature_parameters": self.feature_parameters,
             "status": self.status,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
@@ -62,6 +66,8 @@ class JobStore:
                     oid TEXT NOT NULL,
                     survey TEXT NOT NULL,
                     model_version TEXT,
+                    feature_backend TEXT NOT NULL DEFAULT 'native',
+                    feature_parameters_json TEXT,
                     status TEXT NOT NULL,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
@@ -78,6 +84,14 @@ class JobStore:
             if "lease_expires_at" not in columns:
                 connection.execute(
                     "ALTER TABLE analysis_jobs ADD COLUMN lease_expires_at TEXT"
+                )
+            if "feature_backend" not in columns:
+                connection.execute(
+                    "ALTER TABLE analysis_jobs ADD COLUMN feature_backend TEXT NOT NULL DEFAULT 'native'"
+                )
+            if "feature_parameters_json" not in columns:
+                connection.execute(
+                    "ALTER TABLE analysis_jobs ADD COLUMN feature_parameters_json TEXT"
                 )
             if "scientific_result_id" not in columns:
                 connection.execute(
@@ -100,14 +114,22 @@ class JobStore:
         oid: str,
         survey: str,
         model_version: str | None,
+        feature_backend: str = "native",
+        feature_parameters: dict | None = None,
     ) -> JobRecord:
         """Create a queued job."""
+        if not feature_backend:
+            raise ValueError("feature_backend is required")
+        if feature_parameters is not None and not isinstance(feature_parameters, dict):
+            raise TypeError("feature_parameters must be a dictionary")
         now = self._now()
         record = JobRecord(
             job_id=str(uuid4()),
             oid=oid,
             survey=survey,
             model_version=model_version,
+            feature_backend=feature_backend,
+            feature_parameters=feature_parameters,
             status="queued",
             created_at=now,
             updated_at=now,
@@ -116,14 +138,19 @@ class JobStore:
             connection.execute(
                 """
                 INSERT INTO analysis_jobs
-                (job_id, oid, survey, model_version, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                (job_id, oid, survey, model_version, feature_backend, feature_parameters_json,
+                 status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     record.job_id,
                     record.oid,
                     record.survey,
                     record.model_version,
+                    record.feature_backend,
+                    json.dumps(record.feature_parameters)
+                    if record.feature_parameters is not None
+                    else None,
                     record.status,
                     record.created_at,
                     record.updated_at,
@@ -147,9 +174,9 @@ class JobStore:
             raise ValueError(f"Unsupported job status: {status}")
 
         query = """
-            SELECT job_id, oid, survey, model_version, status,
-                   created_at, updated_at, result_json, error_json,
-                   lease_expires_at, scientific_result_id
+            SELECT job_id, oid, survey, model_version, feature_backend,
+                   feature_parameters_json, status, created_at, updated_at, result_json,
+                   error_json, lease_expires_at, scientific_result_id
             FROM analysis_jobs
         """
         parameters: list[str | int] = []
@@ -166,13 +193,15 @@ class JobStore:
                 oid=row[1],
                 survey=row[2],
                 model_version=row[3],
-                status=row[4],
-                created_at=row[5],
-                updated_at=row[6],
-                result=json.loads(row[7]) if row[7] else None,
-                error=json.loads(row[8]) if row[8] else None,
-                lease_expires_at=row[9],
-                scientific_result_id=row[10],
+                feature_backend=row[4] or "native",
+                feature_parameters=json.loads(row[5]) if row[5] else None,
+                status=row[6],
+                created_at=row[7],
+                updated_at=row[8],
+                result=json.loads(row[9]) if row[9] else None,
+                error=json.loads(row[10]) if row[10] else None,
+                lease_expires_at=row[11],
+                scientific_result_id=row[12],
             )
             for row in rows
         ]
@@ -182,9 +211,9 @@ class JobStore:
         with sqlite3.connect(self.path) as connection:
             row = connection.execute(
                 """
-                SELECT job_id, oid, survey, model_version, status,
-                       created_at, updated_at, result_json, error_json, lease_expires_at,
-                       scientific_result_id
+                SELECT job_id, oid, survey, model_version, feature_backend,
+                       feature_parameters_json, status, created_at, updated_at, result_json,
+                       error_json, lease_expires_at, scientific_result_id
                 FROM analysis_jobs WHERE job_id = ?
                 """,
                 (job_id,),
@@ -196,13 +225,15 @@ class JobStore:
             oid=row[1],
             survey=row[2],
             model_version=row[3],
-            status=row[4],
-            created_at=row[5],
-            updated_at=row[6],
-            result=json.loads(row[7]) if row[7] else None,
-            error=json.loads(row[8]) if row[8] else None,
-            lease_expires_at=row[9],
-            scientific_result_id=row[10],
+            feature_backend=row[4] or "native",
+            feature_parameters=json.loads(row[5]) if row[5] else None,
+            status=row[6],
+            created_at=row[7],
+            updated_at=row[8],
+            result=json.loads(row[9]) if row[9] else None,
+            error=json.loads(row[10]) if row[10] else None,
+            lease_expires_at=row[11],
+            scientific_result_id=row[12],
         )
 
     def requeue_expired(self) -> int:
