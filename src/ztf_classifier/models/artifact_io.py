@@ -6,8 +6,8 @@ import hashlib
 import json
 import shutil
 import warnings
-from datetime import datetime, timezone
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +15,6 @@ import numpy as np
 import pandas as pd
 
 from ztf_classifier.models.artifact import ModelArtifact
-from ztf_classifier.reproducibility.checksums import sha256_file
 from ztf_classifier.models.calibration_artifact import CalibrationArtifact
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.conformal_artifact import ConformalArtifact
@@ -23,6 +22,7 @@ from ztf_classifier.models.contracts import ModelContract
 from ztf_classifier.models.ood_artifact import OODArtifact
 from ztf_classifier.models.ood_production import OODProductionModel
 from ztf_classifier.models.provenance import ModelProvenance
+from ztf_classifier.reproducibility.checksums import sha256_file
 
 ARTIFACT_SCHEMA_VERSION = "1.1"
 LEGACY_ARTIFACT_SCHEMA_VERSION = "1.0"
@@ -326,7 +326,7 @@ class ModelArtifactWriter:
             "training_dataset_sha256": artifact.dataset_sha256,
             "feature_schema_sha256": artifact.feature_schema_sha256,
             "git_commit": provenance.git_commit,
-            "created_at_utc": datetime.now(timezone.utc).isoformat(),
+            "created_at_utc": datetime.now(UTC).isoformat(),
             "python_version": provenance.python_version,
             "platform": provenance.platform,
             "feature_schema_source_sha256": source_schema_hash,
