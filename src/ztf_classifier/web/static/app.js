@@ -68,8 +68,31 @@ async function fetchJson(url, options) {
   if (!response.ok) { const error = new Error("HTTP " + response.status); error.status = response.status; throw error; }
   return response.json();
 }
+function clearPrediction() {
+  document.getElementById("predictedClass").textContent = "—";
+  document.getElementById("topProbability").textContent = "—";
+  document.getElementById("conformalSet").textContent = "—";
+  document.getElementById("oodPercentile").textContent = "—";
+  document.getElementById("probabilityList").innerHTML =
+    '<div class="muted">No durable scientific result loaded.</div>';
+  document.getElementById("featureSchema").textContent = "—";
+  document.getElementById("modelValue").textContent = "—";
+  document.getElementById("calibrationValue").textContent = "—";
+  document.getElementById("oodValue").textContent = "—";
+  document.getElementById("provenanceValue").textContent = "—";
+  document.getElementById("calibrationState").textContent = "—";
+  document.getElementById("conformalState").textContent = "—";
+  document.getElementById("oodState").textContent = "—";
+  document.getElementById("datasetProvenance").textContent = "—";
+  document.getElementById("modelProvenance").textContent = "—";
+  document.getElementById("schemaProvenance").textContent = "—";
+}
+
 function renderPrediction(prediction) {
-  if (!prediction) return;
+  if (!prediction) {
+    clearPrediction();
+    return;
+  }
   const probabilities = Object.entries(prediction.probabilities || {}).sort((a, b) => b[1] - a[1]);
   const top = probabilities[0];
   document.getElementById("predictedClass").textContent = prediction.predicted_class || "—";
