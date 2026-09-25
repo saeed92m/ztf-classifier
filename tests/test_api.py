@@ -91,7 +91,7 @@ def _make_registry(tmp_path: Path) -> None:
           "model_version": "baseline_v0.2",
           "model_family": "XGBoost",
           "feature_schema_version": "v0.2",
-          "classes": ["AGN", "CEP", "DSCT", "EB", "LPV", "Periodic-Other", "QSO", "RR", "SLSN", "SNII", "SNIa", "SNIbc", "TDE", "CV/Nova", "YSO"],
+          "classes": ["AGN", "Blazar", "CEP", "CV/Nova", "DSCT", "E", "LPV", "Periodic-Other", "QSO", "RRL", "SLSN", "SNII", "SNIa", "SNIbc", "YSO"],
           "feature_count": 42,
           "dataset_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "feature_schema_source_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
