@@ -524,3 +524,55 @@ def test_scientific_result_id_retrieval_has_stable_not_found_error(
 
     assert response.status_code == 404
     assert response.json()["code"] == "scientific_result_not_found"
+
+
+def test_scientific_catalog_query_and_csv_export(tmp_path: Path) -> None:
+    from ztf_classifier.jobs import JobStore
+    from ztf_classifier.results import ScientificResultStore
+
+    settings = ApiSettings(
+        job_store_path=tmp_path / "jobs.sqlite3",
+        result_store_path=tmp_path / "results.sqlite3",
+    )
+    job_store = JobStore(settings.job_store_path)
+    result_store = ScientificResultStore(settings.result_store_path)
+    job = job_store.create(
+        oid="ZTF17catalog",
+        survey="ztf",
+        model_version="baseline_v0.2",
+    )
+    result_store.save(
+        job_id=job.job_id,
+        oid=job.oid,
+        survey=job.survey,
+        model_version="baseline_v0.2",
+        payload={"schema_version": "1.0", "prediction": {"predicted_class": "AGN"}},
+    )
+
+    client = TestClient(create_app(settings))
+    response = client.get(
+        "/v1/catalog/results",
+        params={"survey": "ztf", "model_version": "baseline_v0.2"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 1
+    assert body["items"][0]["oid"] == "ZTF17catalog"
+    assert body["has_next"] is False
+
+    exported = client.get("/v1/catalog/results.csv", params={"survey": "ztf"})
+    assert exported.status_code == 200
+    assert exported.headers["content-type"].startswith("text/csv")
+    assert "ZTF17catalog" in exported.text
+    assert "attachment; filename=" in exported.headers["content-disposition"]
+
+
+def test_scientific_catalog_rejects_invalid_limit(tmp_path: Path) -> None:
+    settings = ApiSettings(result_store_path=tmp_path / "results.sqlite3")
+    client = TestClient(create_app(settings))
+
+    response = client.get("/v1/catalog/results", params={"limit": 1001})
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "request_validation_failed"
