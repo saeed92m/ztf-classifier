@@ -123,6 +123,5 @@ def write_release_gate_report(
     result = evaluate_release_gate(registry_dir, evidence_dir)
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(result, indent=2, sort_keys=True) + "
-", encoding="utf-8")
+    path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return result
