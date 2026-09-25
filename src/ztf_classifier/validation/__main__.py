@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.runner import run_table_benchmark
