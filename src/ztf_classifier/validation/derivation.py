@@ -12,6 +12,8 @@ from itertools import chain
 from pathlib import Path
 from typing import Iterable, Iterator
 
+from ztf_classifier.validation.evidence import EvidenceArtifact, write_evidence_manifest
+
 
 @dataclass(frozen=True)
 class DerivationConfig:
@@ -140,6 +142,8 @@ def derive_730k(
     r_member: str | None = None,
     expected_parent_rows: int = 781_602,
     expected_selected_rows: int = 730_184,
+    parent_evidence_sha256: str | None = None,
+    code_version: str = "working-tree",
 ) -> DerivationResult:
     """Derive the published subset from the pinned parent and source lightcurves."""
     config.validate()
@@ -164,6 +168,20 @@ def derive_730k(
             digest.update(encoded)
 
     result = DerivationResult(len(parent_ids), len(selected), digest.hexdigest(), output, config)
+    if parent_evidence_sha256 is None:
+        raise ValueError("parent_evidence_sha256 is required to emit scientific 730k evidence")
+    selection_manifest = json.dumps(result.to_dict()["selection"], sort_keys=True, separators=(",", ":")).encode("utf-8")
+    import hashlib as _hashlib
+    write_evidence_manifest(
+        output.with_name(output.name + ".evidence.json"),
+        benchmark_id="ztf_periodic_730k",
+        source_id="ztf_periodic_730k",
+        acquisition_timestamp=__import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        code_version=code_version,
+        artifacts=(EvidenceArtifact.from_path(output, "derived_benchmark_snapshot"),),
+        parent_evidence_sha256=parent_evidence_sha256,
+        query_manifest_sha256=_hashlib.sha256(selection_manifest).hexdigest(),
+    )
     output.with_name(output.name + ".derivation.json").write_text(
         json.dumps(result.to_dict(), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
