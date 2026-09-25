@@ -44,14 +44,19 @@ def test_cycle_requires_knowledge_extraction():
 def test_cycle_requires_measurement_evidence_shape():
     record = valid_record()
     record["measurement"]["metrics"]["runtime"] = {"before": 10}
-    assert any("runtime needs before/after" in error for error in validate_cycle_record(record))
+    assert any(
+        "runtime needs before/after" in error for error in validate_cycle_record(record)
+    )
 
 
 def test_scientific_cycle_requires_validation_evidence_or_blocker():
     record = valid_record()
     record["validation"] = {"scientific_gate_affected": True}
     errors = validate_cycle_record(record)
-    assert any("scientific-gate changes require validation evidence" in error for error in errors)
+    assert any(
+        "scientific-gate changes require validation evidence" in error
+        for error in errors
+    )
 
 
 def test_accepted_cycle_cannot_hide_regression():
