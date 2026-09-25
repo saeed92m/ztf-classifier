@@ -1,7 +1,7 @@
 # Final Platform Acceptance Evidence
 
 Date: 2026-09-25
-Main commit audited: 43f4082369e0f2f0bd6614668ca99bff90818a1c
+Main commit audited: ce36c5ddd2f86776b3d0b2abdda5b5f93efeb4b4
 Software version: 0.4.0
 Scientific baseline: v0.2.0
 Production model: baseline_v0.2
@@ -14,9 +14,9 @@ not convert unavailable data-dependent validation into a success claim.
 
 ## Current CI evidence
 
-The pre-merge validation for the diagnostics hardening passed before merge. Post-merge CI and CodeQL validation for audited commit `43f4082369e0f2f0bd6614668ca99bff90818a1c` is currently running; its final test count and gate conclusions are not asserted here until those runs complete.
+The audited commit is `ce36c5ddd2f86776b3d0b2abdda5b5f93efeb4b4`, which is the current `main` after PR #57. The current main CI and CodeQL runs are the authoritative post-merge evidence; this report does not freeze an older in-progress status.
 
-The repository has no open pull requests after the diagnostics hardening merge.
+The repository has no open pull requests after the scientific-validation gate documentation merge.
 
 ## Acceptance matrix
 
@@ -90,6 +90,10 @@ The package metadata is already at 0.4.0 and the release workflow is tag-driven.
 A release tag should only be created after the remaining data-dependent
 validation requirements are deliberately accepted or executed with the required
 raw/source environment.
+
+## Scientific-validation gate documentation merged
+
+PR #57 establishes the mandatory scientific-validation gate on current `main`, including the continuity handbook update, benchmark contract, and acceptance-gate documentation. It does not mark the external-data gate as passed.
 
 ## Diagnostics hardening merged
 
