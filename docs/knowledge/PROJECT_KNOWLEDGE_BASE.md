@@ -21,6 +21,8 @@ Every implementation cycle consumes validated prior knowledge, records its inher
 - Generic leakage checks that cannot be established are NOT_EXECUTED and block scientific acceptance. — VERIFIED
 - Historical ALeRCE raw-cache reproduction is currently blocked by external-data drift; frozen assertions must not be weakened. — VERIFIED / UNRESOLVED for completion
 - Meaningful PRs must carry a validated machine-readable cumulative cycle record; CI must reject changes that bypass this evidence. — VERIFIED
+- The cumulative lifecycle gate itself must be validated as executable CI infrastructure; shell expansion and lifecycle-state errors are process regressions, not reasons to bypass the gate. — VERIFIED (AD-CI-008)
+- A lifecycle cycle record may remain BLOCKED during review, but an accepted merged cycle must end with regression PASS and no open blockers. — VERIFIED (AD-CI-008)
 
 ## Addition rule
 
