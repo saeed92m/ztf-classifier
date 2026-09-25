@@ -50,8 +50,41 @@ class ScientificFeatureEngine:
     """Dispatch scientific feature extraction through versioned backends."""
 
     def __init__(self, backends: list[FeatureBackend] | None = None) -> None:
-        registered = backends or [NativeV0_2Backend()]
-        self._backends = {backend.name: backend for backend in registered}
+        self._backends: dict[str, FeatureBackend] = {}
+        for backend in backends or [NativeV0_2Backend()]:
+            self.register_backend(backend)
+
+    def register_backend(self, backend: FeatureBackend, *, replace: bool = False) -> None:
+        """Register a backend with explicit collision semantics."""
+        name = str(getattr(backend, "name", "")).strip()
+        schema_version = str(getattr(backend, "feature_schema_version", "")).strip()
+        software_version = str(getattr(backend, "software_version", "")).strip()
+        if not name or not schema_version or not software_version:
+            raise ValueError(
+                "feature backends require name, software_version, and "
+                "feature_schema_version"
+            )
+        if not callable(getattr(backend, "extract", None)):
+            raise TypeError("feature backend must provide a callable extract method")
+        if name in self._backends and not replace:
+            raise ValueError(f"Feature backend already registered: {name}")
+        self._backends[name] = backend
+
+    def get_backend(self, name: str) -> FeatureBackend:
+        """Return one registered backend or raise a stable lookup error."""
+        try:
+            return self._backends[name]
+        except KeyError as exc:
+            raise KeyError(f"Unknown feature backend: {name}") from exc
+
+    def backend_metadata(self, name: str) -> dict[str, str]:
+        """Return versioned backend metadata for UI/API discovery."""
+        backend = self.get_backend(name)
+        return {
+            "name": backend.name,
+            "software_version": backend.software_version,
+            "feature_schema_version": backend.feature_schema_version,
+        }
 
     def list_backends(self) -> tuple[str, ...]:
         """Return deterministic registered backend names."""
