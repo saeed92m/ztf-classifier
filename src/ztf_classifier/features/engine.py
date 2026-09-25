@@ -54,7 +54,9 @@ class ScientificFeatureEngine:
         for backend in backends or [NativeV0_2Backend()]:
             self.register_backend(backend)
 
-    def register_backend(self, backend: FeatureBackend, *, replace: bool = False) -> None:
+    def register_backend(
+        self, backend: FeatureBackend, *, replace: bool = False
+    ) -> None:
         """Register a backend with explicit collision semantics."""
         name = str(getattr(backend, "name", "")).strip()
         schema_version = str(getattr(backend, "feature_schema_version", "")).strip()
