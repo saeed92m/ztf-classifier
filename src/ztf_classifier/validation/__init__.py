@@ -30,3 +30,5 @@ __all__ = [
 
 # Source-backed acquisition API is exported from ztf_classifier.validation.acquisition.
 from ztf_classifier.validation.acquisition import AcquisitionRequest, AcquisitionResult, acquire_all, acquire_source
+
+from ztf_classifier.validation.acquisition import request_from_benchmark
