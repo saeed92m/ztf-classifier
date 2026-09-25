@@ -632,3 +632,29 @@ def test_object_analysis_rejects_unknown_feature_backend(tmp_path: Path) -> None
 
     assert response.status_code == 404
     assert response.json()["code"] == "feature_backend_not_found"
+
+
+def test_optional_api_key_protects_versioned_endpoints(tmp_path: Path) -> None:
+    settings = ApiSettings(api_key="secret-key", result_store_path=tmp_path / "results.sqlite3")
+    client = TestClient(create_app(settings))
+
+    unauthorized = client.get("/v1/results/missing", headers={"X-Request-ID": "req-1"})
+    assert unauthorized.status_code == 401
+    assert unauthorized.json()["code"] == "authentication_required"
+    assert unauthorized.headers["X-Request-ID"] == "req-1"
+
+    authorized = client.get(
+        "/v1/results/missing",
+        headers={"Authorization": "Bearer secret-key"},
+    )
+    assert authorized.status_code == 404
+    assert authorized.json()["code"] == "scientific_result_not_found"
+
+
+def test_health_remains_public_when_api_key_is_configured() -> None:
+    client = TestClient(create_app(ApiSettings(api_key="secret-key")))
+
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.headers["X-Request-ID"]
