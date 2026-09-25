@@ -644,7 +644,9 @@ def create_app(
         return Response(
             content=catalog.export_csv(page),
             media_type="text/csv",
-            headers={"Content-Disposition": 'attachment; filename="scientific-catalog.csv"'},
+            headers={
+                "Content-Disposition": 'attachment; filename="scientific-catalog.csv"'
+            },
         )
 
     @app.get(
