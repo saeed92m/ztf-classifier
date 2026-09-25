@@ -405,3 +405,69 @@ def test_persistent_analysis_job_lifecycle(tmp_path: Path) -> None:
     missing = client.get("/v1/jobs/not-found")
     assert missing.status_code == 404
     assert missing.json()["code"] == "job_not_found"
+
+
+def test_analysis_job_result_uses_canonical_scientific_contract(tmp_path: Path) -> None:
+    from ztf_classifier.jobs.store import JobStore
+
+    store_path = tmp_path / "jobs.sqlite3"
+    client = TestClient(create_app(ApiSettings(job_store_path=store_path)))
+    submitted = client.post(
+        "/v1/objects/ZTF17result/jobs",
+        json={"survey": "ztf", "model_version": "baseline_v0.2"},
+    )
+    job_id = submitted.json()["job_id"]
+
+    JobStore(store_path).transition(
+        job_id,
+        status="succeeded",
+        result={
+            "schema_version": "1.0",
+            "oid": "ZTF17result",
+            "survey": "ztf",
+            "observation_count": 1,
+            "observations": [{"mjd": 60000.5}],
+            "features": {"feature_1": 1.0},
+            "feature_schema_version": "v0.2",
+            "feature_provenance": {"backend": "native"},
+            "prediction": {
+                "oid": "ZTF17result",
+                "predicted_class": "AGN",
+                "predicted_class_index": 0,
+                "probabilities": {"AGN": 1.0},
+                "conformal": [],
+                "ood": None,
+            },
+            "model_version": "baseline_v0.2",
+            "model_family": "XGBoost",
+            "diagnostics": {
+                "calibration": "available",
+                "conformal": "unavailable",
+                "ood": "unavailable",
+            },
+            "model_provenance": {},
+            "observation_provenance": {},
+            "warnings": [],
+        },
+    )
+
+    response = client.get(f"/v1/jobs/{job_id}/result")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["schema_version"] == "1.0"
+    assert payload["oid"] == "ZTF17result"
+    assert payload["prediction"]["predicted_class"] == "AGN"
+
+
+def test_analysis_job_result_rejects_incomplete_jobs(tmp_path: Path) -> None:
+    client = TestClient(create_app(ApiSettings(job_store_path=tmp_path / "jobs.sqlite3")))
+    submitted = client.post(
+        "/v1/objects/ZTF17pending/jobs",
+        json={"survey": "ztf"},
+    )
+    job_id = submitted.json()["job_id"]
+
+    response = client.get(f"/v1/jobs/{job_id}/result")
+    assert response.status_code == 409
+    assert response.json()["code"] == "job_result_not_ready"
+    assert response.json()["details"] == [{"status": "queued"}]
