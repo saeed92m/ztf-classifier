@@ -30,3 +30,11 @@ def test_workbench_appearance_modes_are_present() -> None:
     assert 'value="deep-space"' in response.text
     assert 'value="alpha"' in response.text
     assert 'value="light"' in response.text
+
+
+def test_workbench_light_curve_uses_observation_api() -> None:
+    client = TestClient(create_app())
+    response = client.get("/workbench/app.js")
+    assert response.status_code == 200
+    assert "/v1/objects/" in response.text
+    assert "/observations?survey=ztf" in response.text
