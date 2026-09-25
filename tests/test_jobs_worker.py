@@ -77,3 +77,39 @@ def test_worker_leaves_unexpected_errors_visible(tmp_path: Path) -> None:
         AnalysisJobWorker(store, execute).run_once()
 
     assert store.get(job.job_id).status == "running"
+
+
+def test_expired_running_job_is_requeued(tmp_path) -> None:
+    store = JobStore(tmp_path / "jobs.sqlite3")
+    record = store.create(oid="ZTF17lease", survey="ztf", model_version=None)
+    running = store.claim_next(lease_seconds=1)
+    assert running is not None
+    import sqlite3
+
+    with sqlite3.connect(store.path) as connection:
+        connection.execute(
+            "UPDATE analysis_jobs SET lease_expires_at = ? WHERE job_id = ?",
+            ("2000-01-01T00:00:00+00:00", record.job_id),
+        )
+
+    assert store.requeue_expired() == 1
+    requeued = store.get(record.job_id)
+    assert requeued.status == "queued"
+    assert requeued.lease_expires_at is None
+
+
+def test_claim_assigns_lease_and_transition_clears_it(tmp_path) -> None:
+    store = JobStore(tmp_path / "jobs.sqlite3")
+    store.create(oid="ZTF17lease2", survey="ztf", model_version=None)
+
+    running = store.claim_next(lease_seconds=60)
+    assert running is not None
+    assert running.lease_expires_at is not None
+
+    completed = store.transition(
+        running.job_id,
+        status="succeeded",
+        result={"ok": True},
+    )
+    assert completed.status == "succeeded"
+    assert completed.lease_expires_at is None
