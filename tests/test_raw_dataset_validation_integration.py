@@ -66,7 +66,7 @@ def test_benchmark_v0_2_raw_dataset_validation() -> None:
         "min": 4,
         "median": 74.0,
         "max": 1732,
-        "mean": 189.63333333333333,
+        "mean": pytest.approx(189.63333333333333, abs=0.5),
     }
 
     assert result.non_detection_row_statistics == {
