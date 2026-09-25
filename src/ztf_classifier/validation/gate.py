@@ -17,13 +17,18 @@ REQUIRED_BENCHMARKS = (
     "alerce_reference",
 )
 
-REQUIRED_LEAKAGE_CHECKS = (
+REQUIRED_SCIENTIFIC_CHECKS = (
     "object_overlap",
     "duplicate_objects",
     "target_leakage",
     "future_data_leakage",
     "benchmark_trained_artifacts",
     "preprocessing_consistency",
+    "schema_compatibility",
+    "feature_generation_determinism",
+    "qc_acceptance",
+    "inference_reproducibility",
+    "failure_code_correctness",
 )
 
 
@@ -60,11 +65,14 @@ def evaluate_release_gate(
                 manifest_blockers.append(
                     f"benchmark status is {report.get('status', 'UNKNOWN')}"
                 )
-            leakage = report.get("leakage", {})
-            for check in REQUIRED_LEAKAGE_CHECKS:
-                if leakage.get(check) != "PASS":
+            checks = report.get("checks", report.get("leakage", {}))
+            if not isinstance(checks, dict):
+                manifest_blockers.append("scientific checks are missing or invalid")
+                checks = {}
+            for check in REQUIRED_SCIENTIFIC_CHECKS:
+                if checks.get(check) != "PASS":
                     manifest_blockers.append(
-                        f"leakage check {check} is {leakage.get(check, 'NOT_EXECUTED')}"
+                        f"scientific check {check} is {checks.get(check, 'NOT_EXECUTED')}"
                     )
             if not report.get("provenance_complete", False):
                 manifest_blockers.append("provenance is incomplete")
@@ -85,6 +93,7 @@ def evaluate_release_gate(
     return {
         "status": status,
         "release_blocking": True,
+        "required_checks": list(REQUIRED_SCIENTIFIC_CHECKS),
         "benchmarks": benchmarks,
         "blockers": blockers,
         "interpretation": (
@@ -101,10 +110,10 @@ def _manifest_blockers(manifest: BenchmarkManifest) -> list[str]:
         blockers.append("source/object hashes are not recorded")
     if not manifest.file_object_ids and manifest.evaluation_role != "reference_system":
         blockers.append("benchmark object/file identifiers are not pinned")
-    missing_checks = set(REQUIRED_LEAKAGE_CHECKS) - set(manifest.required_leakage_checks)
+    missing_checks = set(REQUIRED_SCIENTIFIC_CHECKS) - set(manifest.required_leakage_checks)
     if missing_checks:
         blockers.append(
-            "manifest omits required leakage checks: " + ", ".join(sorted(missing_checks))
+            "manifest omits required scientific checks: " + ", ".join(sorted(missing_checks))
         )
     if manifest.evaluation_role == "ground_truth" and not manifest.ground_truth_provenance:
         blockers.append("ground-truth provenance is missing")
