@@ -515,7 +515,9 @@ def test_latest_object_scientific_result_retrieval(tmp_path: Path) -> None:
     assert response.json()["result_id"] == stored.result_id
 
 
-def test_latest_object_scientific_result_missing_is_stable_not_found(tmp_path: Path) -> None:
+def test_latest_object_scientific_result_missing_is_stable_not_found(
+    tmp_path: Path,
+) -> None:
     settings = ApiSettings(result_store_path=tmp_path / "results.sqlite3")
     client = TestClient(create_app(settings))
 
