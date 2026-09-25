@@ -19,11 +19,11 @@ class JobRecord:
     oid: str
     survey: str
     model_version: str | None
-    feature_backend: str = "native"
-    feature_parameters: dict | None = None
     status: str
     created_at: str
     updated_at: str
+    feature_backend: str = "native"
+    feature_parameters: dict | None = None
     result: dict | None = None
     error: dict | None = None
     lease_expires_at: str | None = None
@@ -189,13 +189,15 @@ class JobStore:
                 oid=row[1],
                 survey=row[2],
                 model_version=row[3],
-                status=row[4],
-                created_at=row[5],
-                updated_at=row[6],
-                result=json.loads(row[7]) if row[7] else None,
-                error=json.loads(row[8]) if row[8] else None,
-                lease_expires_at=row[9],
-                scientific_result_id=row[10],
+                feature_backend=row[4] or "native",
+                feature_parameters=json.loads(row[5]) if row[5] else None,
+                status=row[6],
+                created_at=row[7],
+                updated_at=row[8],
+                result=json.loads(row[9]) if row[9] else None,
+                error=json.loads(row[10]) if row[10] else None,
+                lease_expires_at=row[11],
+                scientific_result_id=row[12],
             )
             for row in rows
         ]
