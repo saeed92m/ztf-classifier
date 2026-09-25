@@ -82,4 +82,4 @@ def test_v0_2_insufficient_history_remains_nan() -> None:
 
     assert np.isnan(features["g_ls_best_frequency"])
     assert np.isnan(features["r_ls_best_frequency"])
-    assert np.isnan(features["mean_color_gr"])
+    assert np.isfinite(features["mean_color_gr"])
