@@ -113,7 +113,9 @@ class SourceBackedAnalysisExecutor:
             else result.raw_probabilities
         )
         if probabilities is None:
-            raise AnalysisJobExecutionError("Prediction result contains no probabilities.")
+            raise AnalysisJobExecutionError(
+                "Prediction result contains no probabilities."
+            )
 
         prediction: dict[str, Any] = {
             "predicted_class": result.top1_labels[0],
