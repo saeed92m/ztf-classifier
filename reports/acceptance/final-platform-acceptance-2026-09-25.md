@@ -1,7 +1,7 @@
 # Final Platform Acceptance Evidence
 
 Date: 2026-09-25
-Main commit audited: b9cdbe7071e66d1a1919b54be5ee6b7f00d3df03
+Main commit audited: 43f4082369e0f2f0bd6614668ca99bff90818a1c
 Software version: 0.4.0
 Scientific baseline: v0.2.0
 Production model: baseline_v0.2
@@ -14,19 +14,9 @@ not convert unavailable data-dependent validation into a success claim.
 
 ## Current CI evidence
 
-The latest merged `main` CI run for the audited commit completed successfully:
+The pre-merge validation for the diagnostics hardening passed before merge. Post-merge CI and CodeQL validation for audited commit `43f4082369e0f2f0bd6614668ca99bff90818a1c` is currently running; its final test count and gate conclusions are not asserted here until those runs complete.
 
-- Ruff lint: PASS
-- Ruff format check: PASS
-- pytest: PASS — 437 passed, 4 skipped, 7 warnings
-- package build: PASS
-- wheel installation: PASS
-- pip check: PASS
-- package import: PASS
-- pip-audit/dependency audit: PASS
-- CodeQL: PASS
-
-The repository has no open pull requests at the time of this audit.
+The repository has no open pull requests after the diagnostics hardening merge.
 
 ## Acceptance matrix
 
@@ -100,6 +90,10 @@ The package metadata is already at 0.4.0 and the release workflow is tag-driven.
 A release tag should only be created after the remaining data-dependent
 validation requirements are deliberately accepted or executed with the required
 raw/source environment.
+
+## Diagnostics hardening merged
+
+PR #54 (`fix: decouple production diagnostic artifacts`) is merged into `main`. It makes calibration, conformal, and OOD artifacts independently loadable/persistable under schema 1.1, preserves the persisted artifact schema version in inference results, and keeps explicit status reporting for unavailable diagnostics. The acceptance boundary remains unchanged: external raw-cache reproduction is still data-dependent and is not weakened.
 
 ## Decision rule
 
