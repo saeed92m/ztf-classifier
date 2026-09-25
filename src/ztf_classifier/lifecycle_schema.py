@@ -1,7 +1,7 @@
-"""Versioned JSON-schema-like contract for cumulative lifecycle records."""
+"""Versioned schema contract for cumulative lifecycle records."""
 
 LIFECYCLE_SCHEMA = {
-    "schema_version": "1.0",
+    "schema_version": "1.1",
     "required": [
         "stage_id",
         "objective",
@@ -48,4 +48,18 @@ LIFECYCLE_SCHEMA = {
         "feature_generation_time",
         "inference_time",
     ],
-}
+    "process_metrics": [
+        "lifecycle_contract_coverage",
+        "knowledge_artifact_count",
+        "regression_protection_count",
+        "audit_time",
+        "implementation_time",
+        "debugging_time",
+        "regression_fix_time",
+        "rework_count",
+        "repeated_failure_count",
+        "pr_cycle_time",
+        "test_execution_efficiency",
+    ],
+    "decisions": ["ACCEPT", "REVISE", "BLOCKED"],
+};
