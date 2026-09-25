@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "stage_id": "example-stage",
+  "objective": "Example cumulative improvement cycle",
+  "previous_knowledge_consumed": ["AD-CI-004"],
+  "baseline": {
+    "description": "State inherited from the previous accepted stage",
+    "revision": "main"
+  },
+  "expected_improvement": ["correctness"],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "NOT_MEASURED",
+        "after": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
+      }
+    },
+    "trade_off": "None measured"
+  },
+  "validation": {
+    "evidence": ["focused tests"],
+    "scientific_gate_affected": false
+  },
+  "failure_analysis": {
+    "status": "no-new-failure",
+    "root_causes": []
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": ["Example finding only; replace before use"]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": ["Example finding only; replace before use"]
+}
