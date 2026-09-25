@@ -39,12 +39,13 @@
     "trade_off": "CI strictness increases; scientific validation remains release-blocking and unchanged."
   },
   "validation": {
-    "status": "PENDING_CI",
+    "status": "BLOCKED",
     "evidence": [
       "Cumulative Lifecycle Gate validates every cycle record.",
       "Pull-request CI requires a cycle record for meaningful changes."
     ],
-    "scientific_gate_affected": false
+    "scientific_gate_affected": false,
+    "blocker": "CI validation is still in progress; merge remains blocked until all required checks pass."
   },
   "failure_analysis": {
     "status": "no-known-failure",
@@ -58,7 +59,7 @@
     ]
   },
   "regression": {
-    "status": "PENDING",
+    "status": "BLOCKED",
     "open_blockers": [
       "CI validation must pass before merge."
     ]

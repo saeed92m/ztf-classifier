@@ -86,9 +86,7 @@ def validate_cycle_record(record: dict[str, Any]) -> list[str]:
         errors.append("previous_knowledge_consumed must be a list")
 
     expected = record.get("expected_improvement")
-    if expected is not None and (
-        not isinstance(expected, list) or not expected
-    ):
+    if expected is not None and (not isinstance(expected, list) or not expected):
         errors.append("expected_improvement must be a non-empty list")
 
     carried = record.get("knowledge_carried_forward")
@@ -178,12 +176,14 @@ def validate_cycle_file(path: str | Path) -> None:
     file_path = Path(path)
     record = json.loads(file_path.read_text(encoding="utf-8"))
     if not isinstance(record, dict):
-        raise ValueError(f"{file_path}: lifecycle record must be a JSON object")
+        raise TypeError(f"{file_path}: lifecycle record must be a JSON object")
     assert_valid_cycle_record(record)
 
 
 def _main() -> int:
-    parser = argparse.ArgumentParser(description="Validate cumulative lifecycle records")
+    parser = argparse.ArgumentParser(
+        description="Validate cumulative lifecycle records"
+    )
     parser.add_argument("command", choices=("validate",))
     parser.add_argument("paths", nargs="+")
     args = parser.parse_args()

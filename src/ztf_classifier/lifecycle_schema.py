@@ -62,4 +62,4 @@ LIFECYCLE_SCHEMA = {
         "test_execution_efficiency",
     ],
     "decisions": ["ACCEPT", "REVISE", "BLOCKED"],
-};
+}
