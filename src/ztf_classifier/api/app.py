@@ -17,6 +17,8 @@ from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.api.schemas import (
     ErrorResponse,
     ModelResponse,
+    ObjectAnalysisRequest,
+    ObjectAnalysisResponse,
     ObjectObservationResponse,
     ObservationResponse,
     PredictionItem,
@@ -353,6 +355,81 @@ def create_app(
                 status_code=500,
             ) from exc
         return _serialize_prediction(dataset, result)
+
+    @app.post(
+        "/v1/objects/{oid}/analysis",
+        response_model=ObjectAnalysisResponse,
+        tags=["analysis"],
+    )
+    def object_analysis(
+        oid: str,
+        request: ObjectAnalysisRequest,
+    ) -> ObjectAnalysisResponse:
+        """Run source-backed observations through features and inference."""
+        try:
+            records, observation_provenance = observations.get_observations(
+                oid,
+                survey=request.survey,
+            )
+            if not records:
+                raise ValueError("No valid observations available.")
+            observation_frame = pd.DataFrame(
+                [record.to_dict() for record in records]
+            )
+            from ztf_classifier.features.engine import ScientificFeatureEngine
+
+            feature_result = ScientificFeatureEngine().compute(
+                observation_frame,
+                backend="native",
+            )
+            feature_frame = pd.DataFrame([feature_result.values])
+            model_version = _resolve_model_version(
+                request.model_version,
+                api_settings,
+            )
+            _, entry = _ensure_registered_model(model_version, api_settings)
+            response = service.predict_dataframe(
+                feature_frame,
+                Path(entry.artifact_dir),
+            )
+            prediction = _serialize_prediction(
+                feature_frame,
+                response,
+            ).predictions[0]
+            return ObjectAnalysisResponse(
+                oid=oid,
+                survey=request.survey,
+                observation_count=len(records),
+                observations=[record.to_dict() for record in records],
+                features=feature_result.values,
+                feature_schema_version=feature_result.feature_schema_version,
+                feature_provenance=feature_result.provenance.to_dict(),
+                prediction=prediction,
+                model_version=response.model_version,
+                model_family=response.model_family,
+                diagnostics={
+                    "calibration": response.result.calibration_status,
+                    "conformal": response.result.conformal_status,
+                    "ood": response.result.ood_status,
+                },
+                model_provenance=result_provenance(response),
+                observation_provenance=observation_provenance.to_dict(),
+                warnings=list(response.result.warnings),
+            )
+        except ApiContractError:
+            raise
+        except ValueError as exc:
+            raise ApiContractError(
+                "analysis_validation_failed",
+                str(exc),
+                status_code=422,
+            ) from exc
+        except Exception as exc:
+            raise ApiContractError(
+                "analysis_failed",
+                "Object analysis could not be completed.",
+                status_code=502,
+            ) from exc
 
     @app.get(
         "/v1/objects/{oid}",
