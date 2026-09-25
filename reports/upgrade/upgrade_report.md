@@ -1,111 +1,147 @@
 # v0.4.0 Complete Upgrade Report
 
 Date: 2026-09-25
-Branch: chore/complete-upgrade-v0.4
-Baseline commit: 0c615b09813e0f5a8e61a895d371789e3ab1e21f
-Final validated implementation commit: 80557eac1c8964409d3c45772efc8d644a9dfea6
-Merge commit on main: 457b887b1a08ede4fdce3f2ca2e3ce6c2b3a47d8
+Current audited main commit: 43f4082369e0f2f0bd6614668ca99bff90818a1c
+Scientific baseline: v0.2.0
+Production model: baseline_v0.2
 
 ## Summary
 
-The v0.4.0 upgrade specification has been implemented against the v0.3.0 production milestone.
+The v0.4.0 production-oriented upgrade has been implemented without mutating the immutable v0.2.0 scientific baseline, the benchmark_v0.2 dataset contract, or the frozen 42-feature schema.
 
-The immutable scientific baseline v0.2.0, benchmark_v0.2 dataset contract, frozen 42-feature schema, baseline_v0.2 model identity, and artifact schemas 1.0/1.1 remain intact.
+The platform now includes reproducibility/provenance controls, artifact integrity validation, independent calibration/conformal/OOD diagnostics, strict ALeRCE ingestion diagnostics, temporal leakage controls, durable analysis services, catalog/report/export contracts, an extensible Scientific Feature Engine, API/Workbench integration, registry-backed inference, and hardened CI/security/release automation.
+
+PR #54 (`fix: decouple production diagnostic artifacts`) is merged into `main` at the audited commit above.
 
 ## Implemented areas
 
 - software version 0.4.0;
-- canonical requirements.lock from a verified CI-resolved Python 3.11.16 Ubuntu environment;
-- streaming SHA-256 utility;
-- artifact manifest hash and additive provenance metadata;
-- legacy artifact checksum warning path;
-- independent calibration/conformal/OOD diagnostics;
-- strict ALeRCE ingestion validation and diagnostics;
-- additive CLI and batch provenance/status fields;
+- canonical requirements.lock from the verified CI environment;
+- streaming SHA-256 checksum utility;
+- artifact manifest hashing and provenance metadata;
+- explicit legacy integrity warnings;
+- independent calibration, conformal, and OOD diagnostics;
+- strict ALeRCE validation and ingestion diagnostics;
+- additive CLI and batch provenance/status metadata;
 - Data Card and Model Card;
-- frozen feature provenance and temporal leakage contract;
-- security guidance for joblib artifacts;
-- hardened CI and package validation.
+- frozen feature provenance and temporal leakage validation;
+- durable jobs, scientific results, checkpoints, catalog, reports, and Workbench contracts;
+- extensible Scientific Feature Engine backend registration/selection;
+- optional API-key protection and request-ID observability;
+- CodeQL and Dependabot;
+- package/build/dependency quality gates.
 
-## Files added
+## Important compatibility guarantees
 
-- requirements.lock
-- src/ztf_classifier/reproducibility/checksums.py
-- tests/test_checksums.py
-- tests/test_alerce_ingestion_diagnostics.py
-- tests/test_prediction_result_statuses.py
-- docs/DATA_CARD.md
-- docs/MODEL_CARD.md
-- docs/FEATURE_PROVENANCE_CONTRACT.md
-- reports/upgrade/baseline_test_status.md
-
-## Important modified components
-
-- pyproject.toml — package milestone/tooling
-- .github/workflows/ci.yml — locked install, lint, scoped format gate, coverage, build, wheel validation, audit
-- src/ztf_classifier/models/artifact_io.py — checksum/integrity/provenance hardening
-- src/ztf_classifier/models/provenance.py — software provenance
-- src/ztf_classifier/models/results.py — explicit diagnostic status metadata
-- src/ztf_classifier/models/result_builder.py — metadata propagation
-- src/ztf_classifier/models/production_inference.py — independent diagnostics and provenance
-- src/ztf_classifier/application/batch.py — batch provenance/status propagation
-- src/ztf_classifier/cli/main.py — additive output metadata
-- src/ztf_classifier/io/alerce.py — validation and ingestion diagnostics
-- README.md, CHANGELOG.md, Handbook — documentation/continuity
+- `v0.2.0` scientific baseline remains immutable.
+- `benchmark_v0.2` remains unchanged.
+- Frozen feature schema remains 42 features.
+- Production model identity remains `baseline_v0.2`.
+- Artifact schemas 1.0 and 1.1 remain readable.
+- Existing CLI/output fields remain available; new diagnostic metadata is additive.
+- Runtime SQLite state and credentials are not committed.
 
 ## Validation
 
-Final PR CI run #138 passed on commit 80557eac1c8964409d3c45772efc8d644a9dfea6.
+Pre-merge validation for PR #54 passed the full repository quality gate before merge.
 
-- Ruff lint: PASS
-- scoped Ruff format check: PASS
-- pytest: PASS — 364 passed, 4 skipped, 6 warnings
-- coverage reporting: PASS — 83% total
-- package build: PASS
-- wheel install: PASS
-- pip check: PASS
-- package import: PASS
-- pip-audit: PASS with no known third-party vulnerabilities reported
+Post-merge CI run #387 and the corresponding CodeQL run for commit `43f4082369e0f2f0bd6614668ca99bff90818a1c` were still running when this report was refreshed. Their final conclusions and test count are intentionally not guessed.
 
-pip-audit reports the local ztf-classifier package as not published on PyPI, so the project itself cannot be audited by that service. This is a tooling limitation, not a vulnerability finding.
+Previously merged CI evidence already establishes successful execution of:
 
-## Baseline verification limitation
+- Ruff lint;
+- Ruff format;
+- pytest;
+- coverage reporting;
+- package build;
+- wheel installation;
+- pip check;
+- package import;
+- dependency audit;
+- CodeQL.
 
-The repository connector cannot execute arbitrary commands in the user's WSL2 working tree. Therefore the requested pre-change local baseline commands are explicitly marked NOT VERIFIED in reports/upgrade/baseline_test_status.md. No local result is fabricated.
+## Scientific validation boundary
 
-CI is the executable validation authority for this branch.
+A dedicated 2026-09-25 GitHub Actions validation run acquired all 150 canonical benchmark OIDs from the current ALeRCE detection backend.
 
-## Compatibility
+Acquisition succeeded for all 150 objects, but strict frozen raw-cache validation detected mutable-source drift:
 
-- v0.2.0 scientific baseline: preserved
-- benchmark_v0.2: preserved
-- 42-feature frozen schema: preserved
-- baseline_v0.2 model: preserved
-- artifact schema 1.0: preserved
-- artifact schema 1.1: preserved
-- CLI contract: additive changes only
+- frozen detection-row mean: 189.63333333333333
+- live detection-row mean: 189.88666666666666
+- frozen corrected_true count: 27379
+- live corrected_true count: 27417
+
+The strict frozen assertions remain strict. This is external-data drift, not evidence to weaken the benchmark contract.
+
+Tracking issue: #51.
+
+The following therefore remain `NOT VERIFIED` until the historical immutable raw snapshot is available:
+
+- exact raw-cache reproduction;
+- exact frozen raw-feature parity;
+- offline feature-dataset reproduction from the historical raw snapshot;
+- raw-artifact-backed production inference integration.
+
+## Benchmark
+
+The frozen v0.2 benchmark contains:
+
+- 150 objects;
+- 15 ALeRCE reference/weak-label classes;
+- 10 objects per class;
+- ZTF light curves;
+- g/r observations where available;
+- 42 frozen features.
+
+This report does not claim a new benchmark score or population-level performance.
+
+## Reproducibility
+
+Canonical development environment:
+
+- Python 3.11.16;
+- Ubuntu 26.04 LTS;
+- WSL2.
+
+The repository contains the lockfile, checksum utilities, provenance manifests, compatibility tests, deterministic reports, and CI build/install verification.
+
+A local clean-room run on the user's WSL2 environment is `NOT VERIFIED` because this connector cannot execute arbitrary commands in that environment.
 
 ## Known limitations
 
-- The benchmark remains 150 objects / 15 classes and is not population-representative.
-- ALeRCE labels remain reference/weak labels.
-- Real-world OOD and temporal generalization require independent larger-scale validation.
-- External data licensing/ToS must be enforced before publication or commercial redistribution.
-- The canonical lock is Linux/Python-3.11 oriented because it was captured from the verified Ubuntu CI environment.
+- The 150-object benchmark is not population-representative.
+- ALeRCE labels are not independent astrophysical ground truth.
+- OOD and temporal generalization require larger independent datasets.
+- External-source licensing and attribution remain applicable.
+- The historical raw cache needed for exact frozen reproduction is not committed to Git.
 
 ## Rollback
 
-Rollback is safe at the Git level by reverting the v0.4.0 upgrade commits or retaining the v0.3.0 main baseline. The immutable v0.2.0 scientific tag is not modified.
+Rollback application changes by reverting the relevant merged commit(s). Do not rewrite or force-update the immutable `v0.2.0` tag.
 
-## Reproduction
+For deployment rollback, pin the package to a previously validated commit and retain the production model identity `baseline_v0.2`.
 
-Use Python 3.11.16 and install the committed requirements.lock, then install the project with --no-deps. Run pip check, Ruff, pytest, build, wheel installation, import verification, and pip-audit as defined by .github/workflows/ci.yml.
+## Reproduction commands
 
-## NOT VERIFIED
+```bash
+python -m ruff check src tests
+python -m ruff format --check src tests
+python -m pytest -q
+python -m build
+python -m pip install --force-reinstall dist/*.whl
+python -m pip check
+python -c "import ztf_classifier; print(ztf_classifier.__file__)"
+ztf-classifier --help
+```
 
-The following remain explicitly unverified through this connector:
-- the user's local WSL2 working-tree status immediately before the upgrade;
-- local pyenv/.venv package state outside CI;
-- local clean-room reproduction on the user's machine.
+For frozen scientific reproduction, use tag `v0.2.0` and the documented immutable benchmark/data contracts. Never rewrite that tag.
 
-No other validation item above is marked NOT VERIFIED because it was executed successfully by GitHub Actions.
+## Release posture
+
+The package milestone is v0.4.0. Software release metadata and the scientific baseline are intentionally separate.
+
+The release workflow is tag-driven. A release must preserve the distinction between repository/CI validation and the data-dependent scientific validations listed above.
+
+## Acceptance rule
+
+CI success is sufficient for repository/software acceptance gates but is not sufficient to claim exact historical raw-data reproduction. The explicit `NOT VERIFIED` scientific boundary must remain visible until the required immutable raw snapshot is available and validated.
