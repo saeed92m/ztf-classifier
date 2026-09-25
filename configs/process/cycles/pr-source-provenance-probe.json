@@ -1,0 +1,30 @@
+{
+  "cycle_id": "source-provenance-probe",
+  "change": {
+    "scope": "Operationalize external-source provenance probing in scheduled/manual scientific validation.",
+    "intent": "Capture response hashes and endpoint reachability without treating live data as benchmark truth."
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Five canonical source contracts are probed or explicitly marked derived.",
+      "Probe output records HTTP status, content type, size, and SHA-256 for live endpoints.",
+      "The fail-closed scientific gate remains release-blocking."
+    ]
+  },
+  "failure_analysis": {
+    "status": "no-known-failure",
+    "root_causes": []
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "SF-001",
+    "SF-002",
+    "FD-001"
+  ]
+}
