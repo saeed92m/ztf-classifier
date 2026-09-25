@@ -4,17 +4,17 @@
 
 This amendment is authoritative over any earlier historical planning text in this handbook.
 
-- Current main: ce36c5ddd2f86776b3d0b2abdda5b5f93efeb4b4 at the time this continuity branch was created.
+- Current main: 0e3c3af6a78d2d63bd79dcef2851eed474757150.
 - v0.4.0 remains the published reproducibility/production-hardening release and is immutable.
 - The mandatory scientific-validation gate is active. Issue #51 remains open because the historical raw-cache snapshot used by the frozen v0.2 benchmark is not available in the repository and current live ALeRCE data has demonstrably drifted from that historical snapshot.
-- Current main has one deterministic CI regression: a diagnostic artifact path-escape test expected a generic message while the hardened loader correctly includes the diagnostic artifact key. This branch fixes the test contract; no security check is weakened.
+- The diagnostic artifact path-containment test contract has been corrected; the loader security check remains strict and unchanged.
 - The project is in active completion/hardening, not final scientific acceptance. No release claim should bypass the explicit external-data gate.
 
 ## 1. Canonical state
 
 - Repository: `saeed92m/ztf-classifier`
 - Default branch: `main`
-- Current main continuity commit: `beee6175ea9154d8f566f0f41dceb8eb6e69c7f3`
+- Current main continuity commit: `0e3c3af6a78d2d63bd79dcef2851eed474757150`
 - Immutable scientific baseline: tag `v0.2.0`
 - Python: 3.11.16
 - Runtime: Ubuntu 26.04 LTS under WSL2

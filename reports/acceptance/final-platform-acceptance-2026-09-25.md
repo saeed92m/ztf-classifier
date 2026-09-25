@@ -1,7 +1,7 @@
 # Final Platform Acceptance Evidence
 
 Date: 2026-09-25
-Audited main commit: ce36c5ddd2f86776b3d0b2abdda5b5f93efeb4b4
+Audited main commit: 0e3c3af6a78d2d63bd79dcef2851eed474757150
 Software version: 0.4.0
 Scientific baseline: v0.2.0
 Production model: baseline_v0.2
@@ -13,8 +13,9 @@ This record separates executable engineering evidence from data-dependent scient
 ## Current engineering evidence
 
 - Main contains the integrated API, source-backed object analysis, durable jobs/results, catalog/reporting, incremental checkpoints, unified Scientific Feature Engine, Workbench, artifact provenance, and CI/security hardening layers.
-- The latest main CI run (#403) reached 444 passed, 4 skipped, 1 failed. The sole failure is a test-contract mismatch in `tests/test_model_artifact_io_diagnostics.py::test_diagnostic_artifact_rejects_path_escape`: the loader emits the more specific message `Artifact ood_model path escapes artifact directory.` while the test expected the generic phrase. This is being corrected without weakening the path-containment check.
-- Lint, format, build/package verification, and dependency audit passed on that run; the CI gate failed only because the test job failed.
+- Post-merge main CI run #420 is green. It completed the full suite successfully with 444 passed and 4 skipped; lint, format, build/package verification, dependency audit, and the CI gate all passed.
+- Post-merge CodeQL run #47 is green.
+- The earlier path-escape test-contract failure on run #403 was fixed without weakening the artifact path-containment check.
 - CodeQL remains part of the repository security gate.
 
 ## Acceptance matrix
@@ -29,7 +30,7 @@ This record separates executable engineering evidence from data-dependent scient
 | Catalog/reporting | VERIFIED | Deterministic bounded query/export/report paths are implemented. |
 | Scientific Feature Engine | VERIFIED | Backend registration, selection, schema and provenance contracts are implemented. |
 | Artifact schema 1.0/1.1 | VERIFIED | Compatibility and diagnostic separation tests are present. |
-| CI/package/security hardening | BLOCKED | Current main has the single deterministic test failure described above. |
+| CI/package/security hardening | VERIFIED | Post-merge CI #420 and CodeQL #47 are green. |
 | Historical raw-cache reproduction | NOT VERIFIED | Immutable historical raw cache is unavailable; current ALeRCE data has drifted. |
 | Exact frozen feature reproduction from raw cache | NOT VERIFIED | Depends on the unavailable historical raw snapshot. |
 | Offline raw-feature reproduction | NOT VERIFIED | Depends on the unavailable historical raw snapshot. |
