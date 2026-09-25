@@ -69,8 +69,8 @@ class ScientificResultStore:
             )
             connection.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_scientific_results_oid_created
-                ON scientific_results(oid, created_at DESC)
+                CREATE INDEX IF NOT EXISTS idx_scientific_results_oid_survey_created
+                ON scientific_results(oid, survey, created_at DESC)
                 """
             )
 
