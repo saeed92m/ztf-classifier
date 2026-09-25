@@ -51,9 +51,11 @@ def render_scientific_validation_report(gate: dict[str, Any]) -> str:
             "",
             "## Scope",
             "",
-            "This report is evidence for the declared benchmark populations, "
-            "source versions, labels, preprocessing, and evaluation conditions. "
-            "It does not establish global correctness outside those conditions.",
+            (
+                "This report is evidence for the declared benchmark populations, "
+                "source versions, labels, preprocessing, and evaluation conditions. "
+                "It does not establish global correctness outside those conditions."
+            ),
             "",
         ]
     )
