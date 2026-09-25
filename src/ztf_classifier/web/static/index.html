@@ -39,9 +39,9 @@
           <button class="nav-item" data-view="reports">Reports</button>
           <div class="sidebar-footer">
             <div class="mini-label">MODEL</div>
-            <div class="model-chip">baseline_v0.2</div>
+            <div class="model-chip" id="modelChip">—</div>
             <div class="mini-label">API</div>
-            <div class="muted">v1 · registry-backed</div>
+            <div class="muted">v1 · API-backed</div>
           </div>
         </aside>
 
@@ -49,8 +49,8 @@
           <div class="canvas-header">
             <div>
               <div class="eyebrow">OBJECT ANALYSIS</div>
-              <h1 id="viewTitle">ZTF17aaanmso</h1>
-              <p id="viewSubtitle">Live ZTF observation view · ALeRCE-backed</p>
+              <h1 id="viewTitle">Select an object</h1>
+              <p id="viewSubtitle">Provide an object ID to load scientific data</p>
             </div>
             <div class="object-actions">
               <button class="secondary-button" id="exportReportButton" type="button">Export report</button>
@@ -92,7 +92,7 @@
             <section class="panel">
               <div class="panel-header"><div><div class="panel-title">Scientific context</div><div class="panel-subtitle">Traceable analysis metadata</div></div></div>
               <dl class="metadata">
-                <div><dt>Object ID</dt><dd>ZTF17aaanmso</dd></div>
+                <div><dt>Object ID</dt><dd id="objectIdValue">—</dd></div>
                 <div><dt>Feature schema</dt><dd id="featureSchema">—</dd></div>
                 <div><dt>Model</dt><dd id="modelValue">—</dd></div>
                 <div><dt>Calibration</dt><dd id="calibrationValue">—</dd></div>
@@ -113,15 +113,15 @@
           <div class="inspector-section">
             <div class="mini-label">ANALYSIS STATE</div>
             <div class="state-row"><span>Inference</span><b id="resultState" class="state-good">loading</b></div>
-            <div class="state-row"><span>Calibration</span><b class="state-good">—</b></div>
-            <div class="state-row"><span>Conformal</span><b class="state-good">active</b></div>
-            <div class="state-row"><span>OOD</span><b class="state-warn">—</b></div>
+            <div class="state-row"><span>Calibration</span><b id="calibrationState">—</b></div>
+            <div class="state-row"><span>Conformal</span><b id="conformalState">—</b></div>
+            <div class="state-row"><span>OOD</span><b id="oodState">—</b></div>
           </div>
           <div class="inspector-section">
             <div class="mini-label">PROVENANCE</div>
-            <div class="provenance-item"><span>Dataset</span><b>—</b></div>
-            <div class="provenance-item"><span>Model artifact</span><b>—</b></div>
-            <div class="provenance-item"><span>Schema</span><b>—</b></div>
+            <div class="provenance-item"><span>Dataset</span><b id="datasetProvenance">—</b></div>
+            <div class="provenance-item"><span>Model artifact</span><b id="modelProvenance">—</b></div>
+            <div class="provenance-item"><span>Schema</span><b id="schemaProvenance">—</b></div>
           </div>
           <button class="outline-button full" type="button">Open provenance graph</button>
         </aside>
