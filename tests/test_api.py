@@ -472,6 +472,36 @@ def test_durable_job_result_is_not_ready_for_queued_job(tmp_path: Path) -> None:
     assert response.json()["code"] == "job_result_not_ready"
 
 
+def test_latest_object_scientific_result_retrieval(tmp_path: Path) -> None:
+    from ztf_classifier.jobs import JobStore
+    from ztf_classifier.results import ScientificResultStore
+
+    settings = ApiSettings(
+        job_store_path=tmp_path / "jobs.sqlite3",
+        result_store_path=tmp_path / "results.sqlite3",
+    )
+    job_store = JobStore(settings.job_store_path)
+    result_store = ScientificResultStore(settings.result_store_path)
+    job = job_store.create(
+        oid="ZTF17latest",
+        survey="ztf",
+        model_version="baseline_v0.2",
+    )
+    stored = result_store.save(
+        job_id=job.job_id,
+        oid=job.oid,
+        survey=job.survey,
+        model_version="baseline_v0.2",
+        payload={"schema_version": "1.0", "prediction": {"predicted_class": "AGN"}},
+    )
+
+    client = TestClient(create_app(settings))
+    response = client.get("/v1/objects/ZTF17latest/results/latest?survey=ztf")
+
+    assert response.status_code == 200
+    assert response.json()["result_id"] == stored.result_id
+
+
 def test_scientific_result_id_retrieval_has_stable_not_found_error(
     tmp_path: Path,
 ) -> None:
