@@ -1,3 +1,5 @@
+import csv
+import io
 from pathlib import Path
 
 import pytest
@@ -47,9 +49,11 @@ def test_catalog_csv_export_is_deterministic(tmp_path: Path) -> None:
         ScientificCatalogService(store).query(limit=1)
     )
 
+    rows = list(csv.DictReader(io.StringIO(csv_text)))
     assert csv_text.splitlines()[0].startswith("result_id,job_id,oid,survey")
-    assert "ZTF17a" in csv_text
-    assert '"label":"AGN"' in csv_text
+    assert len(rows) == 1
+    assert rows[0]["oid"] == "ZTF17a"
+    assert rows[0]["payload_json"] == '{"label":"AGN","value":1}'
 
 
 def test_catalog_query_rejects_invalid_limit(tmp_path: Path) -> None:
