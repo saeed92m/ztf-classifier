@@ -47,7 +47,7 @@ def test_catalog_csv_export_is_deterministic(tmp_path: Path) -> None:
 
     assert csv_text.splitlines()[0].startswith("result_id,job_id,oid,survey")
     assert "ZTF17a" in csv_text
-    assert '"label":"AGN"' in csv_text
+    assert '"{""label"":""AGN"",""value"":1}"' in csv_text
 
 
 def test_catalog_query_rejects_invalid_limit(tmp_path: Path) -> None:
