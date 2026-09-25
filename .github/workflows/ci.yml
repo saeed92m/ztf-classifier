@@ -65,7 +65,10 @@ jobs:
             src/ztf_classifier/jobs/store.py \
             src/ztf_classifier/jobs/worker.py \
             src/ztf_classifier/jobs/__init__.py \
-            tests/test_jobs_worker.py
+            tests/test_jobs_worker.py \
+            src/ztf_classifier/results/store.py \
+            src/ztf_classifier/results/__init__.py \
+            tests/test_scientific_result_store.py
 
       - name: Run test suite with coverage
         run: |

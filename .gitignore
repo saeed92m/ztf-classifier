@@ -52,3 +52,7 @@ dist/
 
 # Generated dataset artifacts
 artifacts/
+
+# Local durable runtime databases
+data/jobs/*.sqlite3
+data/results/*.sqlite3

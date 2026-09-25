@@ -483,3 +483,35 @@ The current architecture therefore has a real asynchronous execution path, but t
 5. connect Workbench jobs and analysis views to the durable result contract;
 6. continue toward catalog/report and continuous incremental analysis.
 
+
+## 27. Persistent scientific-result repository — completed implementation
+
+The scientific payload is now persisted behind a dedicated `ScientificResultStore` boundary.
+
+Implemented capabilities:
+- SQLite-backed durable scientific-result repository;
+- stable `result_id` independent of job lifecycle identifiers;
+- one-result-per-job idempotency contract;
+- conflict detection for a repeated job with a different payload;
+- explicit linkage from `JobRecord.scientific_result_id`;
+- migration-safe job-store column addition for existing SQLite queues;
+- separate runtime configuration through `ZTF_API_RESULT_STORE`;
+- canonical result metadata: object, survey, model version, schema version, creation time, and payload;
+- latest-result lookup by object for future catalog/report workflows;
+- worker persistence failure is converted to a stable job error without leaking internal details;
+- runtime result databases remain external to the source repository.
+
+The queue remains responsible for lifecycle and leases; the scientific-result repository is the durable history boundary. The existing job response remains compatible, but completed jobs now carry a compact result reference when the repository is enabled.
+
+The immutable scientific baseline `v0.2.0` is unchanged.
+
+## 28. Immediate next implementation sequence
+
+1. expose versioned job-result retrieval from `ScientificResultStore`;
+2. make Workbench jobs and analysis views consume the durable result contract;
+3. add catalog query/export contracts over persisted scientific results;
+4. add report generation over the same result contract;
+5. implement incremental/continuous analysis with deterministic deduplication and checkpoints;
+6. finish extensible Scientific Feature Generation with versioned schemas and backend registration;
+7. complete platform integration, observability, security hardening, deployment contracts, and end-to-end audit;
+8. finalize release documentation and production acceptance evidence.

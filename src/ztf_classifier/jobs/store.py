@@ -25,6 +25,7 @@ class JobRecord:
     result: dict | None = None
     error: dict | None = None
     lease_expires_at: str | None = None
+    scientific_result_id: str | None = None
 
     def to_dict(self) -> dict:
         """Return a JSON-safe job representation."""
@@ -39,6 +40,7 @@ class JobRecord:
             "result": self.result,
             "error": self.error,
             "lease_expires_at": self.lease_expires_at,
+            "scientific_result_id": self.scientific_result_id,
         }
 
 
@@ -65,7 +67,8 @@ class JobStore:
                     updated_at TEXT NOT NULL,
                     result_json TEXT,
                     error_json TEXT,
-                    lease_expires_at TEXT
+                    lease_expires_at TEXT,
+                    scientific_result_id TEXT
                 )
                 """
             )
@@ -75,6 +78,10 @@ class JobStore:
             if "lease_expires_at" not in columns:
                 connection.execute(
                     "ALTER TABLE analysis_jobs ADD COLUMN lease_expires_at TEXT"
+                )
+            if "scientific_result_id" not in columns:
+                connection.execute(
+                    "ALTER TABLE analysis_jobs ADD COLUMN scientific_result_id TEXT"
                 )
             connection.execute(
                 """
@@ -130,7 +137,8 @@ class JobStore:
             row = connection.execute(
                 """
                 SELECT job_id, oid, survey, model_version, status,
-                       created_at, updated_at, result_json, error_json, lease_expires_at
+                       created_at, updated_at, result_json, error_json, lease_expires_at,
+                       scientific_result_id
                 FROM analysis_jobs WHERE job_id = ?
                 """,
                 (job_id,),
@@ -148,6 +156,7 @@ class JobStore:
             result=json.loads(row[7]) if row[7] else None,
             error=json.loads(row[8]) if row[8] else None,
             lease_expires_at=row[9],
+            scientific_result_id=row[10],
         )
 
     def requeue_expired(self) -> int:
@@ -215,6 +224,7 @@ class JobStore:
         status: str,
         result: dict | None = None,
         error: dict | None = None,
+        scientific_result_id: str | None = None,
     ) -> JobRecord:
         """Persist an explicit job state transition."""
         if status not in self._STATUSES:
@@ -224,7 +234,7 @@ class JobStore:
             updated = connection.execute(
                 """
                 UPDATE analysis_jobs
-                SET status = ?, updated_at = ?, result_json = ?, error_json = ?, lease_expires_at = NULL
+                SET status = ?, updated_at = ?, result_json = ?, error_json = ?, lease_expires_at = NULL, scientific_result_id = ?
                 WHERE job_id = ?
                 """,
                 (
@@ -232,6 +242,7 @@ class JobStore:
                     now,
                     json.dumps(result) if result is not None else None,
                     json.dumps(error) if error is not None else None,
+                    scientific_result_id,
                     job_id,
                 ),
             ).rowcount
