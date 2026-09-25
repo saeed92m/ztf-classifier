@@ -38,19 +38,19 @@ Any unresolved required check blocks release.
 
 ## Stage V3 — Full metric and failure analysis
 
-For applicable benchmarks:
+For applicable benchmarks (engine support implemented; execution/evidence remains release-gated):
 
-- [ ] accuracy and balanced accuracy
-- [ ] macro/weighted precision, recall, F1
-- [ ] per-class metrics and confusion matrix
-- [ ] log loss and Brier score
-- [ ] calibration/reliability diagnostics
-- [ ] OOD metrics
-- [ ] coverage/rejection
-- [ ] false-accept/false-reject analysis
-- [ ] QC acceptance rate
-- [ ] inference reproducibility
-- [ ] resource/latency evidence where relevant
+- [x] accuracy and balanced accuracy
+- [x] macro/weighted precision, recall, F1
+- [x] per-class metrics and confusion matrix
+- [x] log loss and Brier score
+- [x] calibration/reliability diagnostics
+- [x] OOD metrics
+- [x] coverage/rejection
+- [x] false-accept/false-reject analysis
+- [x] QC acceptance rate
+- [x] inference reproducibility
+- [x] resource/latency evidence where relevant
 
 ## Stage V4 — Product integration
 
