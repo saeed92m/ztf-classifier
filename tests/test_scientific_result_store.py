@@ -95,4 +95,3 @@ def test_latest_result_for_missing_object_returns_none(tmp_path: Path) -> None:
     store = ScientificResultStore(tmp_path / "results.sqlite3")
 
     assert store.latest_for_object("missing") is None
-
