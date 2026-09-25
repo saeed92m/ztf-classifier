@@ -192,6 +192,83 @@ class ScientificResultStore:
                 return existing_record
             return record
 
+    def query(
+        self,
+        *,
+        oid: str | None = None,
+        survey: str | None = None,
+        model_version: str | None = None,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[ScientificResultRecord]:
+        """Return deterministic durable-result catalog rows."""
+        if limit < 1 or limit > 1000:
+            raise ValueError("limit must be between 1 and 1000")
+        if offset < 0:
+            raise ValueError("offset must be non-negative")
+
+        query = """
+            SELECT result_id, job_id, oid, survey, model_version,
+                   schema_version, created_at, payload_json
+            FROM scientific_results
+            WHERE 1 = 1
+        """
+        parameters: list[Any] = []
+        filters = (
+            ("oid", oid),
+            ("survey", survey),
+            ("model_version", model_version),
+        )
+        for column, value in filters:
+            if value is not None:
+                query += f" AND {column} = ?"
+                parameters.append(value)
+        if created_after is not None:
+            query += " AND created_at >= ?"
+            parameters.append(created_after)
+        if created_before is not None:
+            query += " AND created_at <= ?"
+            parameters.append(created_before)
+        query += " ORDER BY created_at DESC, result_id DESC LIMIT ? OFFSET ?"
+        parameters.extend((limit, offset))
+
+        with sqlite3.connect(self.path) as connection:
+            rows = connection.execute(query, parameters).fetchall()
+        return [self._decode(row) for row in rows]
+
+    def count(
+        self,
+        *,
+        oid: str | None = None,
+        survey: str | None = None,
+        model_version: str | None = None,
+        created_after: str | None = None,
+        created_before: str | None = None,
+    ) -> int:
+        """Count durable-result catalog rows matching the supplied filters."""
+        query = "SELECT COUNT(*) FROM scientific_results WHERE 1 = 1"
+        parameters: list[Any] = []
+        filters = (
+            ("oid", oid),
+            ("survey", survey),
+            ("model_version", model_version),
+        )
+        for column, value in filters:
+            if value is not None:
+                query += f" AND {column} = ?"
+                parameters.append(value)
+        if created_after is not None:
+            query += " AND created_at >= ?"
+            parameters.append(created_after)
+        if created_before is not None:
+            query += " AND created_at <= ?"
+            parameters.append(created_before)
+
+        with sqlite3.connect(self.path) as connection:
+            return int(connection.execute(query, parameters).fetchone()[0])
+
     def get(self, result_id: str) -> ScientificResultRecord:
         """Load a result by stable result ID."""
         with sqlite3.connect(self.path) as connection:
