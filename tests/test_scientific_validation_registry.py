@@ -130,3 +130,32 @@ def test_reference_system_role_is_preserved_in_manifest_and_result(tmp_path):
         (tmp_path / "report" / "benchmark_result.json").read_text()
     )
     assert payload["evaluation_role"] == "reference_system"
+
+
+
+def test_release_benchmark_manifests_declare_full_check_contract_and_canonical_adapters():
+    required = {
+        "object_overlap",
+        "duplicate_objects",
+        "target_leakage",
+        "future_data_leakage",
+        "benchmark_trained_artifacts",
+        "preprocessing_consistency",
+        "schema_compatibility",
+        "feature_generation_determinism",
+        "qc_acceptance",
+        "inference_reproducibility",
+        "failure_code_correctness",
+        "provenance",
+    }
+    registry = BenchmarkRegistry("configs/benchmarks")
+    for benchmark_id in (
+        "star_embed_ztf_40k",
+        "ztf_periodic_730k",
+        "ztf_periodic_781k",
+        "ztf_dr24_source_subset",
+        "alerce_reference",
+    ):
+        loaded = registry.load(benchmark_id)
+        assert set(loaded.required_leakage_checks) == required
+        assert loaded.input_contract["adapter"] == benchmark_id if benchmark_id != "star_embed_ztf_40k" else loaded.input_contract["adapter"] == "star_embed"
