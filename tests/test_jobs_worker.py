@@ -187,3 +187,19 @@ def test_job_store_rejects_invalid_listing_status(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="Unsupported job status"):
         store.list(status="invalid")
+
+
+def test_job_store_persists_feature_selection(tmp_path: Path) -> None:
+    store = JobStore(tmp_path / "jobs.sqlite3")
+    job = store.create(
+        oid="ZTF17feature",
+        survey="ztf",
+        model_version="baseline_v0.2",
+        feature_backend="native",
+        feature_parameters={"cutoff_mjd": 60000.0},
+    )
+
+    fetched = store.get(job.job_id)
+
+    assert fetched.feature_backend == "native"
+    assert fetched.feature_parameters == {"cutoff_mjd": 60000.0}
