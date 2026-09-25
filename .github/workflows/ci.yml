@@ -4,18 +4,20 @@ on:
   push:
     branches:
       - main
+      - "chore/complete-upgrade-v0.4"
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   test:
-    name: Python 3.11 - Test and Lint
+    name: Python 3.11 - Lint, Test, Build, Audit
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -36,12 +38,29 @@ jobs:
       - name: Verify installed dependencies
         run: python -m pip check
 
-      - name: Run Ruff
+      - name: Run Ruff lint
         run: python -m ruff check src tests
 
-      - name: Run tests
-        run: python -m pytest -q
+      - name: Run Ruff format check
+        run: python -m ruff format --check src tests
+
+      - name: Run test suite with coverage
+        run: |
+          python -m pytest -q \
+            --cov=ztf_classifier \
+            --cov-report=term-missing \
+            --cov-report=xml
+
+      - name: Build package
+        run: python -m build
+
+      - name: Install built wheel and verify dependencies
+        run: |
+          python -m pip install --force-reinstall dist/*.whl
+          python -m pip check
 
       - name: Verify package import
-        run: |
-          python -c "import ztf_classifier; print(ztf_classifier.__file__)"
+        run: python -c "import ztf_classifier; print(ztf_classifier.__file__)"
+
+      - name: Audit dependencies
+        run: python -m pip_audit
