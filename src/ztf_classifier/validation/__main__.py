@@ -6,26 +6,30 @@ import argparse
 import sys
 from pathlib import Path
 
+from ztf_classifier.validation.gate import write_release_gate_report
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.runner import run_table_benchmark
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m ztf_classifier.validation")
-    parser.add_argument(
-        "--registry-dir",
-        type=Path,
-        default=Path("configs/benchmarks"),
-    )
+    parser.add_argument("--registry-dir", type=Path, default=Path("configs/benchmarks"))
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    list_command = subparsers.add_parser("list", help="List registered benchmarks")
-    list_command.set_defaults(command_name="list")
+    subparsers.add_parser("list", help="List registered benchmarks")
 
     validate = subparsers.add_parser("validate", help="Run a tabular benchmark")
     validate.add_argument("--benchmark-id", required=True)
     validate.add_argument("--input", required=True, type=Path)
     validate.add_argument("--output-dir", required=True, type=Path)
+
+    gate = subparsers.add_parser("gate", help="Evaluate the fail-closed product release gate")
+    gate.add_argument("--evidence-dir", type=Path, default=Path("reports/scientific_validation"))
+    gate.add_argument(
+        "--output",
+        type=Path,
+        default=Path("reports/scientific_validation/release_gate.json"),
+    )
 
     args = parser.parse_args(argv)
     registry = BenchmarkRegistry(args.registry_dir)
@@ -35,6 +39,16 @@ def main(argv: list[str] | None = None) -> int:
             for benchmark_id in registry.validate_all():
                 print(benchmark_id)
             return 0
+
+        if args.command == "gate":
+            result = write_release_gate_report(
+                output_path=args.output,
+                registry_dir=args.registry_dir,
+                evidence_dir=args.evidence_dir,
+            )
+            print(f"scientific_gate={result['status']}")
+            print(f"report={args.output}")
+            return 0 if result["status"] == "PASS" else 2
 
         manifest = registry.load(args.benchmark_id)
         result = run_table_benchmark(
