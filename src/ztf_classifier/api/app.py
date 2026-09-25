@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+import secrets
 from typing import Any
+from uuid import uuid4
 
 import pandas as pd
 from alerce.core import Alerce
@@ -262,6 +264,32 @@ def create_app(
             StaticFiles(directory=static_dir, html=True),
             name="workbench",
         )
+
+    @app.middleware("http")
+    async def security_and_request_id_middleware(
+        request: Request,
+        call_next,
+    ) -> JSONResponse:
+        """Apply optional API-key protection and a stable request ID boundary."""
+        request_id = request.headers.get("X-Request-ID") or str(uuid4())
+        if api_settings.api_key and request.url.path.startswith("/v1/"):
+            authorization = request.headers.get("Authorization", "")
+            expected = f"Bearer {api_settings.api_key}"
+            if not secrets.compare_digest(authorization, expected):
+                response = _error_response(
+                    ApiContractError(
+                        "authentication_required",
+                        "Valid API credentials are required.",
+                        status_code=401,
+                    ),
+                    request_id=request_id,
+                )
+                response.headers["WWW-Authenticate"] = "Bearer"
+                response.headers["X-Request-ID"] = request_id
+                return response
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
 
     @app.exception_handler(ApiContractError)
     async def api_contract_error_handler(
