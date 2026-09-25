@@ -77,8 +77,11 @@ class IncrementalCheckpointStore:
         if not stream_id or not created_at or not result_id:
             raise ValueError("stream_id, created_at, and result_id are required")
         current = self.get(stream_id)
-        if current.created_at is not None and current.result_id is not None:
-            if (created_at, result_id) < (current.created_at, current.result_id):
+        if (
+            current.created_at is not None
+            and current.result_id is not None
+            and (created_at, result_id) < (current.created_at, current.result_id)
+        ):
                 raise ValueError("checkpoint cannot move backwards")
         updated_at = self._now()
         with sqlite3.connect(self.path) as connection:
