@@ -13,7 +13,10 @@ A release candidate must record:
 - regression status and disposition;
 - new knowledge and evidence status;
 - unresolved limitations and scope;
-- next-stage impact.
+- next-stage impact;
+- a validated cumulative cycle record under `configs/process/cycles/`.
+
+Meaningful pull requests contributing to a release must carry their own cycle record. The release evidence is cumulative: it consumes those records rather than reconstructing project history from scratch.
 
 ## Release integrity
 
