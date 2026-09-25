@@ -15,7 +15,7 @@ class ApiSettings:
     default_model_version: str | None = None
 
     @classmethod
-    def from_environment(cls) -> "ApiSettings":
+    def from_environment(cls) -> ApiSettings:
         """Build settings from server-side environment variables."""
         registry = os.getenv("ZTF_API_REGISTRY_DIR")
         model_version = os.getenv("ZTF_API_DEFAULT_MODEL_VERSION")
