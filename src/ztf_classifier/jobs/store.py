@@ -70,8 +70,7 @@ class JobStore:
                 """
             )
             columns = {
-                row[1]
-                for row in connection.execute("PRAGMA table_info(analysis_jobs)")
+                row[1] for row in connection.execute("PRAGMA table_info(analysis_jobs)")
             }
             if "lease_expires_at" not in columns:
                 connection.execute(
