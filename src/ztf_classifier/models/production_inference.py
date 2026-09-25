@@ -124,7 +124,7 @@ class ProductionInferenceService:
             )
 
         calibrated_probabilities = None
-        calibration_status = "unavailable"
+        calibration_status = "uncalibrated"
         if calibration is not None:
             calibrated_probabilities = TemperatureScaler().transform(
                 inference.probabilities,
