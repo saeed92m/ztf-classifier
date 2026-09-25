@@ -104,10 +104,10 @@ jobs:
             echo "Parent evidence unavailable; 730k derivation remains BLOCKED_EXTERNAL."
           fi
       - name: Evaluate fail-closed scientific gate
-        continue-on-error: true
         run: |
           python -m ztf_classifier.validation gate             --evidence-dir reports/scientific_validation             --output reports/scientific_validation/release_gate.json
       - name: Upload heavy scientific evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: scientific-validation-heavy
