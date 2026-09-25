@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import ClassVar
 from uuid import uuid4
@@ -24,6 +24,7 @@ class JobRecord:
     updated_at: str
     result: dict | None = None
     error: dict | None = None
+    lease_expires_at: str | None = None
 
     def to_dict(self) -> dict:
         """Return a JSON-safe job representation."""
@@ -37,6 +38,7 @@ class JobRecord:
             "updated_at": self.updated_at,
             "result": self.result,
             "error": self.error,
+            "lease_expires_at": self.lease_expires_at,
         }
 
 
@@ -62,7 +64,8 @@ class JobStore:
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     result_json TEXT,
-                    error_json TEXT
+                    error_json TEXT,
+                    lease_expires_at TEXT
                 )
                 """
             )
@@ -120,7 +123,7 @@ class JobStore:
             row = connection.execute(
                 """
                 SELECT job_id, oid, survey, model_version, status,
-                       created_at, updated_at, result_json, error_json
+                       created_at, updated_at, result_json, error_json, lease_expires_at
                 FROM analysis_jobs WHERE job_id = ?
                 """,
                 (job_id,),
@@ -137,10 +140,28 @@ class JobStore:
             updated_at=row[6],
             result=json.loads(row[7]) if row[7] else None,
             error=json.loads(row[8]) if row[8] else None,
+            lease_expires_at=row[9],
         )
 
-    def claim_next(self) -> JobRecord | None:
-        """Atomically claim the oldest queued job for execution."""
+    def requeue_expired(self) -> int:
+        """Return interrupted running jobs to the queue when their lease expires."""
+        now = self._now()
+        with sqlite3.connect(self.path) as connection:
+            return connection.execute(
+                """
+                UPDATE analysis_jobs
+                SET status = 'queued', updated_at = ?, lease_expires_at = NULL
+                WHERE status = 'running' AND lease_expires_at IS NOT NULL
+                  AND lease_expires_at <= ?
+                """,
+                (now, now),
+            ).rowcount
+
+    def claim_next(self, *, lease_seconds: int = 900) -> JobRecord | None:
+        """Atomically claim the oldest queued job and assign an execution lease."""
+        if lease_seconds <= 0:
+            raise ValueError("lease_seconds must be positive")
+        self.requeue_expired()
         connection = sqlite3.connect(self.path, timeout=30.0)
         try:
             connection.execute("BEGIN IMMEDIATE")
@@ -158,13 +179,14 @@ class JobStore:
                 return None
 
             now = self._now()
+            lease_expires_at = (datetime.fromisoformat(now) + timedelta(seconds=lease_seconds)).isoformat()
             updated = connection.execute(
                 """
                 UPDATE analysis_jobs
-                SET status = 'running', updated_at = ?
+                SET status = 'running', updated_at = ?, lease_expires_at = ?
                 WHERE job_id = ? AND status = 'queued'
                 """,
-                (now, row[0]),
+                (now, lease_expires_at, row[0]),
             ).rowcount
             if updated != 1:
                 connection.rollback()
@@ -193,7 +215,7 @@ class JobStore:
             updated = connection.execute(
                 """
                 UPDATE analysis_jobs
-                SET status = ?, updated_at = ?, result_json = ?, error_json = ?
+                SET status = ?, updated_at = ?, result_json = ?, error_json = ?, lease_expires_at = NULL
                 WHERE job_id = ?
                 """,
                 (
