@@ -18,7 +18,7 @@ AnalysisJobWorker accepts an injected callable:
 
 executor(JobRecord) -> dict
 
-This deliberately keeps persistence/orchestration separate from the scientific analysis implementation. The next integration step can bind this executor to the existing source-backed object-analysis workflow without changing the public jobs API contracts.
+The production implementation now provides `SourceBackedAnalysisExecutor`, which binds the worker to the existing ALeRCE → normalized observations → Scientific Feature Engine → registered model inference pipeline. The public jobs API contract remains unchanged. Run `ztf-classifier-worker` to drain the durable queue once; deployment schedulers may invoke it repeatedly.
 
 ## Concurrency
 
