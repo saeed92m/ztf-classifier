@@ -193,12 +193,11 @@ class ModelArtifactWriter:
             or ood_model is not None
         )
 
-        if ood is not None or ood_model is not None:
-            if ood is None or ood_model is None:
-                raise ValueError(
-                    "OOD artifact and OOD production model must be "
-                    "provided together."
-                )
+        if (ood is None) != (ood_model is None):
+            raise ValueError(
+                "OOD artifact and OOD production model must be provided "
+                "together."
+            )
 
         if (
             ood is not None
