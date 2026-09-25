@@ -994,7 +994,7 @@ class ModelArtifactLoader:
                     )
                 _validate_sha256(checksum, f"files.{key}.sha256")
 
-        @staticmethod
+    @staticmethod
     def _validate_contract(
         contract: dict[str, Any],
         manifest: dict[str, Any],
