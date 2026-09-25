@@ -76,7 +76,7 @@ def _sha256_bytes(payload: bytes) -> str:
 
 
 def _md5_bytes(payload: bytes) -> str:
-    return hashlib.md5(payload).hexdigest()
+    return hashlib.md5(payload, usedforsecurity=False).hexdigest()
 
 
 def _looks_like_html(payload: bytes) -> bool:
