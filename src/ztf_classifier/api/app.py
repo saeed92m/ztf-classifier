@@ -27,6 +27,7 @@ from ztf_classifier.api.schemas import (
     PredictionRequest,
     PredictionResponse,
     ServiceStatusResponse,
+    ScientificResultResponse,
 )
 from ztf_classifier.application.errors import ApplicationInferenceError
 from ztf_classifier.application.observations import ObservationService
@@ -34,6 +35,7 @@ from ztf_classifier.application.service import ApplicationService
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
 from ztf_classifier.jobs.store import JobStore
 from ztf_classifier.models.classes import MODEL_CLASSES
+from ztf_classifier.results import ScientificResultStore
 from ztf_classifier.models.registry import (
     FilesystemModelRegistry,
     ModelNotFoundError,
@@ -236,6 +238,7 @@ def create_app(
     app.state.settings = api_settings
     app.state.application_service = service
     jobs = JobStore(api_settings.job_store_path)
+    results = ScientificResultStore(api_settings.result_store_path)
     executor = analysis_executor or SourceBackedAnalysisExecutor(
         api_settings,
         observation_service=observations,
@@ -401,6 +404,60 @@ def create_app(
                 status_code=404,
             ) from exc
         return AnalysisJobResponse(**record.to_dict())
+
+    def _scientific_result_response(record: Any) -> ScientificResultResponse:
+        """Serialize one durable scientific result without rebuilding its payload."""
+        return ScientificResultResponse(**record.to_dict())
+
+    @app.get(
+        "/v1/jobs/{job_id}/result",
+        response_model=ScientificResultResponse,
+        tags=["jobs"],
+    )
+    def get_job_result(job_id: str) -> ScientificResultResponse:
+        """Return the canonical durable scientific result for a completed job."""
+        try:
+            job = jobs.get(job_id)
+        except KeyError as exc:
+            raise ApiContractError(
+                "job_not_found",
+                f"Analysis job was not found: {job_id}",
+                status_code=404,
+            ) from exc
+
+        if job.status != "succeeded" or job.scientific_result_id is None:
+            raise ApiContractError(
+                "job_result_not_ready",
+                "A durable scientific result is not available for this job.",
+                status_code=409,
+            )
+
+        try:
+            record = results.get(job.scientific_result_id)
+        except KeyError as exc:
+            raise ApiContractError(
+                "job_result_not_found",
+                "The durable scientific result could not be found.",
+                status_code=404,
+            ) from exc
+        return _scientific_result_response(record)
+
+    @app.get(
+        "/v1/results/{result_id}",
+        response_model=ScientificResultResponse,
+        tags=["results"],
+    )
+    def get_scientific_result(result_id: str) -> ScientificResultResponse:
+        """Return a durable scientific result by stable result ID."""
+        try:
+            record = results.get(result_id)
+        except KeyError as exc:
+            raise ApiContractError(
+                "scientific_result_not_found",
+                f"Scientific result was not found: {result_id}",
+                status_code=404,
+            ) from exc
+        return _scientific_result_response(record)
 
     @app.post(
         "/v1/objects/{oid}/analysis",
