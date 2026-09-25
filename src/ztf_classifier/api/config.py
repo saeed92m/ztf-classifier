@@ -14,6 +14,7 @@ class ApiSettings:
     registry_dir: Path | None = None
     default_model_version: str | None = None
     observation_cache_dir: Path = Path("data/raw/alerce")
+    job_store_path: Path = Path("data/jobs/jobs.sqlite3")
 
     @classmethod
     def from_environment(cls) -> ApiSettings:
@@ -21,9 +22,15 @@ class ApiSettings:
         registry = os.getenv("ZTF_API_REGISTRY_DIR")
         model_version = os.getenv("ZTF_API_DEFAULT_MODEL_VERSION")
         cache_dir = os.getenv("ZTF_API_OBSERVATION_CACHE_DIR")
+        job_store = os.getenv("ZTF_API_JOB_STORE")
         return cls(
             registry_dir=Path(registry).expanduser() if registry else None,
             default_model_version=model_version or None,
+            job_store_path=(
+                Path(job_store).expanduser()
+                if job_store
+                else Path("data/jobs/jobs.sqlite3")
+            ),
             observation_cache_dir=(
                 Path(cache_dir).expanduser()
                 if cache_dir
