@@ -40,16 +40,16 @@ class FakeApplicationService:
         )
 
         class Provenance:
-            model_version = model_version
-            model_family = "XGBoost"
+            def __init__(self, version: str) -> None:
+                self.model_version = version
+                self.model_family = "XGBoost"
 
-            @staticmethod
-            def to_dict() -> dict[str, object]:
+            def to_dict(self) -> dict[str, object]:
                 return {
                     "provenance_schema_version": "1.1",
                     "artifact_version": "test",
                     "model": {
-                        "version": model_version,
+                        "version": self.model_version,
                         "family": "XGBoost",
                     },
                     "dataset": {"version": "test", "path": "/secret"},
@@ -72,7 +72,7 @@ class FakeApplicationService:
                 "result": result,
                 "model_version": model_version,
                 "model_family": "XGBoost",
-                "provenance": Provenance(),
+                "provenance": Provenance(model_version),
             },
         )()
         return response  # type: ignore[return-value]
