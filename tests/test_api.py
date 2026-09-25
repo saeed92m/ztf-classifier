@@ -338,7 +338,7 @@ def test_object_analysis_contract_uses_fake_observations(
     fake = FakeObservationService()
     settings = ApiSettings(
         registry_dir=tmp_path,
-        default_model_version=None,
+        default_model_version="baseline_v0.2",
     )
     client = TestClient(
         create_app(settings, observation_service=fake)  # type: ignore[arg-type]
