@@ -123,11 +123,7 @@ def _manifest_blockers(manifest: BenchmarkManifest) -> list[str]:
         blockers.append("source/object hashes are not recorded")
     if not manifest.file_object_ids and manifest.evaluation_role != "reference_system":
         blockers.append("benchmark object/file identifiers are not pinned")
-    missing_checks = set(REQUIRED_SCIENTIFIC_CHECKS) - set(manifest.required_leakage_checks)
-    if missing_checks:
-        blockers.append(
-            "manifest omits required scientific checks: " + ", ".join(sorted(missing_checks))
-        )
+    blockers.extend(manifest.validate_release_contract())
     if manifest.evaluation_role == "ground_truth" and not manifest.ground_truth_provenance:
         blockers.append("ground-truth provenance is missing")
     if (

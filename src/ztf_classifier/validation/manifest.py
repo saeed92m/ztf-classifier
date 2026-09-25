@@ -99,6 +99,17 @@ class BenchmarkManifest:
             required_leakage_checks=tuple(required),
         )
 
+    def validate_release_contract(self) -> tuple[str, ...]:
+        """Return release-contract omissions without fabricating scientific evidence."""
+        required = set(DEFAULT_SCIENTIFIC_CHECKS)
+        declared = set(self.required_leakage_checks)
+        blockers = [
+            "manifest omits required scientific checks: " + ", ".join(sorted(required - declared))
+        ] if required - declared else []
+        if not self.input_contract.get("adapter"):
+            blockers.append("manifest does not declare canonical input_contract.adapter")
+        return tuple(blockers)
+
     @classmethod
     def from_json(cls, path: str | Path) -> BenchmarkManifest:
         return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))

@@ -159,3 +159,20 @@ def test_release_benchmark_manifests_declare_full_check_contract_and_canonical_a
         loaded = registry.load(benchmark_id)
         assert set(loaded.required_leakage_checks) == required
         assert loaded.input_contract["adapter"] == benchmark_id if benchmark_id != "star_embed_ztf_40k" else loaded.input_contract["adapter"] == "star_embed"
+
+
+def test_release_manifest_contract_rejects_missing_check_and_adapter():
+    loaded = manifest(required_leakage_checks=["duplicate_objects"], input_contract={"prediction_column": "prediction"})
+    blockers = loaded.validate_release_contract()
+    assert any("omits required scientific checks" in item for item in blockers)
+    assert "manifest does not declare canonical input_contract.adapter" in blockers
+
+
+def test_release_benchmark_manifests_have_complete_contract():
+    registry = BenchmarkRegistry("configs/benchmarks")
+    for benchmark_id in (
+        "star_embed_ztf_40k", "ztf_periodic_730k", "ztf_periodic_781k",
+        "ztf_dr24_source_subset", "alerce_reference",
+    ):
+        loaded = registry.load(benchmark_id)
+        assert loaded.validate_release_contract() == ()
