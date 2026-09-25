@@ -4,7 +4,7 @@
 
 - Repository: `saeed92m/ztf-classifier`
 - Default branch: `main`
-- Current main continuity commit: `beee6175ea9154d8f566f0f41dceb8eb6e69c7f3`
+- Current main continuity commit: `ce36c5ddd2f86776b3d0b2abdda5b5f93efeb4b4`
 - Immutable scientific baseline: tag `v0.2.0`
 - Python: 3.11.16
 - Runtime: Ubuntu 26.04 LTS under WSL2
@@ -635,7 +635,8 @@ This gate is a permanent part of the Definition of Done for the final product an
 
 ## 32. Current source-of-truth update — 2026-09-25
 
-- Current `main`: `beee6175ea9154d8f566f0f41dceb8eb6e69c7f3`.
+- Current `main`: `ce36c5ddd2f86776b3d0b2abdda5b5f93efeb4b4`.
+- PR #54 diagnostics hardening and PR #57 scientific-validation gate documentation are merged.
 - PR #54 diagnostics hardening is merged; calibration, conformal, and OOD artifacts are independently loadable under schema 1.1.
 - The historical immutable `v0.2.0` scientific baseline remains unchanged.
 - Live ALeRCE validation acquired all 150 canonical benchmark OIDs, but strict raw-cache reproduction detected external-source drift. Tracking issue: #51.
