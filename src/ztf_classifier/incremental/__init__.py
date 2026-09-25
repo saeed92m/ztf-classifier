@@ -8,7 +8,7 @@ from ztf_classifier.incremental.cursor import IncrementalBatch, IncrementalResul
 
 __all__ = [
     "CheckpointRecord",
-    "IncrementalCheckpointStore",
     "IncrementalBatch",
+    "IncrementalCheckpointStore",
     "IncrementalResultCursor",
 ]
