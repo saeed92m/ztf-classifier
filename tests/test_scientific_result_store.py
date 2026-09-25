@@ -89,3 +89,9 @@ def test_latest_result_for_object(tmp_path: Path) -> None:
 
     assert store.latest_for_object("ZTF17test").result_id == latest.result_id
     assert first.result_id != latest.result_id
+
+
+def test_latest_result_for_missing_object_returns_none(tmp_path: Path) -> None:
+    store = ScientificResultStore(tmp_path / "results.sqlite3")
+
+    assert store.latest_for_object("missing") is None

@@ -24,6 +24,14 @@ Clients never submit arbitrary artifact or registry filesystem paths.
 | GET | `/v1/model` | Default model metadata |
 | POST | `/v1/predict` | Synchronous inference |
 | POST | `/v1/batch` | Synchronous multi-row inference |
+| GET | `/v1/objects/{oid}` | Normalized object summary |
+| GET | `/v1/objects/{oid}/observations` | Normalized observation stream |
+| POST | `/v1/objects/{oid}/analysis` | Source-backed object analysis |
+| POST | `/v1/objects/{oid}/jobs` | Durable analysis job submission |
+| GET | `/v1/jobs/{job_id}` | Durable analysis job state |
+| GET | `/v1/jobs/{job_id}/result` | Canonical durable job result |
+| GET | `/v1/results/{result_id}` | Durable result by stable ID |
+| GET | `/v1/objects/{oid}/results/latest` | Latest durable result for an object |
 
 OpenAPI is generated directly by FastAPI from the versioned HTTP schemas.
 
@@ -119,3 +127,9 @@ Completed jobs persist their scientific payload through `ScientificResultStore`.
 - A missing result returns a stable 404 error.
 - Server configuration: `ZTF_API_RESULT_STORE` selects the SQLite result database; the default is `data/results/results.sqlite3`.
 - The job queue remains the lifecycle boundary; `ScientificResultStore` is the canonical scientific-history boundary.
+
+### Latest durable object result
+
+**GET** `/v1/objects/{oid}/results/latest?survey=ztf`
+
+Returns the newest persisted scientific result for the object and survey. The endpoint reads only from the canonical `ScientificResultStore`; it does not execute inference. If no durable result exists, the API returns `404 scientific_result_not_found`.

@@ -75,8 +75,9 @@ The initial shell is served by the API at:
 
 It currently provides:
 
-- object-analysis shell;
-- light-curve visualization surface;
+- API-backed object analysis;
+- API-backed light-curve visualization;
+- durable scientific-result hydration;
 - classification probability surface;
 - scientific metadata/provenance inspector;
 - batch/catalog/report navigation placeholders;
@@ -84,7 +85,7 @@ It currently provides:
 - responsive layout;
 - semantic status states.
 
-The current chart is a UI shell visualization. It is not a scientific result and must be replaced by API-backed plot data before being presented as an analysis result.
+The Workbench now hydrates its light curve from the normalized observation API and hydrates classification/provenance panels from the durable scientific-result API when a persisted result exists. It does not fabricate scientific values when data is unavailable.
 
 ## Evolution rules
 

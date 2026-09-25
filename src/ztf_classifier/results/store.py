@@ -69,8 +69,8 @@ class ScientificResultStore:
             )
             connection.execute(
                 """
-                CREATE INDEX IF NOT EXISTS idx_scientific_results_oid_created
-                ON scientific_results(oid, created_at DESC)
+                CREATE INDEX IF NOT EXISTS idx_scientific_results_oid_survey_created
+                ON scientific_results(oid, survey, created_at DESC)
                 """
             )
 
@@ -142,29 +142,54 @@ class ScientificResultStore:
                 created_at=self._now(),
                 payload=payload,
             )
-            connection.execute(
-                """
-                INSERT INTO scientific_results
-                (result_id, job_id, oid, survey, model_version,
-                 schema_version, created_at, payload_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    record.result_id,
-                    record.job_id,
-                    record.oid,
-                    record.survey,
-                    record.model_version,
-                    record.schema_version,
-                    record.created_at,
-                    json.dumps(
-                        record.payload,
-                        ensure_ascii=False,
-                        sort_keys=True,
-                        separators=(",", ":"),
-                    ),
-                ),
+            payload_json = json.dumps(
+                record.payload,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
             )
+            try:
+                connection.execute(
+                    """
+                    INSERT INTO scientific_results
+                    (result_id, job_id, oid, survey, model_version,
+                     schema_version, created_at, payload_json)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        record.result_id,
+                        record.job_id,
+                        record.oid,
+                        record.survey,
+                        record.model_version,
+                        record.schema_version,
+                        record.created_at,
+                        payload_json,
+                    ),
+                )
+            except sqlite3.IntegrityError:
+                existing = connection.execute(
+                    """
+                    SELECT result_id, job_id, oid, survey, model_version,
+                           schema_version, created_at, payload_json
+                    FROM scientific_results WHERE job_id = ?
+                    """,
+                    (job_id,),
+                ).fetchone()
+                if existing is None:
+                    raise
+                existing_record = self._decode(existing)
+                if (
+                    existing_record.oid != oid
+                    or existing_record.survey != survey
+                    or existing_record.model_version != model_version
+                    or existing_record.schema_version != schema_version
+                    or existing_record.payload != payload
+                ):
+                    raise ValueError(
+                        f"Scientific result already exists for job: {job_id}"
+                    )
+                return existing_record
             return record
 
     def get(self, result_id: str) -> ScientificResultRecord:
@@ -202,8 +227,8 @@ class ScientificResultStore:
         oid: str,
         *,
         survey: str | None = None,
-    ) -> ScientificResultRecord:
-        """Return the newest durable result for an object."""
+    ) -> ScientificResultRecord | None:
+        """Return the newest durable result for an object, if one exists."""
         query = """
             SELECT result_id, job_id, oid, survey, model_version,
                    schema_version, created_at, payload_json
@@ -219,7 +244,7 @@ class ScientificResultStore:
         with sqlite3.connect(self.path) as connection:
             row = connection.execute(query, parameters).fetchone()
         if row is None:
-            raise KeyError(oid)
+            return None
         return self._decode(row)
 
 
