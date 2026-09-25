@@ -1,4 +1,4 @@
-# ZTF Classifier — Project Continuity Handbook v1.4
+# ZTF Classifier — Project Continuity Handbook v1.5
 
 ## 1. Canonical state
 
@@ -9,8 +9,10 @@
 - Python: 3.11.16
 - Runtime: Ubuntu 26.04 LTS under WSL2
 - Environment: pyenv + `.venv`
-- Handbook v1.4 supersedes v1.3 for current project continuity.
-- Software milestone `v0.4.0` is merged to `main` at `457b887b1a08ede4fdce3f2ca2e3ce6c2b3a47d8`; tag/publication remain release-metadata steps.
+- Handbook v1.5 supersedes v1.4 for current project continuity.
+- Software milestone `v0.4.0` is merged to `main` at `457b887b1a08ede4fdce3f2ca2e3ce6c2b3a47d8` and has been published as the official GitHub release `v0.4.0`.
+- Current post-release `main` may contain continuity/documentation commits after the v0.4.0 merge; the v0.4.0 release target remains immutable.
+- The project has now entered the Web/API product implementation phase.
 
 ## 2. Completed production path
 
@@ -223,15 +225,16 @@ Payment and access control must never be treated as a substitute for scientific 
 The implementation sequence is:
 
 1. v0.3.0 release closeout;
-2. production Web/API layer around the existing inference engine;
-3. ingestion/connectors for user-provided and supported external data;
-4. persistent scientific database and job/analysis orchestration;
-5. Web application for single-object, batch, report, catalog, and analysis workflows;
-6. continuous/incremental source processing;
-7. publication/catalog integrations;
-8. commercial access, billing, entitlements, and secure data delivery;
-9. production observability, security, deployment, and MLOps;
-10. larger-scale scientific validation and ML v0.4+.
+2. v0.4.0 reproducibility/production-hardening release;
+3. production Web/API layer around the existing inference engine;
+4. ingestion/connectors for user-provided and supported external data;
+5. persistent scientific database and job/analysis orchestration;
+6. Web application for single-object, batch, report, catalog, and analysis workflows;
+7. continuous/incremental source processing;
+8. publication/catalog integrations;
+9. commercial access, billing, entitlements, and secure data delivery;
+10. production observability, security, deployment, and MLOps;
+11. larger-scale scientific validation and ML v0.4+.
 
 The database is not a prerequisite for the current local inference core, but it becomes a required product component once persistent analysis history, continuous ingestion, catalogs, or commercial delivery are implemented.
 
@@ -285,4 +288,107 @@ The pre-change WSL2 baseline commands were not executable through the repository
 
 ### Release state
 
-v0.4.0 is merged to `main` as `457b887b1a08ede4fdce3f2ca2e3ce6c2b3a47d8` after green CI. The next source-of-truth step is release/tag metadata. The immutable `v0.2.0` tag must never be rewritten.
+v0.4.0 is merged to `main` as `457b887b1a08ede4fdce3f2ca2e3ce6c2b3a47d8` after green CI and is published as the official `v0.4.0` release. The immutable `v0.2.0` tag must never be rewritten. The next implementation source of truth is the Web/API product layer.
+
+## 16. v0.4.0 release publication and current source of truth
+
+The `v0.4.0` release is published. Its release target is the merged hardening commit:
+
+`457b887b1a08ede4fdce3f2ca2e3ce6c2b3a47d8`
+
+The release is the reproducibility and production-hardening milestone. It must not be rewritten or retagged.
+
+The current development branch for the next product slice is based on post-release `main`. Documentation must distinguish release targets from later continuity commits.
+
+## 17. Web/API foundation — implementation contract
+
+The Web/API layer is an adapter around the existing application/domain services. Scientific inference logic remains outside FastAPI.
+
+Initial API surface:
+
+- `GET /health` — process liveness;
+- `GET /ready` — server readiness against the configured model registry;
+- `GET /v1/model` — selected/default model metadata;
+- `POST /v1/predict` — synchronous feature-row inference;
+- `POST /v1/batch` — synchronous multi-row inference using the same stable prediction contract.
+
+The HTTP client may select a registered `model_version`, but it may not submit arbitrary server filesystem paths. If no model version is supplied, the server may use the explicitly configured `ZTF_API_DEFAULT_MODEL_VERSION`.
+
+Server-side model configuration:
+
+- `ZTF_API_REGISTRY_DIR`
+- `ZTF_API_DEFAULT_MODEL_VERSION`
+
+The API response preserves model identity, diagnostic status, prediction probabilities, conformal diagnostics, OOD diagnostics, warnings, and provenance. Internal filesystem paths are not exposed.
+
+Stable API errors use machine-readable codes rather than leaking internal exception text. Request-validation errors are separated from model-selection and inference failures.
+
+## 18. Web/API dependency and reproducibility policy
+
+The project retains a dedicated `web` optional dependency group. FastAPI and Uvicorn compatibility ranges are pinned in `pyproject.toml`, while the reproducible CI environment records the resolved web stack in `requirements.lock`.
+
+The API implementation follows the current FastAPI error-handling model and remains suitable for deployment behind an ASGI server. The API is not itself the scientific domain layer.
+
+## 19. Scientific Analysis Workbench UI/UX direction
+
+The future web product is a Scientific Analysis Workbench rather than a generic administrative dashboard.
+
+Planned primary surfaces:
+
+- landing / project entry;
+- analysis workbench;
+- single-object analysis;
+- light-curve viewer;
+- observations and QC;
+- feature explorer;
+- periodicity analysis;
+- classification and uncertainty;
+- cross-match/enrichment;
+- provenance;
+- batch analysis;
+- jobs;
+- catalog;
+- reports;
+- advanced scientist controls;
+- administration/operations.
+
+Interaction design must support scientific inspection without hiding the high-level one-click workflow.
+
+The visual identity is intentionally **not locked yet**. Color palette, typography, density, dark/light default, accent treatment, chart palette, and branding direction will be selected with the project owner before frontend implementation. Until then, UI code must avoid embedding irreversible visual assumptions into the API or domain contracts.
+
+## 20. UI/UX design decision checkpoint
+
+Recommended starting direction for discussion:
+
+- dark scientific workstation as the primary mode;
+- near-black/graphite structural surfaces;
+- restrained electric-blue/cyan accent for interactive scientific states;
+- neutral high-contrast typography;
+- semantic colors reserved for status/alerts rather than branding;
+- dense desktop analysis layout with responsive fallback;
+- publication-quality plots and tables;
+- clear distinction between raw observations, derived features, model output, uncertainty, and provenance.
+
+Alternative directions remain open:
+
+1. **Deep-space / observatory** — dark navy/black, blue-cyan accents, minimal glow;
+2. **Scientific instrument** — graphite, neutral panels, restrained blue, data-first;
+3. **Light research lab** — off-white, slate, blue accents, very high print/readability;
+4. **Alpha Team signature** — white/blue brand language integrated with the scientific workbench.
+
+No option is treated as final until the project owner chooses or asks for a custom visual system.
+
+## 21. Next implementation sequence
+
+The immediate implementation sequence is:
+
+1. complete Web/API contract and boundary tests;
+2. verify locked web dependencies and CI;
+3. merge the Web/API foundation;
+4. update this handbook with the merge SHA;
+5. implement the Scientific Feature Engine with a unified feature contract;
+6. add source/feature backends, including an adapter boundary for SCoPe-compatible workflows;
+7. build persistent jobs/database orchestration;
+8. implement the Scientific Analysis Workbench frontend against the stable API contracts.
+
+Do not couple frontend design decisions to the internal Python application service layout.
