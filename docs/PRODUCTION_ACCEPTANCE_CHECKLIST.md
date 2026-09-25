@@ -57,3 +57,22 @@ The engineering/platform gates are implemented and CI-covered. The independent s
 ## Release evidence
 
 The release is accepted only after all engineering gates and the mandatory scientific-validation gate have executable evidence. CI success alone does not satisfy the scientific-validation gate. The release workflow enforces this boundary and must fail closed while any required scientific-validation item remains `NOT VERIFIED`.
+
+
+## Scientific Validation — permanent Product-Level Gate
+
+- [x] Benchmark Registry exists under `configs/benchmarks/`.
+- [x] Versioned manifest contract records source/version/DOI-or-authoritative-unassigned-state, retrieval date, IDs, hashes, schema, taxonomy, mapping, splits, leakage exclusions, preprocessing/input contract, and provenance.
+- [x] Ground truth and independent reference predictions are explicitly separated.
+- [x] ALeRCE is represented as an independent reference system, not ground truth.
+- [x] Reproducible table benchmark runner produces JSON/Markdown evidence and hashes its input.
+- [x] Regression comparison is executable and release-blocking.
+- [x] Registry contract is exercised by GitHub Actions.
+- [ ] All five source-backed benchmark adapters are implemented and executed with immutable evidence.
+- [ ] All required leakage checks are PASS for the release candidate.
+- [ ] Full scientific validation across ingestion -> normalization -> QC -> feature generation -> inference -> calibration/OOD -> provenance is PASS.
+- [ ] Scientific Validation Dashboard/Report is integrated into the Workbench.
+- [ ] No unresolved benchmark regression remains.
+
+The scientific gate remains **NOT VERIFIED** until the unchecked source-backed and leakage/evidence items above are completed. Engineering CI success alone cannot satisfy this gate.
+
