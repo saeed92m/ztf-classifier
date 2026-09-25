@@ -108,3 +108,15 @@ Every benchmark manifest declares an `evaluation_role`:
 - `reference_system`: the label column contains an independent classifier/reference output and requires reference-system provenance, but is never treated as ground truth.
 
 Runner reports preserve this role explicitly. Agreement with a reference system can be reported as a validation signal, but cannot satisfy the independent-ground-truth requirement.
+
+
+## Release-gate execution
+
+The scientific validation architecture is fail-closed at release time. The executable gate is implemented by `ztf_classifier.validation.gate` and evaluates all five permanent benchmark registrations, their immutable evidence reports, required leakage checks, provenance completeness, and source/object hashes.
+
+The gate has two distinct operational modes:
+
+- ordinary CI validates the registry/contract and deterministic runner without requiring multi-gigabyte external datasets;
+- release validation requires complete source-backed evidence for every required benchmark and exits non-zero while any benchmark remains `NOT_VERIFIED`, `BLOCKED`, or missing.
+
+This separation prevents expensive external acquisition from contaminating ordinary unit-test feedback while preserving a hard scientific release boundary.
