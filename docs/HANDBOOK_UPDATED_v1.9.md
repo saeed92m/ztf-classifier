@@ -542,3 +542,21 @@ Scientific invariants remain unchanged:
 - incremental checkpoints advance only after downstream acknowledgement.
 
 The next hardening sequence is platform-level integration: scheduler ownership, checkpoint observability, deployment/database separation, authorization boundaries, API pagination guarantees, end-to-end scientific provenance validation, and release acceptance.
+
+
+## 30. Final production hardening sequence
+
+The remaining acceptance gate is no longer a missing scientific subsystem. It is cross-layer hardening and evidence collection.
+
+Required final checks:
+
+1. green full CI on the merged main lineage;
+2. scientific baseline immutability verification;
+3. API contract and security-boundary verification;
+4. durable job/result/catalog/report persistence verification;
+5. incremental checkpoint restart/replay verification;
+6. Workbench API-backed integration verification;
+7. package build, wheel installation, import, and dependency audit;
+8. final documentation and changelog alignment.
+
+The authoritative acceptance checklist is docs/PRODUCTION_ACCEPTANCE_CHECKLIST.md.
