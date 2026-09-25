@@ -34,8 +34,9 @@ REQUIRED_FILES_V1_0 = (
     "provenance",
 )
 
-REQUIRED_FILES_V1_1 = (
-    *REQUIRED_FILES_V1_0,
+REQUIRED_FILES_V1_1 = REQUIRED_FILES_V1_0
+
+OPTIONAL_FILES_V1_1 = (
     "conformal",
     "ood",
     "ood_model",
@@ -89,6 +90,7 @@ class LoadedModelArtifact:
     ood_model: OODProductionModel | None = None
     artifact_hash: str = ""
     integrity_warnings: tuple[str, ...] = ()
+    artifact_schema_version: str = ""
 
 
 @dataclass(frozen=True)
@@ -191,15 +193,12 @@ class ModelArtifactWriter:
             or ood_model is not None
         )
 
-        if diagnostics and not (
-            conformal is not None
-            and ood is not None
-            and ood_model is not None
-        ):
-            raise ValueError(
-                "Conformal artifact, OOD artifact, and OOD production "
-                "model must be provided together."
-            )
+        if ood is not None or ood_model is not None:
+            if ood is None or ood_model is None:
+                raise ValueError(
+                    "OOD artifact and OOD production model must be "
+                    "provided together."
+                )
 
         if (
             ood is not None
@@ -289,11 +288,7 @@ class ModelArtifactWriter:
             calibration.write(calibration_path)
         provenance.write(provenance_path)
 
-        if diagnostics:
-            assert conformal is not None
-            assert ood is not None
-            assert ood_model is not None
-
+        if conformal is not None:
             conformal_path.write_text(
                 json.dumps(
                     conformal.to_dict(),
@@ -304,6 +299,8 @@ class ModelArtifactWriter:
                 encoding="utf-8",
             )
 
+        if ood is not None:
+            assert ood_model is not None
             ood_path.write_text(
                 json.dumps(
                     ood.to_dict(),
@@ -313,7 +310,6 @@ class ModelArtifactWriter:
                 + "\n",
                 encoding="utf-8",
             )
-
             ood_model.save(ood_model_path)
 
         manifest = {
@@ -360,11 +356,13 @@ class ModelArtifactWriter:
             },
         }
 
-        if diagnostics:
+        if conformal is not None:
             manifest["files"]["conformal"] = {
                 "path": "conformal.json",
                 "sha256": _sha256(conformal_path),
             }
+
+        if ood is not None:
             manifest["files"]["ood"] = {
                 "path": "ood.json",
                 "sha256": _sha256(ood_path),
@@ -630,63 +628,119 @@ class ModelArtifactLoader:
         ood_model = None
 
         if schema_version == ARTIFACT_SCHEMA_VERSION:
-            conformal_payload = json.loads(
-                paths["conformal"].read_text(
-                    encoding="utf-8"
-                )
-            )
-
-            ood_payload = json.loads(
-                paths["ood"].read_text(
-                    encoding="utf-8"
-                )
-            )
-
-            conformal = ConformalArtifact.from_dict(
-                conformal_payload
-            )
-
-            ood = OODArtifact.from_dict(
-                ood_payload
-            )
-
-            ood_model = OODProductionModel.load(
-                paths["ood_model"]
-            )
-
-            if (
-                ood_model.config.method != ood.method
-                or ood_model.config.n_estimators != ood.n_estimators
-                or ood_model.config.contamination != ood.contamination
-                or ood_model.config.random_state != ood.random_state
-                or ood_model.config.n_jobs != ood.n_jobs
-            ):
-                raise ValueError(
-                    "Persisted OOD model configuration does not "
-                    "match OOD artifact."
+            if "conformal" in files:
+                metadata = files["conformal"]
+                candidate = (artifact_dir / metadata["path"]).resolve()
+                try:
+                    candidate.relative_to(artifact_dir)
+                except ValueError as exc:
+                    raise ValueError(
+                        "Artifact conformal path escapes artifact directory."
+                    ) from exc
+                if not candidate.is_file():
+                    raise FileNotFoundError(
+                        f"Artifact file does not exist: {candidate}"
+                    )
+                expected_hash = metadata.get("sha256")
+                actual_hash = _sha256(candidate)
+                if expected_hash is None:
+                    message = (
+                        "Artifact file 'conformal' has no checksum; "
+                        "integrity status is unverified."
+                    )
+                    integrity_warnings.append(message)
+                    warnings.warn(message, UserWarning, stacklevel=2)
+                elif actual_hash != expected_hash:
+                    raise ValueError(
+                        "Artifact integrity check failed for 'conformal'."
+                    )
+                conformal = ConformalArtifact.from_dict(
+                    json.loads(candidate.read_text(encoding="utf-8"))
                 )
 
-            if ood_model.reference_anomaly_scores is None:
-                raise ValueError(
-                    "Persisted OOD model has no reference anomaly scores."
-                )
+            has_ood = "ood" in files or "ood_model" in files
+            if has_ood:
+                if "ood" not in files or "ood_model" not in files:
+                    raise ValueError(
+                        "OOD artifact and OOD production model metadata "
+                        "must be provided together."
+                    )
+                ood_metadata = files["ood"]
+                ood_model_metadata = files["ood_model"]
+                ood_path = (artifact_dir / ood_metadata["path"]).resolve()
+                ood_model_path = (
+                    artifact_dir / ood_model_metadata["path"]
+                ).resolve()
+                for candidate, label in (
+                    (ood_path, "ood"),
+                    (ood_model_path, "ood_model"),
+                ):
+                    try:
+                        candidate.relative_to(artifact_dir)
+                    except ValueError as exc:
+                        raise ValueError(
+                            f"Artifact {label} path escapes artifact directory."
+                        ) from exc
+                    if not candidate.is_file():
+                        raise FileNotFoundError(
+                            f"Artifact file does not exist: {candidate}"
+                        )
+                for metadata, candidate, label in (
+                    (ood_metadata, ood_path, "ood"),
+                    (ood_model_metadata, ood_model_path, "ood_model"),
+                ):
+                    expected_hash = metadata.get("sha256")
+                    actual_hash = _sha256(candidate)
+                    if expected_hash is None:
+                        message = (
+                            f"Artifact file '{label}' has no checksum; "
+                            "integrity status is unverified."
+                        )
+                        integrity_warnings.append(message)
+                        warnings.warn(message, UserWarning, stacklevel=2)
+                    elif actual_hash != expected_hash:
+                        raise ValueError(
+                            f"Artifact integrity check failed for '{label}'."
+                        )
 
-            np.testing.assert_allclose(
-                np.asarray(
-                    ood.reference_anomaly_scores,
-                    dtype=np.float64,
-                ),
-                np.asarray(
-                    ood_model.reference_anomaly_scores,
-                    dtype=np.float64,
-                ),
-                rtol=0.0,
-                atol=0.0,
-                err_msg=(
-                    "Persisted OOD model reference anomaly scores "
-                    "do not match OOD artifact."
-                ),
-            )
+                ood = OODArtifact.from_dict(
+                    json.loads(ood_path.read_text(encoding="utf-8"))
+                )
+                ood_model = OODProductionModel.load(ood_model_path)
+
+                if (
+                    ood_model.config.method != ood.method
+                    or ood_model.config.n_estimators != ood.n_estimators
+                    or ood_model.config.contamination != ood.contamination
+                    or ood_model.config.random_state != ood.random_state
+                    or ood_model.config.n_jobs != ood.n_jobs
+                ):
+                    raise ValueError(
+                        "Persisted OOD model configuration does not "
+                        "match OOD artifact."
+                    )
+
+                if ood_model.reference_anomaly_scores is None:
+                    raise ValueError(
+                        "Persisted OOD model has no reference anomaly scores."
+                    )
+
+                np.testing.assert_allclose(
+                    np.asarray(
+                        ood.reference_anomaly_scores,
+                        dtype=np.float64,
+                    ),
+                    np.asarray(
+                        ood_model.reference_anomaly_scores,
+                        dtype=np.float64,
+                    ),
+                    rtol=0.0,
+                    atol=0.0,
+                    err_msg=(
+                        "Persisted OOD model reference anomaly scores "
+                        "do not match OOD artifact."
+                    ),
+                )
 
         from xgboost import XGBClassifier
 
@@ -726,13 +780,14 @@ class ModelArtifactLoader:
             ood_model=ood_model,
             artifact_hash=sha256_file(manifest_path),
             integrity_warnings=tuple(integrity_warnings),
+            artifact_schema_version=schema_version,
         )
 
     @staticmethod
     def _validate_provenance(
         *,
         manifest: dict[str, Any],
-        calibration: CalibrationArtifact,
+        calibration: CalibrationArtifact | None,
         provenance: ModelProvenance,
     ) -> None:
         """Validate semantic consistency across artifact metadata."""
@@ -769,6 +824,22 @@ class ModelArtifactLoader:
                 "Provenance feature schema SHA-256 "
                 "does not match artifact."
             )
+
+        if calibration is None:
+            if any(
+                value is not None
+                for value in (
+                    provenance.calibration_method,
+                    provenance.calibration_temperature,
+                    provenance.calibration_source_path,
+                    provenance.calibration_source_sha256,
+                )
+            ):
+                raise ValueError(
+                    "Calibration provenance is present but calibration "
+                    "artifact is missing."
+                )
+            return
 
         if provenance.calibration_method != calibration.method:
             raise ValueError(
@@ -902,7 +973,28 @@ class ModelArtifactLoader:
                 f"files.{key}.sha256",
             )
 
-    @staticmethod
+        if schema_version == ARTIFACT_SCHEMA_VERSION:
+            for key in OPTIONAL_FILES_V1_1:
+                if key not in files:
+                    continue
+                metadata = files[key]
+                if not isinstance(metadata, dict):
+                    raise TypeError(
+                        f"Artifact manifest contains invalid '{key}' metadata."
+                    )
+                relative_path = metadata.get("path")
+                if not isinstance(relative_path, str) or not relative_path:
+                    raise ValueError(
+                        f"Artifact manifest contains invalid path for '{key}'."
+                    )
+                checksum = metadata.get("sha256")
+                if checksum is None:
+                    raise ValueError(
+                        f"Artifact manifest requires a checksum for '{key}'."
+                    )
+                _validate_sha256(checksum, f"files.{key}.sha256")
+
+        @staticmethod
     def _validate_contract(
         contract: dict[str, Any],
         manifest: dict[str, Any],
