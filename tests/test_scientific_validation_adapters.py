@@ -33,9 +33,18 @@ def test_730k_adapter_requires_781k_parent_and_is_derived() -> None:
         build_adapter_plan(BenchmarkManifest.from_dict(payload))
 
 
-def test_star_embed_adapter_fails_closed_without_verified_revision() -> None:
+def test_star_embed_adapter_resolves_revision_at_acquisition() -> None:
+    plan = build_adapter_plan(load("star_embed_ztf_40k"))
+    assert len(plan.urls) == 5
+    assert plan.query_manifest["revision"] == "resolve_at_acquisition"
+
+
+def test_star_embed_adapter_rejects_unverified_revision() -> None:
+    manifest = load("star_embed_ztf_40k")
+    payload = manifest.to_dict()
+    payload["input_contract"]["revision"] = "not-a-revision"
     with pytest.raises(AdapterContractError, match="verified 40-character"):
-        build_adapter_plan(load("star_embed_ztf_40k"))
+        build_adapter_plan(BenchmarkManifest.from_dict(payload))
 
 
 def test_star_embed_adapter_accepts_verified_revision() -> None:
