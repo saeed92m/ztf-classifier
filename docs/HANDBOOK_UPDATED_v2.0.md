@@ -651,3 +651,42 @@ This gate is a permanent part of the Definition of Done for the final product an
 - Live ALeRCE validation acquired all 150 canonical benchmark OIDs, but strict raw-cache reproduction detected external-source drift. Tracking issue: #51.
 - Exact historical raw-cache reproduction, frozen raw-feature parity, offline reproduction from that snapshot, and raw-artifact-backed production inference remain `NOT VERIFIED` until the immutable historical snapshot is available.
 - The scientific validation contract in `docs/SCIENTIFIC_VALIDATION_BENCHMARK.md` is mandatory for final scientific acceptance.
+
+## Scientific Validation — permanent product gate
+
+Scientific Validation & External Benchmarking is a permanent Product-Level Gate for the final Astronomical Data Analysis & Discovery Platform.
+
+### Executable architecture
+
+- Benchmark Registry: `configs/benchmarks/`
+- Manifest contract: `ztf_classifier.validation.manifest`
+- Reproducible runner: `ztf_classifier.validation.runner`
+- Regression tracking: `ztf_classifier.validation.regression`
+- Executable entry point: `python -m ztf_classifier.validation`
+- Architecture: `docs/architecture/SCIENTIFIC_VALIDATION_ARCHITECTURE.md`
+- Roadmap: `docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md`
+
+The five permanent validation layers are independent labeled benchmarks, catalog/cross-match evidence, independent classifier/reference systems, raw/source-backed ZTF reproduction, and OOD/failure-case validation.
+
+Ground truth is never inferred from model agreement. ALeRCE is an independent reference/prediction system and is not treated as ground truth.
+
+Every benchmark manifest records source/version/DOI or an explicit authoritative DOI-unassigned state, retrieval date, object IDs, hashes, schema, label taxonomy, class mapping, split definition, leakage exclusions, preprocessing/input contract, and provenance.
+
+Large benchmark datasets remain outside Git. Git stores manifests, checksums, configurations, reports, and code.
+
+Required leakage checks are release-blocking. Checks that cannot be established by a generic runner remain `NOT_EXECUTED` and therefore block scientific acceptance until an adapter or independent evidence supplies them.
+
+Changes to feature generation, preprocessing, model, inference, calibration, conformal prediction, OOD/anomaly handling, normalization, or scientific API contracts require the relevant benchmark regression suite.
+
+Permanent source registry:
+1. StarEmbed ZTF_40k
+2. ZTF periodic-variable classification release (~730k objects)
+3. historical ZTF periodic-variable catalog (~781k objects)
+4. pinned ZTF DR24 source-backed subset
+5. ALeRCE API/TAP independent reference
+
+Scientific interpretation rule:
+
+> Benchmark success is not proof of global correctness. It is quantitative and reproducible evidence for the declared population, source/version, labels, preprocessing, and evaluation conditions.
+
+The release workflow must fail closed while required scientific-validation items remain unresolved.
