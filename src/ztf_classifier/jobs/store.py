@@ -118,6 +118,10 @@ class JobStore:
         feature_parameters: dict | None = None,
     ) -> JobRecord:
         """Create a queued job."""
+        if not feature_backend:
+            raise ValueError("feature_backend is required")
+        if feature_parameters is not None and not isinstance(feature_parameters, dict):
+            raise TypeError("feature_parameters must be a dictionary")
         now = self._now()
         record = JobRecord(
             job_id=str(uuid4()),
