@@ -82,7 +82,7 @@ class IncrementalCheckpointStore:
             and current.result_id is not None
             and (created_at, result_id) < (current.created_at, current.result_id)
         ):
-                raise ValueError("checkpoint cannot move backwards")
+            raise ValueError("checkpoint cannot move backwards")
         updated_at = self._now()
         with sqlite3.connect(self.path) as connection:
             connection.execute(
