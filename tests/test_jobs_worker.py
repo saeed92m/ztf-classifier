@@ -113,3 +113,60 @@ def test_claim_assigns_lease_and_transition_clears_it(tmp_path) -> None:
     )
     assert completed.status == "succeeded"
     assert completed.lease_expires_at is None
+
+
+def test_worker_persists_scientific_result_and_links_job(tmp_path: Path) -> None:
+    from ztf_classifier.results import ScientificResultStore
+
+    job_store = JobStore(tmp_path / "jobs.sqlite3")
+    result_store = ScientificResultStore(tmp_path / "results.sqlite3")
+    job = job_store.create(
+        oid="ZTF-result",
+        survey="ztf",
+        model_version="baseline_v0.2",
+    )
+
+    worker = AnalysisJobWorker(
+        job_store,
+        lambda item: {
+            "schema_version": "1.0",
+            "oid": item.oid,
+            "model_version": "baseline_v0.2",
+            "prediction": {"predicted_class": "AGN"},
+        },
+        result_store,
+    )
+
+    completed = worker.run_once()
+
+    assert completed is not None
+    assert completed.status == "succeeded"
+    assert completed.scientific_result_id is not None
+    assert completed.result == {
+        "result_id": completed.scientific_result_id,
+        "schema_version": "1.0",
+    }
+
+    stored = result_store.get(completed.scientific_result_id)
+    assert stored.job_id == job.job_id
+    assert stored.payload["prediction"]["predicted_class"] == "AGN"
+
+
+def test_worker_marks_result_persistence_failure_without_leaking_details(
+    tmp_path: Path,
+) -> None:
+    from ztf_classifier.results import ScientificResultStore
+
+    job_store = JobStore(tmp_path / "jobs.sqlite3")
+    result_store = ScientificResultStore(tmp_path / "results.sqlite3")
+    job_store.create(oid="ZTF-result-fail", survey="ztf", model_version=None)
+
+    completed = AnalysisJobWorker(
+        job_store,
+        lambda _job: {"value": object()},
+        result_store,
+    ).run_once()
+
+    assert completed is not None
+    assert completed.status == "failed"
+    assert completed.error["code"] == "scientific_result_persistence_failed"
