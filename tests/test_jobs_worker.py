@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from ztf_classifier.jobs import AnalysisJobExecutionError, AnalysisJobWorker, JobStore
 
 
@@ -170,3 +172,22 @@ def test_worker_marks_result_persistence_failure_without_leaking_details(
     assert completed is not None
     assert completed.status == "failed"
     assert completed.error["code"] == "scientific_result_persistence_failed"
+
+
+def test_job_store_lists_jobs_deterministically(tmp_path: Path) -> None:
+    store = JobStore(tmp_path / "jobs.sqlite3")
+    first = store.create(oid="ZTF17first", survey="ztf", model_version="baseline_v0.2")
+    second = store.create(
+        oid="ZTF17second", survey="ztf", model_version="baseline_v0.2"
+    )
+
+    jobs = store.list(limit=10)
+
+    assert [job.job_id for job in jobs] == [second.job_id, first.job_id]
+
+
+def test_job_store_rejects_invalid_listing_status(tmp_path: Path) -> None:
+    store = JobStore(tmp_path / "jobs.sqlite3")
+
+    with pytest.raises(ValueError, match="Unsupported job status"):
+        store.list(status="invalid")
