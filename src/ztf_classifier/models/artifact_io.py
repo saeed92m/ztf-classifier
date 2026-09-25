@@ -556,6 +556,12 @@ class ModelArtifactLoader:
             dependencies=dict(
                 provenance_data["dependencies"]
             ),
+            software_version=str(
+                provenance_data.get("software", {}).get(
+                    "version",
+                    "unknown",
+                )
+            ),
         )
 
         self._validate_provenance(
