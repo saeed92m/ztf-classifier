@@ -20,6 +20,12 @@ on:
   schedule:
     - cron: "17 3 * * 1"
   workflow_dispatch:
+    inputs:
+      run_heavy:
+        description: "Download and execute source-backed benchmark acquisition/derivation"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -51,6 +57,62 @@ jobs:
 
       - name: Run cumulative lifecycle contract tests
         run: python -m pytest -q tests/test_cumulative_lifecycle.py
+
+  heavy-scientific-validation:
+    name: Execute source-backed benchmark acquisition and derivation
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: pip
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+      - name: Acquire 781k CPVS parent evidence
+        continue-on-error: true
+        run: |
+          mkdir -p reports/scientific_validation/ztf_periodic_781k
+          python -m ztf_classifier.validation acquire             --benchmark-id ztf_periodic_781k             --output reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip             --code-version "${GITHUB_SHA}"
+      - name: Acquire StarEmbed source package
+        continue-on-error: true
+        run: |
+          mkdir -p reports/scientific_validation/ztf_star_embed
+          python -m ztf_classifier.validation acquire             --benchmark-id star_embed_ztf_40k             --output reports/scientific_validation/ztf_star_embed             --code-version "${GITHUB_SHA}"
+      - name: Download CPVS light-curve inputs for 730k derivation
+        continue-on-error: true
+        run: |
+          mkdir -p reports/scientific_validation/ztf_periodic_730k
+          curl -L --fail --retry 3 "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" -o reports/scientific_validation/ztf_periodic_730k/ztf2g.zip
+          curl -L --fail --retry 3 "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" -o reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
+          echo "850fcef561dd7407fbe8e19e99100d7a  reports/scientific_validation/ztf_periodic_730k/ztf2g.zip" | md5sum -c -
+          echo "daa7bc45c67579253eebe6b1c09dfbd9  reports/scientific_validation/ztf_periodic_730k/ztf2r.zip" | md5sum -c -
+      - name: Derive published 730k subset
+        continue-on-error: true
+        run: |
+          parent="reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip"
+          evidence="$parent.evidence.json"
+          if test -f "$parent" && test -f "$evidence"; then
+            parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
+            python -m ztf_classifier.validation derive-730k               --parent "$parent"               --g-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2g.zip               --r-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2r.zip               --output reports/scientific_validation/ztf_periodic_730k/selected.tsv               --parent-evidence-sha256 "$parent_sha"               --code-version "${GITHUB_SHA}"
+          else
+            echo "Parent evidence unavailable; 730k derivation remains BLOCKED_EXTERNAL."
+          fi
+      - name: Evaluate fail-closed scientific gate
+        continue-on-error: true
+        run: |
+          python -m ztf_classifier.validation gate             --evidence-dir reports/scientific_validation             --output reports/scientific_validation/release_gate.json
+      - name: Upload heavy scientific evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: scientific-validation-heavy
+          path: reports/scientific_validation/**
+          if-no-files-found: warn
 
   scheduled-scientific-validation:
     name: Source provenance acquisition and scientific gate readiness
