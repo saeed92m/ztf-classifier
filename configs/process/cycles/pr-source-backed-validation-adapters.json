@@ -1,8 +1,30 @@
 {
-  "cycle_id": "source-backed-validation-adapters",
-  "change": {
-    "scope": "Add canonical source contracts for the five permanent scientific-validation adapters.",
-    "intent": "Make external benchmark provenance and acquisition semantics explicit and machine-testable."
+  "schema_version": "1.1",
+  "stage_id": "source-backed-validation-adapters",
+  "objective": "Make external benchmark provenance and acquisition semantics explicit and machine-testable.",
+  "previous_knowledge_consumed": [
+    "SF-001",
+    "SF-002",
+    "FD-001"
+  ],
+  "baseline": {
+    "revision": "historical-cycle-record",
+    "description": "Add canonical source contracts for the five permanent scientific-validation adapters."
+  },
+  "expected_improvement": [
+    "reliability",
+    "reproducibility",
+    "coverage"
+  ],
+  "measurement": {
+    "metrics": {
+      "lifecycle_contract_coverage": {
+        "before": 0,
+        "after": 1,
+        "unit": "validated_cycle_record",
+        "status": "MEASURED"
+      }
+    }
   },
   "validation": {
     "status": "PASS",
@@ -16,6 +38,14 @@
   "failure_analysis": {
     "status": "no-known-failure",
     "root_causes": []
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Source registry has exactly five permanent validation sources.",
+      "ALeRCE is explicitly typed as reference_system.",
+      "The 730,184-object benchmark is explicitly derived from the pinned 781,602-object CPVS snapshot."
+    ]
   },
   "regression": {
     "status": "PASS",
