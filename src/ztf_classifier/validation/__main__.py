@@ -44,6 +44,8 @@ def main(argv: list[str] | None = None) -> int:
     derive.add_argument("--parent-member")
     derive.add_argument("--g-member")
     derive.add_argument("--r-member")
+    derive.add_argument("--parent-evidence-sha256", required=True)
+    derive.add_argument("--code-version", default="working-tree")
 
     gate = subparsers.add_parser("gate", help="Evaluate the fail-closed product release gate")
     gate.add_argument("--evidence-dir", type=Path, default=Path("reports/scientific_validation"))
@@ -96,6 +98,8 @@ def main(argv: list[str] | None = None) -> int:
                 parent_member=args.parent_member,
                 g_member=args.g_member,
                 r_member=args.r_member,
+                parent_evidence_sha256=args.parent_evidence_sha256,
+                code_version=args.code_version,
             )
             print(f"derived={result.output}")
             print(f"selected_rows={result.selected_rows}")

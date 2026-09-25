@@ -26,3 +26,25 @@ def test_derivation_fails_closed_on_parent_count(tmp_path: Path):
     r.write_text("SourceID\te_rmag\nA\t0.1\nB\t0.1\n", encoding="utf-8")
     with pytest.raises(ValueError, match="parent row/object count mismatch"):
         derive_730k(parent, g, r, tmp_path / "selected.tsv")
+
+
+def test_derivation_emits_immutable_evidence_manifest(tmp_path: Path):
+    parent = tmp_path / "parent.tsv"
+    parent.write_text("SourceID\nA\nB\n", encoding="utf-8")
+    g = tmp_path / "g.tsv"
+    g.write_text("SourceID\te_gmag\nA\t0.1\nB\t0.8\n", encoding="utf-8")
+    r = tmp_path / "r.tsv"
+    r.write_text("SourceID\te_rmag\nA\t0.1\nB\t0.8\n", encoding="utf-8")
+    result = derive_730k(
+        parent,
+        g,
+        r,
+        tmp_path / "selected.tsv",
+        expected_parent_rows=2,
+        expected_selected_rows=1,
+        parent_evidence_sha256="0" * 64,
+        code_version="test",
+    )
+    assert result.selected_rows == 1
+    evidence = (tmp_path / "selected.tsv.evidence.json").read_text(encoding="utf-8")
+    assert '"parent_evidence_sha256": "' + "0" * 64 in evidence
