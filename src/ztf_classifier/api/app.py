@@ -402,6 +402,32 @@ def create_app(
             ) from exc
         return AnalysisJobResponse(**record.to_dict())
 
+    @app.get(
+        "/v1/jobs/{job_id}/result",
+        response_model=ObjectAnalysisResponse,
+        tags=["jobs"],
+    )
+    def get_analysis_job_result(job_id: str) -> ObjectAnalysisResponse:
+        """Return a completed job using the canonical scientific result contract."""
+        try:
+            record = jobs.get(job_id)
+        except KeyError as exc:
+            raise ApiContractError(
+                "job_not_found",
+                f"Analysis job was not found: {job_id}",
+                status_code=404,
+            ) from exc
+
+        if record.status != "succeeded" or record.result is None:
+            raise ApiContractError(
+                "job_result_not_ready",
+                "The analysis job has not produced a successful result.",
+                status_code=409,
+                details=[{"status": record.status}],
+            )
+
+        return ObjectAnalysisResponse(**record.result)
+
     @app.post(
         "/v1/objects/{oid}/analysis",
         response_model=ObjectAnalysisResponse,
