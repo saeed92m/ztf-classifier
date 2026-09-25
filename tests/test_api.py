@@ -449,6 +449,9 @@ def test_durable_job_result_retrieval_uses_scientific_result_store(
         model_version="baseline_v0.2",
         payload=scientific_payload,
     )
+    running = job_store.claim_next()
+    assert running is not None
+    assert running.job_id == job.job_id
     job_store.transition(
         job.job_id,
         status="succeeded",
