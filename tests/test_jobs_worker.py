@@ -207,3 +207,23 @@ def test_job_store_persists_feature_selection(tmp_path: Path) -> None:
 
     assert fetched.feature_backend == "native"
     assert fetched.feature_parameters == {"cutoff_mjd": 60000.0}
+
+
+def test_job_store_rejects_terminal_state_regression(tmp_path: Path) -> None:
+    store = JobStore(tmp_path / "jobs.sqlite3")
+    job = store.create(oid="ZTF-transition", survey="ztf", model_version=None)
+    running = store.claim_next()
+    assert running is not None
+    completed = store.transition(job.job_id, status="succeeded", result={"ok": True})
+    assert completed.status == "succeeded"
+
+    with pytest.raises(ValueError, match="Invalid job transition"):
+        store.transition(job.job_id, status="running")
+
+
+def test_job_store_rejects_queued_to_terminal_transition(tmp_path: Path) -> None:
+    store = JobStore(tmp_path / "jobs.sqlite3")
+    job = store.create(oid="ZTF-transition-queued", survey="ztf", model_version=None)
+
+    with pytest.raises(ValueError, match="Invalid job transition"):
+        store.transition(job.job_id, status="succeeded", result={"ok": True})
