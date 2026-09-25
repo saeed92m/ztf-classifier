@@ -8,7 +8,6 @@ from fastapi.testclient import TestClient
 
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
-from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.application.schemas import PredictionResponse
 from ztf_classifier.domain.observations import (
     ObjectObservationSummary,
@@ -330,7 +329,7 @@ class FakeAnalysisService:
         return self._service.predict_dataframe(dataset, artifact_dir)
 
 
-def test_object_analysis_contract_uses_shared_executor() -> None:
+def test_object_analysis_contract_uses_shared_executor(tmp_path: Path) -> None:
     class FakeExecutor:
         def execute(self, *, oid: str, survey: str, model_version: str | None):
             assert oid == "ZTF17test"
