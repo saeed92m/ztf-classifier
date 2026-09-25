@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass
 import numpy as np
 import pandas as pd
 
+
 @dataclass(frozen=True)
 class ALeRCEIngestionDiagnostics:
     """Row-level validation and provenance counters for ALeRCE ingestion."""
