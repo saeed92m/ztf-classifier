@@ -1,5 +1,7 @@
 # Production Acceptance Checklist
 
+Current evidence: `reports/acceptance/final-platform-acceptance-2026-09-25.md`
+
 This checklist is the final gate for the Astronomical Data Analysis & Discovery Platform layer.
 
 ## Scientific integrity
@@ -37,15 +39,15 @@ This checklist is the final gate for the Astronomical Data Analysis & Discovery 
 
 ## CI / packaging
 
-- [ ] Ruff lint passes.
-- [ ] Ruff format checks pass.
-- [ ] Full pytest suite passes.
-- [ ] Coverage is recorded.
-- [ ] Package build succeeds.
-- [ ] Built wheel installs and passes pip check.
-- [ ] Package import succeeds.
-- [ ] Dependency audit passes.
-- [ ] No runtime SQLite database or credential is committed.
+- [x] Ruff lint passes.
+- [x] Ruff format checks pass.
+- [x] Full pytest suite passes (437 passed; 4 data-dependent modules skipped).
+- [x] Coverage is recorded.
+- [x] Package build succeeds.
+- [x] Built wheel installs and passes pip check.
+- [x] Package import succeeds.
+- [x] Dependency audit passes.
+- [x] No runtime SQLite database or credential is committed.
 
 ## Release evidence
 
