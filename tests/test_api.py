@@ -410,8 +410,8 @@ def test_persistent_analysis_job_lifecycle(tmp_path: Path) -> None:
 def test_durable_job_result_retrieval_uses_scientific_result_store(
     tmp_path: Path,
 ) -> None:
-    from ztf_classifier.results import ScientificResultStore
     from ztf_classifier.jobs import JobStore
+    from ztf_classifier.results import ScientificResultStore
 
     settings = ApiSettings(
         job_store_path=tmp_path / "jobs.sqlite3",
@@ -452,6 +452,7 @@ def test_durable_job_result_retrieval_uses_scientific_result_store(
 
 
 def test_durable_job_result_is_not_ready_for_queued_job(tmp_path: Path) -> None:
+    from ztf_classifier.jobs import JobStore
     settings = ApiSettings(
         job_store_path=tmp_path / "jobs.sqlite3",
         result_store_path=tmp_path / "results.sqlite3",
