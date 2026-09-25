@@ -1,5 +1,6 @@
 """Scientific validation and external benchmark infrastructure."""
 
+from ztf_classifier.validation.adapters import AdapterContractError, AdapterPlan, build_adapter_plan
 from ztf_classifier.validation.acquisition import (
     AcquisitionRequest,
     AcquisitionResult,
@@ -28,6 +29,8 @@ from ztf_classifier.validation.runner import BenchmarkRunResult, run_table_bench
 from ztf_classifier.validation.sources import ValidationSource, get_source, source_ids
 
 __all__ = [
+    "AdapterContractError",
+    "AdapterPlan",
     "AcquisitionRequest",
     "AcquisitionResult",
     "BenchmarkManifest",
@@ -38,6 +41,7 @@ __all__ = [
     "EvidenceManifest",
     "ValidationSource",
     "acquire_all",
+    "build_adapter_plan",
     "acquire_source",
     "evaluate_release_gate",
     "get_source",
