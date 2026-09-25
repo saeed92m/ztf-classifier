@@ -324,7 +324,7 @@ jobs:
 
 به‌صورت جداگانه اضافه کن:
 
-- `dependency-review.yml` برای pull request؛
+- Dependency Review: evaluated; GitHub Dependency Graph is unavailable for this repository, so the workflow was not retained;
 - `codeql.yml`؛
 - workflow هفتگی برای dependency drift؛
 - workflow release برای tagها؛
@@ -899,7 +899,7 @@ coverage threshold را واقع‌بینانه انتخاب کن. اگر covera
 ```text
 .github/dependabot.yml
 .github/workflows/codeql.yml
-.github/workflows/dependency-review.yml
+(Dependency Review was evaluated but removed because GitHub Dependency Graph is unavailable on this repository; no non-runnable gate is retained.)
 ```
 
 ## تنظیمات پیشنهادی repository
