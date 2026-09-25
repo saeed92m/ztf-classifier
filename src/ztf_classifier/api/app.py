@@ -33,8 +33,8 @@ from ztf_classifier.api.schemas import (
 )
 from ztf_classifier.application.errors import ApplicationInferenceError
 from ztf_classifier.application.observations import ObservationService
-from ztf_classifier.catalog import ScientificCatalogService
 from ztf_classifier.application.service import ApplicationService
+from ztf_classifier.catalog import ScientificCatalogService
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
 from ztf_classifier.jobs.store import JobStore
 from ztf_classifier.models.classes import MODEL_CLASSES
