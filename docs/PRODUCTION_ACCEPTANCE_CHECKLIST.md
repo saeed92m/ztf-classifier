@@ -6,42 +6,42 @@ This checklist is the final gate for the Astronomical Data Analysis & Discovery 
 
 ## Scientific integrity
 
-- [ ] v0.2.0 tag remains immutable.
-- [ ] Native v0.2 feature schema remains 42 features and deterministic.
-- [ ] Source-backed analysis never fabricates observations.
-- [ ] Scientific results retain object, survey, model, schema, provenance, and creation metadata.
-- [ ] Reports and catalog exports are derived read-only views.
+- [x] v0.2.0 tag remains immutable.
+- [x] Native v0.2 feature schema remains 42 features and deterministic.
+- [x] Source-backed analysis never fabricates observations.
+- [x] Scientific results retain object, survey, model, schema, provenance, and creation metadata.
+- [x] Reports and catalog exports are derived read-only views.
 
 ## Persistence
 
-- [ ] Job lifecycle is durable and lease-aware.
-- [ ] Scientific results are idempotent per job.
-- [ ] Conflicting retries are rejected.
-- [ ] Incremental checkpoints cannot move backwards.
-- [ ] Runtime databases are external to source control.
+- [x] Job lifecycle is durable and lease-aware.
+- [x] Scientific results are idempotent per job.
+- [x] Conflicting retries are rejected.
+- [x] Incremental checkpoints cannot move backwards.
+- [x] Runtime databases are external to source control.
 
 ## API
 
-- [ ] OpenAPI exposes versioned contracts.
-- [ ] Stable error codes do not leak internal exception details.
-- [ ] Request IDs are generated or propagated.
-- [ ] Optional bearer authentication protects versioned endpoints when configured.
-- [ ] Catalog pagination and bounded exports are enforced.
-- [ ] Feature backend discovery and explicit backend selection are versioned.
+- [x] OpenAPI exposes versioned contracts.
+- [x] Stable error codes do not leak internal exception details.
+- [x] Request IDs are generated or propagated.
+- [x] Optional bearer authentication protects versioned endpoints when configured.
+- [x] Catalog pagination and bounded exports are enforced.
+- [x] Feature backend discovery and explicit backend selection are versioned.
 
 ## Workbench
 
-- [ ] Observations and durable results are API-backed.
-- [ ] No illustrative scientific values are presented as loaded results.
-- [ ] Catalog, jobs, report, and analysis views consume API contracts.
-- [ ] Report export is read-only and deterministic.
-- [ ] Theme changes do not alter scientific semantics.
+- [x] Observations and durable results are API-backed.
+- [x] No illustrative scientific values are presented as loaded results.
+- [x] Catalog, jobs, report, and analysis views consume API contracts.
+- [x] Report export is read-only and deterministic.
+- [x] Theme changes do not alter scientific semantics.
 
 ## CI / packaging
 
 - [x] Ruff lint passes.
 - [x] Ruff format checks pass.
-- [x] Full pytest suite passes (437 passed; 4 data-dependent modules skipped).
+- [x] Full pytest suite passes on the latest validated pre-merge hardening lineage; data-dependent modules remain explicitly skipped when their immutable raw inputs are unavailable.
 - [x] Coverage is recorded.
 - [x] Package build succeeds.
 - [x] Built wheel installs and passes pip check.
@@ -49,6 +49,10 @@ This checklist is the final gate for the Astronomical Data Analysis & Discovery 
 - [x] Dependency audit passes.
 - [x] No runtime SQLite database or credential is committed.
 
+## Scientific validation status
+
+The engineering/platform gates are implemented and CI-covered. The independent scientific-validation gate is intentionally **NOT VERIFIED** until the pinned external benchmarks and immutable historical raw-data evidence are executed. See `docs/SCIENTIFIC_VALIDATION_BENCHMARK.md` and issue #51.
+
 ## Release evidence
 
-The release is accepted only after all gates above have executable evidence in the final merged main commit.
+The release is accepted only after all engineering gates and the mandatory scientific-validation gate have executable evidence. CI success alone does not satisfy the scientific-validation gate.
