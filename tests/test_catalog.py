@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from ztf_classifier.catalog import ScientificCatalogService
 from ztf_classifier.results import ScientificResultStore
 
