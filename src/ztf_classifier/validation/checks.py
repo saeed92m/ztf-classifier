@@ -66,6 +66,12 @@ def check_duplicate_objects(
     manifest: BenchmarkManifest, frame: pd.DataFrame
 ) -> CheckResult:
     column = manifest.object_id_column
+    if column not in frame.columns:
+        return _blocked(
+            "duplicate_objects",
+            "The benchmark object identifier column is missing.",
+            required_input=column,
+        )
     duplicated = frame[column].astype(str).duplicated()
     count = int(duplicated.sum())
     if count:
@@ -285,10 +291,25 @@ def check_qc_acceptance(
             "A QC acceptance column is required.",
             required_input="accepted_column or input_contract.qc_acceptance_column",
         )
-    accepted = frame[column].astype(bool)
+    raw = frame[column]
+    if pd.api.types.is_bool_dtype(raw):
+        accepted = raw
+    elif pd.api.types.is_numeric_dtype(raw):
+        accepted = raw.astype(float).eq(1.0)
+    else:
+        normalized = raw.astype(str).str.strip().str.lower()
+        accepted = normalized.isin({"1", "true", "yes", "accepted", "pass"})
+        allowed = {"0", "1", "false", "true", "no", "yes", "rejected", "accepted", "fail", "pass"}
+        unknown = sorted(set(normalized) - allowed)
+        if unknown:
+            return _blocked(
+                "qc_acceptance",
+                "QC acceptance values contain unrecognized tokens.",
+                unknown_values=unknown,
+            )
     return _pass(
         "qc_acceptance",
-        "QC acceptance field is present and evaluable.",
+        "QC acceptance field is present and deterministically interpretable.",
         accepted_rows=int(accepted.sum()),
         rejected_rows=int((~accepted).sum()),
         acceptance_rate=float(accepted.mean()) if len(accepted) else 0.0,
