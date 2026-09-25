@@ -266,3 +266,9 @@ Reports must state:
 - what limitations apply.
 
 The product may claim only what the evidence supports.
+
+## Evaluation-role contract
+
+Every benchmark manifest must explicitly declare whether its labels are `ground_truth` or `reference_system` evidence.
+
+A `reference_system` benchmark such as ALeRCE must use a reference-specific label field and provenance. Its predictions may be compared with the product output, but they must never be represented as ground truth or satisfy a ground-truth provenance requirement.

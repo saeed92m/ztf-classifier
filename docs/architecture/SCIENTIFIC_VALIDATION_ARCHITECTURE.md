@@ -99,3 +99,12 @@ Every release validation package is expected to expose:
 - scientific gate status.
 
 The current runner writes the foundational report artifacts; the Workbench/dashboard surface is the next product integration slice.
+
+### Evaluation role contract
+
+Every benchmark manifest declares an `evaluation_role`:
+
+- `ground_truth`: the label column is an independently sourced evaluation label and requires documented ground-truth provenance.
+- `reference_system`: the label column contains an independent classifier/reference output and requires reference-system provenance, but is never treated as ground truth.
+
+Runner reports preserve this role explicitly. Agreement with a reference system can be reported as a validation signal, but cannot satisfy the independent-ground-truth requirement.
