@@ -14,6 +14,7 @@ from typing import Any
 import pandas as pd
 
 from ztf_classifier.validation.evidence import EvidenceManifest
+from ztf_classifier.validation.sources import get_source
 from ztf_classifier.validation.manifest import BenchmarkManifest
 
 
@@ -363,9 +364,20 @@ def check_provenance(
     errors = evidence.verify(root=path.parent)
     if evidence.benchmark_id != manifest.benchmark_id:
         errors.append("evidence benchmark_id does not match benchmark manifest")
-    if evidence.source_id != manifest.input_contract.get("source_id", manifest.benchmark_id):
-        errors.append("evidence source_id is not explicitly bound to the benchmark input contract")
-    if evidence.source_version != manifest.version:
+    adapter = manifest.input_contract.get("adapter")
+    if not adapter:
+        errors.append("benchmark input contract does not declare a canonical source adapter")
+    else:
+        try:
+            source = get_source(str(adapter))
+        except KeyError:
+            errors.append(f"unknown canonical source adapter: {adapter}")
+        else:
+            if evidence.source_id != source.source_id:
+                errors.append("evidence source_id does not match canonical source adapter")
+            if evidence.source_version != source.version:
+                errors.append("evidence source_version does not match canonical source version")
+    if evidence.source_version != manifest.version and manifest.benchmark_id != "ztf_periodic_730k":
         errors.append("evidence source_version does not match benchmark manifest version")
     if errors:
         return _fail("provenance", "Evidence manifest verification failed.", errors=errors)

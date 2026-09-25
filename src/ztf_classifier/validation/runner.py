@@ -199,6 +199,7 @@ def run_table_benchmark(
         blockers.append("provenance")
     elif provenance_result is None and not provenance_complete:
         blockers.append("provenance")
+    status = "PASS" if not blockers else "BLOCKED"
     result = BenchmarkRunResult(
         benchmark_id=manifest.benchmark_id,
         evaluation_role=manifest.evaluation_role,
