@@ -80,3 +80,13 @@ Initial error codes include:
 ## UI/UX boundary
 
 The future Scientific Analysis Workbench consumes this API contract. UI visual identity is intentionally not embedded here; typography, color system, density, chart styling, theme defaults, and branding remain presentation-layer decisions.
+
+
+## Observation endpoints
+
+- GET /v1/objects/{oid} returns an object summary derived from normalized observations.
+- GET /v1/objects/{oid}/observations returns normalized ZTF photometry and acquisition provenance.
+
+The endpoints use the existing ALeRCE acquisition adapter, Parquet cache, and strict light-curve normalization/QC contract. Observation responses preserve MJD, filter id, magnitude/error, corrected/raw photometry where available, coordinates, QC flags, and source provenance.
+
+Server-side observation caching is configured with ZTF_API_OBSERVATION_CACHE_DIR. Clients cannot provide filesystem paths.
