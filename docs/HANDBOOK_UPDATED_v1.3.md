@@ -1,4 +1,4 @@
-# ZTF Classifier — Project Continuity Handbook v1.3
+# ZTF Classifier — Project Continuity Handbook v1.4
 
 ## 1. Canonical state
 
@@ -9,8 +9,8 @@
 - Python: 3.11.16
 - Runtime: Ubuntu 26.04 LTS under WSL2
 - Environment: pyenv + `.venv`
-- Handbook v1.3 supersedes v1.2 for current project continuity.
-- Software milestone `v0.3.0` is merged to `main`; the GitHub release/tag operation remains a release-metadata step.
+- Handbook v1.4 supersedes v1.3 for current project continuity.
+- Software milestone `v0.4.0` is implemented on the upgrade branch; merge/tag/publication remain release-metadata steps.
 
 ## 2. Completed production path
 
@@ -236,3 +236,53 @@ The implementation sequence is:
 The database is not a prerequisite for the current local inference core, but it becomes a required product component once persistent analysis history, continuous ingestion, catalogs, or commercial delivery are implemented.
 
 Large external datasets must remain outside Git. Repository size and application size are therefore intentionally decoupled from scientific-data volume.
+
+
+## 15. v0.4.0 reproducibility and hardening closeout
+
+The complete upgrade patch has been implemented on branch `chore/complete-upgrade-v0.4` without changing the immutable scientific baseline.
+
+Implemented controls:
+
+- canonical `requirements.lock` captured from the verified Python 3.11.16 Ubuntu CI environment;
+- SHA-256 streaming utility for reproducibility;
+- artifact manifest hash and additive software/dataset/feature/model provenance metadata;
+- backward-compatible legacy artifact checksum warnings;
+- independent calibration, conformal, and OOD diagnostic status fields;
+- strict ALeRCE validation for MJD, filter, photometry, coordinates, duplicates, and corrected/raw fallback;
+- structured ALeRCE ingestion diagnostics;
+- additive CLI and batch provenance/status metadata;
+- Data Card, Model Card, and feature provenance/leakage contract;
+- security warning for trusted-only joblib model artifacts;
+- CI gates for locked installation, pip check, Ruff lint, scoped Ruff format validation, full pytest coverage reporting, wheel build/install, import verification, and pip-audit.
+
+### Executable validation
+
+Final successful PR CI run:
+
+- run #138
+- commit: `80557eac1c8964409d3c45772efc8d644a9dfea6`
+- 364 passed, 4 skipped, 6 warnings
+- total coverage: 83%
+- package build: passed
+- wheel installation: passed
+- package import: passed
+- pip check: passed
+- pip-audit: no known vulnerabilities reported
+
+The pip-audit job explicitly notes that the local project package `ztf-classifier` is not published on PyPI and therefore cannot itself be audited by that service; third-party dependencies returned no known vulnerabilities.
+
+The pre-change WSL2 baseline commands were not executable through the repository connector and are therefore recorded as NOT VERIFIED rather than fabricated.
+
+### Compatibility
+
+- scientific baseline `v0.2.0`: unchanged;
+- dataset contract `benchmark_v0.2`: unchanged;
+- frozen feature schema: v0.2 / 42 features;
+- production model identity: `baseline_v0.2`;
+- artifact schemas 1.0 and 1.1: retained;
+- existing CLI fields: retained; new fields are additive.
+
+### Release state
+
+v0.4.0 is ready for merge once the final branch CI is green. After merge, the next source-of-truth update is the merge SHA and release/tag metadata. The immutable `v0.2.0` tag must never be rewritten.
