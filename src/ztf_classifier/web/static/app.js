@@ -230,16 +230,141 @@ const titles = {
   catalog: ["Catalog", "Catalog query and export module"],
   reports: ["Reports", "Scientific report generation module"],
 };
+const titles = {
+  overview: ["Object analysis", "Scientific overview"],
+  observations: ["Observations", "Normalized observation stream"],
+  features: ["Features", "Scientific Feature Engine output"],
+  classification: ["Classification", "Model prediction and probabilities"],
+  uncertainty: ["Uncertainty & OOD", "Conformal and anomaly diagnostics"],
+  provenance: ["Provenance", "Traceable scientific metadata"],
+  batch: ["Batch jobs", "Durable analysis jobs"],
+  catalog: ["Catalog", "Catalog query and export"],
+  reports: ["Reports", "Scientific report export"],
+};
+
+function renderTable(headers, rows) {
+  const head = headers.map(h => "<th>" + escapeHtml(h) + "</th>").join("");
+  const body = rows.length
+    ? rows.map(row => "<tr>" + row.map(cell => "<td>" + escapeHtml(cell == null ? "—" : String(cell)) + "</td>").join("") + "</tr>").join("")
+    : '<tr><td colspan="' + headers.length + '" class="muted">No data available.</td></tr>';
+  return '<div class="data-table-wrap"><table class="data-table"><thead><tr>' + head + "</tr></thead><tbody>" + body + "</tbody></table></div>";
+}
+
+function setViewShell(title, subtitle, body) {
+  document.getElementById("viewTitle").textContent = title;
+  document.getElementById("viewSubtitle").textContent = subtitle;
+  document.querySelector(".main-canvas").querySelectorAll(".view-content").forEach(node => node.remove());
+  const node = document.createElement("section");
+  node.className = "view-content panel";
+  node.innerHTML = body;
+  document.querySelector(".main-canvas").appendChild(node);
+}
+
+function renderObservationsView() {
+  const rows = state.observations.map(o => [
+    o.mjd, o.band || o.filter, o.mag, o.magerr ?? o.mag_err, o.flux, o.fluxerr ?? o.flux_err
+  ]);
+  setViewShell("Observations", "Normalized observation stream", renderTable(
+    ["MJD", "Band", "Magnitude", "Mag error", "Flux", "Flux error"], rows
+  ));
+}
+
+function renderFeaturesView() {
+  const features = state.result?.payload?.features || {};
+  const rows = Object.entries(features).map(([name, value]) => [name, value]);
+  setViewShell("Features", "Scientific Feature Engine output · " +
+    (state.result?.payload?.feature_schema_version || state.result?.schema_version || "—"),
+    renderTable(["Feature", "Value"], rows));
+}
+
+function renderClassificationView() {
+  const probabilities = Object.entries(state.result?.payload?.prediction?.probabilities || {})
+    .sort((a, b) => b[1] - a[1]);
+  const rows = probabilities.map(([label, value], i) => [i + 1, label, (Number(value) * 100).toFixed(3) + "%"]);
+  setViewShell("Classification", "Full calibrated probability vector", renderTable(
+    ["Rank", "Class", "Probability"], rows
+  ));
+}
+
+function renderUncertaintyView() {
+  const prediction = state.result?.payload?.prediction;
+  const conformal = prediction?.conformal || [];
+  const ood = prediction?.ood || {};
+  const rows = [
+    ["Conformal status", state.result?.payload?.diagnostics?.conformal],
+    ["Conformal set size (first alpha)", conformal[0]?.prediction_set_size],
+    ["Conformal set (first alpha)", conformal[0]?.prediction_set?.join(", ")],
+    ["Alpha (first)", conformal[0]?.alpha],
+    ["OOD status", state.result?.payload?.diagnostics?.ood],
+    ["Anomaly score", ood.anomaly_score],
+    ["Normality score", ood.normality_score],
+    ["Anomaly percentile", ood.anomaly_percentile],
+    ["Isolation Forest label", ood.isolation_forest_label],
+    ["Anomaly rank", ood.anomaly_rank],
+    ["Top 1% anomaly", ood.is_top_1pct_anomaly],
+    ["Top 5% anomaly", ood.is_top_5pct_anomaly],
+    ["Top 10% anomaly", ood.is_top_10pct_anomaly],
+  ];
+  setViewShell("Uncertainty & OOD", "Conformal prediction and anomaly diagnostics",
+    renderTable(["Diagnostic", "Value"], rows));
+}
+
+function renderProvenanceView() {
+  const payload = state.result?.payload || {};
+  const rows = [
+    ["Object", state.result?.oid || state.oid],
+    ["Survey", payload.survey],
+    ["Schema", state.result?.schema_version],
+    ["Feature schema", payload.feature_schema_version],
+    ["Model", state.result?.model_version],
+    ["Model family", payload.model_family],
+    ["Observation source", payload.observation_provenance?.source],
+    ["Observation source version", payload.observation_provenance?.version],
+    ["Feature backend", payload.feature_provenance?.backend],
+    ["Feature backend version", payload.feature_provenance?.backend_version],
+    ["Normalized input SHA-256", payload.feature_provenance?.observation_input_sha256],
+    ["Result ID", state.result?.result_id],
+    ["Job ID", state.result?.job_id],
+    ["Created", state.result?.created_at],
+  ];
+  setViewShell("Provenance", "Traceable scientific metadata for the loaded result",
+    renderTable(["Field", "Value"], rows));
+}
+
+function renderUnavailableView(view) {
+  const messages = {
+    batch: "The durable job API currently supports job submission and individual job/result retrieval. A job-list/catalog endpoint is not exposed yet, so this view does not fabricate a queue.",
+    catalog: "No catalog query/export endpoint is exposed by the current API contract. Catalog UI is therefore intentionally not presented as implemented.",
+    reports: "No scientific report-generation endpoint is exposed by the current API contract. Report export is intentionally disabled rather than producing an incomplete artifact.",
+  };
+  setViewShell(titles[view][0], titles[view][1],
+    '<div class="empty-state"><strong>Capability not exposed yet</strong><p>' +
+    escapeHtml(messages[view]) + '</p></div>');
+}
+
+function renderView(view) {
+  if (view === "overview") {
+    document.querySelector(".main-canvas").querySelectorAll(".view-content").forEach(node => node.remove());
+    loadObject();
+    return;
+  }
+  if (view === "observations") return renderObservationsView();
+  if (view === "features") return renderFeaturesView();
+  if (view === "classification") return renderClassificationView();
+  if (view === "uncertainty") return renderUncertaintyView();
+  if (view === "provenance") return renderProvenanceView();
+  renderUnavailableView(view);
+}
+
 document.querySelectorAll(".nav-item").forEach(button => {
   button.addEventListener("click", () => {
     document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
     button.classList.add("active");
-    const view = button.dataset.view;
-    document.getElementById("viewTitle").textContent = view === "overview" ? state.oid : titles[view][0];
-    document.getElementById("viewSubtitle").textContent = titles[view][1];
-    if (view === "overview") loadObject();
+    renderView(button.dataset.view);
   });
 });
 document.getElementById("runAnalysisButton").addEventListener("click", runAnalysis);
-document.getElementById("exportReportButton").addEventListener("click", () => setConnectionState("Reports not yet enabled", false));
+document.getElementById("exportReportButton").addEventListener("click", () =>
+  setConnectionState("Report endpoint not available", false)
+);
 loadObject();
