@@ -26,6 +26,7 @@ def manifest(**overrides):
         "ground_truth_provenance": {"kind": "independent labels"},
         "reference_system_provenance": {"kind": "independent reference", "is_ground_truth": False},
         "benchmark_code_version": "test",
+        "evaluation_role": "ground_truth",
         "required_leakage_checks": ["object_overlap", "duplicate_objects"],
     }
     payload.update(overrides)
@@ -101,3 +102,31 @@ def test_regression_comparison_is_explicit():
     )
     assert result["status"] == "REGRESSION"
     assert "macro_f1" in result["regressions"]
+
+
+def test_reference_system_role_is_preserved_in_manifest_and_result(tmp_path):
+    manifest_instance = manifest(
+        evaluation_role="reference_system",
+        label_column="reference_label",
+        ground_truth_provenance={"kind": "external ground truth required separately"},
+    )
+    frame = pd.DataFrame(
+        {
+            "oid": ["A", "B"],
+            "reference_label": ["A", "B"],
+            "prediction": ["A", "B"],
+        }
+    )
+    input_path = tmp_path / "reference.parquet"
+    frame.to_parquet(input_path, index=False)
+    result = run_table_benchmark(
+        manifest=manifest_instance,
+        input_path=input_path,
+        output_dir=tmp_path / "report",
+    )
+    assert result.evaluation_role == "reference_system"
+    assert result.status == "BLOCKED"
+    payload = json.loads(
+        (tmp_path / "report" / "benchmark_result.json").read_text()
+    )
+    assert payload["evaluation_role"] == "reference_system"
