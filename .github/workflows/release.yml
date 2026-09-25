@@ -61,6 +61,16 @@ jobs:
               raise SystemExit(f"Tag {tag} does not match project version {actual}")
           PY
 
+      - name: Enforce scientific validation gate
+        shell: bash
+        run: |
+          if grep -q "NOT VERIFIED" docs/PRODUCTION_ACCEPTANCE_CHECKLIST.md; then
+            echo "Scientific validation gate is not complete; release publication is blocked."
+            grep -n "NOT VERIFIED" docs/PRODUCTION_ACCEPTANCE_CHECKLIST.md
+            exit 1
+          fi
+          echo "Scientific validation gate is complete."
+
       - name: Run release validation
         run: |
           python -m pip check
