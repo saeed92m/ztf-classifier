@@ -56,3 +56,4 @@ artifacts/
 # Local durable runtime databases
 data/jobs/*.sqlite3
 data/results/*.sqlite3
+data/incremental/*.sqlite3
