@@ -59,3 +59,17 @@ def test_catalog_query_rejects_invalid_limit(tmp_path: Path) -> None:
         assert "between 1 and 1000" in str(exc)
     else:
         raise AssertionError("invalid catalog limit was accepted")
+
+
+def test_catalog_query_rejects_invalid_time_window(tmp_path: Path) -> None:
+    service = ScientificCatalogService(_store(tmp_path))
+
+    try:
+        service.query(
+            created_after="2026-09-26T00:00:00+00:00",
+            created_before="2026-09-25T00:00:00+00:00",
+        )
+    except ValueError as exc:
+        assert "not be later" in str(exc)
+    else:
+        raise AssertionError("invalid catalog time window was accepted")
