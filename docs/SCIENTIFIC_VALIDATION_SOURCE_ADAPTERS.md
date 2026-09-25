@@ -25,3 +25,10 @@ metadata, and the checks required by the release gate. Live-source success alone
 does not close a historical reproducibility blocker.
 
 StarEmbed is modeled as a five-artifact Parquet package. The adapter now requires a verified 40-character Hugging Face commit SHA before acquisition; unverified revisions or hashes are rejected. Acquisition binds all five artifacts into one evidence manifest. The 781k adapter pins the Zenodo Table2 attachment. DR24 and ALeRCE remain query-driven and fail closed until their returned artifacts are actually acquired.\n\nThe actual benchmark data are intentionally not committed to Git.
+
+
+## 730k deterministic derivation
+
+The 730,184-object release is not treated as an independently downloadable source. The derivation runner consumes the pinned 781,602-object CPVS parent plus the published ZTF2 g/r light-curve artifacts. It requires at least one g-band detection at 2.5σ and one r-band detection at 3σ, and fails closed unless the resulting object count is exactly 730,184. The published study describes the same 730,184/781,602 selection and thresholds. The runner writes a content hash of the selected SourceID manifest and a derivation manifest containing the selection parameters and output hash.
+
+The repository does not claim that derivation evidence exists until the real source artifacts have been acquired and the runner has produced the expected count.
