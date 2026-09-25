@@ -35,11 +35,11 @@ from ztf_classifier.application.service import ApplicationService
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
 from ztf_classifier.jobs.store import JobStore
 from ztf_classifier.models.classes import MODEL_CLASSES
-from ztf_classifier.results import ScientificResultStore
 from ztf_classifier.models.registry import (
     FilesystemModelRegistry,
     ModelNotFoundError,
 )
+from ztf_classifier.results import ScientificResultStore
 
 API_VERSION = "v1"
 
