@@ -36,6 +36,7 @@ class BenchmarkManifest:
     ground_truth_provenance: dict[str, Any]
     reference_system_provenance: dict[str, Any]
     benchmark_code_version: str
+    evaluation_role: str = "ground_truth"
     source_url: str | None = None
     doi: str | None = None
     license: str | None = None
@@ -59,6 +60,9 @@ class BenchmarkManifest:
         for key in ("benchmark_id", "dataset_name", "source", "version"):
             if not isinstance(payload[key], str) or not payload[key].strip():
                 raise ValueError(f"Benchmark manifest field must be non-empty: {key}")
+        evaluation_role = payload.get("evaluation_role", "ground_truth")
+        if evaluation_role not in {"ground_truth", "reference_system"}:
+            raise ValueError("evaluation_role must be 'ground_truth' or 'reference_system'")
         if not isinstance(payload["class_mapping"], dict) or not payload["class_mapping"]:
             raise ValueError("class_mapping must be a non-empty object")
         if not isinstance(payload["leakage_exclusions"], list):
@@ -78,6 +82,7 @@ class BenchmarkManifest:
             ground_truth_provenance=dict(payload["ground_truth_provenance"]),
             reference_system_provenance=dict(payload["reference_system_provenance"]),
             benchmark_code_version=payload["benchmark_code_version"],
+            evaluation_role=evaluation_role,
             source_url=payload.get("source_url"), doi=payload.get("doi"), license=payload.get("license"),
             file_object_ids=list(payload["file_object_ids"]) if payload.get("file_object_ids") is not None else None,
             hashes=dict(payload["hashes"]) if payload.get("hashes") is not None else None,
@@ -102,7 +107,9 @@ class BenchmarkManifest:
             "preprocessing_contract": self.preprocessing_contract,
             "input_contract": self.input_contract, "ground_truth_provenance": self.ground_truth_provenance,
             "reference_system_provenance": self.reference_system_provenance,
-            "benchmark_code_version": self.benchmark_code_version, "file_object_ids": self.file_object_ids,
+            "benchmark_code_version": self.benchmark_code_version,
+            "evaluation_role": self.evaluation_role,
+            "file_object_ids": self.file_object_ids,
             "hashes": self.hashes, "probability_columns": self.probability_columns,
             "ood_label_column": self.ood_label_column, "ood_score_column": self.ood_score_column,
             "accepted_column": self.accepted_column, "required_leakage_checks": list(self.required_leakage_checks),

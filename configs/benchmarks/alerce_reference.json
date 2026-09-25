@@ -8,8 +8,8 @@
   "doi": "NOT_APPLICABLE",
   "license": "ALeRCE service terms",
   "object_id_column": "oid",
-  "label_column": "ground_truth_label",
-  "label_taxonomy": "reference-system output taxonomy; not ground truth",
+  "label_column": "reference_label",
+  "label_taxonomy": "reference-system output taxonomy; never ground truth",
   "class_mapping": {
     "source_native": "source_native"
   },
@@ -45,5 +45,6 @@
     "future_data_leakage",
     "benchmark_trained_artifacts",
     "preprocessing_consistency"
-  ]
+  ],
+  "evaluation_role": "reference_system"
 }

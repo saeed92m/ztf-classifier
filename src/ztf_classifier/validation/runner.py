@@ -28,6 +28,7 @@ class BenchmarkRunResult:
     """Machine-readable scientific validation result."""
 
     benchmark_id: str
+    evaluation_role: str
     status: str
     metrics: dict[str, Any]
     leakage: dict[str, str]
@@ -42,7 +43,9 @@ class BenchmarkRunResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "benchmark_id": self.benchmark_id, "status": self.status,
+            "benchmark_id": self.benchmark_id,
+            "evaluation_role": self.evaluation_role,
+            "status": self.status,
             "metrics": self.metrics, "leakage": self.leakage,
             "provenance_complete": self.provenance_complete,
             "input_sha256": self.input_sha256, "row_count": self.row_count,
@@ -178,9 +181,13 @@ def run_table_benchmark(
 
     provenance_complete = all((
         manifest.source, manifest.version, manifest.retrieval_date,
-        manifest.label_taxonomy, manifest.ground_truth_provenance,
-        manifest.reference_system_provenance, manifest.benchmark_code_version,
+        manifest.label_taxonomy, manifest.benchmark_code_version,
     ))
+    if manifest.evaluation_role == "ground_truth":
+        provenance_complete = provenance_complete and bool(manifest.ground_truth_provenance)
+    else:
+        provenance_complete = provenance_complete and bool(manifest.reference_system_provenance)
+
     blockers = [
         name for name in manifest.required_leakage_checks
         if leakage.get(name) != "PASS"
@@ -190,7 +197,10 @@ def run_table_benchmark(
     status = "PASS" if not blockers else "BLOCKED"
 
     result = BenchmarkRunResult(
-        benchmark_id=manifest.benchmark_id, status=status, metrics=metrics,
+        benchmark_id=manifest.benchmark_id,
+        evaluation_role=manifest.evaluation_role,
+        status=status,
+        metrics=metrics,
         leakage=leakage, provenance_complete=provenance_complete,
         input_sha256=_sha256(input_path), row_count=len(frame),
         output_path=str(output_dir / "benchmark_result.json"),
