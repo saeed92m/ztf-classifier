@@ -646,7 +646,9 @@ def test_object_analysis_rejects_unknown_feature_backend(tmp_path: Path) -> None
 
 
 def test_optional_api_key_protects_versioned_endpoints(tmp_path: Path) -> None:
-    settings = ApiSettings(api_key="secret-key", result_store_path=tmp_path / "results.sqlite3")
+    settings = ApiSettings(
+        api_key="secret-key", result_store_path=tmp_path / "results.sqlite3"
+    )
     client = TestClient(create_app(settings))
 
     unauthorized = client.get("/v1/results/missing", headers={"X-Request-ID": "req-1"})
