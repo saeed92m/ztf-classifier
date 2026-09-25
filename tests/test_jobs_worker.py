@@ -66,7 +66,7 @@ def test_worker_drain_processes_multiple_jobs(tmp_path: Path) -> None:
 
 def test_worker_leaves_unexpected_errors_visible(tmp_path: Path) -> None:
     store = JobStore(tmp_path / "jobs.sqlite3")
-    store.create(oid="ZTF-unexpected", survey="ztf", model_version=None)
+    job = store.create(oid="ZTF-unexpected", survey="ztf", model_version=None)
 
     def execute(_job):
         raise ValueError("programmer error")
@@ -76,4 +76,4 @@ def test_worker_leaves_unexpected_errors_visible(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="programmer error"):
         AnalysisJobWorker(store, execute).run_once()
 
-    assert store.get(store.claim_next().job_id).status == "running"
+    assert store.get(job.job_id).status == "running"
