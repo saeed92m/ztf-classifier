@@ -4,8 +4,8 @@ A CPU-oriented machine-learning research pipeline for classification of astronom
 
 ## Project status
 
-**Version:** v0.3.0
-**Status:** Production-oriented research pipeline with registry-backed inference and validated CLI E2E paths
+**Version:** v0.4.0
+**Status:** Hardened production-oriented research pipeline with reproducibility, provenance, registry-backed inference, strict ingestion diagnostics, and validated CLI E2E paths
 
 The v0.2 core pipeline includes:
 
@@ -231,6 +231,13 @@ The Parquet file contains prediction columns plus metadata including:
 * `ztf_classifier.has_calibration`
 * `ztf_classifier.has_conformal`
 * `ztf_classifier.has_ood`
+* `ztf_classifier.calibration_status`
+* `ztf_classifier.conformal_status`
+* `ztf_classifier.ood_status`
+* `ztf_classifier.artifact_schema_version`
+* `ztf_classifier.artifact_hash`
+* `ztf_classifier.feature_schema_hash`
+* `ztf_classifier.software_version`
 
 Existing output files are not overwritten.
 
@@ -246,7 +253,7 @@ Primary environment:
 * Ubuntu 26.04 LTS
 * WSL2
 
-The repository contains reproducibility, provenance, validation, and artifact-contract components intended to make model production and inference auditable.
+The repository contains reproducibility, provenance, checksum validation, ingestion diagnostics, and artifact-contract components intended to make model production and inference auditable. The CI gate also validates formatting, coverage reporting, package builds, wheel installation, and dependency security auditing.
 
 ## Validation status
 
@@ -267,7 +274,7 @@ Current validated areas include:
 
 The full test suite is the release gate. CI runs installation, dependency verification, Ruff, the complete pytest suite, and package import verification. Registry-backed prediction and batch paths are covered by real subprocess E2E tests.
 
-The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the software package milestone is `v0.3.0`.
+The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the software package milestone is `v0.4.0`.
 
 ## Repository structure
 
@@ -296,4 +303,4 @@ The benchmark is intentionally small and balanced. Its labels originate from ALe
 
 Performance measured on the current 150-object benchmark should not be interpreted as representative of the full ZTF population.
 
-The system is intended as a reproducible foundation for future scaling, broader validation, and deployment-oriented development.
+The system is intended as a reproducible foundation for future scaling, broader validation, and deployment-oriented development. See `docs/DATA_CARD.md` and `docs/MODEL_CARD.md` for the current dataset and model limitations.
