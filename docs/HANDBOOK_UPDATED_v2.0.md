@@ -1,5 +1,15 @@
 # ZTF Classifier — Project Continuity Handbook v2.0
 
+## Current continuity amendment — 2026-09-25
+
+This amendment is authoritative over any earlier historical planning text in this handbook.
+
+- Current main: ce36c5ddd2f86776b3d0b2abdda5b5f93efeb4b4 at the time this continuity branch was created.
+- v0.4.0 remains the published reproducibility/production-hardening release and is immutable.
+- The mandatory scientific-validation gate is active. Issue #51 remains open because the historical raw-cache snapshot used by the frozen v0.2 benchmark is not available in the repository and current live ALeRCE data has demonstrably drifted from that historical snapshot.
+- Current main has one deterministic CI regression: a diagnostic artifact path-escape test expected a generic message while the hardened loader correctly includes the diagnostic artifact key. This branch fixes the test contract; no security check is weakened.
+- The project is in active completion/hardening, not final scientific acceptance. No release claim should bypass the explicit external-data gate.
+
 ## 1. Canonical state
 
 - Repository: `saeed92m/ztf-classifier`
