@@ -1,8 +1,30 @@
 {
-  "cycle_id": "source-provenance-probe",
-  "change": {
-    "scope": "Operationalize external-source provenance probing in scheduled/manual scientific validation.",
-    "intent": "Capture response hashes and endpoint reachability without treating live data as benchmark truth."
+  "schema_version": "1.1",
+  "stage_id": "source-provenance-probe",
+  "objective": "Capture response hashes and endpoint reachability without treating live data as benchmark truth.",
+  "previous_knowledge_consumed": [
+    "SF-001",
+    "SF-002",
+    "FD-001"
+  ],
+  "baseline": {
+    "revision": "historical-cycle-record",
+    "description": "Operationalize external-source provenance probing in scheduled/manual scientific validation."
+  },
+  "expected_improvement": [
+    "reliability",
+    "reproducibility",
+    "coverage"
+  ],
+  "measurement": {
+    "metrics": {
+      "lifecycle_contract_coverage": {
+        "before": 0,
+        "after": 1,
+        "unit": "validated_cycle_record",
+        "status": "MEASURED"
+      }
+    }
   },
   "validation": {
     "status": "PASS",
@@ -16,6 +38,14 @@
   "failure_analysis": {
     "status": "no-known-failure",
     "root_causes": []
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Five canonical source contracts are probed or explicitly marked derived.",
+      "Probe output records HTTP status, content type, size, and SHA-256 for live endpoints.",
+      "The fail-closed scientific gate remains release-blocking."
+    ]
   },
   "regression": {
     "status": "PASS",
