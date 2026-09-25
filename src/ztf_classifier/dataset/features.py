@@ -7,11 +7,8 @@ from dataclasses import dataclass
 import pandas as pd
 
 from ztf_classifier.dataset.manifest import ObjectManifest
-from ztf_classifier.features.pipeline import (
-    V0_2_FEATURES,
-    extract_v0_2_features,
-    validate_v0_2_feature_vector,
-)
+from ztf_classifier.features.engine import ScientificFeatureEngine
+from ztf_classifier.features.pipeline import V0_2_FEATURES
 from ztf_classifier.io.alerce import alerce_to_internal_lc_robust
 from ztf_classifier.io.detection_acquisition import (
     DetectionAcquisitionBackend,
@@ -72,10 +69,12 @@ class FeatureDatasetBuilder:
         manifest: ObjectManifest,
         acquisition_backend: DetectionAcquisitionBackend,
         feature_schema_version: str = "v0.2",
+        feature_engine: ScientificFeatureEngine | None = None,
     ) -> None:
         self._manifest = manifest
         self._acquisition_backend = acquisition_backend
         self._feature_schema_version = feature_schema_version
+        self._feature_engine = feature_engine or ScientificFeatureEngine()
 
     def build(
         self,
@@ -108,11 +107,15 @@ class FeatureDatasetBuilder:
                 result.detections
             )
 
-            features = extract_v0_2_features(
+            features = self._feature_engine.compute(
                 internal,
-                cutoff_mjd=cutoff_mjd,
-            )
-            validate_v0_2_feature_vector(features)
+                backend="native",
+                parameters=(
+                    {"cutoff_mjd": cutoff_mjd}
+                    if cutoff_mjd is not None
+                    else {}
+                ),
+            ).values
 
             row = {
                 column: record[column]
