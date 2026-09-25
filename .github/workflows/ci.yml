@@ -62,9 +62,13 @@ jobs:
             src/ztf_classifier/api/schemas.py \
             src/ztf_classifier/api/server.py \
             tests/test_api.py \
+            src/ztf_classifier/incremental/__init__.py \
+            src/ztf_classifier/incremental/checkpoints.py \
+            src/ztf_classifier/incremental/cursor.py \
             src/ztf_classifier/jobs/store.py \
             src/ztf_classifier/jobs/worker.py \
             src/ztf_classifier/jobs/__init__.py \
+            tests/test_incremental.py \
             tests/test_jobs_worker.py \
             src/ztf_classifier/catalog/__init__.py \
             src/ztf_classifier/catalog/service.py \
