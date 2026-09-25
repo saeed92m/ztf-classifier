@@ -1,0 +1,51 @@
+{
+  "benchmark_id": "ztf_dr24_source_subset",
+  "dataset_name": "Pinned ZTF Data Release 24 source-backed subset",
+  "source": "ZTF/IRSA Public Data Release 24",
+  "version": "DR24 (2026-01-22)",
+  "retrieval_date": "2026-09-25",
+  "source_url": "https://irsa.ipac.caltech.edu/data/ZTF/docs/releases/dr24/ztf_release_notes_dr24.pdf",
+  "doi": "NOT_ASSIGNED",
+  "license": "ZTF data usage and acknowledgement terms",
+  "object_id_column": "oid",
+  "label_column": "ground_truth_label",
+  "label_taxonomy": "benchmark-defined source-backed taxonomy",
+  "class_mapping": {
+    "source_native": "source_native"
+  },
+  "split_definition": {
+    "strategy": "pinned object IDs and observation cutoff defined by manifest"
+  },
+  "leakage_exclusions": [
+    "future observations after the pinned cutoff are excluded",
+    "duplicate objects across splits are prohibited",
+    "benchmark-trained artifacts are prohibited"
+  ],
+  "preprocessing_contract": {
+    "ingestion": "source-backed only",
+    "normalization": "production normalization contract",
+    "qc": "production QC contract",
+    "feature_generation": "production Scientific Feature Engine"
+  },
+  "input_contract": {
+    "adapter": "ztf_dr24_source_subset",
+    "prediction_column": "y_pred"
+  },
+  "ground_truth_provenance": {
+    "kind": "benchmark-specific independent labels/catalog evidence",
+    "is_model_agreement": false
+  },
+  "reference_system_provenance": {
+    "kind": "optional ALeRCE reference",
+    "notes": "ALeRCE output is independent reference/prediction, never ground truth"
+  },
+  "benchmark_code_version": "benchmark-registry-v1",
+  "required_leakage_checks": [
+    "object_overlap",
+    "duplicate_objects",
+    "target_leakage",
+    "future_data_leakage",
+    "benchmark_trained_artifacts",
+    "preprocessing_consistency"
+  ]
+}

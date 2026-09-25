@@ -1,0 +1,49 @@
+{
+  "benchmark_id": "ztf_periodic_730k",
+  "dataset_name": "Classification of The Zwicky Transient Facility Catalog of Periodic Variable Stars",
+  "source": "Zenodo record 5764899",
+  "version": "2021-12-07 release",
+  "retrieval_date": "2026-09-25",
+  "source_url": "https://zenodo.org/records/5764899",
+  "doi": "10.5281/zenodo.5764899",
+  "license": "CC BY 4.0",
+  "object_id_column": "source_id",
+  "label_column": "class",
+  "label_taxonomy": "source-native ZTF CPVS classification release taxonomy",
+  "class_mapping": {
+    "source_native": "source_native"
+  },
+  "split_definition": {
+    "strategy": "versioned object-level split defined by benchmark runner"
+  },
+  "leakage_exclusions": [
+    "object IDs overlapping training artifacts are excluded",
+    "cross-match evidence is kept separate from labels"
+  ],
+  "preprocessing_contract": {
+    "source_schema": "preserve source schema before adapter mapping",
+    "normalization": "versioned"
+  },
+  "input_contract": {
+    "adapter": "ztf_periodic_730k",
+    "prediction_column": "y_pred"
+  },
+  "ground_truth_provenance": {
+    "kind": "catalog classification labels",
+    "source": "Zenodo 5764899",
+    "is_model_agreement": false
+  },
+  "reference_system_provenance": {
+    "kind": "catalog cross-match/reference evidence",
+    "notes": "SIMBAD/cross-match evidence is not universal ground truth"
+  },
+  "benchmark_code_version": "benchmark-registry-v1",
+  "required_leakage_checks": [
+    "object_overlap",
+    "duplicate_objects",
+    "target_leakage",
+    "future_data_leakage",
+    "benchmark_trained_artifacts",
+    "preprocessing_consistency"
+  ]
+}
