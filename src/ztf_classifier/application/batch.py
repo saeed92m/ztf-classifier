@@ -29,6 +29,14 @@ class BatchPredictionResult:
     has_calibration: bool
     has_conformal: bool
     has_ood: bool
+    calibration_status: str = "unavailable"
+    conformal_status: str = "unavailable"
+    ood_status: str = "unavailable"
+    artifact_schema_version: str = ""
+    artifact_hash: str = ""
+    feature_schema_hash: str = ""
+    software_version: str = ""
+    warnings: tuple[str, ...] = ()
     schema_version: str = BATCH_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
@@ -212,6 +220,14 @@ class BatchInferenceService:
             has_calibration=result.has_calibration,
             has_conformal=result.has_conformal,
             has_ood=result.has_ood,
+            calibration_status=result.calibration_status,
+            conformal_status=result.conformal_status,
+            ood_status=result.ood_status,
+            artifact_schema_version=result.artifact_schema_version,
+            artifact_hash=result.artifact_hash,
+            feature_schema_hash=result.feature_schema_hash,
+            software_version=result.software_version,
+            warnings=result.warnings,
         )
 
 
