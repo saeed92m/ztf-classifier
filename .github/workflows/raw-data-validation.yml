@@ -1,0 +1,119 @@
+name: Raw Data Validation
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/raw-data-validation.yml"
+      - "tests/test_feature_pipeline_parity.py"
+      - "tests/test_raw_dataset_validation_integration.py"
+      - "tests/test_offline_feature_dataset_reproduction.py"
+      - "tests/test_model_production_inference.py"
+      - "src/ztf_classifier/**"
+      - "configs/datasets/benchmark_v0.2.json"
+      - "data/processed/benchmark_v0.2/**"
+      - "pyproject.toml"
+      - "requirements.lock"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: raw-data-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Acquire raw benchmark cache and run data-dependent validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: "pip"
+
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Acquire canonical benchmark raw cache
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import pandas as pd
+          from alerce.core import Alerce
+
+          from ztf_classifier.io.alerce_detection import AlerceDetectionBackend
+          from ztf_classifier.io.detection_acquisition import DetectionAcquisitionRequest
+          from ztf_classifier.io.parquet_detection_store import ParquetDetectionStore
+
+          source = Path("data/processed/benchmark_v0.2/features.parquet")
+          cache = Path("data/raw/alerce")
+          cache.mkdir(parents=True, exist_ok=True)
+
+          if not source.is_file():
+              raise SystemExit(f"Missing benchmark artifact: {source}")
+
+          oids = (
+              pd.read_parquet(source)["oid"]
+              .astype(str)
+              .drop_duplicates()
+              .sort_values()
+              .tolist()
+          )
+
+          if len(oids) != 150:
+              raise SystemExit(f"Expected 150 canonical OIDs, found {len(oids)}")
+
+          client = Alerce()
+          backend = AlerceDetectionBackend(
+              client=client,
+              store=ParquetDetectionStore(cache),
+          )
+
+          for index, oid in enumerate(oids, start=1):
+              print(f"[{index}/150] acquiring {oid}", flush=True)
+              backend.acquire(
+                  DetectionAcquisitionRequest(
+                      oid=oid,
+                      survey="ztf",
+                  )
+              )
+          PY
+
+      - name: Run raw dataset validation
+        run: |
+          pytest -q tests/test_raw_dataset_validation_integration.py
+
+      - name: Run frozen feature parity
+        run: |
+          pytest -q tests/test_feature_pipeline_parity.py
+
+      - name: Run offline feature reproduction
+        run: |
+          pytest -q tests/test_offline_feature_dataset_reproduction.py
+
+      - name: Run production inference integration
+        run: |
+          pytest -q tests/test_model_production_inference.py
+
+      - name: Record validation environment
+        if: always()
+        run: |
+          python --version
+          python -m pip check
+          git rev-parse HEAD
