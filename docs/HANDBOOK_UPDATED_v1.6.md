@@ -1,4 +1,4 @@
-# ZTF Classifier — Project Continuity Handbook v1.5
+# ZTF Classifier — Project Continuity Handbook v1.6
 
 ## 1. Canonical state
 
@@ -9,7 +9,7 @@
 - Python: 3.11.16
 - Runtime: Ubuntu 26.04 LTS under WSL2
 - Environment: pyenv + `.venv`
-- Handbook v1.5 supersedes v1.4 for current project continuity.
+- Handbook v1.6 supersedes v1.5 for current project continuity.
 - Software milestone `v0.4.0` is merged to `main` at `457b887b1a08ede4fdce3f2ca2e3ce6c2b3a47d8` and has been published as the official GitHub release `v0.4.0`.
 - Current post-release `main` may contain continuity/documentation commits after the v0.4.0 merge; the v0.4.0 release target remains immutable.
 - The project has now entered the Web/API product implementation phase.
@@ -354,41 +354,57 @@ Planned primary surfaces:
 
 Interaction design must support scientific inspection without hiding the high-level one-click workflow.
 
-The visual identity is intentionally **not locked yet**. Color palette, typography, density, dark/light default, accent treatment, chart palette, and branding direction will be selected with the project owner before frontend implementation. Until then, UI code must avoid embedding irreversible visual assumptions into the API or domain contracts.
+The visual system is now defined as a tokenized, theme-independent presentation layer. The selected modes are **Deep Space**, **Alpha Theme**, **Light**, **System**, and **Auto**. The default is **Auto**, which follows local clock time; day/night boundaries are configurable. UI code must keep these presentation choices outside API and domain contracts.
 
-## 20. UI/UX design decision checkpoint
+## 20. UI/UX design system decision
 
-Recommended starting direction for discussion:
+The project-owner-approved presentation system is now:
 
-- dark scientific workstation as the primary mode;
-- near-black/graphite structural surfaces;
-- restrained electric-blue/cyan accent for interactive scientific states;
-- neutral high-contrast typography;
-- semantic colors reserved for status/alerts rather than branding;
-- dense desktop analysis layout with responsive fallback;
-- publication-quality plots and tables;
-- clear distinction between raw observations, derived features, model output, uncertainty, and provenance.
+- **Deep Space** — fixed dark scientific/observatory theme;
+- **Alpha Theme** — fixed dark Alpha Team theme using Alpha Blue `#003C91` and Alpha Gray `#8A8A8A`;
+- **Light** — fixed light research-lab theme;
+- **System** — follows OS/browser `prefers-color-scheme`;
+- **Auto** — default mode; follows local clock time and switches between Light and a dark theme.
 
-Alternative directions remain open:
+Auto defaults to day start 06:00 and night start 18:00, with user-configurable boundaries. Theme changes operate only on semantic presentation tokens.
 
-1. **Deep-space / observatory** — dark navy/black, blue-cyan accents, minimal glow;
-2. **Scientific instrument** — graphite, neutral panels, restrained blue, data-first;
-3. **Light research lab** — off-white, slate, blue accents, very high print/readability;
-4. **Alpha Team signature** — white/blue brand language integrated with the scientific workbench.
+The Workbench uses a dense desktop scientific layout with responsive fallback, high-contrast typography, publication-oriented plots/tables, and explicit separation of observations, features, model output, uncertainty, and provenance.
 
-No option is treated as final until the project owner chooses or asks for a custom visual system.
+Scientific chart palettes are separate from UI branding. Alpha Blue and Alpha Gray are identity tokens, not universal chart colors.
 
-## 21. Next implementation sequence
+The initial implementation is documented in `docs/ui/SCIENTIFIC_WORKBENCH_UI_v0.1.md`.
 
-The immediate implementation sequence is:
+## 21. Scientific Analysis Workbench implementation
 
-1. complete Web/API contract and boundary tests;
-2. verify locked web dependencies and CI;
-3. merge the Web/API foundation;
-4. update this handbook with the merge SHA;
-5. implement the Scientific Feature Engine with a unified feature contract;
-6. add source/feature backends, including an adapter boundary for SCoPe-compatible workflows;
-7. build persistent jobs/database orchestration;
-8. implement the Scientific Analysis Workbench frontend against the stable API contracts.
+The first real Workbench shell is implemented under `src/ztf_classifier/web/static/` and is served at `/workbench/` by the API boundary.
+
+Implemented presentation surfaces:
+
+- analysis/workspace navigation;
+- object-analysis header and actions;
+- light-curve visualization surface;
+- calibrated classification probability surface;
+- scientific metadata and provenance inspector;
+- analysis-state/status indicators;
+- batch/catalog/report navigation placeholders;
+- appearance settings with all five modes;
+- local persistence of appearance preferences;
+- responsive desktop/mobile behavior.
+
+The current light curve is explicitly a UI shell visualization. It must not be represented as a scientific result until backed by API-provided observation data.
+
+The Workbench is intentionally dependency-light so the visual architecture can later migrate to a richer component framework without changing scientific/API contracts.
+
+## 22. Next implementation sequence
+
+1. finish and verify Web/API dependency/security CI;
+2. merge the Web/API foundation;
+3. verify the merged main state and record the merge SHA;
+4. merge the Workbench presentation slice against the stable API boundary;
+5. replace shell visualizations with API-backed scientific data;
+6. implement the unified Scientific Feature Engine contract;
+7. add native/SCoPe-compatible feature backends and provenance;
+8. implement persistent jobs/database orchestration;
+9. expand single-object, batch, catalog, report, and continuous-analysis workflows.
 
 Do not couple frontend design decisions to the internal Python application service layout.

@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.api.errors import ApiContractError
@@ -217,6 +219,14 @@ def create_app(
     )
     app.state.settings = api_settings
     app.state.application_service = service
+
+    static_dir = Path(__file__).resolve().parents[1] / "web" / "static"
+    if static_dir.is_dir():
+        app.mount(
+            "/workbench",
+            StaticFiles(directory=static_dir, html=True),
+            name="workbench",
+        )
 
     @app.exception_handler(ApiContractError)
     async def api_contract_error_handler(
