@@ -7,8 +7,8 @@ import pandas as pd
 from fastapi.testclient import TestClient
 
 from ztf_classifier.api.app import create_app
-from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.api.config import ApiSettings
+from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.application.schemas import PredictionResponse
 from ztf_classifier.domain.observations import (
     ObjectObservationSummary,
@@ -188,6 +188,7 @@ def test_object_observation_endpoints_use_normalized_contract() -> None:
     assert payload["observation_count"] == 1
     assert payload["observations"][0]["photometry_source"] == "corrected"
     assert payload["provenance"]["source"] == "ALeRCE"
+
 
 def test_health_and_readiness(tmp_path: Path) -> None:
     _make_registry(tmp_path)
