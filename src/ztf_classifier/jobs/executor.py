@@ -8,6 +8,7 @@ from typing import Any
 import pandas as pd
 
 from ztf_classifier.api.config import ApiSettings
+from ztf_classifier.application.errors import ApplicationError
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.application.service import ApplicationService
 from ztf_classifier.features.engine import ScientificFeatureEngine
@@ -38,7 +39,7 @@ class SourceBackedAnalysisExecutor:
             return self.execute(job)
         except AnalysisJobExecutionError:
             raise
-        except (ValueError, KeyError, FileNotFoundError, ModelNotFoundError) as exc:
+        except (ApplicationError, ValueError, KeyError, FileNotFoundError, ModelNotFoundError) as exc:
             raise AnalysisJobExecutionError(
                 "Object analysis could not be completed."
             ) from exc
