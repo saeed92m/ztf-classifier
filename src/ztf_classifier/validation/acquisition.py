@@ -121,6 +121,45 @@ def _expected_hashes(request: AcquisitionRequest) -> tuple[str | None, ...]:
     return tuple(None for _ in request.urls)
 
 
+
+
+def _resolve_star_embed_urls(
+    urls: tuple[str, ...],
+    query_manifest: dict[str, object] | None,
+    timeout_seconds: float,
+) -> tuple[tuple[str, ...], dict[str, object] | None]:
+    if not query_manifest or query_manifest.get("revision") != "resolve_at_acquisition":
+        return urls, query_manifest
+    import requests
+
+    response = requests.get(
+        "https://huggingface.co/api/datasets/StarEmbed/ZTF_40k",
+        timeout=timeout_seconds,
+        params={"expand": "sha,siblings"},
+    )
+    response.raise_for_status()
+    payload = response.json()
+    revision = payload.get("sha")
+    siblings = payload.get("siblings")
+    if not isinstance(revision, str) or len(revision) != 40:
+        raise AcquisitionError("Hugging Face did not return a valid dataset commit SHA")
+    names = tuple(query_manifest.get("artifact_names", ()))
+    if not names:
+        names = tuple(Path(url).name for url in urls)
+    available = {item.get("rfilename") for item in siblings or [] if isinstance(item, dict)}
+    missing = [name for name in names if name not in available]
+    if missing:
+        raise AcquisitionError("StarEmbed source artifacts missing from resolved revision: " + ", ".join(missing))
+    resolved = tuple(
+        f"https://huggingface.co/datasets/StarEmbed/ZTF_40k/resolve/{revision}/data/{name}"
+        for name in names
+    )
+    manifest = dict(query_manifest)
+    manifest["revision"] = revision
+    manifest["resolution"] = "Hugging Face dataset_info API"
+    manifest["artifact_names"] = list(names)
+    return resolved, manifest
+
 def acquire_source(
     request: AcquisitionRequest,
     *,
@@ -142,9 +181,11 @@ def acquire_source(
             None,
             "canonical adapter is derived and requires a dedicated derivation runner",
         )
-    for url in request.urls:
+    resolved_urls, resolved_query_manifest = (_resolve_star_embed_urls(request.urls, request.query_manifest, request.timeout_seconds) if request.source_id == "star_embed_ztf_40k" else (request.urls, request.query_manifest))
+    for url in resolved_urls:
         _validate_url(url)
 
+    request = AcquisitionRequest(**{**request.__dict__, "urls": resolved_urls, "query_manifest": resolved_query_manifest})
     names = _artifact_names(request)
     expected_hashes = _expected_hashes(request)
     root = request.destination
@@ -175,6 +216,10 @@ def acquire_source(
 
         for part, destination in zip(temporary, destinations, strict=True):
             part.replace(destination)
+
+        if request.query_manifest is not None:
+            query_path = (root / (root.name + ".evidence.query.json") if multi else root.with_name(root.name + ".evidence.query.json"))
+            query_path.write_text(json.dumps(request.query_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
         manifest = write_evidence_manifest(
             root / (root.name + ".evidence.json") if multi else root.with_name(root.name + ".evidence.json"),
