@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-PROVENANCE_SCHEMA_VERSION = "1.0"
+PROVENANCE_SCHEMA_VERSION = "1.1"
 
 
 def _sha256(path: Path) -> str:
@@ -73,6 +73,7 @@ class ModelProvenance:
     platform: str
     machine: str
     dependencies: dict[str, str]
+    software_version: str = "unknown"
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize provenance to a JSON-compatible dictionary."""
@@ -116,6 +117,9 @@ class ModelProvenance:
             "dependencies": dict(
                 sorted(self.dependencies.items())
             ),
+            "software": {
+                "version": self.software_version,
+            },
         }
 
     def write(self, path: Path) -> None:
@@ -221,6 +225,11 @@ class ModelProvenanceBuilder:
             )
         )
 
+        try:
+            software_version = importlib.metadata.version("ztf-classifier")
+        except importlib.metadata.PackageNotFoundError:
+            software_version = "unknown"
+
         return ModelProvenance(
             schema_version=PROVENANCE_SCHEMA_VERSION,
             artifact_version=artifact_version,
@@ -266,6 +275,7 @@ class ModelProvenanceBuilder:
             platform=platform.platform(),
             machine=platform.machine(),
             dependencies=dependencies,
+            software_version=software_version,
         )
 
 
