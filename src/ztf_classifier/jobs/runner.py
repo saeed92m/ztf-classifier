@@ -28,9 +28,10 @@ def create_worker(settings: ApiSettings | None = None) -> AnalysisJobWorker:
     )
 
 
-def main() -> None:
-    """Drain the durable queue once and exit."""
-    create_worker().drain()
+def main() -> int:
+    """Drain the durable queue once and return a scheduler-safe exit code."""
+    completed = create_worker().drain()
+    return 1 if any(job.status == "failed" for job in completed) else 0
 
 
 __all__ = ["create_worker", "main"]
