@@ -1,310 +1,518 @@
 # ZTF Classifier
 
-A CPU-oriented machine-learning research pipeline for classification of astronomical transient and variable objects using public Zwicky Transient Facility (ZTF) light-curve data.
+**ZTF Classifier** is a cross-platform, CPU-first **Astronomical Data Analysis & Discovery Platform** built around Zwicky Transient Facility (ZTF) data. Classification is a core scientific capability of the platform, alongside observation acquisition and validation, scientific feature generation, time-series and light-curve analysis, transient and variable-object analysis, anomaly/OOD diagnostics, production inference, persistent analysis jobs, provenance, and discovery-oriented workflows.
+
+The project is designed as a reproducible, extensible scientific-computing foundation: the frozen benchmark and production model remain stable while the surrounding platform can evolve toward broader data sources, richer feature backends, persistent scientific history, catalog/report generation, continuous analysis, and a full Scientific Analysis Workbench.
 
 ## Project status
 
-**Version:** v0.4.0
-**Status:** Hardened production-oriented research pipeline with reproducibility, provenance, registry-backed inference, strict ingestion diagnostics, and validated CLI E2E paths
+**Software milestone:** `v0.4.0`  
+**Scientific baseline:** `v0.2.0` (immutable)  
+**Production model:** `baseline_v0.2`  
+**Current direction:** Web/API product layer, scientific analysis workflows, persistent jobs, and platform expansion
 
-The v0.2 core pipeline includes:
+The `v0.2.0` scientific baseline is immutable. Later releases and platform capabilities do not silently redefine its historical benchmark, feature schema, or model identity.
 
-* light-curve acquisition and validation;
-* feature extraction;
-* multiclass classification;
-* probability calibration;
-* conformal prediction;
-* out-of-distribution (OOD) scoring;
-* historical and temporal evaluation;
-* persisted production model artifacts;
-* production inference;
-* single-object and batch inference interfaces.
+## Platform capabilities
 
-The current benchmark contains **150 ZTF objects across 15 ALeRCE classes**. ALeRCE classifications are used as benchmark labels and are not treated as independent ground truth.
+The current system combines the following capabilities:
 
-## Scientific objective
+- targeted ZTF/ALeRCE light-curve and detection acquisition;
+- strict observation validation, normalization, and quality-control diagnostics;
+- deterministic scientific feature generation;
+- an extensible Scientific Feature Engine boundary;
+- time-series and light-curve analysis;
+- transient and variable-object analysis;
+- multiclass machine-learning classification;
+- calibrated class probabilities;
+- split-conformal prediction diagnostics;
+- out-of-distribution (OOD) and anomaly diagnostics;
+- persisted production model artifacts;
+- registry-backed model selection and provenance;
+- single-object and batch inference;
+- versioned HTTP API contracts;
+- source-backed end-to-end object analysis;
+- durable SQLite-backed analysis jobs and worker execution;
+- scientific provenance and reproducibility metadata;
+- a Scientific Analysis Workbench presentation layer.
 
-The project investigates whether public ZTF light curves can be used to construct a reproducible CPU-oriented classifier that provides:
+Classification remains a first-class capability, but it is one component of the broader astronomical analysis and discovery platform.
 
-* multiclass object classification;
-* class probabilities;
-* calibrated confidence estimates;
-* set-valued predictions through conformal prediction;
-* anomaly / out-of-distribution scores;
-* reproducible historical and temporal evaluation.
+## Scientific workflow
 
-The intended long-term system is designed for scalable transient and variable-source screening without requiring the full ZTF DR24 archive to be downloaded locally.
+The canonical object-analysis path is:
+
+```text
+ZTF / ALeRCE source
+        ↓
+Acquisition
+        ↓
+Validation / QC
+        ↓
+Normalization
+        ↓
+Scientific Feature Engine
+        ↓
+ML inference
+   ┌────┼───────────────┐
+   ↓    ↓               ↓
+Class  Conformal       OOD
+prob.  diagnostics     diagnostics
+   └────┼───────────────┘
+        ↓
+Unified scientific result
+        ↓
+API / CLI / Workbench / Jobs
+```
+
+The architecture keeps scientific computation independent from HTTP and UI concerns. The same scientific execution boundary can therefore support interactive analysis, CLI workflows, persistent jobs, batch processing, and future schedulers.
 
 ## Data strategy
 
-The project uses targeted ZTF light-curve retrieval rather than downloading the complete DR24 catalog.
+The platform uses targeted and lazy scientific data access rather than requiring the complete ZTF archive to be stored inside the repository.
 
-The benchmark dataset was acquired through the ALeRCE ZTF interface and cached locally as per-object Parquet light curves.
+Current acquisition is source-backed through the ALeRCE adapter and ZTF observations. Normalized observations preserve scientific measurements, quality information, coordinates where available, acquisition context, and provenance.
 
-The pipeline is designed around targeted and lazy data access so that the full DR24-scale data volume is not required for development or experimentation.
+Large scientific datasets, caches, generated reports, model runs, and local outputs are intentionally kept outside Git. Repository size is therefore decoupled from scientific-data volume.
+
+Future source connectors can implement the same canonical observation contract without changing downstream scientific consumers.
 
 ## Benchmark dataset
 
-Current v0.2 benchmark:
+The controlled `v0.2` benchmark contains:
 
-* Objects: **150**
-* Classes: **15**
-* Objects per class: **10**
-* Label source: **ALeRCE**
-* Light curves: **ZTF**
-* Bands: **g and r where available**
-* Labels: weak / reference labels, not independent ground truth
+| Property | Value |
+| --- | --- |
+| Objects | **150** |
+| Classes | **15** |
+| Objects per class | **10** |
+| Label source | ALeRCE |
+| Photometry source | ZTF |
+| Bands | g and r where available |
+| Dataset identity | `benchmark_v0.2` |
+| Label interpretation | Reference/weak labels, not independent ground truth |
 
 Classes:
 
-* SNIa
-* SNIbc
-* SNII
-* SLSN
-* QSO
-* AGN
-* Blazar
-* CV/Nova
-* YSO
-* LPV
-* E
-* DSCT
-* RRL
-* CEP
-* Periodic-Other
+- SNIa
+- SNIbc
+- SNII
+- SLSN
+- QSO
+- AGN
+- Blazar
+- CV/Nova
+- YSO
+- LPV
+- E
+- DSCT
+- RRL
+- CEP
+- Periodic-Other
 
-## Feature engineering
+The benchmark is a controlled validation asset. Its measurements must not be interpreted as population-level performance for the full ZTF survey.
 
-The frozen v0.2 model uses **42 features**.
+See [Data Card](docs/DATA_CARD.md) for dataset identity, provenance, and limitations.
 
-Feature groups:
+## Scientific Feature Engine
 
-1. Cross-band features
-2. Observation-quality features
-3. Periodicity features
-4. Photometric-level features
+Scientific feature generation is a first-class, extensible subsystem rather than a permanent implementation of the frozen 42-column benchmark.
 
-The frozen feature definition is stored in:
+The initial `native` backend preserves the frozen `v0.2` feature contract. Each engine result records the feature schema, backend identity, backend version, parameters, and a SHA-256 identity of the normalized observation input.
 
-```text
-reports/tables/final_feature_set_v0.2.parquet
-```
+The architecture allows additional scientific feature backends to be introduced without redefining the historical benchmark.
 
-## Model and calibration
+The frozen `v0.2` model uses **42 features**. This number describes the historical production model contract; it is not a ceiling on the platform's future scientific feature space.
 
-The production model uses the frozen v0.2 model configuration and persists the complete inference artifact.
+See [Scientific Feature Engine](docs/SCIENTIFIC_FEATURE_ENGINE_v0.1.md) and [Feature Provenance Contract](docs/FEATURE_PROVENANCE_CONTRACT.md).
 
-The artifact includes:
+## Production model
 
-* model configuration;
-* trained classifier;
-* preprocessing state;
-* feature schema;
-* probability calibration;
-* provenance information;
-* conformal prediction diagnostics;
-* OOD diagnostics and production OOD model.
+The current production model is:
 
-The current artifact schema is **1.1** and remains backward-compatible with schema **1.0** artifacts.
+- model version: `baseline_v0.2`;
+- model family: XGBoost;
+- artifact schema: **1.1**;
+- feature schema: frozen `v0.2`;
+- classes: **15**;
+- calibration: temperature scaling;
+- conformal diagnostics: persisted;
+- OOD diagnostics: persisted;
+- provenance: persisted;
+- artifact manifest/checksum: persisted.
 
-## Conformal prediction
+Artifact schemas **1.0** and **1.1** remain readable.
+
+See [Model Card](docs/MODEL_CARD.md) for model identity, evaluation context, and limitations.
+
+## Calibration, conformal prediction, and OOD
+
+### Calibration
+
+Production inference can expose calibrated class probabilities when calibration is present in the selected artifact.
+
+### Conformal prediction
 
 Conformal diagnostics are calibrated from held-out predictions and persisted with the production artifact.
 
-Production inference can expose:
+Available outputs include:
 
-* significance level (`alpha`);
-* conformal threshold;
-* prediction set;
-* prediction-set size.
+- significance level (`alpha`);
+- conformal threshold;
+- prediction set;
+- prediction-set size.
 
-Conformal outputs are available through both the JSON prediction interface and the batch Parquet interface.
-
-## Out-of-distribution detection
+### Out-of-distribution detection
 
 The production OOD pipeline uses:
 
-* median imputation;
-* robust scaling;
-* Isolation Forest;
-* persisted reference anomaly scores.
+- median imputation;
+- robust scaling;
+- Isolation Forest;
+- persisted reference anomaly scores.
 
-The OOD contract contains:
+The OOD contract includes:
 
-* anomaly score;
-* normality score;
-* anomaly percentile;
-* Isolation Forest label;
-* anomaly rank;
-* top 1%, 5%, and 10% anomaly flags.
+- anomaly score;
+- normality score;
+- anomaly percentile;
+- Isolation Forest label;
+- anomaly rank;
+- top 1%, 5%, and 10% anomaly flags.
 
-The OOD feature contract contains **42 features**, matching the frozen model feature definition.
+The OOD feature contract currently follows the frozen 42-feature model contract.
 
-## Production inference
+## Production inference and model selection
 
-The production inference layer loads a persisted artifact and performs inference using the stored model, preprocessing, calibration, conformal diagnostics, and OOD configuration.
+Production inference requires exactly one explicit model-selection mode.
 
-Production outputs preserve model and diagnostic metadata so that downstream consumers can distinguish the exact artifact contract used for inference.
+### Direct artifact
+
+```bash
+ztf-classifier predict \
+  --artifact PATH_TO_ARTIFACT \
+  --input INPUT.parquet \
+  --output OUTPUT.json
+```
+
+### Registry-backed selection
+
+```bash
+ztf-classifier predict \
+  --registry-dir PATH_TO_REGISTRY \
+  --model-version baseline_v0.2 \
+  --input INPUT.parquet \
+  --output OUTPUT.json
+```
+
+Do not combine `--artifact` with `--registry-dir` / `--model-version`. Ambiguous model selection is rejected.
+
+The same explicit selection contract applies to batch inference:
+
+```bash
+ztf-classifier batch \
+  --registry-dir PATH_TO_REGISTRY \
+  --model-version baseline_v0.2 \
+  --input INPUT.parquet \
+  --output OUTPUT.parquet
+```
+
+Existing output files are not overwritten and empty batch outputs are rejected by the application contract.
 
 ## Command-line interface
 
-The CLI is available as:
+Available production entry points include:
 
 ```text
-ztf-classifier {predict,batch}
+ztf-classifier
+ztf-classifier-api
+ztf-classifier-worker
 ```
 
-### Model selection
+The CLI provides production single-object and batch inference. The API and worker entry points expose the platform's service and asynchronous execution boundaries.
 
-Production inference requires exactly one explicit model-selection mode:
+## Web/API platform
 
-**Direct artifact**
+The HTTP API is an adapter around application and scientific services. FastAPI does not own model loading rules, scientific feature semantics, inference logic, or provenance construction.
+
+Current API surface:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/health` | Liveness |
+| GET | `/ready` | Model-registry readiness |
+| GET | `/v1/model` | Model metadata |
+| POST | `/v1/predict` | Synchronous inference |
+| POST | `/v1/batch` | Synchronous multi-row inference |
+| GET | `/v1/objects/{oid}` | Object summary |
+| GET | `/v1/objects/{oid}/observations` | Normalized observations |
+| POST | `/v1/objects/{oid}/analysis` | Complete source-backed analysis |
+| POST | `/v1/objects/{oid}/jobs` | Create durable analysis job |
+| GET | `/v1/jobs/{job_id}` | Retrieve durable job state |
+
+The API preserves model identity, diagnostic status, prediction results, conformal/OOD diagnostics, warnings, and provenance while preventing internal filesystem paths from becoming public API data.
+
+See [API v1 Contract](docs/api/API_V1.md).
+
+## Persistent analysis jobs
+
+Long-running object analysis can be persisted as durable jobs.
+
+Current implementation:
+
+- SQLite-backed job store;
+- lifecycle: `queued → running → succeeded / failed`;
+- atomic queue claiming with SQLite `BEGIN IMMEDIATE`;
+- dependency-injected scientific execution boundary;
+- source-backed executor;
+- persisted observations, features, prediction diagnostics, and provenance;
+- stable public failure codes;
+- protected execution boundary for expected scientific failures;
+- preservation of unexpected programmer failures;
+- production worker entry point: `ztf-classifier-worker`;
+- scheduler-safe non-zero worker exit when drained jobs fail.
+
+The worker connects the durable job layer to the same scientific path used by direct object analysis:
+
+```text
+Job
+ ↓
+ALeRCE acquisition
+ ↓
+Normalization / QC
+ ↓
+Scientific Feature Engine
+ ↓
+Registered model inference
+ ↓
+Scientific result + provenance
+```
+
+See [Persistent Analysis Job Worker](docs/api/ANALYSIS_JOB_WORKER.md).
+
+## Scientific Analysis Workbench
+
+The project includes a presentation-layer Scientific Analysis Workbench served at:
+
+```text
+/workbench/
+```
+
+The Workbench is designed around scientific inspection rather than generic administration. Its current presentation surfaces include:
+
+- object analysis;
+- light-curve visualization;
+- classification probabilities;
+- scientific metadata and provenance;
+- analysis state;
+- batch/catalog/report navigation;
+- responsive layouts;
+- appearance preferences.
+
+The Workbench consumes API contracts and does not embed scientific inference logic.
+
+The current presentation system supports:
+
+- **Auto** — default, follows local clock;
+- **System** — follows OS/browser appearance;
+- **Deep Space** — dark scientific/observatory theme;
+- **Alpha Theme** — Alpha Team brand theme;
+- **Light** — light research-lab theme.
+
+Scientific chart palettes remain separate from UI branding.
+
+See [Scientific Analysis Workbench UI Contract](docs/ui/SCIENTIFIC_WORKBENCH_UI_v0.1.md).
+
+## Reproducibility and provenance
+
+Reproducibility is a system-level concern.
+
+The project maintains:
+
+- pinned Python environment;
+- committed `requirements.lock`;
+- SHA-256 checksum utilities;
+- artifact manifest hashing;
+- software, dataset, feature, and model provenance;
+- ingestion diagnostics;
+- feature provenance contracts;
+- dataset and model cards;
+- CI validation;
+- package build and wheel-install verification.
+
+Primary development environment:
+
+- Python **3.11.16**;
+- Ubuntu **26.04 LTS**;
+- WSL2;
+- pyenv + `.venv`.
+
+For a locked environment matching CI:
 
 ```bash
-ztf-classifier predict \
-  --artifact PATH_TO_ARTIFACT \
-  --input INPUT.parquet \
-  --output OUTPUT.json
+python -m pip install -r requirements.lock
+python -m pip install -e . --no-deps
+python -m pip check
 ```
 
-**Registry-backed selection**
+## Validation and CI
 
-```bash
-ztf-classifier predict \
-  --registry-dir PATH_TO_REGISTRY \
-  --model-version baseline_v0.2 \
-  --input INPUT.parquet \
-  --output OUTPUT.json
-```
+The full test suite is the release gate.
 
-Do not supply `--artifact` together with `--registry-dir` / `--model-version`; ambiguous model selection is rejected.
+CI validates:
 
-### Single prediction output
+1. Python 3.11.16 environment;
+2. locked dependency installation;
+3. package installation;
+4. dependency consistency with `pip check`;
+5. Ruff linting;
+6. formatting of protected upgrade modules;
+7. complete pytest suite with coverage;
+8. source distribution/wheel build;
+9. built-wheel installation;
+10. package import;
+11. dependency security auditing with `pip-audit`.
 
-```bash
-ztf-classifier predict \
-  --artifact PATH_TO_ARTIFACT \
-  --input INPUT.parquet \
-  --output OUTPUT.json
-```
+Real subprocess E2E paths cover registry-backed prediction and batch inference.
 
-The JSON output uses CLI schema **1.1** and contains:
-
-* model version;
-* model family;
-* sample count;
-* calibration status;
-* conformal status;
-* OOD status;
-* predicted class;
-* predicted class index;
-* class probabilities;
-* conformal diagnostics when available;
-* OOD diagnostics when available.
-
-### Batch prediction output
-
-```bash
-ztf-classifier batch \
-  --artifact PATH_TO_ARTIFACT \
-  --input INPUT.parquet \
-  --output OUTPUT.parquet
-```
-
-Registry-backed batch inference uses the same explicit selection contract:
-
-```bash
-ztf-classifier batch \
-  --registry-dir PATH_TO_REGISTRY \
-  --model-version baseline_v0.2 \
-  --input INPUT.parquet \
-  --output OUTPUT.parquet
-```
-
-Batch output uses schema **1.1**.
-
-The Parquet file contains prediction columns plus metadata including:
-
-* `ztf_classifier.schema_version`
-* `ztf_classifier.model_version`
-* `ztf_classifier.model_family`
-* `ztf_classifier.has_calibration`
-* `ztf_classifier.has_conformal`
-* `ztf_classifier.has_ood`
-* `ztf_classifier.calibration_status`
-* `ztf_classifier.conformal_status`
-* `ztf_classifier.ood_status`
-* `ztf_classifier.artifact_schema_version`
-* `ztf_classifier.artifact_hash`
-* `ztf_classifier.feature_schema_hash`
-* `ztf_classifier.software_version`
-
-Existing output files are not overwritten.
-
-Empty batch outputs are rejected by the application contract.
+The current repository state also contains contract tests for observation acquisition, scientific feature generation, production inference, the API boundary, persistent jobs, source-backed execution, and worker lifecycle semantics.
 
 ## Security and artifact handling
 
-The production OOD artifact contains a `joblib` model file. Treat model artifacts as executable-trust-boundary inputs: only load artifacts from trusted sources and verify their manifest/checksum integrity before loading. Do not accept untrusted `joblib` files in a public inference service.
+Production model artifacts can contain serialized `joblib` objects. Treat model artifacts as executable-trust-boundary inputs.
 
-## Reproducibility
+Only load model artifacts from trusted sources and validate their manifest/checksum integrity before loading. Do not accept untrusted `joblib` files in a public inference service.
 
-The project is managed with Git and uses a pinned Python development environment.
+The public API is designed to avoid accepting arbitrary server filesystem paths and to avoid exposing internal paths through public provenance.
 
-Primary environment:
-
-* Python **3.11.16**
-* Ubuntu 26.04 LTS
-* WSL2
-
-The repository contains reproducibility, provenance, checksum validation, ingestion diagnostics, and artifact-contract components intended to make model production and inference auditable. CI uses the committed `requirements.lock` environment captured from a verified Python 3.11.16 Ubuntu runner. The CI gate also validates formatting, coverage reporting, package builds, wheel installation, and dependency security auditing.
-
-## Validation status
-
-The production inference and batch-output contracts are covered by focused automated tests.
-
-Current validated areas include:
-
-* model artifact loading and schema compatibility;
-* calibration;
-* conformal diagnostics;
-* OOD diagnostics;
-* production inference;
-* CLI prediction output;
-* batch Parquet output;
-* batch metadata contract;
-* batch schema and flag validation;
-* rejection of empty batch outputs.
-
-The full test suite is the release gate. CI runs installation, dependency verification, Ruff, the complete pytest suite, and package import verification. Registry-backed prediction and batch paths are covered by real subprocess E2E tests.
-
-The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the software package milestone is `v0.4.0`.
-
-## Repository structure
+## Repository architecture
 
 ```text
 src/ztf_classifier/
-├── application/       Application and batch inference services
-├── cli/               Command-line interface
-├── dataset/           Dataset construction and validation
-├── features/          Feature engineering
-├── io/                ZTF / ALeRCE data access and storage
-├── models/             Model, calibration, conformal, OOD, and inference
-├── pipeline/          Dataset and model pipelines
-├── preprocessing/     Light-curve preprocessing
-├── reproducibility/   Environment and reproducibility validation
-└── uncertainty/       Uncertainty-related components
+├── domain/             Scientific/domain contracts
+├── application/        Application services and inference orchestration
+├── api/                Versioned HTTP boundary
+├── cli/                Command-line interfaces
+├── dataset/             Dataset construction and validation
+├── features/            Scientific feature generation and engine
+├── io/                  ZTF / ALeRCE acquisition and storage adapters
+├── models/              Model, calibration, conformal, OOD, inference
+├── pipeline/            Dataset and model pipelines
+├── preprocessing/      Light-curve preprocessing
+├── reproducibility/    Checksums and reproducibility validation
+├── uncertainty/        Uncertainty-related components
+├── jobs/               Persistent analysis jobs and worker execution
+└── web/                Scientific Workbench presentation assets
 
-tests/                  Automated contract and regression tests
-reports/                Frozen benchmark specifications and tables
+tests/                   Automated contract, integration, and regression tests
+docs/                    Architecture, API, scientific, UI, and continuity documentation
+reports/                 Frozen benchmark specifications and validation reports
 ```
 
-## Scope and scientific limitations
+The important architectural boundary is:
 
-This repository is a production-oriented research pipeline and benchmark foundation. It provides validated production inference interfaces, but the benchmark itself remains intentionally limited and is not a claim of population-level ZTF performance.
+```text
+Presentation / API / CLI
+          ↓
+Application services
+          ↓
+Domain + scientific execution
+          ↓
+Infrastructure / external sources
+```
 
-The benchmark is intentionally small and balanced. Its labels originate from ALeRCE and therefore should not be interpreted as independent astrophysical ground truth.
+Scientific logic remains reusable across interfaces.
 
-Performance measured on the current 150-object benchmark should not be interpreted as representative of the full ZTF population.
+## Scientific limitations
 
-The system is intended as a reproducible foundation for future scaling, broader validation, and deployment-oriented development. See `docs/DATA_CARD.md` and `docs/MODEL_CARD.md` for the current dataset and model limitations.
+The current benchmark is deliberately small:
+
+- 150 objects;
+- 15 classes;
+- 10 objects per class;
+- ALeRCE reference labels;
+- frozen 42-feature model contract.
+
+The benchmark is not representative of the full ZTF population, and ALeRCE labels are not independent astrophysical ground truth.
+
+The current production implementation should therefore be understood as a validated research and product foundation, not as a claim of survey-scale scientific performance.
+
+Future scientific validation must expand dataset size and diversity, evaluate label quality and uncertainty, test temporal and historical generalization, examine class imbalance and selection effects, and validate performance on independently curated data.
+
+## Product direction
+
+The platform is being developed toward a broader astronomical analysis and discovery system while preserving the validated scientific core.
+
+The intended evolution is:
+
+```text
+Scientific data sources
+        ↓
+Ingestion / QC / normalization
+        ↓
+Scientific Feature Engine
+        ↓
+Analysis + ML + uncertainty
+        ↓
+Persistent scientific results
+        ↓
+Catalogs / reports / API
+        ↓
+Scientific Analysis Workbench
+        ↓
+Continuous and incremental discovery workflows
+```
+
+Planned expansion areas include:
+
+- additional astronomical data-source connectors;
+- richer scientific feature backends;
+- scalable feature computation;
+- persistent scientific-result storage;
+- durable retry and lease semantics;
+- catalog and report generation;
+- batch and continuous/incremental analysis;
+- cross-match and enrichment workflows;
+- production observability and deployment;
+- larger-scale scientific validation;
+- future ML model generations beyond the frozen `baseline_v0.2` contract.
+
+The frozen `v0.2.0` scientific baseline remains the reference point while these capabilities evolve around it.
+
+## Versioning and releases
+
+Important project identities are intentionally separated:
+
+| Identity | Current value |
+| --- | --- |
+| Software milestone | `v0.4.0` |
+| Immutable scientific baseline | `v0.2.0` |
+| Dataset contract | `benchmark_v0.2` |
+| Production model | `baseline_v0.2` |
+| Artifact schema | `1.1` |
+| CLI/output schema | `1.1` |
+
+This separation prevents platform evolution from silently changing the scientific benchmark or production model contract.
+
+See [CHANGELOG](CHANGELOG.md) for release history.
+
+## Documentation
+
+Key project documents:
+
+- [Data Card](docs/DATA_CARD.md)
+- [Model Card](docs/MODEL_CARD.md)
+- [Scientific Feature Engine](docs/SCIENTIFIC_FEATURE_ENGINE_v0.1.md)
+- [Feature Provenance Contract](docs/FEATURE_PROVENANCE_CONTRACT.md)
+- [API v1 Contract](docs/api/API_V1.md)
+- [Persistent Analysis Job Worker](docs/api/ANALYSIS_JOB_WORKER.md)
+- [Scientific Analysis Workbench UI](docs/ui/SCIENTIFIC_WORKBENCH_UI_v0.1.md)
+- [Project Continuity Handbook](docs/HANDBOOK_UPDATED_v1.9.md)
+- [Changelog](CHANGELOG.md)
+
+## Project identity
+
+**ZTF Classifier**  
+*Astronomical Data Analysis & Discovery Platform*
+
+The name reflects the project's origin in ZTF object classification; the platform architecture now provides a broader scientific analysis and discovery foundation around that core capability.
