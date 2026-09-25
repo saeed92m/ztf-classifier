@@ -35,19 +35,48 @@ class SourceBackedAnalysisExecutor:
         self.feature_engine = feature_engine or ScientificFeatureEngine()
 
     def __call__(self, job: JobRecord) -> dict[str, Any]:
+        return self.execute(
+            oid=job.oid,
+            survey=job.survey,
+            model_version=job.model_version,
+        )
+
+    def execute(
+        self,
+        *,
+        oid: str,
+        survey: str,
+        model_version: str | None,
+    ) -> dict[str, Any]:
         try:
-            return self.execute(job)
+            return self._execute(
+                oid=oid,
+                survey=survey,
+                model_version=model_version,
+            )
         except AnalysisJobExecutionError:
             raise
-        except (ApplicationError, ValueError, KeyError, FileNotFoundError, ModelNotFoundError) as exc:
+        except (
+            ApplicationError,
+            ValueError,
+            KeyError,
+            FileNotFoundError,
+            ModelNotFoundError,
+        ) as exc:
             raise AnalysisJobExecutionError(
                 "Object analysis could not be completed."
             ) from exc
 
-    def execute(self, job: JobRecord) -> dict[str, Any]:
+    def _execute(
+        self,
+        *,
+        oid: str,
+        survey: str,
+        model_version: str | None,
+    ) -> dict[str, Any]:
         records, observation_provenance = self.observation_service.get_observations(
-            job.oid,
-            survey=job.survey,
+            oid,
+            survey=survey,
         )
         if not records:
             raise AnalysisJobExecutionError("No valid observations were acquired.")
@@ -55,7 +84,7 @@ class SourceBackedAnalysisExecutor:
         observations = pd.DataFrame([record.to_dict() for record in records])
         feature_result = self.feature_engine.compute(observations, backend="native")
 
-        model_version = job.model_version or self.settings.default_model_version
+        model_version = model_version or self.settings.default_model_version
         if not model_version or self.settings.registry_dir is None:
             raise AnalysisJobExecutionError("No production model is configured.")
 
@@ -92,8 +121,8 @@ class SourceBackedAnalysisExecutor:
 
         return {
             "schema_version": "1.0",
-            "oid": job.oid,
-            "survey": job.survey,
+            "oid": oid,
+            "survey": survey,
             "observation_count": len(records),
             "observations": [record.to_dict() for record in records],
             "features": feature_result.values,
