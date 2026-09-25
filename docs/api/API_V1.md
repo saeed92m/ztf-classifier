@@ -32,6 +32,8 @@ Clients never submit arbitrary artifact or registry filesystem paths.
 | GET | `/v1/jobs/{job_id}/result` | Canonical durable job result |
 | GET | `/v1/results/{result_id}` | Durable result by stable ID |
 | GET | `/v1/objects/{oid}/results/latest` | Latest durable result for an object |
+| GET | `/v1/catalog/results` | Paginated scientific catalog query |
+| GET | `/v1/catalog/results.csv` | Deterministic catalog CSV export |
 
 OpenAPI is generated directly by FastAPI from the versioned HTTP schemas.
 
