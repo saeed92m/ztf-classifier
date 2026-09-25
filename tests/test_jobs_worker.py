@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from ztf_classifier.jobs import AnalysisJobExecutionError, AnalysisJobWorker, JobStore
 
 
