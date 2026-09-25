@@ -95,6 +95,8 @@ class ObjectAnalysisRequest(BaseModel):
 
     model_version: str | None = Field(default=None, min_length=1, max_length=128)
     survey: str = Field(default="ztf", min_length=1, max_length=32)
+    feature_backend: str = Field(default="native", min_length=1, max_length=128)
+    feature_parameters: dict[str, Any] = Field(default_factory=dict)
 
 
 class ObjectAnalysisResponse(BaseModel):
@@ -124,6 +126,8 @@ class AnalysisJobRequest(BaseModel):
 
     model_version: str | None = Field(default=None, min_length=1, max_length=128)
     survey: str = Field(default="ztf", min_length=1, max_length=32)
+    feature_backend: str = Field(default="native", min_length=1, max_length=128)
+    feature_parameters: dict[str, Any] = Field(default_factory=dict)
 
 
 class AnalysisJobResponse(BaseModel):
