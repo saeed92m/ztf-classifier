@@ -24,4 +24,4 @@ containing provenance, source/version identifiers, object/file hashes, schema
 metadata, and the checks required by the release gate. Live-source success alone
 does not close a historical reproducibility blocker.
 
-The actual benchmark data are intentionally not committed to Git.
+StarEmbed is pinned to Hugging Face revision `18db85e` and enumerates five Parquet artifacts with expected SHA-256 values; acquisition binds them into one evidence manifest. The 781k adapter pins the Zenodo Table2 attachment. DR24 and ALeRCE remain query-driven and fail closed until their returned artifacts are actually acquired.\n\nThe actual benchmark data are intentionally not committed to Git.
