@@ -1,10 +1,12 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.domain.observations import Observation, ObservationProvenance
 from ztf_classifier.features.contracts import FeatureProvenance, FeatureResult
+from ztf_classifier.jobs.errors import AnalysisJobExecutionError
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
 from ztf_classifier.jobs.store import JobRecord
 from ztf_classifier.models.results import PredictionResult
@@ -158,9 +160,6 @@ def test_source_backed_executor_translates_expected_application_errors():
         created_at="2026-09-25T00:00:00+00:00",
         updated_at="2026-09-25T00:00:00+00:00",
     )
-
-    import pytest
-    from ztf_classifier.jobs.errors import AnalysisJobExecutionError
 
     with pytest.raises(AnalysisJobExecutionError):
         executor(job)
