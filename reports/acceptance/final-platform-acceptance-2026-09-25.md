@@ -59,6 +59,21 @@ The repository has no open pull requests at the time of this audit.
 | Offline raw-feature reproduction | NOT VERIFIED | Requires the raw benchmark cache, intentionally excluded from Git. |
 | Local WSL2 clean-room reproduction | NOT VERIFIED | This connector cannot execute arbitrary commands in the user's local WSL2 environment. |
 
+## Live external-data validation attempt
+
+On 2026-09-25, a dedicated GitHub Actions validation run acquired all 150 canonical benchmark OIDs through the current ALeRCE detection backend. Acquisition completed successfully for all 150 objects.
+
+The strict frozen raw-cache validation did **not** pass against the live service. Observed drift included:
+
+- detection-row mean: frozen `189.63333333333333`; live `189.88666666666666`;
+- corrected-true count: frozen `27379`; live `27417`.
+
+Structural checks observed in that run remained consistent: 150 canonical objects, no missing canonical OIDs, valid required schemas, deterministic MJD ordering, and matching FID distributions.
+
+This establishes that the acquisition/validation path is operational while the current mutable ALeRCE source is not an exact reproduction of the historical raw-cache snapshot. The strict frozen assertions are intentionally retained; live-source drift is not converted into a passing frozen-reproduction result. Tracking issue: #51.
+
+Consequently, exact raw-cache reproduction, exact frozen feature parity, offline reproduction from the historical raw snapshot, and raw-artifact-backed production inference remain `NOT VERIFIED`.
+
 ## Skipped CI tests
 
 The four skipped modules are data-dependent integration suites:
