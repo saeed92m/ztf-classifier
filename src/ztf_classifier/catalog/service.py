@@ -5,9 +5,8 @@ from __future__ import annotations
 import csv
 import io
 import json
-from datetime import datetime
 from dataclasses import dataclass
-from typing import Any
+from datetime import datetime
 
 from ztf_classifier.results import ScientificResultRecord, ScientificResultStore
 
