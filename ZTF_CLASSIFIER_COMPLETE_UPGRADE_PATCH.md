@@ -899,7 +899,6 @@ coverage threshold را واقع‌بینانه انتخاب کن. اگر covera
 ```text
 .github/dependabot.yml
 .github/workflows/codeql.yml
-(Dependency Review was evaluated but removed because GitHub Dependency Graph is unavailable on this repository; no non-runnable gate is retained.)
 ```
 
 ## تنظیمات پیشنهادی repository
@@ -910,6 +909,7 @@ coverage threshold را واقع‌بینانه انتخاب کن. اگر covera
 - جلوگیری از push مستقیم در صورت امکان؛
 - Dependabot updates؛
 - CodeQL؛
+- Dependency Review was evaluated but removed because GitHub Dependency Graph is unavailable on this repository; no non-runnable gate is retained؛
 - secret scanning؛
 - dependency graph.
 
