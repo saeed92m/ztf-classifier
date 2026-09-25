@@ -405,3 +405,80 @@ def test_persistent_analysis_job_lifecycle(tmp_path: Path) -> None:
     missing = client.get("/v1/jobs/not-found")
     assert missing.status_code == 404
     assert missing.json()["code"] == "job_not_found"
+
+
+def test_durable_job_result_retrieval_uses_scientific_result_store(
+    tmp_path: Path,
+) -> None:
+    from ztf_classifier.results import ScientificResultStore
+    from ztf_classifier.jobs import JobStore
+
+    settings = ApiSettings(
+        job_store_path=tmp_path / "jobs.sqlite3",
+        result_store_path=tmp_path / "results.sqlite3",
+    )
+    job_store = JobStore(settings.job_store_path)
+    result_store = ScientificResultStore(settings.result_store_path)
+    job = job_store.create(
+        oid="ZTF17result",
+        survey="ztf",
+        model_version="baseline_v0.2",
+    )
+    scientific_payload = {
+        "schema_version": "1.0",
+        "oid": "ZTF17result",
+        "prediction": {"predicted_class": "AGN"},
+    }
+    stored = result_store.save(
+        job_id=job.job_id,
+        oid=job.oid,
+        survey=job.survey,
+        model_version="baseline_v0.2",
+        payload=scientific_payload,
+    )
+    job_store.transition(
+        job.job_id,
+        status="succeeded",
+        result={"result_id": stored.result_id, "schema_version": "1.0"},
+        scientific_result_id=stored.result_id,
+    )
+
+    client = TestClient(create_app(settings))
+    response = client.get(f"/v1/jobs/{job.job_id}/result")
+
+    assert response.status_code == 200
+    assert response.json()["result_id"] == stored.result_id
+    assert response.json()["payload"] == scientific_payload
+
+
+def test_durable_job_result_is_not_ready_for_queued_job(tmp_path: Path) -> None:
+    settings = ApiSettings(
+        job_store_path=tmp_path / "jobs.sqlite3",
+        result_store_path=tmp_path / "results.sqlite3",
+    )
+    job_store = JobStore(settings.job_store_path)
+    job = job_store.create(
+        oid="ZTF17queued",
+        survey="ztf",
+        model_version="baseline_v0.2",
+    )
+
+    client = TestClient(create_app(settings))
+    response = client.get(f"/v1/jobs/{job.job_id}/result")
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "job_result_not_ready"
+
+
+def test_scientific_result_id_retrieval_has_stable_not_found_error(
+    tmp_path: Path,
+) -> None:
+    settings = ApiSettings(
+        result_store_path=tmp_path / "results.sqlite3",
+    )
+    client = TestClient(create_app(settings))
+
+    response = client.get("/v1/results/missing")
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "scientific_result_not_found"
