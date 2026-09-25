@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ztf-classifier"
 version = "0.4.0"
-description = "Machine-learning classification of astronomical transient and variable objects using ZTF light curves."
+description = "Astronomical data analysis and discovery platform with ZTF scientific inference and provenance."
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 license = {text = "Proprietary"}
-keywords = ["astronomy", "ZTF", "machine-learning", "transient-classification", "astronomical-data"]
+keywords = ["astronomy", "ZTF", "machine-learning", "astronomical-data-analysis", "scientific-discovery", "transient-classification"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
