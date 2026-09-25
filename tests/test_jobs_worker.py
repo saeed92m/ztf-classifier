@@ -177,7 +177,9 @@ def test_worker_marks_result_persistence_failure_without_leaking_details(
 def test_job_store_lists_jobs_deterministically(tmp_path: Path) -> None:
     store = JobStore(tmp_path / "jobs.sqlite3")
     first = store.create(oid="ZTF17first", survey="ztf", model_version="baseline_v0.2")
-    second = store.create(oid="ZTF17second", survey="ztf", model_version="baseline_v0.2")
+    second = store.create(
+        oid="ZTF17second", survey="ztf", model_version="baseline_v0.2"
+    )
 
     jobs = store.list(limit=10)
 
