@@ -41,6 +41,7 @@ from ztf_classifier.models.registry import (
     FilesystemModelRegistry,
     ModelNotFoundError,
 )
+from ztf_classifier.reporting import ScientificReportService
 from ztf_classifier.results import ScientificResultStore
 
 API_VERSION = "v1"
@@ -242,6 +243,7 @@ def create_app(
     jobs = JobStore(api_settings.job_store_path)
     results = ScientificResultStore(api_settings.result_store_path)
     catalog = ScientificCatalogService(results)
+    reports = ScientificReportService()
     executor = analysis_executor or SourceBackedAnalysisExecutor(
         api_settings,
         observation_service=observations,
@@ -461,6 +463,31 @@ def create_app(
                 status_code=404,
             ) from exc
         return _scientific_result_response(record)
+
+    @app.get(
+        "/v1/results/{result_id}/report",
+        response_class=Response,
+        tags=["reports"],
+    )
+    def get_scientific_result_report(result_id: str) -> Response:
+        """Render a durable scientific result without re-running inference."""
+        try:
+            record = results.get(result_id)
+        except KeyError as exc:
+            raise ApiContractError(
+                "scientific_result_not_found",
+                f"Scientific result was not found: {result_id}",
+                status_code=404,
+            ) from exc
+        return Response(
+            content=reports.render_markdown(record),
+            media_type="text/markdown",
+            headers={
+                "Content-Disposition": (
+                    f'attachment; filename="ztf-analysis-{record.result_id}.md"'
+                )
+            },
+        )
 
     @app.get(
         "/v1/catalog/results",
