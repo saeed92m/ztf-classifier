@@ -96,8 +96,8 @@ jobs:
             tests/test_catalog.py \
             tests/test_reporting.py \
             tests/test_scientific_result_store.py \
-            src/ztf_classifier/lifecycle.py
-            src/ztf_classifier/lifecycle_schema.py
+            src/ztf_classifier/lifecycle.py \
+            src/ztf_classifier/lifecycle_schema.py \
             tests/test_cumulative_lifecycle.py
 
 
