@@ -116,7 +116,8 @@ jobs:
           # The frozen v0.2.0 feature table is immutable, while ALeRCE is
           # mutable. This diagnostic records exact parity when the live source
           # still matches; drift must not suppress the independent live-source
-          # validation and inference checks below.
+          # validation and inference checks below. This keeps the diagnostic
+          # visible in the Actions UI instead of hiding the mismatch.
           pytest -q tests/test_feature_pipeline_parity.py
 
       - name: Run offline feature reproduction
