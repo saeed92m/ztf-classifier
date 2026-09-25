@@ -690,3 +690,20 @@ Scientific interpretation rule:
 > Benchmark success is not proof of global correctness. It is quantitative and reproducible evidence for the declared population, source/version, labels, preprocessing, and evaluation conditions.
 
 The release workflow must fail closed while required scientific-validation items remain unresolved.
+
+## Definition of Done — Scientific Validation Gate
+
+A product release is scientifically complete only when all applicable conditions below have executable evidence:
+
+- every affected benchmark is identified by a versioned registry manifest;
+- benchmark source/version/retrieval date/DOI-or-authoritative-unassigned-state, object IDs, hashes, schema, taxonomy, class mapping, split, leakage exclusions, preprocessing contract, input contract, and provenance are recorded;
+- independent ground truth is kept distinct from classifier/reference agreement;
+- all applicable leakage checks are PASS, with no unresolved NOT_EXECUTED release blockers;
+- the complete scientific chain from ingestion through reproducible inference has been validated;
+- classification, calibration, OOD, coverage/rejection, QC, determinism, schema, provenance, and failure-code metrics are reported where applicable;
+- any benchmark regression has an explicit scientific disposition before release;
+- benchmark evidence is reproducible from source-backed immutable inputs or explicitly documented external-source limitations;
+- the Scientific Validation report/dashboard identifies population, version, results, regressions, scope limits, and known failure cases;
+- the release workflow records an explicit Scientific Validation Gate result.
+
+A benchmark passing is evidence for its declared scope, not proof of universal correctness.
