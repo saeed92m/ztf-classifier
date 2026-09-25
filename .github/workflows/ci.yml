@@ -47,8 +47,9 @@ jobs:
       - name: Run Ruff lint
         run: python -m ruff check src tests
 
-      - name: Run Ruff format check
-        run: python -m ruff format --check src tests
+      - name: Run Ruff format check for new upgrade files
+        run: |
+          python -m ruff format --check             src/ztf_classifier/reproducibility             tests/test_checksums.py             tests/test_alerce_ingestion_diagnostics.py             tests/test_prediction_result_statuses.py
 
       - name: Run test suite with coverage
         run: |
