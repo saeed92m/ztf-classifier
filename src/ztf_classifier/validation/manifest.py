@@ -20,7 +20,7 @@ DEFAULT_SCIENTIFIC_CHECKS = (
     "future_data_leakage", "benchmark_trained_artifacts",
     "preprocessing_consistency", "schema_compatibility",
     "feature_generation_determinism", "qc_acceptance",
-    "inference_reproducibility", "failure_code_correctness",
+    "inference_reproducibility", "failure_code_correctness", "provenance",
 )
 
 
