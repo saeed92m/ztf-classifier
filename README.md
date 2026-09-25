@@ -243,6 +243,10 @@ Existing output files are not overwritten.
 
 Empty batch outputs are rejected by the application contract.
 
+## Security and artifact handling
+
+The production OOD artifact contains a `joblib` model file. Treat model artifacts as executable-trust-boundary inputs: only load artifacts from trusted sources and verify their manifest/checksum integrity before loading. Do not accept untrusted `joblib` files in a public inference service.
+
 ## Reproducibility
 
 The project is managed with Git and uses a pinned Python development environment.
@@ -253,7 +257,7 @@ Primary environment:
 * Ubuntu 26.04 LTS
 * WSL2
 
-The repository contains reproducibility, provenance, checksum validation, ingestion diagnostics, and artifact-contract components intended to make model production and inference auditable. The CI gate also validates formatting, coverage reporting, package builds, wheel installation, and dependency security auditing.
+The repository contains reproducibility, provenance, checksum validation, ingestion diagnostics, and artifact-contract components intended to make model production and inference auditable. CI uses the committed `requirements.lock` environment captured from a verified Python 3.11.16 Ubuntu runner. The CI gate also validates formatting, coverage reporting, package builds, wheel installation, and dependency security auditing.
 
 ## Validation status
 
