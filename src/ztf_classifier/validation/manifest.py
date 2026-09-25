@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -52,7 +52,7 @@ class BenchmarkManifest:
     )
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "BenchmarkManifest":
+    def from_dict(cls, payload: dict[str, Any]) -> BenchmarkManifest:
         missing = [key for key in REQUIRED_FIELDS if key not in payload]
         if missing:
             raise ValueError("Benchmark manifest missing required fields: " + ", ".join(missing))
@@ -62,7 +62,7 @@ class BenchmarkManifest:
         if not isinstance(payload["class_mapping"], dict) or not payload["class_mapping"]:
             raise ValueError("class_mapping must be a non-empty object")
         if not isinstance(payload["leakage_exclusions"], list):
-            raise ValueError("leakage_exclusions must be a list")
+            raise TypeError("leakage_exclusions must be a list")
         required = payload.get("required_leakage_checks", list(cls.required_leakage_checks))
         if not isinstance(required, list) or not required:
             raise ValueError("required_leakage_checks must be a non-empty list")
