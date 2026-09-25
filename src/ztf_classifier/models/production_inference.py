@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 import numpy as np
@@ -68,16 +69,16 @@ class ProductionInferenceService:
         conformal = None
         ood = None
 
-        if (
-            self.loaded_artifact.conformal is not None
-            and self.loaded_artifact.ood is not None
-            and self.loaded_artifact.ood_model is not None
-        ):
+        if self.loaded_artifact.conformal is not None:
             conformal = ProductionConformalDiagnostics.predict(
                 inference.probabilities,
                 self.loaded_artifact.conformal,
             )
 
+        if (
+            self.loaded_artifact.ood is not None
+            and self.loaded_artifact.ood_model is not None
+        ):
             features = engine.prepare_features(dataset)
             feature_matrix = features.to_numpy(
                 dtype=np.float64
@@ -127,11 +128,33 @@ class ProductionInferenceService:
             calibration.temperature,
         )
 
+        try:
+            software_version = version("ztf-classifier")
+        except PackageNotFoundError:
+            software_version = "unknown"
+
+        warnings = self.loaded_artifact.integrity_warnings
+
         return PredictionResultBuilder.build(
             inference,
             calibrated_probabilities=calibrated_probabilities,
             conformal=conformal,
             ood=ood,
+            calibration_status="available",
+            conformal_status=(
+                "available" if conformal is not None else "unavailable"
+            ),
+            ood_status="available" if ood is not None else "unavailable",
+            warnings=warnings,
+            artifact_schema_version=(
+                "1.1" if self.loaded_artifact.conformal is not None
+                or self.loaded_artifact.ood is not None
+                else "1.0"
+            ),
+            artifact_hash=self.loaded_artifact.artifact_hash,
+            feature_schema_hash=model_artifact.feature_schema_sha256,
+            software_version=software_version,
+            model_version=model_artifact.model_version,
         )
 
 
