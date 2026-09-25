@@ -38,10 +38,10 @@ def test_730k_request_requires_parent_evidence_binding():
 def test_acquisition_rejects_html_payload_without_creating_evidence(tmp_path):
     request = AcquisitionRequest(
         benchmark_id="ztf_periodic_781k",
-        source_id="ztf_periodic_781k",
+        source_id="star_embed_ztf_40k",
         destination=tmp_path / "artifact.bin",
         urls=("https://example.test/landing",),
-        source_version="v1 published 2020-06-11",
+        source_version="2026-05 dataset snapshot",
     )
 
     def fetcher(_url: str, _timeout: float) -> bytes:
@@ -57,11 +57,11 @@ def test_multi_artifact_acquisition_binds_all_artifacts(tmp_path):
     payloads = {"https://example.test/a": b"alpha", "https://example.test/b": b"beta"}
     request = AcquisitionRequest(
         benchmark_id="ztf_periodic_781k",
-        source_id="ztf_periodic_781k",
+        source_id="star_embed_ztf_40k",
         destination=tmp_path / "snapshot",
         urls=tuple(payloads),
         artifact_names=("a.bin", "b.bin"),
-        source_version="v1 published 2020-06-11",
+        source_version="2026-05 dataset snapshot",
     )
     result = acquire_source(request, code_version="test", fetcher=lambda url, _timeout: payloads[url])
     assert result.status == "ACQUIRED"
