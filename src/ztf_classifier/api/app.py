@@ -17,12 +17,12 @@ from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.api.schemas import (
     ErrorResponse,
     ModelResponse,
+    ObjectObservationResponse,
+    ObservationResponse,
     PredictionItem,
     PredictionRequest,
     PredictionResponse,
     ServiceStatusResponse,
-    ObservationResponse,
-    ObjectObservationResponse,
 )
 from ztf_classifier.application.errors import ApplicationInferenceError
 from ztf_classifier.application.observations import ObservationService
