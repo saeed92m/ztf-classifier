@@ -153,7 +153,7 @@ jobs:
                 configs/process/cycles/*.json) has_record=true ;;
               esac
             done
-            if [ "\$has_record" != true ]; then
+            if [ "$has_record" != true ]; then
               echo "Meaningful PR changes require a machine-readable cumulative cycle record under configs/process/cycles/."
               printf 'Changed files:\n%s\n' "${meaningful[*]}"
               exit 1
