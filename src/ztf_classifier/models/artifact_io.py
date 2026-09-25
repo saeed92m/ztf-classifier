@@ -6,6 +6,7 @@ import hashlib
 import json
 import shutil
 import warnings
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -306,6 +307,7 @@ class ModelArtifactWriter:
             ood_model.save(ood_model_path)
 
         manifest = {
+            "software_version": provenance.software_version,
             "artifact_schema_version": (
                 ARTIFACT_SCHEMA_VERSION
                 if diagnostics
@@ -321,6 +323,12 @@ class ModelArtifactWriter:
                 artifact.dataset_sha256,
                 "dataset_sha256",
             ),
+            "training_dataset_sha256": artifact.dataset_sha256,
+            "feature_schema_sha256": artifact.feature_schema_sha256,
+            "git_commit": provenance.git_commit,
+            "created_at_utc": datetime.now(timezone.utc).isoformat(),
+            "python_version": provenance.python_version,
+            "platform": provenance.platform,
             "feature_schema_source_sha256": source_schema_hash,
             "files": {
                 "model": {
@@ -359,6 +367,8 @@ class ModelArtifactWriter:
                 "path": "ood_model.joblib",
                 "sha256": _sha256(ood_model_path),
             }
+
+        manifest["model_file_sha256"] = manifest["files"]["model"]["sha256"]
 
         manifest_path = output_dir / "artifact_manifest.json"
 
