@@ -1,7 +1,7 @@
 # Final Platform Acceptance Evidence
 
 Date: 2026-09-25
-Main commit audited: acc9bafaa15016196c09ec286428aba21c6593a9
+Main commit audited: b9cdbe7071e66d1a1919b54be5ee6b7f00d3df03
 Software version: 0.4.0
 Scientific baseline: v0.2.0
 Production model: baseline_v0.2
@@ -14,7 +14,7 @@ not convert unavailable data-dependent validation into a success claim.
 
 ## Current CI evidence
 
-The latest merged `main` CI run completed successfully:
+The latest merged `main` CI run for the audited commit completed successfully:
 
 - Ruff lint: PASS
 - Ruff format check: PASS
