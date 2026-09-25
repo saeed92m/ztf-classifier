@@ -39,10 +39,17 @@
   },
   "benchmark_code_version": "benchmark-registry-v1",
   "required_leakage_checks": [
-    "object_overlap", "duplicate_objects", "target_leakage",
-    "future_data_leakage", "benchmark_trained_artifacts",
-    "preprocessing_consistency", "schema_compatibility",
-    "feature_generation_determinism", "qc_acceptance",
-    "inference_reproducibility", "failure_code_correctness"
+    "object_overlap",
+    "duplicate_objects",
+    "target_leakage",
+    "future_data_leakage",
+    "benchmark_trained_artifacts",
+    "preprocessing_consistency",
+    "schema_compatibility",
+    "feature_generation_determinism",
+    "qc_acceptance",
+    "inference_reproducibility",
+    "failure_code_correctness",
+    "provenance"
   ]
 }
