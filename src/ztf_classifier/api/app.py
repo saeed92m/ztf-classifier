@@ -9,14 +9,6 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from ztf_classifier.application.errors import ApplicationInferenceError
-from ztf_classifier.application.service import ApplicationService
-from ztf_classifier.models.classes import MODEL_CLASSES
-from ztf_classifier.models.registry import (
-    FilesystemModelRegistry,
-    ModelNotFoundError,
-)
-
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.api.schemas import (
@@ -26,6 +18,13 @@ from ztf_classifier.api.schemas import (
     PredictionRequest,
     PredictionResponse,
     ServiceStatusResponse,
+)
+from ztf_classifier.application.errors import ApplicationInferenceError
+from ztf_classifier.application.service import ApplicationService
+from ztf_classifier.models.classes import MODEL_CLASSES
+from ztf_classifier.models.registry import (
+    FilesystemModelRegistry,
+    ModelNotFoundError,
 )
 
 API_VERSION = "v1"
