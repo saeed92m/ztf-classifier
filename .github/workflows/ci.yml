@@ -128,34 +128,34 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
           records=(configs/process/cycles/*.json)
-          test \${#records[@]} -gt 0
-          python -m ztf_classifier.lifecycle validate "\${records[@]}"
+          test ${#records[@]} -gt 0
+          python -m ztf_classifier.lifecycle validate "${records[@]}"
 
       - name: Require a cycle record for meaningful pull requests
-        if: \${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' }}
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin "\${GITHUB_BASE_REF}" --depth=1
-          mapfile -t changed < <(git diff --name-only "origin/\${GITHUB_BASE_REF}...HEAD")
+          git fetch origin "${GITHUB_BASE_REF}" --depth=1
+          mapfile -t changed < <(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD")
           meaningful=()
-          for path in "\${changed[@]}"; do
-            case "\$path" in
+          for path in "${changed[@]}"; do
+            case "$path" in
               configs/process/cycles/*) ;;
               .gitignore|.gitattributes) ;;
-              *) meaningful+=("\$path") ;;
+              *) meaningful+=("$path") ;;
             esac
           done
-          if [ "\${#meaningful[@]}" -gt 0 ]; then
+          if [ "${#meaningful[@]}" -gt 0 ]; then
             has_record=false
-            for path in "\${changed[@]}"; do
-              case "\$path" in
+            for path in "${changed[@]}"; do
+              case "$path" in
                 configs/process/cycles/*.json) has_record=true ;;
               esac
             done
             if [ "\$has_record" != true ]; then
               echo "Meaningful PR changes require a machine-readable cumulative cycle record under configs/process/cycles/."
-              printf 'Changed files:\n%s\n' "\${meaningful[*]}"
+              printf 'Changed files:\n%s\n' "${meaningful[*]}"
               exit 1
             fi
           fi
