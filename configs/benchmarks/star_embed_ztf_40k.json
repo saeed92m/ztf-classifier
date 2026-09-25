@@ -38,6 +38,7 @@
   },
   "input_contract": {
     "adapter": "star_embed_ztf_40k",
+    "revision": "resolve_at_acquisition",
     "prediction_column": "y_pred"
   },
   "ground_truth_provenance": {
