@@ -32,7 +32,7 @@ def fetch(url: str, timeout: int = 30) -> tuple[int, bytes, str]:
         return response.status, payload, content_type
 
 
-def run(output: str | Path) -> dict[str, object]:
+def run(output: str | Path, fetcher=fetch) -> dict[str, object]:
     retrieved_at = datetime.now(timezone.utc).isoformat()
     results: list[dict[str, object]] = []
 
@@ -50,7 +50,7 @@ def run(output: str | Path) -> dict[str, object]:
             continue
 
         try:
-            status, payload, content_type = fetch(url)
+            status, payload, content_type = fetcher(url)
             results.append(
                 {
                     "source_id": source.source_id,
