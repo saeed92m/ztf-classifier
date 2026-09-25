@@ -38,3 +38,16 @@ def test_workbench_light_curve_uses_observation_api() -> None:
     assert response.status_code == 200
     assert "/v1/objects/" in response.text
     assert "/observations?survey=ztf" in response.text
+
+
+def test_workbench_uses_durable_result_api_without_fabricated_values() -> None:
+    client = TestClient(create_app())
+    response = client.get("/workbench/app.js")
+    assert response.status_code == 200
+    assert "/results/latest?survey=" in response.text
+    assert "Run analysis" in response.text
+
+    page = client.get("/workbench/")
+    assert "38.7%" not in page.text
+    assert "267.1124" not in page.text
+    assert "32.4198" not in page.text
