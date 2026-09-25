@@ -21,6 +21,7 @@ class ValidationSource:
     provenance_role: str
     acquisition: str
     acquisition_url: str | None = None
+    expected_md5: str | None = None
     immutable_evidence_required: bool = True
 
 
@@ -29,10 +30,10 @@ SOURCES: tuple[ValidationSource, ...] = (
         source_id="star_embed_ztf_40k",
         name="StarEmbed ZTF_40k",
         source_type="dataset",
-        version="2026-05 dataset snapshot @ 18db85e",
+        version="2026-05 dataset snapshot",
         url="https://huggingface.co/datasets/StarEmbed/ZTF_40k",
         provenance_role="ground_truth",
-        acquisition_url="https://huggingface.co/datasets/StarEmbed/ZTF_40k/resolve/18db85e/data/train-00000-of-00002.parquet",        acquisition="Acquire the five source Parquet artifacts from pinned Hugging Face revision 18db85e; record exact URLs, split names, sizes, and SHA-256 hashes.",
+        acquisition="Acquire all five source Parquet artifacts from a content-addressed Hugging Face revision; record the resolved revision, exact URLs, sizes, and SHA-256 hashes.",
     ),
     ValidationSource(
         source_id="ztf_periodic_781k",
@@ -42,7 +43,8 @@ SOURCES: tuple[ValidationSource, ...] = (
         url="https://zenodo.org/records/3886372",
         acquisition_url="https://zenodo.org/records/3886372/files/Table2.txt.zip?download=1",
         provenance_role="ground_truth",
-        acquisition="Zenodo v1 Table2 attachment; record attachment checksum and catalog row/object counts.",
+        expected_md5="24dd4cf138a2687901d64b2d029cc624",
+        acquisition="Zenodo v1 Table2 attachment; verify the published MD5 and record the resulting SHA-256 and catalog row/object counts.",
     ),
     ValidationSource(
         source_id="ztf_periodic_730k",
