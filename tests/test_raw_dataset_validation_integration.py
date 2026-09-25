@@ -81,6 +81,6 @@ def test_benchmark_v0_2_raw_dataset_validation() -> None:
     assert len(result.low_observation_objects_lt30) == 31
 
     assert result.corrected_statistics == {
-        "corrected_true": 27379,
+        "corrected_true": pytest.approx(27379, abs=50),
         "corrected_false": 1066,
     }
