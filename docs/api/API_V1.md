@@ -24,6 +24,14 @@ Clients never submit arbitrary artifact or registry filesystem paths.
 | GET | `/v1/model` | Default model metadata |
 | POST | `/v1/predict` | Synchronous inference |
 | POST | `/v1/batch` | Synchronous multi-row inference |
+| GET | `/v1/objects/{oid}` | Normalized object summary |
+| GET | `/v1/objects/{oid}/observations` | Normalized observation stream |
+| POST | `/v1/objects/{oid}/analysis` | Source-backed object analysis |
+| POST | `/v1/objects/{oid}/jobs` | Durable analysis job submission |
+| GET | `/v1/jobs/{job_id}` | Durable analysis job state |
+| GET | `/v1/jobs/{job_id}/result` | Canonical durable job result |
+| GET | `/v1/results/{result_id}` | Durable result by stable ID |
+| GET | `/v1/objects/{oid}/results/latest` | Latest durable result for an object |
 
 OpenAPI is generated directly by FastAPI from the versioned HTTP schemas.
 
