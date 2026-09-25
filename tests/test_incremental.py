@@ -68,7 +68,9 @@ def test_incremental_checkpoint_equal_cursor_is_idempotent(tmp_path: Path) -> No
     assert second.result_id == first.result_id
 
 
-def test_incremental_checkpoint_store_does_not_overwrite_newer_cursor(tmp_path: Path) -> None:
+def test_incremental_checkpoint_store_does_not_overwrite_newer_cursor(
+    tmp_path: Path,
+) -> None:
     checkpoints = IncrementalCheckpointStore(tmp_path / "checkpoints.sqlite3")
     checkpoints.advance(
         "analysis",
