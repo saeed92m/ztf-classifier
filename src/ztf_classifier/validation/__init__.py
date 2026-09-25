@@ -6,6 +6,10 @@ from ztf_classifier.validation.gate import (
 )
 from ztf_classifier.validation.manifest import BenchmarkManifest
 from ztf_classifier.validation.registry import BenchmarkRegistry
+from ztf_classifier.validation.report import (
+    render_scientific_validation_report,
+    write_scientific_validation_report,
+)
 from ztf_classifier.validation.runner import BenchmarkRunResult, run_table_benchmark
 
 __all__ = [
@@ -13,6 +17,8 @@ __all__ = [
     "BenchmarkRegistry",
     "BenchmarkRunResult",
     "evaluate_release_gate",
+    "render_scientific_validation_report",
     "run_table_benchmark",
     "write_release_gate_report",
+    "write_scientific_validation_report",
 ]

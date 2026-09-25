@@ -8,6 +8,7 @@ from pathlib import Path
 
 from ztf_classifier.validation.gate import write_release_gate_report
 from ztf_classifier.validation.registry import BenchmarkRegistry
+from ztf_classifier.validation.report import write_scientific_validation_report
 from ztf_classifier.validation.runner import run_table_benchmark
 
 
@@ -31,6 +32,10 @@ def main(argv: list[str] | None = None) -> int:
         default=Path("reports/scientific_validation/release_gate.json"),
     )
 
+    report = subparsers.add_parser("report", help="Render a scientific validation report")
+    report.add_argument("--gate", type=Path, required=True)
+    report.add_argument("--output", type=Path, required=True)
+
     args = parser.parse_args(argv)
     registry = BenchmarkRegistry(args.registry_dir)
 
@@ -38,6 +43,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "list":
             for benchmark_id in registry.validate_all():
                 print(benchmark_id)
+            return 0
+
+        if args.command == "report":
+            output = write_scientific_validation_report(args.gate, args.output)
+            print(f"report={output}")
             return 0
 
         if args.command == "gate":

@@ -95,3 +95,22 @@ The Workbench now hydrates its light curve from the normalized observation API a
 - UI changes must preserve accessibility and data readability.
 - A future component framework may replace the current dependency-light shell without changing API contracts.
 - Workbench modules should be independently routable and progressively hydrated from API data.
+
+
+## Scientific Validation Dashboard
+
+The Workbench must expose a release-scoped Scientific Validation surface backed by the executable validation report.
+
+Required panels:
+
+- gate status: PASS / NOT_VERIFIED;
+- benchmark registry and evaluation role;
+- population/source/version and retrieval metadata;
+- benchmark metrics and calibration/OOD diagnostics;
+- leakage status for every release-blocking check;
+- regression history and disposition;
+- known failure cases and out-of-domain scope;
+- provenance completeness and input hashes;
+- release decision evidence.
+
+The dashboard is evidence presentation only. It must not convert reference-system agreement into ground truth or suppress unresolved scientific blockers.
