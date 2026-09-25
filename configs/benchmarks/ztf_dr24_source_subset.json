@@ -46,6 +46,12 @@
     "target_leakage",
     "future_data_leakage",
     "benchmark_trained_artifacts",
-    "preprocessing_consistency"
+    "preprocessing_consistency",
+    "schema_compatibility",
+    "feature_generation_determinism",
+    "qc_acceptance",
+    "inference_reproducibility",
+    "failure_code_correctness",
+    "provenance"
   ]
 }
