@@ -88,7 +88,7 @@ class BenchmarkManifest:
         )
 
     @classmethod
-    def from_json(cls, path: str | Path) -> "BenchmarkManifest":
+    def from_json(cls, path: str | Path) -> BenchmarkManifest:
         return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
 
     def to_dict(self) -> dict[str, Any]:
