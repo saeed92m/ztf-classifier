@@ -66,3 +66,13 @@ def test_workbench_workspace_views_use_real_catalog_job_and_report_contracts() -
     assert "/v1/results/" in response.text
     assert "/report" in response.text
     assert "Reports not yet enabled" not in response.text
+
+
+def test_workbench_exposes_scientific_validation_dashboard() -> None:
+    client = TestClient(create_app())
+    page = client.get("/workbench/")
+    script = client.get("/workbench/app.js")
+    assert page.status_code == 200
+    assert "Scientific Validation" in page.text
+    assert script.status_code == 200
+    assert "/v1/scientific-validation" in script.text

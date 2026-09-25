@@ -237,6 +237,7 @@ const titles = {
   batch: ["Batch jobs", "Durable analysis jobs"],
   catalog: ["Catalog", "Catalog query and export module"],
   reports: ["Reports", "Scientific report generation module"],
+  validation: ["Scientific Validation", "Release-blocking scientific evidence and provenance"],
 };
 
 function setViewHeading(view) {
@@ -418,6 +419,42 @@ function renderAnalysisModule(view) {
   }
 }
 
+async function loadValidationDashboard() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">RELEASE GATE</div><h1 id="viewTitle">Scientific Validation</h1>
+    <p id="viewSubtitle">Independent evidence status · fail-closed release boundary</p></div></div>
+    <section class="metric-grid">
+      <article class="metric-card"><span>Gate status</span><strong id="validationStatus">—</strong><small>release-blocking</small></article>
+      <article class="metric-card"><span>Benchmarks</span><strong id="validationBenchmarks">—</strong><small>registered sources</small></article>
+      <article class="metric-card"><span>Blocked checks</span><strong id="validationBlockers">—</strong><small>must reach zero for release</small></article>
+      <article class="metric-card"><span>Probe</span><strong id="validationProbe">—</strong><small>source provenance evidence</small></article>
+    </section>
+    <section class="panel"><div class="panel-header"><div><div class="panel-title">Benchmark gate</div><div class="panel-subtitle">No missing evidence is silently treated as PASS</div></div></div>
+    <div class="catalog-table-wrap"><table class="metadata"><thead><tr><th>Benchmark</th><th>Role</th><th>Status</th><th>Blockers</th></tr></thead><tbody id="validationRows"></tbody></table></div></section>
+    <section class="panel"><div class="panel-header"><div><div class="panel-title">Source provenance</div><div class="panel-subtitle">Reachability is provenance evidence, not scientific validation</div></div></div>
+    <pre id="validationProbeDetails" class="report-content"></pre></section>`;
+  try {
+    const payload = await fetchJson("/v1/scientific-validation");
+    document.getElementById("validationStatus").textContent = payload.status;
+    document.getElementById("validationBenchmarks").textContent = payload.benchmarks.length;
+    document.getElementById("validationBlockers").textContent = payload.blockers.length;
+    const probe = payload.source_probe;
+    const probeItems = probe?.sources || [];
+    const reachable = probeItems.filter(item => item.status === "REACHABLE").length;
+    document.getElementById("validationProbe").textContent = probe ? reachable + "/" + probeItems.length : "not run";
+    document.getElementById("validationRows").innerHTML = payload.benchmarks.map(item =>
+      "<tr><td>" + escapeHtml(item.benchmark_id) + "</td><td>" +
+      escapeHtml(item.evaluation_role) + "</td><td>" + escapeHtml(item.status) +
+      "</td><td>" + escapeHtml(item.blockers.join("; ") || "—") + "</td></tr>"
+    ).join("");
+    document.getElementById("validationProbeDetails").textContent =
+      JSON.stringify({ interpretation: payload.interpretation, source_probe: probe }, null, 2);
+    setConnectionState(payload.status === "PASS" ? "Scientific gate PASS" : "Scientific gate blocked", payload.status === "PASS");
+  } catch {
+    setConnectionState("Scientific validation unavailable", false);
+  }
+}
+
 async function showView(view) {
   document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
   const active = document.querySelector('.nav-item[data-view="' + view + '"]');
@@ -432,6 +469,7 @@ async function showView(view) {
   if (view === "catalog") return loadCatalog();
   if (view === "batch") return loadBatchJobs();
   if (view === "reports") return loadReportView();
+  if (view === "validation") return loadValidationDashboard();
   if (!state.result && state.oid) await loadObject();
   renderAnalysisModule(view);
 }

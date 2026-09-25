@@ -34,6 +34,7 @@ from ztf_classifier.api.schemas import (
     ScientificCatalogResponse,
     ScientificResultResponse,
     ServiceStatusResponse,
+    ScientificValidationResponse,
 )
 from ztf_classifier.application.errors import ApplicationInferenceError
 from ztf_classifier.application.observations import ObservationService
@@ -48,6 +49,7 @@ from ztf_classifier.models.registry import (
     ModelNotFoundError,
 )
 from ztf_classifier.reporting import ScientificReportService
+from ztf_classifier.validation.gate import evaluate_release_gate
 from ztf_classifier.results import ScientificResultStore
 
 API_VERSION = "v1"
@@ -360,6 +362,34 @@ def create_app(
         return ServiceStatusResponse(
             status="ready",
             model_version=version,
+        )
+
+    @app.get(
+        "/v1/scientific-validation",
+        response_model=ScientificValidationResponse,
+        tags=["scientific-validation"],
+    )
+    def scientific_validation() -> ScientificValidationResponse:
+        """Return the current fail-closed scientific release-gate state."""
+        result = evaluate_release_gate(
+            registry_dir=api_settings.scientific_registry_dir,
+            evidence_dir=api_settings.scientific_evidence_dir,
+        )
+        probe_path = api_settings.scientific_evidence_dir / "source_probe.json"
+        source_probe = None
+        if probe_path.is_file():
+            try:
+                import json
+                source_probe = json.loads(probe_path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                source_probe = {"status": "INVALID_EVIDENCE"}
+        return ScientificValidationResponse(
+            status=result["status"],
+            release_blocking=result["release_blocking"],
+            benchmarks=result["benchmarks"],
+            blockers=result["blockers"],
+            source_probe=source_probe,
+            interpretation=result["interpretation"],
         )
 
     @app.get(

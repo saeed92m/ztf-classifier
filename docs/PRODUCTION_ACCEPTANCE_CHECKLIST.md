@@ -70,7 +70,7 @@ The release is accepted only after all engineering gates and the mandatory scien
 - [ ] All five source-backed benchmark adapters are implemented and executed with immutable evidence.
 - [ ] All required leakage checks are PASS for the release candidate.
 - [ ] Full scientific validation across ingestion -> normalization -> QC -> feature generation -> inference -> calibration/OOD -> provenance is PASS.
-- [ ] Scientific Validation Dashboard/Report is integrated into the Workbench.
+- [x] Scientific Validation Dashboard/Report is integrated into the Workbench via the versioned API and Workbench validation view.
 - [ ] No unresolved benchmark regression remains.
 
 The scientific gate remains **NOT VERIFIED** until the unchecked source-backed and leakage/evidence items above are completed. Engineering CI success alone cannot satisfy this gate.
