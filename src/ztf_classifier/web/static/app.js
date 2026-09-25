@@ -3,7 +3,7 @@ const STORAGE_KEY = "ztf-workbench-appearance";
 const defaults = { theme: "auto", dayStart: "06:00", nightStart: "18:00" };
 const params = new URLSearchParams(window.location.search);
 const state = {
-  oid: params.get("oid") || "ZTF17aaanmso",
+  oid: params.get("oid") || "",
   survey: params.get("survey") || "ztf",
   observations: [],
   result: null,
@@ -52,8 +52,9 @@ function setConnectionState(label, ok) {
     ok === false ? "var(--color-warning)" : "var(--color-success)";
 }
 function setObjectIdentity() {
-  document.getElementById("viewTitle").textContent = state.oid;
-  document.querySelector(".object-identity strong").textContent = state.oid;
+  const label = state.oid || "Select an object";
+  document.getElementById("viewTitle").textContent = label;
+  document.querySelector(".object-identity strong").textContent = label;
 }
 function escapeHtml(value) {
   return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;")
@@ -90,12 +91,12 @@ function renderPrediction(prediction) {
   document.getElementById("oodPercentile").textContent =
     ood && ood.anomaly_percentile != null ? Number(ood.anomaly_percentile).toFixed(1) : "—";
 }
-function renderResult(record) {
+function renderResult(record, durable = true) {
   state.result = record;
   const payload = record.payload || {};
   renderPrediction(payload.prediction);
   document.getElementById("viewSubtitle").textContent =
-    "Durable scientific result · " + record.schema_version + " · " + record.model_version;
+    (durable ? "Durable scientific result · " : "Live analysis result · ") + record.schema_version + " · " + record.model_version;
   document.getElementById("featureSchema").textContent = payload.feature_schema_version || "—";
   document.getElementById("modelValue").textContent =
     record.model_version + " · " + (payload.model_family || "—");
@@ -140,7 +141,14 @@ function renderLightCurve(svg, observations) {
   group.appendChild(points); svg.appendChild(group);
 }
 async function loadObject() {
-  setObjectIdentity(); setConnectionState("Loading…");
+  setObjectIdentity();
+  if (!state.oid) {
+    setConnectionState("Object required", false);
+    document.getElementById("viewSubtitle").textContent = "Provide ?oid=<object-id> to load scientific data";
+    document.getElementById("resultState").textContent = "idle";
+    return;
+  }
+  setConnectionState("Loading…");
   try {
     const result = await fetchJson("/v1/objects/" + encodeURIComponent(state.oid) +
       "/results/latest?survey=" + encodeURIComponent(state.survey));
@@ -169,7 +177,7 @@ async function runAnalysis() {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ survey: state.survey }),
     });
-    renderResult({ schema_version: result.schema_version || "1.0", model_version: result.model_version, payload: result });
+    renderResult({ schema_version: result.schema_version || "1.0", model_version: result.model_version, payload: result }, false);
     setConnectionState("Analysis complete");
   } catch { setConnectionState("Analysis failed", false); }
   finally { button.disabled = false; button.textContent = "Run analysis"; }
