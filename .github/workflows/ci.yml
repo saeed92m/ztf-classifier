@@ -49,7 +49,7 @@ jobs:
 
       - name: Run Ruff format check for new upgrade files
         run: |
-          python -m ruff format --check             src/ztf_classifier/reproducibility             tests/test_checksums.py             tests/test_alerce_ingestion_diagnostics.py             tests/test_prediction_result_statuses.py
+          python -m ruff format --check             src/ztf_classifier/reproducibility/checksums.py             src/ztf_classifier/reproducibility/__init__.py             tests/test_checksums.py             tests/test_alerce_ingestion_diagnostics.py             tests/test_prediction_result_statuses.py
 
       - name: Run test suite with coverage
         run: |
