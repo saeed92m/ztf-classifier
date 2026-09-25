@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+from ztf_classifier.jobs.errors import AnalysisJobExecutionError
 from ztf_classifier.jobs.store import JobRecord, JobStore
 
 JobExecutor = Callable[[JobRecord], dict[str, Any]]
@@ -25,7 +26,7 @@ class AnalysisJobWorker:
 
         try:
             result = self.executor(job)
-        except RuntimeError:
+        except AnalysisJobExecutionError:
             return self.store.transition(
                 job.job_id,
                 status="failed",
