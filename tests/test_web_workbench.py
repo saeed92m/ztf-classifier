@@ -51,6 +51,7 @@ def test_workbench_uses_durable_result_api_without_fabricated_values() -> None:
     assert "38.7%" not in page.text
     assert "267.1124" not in page.text
     assert "32.4198" not in page.text
+    assert "α = 0.10" not in page.text
     assert "baseline_v0.2" not in page.text
     assert "267.1124" not in response.text
 
