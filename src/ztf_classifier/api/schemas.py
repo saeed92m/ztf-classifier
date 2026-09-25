@@ -141,3 +141,16 @@ class AnalysisJobResponse(BaseModel):
     error: dict[str, Any] | None = None
     lease_expires_at: str | None = None
     scientific_result_id: str | None = None
+
+
+class ScientificResultResponse(BaseModel):
+    """Versioned durable scientific analysis result."""
+
+    schema_version: str
+    result_id: str
+    job_id: str
+    oid: str
+    survey: str
+    model_version: str
+    created_at: str
+    payload: dict[str, Any]
