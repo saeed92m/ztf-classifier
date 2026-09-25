@@ -31,9 +31,9 @@ def compare_metrics(
         # Higher-is-better metrics are the default scientific classification
         # convention. Lower-is-better metrics can be encoded with a negative
         # tolerance in the manifest/configuration.
-        if tolerance >= 0 and delta < -tolerance:
-            regressions[name] = checked[name]
-        elif tolerance < 0 and delta > abs(tolerance):
+        if (tolerance >= 0 and delta < -tolerance) or (
+            tolerance < 0 and delta > abs(tolerance)
+        ):
             regressions[name] = checked[name]
     return {
         "status": "REGRESSION" if regressions else "PASS",
