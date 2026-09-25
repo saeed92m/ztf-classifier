@@ -678,7 +678,7 @@ class ModelArtifactLoader:
                         candidate.relative_to(artifact_dir)
                     except ValueError as exc:
                         raise ValueError(
-                            f"Artifact {label} path escapes artifact directory."
+                            "Artifact path escapes artifact directory."
                         ) from exc
                     if not candidate.is_file():
                         raise FileNotFoundError(
