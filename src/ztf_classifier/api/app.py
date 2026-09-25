@@ -405,6 +405,12 @@ def create_app(
         request: AnalysisJobRequest,
     ) -> AnalysisJobResponse:
         """Persist an analysis request for asynchronous execution."""
+        if request.feature_backend not in feature_engine.list_backends():
+            raise ApiContractError(
+                "feature_backend_not_found",
+                f"Feature backend is not registered: {request.feature_backend}",
+                status_code=404,
+            )
         record = jobs.create(
             oid=oid,
             survey=request.survey,
@@ -640,6 +646,12 @@ def create_app(
         request: ObjectAnalysisRequest,
     ) -> ObjectAnalysisResponse:
         """Run source-backed observations through the shared scientific executor."""
+        if request.feature_backend not in feature_engine.list_backends():
+            raise ApiContractError(
+                "feature_backend_not_found",
+                f"Feature backend is not registered: {request.feature_backend}",
+                status_code=404,
+            )
         try:
             result = executor.execute(
                 oid=oid,
