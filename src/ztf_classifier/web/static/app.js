@@ -72,6 +72,7 @@ function clearPrediction() {
   document.getElementById("predictedClass").textContent = "—";
   document.getElementById("topProbability").textContent = "—";
   document.getElementById("conformalSet").textContent = "—";
+  document.getElementById("conformalAlpha").textContent = "conformal coverage";
   document.getElementById("oodPercentile").textContent = "—";
   document.getElementById("probabilityList").innerHTML =
     '<div class="muted">No durable scientific result loaded.</div>';
@@ -110,6 +111,10 @@ function renderPrediction(prediction) {
   const conformal = prediction.conformal || [];
   document.getElementById("conformalSet").textContent =
     conformal.length ? conformal[0].prediction_set_size + " classes" : "—";
+  document.getElementById("conformalAlpha").textContent =
+    conformal.length && conformal[0].alpha != null
+      ? "α = " + Number(conformal[0].alpha).toFixed(2)
+      : "conformal coverage";
   const ood = prediction.ood;
   document.getElementById("oodPercentile").textContent =
     ood && ood.anomaly_percentile != null ? Number(ood.anomaly_percentile).toFixed(1) : "—";
@@ -219,6 +224,9 @@ async function runAnalysis() {
   } catch { setConnectionState("Analysis failed", false); }
   finally { button.disabled = false; button.textContent = "Run analysis"; }
 }
+const mainCanvas = document.querySelector(".main-canvas");
+const overviewMarkup = mainCanvas.innerHTML;
+
 const titles = {
   overview: ["Object analysis", "Scientific overview"],
   observations: ["Observations", "Normalized observation stream"],
@@ -230,141 +238,207 @@ const titles = {
   catalog: ["Catalog", "Catalog query and export module"],
   reports: ["Reports", "Scientific report generation module"],
 };
-const titles = {
-  overview: ["Object analysis", "Scientific overview"],
-  observations: ["Observations", "Normalized observation stream"],
-  features: ["Features", "Scientific Feature Engine output"],
-  classification: ["Classification", "Model prediction and probabilities"],
-  uncertainty: ["Uncertainty & OOD", "Conformal and anomaly diagnostics"],
-  provenance: ["Provenance", "Traceable scientific metadata"],
-  batch: ["Batch jobs", "Durable analysis jobs"],
-  catalog: ["Catalog", "Catalog query and export"],
-  reports: ["Reports", "Scientific report export"],
-};
 
-function renderTable(headers, rows) {
-  const head = headers.map(h => "<th>" + escapeHtml(h) + "</th>").join("");
-  const body = rows.length
-    ? rows.map(row => "<tr>" + row.map(cell => "<td>" + escapeHtml(cell == null ? "—" : String(cell)) + "</td>").join("") + "</tr>").join("")
-    : '<tr><td colspan="' + headers.length + '" class="muted">No data available.</td></tr>';
-  return '<div class="data-table-wrap"><table class="data-table"><thead><tr>' + head + "</tr></thead><tbody>" + body + "</tbody></table></div>";
+function setViewHeading(view) {
+  const heading = document.getElementById("viewTitle");
+  const subtitle = document.getElementById("viewSubtitle");
+  heading.textContent = view === "overview" ? (state.oid || "Select an object") : titles[view][0];
+  subtitle.textContent = titles[view][1];
 }
 
-function setViewShell(title, subtitle, body) {
-  document.getElementById("viewTitle").textContent = title;
-  document.getElementById("viewSubtitle").textContent = subtitle;
-  document.querySelector(".main-canvas").querySelectorAll(".view-content").forEach(node => node.remove());
-  const node = document.createElement("section");
-  node.className = "view-content panel";
-  node.innerHTML = body;
-  document.querySelector(".main-canvas").appendChild(node);
+function bindOverviewActions() {
+  const runButton = document.getElementById("runAnalysisButton");
+  const exportButton = document.getElementById("exportReportButton");
+  if (runButton) runButton.addEventListener("click", runAnalysis);
+  if (exportButton) exportButton.addEventListener("click", exportCurrentReport);
 }
 
-function renderObservationsView() {
-  const rows = state.observations.map(o => [
-    o.mjd, o.band || o.filter, o.mag, o.magerr ?? o.mag_err, o.flux, o.fluxerr ?? o.flux_err
-  ]);
-  setViewShell("Observations", "Normalized observation stream", renderTable(
-    ["MJD", "Band", "Magnitude", "Mag error", "Flux", "Flux error"], rows
-  ));
-}
-
-function renderFeaturesView() {
-  const features = state.result?.payload?.features || {};
-  const rows = Object.entries(features).map(([name, value]) => [name, value]);
-  setViewShell("Features", "Scientific Feature Engine output · " +
-    (state.result?.payload?.feature_schema_version || state.result?.schema_version || "—"),
-    renderTable(["Feature", "Value"], rows));
-}
-
-function renderClassificationView() {
-  const probabilities = Object.entries(state.result?.payload?.prediction?.probabilities || {})
-    .sort((a, b) => b[1] - a[1]);
-  const rows = probabilities.map(([label, value], i) => [i + 1, label, (Number(value) * 100).toFixed(3) + "%"]);
-  setViewShell("Classification", "Full calibrated probability vector", renderTable(
-    ["Rank", "Class", "Probability"], rows
-  ));
-}
-
-function renderUncertaintyView() {
-  const prediction = state.result?.payload?.prediction;
-  const conformal = prediction?.conformal || [];
-  const ood = prediction?.ood || {};
-  const rows = [
-    ["Conformal status", state.result?.payload?.diagnostics?.conformal],
-    ["Conformal set size (first alpha)", conformal[0]?.prediction_set_size],
-    ["Conformal set (first alpha)", conformal[0]?.prediction_set?.join(", ")],
-    ["Alpha (first)", conformal[0]?.alpha],
-    ["OOD status", state.result?.payload?.diagnostics?.ood],
-    ["Anomaly score", ood.anomaly_score],
-    ["Normality score", ood.normality_score],
-    ["Anomaly percentile", ood.anomaly_percentile],
-    ["Isolation Forest label", ood.isolation_forest_label],
-    ["Anomaly rank", ood.anomaly_rank],
-    ["Top 1% anomaly", ood.is_top_1pct_anomaly],
-    ["Top 5% anomaly", ood.is_top_5pct_anomaly],
-    ["Top 10% anomaly", ood.is_top_10pct_anomaly],
-  ];
-  setViewShell("Uncertainty & OOD", "Conformal prediction and anomaly diagnostics",
-    renderTable(["Diagnostic", "Value"], rows));
-}
-
-function renderProvenanceView() {
-  const payload = state.result?.payload || {};
-  const rows = [
-    ["Object", state.result?.oid || state.oid],
-    ["Survey", payload.survey],
-    ["Schema", state.result?.schema_version],
-    ["Feature schema", payload.feature_schema_version],
-    ["Model", state.result?.model_version],
-    ["Model family", payload.model_family],
-    ["Observation source", payload.observation_provenance?.source],
-    ["Observation source version", payload.observation_provenance?.version],
-    ["Feature backend", payload.feature_provenance?.backend],
-    ["Feature backend version", payload.feature_provenance?.backend_version],
-    ["Normalized input SHA-256", payload.feature_provenance?.observation_input_sha256],
-    ["Result ID", state.result?.result_id],
-    ["Job ID", state.result?.job_id],
-    ["Created", state.result?.created_at],
-  ];
-  setViewShell("Provenance", "Traceable scientific metadata for the loaded result",
-    renderTable(["Field", "Value"], rows));
-}
-
-function renderUnavailableView(view) {
-  const messages = {
-    batch: "The durable job API currently supports job submission and individual job/result retrieval. A job-list/catalog endpoint is not exposed yet, so this view does not fabricate a queue.",
-    catalog: "No catalog query/export endpoint is exposed by the current API contract. Catalog UI is therefore intentionally not presented as implemented.",
-    reports: "No scientific report-generation endpoint is exposed by the current API contract. Report export is intentionally disabled rather than producing an incomplete artifact.",
-  };
-  setViewShell(titles[view][0], titles[view][1],
-    '<div class="empty-state"><strong>Capability not exposed yet</strong><p>' +
-    escapeHtml(messages[view]) + '</p></div>');
-}
-
-function renderView(view) {
-  if (view === "overview") {
-    document.querySelector(".main-canvas").querySelectorAll(".view-content").forEach(node => node.remove());
-    loadObject();
+async function exportCurrentReport() {
+  if (!state.result || !state.result.result_id) {
+    setConnectionState("No durable result to export", false);
     return;
   }
-  if (view === "observations") return renderObservationsView();
-  if (view === "features") return renderFeaturesView();
-  if (view === "classification") return renderClassificationView();
-  if (view === "uncertainty") return renderUncertaintyView();
-  if (view === "provenance") return renderProvenanceView();
-  renderUnavailableView(view);
+  try {
+    const response = await fetch(
+      "/v1/results/" + encodeURIComponent(state.result.result_id) + "/report",
+      { headers: { Accept: "text/markdown" } },
+    );
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ztf-analysis-" + state.result.result_id + ".md";
+    link.click();
+    URL.revokeObjectURL(url);
+    setConnectionState("Report ready");
+  } catch {
+    setConnectionState("Report export failed", false);
+  }
+}
+
+function renderCatalogShell() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header">
+      <div><div class="eyebrow">SCIENTIFIC CATALOG</div><h1 id="viewTitle">Catalog</h1>
+      <p id="viewSubtitle">Persisted scientific results</p></div>
+      <div class="object-actions"><button class="secondary-button" id="catalogExport">Export CSV</button></div>
+    </div>
+    <section class="panel"><div class="panel-header"><div>
+      <div class="panel-title">Durable results</div><div class="panel-subtitle" id="catalogSummary">Loading…</div>
+    </div></div>
+    <div class="catalog-table-wrap"><table class="metadata"><thead><tr>
+      <th>Object</th><th>Survey</th><th>Model</th><th>Prediction</th><th>Created</th><th>Result</th>
+    </tr></thead><tbody id="catalogRows"></tbody></table></div></section>`;
+}
+
+async function loadCatalog() {
+  renderCatalogShell();
+  try {
+    const page = await fetchJson("/v1/catalog/results?limit=100");
+    document.getElementById("catalogSummary").textContent =
+      page.total + " persisted result(s)" + (page.has_next ? " · more available" : "");
+    const rows = document.getElementById("catalogRows");
+    rows.innerHTML = page.items.map(item => {
+      const prediction = item.payload?.prediction?.predicted_class || "—";
+      return "<tr><td>" + escapeHtml(item.oid) + "</td><td>" +
+        escapeHtml(item.survey) + "</td><td>" + escapeHtml(item.model_version) +
+        "</td><td>" + escapeHtml(prediction) + "</td><td>" +
+        escapeHtml(item.created_at) + "</td><td><button class=\"text-button\" data-result-id=\"" +
+        escapeHtml(item.result_id) + "\">Open</button></td></tr>";
+    }).join("") || '<tr><td colspan="6">No durable results.</td></tr>';
+    rows.querySelectorAll("[data-result-id]").forEach(button => {
+      button.addEventListener("click", async () => {
+        const record = await fetchJson("/v1/results/" + encodeURIComponent(button.dataset.resultId));
+        state.result = record;
+        state.oid = record.oid;
+        showView("overview");
+      });
+    });
+    document.getElementById("catalogExport").addEventListener("click", () => {
+      window.location.href = "/v1/catalog/results.csv?limit=1000";
+    });
+    setConnectionState("Catalog ready");
+  } catch {
+    setConnectionState("Catalog unavailable", false);
+  }
+}
+
+async function loadBatchJobs() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">WORKSPACE</div><h1 id="viewTitle">Batch jobs</h1>
+    <p id="viewSubtitle">Durable asynchronous analysis jobs</p></div></div>
+    <section class="panel"><div class="panel-header"><div>
+      <div class="panel-title">Job queue</div><div class="panel-subtitle" id="jobsSummary">Loading…</div>
+    </div></div><div class="catalog-table-wrap"><table class="metadata"><thead><tr>
+      <th>Object</th><th>Status</th><th>Model</th><th>Updated</th><th>Result</th>
+    </tr></thead><tbody id="jobRows"></tbody></table></div></section>`;
+  try {
+    const page = await fetchJson("/v1/jobs?limit=100");
+    document.getElementById("jobsSummary").textContent = page.items.length + " recent job(s)";
+    const rows = document.getElementById("jobRows");
+    rows.innerHTML = page.items.map(job =>
+      "<tr><td>" + escapeHtml(job.oid) + "</td><td>" + escapeHtml(job.status) +
+      "</td><td>" + escapeHtml(job.model_version || "default") + "</td><td>" +
+      escapeHtml(job.updated_at) + "</td><td>" +
+      (job.scientific_result_id
+        ? '<button class="text-button" data-job-result="' + escapeHtml(job.scientific_result_id) + '">Open result</button>'
+        : "—") + "</td></tr>"
+    ).join("") || '<tr><td colspan="5">No jobs.</td></tr>';
+    rows.querySelectorAll("[data-job-result]").forEach(button => {
+      button.addEventListener("click", async () => {
+        state.result = await fetchJson("/v1/results/" + encodeURIComponent(button.dataset.jobResult));
+        state.oid = state.result.oid;
+        showView("overview");
+      });
+    });
+    setConnectionState("Jobs ready");
+  } catch {
+    setConnectionState("Jobs unavailable", false);
+  }
+}
+
+async function loadReportView() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">SCIENTIFIC REPORT</div><h1 id="viewTitle">Report</h1>
+    <p id="viewSubtitle">Deterministic report from a durable scientific result</p></div>
+    <div class="object-actions"><button class="primary-button" id="reportDownload">Export Markdown</button></div></div>
+    <section class="panel"><pre id="reportContent" class="report-content">Loading…</pre></section>`;
+  if (!state.result?.result_id) {
+    document.getElementById("reportContent").textContent = "Select a durable result from Catalog or Batch jobs first.";
+    document.getElementById("reportDownload").disabled = true;
+    return;
+  }
+  try {
+    const response = await fetch("/v1/results/" + encodeURIComponent(state.result.result_id) + "/report");
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    const markdown = await response.text();
+    document.getElementById("reportContent").textContent = markdown;
+    document.getElementById("reportDownload").addEventListener("click", exportCurrentReport);
+    setConnectionState("Report ready");
+  } catch {
+    document.getElementById("reportContent").textContent = "Report unavailable.";
+    setConnectionState("Report unavailable", false);
+  }
+}
+
+function renderAnalysisModule(view) {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">SCIENTIFIC ANALYSIS</div><h1 id="viewTitle"></h1>
+    <p id="viewSubtitle"></p></div></div>
+    <section class="panel"><div id="moduleContent"></div></section>`;
+  setViewHeading(view);
+  const payload = state.result?.payload || {};
+  const target = document.getElementById("moduleContent");
+  if (view === "observations") {
+    const observations = payload.observations || state.observations;
+    target.innerHTML = "<h2>Normalized observations</h2><p>" + observations.length +
+      " observation(s) available.</p><pre>" + escapeHtml(JSON.stringify(observations, null, 2)) + "</pre>";
+  } else if (view === "features") {
+    target.innerHTML = "<h2>Scientific features</h2><p>" +
+      Object.keys(payload.features || {}).length + " feature(s).</p><pre>" +
+      escapeHtml(JSON.stringify(payload.features || {}, null, 2)) + "</pre>";
+  } else if (view === "classification") {
+    target.innerHTML = "<h2>Classification</h2><pre>" +
+      escapeHtml(JSON.stringify(payload.prediction || {}, null, 2)) + "</pre>";
+  } else if (view === "uncertainty") {
+    target.innerHTML = "<h2>Uncertainty and OOD diagnostics</h2><pre>" +
+      escapeHtml(JSON.stringify({
+        conformal: payload.prediction?.conformal || [],
+        ood: payload.prediction?.ood || null,
+        diagnostics: payload.diagnostics || {},
+      }, null, 2)) + "</pre>";
+  } else {
+    target.innerHTML = "<h2>Provenance</h2><pre>" +
+      escapeHtml(JSON.stringify({
+        observation: payload.observation_provenance || {},
+        feature: payload.feature_provenance || {},
+        model: payload.model_provenance || {},
+      }, null, 2)) + "</pre>";
+  }
+}
+
+async function showView(view) {
+  document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
+  const active = document.querySelector('.nav-item[data-view="' + view + '"]');
+  if (active) active.classList.add("active");
+  if (view === "overview") {
+    mainCanvas.innerHTML = overviewMarkup;
+    bindOverviewActions();
+    setViewHeading(view);
+    await loadObject();
+    return;
+  }
+  if (view === "catalog") return loadCatalog();
+  if (view === "batch") return loadBatchJobs();
+  if (view === "reports") return loadReportView();
+  if (!state.result && state.oid) await loadObject();
+  renderAnalysisModule(view);
 }
 
 document.querySelectorAll(".nav-item").forEach(button => {
-  button.addEventListener("click", () => {
-    document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
-    button.classList.add("active");
-    renderView(button.dataset.view);
-  });
+  button.addEventListener("click", () => showView(button.dataset.view));
 });
-document.getElementById("runAnalysisButton").addEventListener("click", runAnalysis);
-document.getElementById("exportReportButton").addEventListener("click", () =>
-  setConnectionState("Report endpoint not available", false)
-);
+
+bindOverviewActions();
 loadObject();
