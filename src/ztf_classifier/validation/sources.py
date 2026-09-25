@@ -29,10 +29,10 @@ SOURCES: tuple[ValidationSource, ...] = (
         source_id="star_embed_ztf_40k",
         name="StarEmbed ZTF_40k",
         source_type="dataset",
-        version="2026-05 dataset snapshot",
+        version="2026-05 dataset snapshot @ 18db85e",
         url="https://huggingface.co/datasets/StarEmbed/ZTF_40k",
         provenance_role="ground_truth",
-        acquisition="Resolve the four split Parquet artifacts from the Hugging Face dataset repository/API; record exact file URLs and hashes.",
+        acquisition_url="https://huggingface.co/datasets/StarEmbed/ZTF_40k/resolve/18db85e/data/train-00000-of-00002.parquet",        acquisition="Acquire the five source Parquet artifacts from pinned Hugging Face revision 18db85e; record exact URLs, split names, sizes, and SHA-256 hashes.",
     ),
     ValidationSource(
         source_id="ztf_periodic_781k",
