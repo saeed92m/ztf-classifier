@@ -459,6 +459,25 @@ def create_app(
             ) from exc
         return _scientific_result_response(record)
 
+    @app.get(
+        "/v1/objects/{oid}/results/latest",
+        response_model=ScientificResultResponse,
+        tags=["results"],
+    )
+    def get_latest_object_result(
+        oid: str,
+        survey: str = "ztf",
+    ) -> ScientificResultResponse:
+        """Return the newest durable scientific result for one object."""
+        record = results.latest_for_object(oid, survey=survey)
+        if record is None:
+            raise ApiContractError(
+                "scientific_result_not_found",
+                f"No durable scientific result was found for object: {oid}",
+                status_code=404,
+            )
+        return _scientific_result_response(record)
+
     @app.post(
         "/v1/objects/{oid}/analysis",
         response_model=ObjectAnalysisResponse,
