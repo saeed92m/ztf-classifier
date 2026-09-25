@@ -674,3 +674,21 @@ def test_health_remains_public_when_api_key_is_configured() -> None:
 
     assert response.status_code == 200
     assert response.headers["X-Request-ID"]
+
+
+def test_scientific_validation_dashboard_is_fail_closed(tmp_path: Path) -> None:
+    client = TestClient(
+        create_app(
+            ApiSettings(
+                scientific_registry_dir=Path("configs/benchmarks"),
+                scientific_evidence_dir=tmp_path / "evidence",
+            )
+        )
+    )
+    response = client.get("/v1/scientific-validation")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["release_blocking"] is True
+    assert payload["status"] == "NOT_VERIFIED"
+    assert len(payload["benchmarks"]) == 5
+    assert payload["blockers"]
