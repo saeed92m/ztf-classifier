@@ -39,17 +39,19 @@
     "trade_off": "CI strictness increases; scientific validation remains release-blocking and unchanged."
   },
   "validation": {
-    "status": "BLOCKED",
+    "status": "PASS",
     "evidence": [
       "Cumulative Lifecycle Gate validates every cycle record.",
-      "Pull-request CI requires a cycle record for meaningful changes."
+      "Pull-request CI requires a cycle record for meaningful changes.",
+      "PR #74 merged after all required CI, CodeQL, scientific-validation contract, and cumulative lifecycle checks passed on the accepted head."
     ],
-    "scientific_gate_affected": false,
-    "blocker": "CI validation is still in progress; merge remains blocked until all required checks pass."
+    "scientific_gate_affected": false
   },
   "failure_analysis": {
-    "status": "no-known-failure",
-    "root_causes": []
+    "status": "resolved",
+    "root_causes": [
+      "CI shell variable escaping and unsupported pending regression state were corrected and revalidated."
+    ]
   },
   "knowledge_extraction": {
     "status": "SUPPORTED",
@@ -59,13 +61,12 @@
     ]
   },
   "regression": {
-    "status": "BLOCKED",
-    "open_blockers": [
-      "CI validation must pass before merge."
-    ]
+    "status": "PASS",
+    "open_blockers": []
   },
-  "decision": "BLOCKED",
+  "decision": "ACCEPT",
   "knowledge_carried_forward": [
-    "AD-CI-007"
+    "AD-CI-007",
+    "AD-CI-008"
   ]
 }
