@@ -234,7 +234,7 @@ class JobStore:
             updated = connection.execute(
                 """
                 UPDATE analysis_jobs
-                SET status = ?, updated_at = ?, result_json = ?, error_json = ?, lease_expires_at = NULL
+                SET status = ?, updated_at = ?, result_json = ?, error_json = ?, lease_expires_at = NULL, scientific_result_id = ?
                 WHERE job_id = ?
                 """,
                 (
