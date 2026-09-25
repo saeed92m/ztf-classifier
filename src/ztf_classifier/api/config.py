@@ -13,13 +13,20 @@ class ApiSettings:
 
     registry_dir: Path | None = None
     default_model_version: str | None = None
+    observation_cache_dir: Path = Path("data/raw/alerce")
 
     @classmethod
     def from_environment(cls) -> ApiSettings:
         """Build settings from server-side environment variables."""
         registry = os.getenv("ZTF_API_REGISTRY_DIR")
         model_version = os.getenv("ZTF_API_DEFAULT_MODEL_VERSION")
+        cache_dir = os.getenv("ZTF_API_OBSERVATION_CACHE_DIR")
         return cls(
             registry_dir=Path(registry).expanduser() if registry else None,
             default_model_version=model_version or None,
+            observation_cache_dir=(
+                Path(cache_dir).expanduser()
+                if cache_dir
+                else Path("data/raw/alerce")
+            ),
         )
