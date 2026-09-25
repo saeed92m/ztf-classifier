@@ -42,6 +42,8 @@ class JobRecord:
 class JobStore:
     """Durable local job store with explicit state transitions."""
 
+    _STATUSES = {"queued", "running", "succeeded", "failed"}
+
     def __init__(self, path: Path) -> None:
         self.path = path
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -59,6 +61,12 @@ class JobStore:
                     result_json TEXT,
                     error_json TEXT
                 )
+                """
+            )
+            connection.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_analysis_jobs_status_created
+                ON analysis_jobs(status, created_at)
                 """
             )
 
@@ -128,6 +136,44 @@ class JobStore:
             error=json.loads(row[8]) if row[8] else None,
         )
 
+    def claim_next(self) -> JobRecord | None:
+        """Atomically claim the oldest queued job for execution."""
+        connection = sqlite3.connect(self.path, timeout=30.0)
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                """
+                SELECT job_id
+                FROM analysis_jobs
+                WHERE status = 'queued'
+                ORDER BY created_at ASC, job_id ASC
+                LIMIT 1
+                """
+            ).fetchone()
+            if row is None:
+                connection.commit()
+                return None
+
+            now = self._now()
+            updated = connection.execute(
+                """
+                UPDATE analysis_jobs
+                SET status = 'running', updated_at = ?
+                WHERE job_id = ? AND status = 'queued'
+                """,
+                (now, row[0]),
+            ).rowcount
+            if updated != 1:
+                connection.rollback()
+                return None
+            connection.commit()
+            return self.get(row[0])
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
     def transition(
         self,
         job_id: str,
@@ -137,8 +183,7 @@ class JobStore:
         error: dict | None = None,
     ) -> JobRecord:
         """Persist an explicit job state transition."""
-        allowed = {"queued", "running", "succeeded", "failed"}
-        if status not in allowed:
+        if status not in self._STATUSES:
             raise ValueError(f"Unsupported job status: {status}")
         now = self._now()
         with sqlite3.connect(self.path) as connection:
