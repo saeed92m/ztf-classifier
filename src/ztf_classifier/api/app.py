@@ -144,19 +144,13 @@ def _serialize_prediction(
             ood = {
                 "anomaly_score": float(result.ood.anomaly_score[row_index]),
                 "normality_score": float(result.ood.normality_score[row_index]),
-                "anomaly_percentile": float(
-                    result.ood.anomaly_percentile[row_index]
-                ),
+                "anomaly_percentile": float(result.ood.anomaly_percentile[row_index]),
                 "isolation_forest_label": int(
                     result.ood.isolation_forest_label[row_index]
                 ),
                 "anomaly_rank": int(result.ood.anomaly_rank[row_index]),
-                "is_top_1pct_anomaly": bool(
-                    result.ood.is_top_1pct_anomaly[row_index]
-                ),
-                "is_top_5pct_anomaly": bool(
-                    result.ood.is_top_5pct_anomaly[row_index]
-                ),
+                "is_top_1pct_anomaly": bool(result.ood.is_top_1pct_anomaly[row_index]),
+                "is_top_5pct_anomaly": bool(result.ood.is_top_5pct_anomaly[row_index]),
                 "is_top_10pct_anomaly": bool(
                     result.ood.is_top_10pct_anomaly[row_index]
                 ),
@@ -213,10 +207,7 @@ def create_app(
     app = FastAPI(
         title="ZTF Classifier API",
         version="1.0",
-        description=(
-            "Versioned scientific inference boundary for the "
-            "ZTF Classifier platform."
-        ),
+        description="Versioned scientific inference boundary for the ZTF Classifier platform.",
     )
     app.state.settings = api_settings
     app.state.application_service = service
