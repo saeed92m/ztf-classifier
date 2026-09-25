@@ -62,3 +62,11 @@ def test_dr24_adapter_fails_closed_without_pinned_query() -> None:
 def test_alerce_adapter_fails_closed_without_tap_query() -> None:
     with pytest.raises(AdapterContractError, match="TAP query"):
         build_adapter_plan(load("alerce_reference"))
+
+
+def test_star_embed_plan_pins_all_source_artifacts() -> None:
+    plan = build_adapter_plan(load("star_embed_ztf_40k"))
+    assert len(plan.urls) == 5
+    assert len(plan.artifact_names) == 5
+    assert len(plan.expected_sha256) == 5
+    assert plan.query_manifest["revision"] == "18db85e"
