@@ -602,3 +602,16 @@ def test_durable_job_listing_rejects_invalid_status(tmp_path: Path) -> None:
 
     assert response.status_code == 422
     assert response.json()["code"] == "job_query_invalid"
+
+
+def test_feature_backend_discovery_endpoint() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/v1/features/backends")
+
+    assert response.status_code == 200
+    assert response.json()["backends"][0] == {
+        "name": "native",
+        "software_version": "ztf-classifier-native-v0.2",
+        "feature_schema_version": "v0.2",
+    }
