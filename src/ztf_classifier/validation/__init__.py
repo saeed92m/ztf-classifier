@@ -9,6 +9,7 @@ from ztf_classifier.validation.acquisition import (
     request_from_benchmark,
 )
 from ztf_classifier.validation.checks import CheckResult, run_scientific_checks
+from ztf_classifier.validation.derivation import DerivationConfig, DerivationResult, derive_730k
 from ztf_classifier.validation.evidence import (
     EvidenceArtifact,
     EvidenceManifest,
@@ -39,10 +40,13 @@ __all__ = [
     "CheckResult",
     "EvidenceArtifact",
     "EvidenceManifest",
+    "DerivationConfig",
+    "DerivationResult",
     "ValidationSource",
     "acquire_all",
     "build_adapter_plan",
     "acquire_source",
+    "derive_730k",
     "evaluate_release_gate",
     "get_source",
     "render_scientific_validation_report",
