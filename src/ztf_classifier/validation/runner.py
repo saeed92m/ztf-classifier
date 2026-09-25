@@ -2,17 +2,22 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
-    accuracy_score, balanced_accuracy_score, confusion_matrix, f1_score,
-    log_loss, precision_score, recall_score,
+    accuracy_score,
+    balanced_accuracy_score,
+    confusion_matrix,
+    f1_score,
+    log_loss,
+    precision_score,
+    recall_score,
 )
 
 from ztf_classifier.validation.manifest import BenchmarkManifest
@@ -210,8 +215,11 @@ def _render_markdown(result: BenchmarkRunResult) -> str:
     lines.extend(f"- **{key}**: {value}" for key, value in result.leakage.items())
     lines.extend([
         "", "## Interpretation boundary", "",
-        "Benchmark success is not proof of universal correctness; it is quantitative, "
-        "reproducible evidence for the defined population, labels, source versions, and evaluation conditions.",
+        (
+            "Benchmark success is not proof of universal correctness; it is quantitative, "
+            "reproducible evidence for the defined population, labels, source versions, "
+            "and evaluation conditions."
+        ),
         "",
     ])
     return "\n".join(lines)
