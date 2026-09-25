@@ -17,13 +17,14 @@ def test_request_from_benchmark_binds_canonical_source_and_version():
     assert request.source_version == "v1 published 2020-06-11"
 
 
-def test_request_from_benchmark_fails_closed_without_verified_star_embed_revision():
-    with pytest.raises(AcquisitionError, match="invalid canonical adapter contract"):
-        request_from_benchmark(
-            "configs/benchmarks",
-            "star_embed_ztf_40k",
-            destination="/tmp/star_embed.snapshot",
-        )
+def test_request_from_benchmark_uses_dynamic_star_embed_resolution():
+    request = request_from_benchmark(
+        "configs/benchmarks",
+        "star_embed_ztf_40k",
+        destination="/tmp/star_embed.snapshot",
+    )
+    assert len(request.urls) == 5
+    assert request.query_manifest["revision"] == "resolve_at_acquisition"
 
 
 def test_730k_request_requires_parent_evidence_binding():
