@@ -317,3 +317,41 @@ def test_missing_model_configuration_has_stable_error() -> None:
         "request_id": "req-456",
         "details": [],
     }
+
+
+class FakeAnalysisService:
+    def __init__(self) -> None:
+        from ztf_classifier.application.service import ApplicationService
+        self._service = ApplicationService()
+
+    def predict_dataframe(self, dataset, artifact_dir):
+        return self._service.predict_dataframe(dataset, artifact_dir)
+
+
+def test_object_analysis_contract_uses_fake_observations(
+    tmp_path: Path,
+) -> None:
+    from unittest.mock import patch
+
+    fake = FakeObservationService()
+    settings = ApiSettings(
+        registry_dir=tmp_path,
+        default_model_version=None,
+    )
+    client = TestClient(
+        create_app(settings, observation_service=fake)  # type: ignore[arg-type]
+    )
+    with patch(
+        "ztf_classifier.api.app._ensure_registered_model",
+        side_effect=ApiContractError(
+            "model_not_found",
+            "not configured for unit test",
+            status_code=404,
+        ),
+    ):
+        response = client.post(
+            "/v1/objects/ZTF17test/analysis",
+            json={"survey": "ztf"},
+        )
+    assert response.status_code == 404
+    assert response.json()["code"] == "model_not_found"
