@@ -1,10 +1,4 @@
-"""Source-backed benchmark adapter contracts.
-
-Adapters describe how a canonical benchmark is acquired and transformed into
-the repository's validation input. They do not manufacture evidence: acquisition
-must succeed and immutable evidence must be recorded before a benchmark can be
-considered scientifically verified.
-"""
+"""Source-backed benchmark adapter contracts."""
 
 from __future__ import annotations
 
@@ -60,7 +54,7 @@ def _source_plan(manifest: BenchmarkManifest, source: ValidationSource) -> Adapt
         source_id=source.source_id,
         source_version=source.version,
         role=manifest.evaluation_role,
-        urls=(source.url,),
+        urls=(source.acquisition_url or source.url,),
         destination_name=f"{manifest.benchmark_id}.snapshot",
     )
     plan.validate()
@@ -79,12 +73,12 @@ def _derived_730k_plan(manifest: BenchmarkManifest) -> AdapterPlan:
         source_id=source.source_id,
         source_version=source.version,
         role=manifest.evaluation_role,
-        urls=(get_source("ztf_periodic_781k").url,),
+        urls=(get_source("ztf_periodic_781k").acquisition_url or get_source("ztf_periodic_781k").url,),
         destination_name=f"{manifest.benchmark_id}.derived",
         query_manifest={
             "operation": "deterministic_quality_selection",
             "parent_benchmark_id": "ztf_periodic_781k",
-            "selection": "published g/r detection-quality criteria",
+            "selection": "published g/r detection-quality criteria; implementation must be pinned before derivation",
         },
         parent_benchmark_id="ztf_periodic_781k",
     )
@@ -94,11 +88,10 @@ def _derived_730k_plan(manifest: BenchmarkManifest) -> AdapterPlan:
 
 def _dr24_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     plan = _source_plan(manifest, get_source("ztf_dr24_source_subset"))
-    if not manifest.input_contract.get("query"):
+    query = manifest.input_contract.get("query")
+    if not isinstance(query, dict) or not query:
         raise AdapterContractError("DR24 adapter requires input_contract.query for a pinned source subset")
-    return AdapterPlan(
-        **{**plan.__dict__, "query_manifest": dict(manifest.input_contract["query"])}
-    )
+    return AdapterPlan(**{**plan.__dict__, "query_manifest": dict(query)})
 
 
 def _alerce_plan(manifest: BenchmarkManifest) -> AdapterPlan:
@@ -106,9 +99,7 @@ def _alerce_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     query = manifest.input_contract.get("query")
     if not isinstance(query, str) or not query.strip():
         raise AdapterContractError("ALeRCE adapter requires a non-empty TAP query")
-    return AdapterPlan(
-        **{**plan.__dict__, "query_manifest": {"tap_query": query}}
-    )
+    return AdapterPlan(**{**plan.__dict__, "query_manifest": {"tap_query": query}})
 
 
 def build_adapter_plan(manifest: BenchmarkManifest) -> AdapterPlan:
