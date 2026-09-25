@@ -131,6 +131,52 @@ class JobStore:
             )
         return record
 
+    def list(
+        self,
+        *,
+        status: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[JobRecord]:
+        """Return deterministic durable jobs for operational views."""
+        if limit < 1 or limit > 1000:
+            raise ValueError("limit must be between 1 and 1000")
+        if offset < 0:
+            raise ValueError("offset must be non-negative")
+        if status is not None and status not in self._STATUSES:
+            raise ValueError(f"Unsupported job status: {status}")
+
+        query = """
+            SELECT job_id, oid, survey, model_version, status,
+                   created_at, updated_at, result_json, error_json,
+                   lease_expires_at, scientific_result_id
+            FROM analysis_jobs
+        """
+        parameters: list[str | int] = []
+        if status is not None:
+            query += " WHERE status = ?"
+            parameters.append(status)
+        query += " ORDER BY created_at DESC, job_id DESC LIMIT ? OFFSET ?"
+        parameters.extend((limit, offset))
+        with sqlite3.connect(self.path) as connection:
+            rows = connection.execute(query, parameters).fetchall()
+        return [
+            JobRecord(
+                job_id=row[0],
+                oid=row[1],
+                survey=row[2],
+                model_version=row[3],
+                status=row[4],
+                created_at=row[5],
+                updated_at=row[6],
+                result=json.loads(row[7]) if row[7] else None,
+                error=json.loads(row[8]) if row[8] else None,
+                lease_expires_at=row[9],
+                scientific_result_id=row[10],
+            )
+            for row in rows
+        ]
+
     def get(self, job_id: str) -> JobRecord:
         """Load a job or raise KeyError."""
         with sqlite3.connect(self.path) as connection:

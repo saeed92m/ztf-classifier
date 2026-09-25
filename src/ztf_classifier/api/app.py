@@ -7,14 +7,15 @@ from typing import Any
 
 import pandas as pd
 from alerce.core import Alerce
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.api.schemas import (
+    AnalysisJobListResponse,
     AnalysisJobRequest,
     AnalysisJobResponse,
     ErrorResponse,
@@ -26,12 +27,14 @@ from ztf_classifier.api.schemas import (
     PredictionItem,
     PredictionRequest,
     PredictionResponse,
+    ScientificCatalogResponse,
     ScientificResultResponse,
     ServiceStatusResponse,
 )
 from ztf_classifier.application.errors import ApplicationInferenceError
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.application.service import ApplicationService
+from ztf_classifier.catalog import ScientificCatalogService
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
 from ztf_classifier.jobs.store import JobStore
 from ztf_classifier.models.classes import MODEL_CLASSES
@@ -39,6 +42,7 @@ from ztf_classifier.models.registry import (
     FilesystemModelRegistry,
     ModelNotFoundError,
 )
+from ztf_classifier.reporting import ScientificReportService
 from ztf_classifier.results import ScientificResultStore
 
 API_VERSION = "v1"
@@ -239,6 +243,8 @@ def create_app(
     app.state.application_service = service
     jobs = JobStore(api_settings.job_store_path)
     results = ScientificResultStore(api_settings.result_store_path)
+    catalog = ScientificCatalogService(results)
+    reports = ScientificReportService()
     executor = analysis_executor or SourceBackedAnalysisExecutor(
         api_settings,
         observation_service=observations,
@@ -389,6 +395,31 @@ def create_app(
         return AnalysisJobResponse(**record.to_dict())
 
     @app.get(
+        "/v1/jobs",
+        response_model=AnalysisJobListResponse,
+        tags=["jobs"],
+    )
+    def list_analysis_jobs(
+        status: str | None = Query(default=None, min_length=1, max_length=16),
+        limit: int = Query(default=100, ge=1, le=1000),
+        offset: int = Query(default=0, ge=0),
+    ) -> AnalysisJobListResponse:
+        """Return a bounded operational view of durable analysis jobs."""
+        try:
+            records = jobs.list(status=status, limit=limit, offset=offset)
+        except ValueError as exc:
+            raise ApiContractError(
+                "job_query_invalid",
+                str(exc),
+                status_code=422,
+            ) from exc
+        return AnalysisJobListResponse(
+            items=[AnalysisJobResponse(**record.to_dict()) for record in records],
+            limit=limit,
+            offset=offset,
+        )
+
+    @app.get(
         "/v1/jobs/{job_id}",
         response_model=AnalysisJobResponse,
         tags=["jobs"],
@@ -458,6 +489,109 @@ def create_app(
                 status_code=404,
             ) from exc
         return _scientific_result_response(record)
+
+    @app.get(
+        "/v1/results/{result_id}/report",
+        response_class=Response,
+        tags=["reports"],
+    )
+    def get_scientific_result_report(result_id: str) -> Response:
+        """Render a durable scientific result without re-running inference."""
+        try:
+            record = results.get(result_id)
+        except KeyError as exc:
+            raise ApiContractError(
+                "scientific_result_not_found",
+                f"Scientific result was not found: {result_id}",
+                status_code=404,
+            ) from exc
+        return Response(
+            content=reports.render_markdown(record),
+            media_type="text/markdown",
+            headers={
+                "Content-Disposition": (
+                    f'attachment; filename="ztf-analysis-{record.result_id}.md"'
+                )
+            },
+        )
+
+    @app.get(
+        "/v1/catalog/results",
+        response_model=ScientificCatalogResponse,
+        tags=["catalog"],
+    )
+    def query_scientific_catalog(
+        oid: str | None = Query(default=None, min_length=1, max_length=256),
+        survey: str | None = Query(default=None, min_length=1, max_length=32),
+        model_version: str | None = Query(default=None, min_length=1, max_length=128),
+        created_after: str | None = Query(default=None, min_length=1, max_length=64),
+        created_before: str | None = Query(default=None, min_length=1, max_length=64),
+        limit: int = Query(default=100, ge=1, le=1000),
+        offset: int = Query(default=0, ge=0),
+    ) -> ScientificCatalogResponse:
+        """Query persisted scientific results without executing inference."""
+        try:
+            page = catalog.query(
+                oid=oid,
+                survey=survey,
+                model_version=model_version,
+                created_after=created_after,
+                created_before=created_before,
+                limit=limit,
+                offset=offset,
+            )
+        except ValueError as exc:
+            raise ApiContractError(
+                "catalog_query_invalid",
+                str(exc),
+                status_code=422,
+            ) from exc
+        return ScientificCatalogResponse(
+            items=[_scientific_result_response(item) for item in page.items],
+            total=page.total,
+            limit=page.limit,
+            offset=page.offset,
+            has_next=page.has_next,
+        )
+
+    @app.get(
+        "/v1/catalog/results.csv",
+        response_class=Response,
+        tags=["catalog"],
+    )
+    def export_scientific_catalog(
+        oid: str | None = Query(default=None, min_length=1, max_length=256),
+        survey: str | None = Query(default=None, min_length=1, max_length=32),
+        model_version: str | None = Query(default=None, min_length=1, max_length=128),
+        created_after: str | None = Query(default=None, min_length=1, max_length=64),
+        created_before: str | None = Query(default=None, min_length=1, max_length=64),
+        limit: int = Query(default=1000, ge=1, le=1000),
+        offset: int = Query(default=0, ge=0),
+    ) -> Response:
+        """Export one bounded deterministic catalog page as CSV."""
+        try:
+            page = catalog.query(
+                oid=oid,
+                survey=survey,
+                model_version=model_version,
+                created_after=created_after,
+                created_before=created_before,
+                limit=limit,
+                offset=offset,
+            )
+        except ValueError as exc:
+            raise ApiContractError(
+                "catalog_query_invalid",
+                str(exc),
+                status_code=422,
+            ) from exc
+        return Response(
+            content=catalog.export_csv(page),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": 'attachment; filename="scientific-catalog.csv"'
+            },
+        )
 
     @app.get(
         "/v1/objects/{oid}/results/latest",
