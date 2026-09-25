@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-current-enforce-cycle-records",
+  "objective": "Make cumulative lifecycle evidence mandatory and machine-validated for every meaningful pull request.",
+  "previous_knowledge_consumed": [
+    "AD-CI-006",
+    "FD-003"
+  ],
+  "baseline": {
+    "revision": "cae20424e386345610a3052c977100982489de7c",
+    "description": "Cumulative lifecycle contract and knowledge layer exist, but cycle records are not yet mandatory in pull-request CI."
+  },
+  "expected_improvement": [
+    "reliability",
+    "reproducibility",
+    "coverage"
+  ],
+  "measurement": {
+    "metrics": {
+      "regression_protection_count": {
+        "before": 4,
+        "after": 6,
+        "unit": "lifecycle_contract_tests",
+        "status": "MEASURED"
+      },
+      "knowledge_artifact_count": {
+        "before": 11,
+        "after": 12,
+        "unit": "versioned_knowledge_artifacts_and_cycle_records",
+        "status": "MEASURED"
+      },
+      "scientific_validity": {
+        "before": "NOT_VERIFIED",
+        "after": "NOT_VERIFIED",
+        "status": "NOT_MEASURED",
+        "reason": "This process-control change does not constitute external scientific benchmark evidence."
+      }
+    },
+    "trade_off": "CI strictness increases; scientific validation remains release-blocking and unchanged."
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "evidence": [
+      "Cumulative Lifecycle Gate validates every cycle record.",
+      "Pull-request CI requires a cycle record for meaningful changes."
+    ],
+    "scientific_gate_affected": false
+  },
+  "failure_analysis": {
+    "status": "no-known-failure",
+    "root_causes": []
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Advisory lifecycle documentation is insufficient for durable process compliance.",
+      "CI can enforce cumulative evidence without coupling it to mutable scientific benchmark data."
+    ]
+  },
+  "regression": {
+    "status": "PENDING",
+    "open_blockers": [
+      "CI validation must pass before merge."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "AD-CI-007"
+  ]
+}
