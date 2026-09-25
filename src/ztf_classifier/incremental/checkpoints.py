@@ -76,15 +76,25 @@ class IncrementalCheckpointStore:
         """Advance a checkpoint monotonically."""
         if not stream_id or not created_at or not result_id:
             raise ValueError("stream_id, created_at, and result_id are required")
-        current = self.get(stream_id)
-        if (
-            current.created_at is not None
-            and current.result_id is not None
-            and (created_at, result_id) < (current.created_at, current.result_id)
-        ):
-            raise ValueError("checkpoint cannot move backwards")
         updated_at = self._now()
-        with sqlite3.connect(self.path) as connection:
+        with sqlite3.connect(self.path, timeout=30.0) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            current = connection.execute(
+                """
+                SELECT created_at, result_id
+                FROM incremental_checkpoints
+                WHERE stream_id = ?
+                """,
+                (stream_id,),
+            ).fetchone()
+            if (
+                current is not None
+                and current[0] is not None
+                and current[1] is not None
+                and (created_at, result_id) < (current[0], current[1])
+            ):
+                connection.rollback()
+                raise ValueError("checkpoint cannot move backwards")
             connection.execute(
                 """
                 INSERT INTO incremental_checkpoints
@@ -97,6 +107,7 @@ class IncrementalCheckpointStore:
                 """,
                 (stream_id, created_at, result_id, updated_at),
             )
+            connection.commit()
         return CheckpointRecord(
             stream_id=stream_id,
             created_at=created_at,
