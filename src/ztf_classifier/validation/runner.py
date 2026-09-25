@@ -20,6 +20,7 @@ from sklearn.metrics import (
     recall_score,
 )
 
+from ztf_classifier.validation.checks import run_scientific_checks
 from ztf_classifier.validation.manifest import BenchmarkManifest
 
 
@@ -32,6 +33,7 @@ class BenchmarkRunResult:
     status: str
     metrics: dict[str, Any]
     leakage: dict[str, str]
+    checks: dict[str, dict[str, Any]]
     provenance_complete: bool
     input_sha256: str
     row_count: int
@@ -47,6 +49,7 @@ class BenchmarkRunResult:
             "evaluation_role": self.evaluation_role,
             "status": self.status,
             "metrics": self.metrics, "leakage": self.leakage,
+            "checks": self.checks,
             "provenance_complete": self.provenance_complete,
             "input_sha256": self.input_sha256, "row_count": self.row_count,
             "output_path": self.output_path,
@@ -172,13 +175,11 @@ def run_table_benchmark(
             raise ValueError(f"Missing acceptance column: {manifest.accepted_column}")
         metrics["coverage"] = float(frame[manifest.accepted_column].mean())
 
-    leakage = {
-        "object_overlap": "PASS",
-        "duplicate_objects": "PASS" if duplicate_count == 0 else "FAIL",
-    }
-    for check in manifest.required_leakage_checks:
-        leakage.setdefault(check, "NOT_EXECUTED")
+    check_results = run_scientific_checks(manifest, frame, input_path)
+    checks = {name: result.to_dict() for name, result in check_results.items()}
+    leakage = {name: result.status for name, result in check_results.items()}
 
+    provenance_result = check_results.get("provenance")
     provenance_complete = all((
         manifest.source, manifest.version, manifest.retrieval_date,
         manifest.label_taxonomy, manifest.benchmark_code_version,
@@ -187,21 +188,23 @@ def run_table_benchmark(
         provenance_complete = provenance_complete and bool(manifest.ground_truth_provenance)
     else:
         provenance_complete = provenance_complete and bool(manifest.reference_system_provenance)
+    if provenance_result is not None:
+        provenance_complete = provenance_complete and provenance_result.status == "PASS"
 
     blockers = [
         name for name in manifest.required_leakage_checks
         if leakage.get(name) != "PASS"
     ]
-    if not provenance_complete:
+    if provenance_result is not None and provenance_result.status != "PASS":
         blockers.append("provenance")
-    status = "PASS" if not blockers else "BLOCKED"
-
+    elif provenance_result is None and not provenance_complete:
+        blockers.append("provenance")
     result = BenchmarkRunResult(
         benchmark_id=manifest.benchmark_id,
         evaluation_role=manifest.evaluation_role,
         status=status,
         metrics=metrics,
-        leakage=leakage, provenance_complete=provenance_complete,
+        leakage=leakage, checks=checks, provenance_complete=provenance_complete,
         input_sha256=_sha256(input_path), row_count=len(frame),
         output_path=str(output_dir / "benchmark_result.json"),
     )
