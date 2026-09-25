@@ -72,6 +72,7 @@ function clearPrediction() {
   document.getElementById("predictedClass").textContent = "—";
   document.getElementById("topProbability").textContent = "—";
   document.getElementById("conformalSet").textContent = "—";
+  document.getElementById("conformalAlpha").textContent = "conformal coverage";
   document.getElementById("oodPercentile").textContent = "—";
   document.getElementById("probabilityList").innerHTML =
     '<div class="muted">No durable scientific result loaded.</div>';
@@ -110,6 +111,10 @@ function renderPrediction(prediction) {
   const conformal = prediction.conformal || [];
   document.getElementById("conformalSet").textContent =
     conformal.length ? conformal[0].prediction_set_size + " classes" : "—";
+  document.getElementById("conformalAlpha").textContent =
+    conformal.length && conformal[0].alpha != null
+      ? "α = " + Number(conformal[0].alpha).toFixed(2)
+      : "conformal coverage";
   const ood = prediction.ood;
   document.getElementById("oodPercentile").textContent =
     ood && ood.anomaly_percentile != null ? Number(ood.anomaly_percentile).toFixed(1) : "—";
