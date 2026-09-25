@@ -176,3 +176,38 @@ def test_release_benchmark_manifests_have_complete_contract():
     ):
         loaded = registry.load(benchmark_id)
         assert loaded.validate_release_contract() == ()
+
+
+
+def test_runner_reports_ood_and_performance_metrics(tmp_path):
+    frame = pd.DataFrame(
+        {
+            "oid": ["A", "B", "C", "D"],
+            "truth": ["A", "B", "A", "B"],
+            "prediction": ["A", "B", "B", "B"],
+            "p_a": [0.9, 0.1, 0.4, 0.1],
+            "p_b": [0.1, 0.9, 0.6, 0.9],
+            "ood_label": [0, 0, 1, 1],
+            "ood_score": [0.1, 0.2, 0.8, 0.9],
+            "accepted": [True, True, False, True],
+        }
+    )
+    input_path = tmp_path / "predictions.parquet"
+    frame.to_parquet(input_path, index=False)
+    result = run_table_benchmark(
+        manifest=manifest(
+            probability_columns=["p_a", "p_b"],
+            ood_label_column="ood_label",
+            ood_score_column="ood_score",
+            accepted_column="accepted",
+        ),
+        input_path=input_path,
+        output_dir=tmp_path / "report",
+    )
+    assert result.status == "PASS"
+    assert result.metrics["ood"]["auroc"] == 1.0
+    assert result.metrics["ood"]["average_precision"] == 1.0
+    assert result.metrics["ood"]["false_accept_rate"] == 0.5
+    assert result.metrics["ood"]["false_reject_rate"] == 0.0
+    assert result.metrics["performance"]["runtime_seconds"] >= 0.0
+    assert result.metrics["performance"]["peak_rss_mb"] > 0.0
