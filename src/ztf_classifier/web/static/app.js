@@ -98,6 +98,8 @@ function renderResult(record, durable = true) {
   document.getElementById("viewSubtitle").textContent =
     (durable ? "Durable scientific result · " : "Live analysis result · ") + record.schema_version + " · " + record.model_version;
   document.getElementById("featureSchema").textContent = payload.feature_schema_version || "—";
+  document.getElementById("objectIdValue").textContent = record.oid || state.oid || "—";
+  document.getElementById("modelChip").textContent = record.model_version || "—";
   document.getElementById("modelValue").textContent =
     record.model_version + " · " + (payload.model_family || "—");
   document.getElementById("calibrationValue").textContent =
@@ -105,6 +107,18 @@ function renderResult(record, durable = true) {
   document.getElementById("oodValue").textContent = (payload.diagnostics || {}).ood || "—";
   document.getElementById("provenanceValue").textContent =
     payload.observation_provenance ? "source-backed" : "stored result";
+  document.getElementById("calibrationState").textContent =
+    (payload.diagnostics || {}).calibration || "—";
+  document.getElementById("conformalState").textContent =
+    (payload.diagnostics || {}).conformal || "—";
+  document.getElementById("oodState").textContent =
+    (payload.diagnostics || {}).ood || "—";
+  document.getElementById("datasetProvenance").textContent =
+    payload.observation_provenance?.source || "—";
+  document.getElementById("modelProvenance").textContent =
+    payload.model_provenance?.model_version || record.model_version || "—";
+  document.getElementById("schemaProvenance").textContent =
+    payload.feature_schema_version || record.schema_version || "—";
   document.getElementById("resultState").textContent = "complete";
   renderLightCurve(document.getElementById("lightCurveSvg"), payload.observations || state.observations);
 }
