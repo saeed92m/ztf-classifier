@@ -79,20 +79,31 @@ jobs:
           if len(oids) != 150:
               raise SystemExit(f"Expected 150 canonical OIDs, found {len(oids)}")
 
-          client = Alerce()
-          backend = AlerceDetectionBackend(
-              client=client,
-              store=ParquetDetectionStore(cache),
-          )
+          from concurrent.futures import ThreadPoolExecutor, as_completed
 
-          for index, oid in enumerate(oids, start=1):
-              print(f"[{index}/150] acquiring {oid}", flush=True)
+          def acquire(oid: str) -> str:
+              backend = AlerceDetectionBackend(
+                  client=Alerce(),
+                  store=ParquetDetectionStore(cache),
+              )
               backend.acquire(
                   DetectionAcquisitionRequest(
                       oid=oid,
                       survey="ztf",
                   )
               )
+              return oid
+
+          with ThreadPoolExecutor(max_workers=3) as executor:
+              futures = {
+                  executor.submit(acquire, oid): oid
+                  for oid in oids
+              }
+              completed = 0
+              for future in as_completed(futures):
+                  oid = future.result()
+                  completed += 1
+                  print(f"[{completed}/150] acquired {oid}", flush=True)
           PY
 
       - name: Run raw dataset validation
