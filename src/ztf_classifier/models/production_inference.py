@@ -124,7 +124,7 @@ class ProductionInferenceService:
             )
 
         calibrated_probabilities = None
-        calibration_status = "unavailable"
+        calibration_status = "uncalibrated"
         if calibration is not None:
             calibrated_probabilities = TemperatureScaler().transform(
                 inference.probabilities,
@@ -150,11 +150,7 @@ class ProductionInferenceService:
             ),
             ood_status="available" if ood is not None else "unavailable",
             warnings=warnings,
-            artifact_schema_version=(
-                "1.1" if self.loaded_artifact.conformal is not None
-                or self.loaded_artifact.ood is not None
-                else "1.0"
-            ),
+            artifact_schema_version=self.loaded_artifact.artifact_schema_version,
             artifact_hash=self.loaded_artifact.artifact_hash,
             feature_schema_hash=model_artifact.feature_schema_sha256,
             software_version=software_version,

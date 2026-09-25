@@ -282,119 +282,95 @@ def test_diagnostic_artifact_loader_roundtrip(
     )
 
 
-def test_diagnostic_artifact_rejects_missing_conformal(
+def test_diagnostic_artifact_loads_without_conformal(
     tmp_path: Path,
 ) -> None:
-    artifact_dir = _write_diagnostic_artifact(
-        tmp_path,
+    artifact_dir = _write_diagnostic_artifact(tmp_path)
+    (artifact_dir / "conformal.json").unlink()
+
+    manifest_path = artifact_dir / "artifact_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    del manifest["files"]["conformal"]
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
 
-    (
-        artifact_dir / "conformal.json"
-    ).unlink()
-
-    with pytest.raises(
-        FileNotFoundError,
-        match="conformal",
-    ):
-        ModelArtifactLoader().load(
-            artifact_dir,
-        )
+    loaded = ModelArtifactLoader().load(artifact_dir)
+    assert loaded.conformal is None
+    assert loaded.ood is not None
+    assert loaded.ood_model is not None
 
 
-def test_diagnostic_artifact_rejects_missing_ood(
+def test_diagnostic_artifact_loads_without_ood(
     tmp_path: Path,
 ) -> None:
-    artifact_dir = _write_diagnostic_artifact(
-        tmp_path,
+    artifact_dir = _write_diagnostic_artifact(tmp_path)
+    (artifact_dir / "ood.json").unlink()
+    (artifact_dir / "ood_model.joblib").unlink()
+
+    manifest_path = artifact_dir / "artifact_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    del manifest["files"]["ood"]
+    del manifest["files"]["ood_model"]
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
 
-    (
-        artifact_dir / "ood.json"
-    ).unlink()
-
-    with pytest.raises(
-        FileNotFoundError,
-        match="ood",
-    ):
-        ModelArtifactLoader().load(
-            artifact_dir,
-        )
+    loaded = ModelArtifactLoader().load(artifact_dir)
+    assert loaded.conformal is not None
+    assert loaded.ood is None
+    assert loaded.ood_model is None
 
 
-def test_diagnostic_artifact_rejects_missing_ood_model(
+def test_diagnostic_artifact_rejects_partial_ood_metadata(
     tmp_path: Path,
 ) -> None:
-    artifact_dir = _write_diagnostic_artifact(
-        tmp_path,
+    artifact_dir = _write_diagnostic_artifact(tmp_path)
+    (artifact_dir / "ood_model.joblib").unlink()
+
+    manifest_path = artifact_dir / "artifact_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    del manifest["files"]["ood_model"]
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
 
-    (
-        artifact_dir / "ood_model.joblib"
-    ).unlink()
-
     with pytest.raises(
-        FileNotFoundError,
-        match="ood_model",
+        ValueError,
+        match="OOD artifact and OOD production model metadata",
     ):
-        ModelArtifactLoader().load(
-            artifact_dir,
-        )
+        ModelArtifactLoader().load(artifact_dir)
 
 
 def test_diagnostic_artifact_rejects_tampered_ood_model(
     tmp_path: Path,
 ) -> None:
-    artifact_dir = _write_diagnostic_artifact(
-        tmp_path,
-    )
+    artifact_dir = _write_diagnostic_artifact(tmp_path)
 
     path = artifact_dir / "ood_model.joblib"
-
     payload = path.read_bytes()
-
-    path.write_bytes(
-        payload + b"tampered",
-    )
+    path.write_bytes(payload + b"tampered")
 
     with pytest.raises(
         ValueError,
         match="Artifact integrity check failed for .ood_model.",
     ):
-        ModelArtifactLoader().load(
-            artifact_dir,
-        )
+        ModelArtifactLoader().load(artifact_dir)
 
 
 def test_diagnostic_artifact_rejects_path_escape(
     tmp_path: Path,
 ) -> None:
-    artifact_dir = _write_diagnostic_artifact(
-        tmp_path,
-    )
+    artifact_dir = _write_diagnostic_artifact(tmp_path)
 
-    manifest_path = (
-        artifact_dir
-        / "artifact_manifest.json"
-    )
-
-    manifest = json.loads(
-        manifest_path.read_text(
-            encoding="utf-8"
-        )
-    )
-
-    manifest["files"]["ood_model"]["path"] = (
-        "../ood_model.joblib"
-    )
-
+    manifest_path = artifact_dir / "artifact_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["files"]["ood_model"]["path"] = "../ood_model.joblib"
     manifest_path.write_text(
-        json.dumps(
-            manifest,
-            indent=2,
-            sort_keys=True,
-        )
-        + "\n",
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
 
@@ -402,9 +378,7 @@ def test_diagnostic_artifact_rejects_path_escape(
         ValueError,
         match="Artifact path escapes artifact directory",
     ):
-        ModelArtifactLoader().load(
-            artifact_dir,
-        )
+        ModelArtifactLoader().load(artifact_dir)
 
 
 def test_legacy_writer_still_emits_schema_1_0(
@@ -418,9 +392,7 @@ def test_legacy_writer_still_emits_schema_1_0(
         artifact_version="1.0",
     )
 
-    output_dir = (
-        tmp_path / "legacy_artifact"
-    )
+    output_dir = tmp_path / "legacy_artifact"
 
     ModelArtifactWriter().write(
         artifact=artifact,
@@ -431,10 +403,7 @@ def test_legacy_writer_still_emits_schema_1_0(
     )
 
     manifest = json.loads(
-        (
-            output_dir
-            / "artifact_manifest.json"
-        ).read_text(
+        (output_dir / "artifact_manifest.json").read_text(
             encoding="utf-8"
         )
     )
@@ -444,60 +413,63 @@ def test_legacy_writer_still_emits_schema_1_0(
         == LEGACY_ARTIFACT_SCHEMA_VERSION
         == "1.0"
     )
-
-    assert not (
-        output_dir / "conformal.json"
-    ).exists()
-
-    assert not (
-        output_dir / "ood.json"
-    ).exists()
-
-    assert not (
-        output_dir / "ood_model.joblib"
-    ).exists()
+    assert not (output_dir / "conformal.json").exists()
+    assert not (output_dir / "ood.json").exists()
+    assert not (output_dir / "ood_model.joblib").exists()
 
 
-def test_writer_requires_all_diagnostics_together(
+def test_writer_allows_conformal_without_ood(
     tmp_path: Path,
 ) -> None:
-    (
-        artifact,
-        calibration,
-        provenance,
-    ) = _build_writer_inputs(
+    artifact, calibration, provenance = _build_writer_inputs(
         artifact_version="1.1",
     )
+    conformal, _, _ = _build_diagnostics()
 
-    conformal, ood, ood_model = (
-        _build_diagnostics()
+    output_dir = tmp_path / "conformal_only"
+    ModelArtifactWriter().write(
+        artifact=artifact,
+        output_dir=output_dir,
+        feature_schema_path=FEATURE_SCHEMA_PATH,
+        calibration=calibration,
+        provenance=provenance,
+        conformal=conformal,
     )
+
+    loaded = ModelArtifactLoader().load(output_dir)
+    assert loaded.conformal is not None
+    assert loaded.ood is None
+    assert loaded.ood_model is None
+
+
+def test_writer_rejects_partial_ood_pair(
+    tmp_path: Path,
+) -> None:
+    artifact, calibration, provenance = _build_writer_inputs(
+        artifact_version="1.1",
+    )
+    _, ood, ood_model = _build_diagnostics()
 
     with pytest.raises(
         ValueError,
-        match="must be provided together",
+        match="OOD artifact and OOD production model must be provided together",
     ):
         ModelArtifactWriter().write(
             artifact=artifact,
-            output_dir=(
-                tmp_path / "partial"
-            ),
+            output_dir=tmp_path / "partial",
             feature_schema_path=FEATURE_SCHEMA_PATH,
             calibration=calibration,
             provenance=provenance,
-            conformal=conformal,
             ood=ood,
         )
 
     with pytest.raises(
         ValueError,
-        match="must be provided together",
+        match="OOD artifact and OOD production model must be provided together",
     ):
         ModelArtifactWriter().write(
             artifact=artifact,
-            output_dir=(
-                tmp_path / "partial-2"
-            ),
+            output_dir=tmp_path / "partial-2",
             feature_schema_path=FEATURE_SCHEMA_PATH,
             calibration=calibration,
             provenance=provenance,
