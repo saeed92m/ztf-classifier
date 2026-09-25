@@ -14,7 +14,7 @@ Scientific validation is a permanent Product-Level Gate for the final Astronomic
 
 ## Stage V1 — Benchmark adapters
 
-- [x] StarEmbed ZTF_40k adapter and reproducible subset retrieval
+- [ ] StarEmbed ZTF_40k adapter and reproducible subset retrieval
 - [ ] ZTF periodic-variable classification release (~730k) adapter
 - [x] historical ZTF periodic-variable catalog (~781k) adapter
 - [ ] pinned ZTF DR24 source-backed adapter
