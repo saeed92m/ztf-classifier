@@ -49,7 +49,23 @@ jobs:
 
       - name: Run Ruff format check for new upgrade files
         run: |
-          python -m ruff format --check             src/ztf_classifier/reproducibility/checksums.py             src/ztf_classifier/reproducibility/__init__.py             tests/test_checksums.py             tests/test_alerce_ingestion_diagnostics.py             tests/test_prediction_result_statuses.py             src/ztf_classifier/api/__init__.py             src/ztf_classifier/api/app.py             src/ztf_classifier/api/config.py             src/ztf_classifier/api/errors.py             src/ztf_classifier/api/schemas.py             src/ztf_classifier/api/server.py             tests/test_api.py
+          python -m ruff format --check \
+            src/ztf_classifier/reproducibility/checksums.py \
+            src/ztf_classifier/reproducibility/__init__.py \
+            tests/test_checksums.py \
+            tests/test_alerce_ingestion_diagnostics.py \
+            tests/test_prediction_result_statuses.py \
+            src/ztf_classifier/api/__init__.py \
+            src/ztf_classifier/api/app.py \
+            src/ztf_classifier/api/config.py \
+            src/ztf_classifier/api/errors.py \
+            src/ztf_classifier/api/schemas.py \
+            src/ztf_classifier/api/server.py \
+            tests/test_api.py \
+            src/ztf_classifier/jobs/store.py \
+            src/ztf_classifier/jobs/worker.py \
+            src/ztf_classifier/jobs/__init__.py \
+            tests/test_jobs_worker.py
 
       - name: Run test suite with coverage
         run: |
