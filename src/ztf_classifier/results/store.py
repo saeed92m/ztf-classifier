@@ -202,8 +202,8 @@ class ScientificResultStore:
         oid: str,
         *,
         survey: str | None = None,
-    ) -> ScientificResultRecord:
-        """Return the newest durable result for an object."""
+    ) -> ScientificResultRecord | None:
+        """Return the newest durable result for an object, if one exists."""
         query = """
             SELECT result_id, job_id, oid, survey, model_version,
                    schema_version, created_at, payload_json
@@ -219,7 +219,7 @@ class ScientificResultStore:
         with sqlite3.connect(self.path) as connection:
             row = connection.execute(query, parameters).fetchone()
         if row is None:
-            raise KeyError(oid)
+            return None
         return self._decode(row)
 
 
