@@ -218,6 +218,7 @@ def create_app(
     settings: ApiSettings | None = None,
     application_service: ApplicationService | None = None,
     observation_service: ObservationService | None = None,
+    analysis_executor: SourceBackedAnalysisExecutor | None = None,
 ) -> FastAPI:
     """Create the production API application."""
     api_settings = settings or ApiSettings.from_environment()
@@ -235,7 +236,7 @@ def create_app(
     app.state.settings = api_settings
     app.state.application_service = service
     jobs = JobStore(api_settings.job_store_path)
-    analysis_executor = SourceBackedAnalysisExecutor(
+    executor = analysis_executor or SourceBackedAnalysisExecutor(
         api_settings,
         observation_service=observations,
         application_service=service,
@@ -412,7 +413,7 @@ def create_app(
     ) -> ObjectAnalysisResponse:
         """Run source-backed observations through the shared scientific executor."""
         try:
-            result = analysis_executor.execute(
+            result = executor.execute(
                 oid=oid,
                 survey=request.survey,
                 model_version=request.model_version,
