@@ -38,6 +38,9 @@ jobs:
       - name: Verify installed dependencies
         run: python -m pip check
 
+      - name: Record resolved environment
+        run: python -m pip freeze | sort
+
       - name: Run Ruff lint
         run: python -m ruff check src tests
 
