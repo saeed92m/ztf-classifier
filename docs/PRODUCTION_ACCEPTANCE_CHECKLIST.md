@@ -42,7 +42,7 @@ This checklist is the final gate for the Astronomical Data Analysis & Discovery 
 
 - [x] Ruff lint passes.
 - [x] Ruff format checks pass.
-- [x] Full pytest suite passes on the latest validated pre-merge hardening lineage; data-dependent modules remain explicitly skipped when their immutable raw inputs are unavailable.
+- [x] Full pytest suite passes on current `main` CI; four data-dependent modules remain explicitly skipped when their immutable raw inputs are unavailable.
 - [x] Coverage is recorded.
 - [x] Package build succeeds.
 - [x] Built wheel installs and passes pip check.
