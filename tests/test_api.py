@@ -355,3 +355,25 @@ def test_object_analysis_contract_uses_fake_observations(
         )
     assert response.status_code == 404
     assert response.json()["code"] == "model_not_found"
+
+
+def test_persistent_analysis_job_lifecycle(tmp_path: Path) -> None:
+    settings = ApiSettings(job_store_path=tmp_path / "jobs.sqlite3")
+    client = TestClient(create_app(settings))
+
+    submitted = client.post(
+        "/v1/objects/ZTF17job/jobs",
+        json={"survey": "ztf"},
+    )
+    assert submitted.status_code == 202
+    payload = submitted.json()
+    assert payload["status"] == "queued"
+    assert payload["oid"] == "ZTF17job"
+
+    fetched = client.get(f"/v1/jobs/{payload['job_id']}")
+    assert fetched.status_code == 200
+    assert fetched.json()["status"] == "queued"
+
+    missing = client.get("/v1/jobs/not-found")
+    assert missing.status_code == 404
+    assert missing.json()["code"] == "job_not_found"

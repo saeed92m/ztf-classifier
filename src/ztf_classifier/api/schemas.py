@@ -115,3 +115,27 @@ class ObjectAnalysisResponse(BaseModel):
     model_provenance: dict[str, Any]
     observation_provenance: dict[str, Any]
     warnings: list[str] = Field(default_factory=list)
+
+
+class AnalysisJobRequest(BaseModel):
+    """Request to enqueue one object analysis."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    model_version: str | None = Field(default=None, min_length=1, max_length=128)
+    survey: str = Field(default="ztf", min_length=1, max_length=32)
+
+
+class AnalysisJobResponse(BaseModel):
+    """Persistent analysis job state."""
+
+    schema_version: str = "1.0"
+    job_id: str
+    oid: str
+    survey: str
+    model_version: str | None
+    status: str
+    created_at: str
+    updated_at: str
+    result: dict[str, Any] | None = None
+    error: dict[str, Any] | None = None

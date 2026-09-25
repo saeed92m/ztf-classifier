@@ -17,6 +17,8 @@ from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.api.schemas import (
     ErrorResponse,
     ModelResponse,
+    AnalysisJobRequest,
+    AnalysisJobResponse,
     ObjectAnalysisRequest,
     ObjectAnalysisResponse,
     ObjectObservationResponse,
@@ -29,6 +31,7 @@ from ztf_classifier.api.schemas import (
 from ztf_classifier.application.errors import ApplicationInferenceError
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.application.service import ApplicationService
+from ztf_classifier.jobs.store import JobStore
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.registry import (
     FilesystemModelRegistry,
@@ -230,6 +233,7 @@ def create_app(
     )
     app.state.settings = api_settings
     app.state.application_service = service
+    jobs = JobStore(api_settings.job_store_path)
 
     static_dir = Path(__file__).resolve().parents[1] / "web" / "static"
     if static_dir.is_dir():
@@ -355,6 +359,41 @@ def create_app(
                 status_code=500,
             ) from exc
         return _serialize_prediction(dataset, result)
+
+    @app.post(
+        "/v1/objects/{oid}/jobs",
+        response_model=AnalysisJobResponse,
+        status_code=202,
+        tags=["jobs"],
+    )
+    def submit_analysis_job(
+        oid: str,
+        request: AnalysisJobRequest,
+    ) -> AnalysisJobResponse:
+        """Persist an analysis request for asynchronous execution."""
+        record = jobs.create(
+            oid=oid,
+            survey=request.survey,
+            model_version=request.model_version,
+        )
+        return AnalysisJobResponse(**record.to_dict())
+
+    @app.get(
+        "/v1/jobs/{job_id}",
+        response_model=AnalysisJobResponse,
+        tags=["jobs"],
+    )
+    def get_analysis_job(job_id: str) -> AnalysisJobResponse:
+        """Return the durable state of an analysis job."""
+        try:
+            record = jobs.get(job_id)
+        except KeyError as exc:
+            raise ApiContractError(
+                "job_not_found",
+                f"Analysis job was not found: {job_id}",
+                status_code=404,
+            ) from exc
+        return AnalysisJobResponse(**record.to_dict())
 
     @app.post(
         "/v1/objects/{oid}/analysis",
