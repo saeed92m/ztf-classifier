@@ -86,3 +86,32 @@ class ObjectObservationResponse(BaseModel):
     schema_version: str = "1.0"
     object: dict[str, Any]
     provenance: dict[str, Any]
+
+
+class ObjectAnalysisRequest(BaseModel):
+    """Request to run the complete observation-to-inference workflow."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    model_version: str | None = Field(default=None, min_length=1, max_length=128)
+    survey: str = Field(default="ztf", min_length=1, max_length=32)
+
+
+class ObjectAnalysisResponse(BaseModel):
+    """Complete source-backed scientific analysis for one object."""
+
+    schema_version: str = "1.0"
+    oid: str
+    survey: str
+    observation_count: int
+    observations: list[dict[str, Any]]
+    features: dict[str, float]
+    feature_schema_version: str
+    feature_provenance: dict[str, Any]
+    prediction: PredictionItem
+    model_version: str
+    model_family: str
+    diagnostics: dict[str, str]
+    model_provenance: dict[str, Any]
+    observation_provenance: dict[str, Any]
+    warnings: list[str] = Field(default_factory=list)
