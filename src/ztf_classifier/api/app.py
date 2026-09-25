@@ -26,8 +26,8 @@ from ztf_classifier.api.schemas import (
     PredictionItem,
     PredictionRequest,
     PredictionResponse,
-    ServiceStatusResponse,
     ScientificResultResponse,
+    ServiceStatusResponse,
 )
 from ztf_classifier.application.errors import ApplicationInferenceError
 from ztf_classifier.application.observations import ObservationService
