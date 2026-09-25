@@ -16,6 +16,7 @@ from typing import Callable, Iterable
 from urllib.parse import urlparse
 
 from ztf_classifier.validation.evidence import EvidenceArtifact, EvidenceManifest, write_evidence_manifest
+from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.sources import get_source
 
 
@@ -34,6 +35,7 @@ class AcquisitionRequest:
     expected_sha256: str | None = None
     parent_evidence_sha256: str | None = None
     query_manifest: dict[str, object] | None = None
+    source_version: str | None = None
 
 
 @dataclass(frozen=True)
@@ -97,6 +99,10 @@ def acquire_source(
     the resulting manifest records the exact bytes and canonical source version.
     """
     source = get_source(request.source_id)
+    if request.source_version is not None and request.source_version != source.version:
+        raise AcquisitionError(
+            f"canonical source version mismatch: expected {source.version!r}, got {request.source_version!r}"
+        )
     if not request.urls:
         raise AcquisitionError("at least one acquisition URL is required")
     for url in request.urls:
@@ -160,3 +166,34 @@ def acquire_all(
 ) -> tuple[AcquisitionResult, ...]:
     """Acquire multiple sources without hiding individual external failures."""
     return tuple(acquire_source(item, code_version=code_version, fetcher=fetcher) for item in requests)
+
+
+def request_from_benchmark(
+    registry_dir: str | Path,
+    benchmark_id: str,
+    *,
+    destination: str | Path,
+    urls: tuple[str, ...],
+    query_manifest: dict[str, object] | None = None,
+    expected_sha256: str | None = None,
+) -> AcquisitionRequest:
+    """Construct an acquisition request from the canonical benchmark manifest."""
+    manifest = BenchmarkRegistry(registry_dir).load(benchmark_id)
+    source = get_source(str(manifest.input_contract["adapter"]))
+    if manifest.version != source.version:
+        raise AcquisitionError(
+            f"benchmark/source version drift for {benchmark_id}: benchmark={manifest.version!r}, canonical={source.version!r}"
+        )
+    if manifest.input_contract["adapter"] != source.source_id:
+        raise AcquisitionError(
+            f"benchmark adapter/source mismatch: {manifest.input_contract['adapter']!r} != {source.source_id!r}"
+        )
+    return AcquisitionRequest(
+        benchmark_id=manifest.benchmark_id,
+        source_id=source.source_id,
+        source_version=source.version,
+        destination=Path(destination),
+        urls=urls,
+        expected_sha256=expected_sha256,
+        query_manifest=query_manifest,
+    )
