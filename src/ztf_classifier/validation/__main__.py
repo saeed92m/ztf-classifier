@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from ztf_classifier.validation.acquisition import AcquisitionRequest, acquire_source
+from ztf_classifier.validation.acquisition import AcquisitionRequest, acquire_source
 from ztf_classifier.validation.gate import write_release_gate_report
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.report import write_scientific_validation_report
@@ -24,6 +25,15 @@ def main(argv: list[str] | None = None) -> int:
     validate.add_argument("--benchmark-id", required=True)
     validate.add_argument("--input", required=True, type=Path)
     validate.add_argument("--output-dir", required=True, type=Path)
+
+    acquire = subparsers.add_parser("acquire", help="Acquire one source-backed scientific evidence artifact")
+    acquire.add_argument("--benchmark-id", required=True)
+    acquire.add_argument("--source-id", required=True)
+    acquire.add_argument("--url", action="append", required=True, dest="urls")
+    acquire.add_argument("--output", required=True, type=Path)
+    acquire.add_argument("--code-version", default="working-tree")
+    acquire.add_argument("--expected-sha256")
+    acquire.add_argument("--query-manifest", type=Path)
 
     acquire = subparsers.add_parser("acquire", help="Acquire one source-backed scientific evidence artifact")
     acquire.add_argument("--benchmark-id", required=True)
@@ -78,6 +88,31 @@ def main(argv: list[str] | None = None) -> int:
             report = args.output.with_name(args.output.name + ".acquisition.json")
             report.write_text(
                 __import__("json").dumps(result.to_dict(), indent=2, sort_keys=True) + "\\n",
+                encoding="utf-8",
+            )
+            print(f"acquisition={result.status}")
+            print(f"report={report}")
+            return 0 if result.status == "ACQUIRED" else 2
+
+        if args.command == "acquire":
+            import json
+            query_manifest = None
+            if args.query_manifest:
+                query_manifest = json.loads(args.query_manifest.read_text(encoding="utf-8"))
+            result = acquire_source(
+                AcquisitionRequest(
+                    benchmark_id=args.benchmark_id,
+                    source_id=args.source_id,
+                    destination=args.output,
+                    urls=tuple(args.urls),
+                    expected_sha256=args.expected_sha256,
+                    query_manifest=query_manifest,
+                ),
+                code_version=args.code_version,
+            )
+            report = args.output.with_name(args.output.name + ".acquisition.json")
+            report.write_text(
+                json.dumps(result.to_dict(), indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
             print(f"acquisition={result.status}")
