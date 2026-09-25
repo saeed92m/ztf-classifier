@@ -26,14 +26,20 @@ class AdapterPlan:
     destination_name: str
     query_manifest: dict[str, Any] | None = None
     parent_benchmark_id: str | None = None
+    artifact_names: tuple[str, ...] = ()
+    expected_sha256: tuple[str, ...] = ()
 
     def validate(self) -> None:
-        if not self.urls:
+        if not self.urls and self.parent_benchmark_id is None:
             raise AdapterContractError("adapter plan must contain at least one source URL")
         if any(not isinstance(url, str) or not url.startswith(("http://", "https://")) for url in self.urls):
             raise AdapterContractError("adapter plan contains an invalid source URL")
         if not self.destination_name or Path(self.destination_name).name != self.destination_name:
             raise AdapterContractError("destination_name must be a plain file name")
+        if self.artifact_names and len(self.artifact_names) != len(self.urls):
+            raise AdapterContractError("artifact_names must align one-to-one with source URLs")
+        if self.expected_sha256 and len(self.expected_sha256) != len(self.urls):
+            raise AdapterContractError("expected_sha256 must align one-to-one with source URLs")
 
 
 AdapterBuilder = Callable[[BenchmarkManifest], AdapterPlan]
@@ -61,6 +67,38 @@ def _source_plan(manifest: BenchmarkManifest, source: ValidationSource) -> Adapt
     return plan
 
 
+
+def _star_embed_plan(manifest: BenchmarkManifest) -> AdapterPlan:
+    source = get_source("star_embed_ztf_40k")
+    if manifest.input_contract.get("adapter") != source.source_id:
+        raise AdapterContractError("StarEmbed manifest is not bound to the canonical adapter")
+    if manifest.version != source.version:
+        raise AdapterContractError(
+            f"benchmark/source version drift: benchmark={manifest.version!r}, source={source.version!r}"
+        )
+    revision = "18db85e"
+    base = f"https://huggingface.co/datasets/StarEmbed/ZTF_40k/resolve/{revision}/data"
+    urls = (
+        f"{base}/train-00000-of-00002.parquet",
+        f"{base}/train-00001-of-00002.parquet",
+        f"{base}/validation-00000-of-00001.parquet",
+        f"{base}/test-00000-of-00001.parquet",
+        f"{base}/anom-00000-of-00001.parquet",
+    )
+    plan = AdapterPlan(
+        benchmark_id=manifest.benchmark_id,
+        source_id=source.source_id,
+        source_version=source.version,
+        role=manifest.evaluation_role,
+        urls=urls,
+        destination_name=f"{manifest.benchmark_id}.snapshot",
+        artifact_names=("train-00000-of-00002.parquet","train-00001-of-00002.parquet","validation-00000-of-00001.parquet","test-00000-of-00001.parquet","anom-00000-of-00001.parquet"),
+        expected_sha256=("6a84a4fe8706fa6cff2a908a2b3a0a89bab6e7d564fb53ebd56491757a8746bc","73cdd608cc3c8e102817317e51fc079fff52de6f46bdcd0ed9a3a4e708cd672d","7652e00b09babff33f7a0ebcd3294e4854963b59f0c0d533115300c2aee64726","4ef77d676d399f8ceb2d6ab9caa652206309e590ebf7196f4477443fb8fe7d2c","716f053acf17ff7697ec07fc886d75bc1440545f3c84459373541b566a0c83b1"),
+        query_manifest={"provider":"huggingface","dataset":"StarEmbed/ZTF_40k","revision":revision,"splits":["train","validation","test","anom"]},
+    )
+    plan.validate()
+    return plan
+
 def _derived_730k_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     source = get_source("ztf_periodic_730k")
     if manifest.input_contract.get("adapter") != source.source_id:
@@ -73,7 +111,7 @@ def _derived_730k_plan(manifest: BenchmarkManifest) -> AdapterPlan:
         source_id=source.source_id,
         source_version=source.version,
         role=manifest.evaluation_role,
-        urls=(get_source("ztf_periodic_781k").acquisition_url or get_source("ztf_periodic_781k").url,),
+        urls=(),
         destination_name=f"{manifest.benchmark_id}.derived",
         query_manifest={
             "operation": "deterministic_quality_selection",
@@ -105,7 +143,7 @@ def _alerce_plan(manifest: BenchmarkManifest) -> AdapterPlan:
 def build_adapter_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     """Build the canonical plan without acquiring or fabricating external data."""
     builders: dict[str, AdapterBuilder] = {
-        "star_embed_ztf_40k": lambda m: _source_plan(m, get_source("star_embed_ztf_40k")),
+        "star_embed_ztf_40k": _star_embed_plan,
         "ztf_periodic_781k": lambda m: _source_plan(m, get_source("ztf_periodic_781k")),
         "ztf_periodic_730k": _derived_730k_plan,
         "ztf_dr24_source_subset": _dr24_plan,

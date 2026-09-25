@@ -26,7 +26,7 @@ def main(argv: list[str] | None = None) -> int:
     validate.add_argument("--input", required=True, type=Path)
     validate.add_argument("--output-dir", required=True, type=Path)
 
-    acquire = subparsers.add_parser("acquire", help="Acquire one canonical source-backed evidence artifact")
+    acquire = subparsers.add_parser("acquire", help="Acquire one canonical source-backed evidence package")
     acquire.add_argument("--benchmark-id", required=True)
     acquire.add_argument("--output", required=True, type=Path)
     acquire.add_argument("--url", action="append", dest="urls", default=())
@@ -72,8 +72,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             result = acquire_source(request, code_version=args.code_version)
             report = args.output.with_name(args.output.name + ".acquisition.json")
-            report.write_text(json.dumps(result.to_dict(), indent=2, sort_keys=True) + "
-", encoding="utf-8")
+            report.write_text(json.dumps(result.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
             print(f"acquisition={result.status}")
             print(f"report={report}")
             return 0 if result.status == "ACQUIRED" else 2
