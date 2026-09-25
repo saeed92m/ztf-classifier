@@ -107,3 +107,28 @@ def test_runner_emits_structured_check_results(tmp_path):
     assert result.checks["duplicate_objects"]["status"] == "PASS"
     payload = json.loads((tmp_path / "report" / "benchmark_result.json").read_text())
     assert payload["checks"]["duplicate_objects"]["check_id"] == "duplicate_objects"
+
+
+def test_duplicate_objects_blocks_when_object_identifier_is_missing():
+    frame = pd.DataFrame({"truth": ["A"], "prediction": ["A"]})
+    result = __import__("ztf_classifier.validation.checks", fromlist=["check_duplicate_objects"]).check_duplicate_objects(
+        manifest(), frame
+    )
+    assert result.status == "BLOCKED"
+
+
+def test_qc_acceptance_does_not_treat_arbitrary_strings_as_true():
+    from ztf_classifier.validation.checks import check_qc_acceptance
+
+    frame = pd.DataFrame({"oid": ["A", "B"], "truth": ["A", "B"], "prediction": ["A", "B"], "accepted": ["false", "true"]})
+    result = check_qc_acceptance(manifest(accepted_column="accepted"), frame)
+    assert result.status == "PASS"
+    assert result.metrics["accepted_rows"] == 1
+
+
+def test_qc_acceptance_blocks_unknown_tokens():
+    from ztf_classifier.validation.checks import check_qc_acceptance
+
+    frame = pd.DataFrame({"oid": ["A"], "truth": ["A"], "prediction": ["A"], "accepted": ["maybe"]})
+    result = check_qc_acceptance(manifest(accepted_column="accepted"), frame)
+    assert result.status == "BLOCKED"
