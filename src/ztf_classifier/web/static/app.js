@@ -241,5 +241,27 @@ document.querySelectorAll(".nav-item").forEach(button => {
   });
 });
 document.getElementById("runAnalysisButton").addEventListener("click", runAnalysis);
-document.getElementById("exportReportButton").addEventListener("click", () => setConnectionState("Reports not yet enabled", false));
+document.getElementById("exportReportButton").addEventListener("click", async () => {
+  if (!state.result || !state.result.result_id) {
+    setConnectionState("No durable result to export", false);
+    return;
+  }
+  try {
+    const response = await fetch(
+      "/v1/results/" + encodeURIComponent(state.result.result_id) + "/report",
+      { headers: { Accept: "text/markdown" } },
+    );
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ztf-analysis-" + state.result.result_id + ".md";
+    link.click();
+    URL.revokeObjectURL(url);
+    setConnectionState("Report ready");
+  } catch {
+    setConnectionState("Report export failed", false);
+  }
+});
 loadObject();
