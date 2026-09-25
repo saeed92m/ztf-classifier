@@ -1,3 +1,4 @@
+
 """Source-backed acquisition contracts for scientific-validation evidence."""
 
 from __future__ import annotations
@@ -29,9 +30,11 @@ class AcquisitionRequest:
     artifact_role: str = "benchmark_snapshot"
     timeout_seconds: float = 60.0
     expected_sha256: str | None = None
+    expected_sha256s: tuple[str, ...] = ()
     parent_evidence_sha256: str | None = None
     query_manifest: dict[str, object] | None = None
     source_version: str | None = None
+    artifact_names: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -60,7 +63,7 @@ Fetcher = Callable[[str, float], bytes]
 def _requests_fetch(url: str, timeout_seconds: float) -> bytes:
     import requests
 
-    response = requests.get(url, timeout=timeout_seconds)
+    response = requests.get(url, timeout=timeout_seconds, allow_redirects=True)
     response.raise_for_status()
     content_type = response.headers.get("content-type", "")
     if "text/html" in content_type.lower():
@@ -70,6 +73,11 @@ def _requests_fetch(url: str, timeout_seconds: float) -> bytes:
 
 def _sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
+
+
+def _looks_like_html(payload: bytes) -> bool:
+    sample = payload.lstrip()[:512].lower()
+    return sample.startswith((b"<!doctype html", b"<html", b"<head", b"<body"))
 
 
 def _query_manifest_hash(payload: dict[str, object] | None) -> str | None:
@@ -85,71 +93,111 @@ def _validate_url(url: str) -> None:
         raise AcquisitionError(f"unsupported acquisition URL: {url!r}")
 
 
+def _artifact_names(request: AcquisitionRequest) -> tuple[str, ...]:
+    if request.artifact_names:
+        if len(request.artifact_names) != len(request.urls):
+            raise AcquisitionError("artifact_names must align one-to-one with acquisition URLs")
+        names = request.artifact_names
+    elif len(request.urls) == 1:
+        names = (request.destination.name,)
+    else:
+        raise AcquisitionError("multiple acquisition URLs require explicit artifact_names")
+    if any(not name or Path(name).name != name for name in names):
+        raise AcquisitionError("invalid artifact name")
+    return names
+
+
+def _expected_hashes(request: AcquisitionRequest) -> tuple[str | None, ...]:
+    if request.expected_sha256s:
+        if len(request.expected_sha256s) != len(request.urls):
+            raise AcquisitionError("expected_sha256s must align one-to-one with acquisition URLs")
+        return tuple(request.expected_sha256s)
+    if len(request.urls) == 1:
+        return (request.expected_sha256,)
+    return tuple(None for _ in request.urls)
+
+
 def acquire_source(
     request: AcquisitionRequest,
     *,
     code_version: str,
     fetcher: Fetcher = _requests_fetch,
 ) -> AcquisitionResult:
-    """Acquire one source artifact and bind it to an immutable evidence manifest."""
+    """Acquire all artifacts in a source-backed plan and bind them to one evidence manifest."""
     source = get_source(request.source_id)
     if request.source_version is not None and request.source_version != source.version:
         raise AcquisitionError(
             f"canonical source version mismatch: expected {source.version!r}, got {request.source_version!r}"
         )
     if not request.urls:
-        raise AcquisitionError("at least one acquisition URL is required")
+        return AcquisitionResult(
+            request.benchmark_id,
+            request.source_id,
+            "BLOCKED_EXTERNAL",
+            None,
+            None,
+            "canonical adapter is derived and requires a dedicated derivation runner",
+        )
     for url in request.urls:
         _validate_url(url)
 
-    destination = request.destination
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    last_error: str | None = None
+    names = _artifact_names(request)
+    expected_hashes = _expected_hashes(request)
+    root = request.destination
+    multi = len(request.urls) > 1
+    if multi:
+        root.mkdir(parents=True, exist_ok=True)
+        destinations = tuple(root / name for name in names)
+    else:
+        destinations = (root,)
 
-    for url in request.urls:
-        try:
+    temporary: list[Path] = []
+    try:
+        for url, destination, expected in zip(request.urls, destinations, expected_hashes, strict=True):
             payload = fetcher(url, request.timeout_seconds)
             if not payload:
                 raise AcquisitionError(f"empty response from {url}")
+            if _looks_like_html(payload):
+                raise AcquisitionError(f"source returned HTML instead of a data artifact: {url}")
             digest = _sha256_bytes(payload)
-            if request.expected_sha256 and digest != request.expected_sha256:
-                raise AcquisitionError(
-                    f"SHA-256 mismatch for {url}: expected {request.expected_sha256}, got {digest}"
-                )
-            temporary = destination.with_suffix(destination.suffix + ".part")
-            temporary.write_bytes(payload)
-            temporary.replace(destination)
+            if expected and digest != expected:
+                raise AcquisitionError(f"SHA-256 mismatch for {url}: expected {expected}, got {digest}")
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            part = destination.with_suffix(destination.suffix + ".part")
+            part.write_bytes(payload)
+            temporary.append(part)
 
-            artifact = EvidenceArtifact.from_path(destination, request.artifact_role)
-            query_hash = _query_manifest_hash(request.query_manifest)
-            manifest = write_evidence_manifest(
-                destination.with_name(destination.name + ".evidence.json"),
-                benchmark_id=request.benchmark_id,
-                source_id=source.source_id,
-                acquisition_timestamp=datetime.now(timezone.utc).isoformat(),
-                code_version=code_version,
-                artifacts=(artifact,),
-                parent_evidence_sha256=request.parent_evidence_sha256,
-                query_manifest_sha256=query_hash,
-            )
-            return AcquisitionResult(
-                benchmark_id=request.benchmark_id,
-                source_id=source.source_id,
-                status="ACQUIRED",
-                artifact=artifact,
-                evidence_manifest=manifest,
-            )
-        except Exception as exc:  # noqa: BLE001 - acquisition must try fallbacks
-            last_error = f"{url}: {exc}"
+        for part, destination in zip(temporary, destinations, strict=True):
+            part.replace(destination)
 
-    return AcquisitionResult(
-        benchmark_id=request.benchmark_id,
-        source_id=source.source_id,
-        status="BLOCKED_EXTERNAL",
-        artifact=None,
-        evidence_manifest=None,
-        error=last_error or "all acquisition URLs failed",
-    )
+        manifest = write_evidence_manifest(
+            root / (root.name + ".evidence.json") if multi else root.with_name(root.name + ".evidence.json"),
+            benchmark_id=request.benchmark_id,
+            source_id=source.source_id,
+            acquisition_timestamp=datetime.now(timezone.utc).isoformat(),
+            code_version=code_version,
+            artifacts=tuple(EvidenceArtifact.from_path(path, request.artifact_role) for path in destinations),
+            parent_evidence_sha256=request.parent_evidence_sha256,
+            query_manifest_sha256=_query_manifest_hash(request.query_manifest),
+        )
+        return AcquisitionResult(
+            request.benchmark_id,
+            source.source_id,
+            "ACQUIRED",
+            manifest.artifacts[0],
+            manifest,
+        )
+    except Exception as exc:
+        for part in temporary:
+            part.unlink(missing_ok=True)
+        return AcquisitionResult(
+            request.benchmark_id,
+            source.source_id,
+            "BLOCKED_EXTERNAL",
+            None,
+            None,
+            str(exc),
+        )
 
 
 def acquire_all(
@@ -171,11 +219,7 @@ def request_from_benchmark(
     expected_sha256: str | None = None,
     parent_evidence_sha256: str | None = None,
 ) -> AcquisitionRequest:
-    """Construct an acquisition request from the canonical benchmark manifest.
-
-    Caller-supplied URLs are accepted only as explicit fallback endpoints; the
-    canonical source identity/version always come from the adapter contract.
-    """
+    """Construct an acquisition request from the canonical benchmark manifest."""
     manifest = BenchmarkRegistry(registry_dir).load(benchmark_id)
     try:
         plan = build_adapter_plan(manifest)
@@ -189,13 +233,19 @@ def request_from_benchmark(
             f"{benchmark_id} requires parent_evidence_sha256 for {plan.parent_benchmark_id}"
         )
 
+    selected_urls = urls or plan.urls
+    if urls and len(urls) != len(plan.urls):
+        raise AcquisitionError("explicit URL override must preserve the canonical artifact count")
+
     return AcquisitionRequest(
         benchmark_id=manifest.benchmark_id,
         source_id=plan.source_id,
         source_version=plan.source_version,
         destination=Path(destination),
-        urls=urls or plan.urls,
+        urls=selected_urls,
         expected_sha256=expected_sha256,
+        expected_sha256s=plan.expected_sha256 if not urls else (),
         parent_evidence_sha256=parent_evidence_sha256,
         query_manifest=query_manifest if query_manifest is not None else plan.query_manifest,
+        artifact_names=plan.artifact_names,
     )
