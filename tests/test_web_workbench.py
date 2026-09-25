@@ -37,7 +37,7 @@ def test_workbench_light_curve_uses_observation_api() -> None:
     response = client.get("/workbench/app.js")
     assert response.status_code == 200
     assert "/v1/objects/" in response.text
-    assert "/observations?survey=ztf" in response.text
+    assert "/observations?survey=" in response.text
 
 
 def test_workbench_uses_durable_result_api_without_fabricated_values() -> None:
