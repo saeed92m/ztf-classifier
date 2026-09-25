@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.api.schemas import (
+    AnalysisJobListResponse,
     AnalysisJobRequest,
     AnalysisJobResponse,
     ErrorResponse,
@@ -392,6 +393,31 @@ def create_app(
             model_version=request.model_version,
         )
         return AnalysisJobResponse(**record.to_dict())
+
+    @app.get(
+        "/v1/jobs",
+        response_model=AnalysisJobListResponse,
+        tags=["jobs"],
+    )
+    def list_analysis_jobs(
+        status: str | None = Query(default=None, min_length=1, max_length=16),
+        limit: int = Query(default=100, ge=1, le=1000),
+        offset: int = Query(default=0, ge=0),
+    ) -> AnalysisJobListResponse:
+        """Return a bounded operational view of durable analysis jobs."""
+        try:
+            records = jobs.list(status=status, limit=limit, offset=offset)
+        except ValueError as exc:
+            raise ApiContractError(
+                "job_query_invalid",
+                str(exc),
+                status_code=422,
+            ) from exc
+        return AnalysisJobListResponse(
+            items=[AnalysisJobResponse(**record.to_dict()) for record in records],
+            limit=limit,
+            offset=offset,
+        )
 
     @app.get(
         "/v1/jobs/{job_id}",
