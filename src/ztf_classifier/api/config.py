@@ -31,5 +31,7 @@ class ApiSettings:
                 if job_store
                 else Path("data/jobs/jobs.sqlite3")
             ),
-            observation_cache_dir=Path(cache_dir).expanduser() if cache_dir else Path("data/raw/alerce"),
+            observation_cache_dir=Path(cache_dir).expanduser()
+            if cache_dir
+            else Path("data/raw/alerce"),
         )
