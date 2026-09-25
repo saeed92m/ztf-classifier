@@ -195,3 +195,16 @@ class FeatureBackendListResponse(BaseModel):
 
     schema_version: str = "1.0"
     backends: list[FeatureBackendResponse]
+
+
+class ScientificValidationResponse(BaseModel):
+    """Current fail-closed scientific release-gate state."""
+
+    schema_version: str = "1.0"
+    status: str
+    release_blocking: bool
+    required_checks: list[str] = Field(default_factory=list)
+    benchmarks: list[dict[str, Any]] = Field(default_factory=list)
+    blockers: list[str] = Field(default_factory=list)
+    source_probe: dict[str, Any] | None = None
+    interpretation: str
