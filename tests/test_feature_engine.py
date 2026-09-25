@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from ztf_classifier.features.engine import ScientificFeatureEngine
+from ztf_classifier.features.engine import NativeV0_2Backend, ScientificFeatureEngine
 
 
 def _observations() -> pd.DataFrame:
