@@ -95,8 +95,7 @@ class ScientificCatalogService:
                 "created_at",
                 "payload_json",
             ],
-            lineterminator="
-",
+            lineterminator="\\n",
         )
         writer.writeheader()
         for record in page.items:
