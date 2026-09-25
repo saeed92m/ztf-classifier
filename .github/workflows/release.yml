@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Resolve release ref
+        id: ref
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.tag }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+          cache: pip
+
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -r requirements.lock
+          python -m pip install build
+
+      - name: Verify package version matches tag
+        env:
+          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
+        run: |
+          python - <<'PY'
+          import tomllib
+          from pathlib import Path
+
+          tag = __import__("os").environ["RELEASE_TAG"]
+          expected = tag.removeprefix("v")
+          actual = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
+          if actual != expected:
+              raise SystemExit(f"Tag {tag} does not match project version {actual}")
+          PY
+
+      - name: Run release validation
+        run: |
+          python -m pip check
+          python -m ruff check src tests
+          python -m ruff format --check src tests
+          python -m pytest -q
+          python -m build
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
