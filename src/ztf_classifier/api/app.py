@@ -230,6 +230,21 @@ def create_app(
         request_id = request.headers.get("X-Request-ID")
         return _error_response(exc, request_id=request_id)
 
+    @app.exception_handler(Exception)
+    async def unexpected_error_handler(
+        request: Request,
+        exc: Exception,
+    ) -> JSONResponse:
+        """Return a safe error envelope for unexpected server failures."""
+        return _error_response(
+            ApiContractError(
+                "internal_server_error",
+                "The API could not complete the request.",
+                status_code=500,
+            ),
+            request_id=request.headers.get("X-Request-ID"),
+        )
+
     @app.exception_handler(RequestValidationError)
     async def request_validation_error_handler(
         request: Request,
