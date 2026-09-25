@@ -174,3 +174,18 @@ class AnalysisJobListResponse(BaseModel):
     items: list[AnalysisJobResponse]
     limit: int
     offset: int
+
+
+class FeatureBackendResponse(BaseModel):
+    """Discoverable scientific feature backend metadata."""
+
+    name: str
+    software_version: str
+    feature_schema_version: str
+
+
+class FeatureBackendListResponse(BaseModel):
+    """Versioned list of registered scientific feature backends."""
+
+    schema_version: str = "1.0"
+    backends: list[FeatureBackendResponse]
