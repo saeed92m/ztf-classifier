@@ -60,7 +60,11 @@ class FakeApplicationService:
                         "source_path": "/secret",
                     },
                     "source_control": {"git_commit": "test", "git_dirty": False},
-                    "runtime": {"python_version": "3.11", "platform": "test", "machine": "test"},
+                    "runtime": {
+                        "python_version": "3.11",
+                        "platform": "test",
+                        "machine": "test",
+                    },
                     "dependencies": {},
                     "software": {"version": "test"},
                 }
@@ -205,6 +209,7 @@ def test_invalid_request_has_stable_error(tmp_path: Path) -> None:
     response = client.post("/v1/predict", json={"records": []})
     assert response.status_code == 422
     assert response.json()["code"] == "request_validation_failed"
+
 
 def test_openapi_exposes_versioned_contract(tmp_path: Path) -> None:
     _make_registry(tmp_path)
