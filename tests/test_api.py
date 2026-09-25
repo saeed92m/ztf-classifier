@@ -9,6 +9,11 @@ from fastapi.testclient import TestClient
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.application.schemas import PredictionResponse
+from ztf_classifier.domain.observations import (
+    ObjectObservationSummary,
+    Observation,
+    ObservationProvenance,
+)
 from ztf_classifier.models.results import PredictionResult
 
 
@@ -109,6 +114,79 @@ def _make_registry(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
+
+
+
+class FakeObservationService:
+    def get_observations(
+        self,
+        oid: str,
+        *,
+        survey: str = "ztf",
+    ) -> tuple[list[Observation], ObservationProvenance]:
+        record = Observation(
+            mjd=60000.5,
+            fid=1,
+            mag=19.2,
+            magerr=0.08,
+            mag_raw=19.3,
+            magerr_raw=0.1,
+            mag_corr=19.2,
+            magerr_corr=0.08,
+            photometry_source="corrected",
+            ra=123.4,
+            dec=-20.5,
+            dubious=False,
+            corrected=True,
+        )
+        provenance = ObservationProvenance(
+            source="ALeRCE",
+            survey=survey,
+            cache_hit=True,
+            diagnostics={"rows_input": 1, "rows_output": 1},
+        )
+        return [record], provenance
+
+    def get_object_summary(
+        self,
+        oid: str,
+        *,
+        survey: str = "ztf",
+    ) -> ObjectObservationSummary:
+        _, provenance = self.get_observations(oid, survey=survey)
+        return ObjectObservationSummary(
+            oid=oid,
+            observation_count=1,
+            mjd_min=60000.5,
+            mjd_max=60000.5,
+            filters=(1,),
+            ra=123.4,
+            dec=-20.5,
+            provenance=provenance,
+        )
+
+
+def test_object_observation_endpoints_use_normalized_contract() -> None:
+    fake = FakeObservationService()
+    client = TestClient(
+        create_app(
+            ApiSettings(),
+            observation_service=fake,  # type: ignore[arg-type]
+        )
+    )
+
+    summary = client.get("/v1/objects/ZTF17test")
+    assert summary.status_code == 200
+    assert summary.json()["object"]["observation_count"] == 1
+    assert summary.json()["object"]["filters"] == [1]
+
+    response = client.get("/v1/objects/ZTF17test/observations")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["oid"] == "ZTF17test"
+    assert payload["observation_count"] == 1
+    assert payload["observations"][0]["photometry_source"] == "corrected"
+    assert payload["provenance"]["source"] == "ALeRCE"
 
 def test_health_and_readiness(tmp_path: Path) -> None:
     _make_registry(tmp_path)

@@ -68,3 +68,21 @@ class ErrorResponse(BaseModel):
     message: str
     request_id: str | None = None
     details: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ObservationResponse(BaseModel):
+    """Versioned normalized observation payload."""
+
+    schema_version: str = "1.0"
+    oid: str
+    observations: list[dict[str, Any]]
+    observation_count: int
+    provenance: dict[str, Any]
+
+
+class ObjectObservationResponse(BaseModel):
+    """Object summary derived from the normalized observation stream."""
+
+    schema_version: str = "1.0"
+    object: dict[str, Any]
+    provenance: dict[str, Any]

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from alerce.core import Alerce
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -16,12 +17,15 @@ from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.api.schemas import (
     ErrorResponse,
     ModelResponse,
+    ObjectObservationResponse,
+    ObservationResponse,
     PredictionItem,
     PredictionRequest,
     PredictionResponse,
     ServiceStatusResponse,
 )
 from ztf_classifier.application.errors import ApplicationInferenceError
+from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.application.service import ApplicationService
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.registry import (
@@ -207,10 +211,15 @@ def result_provenance(response: Any) -> dict[str, Any]:
 def create_app(
     settings: ApiSettings | None = None,
     application_service: ApplicationService | None = None,
+    observation_service: ObservationService | None = None,
 ) -> FastAPI:
     """Create the production API application."""
     api_settings = settings or ApiSettings.from_environment()
     service = application_service or ApplicationService()
+    observations = observation_service or ObservationService(
+        client=Alerce(),
+        cache_dir=api_settings.observation_cache_dir,
+    )
 
     app = FastAPI(
         title="ZTF Classifier API",
@@ -344,6 +353,65 @@ def create_app(
                 status_code=500,
             ) from exc
         return _serialize_prediction(dataset, result)
+
+    @app.get(
+        "/v1/objects/{oid}",
+        response_model=ObjectObservationResponse,
+        tags=["observations"],
+    )
+    def object_summary(oid: str, survey: str = "ztf") -> ObjectObservationResponse:
+        """Return an object summary derived from normalized observations."""
+        try:
+            summary = observations.get_object_summary(oid, survey=survey)
+        except ValueError as exc:
+            raise ApiContractError(
+                "object_not_found",
+                f"No valid observations available for object: {oid}",
+                status_code=404,
+            ) from exc
+        except Exception as exc:
+            raise ApiContractError(
+                "observation_acquisition_failed",
+                "Object observations could not be acquired.",
+                status_code=502,
+            ) from exc
+        payload = summary.to_dict()
+        provenance = payload.pop("provenance")
+        return ObjectObservationResponse(object=payload, provenance=provenance)
+
+    @app.get(
+        "/v1/objects/{oid}/observations",
+        response_model=ObservationResponse,
+        tags=["observations"],
+    )
+    def object_observations(
+        oid: str,
+        survey: str = "ztf",
+    ) -> ObservationResponse:
+        """Return normalized photometric observations for one object."""
+        try:
+            records, provenance = observations.get_observations(
+                oid,
+                survey=survey,
+            )
+        except ValueError as exc:
+            raise ApiContractError(
+                "observation_validation_failed",
+                "Object observations failed validation.",
+                status_code=422,
+            ) from exc
+        except Exception as exc:
+            raise ApiContractError(
+                "observation_acquisition_failed",
+                "Object observations could not be acquired.",
+                status_code=502,
+            ) from exc
+        return ObservationResponse(
+            oid=oid,
+            observations=[record.to_dict() for record in records],
+            observation_count=len(records),
+            provenance=provenance.to_dict(),
+        )
 
     @app.post(
         "/v1/predict",
