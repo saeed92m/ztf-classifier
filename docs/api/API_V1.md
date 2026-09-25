@@ -98,3 +98,12 @@ Server-side observation caching is configured with ZTF_API_OBSERVATION_CACHE_DIR
 - The response contains normalized observations, feature values and provenance, calibrated classification output, conformal/OOD diagnostics, model provenance, and source provenance.
 - The model is selected by server-side registry version; clients cannot submit artifact filesystem paths.
 - The workflow fails explicitly when observations cannot be acquired or validated; it does not fabricate scientific observations or features.
+
+
+## Persistent analysis jobs
+
+- `POST /v1/objects/{oid}/jobs` persists an analysis request and returns HTTP 202 with a durable job id.
+- `GET /v1/jobs/{job_id}` returns the current durable state.
+- The initial implementation uses SQLite and explicit states: `queued`, `running`, `succeeded`, and `failed`.
+- Server configuration: `ZTF_API_JOB_STORE` selects the SQLite path; the default is `data/jobs/jobs.sqlite3`.
+- Job persistence is deliberately separated from execution. A worker/orchestrator can claim queued jobs without changing the public API contract.
