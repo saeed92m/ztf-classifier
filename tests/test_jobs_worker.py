@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ztf_classifier.jobs import AnalysisJobWorker, JobStore
+from ztf_classifier.jobs import AnalysisJobExecutionError, AnalysisJobWorker, JobStore
 
 
 def test_worker_claims_oldest_queued_job_and_persists_result(tmp_path: Path) -> None:
@@ -29,7 +29,7 @@ def test_worker_persists_executor_failure_without_leaking_exception(
     store.create(oid="ZTF-failure", survey="ztf", model_version=None)
 
     def execute(_job):
-        raise RuntimeError("secret internal detail")
+        raise AnalysisJobExecutionError("secret internal detail")
 
     result = AnalysisJobWorker(store, execute).run_once()
 
