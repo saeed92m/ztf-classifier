@@ -8,7 +8,6 @@ from fastapi.testclient import TestClient
 
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
-from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.application.schemas import PredictionResponse
 from ztf_classifier.domain.observations import (
     ObjectObservationSummary,
@@ -330,33 +329,60 @@ class FakeAnalysisService:
         return self._service.predict_dataframe(dataset, artifact_dir)
 
 
-def test_object_analysis_contract_uses_fake_observations(
-    tmp_path: Path,
-) -> None:
-    from unittest.mock import patch
+def test_object_analysis_contract_uses_shared_executor(tmp_path: Path) -> None:
+    class FakeExecutor:
+        def execute(self, *, oid: str, survey: str, model_version: str | None):
+            assert oid == "ZTF17test"
+            assert survey == "ztf"
+            assert model_version is None
+            return {
+                "oid": oid,
+                "survey": survey,
+                "observation_count": 1,
+                "observations": [{"mjd": 60000.5}],
+                "features": {"feature_1": 1.0},
+                "feature_schema_version": "v0.2",
+                "feature_provenance": {},
+                "prediction": {
+                    "predicted_class": "AGN",
+                    "predicted_class_index": 0,
+                    "probabilities": {"AGN": 1.0},
+                    "conformal": [],
+                    "ood": None,
+                },
+                "model_version": "baseline_v0.2",
+                "model_family": "XGBoost",
+                "diagnostics": {
+                    "calibration": "available",
+                    "conformal": "unavailable",
+                    "ood": "unavailable",
+                },
+                "model_provenance": {},
+                "observation_provenance": {},
+                "warnings": [],
+            }
 
-    fake = FakeObservationService()
     settings = ApiSettings(
         registry_dir=tmp_path,
         default_model_version="baseline_v0.2",
     )
     client = TestClient(
-        create_app(settings, observation_service=fake)  # type: ignore[arg-type]
-    )
-    with patch(
-        "ztf_classifier.api.app._ensure_registered_model",
-        side_effect=ApiContractError(
-            "model_not_found",
-            "not configured for unit test",
-            status_code=404,
-        ),
-    ):
-        response = client.post(
-            "/v1/objects/ZTF17test/analysis",
-            json={"survey": "ztf"},
+        create_app(
+            settings,
+            observation_service=FakeObservationService(),
+            analysis_executor=FakeExecutor(),  # type: ignore[arg-type]
         )
-    assert response.status_code == 404
-    assert response.json()["code"] == "model_not_found"
+    )
+
+    response = client.post(
+        "/v1/objects/ZTF17test/analysis",
+        json={"survey": "ztf"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["oid"] == "ZTF17test"
+    assert payload["prediction"]["predicted_class"] == "AGN"
 
 
 def test_persistent_analysis_job_lifecycle(tmp_path: Path) -> None:

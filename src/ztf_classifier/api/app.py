@@ -31,6 +31,7 @@ from ztf_classifier.api.schemas import (
 from ztf_classifier.application.errors import ApplicationInferenceError
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.application.service import ApplicationService
+from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
 from ztf_classifier.jobs.store import JobStore
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.registry import (
@@ -217,6 +218,7 @@ def create_app(
     settings: ApiSettings | None = None,
     application_service: ApplicationService | None = None,
     observation_service: ObservationService | None = None,
+    analysis_executor: SourceBackedAnalysisExecutor | None = None,
 ) -> FastAPI:
     """Create the production API application."""
     api_settings = settings or ApiSettings.from_environment()
@@ -234,6 +236,11 @@ def create_app(
     app.state.settings = api_settings
     app.state.application_service = service
     jobs = JobStore(api_settings.job_store_path)
+    executor = analysis_executor or SourceBackedAnalysisExecutor(
+        api_settings,
+        observation_service=observations,
+        application_service=service,
+    )
 
     static_dir = Path(__file__).resolve().parents[1] / "web" / "static"
     if static_dir.is_dir():
@@ -404,54 +411,12 @@ def create_app(
         oid: str,
         request: ObjectAnalysisRequest,
     ) -> ObjectAnalysisResponse:
-        """Run source-backed observations through features and inference."""
+        """Run source-backed observations through the shared scientific executor."""
         try:
-            records, observation_provenance = observations.get_observations(
-                oid,
-                survey=request.survey,
-            )
-            if not records:
-                raise ValueError("No valid observations available.")
-            observation_frame = pd.DataFrame([record.to_dict() for record in records])
-            from ztf_classifier.features.engine import ScientificFeatureEngine
-
-            feature_result = ScientificFeatureEngine().compute(
-                observation_frame,
-                backend="native",
-            )
-            feature_frame = pd.DataFrame([feature_result.values])
-            model_version = _resolve_model_version(
-                request.model_version,
-                api_settings,
-            )
-            _, entry = _ensure_registered_model(model_version, api_settings)
-            response = service.predict_dataframe(
-                feature_frame,
-                Path(entry.artifact_dir),
-            )
-            prediction = _serialize_prediction(
-                feature_frame,
-                response,
-            ).predictions[0]
-            return ObjectAnalysisResponse(
+            result = executor.execute(
                 oid=oid,
                 survey=request.survey,
-                observation_count=len(records),
-                observations=[record.to_dict() for record in records],
-                features=feature_result.values,
-                feature_schema_version=feature_result.feature_schema_version,
-                feature_provenance=feature_result.provenance.to_dict(),
-                prediction=prediction,
-                model_version=response.model_version,
-                model_family=response.model_family,
-                diagnostics={
-                    "calibration": response.result.calibration_status,
-                    "conformal": response.result.conformal_status,
-                    "ood": response.result.ood_status,
-                },
-                model_provenance=result_provenance(response),
-                observation_provenance=observation_provenance.to_dict(),
-                warnings=list(response.result.warnings),
+                model_version=request.model_version,
             )
         except ApiContractError:
             raise
@@ -467,6 +432,25 @@ def create_app(
                 "Object analysis could not be completed.",
                 status_code=502,
             ) from exc
+
+        prediction_data = result["prediction"]
+        prediction = PredictionItem(**prediction_data)
+        return ObjectAnalysisResponse(
+            oid=result["oid"],
+            survey=result["survey"],
+            observation_count=result["observation_count"],
+            observations=result["observations"],
+            features=result["features"],
+            feature_schema_version=result["feature_schema_version"],
+            feature_provenance=result["feature_provenance"],
+            prediction=prediction,
+            model_version=result["model_version"],
+            model_family=result["model_family"],
+            diagnostics=result["diagnostics"],
+            model_provenance=result["model_provenance"],
+            observation_provenance=result["observation_provenance"],
+            warnings=result["warnings"],
+        )
 
     @app.get(
         "/v1/objects/{oid}",
