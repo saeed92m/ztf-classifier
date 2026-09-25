@@ -50,7 +50,7 @@
             <div>
               <div class="eyebrow">OBJECT ANALYSIS</div>
               <h1 id="viewTitle">ZTF17aaanmso</h1>
-              <p id="viewSubtitle">Scientific overview · 150-sample benchmark workspace</p>
+              <p id="viewSubtitle">Live ZTF observation view · ALeRCE-backed</p>
             </div>
             <div class="object-actions">
               <button class="secondary-button" type="button">Export report</button>
@@ -70,19 +70,13 @@
               <div><div class="panel-title">Light curve</div><div class="panel-subtitle">Observation-domain view · flux/magnitude history</div></div>
               <div class="legend"><span><i class="legend-dot observation"></i>observations</span><span><i class="legend-dot uncertainty"></i>uncertainty</span></div>
             </div>
-            <div class="chart" role="img" aria-label="Illustrative light curve">
-              <svg viewBox="0 0 900 280" preserveAspectRatio="none">
+            <div class="chart" role="img" aria-label="ZTF light curve">
+              <svg id="lightCurveSvg" viewBox="0 0 900 280" preserveAspectRatio="none">
                 <g class="grid-lines">
-                  <line x1="0" y1="55" x2="900" y2="55"></line><line x1="0" y1="110" x2="900" y2="110"></line>
-                  <line x1="0" y1="165" x2="900" y2="165"></line><line x1="0" y1="220" x2="900" y2="220"></line>
-                </g>
-                <path class="curve-band" d="M0 164 C55 150 82 185 135 142 S218 104 270 146 S355 197 405 125 S485 76 540 128 S620 194 674 119 S750 90 805 143 S865 175 900 122 L900 154 C845 203 805 157 750 116 S680 171 620 210 S545 151 485 105 S410 152 355 218 S270 168 218 128 S150 171 95 201 S42 180 0 188 Z"></path>
-                <path class="curve-line" d="M0 176 C55 162 82 197 135 154 S218 116 270 158 S355 209 405 137 S485 88 540 140 S620 206 674 131 S750 102 805 155 S865 187 900 134"></path>
-                <g class="points">
-                  <circle cx="32" cy="169" r="3"></circle><circle cx="98" cy="187" r="3"></circle><circle cx="168" cy="133" r="3"></circle>
-                  <circle cx="236" cy="137" r="3"></circle><circle cx="305" cy="176" r="3"></circle><circle cx="377" cy="176" r="3"></circle>
-                  <circle cx="447" cy="105" r="3"></circle><circle cx="515" cy="122" r="3"></circle><circle cx="588" cy="176" r="3"></circle>
-                  <circle cx="654" cy="144" r="3"></circle><circle cx="728" cy="112" r="3"></circle><circle cx="801" cy="152" r="3"></circle><circle cx="873" cy="169" r="3"></circle>
+                  <line x1="0" y1="55" x2="900" y2="55"></line>
+                  <line x1="0" y1="110" x2="900" y2="110"></line>
+                  <line x1="0" y1="165" x2="900" y2="165"></line>
+                  <line x1="0" y1="220" x2="900" y2="220"></line>
                 </g>
               </svg>
               <div class="axis-label x">MJD →</div>
