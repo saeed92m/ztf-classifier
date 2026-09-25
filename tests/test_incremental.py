@@ -49,3 +49,42 @@ def test_incremental_cursor_requires_matching_cursor_fields(tmp_path: Path) -> N
 
     with pytest.raises(ValueError, match="provided together"):
         results.query_after_cursor(created_at="2026-09-25T12:00:00+00:00")
+
+
+def test_incremental_checkpoint_equal_cursor_is_idempotent(tmp_path: Path) -> None:
+    checkpoints = IncrementalCheckpointStore(tmp_path / "checkpoints.sqlite3")
+    first = checkpoints.advance(
+        "analysis",
+        created_at="2026-09-25T12:00:00+00:00",
+        result_id="result-2",
+    )
+    second = checkpoints.advance(
+        "analysis",
+        created_at="2026-09-25T12:00:00+00:00",
+        result_id="result-2",
+    )
+
+    assert second.created_at == first.created_at
+    assert second.result_id == first.result_id
+
+
+def test_incremental_checkpoint_rejects_stale_update_without_overwrite(
+    tmp_path: Path,
+) -> None:
+    checkpoints = IncrementalCheckpointStore(tmp_path / "checkpoints.sqlite3")
+    checkpoints.advance(
+        "analysis",
+        created_at="2026-09-25T12:00:00+00:00",
+        result_id="result-2",
+    )
+
+    with pytest.raises(ValueError, match="move backwards"):
+        checkpoints.advance(
+            "analysis",
+            created_at="2026-09-25T11:00:00+00:00",
+            result_id="result-9",
+        )
+
+    current = checkpoints.get("analysis")
+    assert current.created_at == "2026-09-25T12:00:00+00:00"
+    assert current.result_id == "result-2"
