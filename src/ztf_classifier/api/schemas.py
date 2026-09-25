@@ -154,3 +154,14 @@ class ScientificResultResponse(BaseModel):
     model_version: str
     created_at: str
     payload: dict[str, Any]
+
+
+class ScientificCatalogResponse(BaseModel):
+    """Paginated durable scientific-result catalog response."""
+
+    schema_version: str = "1.0"
+    items: list[ScientificResultResponse]
+    total: int
+    limit: int
+    offset: int
+    has_next: bool
