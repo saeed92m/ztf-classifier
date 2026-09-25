@@ -4,13 +4,13 @@
 
 - Repository: `saeed92m/ztf-classifier`
 - Default branch: `main`
-- Current merged production baseline: `375d7f0469a247f6a810ec2fd56029f9fe9b7768`
+- Current merged production baseline: `457b887b1a08ede4fdce3f2ca2e3ce6c2b3a47d8`
 - Immutable scientific baseline: tag `v0.2.0`
 - Python: 3.11.16
 - Runtime: Ubuntu 26.04 LTS under WSL2
 - Environment: pyenv + `.venv`
 - Handbook v1.4 supersedes v1.3 for current project continuity.
-- Software milestone `v0.4.0` is implemented on the upgrade branch; merge/tag/publication remain release-metadata steps.
+- Software milestone `v0.4.0` is merged to `main` at `457b887b1a08ede4fdce3f2ca2e3ce6c2b3a47d8`; tag/publication remain release-metadata steps.
 
 ## 2. Completed production path
 
@@ -285,4 +285,4 @@ The pre-change WSL2 baseline commands were not executable through the repository
 
 ### Release state
 
-v0.4.0 is ready for merge once the final branch CI is green. After merge, the next source-of-truth update is the merge SHA and release/tag metadata. The immutable `v0.2.0` tag must never be rewritten.
+v0.4.0 is merged to `main` as `457b887b1a08ede4fdce3f2ca2e3ce6c2b3a47d8` after green CI. The next source-of-truth step is release/tag metadata. The immutable `v0.2.0` tag must never be rewritten.
