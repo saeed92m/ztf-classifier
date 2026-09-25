@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import resource
+import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -18,6 +21,8 @@ from sklearn.metrics import (
     log_loss,
     precision_score,
     recall_score,
+    average_precision_score,
+    roc_auc_score,
 )
 
 from ztf_classifier.validation.checks import run_scientific_checks
@@ -105,6 +110,7 @@ def run_table_benchmark(
     input_path = Path(input_path)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    started = time.perf_counter()
     frame = _read_table(input_path)
 
     prediction_column = str(manifest.input_contract.get("prediction_column", "y_pred"))
@@ -164,11 +170,28 @@ def run_table_benchmark(
     if manifest.ood_label_column and manifest.ood_score_column:
         if manifest.ood_label_column not in frame or manifest.ood_score_column not in frame:
             raise ValueError("OOD columns declared by manifest are missing")
-        metrics["ood"] = {
+        ood_labels = frame[manifest.ood_label_column].astype(int).to_numpy()
+        ood_scores = frame[manifest.ood_score_column].to_numpy(dtype=float)
+        if not np.isfinite(ood_scores).all():
+            raise ValueError("OOD scores must be finite")
+        if set(np.unique(ood_labels)) - {0, 1}:
+            raise ValueError("OOD labels must be binary 0/1")
+        ood = {
             "label_column": manifest.ood_label_column,
             "score_column": manifest.ood_score_column,
-            "coverage": float(frame[manifest.ood_label_column].mean()),
+            "coverage": float((ood_labels == 0).mean()),
         }
+        if len(np.unique(ood_labels)) == 2:
+            ood["auroc"] = float(roc_auc_score(ood_labels, ood_scores))
+            ood["average_precision"] = float(average_precision_score(ood_labels, ood_scores))
+        else:
+            ood["auroc"] = None
+            ood["average_precision"] = None
+        if manifest.accepted_column:
+            accepted = frame[manifest.accepted_column].astype(bool).to_numpy()
+            ood["false_accept_rate"] = float(np.mean(accepted[ood_labels == 1])) if np.any(ood_labels == 1) else None
+            ood["false_reject_rate"] = float(np.mean(~accepted[ood_labels == 0])) if np.any(ood_labels == 0) else None
+        metrics["ood"] = ood
 
     if manifest.accepted_column:
         if manifest.accepted_column not in frame:
@@ -200,6 +223,12 @@ def run_table_benchmark(
     elif provenance_result is None and not provenance_complete:
         blockers.append("provenance")
     status = "PASS" if not blockers else "BLOCKED"
+    elapsed = time.perf_counter() - started
+    peak_rss_mb = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) / 1024.0
+    if sys.platform == "darwin":
+        peak_rss_mb /= 1024.0
+    metrics["performance"] = {"runtime_seconds": float(elapsed), "peak_rss_mb": peak_rss_mb}
+
     result = BenchmarkRunResult(
         benchmark_id=manifest.benchmark_id,
         evaluation_role=manifest.evaluation_role,
