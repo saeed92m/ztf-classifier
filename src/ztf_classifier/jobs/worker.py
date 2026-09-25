@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+import sqlite3
 from typing import Any
 
 from ztf_classifier.jobs.errors import AnalysisJobExecutionError
@@ -68,7 +69,7 @@ class AnalysisJobWorker:
                     schema_version=str(result.get("schema_version") or "1.0"),
                     payload=result,
                 )
-            except (TypeError, ValueError, KeyError):
+            except (sqlite3.Error, TypeError, ValueError, KeyError):
                 return self.store.transition(
                     job.job_id,
                     status="failed",
@@ -81,6 +82,12 @@ class AnalysisJobWorker:
                 "result_id": stored.result_id,
                 "schema_version": stored.schema_version,
             }
+            return self.store.transition(
+                job.job_id,
+                status="succeeded",
+                result=result,
+                scientific_result_id=stored.result_id,
+            )
 
         return self.store.transition(
             job.job_id,
