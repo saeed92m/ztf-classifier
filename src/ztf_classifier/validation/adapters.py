@@ -77,13 +77,16 @@ def _star_embed_plan(manifest: BenchmarkManifest) -> AdapterPlan:
             f"benchmark/source version drift: benchmark={manifest.version!r}, source={source.version!r}"
         )
     revision = manifest.input_contract.get("revision")
-    if not isinstance(revision, str) or len(revision) != 40:
+    if revision == "resolve_at_acquisition":
+        resolved_revision = "resolve_at_acquisition"
+    elif isinstance(revision, str) and len(revision) == 40 and all(ch in "0123456789abcdef" for ch in revision.lower()):
+        resolved_revision = revision
+    else:
         raise AdapterContractError(
-            "StarEmbed adapter requires a verified 40-character Hugging Face commit SHA in input_contract.revision"
+            "StarEmbed adapter requires input_contract.revision to be a verified 40-character "
+            "Hugging Face commit SHA or resolve_at_acquisition"
         )
-    if any(ch not in "0123456789abcdef" for ch in revision.lower()):
-        raise AdapterContractError("StarEmbed revision must be a hexadecimal commit SHA")
-    base = f"https://huggingface.co/datasets/StarEmbed/ZTF_40k/resolve/{revision}/data"
+    base = f"https://huggingface.co/datasets/StarEmbed/ZTF_40k/resolve/{resolved_revision}/data"
     artifact_names = (
         "train-00000-of-00002.parquet",
         "train-00001-of-00002.parquet",
@@ -102,7 +105,7 @@ def _star_embed_plan(manifest: BenchmarkManifest) -> AdapterPlan:
         query_manifest={
             "provider": "huggingface",
             "dataset": "StarEmbed/ZTF_40k",
-            "revision": revision,
+            "revision": resolved_revision,
             "splits": ["train", "validation", "test", "anom"],
         },
     )
