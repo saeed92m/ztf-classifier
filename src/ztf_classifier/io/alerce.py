@@ -2,8 +2,32 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict, dataclass
+
 import numpy as np
 import pandas as pd
+
+
+@dataclass(frozen=True)
+class ALeRCEIngestionDiagnostics:
+    """Row-level validation and provenance counters for ALeRCE ingestion."""
+
+    rows_input: int
+    rows_output: int
+    rows_dropped: int
+    invalid_mjd: int
+    invalid_fid: int
+    invalid_mag: int
+    invalid_magerr: int
+    invalid_coordinates: int
+    duplicate_rows: int
+    corrected_photometry_count: int
+    raw_fallback_count: int
+
+    def to_dict(self) -> dict[str, int]:
+        """Return JSON-compatible diagnostics."""
+        return asdict(self)
+
 
 _REQUIRED_COLUMNS = {
     "mjd",
@@ -46,7 +70,9 @@ def _coerce_bool_series(
 
 def alerce_to_internal_lc_robust(
     detections: pd.DataFrame,
-) -> pd.DataFrame:
+    *,
+    return_diagnostics: bool = False,
+) -> pd.DataFrame | tuple[pd.DataFrame, ALeRCEIngestionDiagnostics]:
     """Convert ALeRCE ZTF detections to the internal light-curve schema.
 
     Photometry priority:
@@ -134,8 +160,61 @@ def alerce_to_internal_lc_robust(
         }
     )
 
-    return (
-        internal
+    valid_mjd = mjd.notna() & np.isfinite(mjd) & (mjd >= 0.0)
+    valid_fid = fid.notna() & fid.isin({1, 2, 3})
+    valid_mag = mag.notna() & np.isfinite(mag)
+    valid_magerr = magerr.notna() & np.isfinite(magerr) & (magerr > 0.0)
+
+    ra = internal["ra"]
+    dec = internal["dec"]
+    valid_coordinates = (
+        ra.notna()
+        & np.isfinite(ra)
+        & (ra >= 0.0)
+        & (ra <= 360.0)
+        & dec.notna()
+        & np.isfinite(dec)
+        & (dec >= -90.0)
+        & (dec <= 90.0)
+    )
+
+    valid_rows = (
+        valid_mjd
+        & valid_fid
+        & valid_mag
+        & valid_magerr
+        & valid_coordinates
+    )
+
+    invalid_counts = {
+        "invalid_mjd": int((~valid_mjd).sum()),
+        "invalid_fid": int((~valid_fid).sum()),
+        "invalid_mag": int((~valid_mag).sum()),
+        "invalid_magerr": int((~valid_magerr).sum()),
+        "invalid_coordinates": int((~valid_coordinates).sum()),
+    }
+
+    filtered = internal.loc[valid_rows].copy()
+    duplicate_mask = filtered.duplicated(keep="first")
+    duplicate_rows = int(duplicate_mask.sum())
+    filtered = filtered.loc[~duplicate_mask].copy()
+
+    diagnostics = ALeRCEIngestionDiagnostics(
+        rows_input=len(internal),
+        rows_output=len(filtered),
+        rows_dropped=len(internal) - len(filtered),
+        duplicate_rows=duplicate_rows,
+        corrected_photometry_count=int(use_corrected.sum()),
+        raw_fallback_count=int((~use_corrected).sum()),
+        **invalid_counts,
+    )
+
+    filtered = (
+        filtered
         .sort_values(["fid", "mjd"])
         .reset_index(drop=True)
     )
+
+    if return_diagnostics:
+        return filtered, diagnostics
+    return filtered

@@ -1,30 +1,29 @@
 # Changelog
 
-## [0.3.0] — Production inference milestone
-
-This release advances the project from the immutable v0.2.0 scientific baseline to a production-oriented inference milestone.
+## [0.4.0] — Reproducibility and production hardening
 
 ### Added
-- Filesystem-backed model registry for immutable production artifacts.
-- Registry-backed single-object prediction.
-- Registry-backed batch inference.
-- Explicit CLI model-selection contract.
-- Production validation hardening for external boolean fields and model feature schemas.
-- Registry-backed end-to-end tests for both predict and batch CLI paths.
-- Artifact schema 1.1 support with calibration, conformal diagnostics, OOD diagnostics, and provenance.
+- Streaming SHA-256 checksum utility for reproducibility and artifact validation.
+- Explicit production calibration, conformal, and OOD status fields.
+- Artifact manifest hashing and explicit legacy integrity warnings.
+- Strict ALeRCE ingestion diagnostics for invalid observations, coordinates, bands, duplicates, and photometry fallback.
+- Data card and model card documentation.
+- CI format, coverage, package-build, wheel-install, and dependency-audit gates.
+- Upgrade baseline and verification report structure.
 
-### Validated
-- 150-object benchmark dataset across 15 classes.
-- 42-feature production inference contract.
-- JSON prediction output schema 1.1.
-- Batch Parquet output schema 1.1.
-- Registry → artifact → inference → CLI → output end-to-end path.
-- CI dependency, lint, test, and import checks.
+### Changed
+- Production diagnostic execution is independent: missing conformal data no longer disables OOD evaluation and vice versa.
+- Package metadata advances to software version 0.4.0 while the scientific baseline remains v0.2.0 and the production model remains baseline_v0.2.
+- ALeRCE normalization preserves the existing default DataFrame API while offering an additive diagnostics return mode.
 
 ### Compatibility
-- The `v0.2.0` tag remains the immutable scientific baseline.
-- The production artifact model version remains `baseline_v0.2`.
-- Artifact schema 1.0 remains supported alongside 1.1.
+- The v0.2.0 scientific baseline remains immutable.
+- Dataset contract benchmark_v0.2 remains unchanged.
+- The frozen v0.2 feature schema remains 42 features.
+- Artifact schemas 1.0 and 1.1 remain readable.
+- Existing CLI output fields remain available; new diagnostic/provenance fields are additive.
 
-### Scope
-This release does not claim that the 150-object benchmark is representative of the full ZTF population. ALeRCE labels remain reference/weak labels rather than independent astrophysical ground truth.
+### Limitations
+- The 150-object benchmark is small and is not representative of the full ZTF population.
+- ALeRCE labels are reference/weak labels rather than independent astrophysical ground truth.
+- Source-data licensing and attribution requirements remain applicable to future ingestion and publication.

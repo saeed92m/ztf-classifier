@@ -211,6 +211,14 @@ def _prediction_payload(
         "has_calibration": result.has_calibration,
         "has_conformal": result.has_conformal,
         "has_ood": result.has_ood,
+        "calibration_status": result.calibration_status,
+        "conformal_status": result.conformal_status,
+        "ood_status": result.ood_status,
+        "warnings": list(result.warnings),
+        "artifact_schema_version": result.artifact_schema_version,
+        "artifact_hash": result.artifact_hash,
+        "feature_schema_hash": result.feature_schema_hash,
+        "software_version": result.software_version,
         "predictions": predictions,
     }
 
@@ -339,6 +347,13 @@ def _run_batch(args: argparse.Namespace) -> int:
             b"ztf_classifier.has_ood": (
                 str(result.has_ood).lower().encode("utf-8")
             ),
+            b"ztf_classifier.calibration_status": result.calibration_status.encode("utf-8"),
+            b"ztf_classifier.conformal_status": result.conformal_status.encode("utf-8"),
+            b"ztf_classifier.ood_status": result.ood_status.encode("utf-8"),
+            b"ztf_classifier.artifact_schema_version": result.artifact_schema_version.encode("utf-8"),
+            b"ztf_classifier.artifact_hash": result.artifact_hash.encode("utf-8"),
+            b"ztf_classifier.feature_schema_hash": result.feature_schema_hash.encode("utf-8"),
+            b"ztf_classifier.software_version": result.software_version.encode("utf-8"),
         }
     )
 

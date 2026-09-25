@@ -5,7 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+import warnings
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +22,7 @@ from ztf_classifier.models.contracts import ModelContract
 from ztf_classifier.models.ood_artifact import OODArtifact
 from ztf_classifier.models.ood_production import OODProductionModel
 from ztf_classifier.models.provenance import ModelProvenance
+from ztf_classifier.reproducibility.checksums import sha256_file
 
 ARTIFACT_SCHEMA_VERSION = "1.1"
 LEGACY_ARTIFACT_SCHEMA_VERSION = "1.0"
@@ -85,6 +88,8 @@ class LoadedModelArtifact:
     conformal: ConformalArtifact | None = None
     ood: OODArtifact | None = None
     ood_model: OODProductionModel | None = None
+    artifact_hash: str = ""
+    integrity_warnings: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -302,6 +307,7 @@ class ModelArtifactWriter:
             ood_model.save(ood_model_path)
 
         manifest = {
+            "software_version": provenance.software_version,
             "artifact_schema_version": (
                 ARTIFACT_SCHEMA_VERSION
                 if diagnostics
@@ -317,6 +323,12 @@ class ModelArtifactWriter:
                 artifact.dataset_sha256,
                 "dataset_sha256",
             ),
+            "training_dataset_sha256": artifact.dataset_sha256,
+            "feature_schema_sha256": artifact.feature_schema_sha256,
+            "git_commit": provenance.git_commit,
+            "created_at_utc": datetime.now(UTC).isoformat(),
+            "python_version": provenance.python_version,
+            "platform": provenance.platform,
             "feature_schema_source_sha256": source_schema_hash,
             "files": {
                 "model": {
@@ -355,6 +367,8 @@ class ModelArtifactWriter:
                 "path": "ood_model.joblib",
                 "sha256": _sha256(ood_model_path),
             }
+
+        manifest["model_file_sha256"] = manifest["files"]["model"]["sha256"]
 
         manifest_path = output_dir / "artifact_manifest.json"
 
@@ -411,11 +425,12 @@ class ModelArtifactLoader:
 
         files = manifest["files"]
         paths: dict[str, Path] = {}
+        integrity_warnings: list[str] = []
 
         for key in required_files:
             metadata = files[key]
             relative_path = metadata["path"]
-            expected_hash = metadata["sha256"]
+            expected_hash = metadata.get("sha256")
 
             candidate = (
                 artifact_dir / relative_path
@@ -436,7 +451,14 @@ class ModelArtifactLoader:
 
             actual_hash = _sha256(candidate)
 
-            if actual_hash != expected_hash:
+            if expected_hash is None:
+                message = (
+                    f"Artifact file '{key}' has no checksum; "
+                    "legacy integrity status is unverified."
+                )
+                integrity_warnings.append(message)
+                warnings.warn(message, UserWarning, stacklevel=2)
+            elif actual_hash != expected_hash:
                 raise ValueError(
                     f"Artifact integrity check failed for '{key}'."
                 )
@@ -543,6 +565,12 @@ class ModelArtifactLoader:
             ),
             dependencies=dict(
                 provenance_data["dependencies"]
+            ),
+            software_version=str(
+                provenance_data.get("software", {}).get(
+                    "version",
+                    "unknown",
+                )
             ),
         )
 
@@ -651,6 +679,8 @@ class ModelArtifactLoader:
             conformal=conformal,
             ood=ood,
             ood_model=ood_model,
+            artifact_hash=sha256_file(manifest_path),
+            integrity_warnings=tuple(integrity_warnings),
         )
 
     @staticmethod
@@ -816,8 +846,14 @@ class ModelArtifactLoader:
                     f"Empty path metadata for '{key}'."
                 )
 
+            checksum = metadata.get("sha256")
+            if (
+                checksum is None
+                and schema_version == LEGACY_ARTIFACT_SCHEMA_VERSION
+            ):
+                continue
             _validate_sha256(
-                metadata.get("sha256"),
+                checksum,
                 f"files.{key}.sha256",
             )
 

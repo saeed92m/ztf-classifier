@@ -26,6 +26,15 @@ class PredictionResultBuilder:
         ConformalResult | ProductionConformalDiagnostics | None
     ) = None,
         ood: OODResult | None = None,
+        calibration_status: str = "unavailable",
+        conformal_status: str = "unavailable",
+        ood_status: str = "unavailable",
+        warnings: tuple[str, ...] = (),
+        artifact_schema_version: str = "",
+        artifact_hash: str = "",
+        feature_schema_hash: str = "",
+        software_version: str = "",
+        model_version: str = "",
     ) -> PredictionResult:
         """Build a unified prediction result."""
 
@@ -59,6 +68,15 @@ class PredictionResultBuilder:
             calibrated_predicted_labels=calibrated_labels,
             conformal=conformal,
             ood=ood,
+            calibration_status=calibration_status,
+            conformal_status=conformal_status,
+            ood_status=ood_status,
+            warnings=tuple(warnings),
+            artifact_schema_version=artifact_schema_version,
+            artifact_hash=artifact_hash,
+            feature_schema_hash=feature_schema_hash,
+            software_version=software_version,
+            model_version=model_version,
         )
 
 

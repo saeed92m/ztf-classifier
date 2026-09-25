@@ -30,6 +30,15 @@ class PredictionResult:
 
     conformal: ProductionConformalDiagnostics | None = None
     ood: OODResult | None = None
+    calibration_status: str = "unavailable"
+    conformal_status: str = "unavailable"
+    ood_status: str = "unavailable"
+    warnings: tuple[str, ...] = ()
+    artifact_schema_version: str = ""
+    artifact_hash: str = ""
+    feature_schema_hash: str = ""
+    software_version: str = ""
+    model_version: str = ""
 
     def __post_init__(self) -> None:
         """Validate the result contract."""
@@ -131,6 +140,7 @@ class PredictionResult:
             )
 
         self._validate_optional_diagnostics()
+        self._validate_status_metadata()
 
     @property
     def sample_count(self) -> int:
@@ -253,6 +263,21 @@ class PredictionResult:
             raise ValueError(
                 f"{name.capitalize()} labels do not match class indices."
             )
+
+    def _validate_status_metadata(self) -> None:
+        """Validate additive production diagnostic status metadata."""
+        valid = {"available", "unavailable", "uncalibrated"}
+        for name, value in (
+            ("calibration_status", self.calibration_status),
+            ("conformal_status", self.conformal_status),
+            ("ood_status", self.ood_status),
+        ):
+            if value not in valid:
+                raise ValueError(f"{name} has an invalid status: {value}")
+        if not isinstance(self.warnings, tuple):
+            raise TypeError("warnings must be a tuple of strings.")
+        if not all(isinstance(item, str) for item in self.warnings):
+            raise ValueError("warnings must contain only strings.")
 
     def _validate_optional_diagnostics(self) -> None:
         """Validate alignment of optional diagnostic results."""
