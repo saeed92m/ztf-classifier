@@ -515,3 +515,30 @@ The immutable scientific baseline `v0.2.0` is unchanged.
 6. finish extensible Scientific Feature Generation with versioned schemas and backend registration;
 7. complete platform integration, observability, security hardening, deployment contracts, and end-to-end audit;
 8. finalize release documentation and production acceptance evidence.
+
+## 29. Scientific Workbench, catalog, reports, and incremental foundations
+
+The platform integration sequence now includes durable scientific-result consumption beyond the object-analysis screen.
+
+Completed implementation slices on the current development path:
+
+- Workbench hydration from durable scientific results and normalized observations;
+- durable result lookup by object/survey;
+- operational durable-job listing;
+- paginated scientific catalog query over persisted results;
+- deterministic CSV catalog export;
+- deterministic Markdown scientific report generation from persisted results;
+- Workbench catalog, jobs, and report views backed by those API contracts;
+- restart-safe incremental result cursors with durable checkpoints;
+- explicit scientific feature backend registration and backend metadata discovery;
+- API-level feature backend selection and persistence in analysis jobs/results.
+
+Scientific invariants remain unchanged:
+
+- v0.2.0 remains immutable;
+- the native v0.2 feature backend remains the default;
+- persisted scientific results remain the canonical history boundary;
+- reports and catalog exports are derived read-only views;
+- incremental checkpoints advance only after downstream acknowledgement.
+
+The next hardening sequence is platform-level integration: scheduler ownership, checkpoint observability, deployment/database separation, authorization boundaries, API pagination guarantees, end-to-end scientific provenance validation, and release acceptance.
