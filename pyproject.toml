@@ -45,6 +45,7 @@ dependencies = [
 [project.scripts]
 ztf-classifier = "ztf_classifier.cli.main:main"
 ztf-classifier-api = "ztf_classifier.api.server:main"
+ztf-classifier-worker = "ztf_classifier.jobs.runner:main"
 
 [project.optional-dependencies]
 notebook = [

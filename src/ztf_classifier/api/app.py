@@ -15,10 +15,10 @@ from fastapi.staticfiles import StaticFiles
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.api.schemas import (
-    ErrorResponse,
-    ModelResponse,
     AnalysisJobRequest,
     AnalysisJobResponse,
+    ErrorResponse,
+    ModelResponse,
     ObjectAnalysisRequest,
     ObjectAnalysisResponse,
     ObjectObservationResponse,
@@ -412,9 +412,7 @@ def create_app(
             )
             if not records:
                 raise ValueError("No valid observations available.")
-            observation_frame = pd.DataFrame(
-                [record.to_dict() for record in records]
-            )
+            observation_frame = pd.DataFrame([record.to_dict() for record in records])
             from ztf_classifier.features.engine import ScientificFeatureEngine
 
             feature_result = ScientificFeatureEngine().compute(

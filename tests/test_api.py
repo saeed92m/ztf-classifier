@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
+from ztf_classifier.api.errors import ApiContractError
 from ztf_classifier.application.schemas import PredictionResponse
 from ztf_classifier.domain.observations import (
     ObjectObservationSummary,
@@ -30,10 +31,11 @@ class FakeApplicationService:
         self.calls.append((dataset, registry_dir, model_version))
         probabilities = np.zeros((len(dataset), 15), dtype=np.float64)
         probabilities[:, 0] = 1.0
+        raw_labels = tuple("AGN" for _ in dataset.index)
         result = PredictionResult(
             raw_probabilities=probabilities,
             raw_predicted_class_indices=np.zeros(len(dataset), dtype=np.int64),
-            raw_predicted_labels=tuple("AGN" for _ in dataset.index),
+            raw_predicted_labels=raw_labels,
             calibration_status="available",
             conformal_status="unavailable",
             ood_status="unavailable",
@@ -115,8 +117,6 @@ def _make_registry(tmp_path: Path) -> None:
     )
 
 
-
-
 class FakeObservationService:
     def get_observations(
         self,
@@ -187,6 +187,7 @@ def test_object_observation_endpoints_use_normalized_contract() -> None:
     assert payload["observation_count"] == 1
     assert payload["observations"][0]["photometry_source"] == "corrected"
     assert payload["provenance"]["source"] == "ALeRCE"
+
 
 def test_health_and_readiness(tmp_path: Path) -> None:
     _make_registry(tmp_path)
@@ -322,6 +323,7 @@ def test_missing_model_configuration_has_stable_error() -> None:
 class FakeAnalysisService:
     def __init__(self) -> None:
         from ztf_classifier.application.service import ApplicationService
+
         self._service = ApplicationService()
 
     def predict_dataframe(self, dataset, artifact_dir):
@@ -336,7 +338,7 @@ def test_object_analysis_contract_uses_fake_observations(
     fake = FakeObservationService()
     settings = ApiSettings(
         registry_dir=tmp_path,
-        default_model_version=None,
+        default_model_version="baseline_v0.2",
     )
     client = TestClient(
         create_app(settings, observation_service=fake)  # type: ignore[arg-type]

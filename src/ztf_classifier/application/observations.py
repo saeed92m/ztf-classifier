@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from ztf_classifier.application.errors import ObservationAcquisitionError
 from ztf_classifier.domain.observations import (
     ObjectObservationSummary,
     Observation,
@@ -33,9 +34,14 @@ class ObservationService:
         survey: str = "ztf",
     ) -> tuple[list[Observation], ObservationProvenance]:
         """Fetch one object's detections and normalize them."""
-        result = self._backend.acquire(
-            DetectionAcquisitionRequest(oid=oid, survey=survey)
-        )
+        try:
+            result = self._backend.acquire(
+                DetectionAcquisitionRequest(oid=oid, survey=survey)
+            )
+        except Exception as exc:
+            raise ObservationAcquisitionError(
+                "Observation acquisition failed."
+            ) from exc
         normalized, diagnostics = alerce_to_internal_lc_robust(
             result.detections,
             return_diagnostics=True,
