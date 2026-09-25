@@ -13,3 +13,7 @@ class ApplicationInputError(ApplicationError):
 
 class ApplicationInferenceError(ApplicationError):
     """Raised when production inference cannot be completed."""
+
+
+class ObservationAcquisitionError(ApplicationError):
+    """Raised when a source-backed observation request cannot be completed."""
