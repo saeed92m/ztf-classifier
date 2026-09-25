@@ -15,6 +15,14 @@ REQUIRED_FIELDS = (
     "benchmark_code_version",
 )
 
+DEFAULT_SCIENTIFIC_CHECKS = (
+    "object_overlap", "duplicate_objects", "target_leakage",
+    "future_data_leakage", "benchmark_trained_artifacts",
+    "preprocessing_consistency", "schema_compatibility",
+    "feature_generation_determinism", "qc_acceptance",
+    "inference_reproducibility", "failure_code_correctness",
+)
+
 
 @dataclass(frozen=True)
 class BenchmarkManifest:
@@ -46,11 +54,7 @@ class BenchmarkManifest:
     ood_label_column: str | None = None
     ood_score_column: str | None = None
     accepted_column: str | None = None
-    required_leakage_checks: tuple[str, ...] = (
-        "object_overlap", "duplicate_objects", "target_leakage",
-        "future_data_leakage", "benchmark_trained_artifacts",
-        "preprocessing_consistency",
-    )
+    required_leakage_checks: tuple[str, ...] = DEFAULT_SCIENTIFIC_CHECKS
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> BenchmarkManifest:
@@ -67,9 +71,12 @@ class BenchmarkManifest:
             raise ValueError("class_mapping must be a non-empty object")
         if not isinstance(payload["leakage_exclusions"], list):
             raise TypeError("leakage_exclusions must be a list")
-        required = payload.get("required_leakage_checks", list(cls.required_leakage_checks))
+        required = payload.get("required_leakage_checks", list(DEFAULT_SCIENTIFIC_CHECKS))
         if not isinstance(required, list) or not required:
             raise ValueError("required_leakage_checks must be a non-empty list")
+        unknown = set(required) - set(DEFAULT_SCIENTIFIC_CHECKS)
+        if unknown:
+            raise ValueError("unknown scientific checks: " + ", ".join(sorted(unknown)))
         return cls(
             benchmark_id=payload["benchmark_id"], dataset_name=payload["dataset_name"],
             source=payload["source"], version=payload["version"],
@@ -112,5 +119,6 @@ class BenchmarkManifest:
             "file_object_ids": self.file_object_ids,
             "hashes": self.hashes, "probability_columns": self.probability_columns,
             "ood_label_column": self.ood_label_column, "ood_score_column": self.ood_score_column,
-            "accepted_column": self.accepted_column, "required_leakage_checks": list(self.required_leakage_checks),
+            "accepted_column": self.accepted_column,
+            "required_leakage_checks": list(self.required_leakage_checks),
         }
