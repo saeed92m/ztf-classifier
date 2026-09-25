@@ -12,6 +12,7 @@ The server reads:
 
 - `ZTF_API_REGISTRY_DIR`: filesystem model registry visible to the server.
 - `ZTF_API_DEFAULT_MODEL_VERSION`: optional default registered model.
+- `ZTF_API_KEY`: optional bearer credential protecting versioned `/v1/` endpoints when configured.
 
 Clients never submit arbitrary artifact or registry filesystem paths.
 
@@ -148,3 +149,10 @@ Object-analysis and asynchronous job requests may provide:
 - feature_parameters: backend-specific deterministic parameters.
 
 The default backend is native, preserving the frozen v0.2 42-feature contract. Backend selection is recorded in feature provenance and the durable result payload.
+
+
+## Security boundary
+
+When ZTF_API_KEY is configured, versioned API endpoints require Authorization: Bearer <key>. Liveness/readiness endpoints remain public for deployment probes. The API never returns the configured credential.
+
+Every HTTP response receives an X-Request-ID. Clients may provide one; otherwise the server generates a UUID. The request ID is also included in stable API error envelopes.
