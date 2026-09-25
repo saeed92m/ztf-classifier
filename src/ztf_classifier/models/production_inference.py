@@ -123,10 +123,14 @@ class ProductionInferenceService:
                 is_top_10pct_anomaly=anomaly_flags[90.0],
             )
 
-        calibrated_probabilities = TemperatureScaler().transform(
-            inference.probabilities,
-            calibration.temperature,
-        )
+        calibrated_probabilities = None
+        calibration_status = "unavailable"
+        if calibration is not None:
+            calibrated_probabilities = TemperatureScaler().transform(
+                inference.probabilities,
+                calibration.temperature,
+            )
+            calibration_status = "available"
 
         try:
             software_version = version("ztf-classifier")
@@ -140,7 +144,7 @@ class ProductionInferenceService:
             calibrated_probabilities=calibrated_probabilities,
             conformal=conformal,
             ood=ood,
-            calibration_status="available",
+            calibration_status=calibration_status,
             conformal_status=(
                 "available" if conformal is not None else "unavailable"
             ),
