@@ -170,7 +170,8 @@ def test_object_observation_endpoints_use_normalized_contract() -> None:
     fake = FakeObservationService()
     client = TestClient(
         create_app(
-            ApiSettings(), observation_service=fake  # type: ignore[arg-type]
+            ApiSettings(),
+            observation_service=fake,  # type: ignore[arg-type]
         )
     )
 
