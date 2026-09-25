@@ -136,3 +136,26 @@ h1 { margin: 5px 0 4px; font-size: 22px; letter-spacing: -.02em; }
 .popover-note { margin: 12px 0 0; color: var(--color-text-secondary); font-size: 10px; line-height: 1.5; }
 @media (max-width: 1080px) { .workspace { grid-template-columns: 170px minmax(0, 1fr); } .inspector { display: none; } }
 @media (max-width: 760px) { .workspace { display: block; } .sidebar { display: none; } .main-canvas { padding: 16px; } .canvas-header { display: block; } .object-actions { margin-top: 12px; } .metric-grid { grid-template-columns: repeat(2, 1fr); } .lower-grid { grid-template-columns: 1fr; } }
+
+
+.catalog-table-wrap {
+  overflow: auto;
+}
+.catalog-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.catalog-table-wrap th,
+.catalog-table-wrap td {
+  padding: 0.7rem 0.8rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  white-space: nowrap;
+}
+.report-content {
+  margin: 0;
+  max-height: 70vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  font: 0.86rem/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
