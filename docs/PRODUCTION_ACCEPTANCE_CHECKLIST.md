@@ -1,12 +1,13 @@
 # Production Acceptance Checklist
 
-Current evidence: `reports/acceptance/final-platform-acceptance-2026-09-25.md`
+Current evidence: `reports/acceptance/final-platform-acceptance-2026-09-25.md` (audited against current `main`)
 
 This checklist is the final gate for the Astronomical Data Analysis & Discovery Platform layer.
 
 ## Scientific integrity
 
 - [x] v0.2.0 tag remains immutable.
+- [x] Current `main` scientific-validation gate is documented and release-blocking.
 - [x] Native v0.2 feature schema remains 42 features and deterministic.
 - [x] Source-backed analysis never fabricates observations.
 - [x] Scientific results retain object, survey, model, schema, provenance, and creation metadata.
@@ -55,4 +56,4 @@ The engineering/platform gates are implemented and CI-covered. The independent s
 
 ## Release evidence
 
-The release is accepted only after all engineering gates and the mandatory scientific-validation gate have executable evidence. CI success alone does not satisfy the scientific-validation gate.
+The release is accepted only after all engineering gates and the mandatory scientific-validation gate have executable evidence. CI success alone does not satisfy the scientific-validation gate. The release workflow enforces this boundary and must fail closed while any required scientific-validation item remains `NOT VERIFIED`.
