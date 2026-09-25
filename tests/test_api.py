@@ -619,3 +619,16 @@ def test_feature_backend_discovery_endpoint() -> None:
         "software_version": "ztf-classifier-native-v0.2",
         "feature_schema_version": "v0.2",
     }
+
+
+def test_object_analysis_rejects_unknown_feature_backend(tmp_path: Path) -> None:
+    settings = ApiSettings()
+    client = TestClient(create_app(settings))
+
+    response = client.post(
+        "/v1/objects/ZTF17test/analysis",
+        json={"survey": "ztf", "feature_backend": "missing"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "feature_backend_not_found"
