@@ -69,9 +69,14 @@ class JobStore:
                 )
                 """
             )
-            columns = {row[1] for row in connection.execute("PRAGMA table_info(analysis_jobs)")}
+            columns = {
+                row[1]
+                for row in connection.execute("PRAGMA table_info(analysis_jobs)")
+            }
             if "lease_expires_at" not in columns:
-                connection.execute("ALTER TABLE analysis_jobs ADD COLUMN lease_expires_at TEXT")
+                connection.execute(
+                    "ALTER TABLE analysis_jobs ADD COLUMN lease_expires_at TEXT"
+                )
             connection.execute(
                 """
                 CREATE INDEX IF NOT EXISTS idx_analysis_jobs_status_created
