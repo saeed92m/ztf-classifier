@@ -12,6 +12,20 @@ This checklist is the final gate for the Astronomical Data Analysis & Discovery 
 - [ ] Scientific results retain object, survey, model, schema, provenance, and creation metadata.
 - [ ] Reports and catalog exports are derived read-only views.
 
+## Scientific validation
+
+- [ ] Independent labeled benchmark manifest is pinned.
+- [ ] Ground-truth provenance and label taxonomy are documented.
+- [ ] Object-level train/test leakage checks pass.
+- [ ] External benchmark execution succeeds.
+- [ ] Per-class classification metrics and confusion matrix are recorded.
+- [ ] Calibration/probabilistic diagnostics are recorded where applicable.
+- [ ] OOD and explicit failure-case validation are recorded.
+- [ ] Independent classifier outputs are separated from ground truth.
+- [ ] ZTF source-backed reproduction is pinned to a documented release/subset.
+- [ ] Benchmark results are reproducible from the recorded manifest.
+- [ ] Scientific regressions are resolved or explicitly dispositioned before release.
+
 ## Persistence
 
 - [ ] Job lifecycle is durable and lease-aware.
