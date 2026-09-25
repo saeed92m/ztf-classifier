@@ -3,8 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - main
-      - "chore/complete-upgrade-v0.4"
+      - "**"
   pull_request:
     branches:
       - main

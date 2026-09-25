@@ -54,6 +54,12 @@ class JobStore:
     _STATUSES: ClassVar[frozenset[str]] = frozenset(
         {"queued", "running", "succeeded", "failed"}
     )
+    _ALLOWED_TRANSITIONS: ClassVar[dict[str, frozenset[str]]] = {
+        "queued": frozenset({"running"}),
+        "running": frozenset({"succeeded", "failed"}),
+        "succeeded": frozenset(),
+        "failed": frozenset(),
+    }
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -307,12 +313,26 @@ class JobStore:
         if status not in self._STATUSES:
             raise ValueError(f"Unsupported job status: {status}")
         now = self._now()
-        with sqlite3.connect(self.path) as connection:
-            updated = connection.execute(
+        with sqlite3.connect(self.path, timeout=30.0) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            current = connection.execute(
+                "SELECT status FROM analysis_jobs WHERE job_id = ?",
+                (job_id,),
+            ).fetchone()
+            if current is None:
+                connection.rollback()
+                raise KeyError(job_id)
+            current_status = current[0]
+            if status not in self._ALLOWED_TRANSITIONS[current_status]:
+                connection.rollback()
+                raise ValueError(
+                    f"Invalid job transition: {current_status} -> {status}"
+                )
+            connection.execute(
                 """
                 UPDATE analysis_jobs
                 SET status = ?, updated_at = ?, result_json = ?, error_json = ?, lease_expires_at = NULL, scientific_result_id = ?
-                WHERE job_id = ?
+                WHERE job_id = ? AND status = ?
                 """,
                 (
                     status,
@@ -321,10 +341,10 @@ class JobStore:
                     json.dumps(error) if error is not None else None,
                     scientific_result_id,
                     job_id,
+                    current_status,
                 ),
-            ).rowcount
-        if updated != 1:
-            raise KeyError(job_id)
+            )
+            connection.commit()
         return self.get(job_id)
 
 
