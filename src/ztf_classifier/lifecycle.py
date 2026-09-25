@@ -93,9 +93,11 @@ def validate_cycle_record(record: dict[str, Any]) -> list[str]:
                 if isinstance(value, dict):
                     before = value.get("before")
                     after = value.get("after")
-                    if before is None and after is None and value.get("status") != "NOT_MEASURED":
+                    measured = before is not None and after is not None
+                    if not measured and value.get("status") != "NOT_MEASURED":
                         errors.append(
-                            f"metric {name} needs before/after or status=NOT_MEASURED"
+                            f"metric {name} needs before/after or "
+                            "status=NOT_MEASURED"
                         )
     elif measurement is not None:
         errors.append("measurement must be an object")
@@ -106,7 +108,8 @@ def validate_cycle_record(record: dict[str, Any]) -> list[str]:
             "evidence"
         ):
             errors.append(
-                "scientific-gate changes require validation evidence or an explicit blocker"
+                "scientific-gate changes require validation evidence or an explicit "
+                "blocker"
             )
 
     return errors
