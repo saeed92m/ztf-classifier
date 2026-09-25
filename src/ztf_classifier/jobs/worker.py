@@ -25,7 +25,7 @@ class AnalysisJobWorker:
 
         try:
             result = self.executor(job)
-        except Exception:
+        except RuntimeError:
             return self.store.transition(
                 job.job_id,
                 status="failed",
