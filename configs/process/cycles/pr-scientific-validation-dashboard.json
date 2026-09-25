@@ -1,0 +1,30 @@
+{
+  "cycle_id": "scientific-validation-dashboard",
+  "change": {
+    "scope": "Expose the fail-closed Scientific Validation Gate through the API and Workbench.",
+    "intent": "Make release-blocking scientific evidence visible as a first-class product surface without converting missing evidence into PASS."
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Versioned /v1/scientific-validation endpoint evaluates the existing fail-closed gate.",
+      "Workbench has a dedicated Scientific Validation view.",
+      "Dashboard reports benchmark blockers and source-probe provenance separately."
+    ]
+  },
+  "failure_analysis": {
+    "status": "no-known-failure",
+    "root_causes": []
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "SF-001",
+    "SF-002",
+    "FD-001"
+  ]
+}
