@@ -56,7 +56,7 @@ def test_scientific_cycle_requires_validation_evidence_or_blocker():
 
 def test_accepted_cycle_cannot_hide_regression():
     record = valid_record()
-    record["regression"] = {"status": "BLOCKED", "open_blockers": ["benchmark"}
+    record["regression"] = {"status": "BLOCKED", "open_blockers": ["benchmark"]}
     errors = validate_cycle_record(record)
     assert any("ACCEPT decisions require" in error for error in errors)
 
