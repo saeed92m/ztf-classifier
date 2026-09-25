@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import secrets
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
@@ -36,9 +36,9 @@ from ztf_classifier.api.schemas import (
     ServiceStatusResponse,
 )
 from ztf_classifier.application.errors import ApplicationInferenceError
-from ztf_classifier.catalog import ScientificCatalogService
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.application.service import ApplicationService
+from ztf_classifier.catalog import ScientificCatalogService
 from ztf_classifier.features import ScientificFeatureEngine
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
 from ztf_classifier.jobs.store import JobStore
