@@ -9,6 +9,7 @@ from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
 from ztf_classifier.jobs.store import JobStore
 from ztf_classifier.jobs.worker import AnalysisJobWorker
+from ztf_classifier.results import ScientificResultStore
 
 
 def create_worker(settings: ApiSettings | None = None) -> AnalysisJobWorker:
@@ -25,6 +26,7 @@ def create_worker(settings: ApiSettings | None = None) -> AnalysisJobWorker:
     return AnalysisJobWorker(
         JobStore(api_settings.job_store_path),
         executor,
+        ScientificResultStore(api_settings.result_store_path),
     )
 
 
