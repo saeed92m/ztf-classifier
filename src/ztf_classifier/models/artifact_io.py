@@ -31,7 +31,6 @@ REQUIRED_FILES_V1_0 = (
     "model",
     "model_contract",
     "feature_schema",
-    "calibration",
     "provenance",
 )
 
@@ -83,7 +82,7 @@ class LoadedModelArtifact:
     """Complete production artifact loaded from disk."""
 
     model_artifact: ModelArtifact
-    calibration: CalibrationArtifact
+    calibration: CalibrationArtifact | None
     provenance: ModelProvenance
     conformal: ConformalArtifact | None = None
     ood: OODArtifact | None = None
@@ -102,7 +101,7 @@ class ModelArtifactWriter:
         artifact: ModelArtifact,
         output_dir: Path,
         feature_schema_path: Path,
-        calibration: CalibrationArtifact,
+        calibration: CalibrationArtifact | None = None,
         provenance: ModelProvenance,
         conformal: ConformalArtifact | None = None,
         ood: OODArtifact | None = None,
@@ -163,18 +162,28 @@ class ModelArtifactWriter:
                 "does not match provenance."
             )
 
-        if calibration.method != provenance.calibration_method:
-            raise ValueError(
-                "Calibration method does not match provenance."
-            )
-
-        if (
-            calibration.temperature
-            != provenance.calibration_temperature
-        ):
-            raise ValueError(
-                "Calibration temperature does not match provenance."
-            )
+        if calibration is None:
+            if any(
+                value is not None
+                for value in (
+                    provenance.calibration_method,
+                    provenance.calibration_temperature,
+                    provenance.calibration_source_path,
+                    provenance.calibration_source_sha256,
+                )
+            ):
+                raise ValueError(
+                    "Calibration provenance is present but calibration artifact is missing."
+                )
+        else:
+            if provenance.calibration_method != calibration.method:
+                raise ValueError(
+                    "Calibration method does not match provenance."
+                )
+            if provenance.calibration_temperature != calibration.temperature:
+                raise ValueError(
+                    "Calibration temperature does not match provenance."
+                )
 
         diagnostics = (
             conformal is not None
@@ -276,7 +285,8 @@ class ModelArtifactWriter:
             schema_path,
         )
 
-        calibration.write(calibration_path)
+        if calibration is not None:
+            calibration.write(calibration_path)
         provenance.write(provenance_path)
 
         if diagnostics:
@@ -343,10 +353,6 @@ class ModelArtifactWriter:
                     "path": "feature_schema.parquet",
                     "sha256": _sha256(schema_path),
                 },
-                "calibration": {
-                    "path": "calibration.json",
-                    "sha256": _sha256(calibration_path),
-                },
                 "provenance": {
                     "path": "provenance.json",
                     "sha256": _sha256(provenance_path),
@@ -366,6 +372,12 @@ class ModelArtifactWriter:
             manifest["files"]["ood_model"] = {
                 "path": "ood_model.joblib",
                 "sha256": _sha256(ood_model_path),
+            }
+
+        if calibration is not None:
+            manifest["files"]["calibration"] = {
+                "path": "calibration.json",
+                "sha256": _sha256(calibration_path),
             }
 
         manifest["model_file_sha256"] = manifest["files"]["model"]["sha256"]
@@ -489,9 +501,34 @@ class ModelArtifactLoader:
             manifest,
         )
 
-        calibration = CalibrationArtifact.read(
-            paths["calibration"]
-        )
+        calibration = None
+        calibration_metadata = files.get("calibration")
+        if calibration_metadata is not None:
+            calibration_path = (artifact_dir / calibration_metadata["path"]).resolve()
+            try:
+                calibration_path.relative_to(artifact_dir)
+            except ValueError as exc:
+                raise ValueError(
+                    "Artifact calibration path escapes artifact directory."
+                ) from exc
+            if not calibration_path.is_file():
+                raise FileNotFoundError(
+                    f"Artifact file does not exist: {calibration_path}"
+                )
+            expected_hash = calibration_metadata.get("sha256")
+            actual_hash = _sha256(calibration_path)
+            if expected_hash is None:
+                message = (
+                    "Artifact file 'calibration' has no checksum; "
+                    "legacy integrity status is unverified."
+                )
+                integrity_warnings.append(message)
+                warnings.warn(message, UserWarning, stacklevel=2)
+            elif actual_hash != expected_hash:
+                raise ValueError(
+                    "Artifact integrity check failed for 'calibration'."
+                )
+            calibration = CalibrationArtifact.read(calibration_path)
 
         provenance_data = json.loads(
             paths["provenance"].read_text(
@@ -536,17 +573,25 @@ class ModelArtifactLoader:
             model_config_sha256=str(
                 provenance_data["model_configuration"]["sha256"]
             ),
-            calibration_method=str(
-                provenance_data["calibration"]["method"]
+            calibration_method=(
+                str(provenance_data["calibration"]["method"])
+                if provenance_data.get("calibration") is not None
+                else None
             ),
-            calibration_temperature=float(
-                provenance_data["calibration"]["temperature"]
+            calibration_temperature=(
+                float(provenance_data["calibration"]["temperature"])
+                if provenance_data.get("calibration") is not None
+                else None
             ),
-            calibration_source_path=str(
-                provenance_data["calibration"]["source_path"]
+            calibration_source_path=(
+                str(provenance_data["calibration"]["source_path"])
+                if provenance_data.get("calibration") is not None
+                else None
             ),
-            calibration_source_sha256=str(
-                provenance_data["calibration"]["source_sha256"]
+            calibration_source_sha256=(
+                str(provenance_data["calibration"]["source_sha256"])
+                if provenance_data.get("calibration") is not None
+                else None
             ),
             git_commit=str(
                 provenance_data["source_control"]["git_commit"]

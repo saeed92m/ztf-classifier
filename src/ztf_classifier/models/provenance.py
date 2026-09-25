@@ -63,10 +63,10 @@ class ModelProvenance:
     feature_schema_sha256: str
     model_config_path: str
     model_config_sha256: str
-    calibration_method: str
-    calibration_temperature: float
-    calibration_source_path: str
-    calibration_source_sha256: str
+    calibration_method: str | None
+    calibration_temperature: float | None
+    calibration_source_path: str | None
+    calibration_source_sha256: str | None
     git_commit: str
     git_dirty: bool
     python_version: str
@@ -99,12 +99,18 @@ class ModelProvenance:
                 "path": self.model_config_path,
                 "sha256": self.model_config_sha256,
             },
-            "calibration": {
-                "method": self.calibration_method,
-                "temperature": self.calibration_temperature,
-                "source_path": self.calibration_source_path,
-                "source_sha256": self.calibration_source_sha256,
-            },
+            **(
+                {
+                    "calibration": {
+                        "method": self.calibration_method,
+                        "temperature": self.calibration_temperature,
+                        "source_path": self.calibration_source_path,
+                        "source_sha256": self.calibration_source_sha256,
+                    }
+                }
+                if self.calibration_method is not None
+                else {}
+            ),
             "source_control": {
                 "git_commit": self.git_commit,
                 "git_dirty": self.git_dirty,
