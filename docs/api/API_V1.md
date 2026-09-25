@@ -119,3 +119,9 @@ Completed jobs persist their scientific payload through `ScientificResultStore`.
 - A missing result returns a stable 404 error.
 - Server configuration: `ZTF_API_RESULT_STORE` selects the SQLite result database; the default is `data/results/results.sqlite3`.
 - The job queue remains the lifecycle boundary; `ScientificResultStore` is the canonical scientific-history boundary.
+
+### Latest durable object result
+
+**GET** `/v1/objects/{oid}/results/latest?survey=ztf`
+
+Returns the newest persisted scientific result for the object and survey. The endpoint reads only from the canonical `ScientificResultStore`; it does not execute inference. If no durable result exists, the API returns `404 scientific_result_not_found`.
