@@ -90,6 +90,10 @@ class ScientificFeatureEngine:
         """Return deterministic registered backend names."""
         return tuple(sorted(self._backends))
 
+    def all_backend_metadata(self) -> tuple[dict[str, str], ...]:
+        """Return deterministic metadata for all registered backends."""
+        return tuple(self.backend_metadata(name) for name in self.list_backends())
+
     def compute(
         self,
         observations: pd.DataFrame,
