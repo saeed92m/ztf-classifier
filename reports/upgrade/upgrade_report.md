@@ -3,7 +3,8 @@
 Date: 2026-09-25
 Branch: chore/complete-upgrade-v0.4
 Baseline commit: 0c615b09813e0f5a8e61a895d371789e3ab1e21f
-Final validated commit before documentation closeout: 80557eac1c8964409d3c45772efc8d644a9dfea6
+Final validated implementation commit: 80557eac1c8964409d3c45772efc8d644a9dfea6
+Merge commit on main: 457b887b1a08ede4fdce3f2ca2e3ce6c2b3a47d8
 
 ## Summary
 
