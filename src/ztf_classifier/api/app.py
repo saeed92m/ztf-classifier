@@ -19,6 +19,8 @@ from ztf_classifier.api.schemas import (
     AnalysisJobRequest,
     AnalysisJobResponse,
     ErrorResponse,
+    FeatureBackendListResponse,
+    FeatureBackendResponse,
     ModelResponse,
     ObjectAnalysisRequest,
     ObjectAnalysisResponse,
@@ -35,6 +37,7 @@ from ztf_classifier.application.errors import ApplicationInferenceError
 from ztf_classifier.catalog import ScientificCatalogService
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.application.service import ApplicationService
+from ztf_classifier.features import ScientificFeatureEngine
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
 from ztf_classifier.jobs.store import JobStore
 from ztf_classifier.models.classes import MODEL_CLASSES
@@ -245,6 +248,7 @@ def create_app(
     results = ScientificResultStore(api_settings.result_store_path)
     catalog = ScientificCatalogService(results)
     reports = ScientificReportService()
+    feature_engine = ScientificFeatureEngine()
     executor = analysis_executor or SourceBackedAnalysisExecutor(
         api_settings,
         observation_service=observations,
@@ -326,6 +330,20 @@ def create_app(
         return ServiceStatusResponse(
             status="ready",
             model_version=version,
+        )
+
+    @app.get(
+        "/v1/features/backends",
+        response_model=FeatureBackendListResponse,
+        tags=["features"],
+    )
+    def list_feature_backends() -> FeatureBackendListResponse:
+        """Return registered scientific feature backend metadata."""
+        return FeatureBackendListResponse(
+            backends=[
+                FeatureBackendResponse(**metadata)
+                for metadata in feature_engine.all_backend_metadata()
+            ]
         )
 
     @app.get(
