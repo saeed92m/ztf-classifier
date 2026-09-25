@@ -20,6 +20,7 @@ Every implementation cycle consumes validated prior knowledge, records its inher
 - Large benchmark datasets stay outside Git; manifests, checksums, contracts, configurations, and reports are versioned. — VERIFIED
 - Generic leakage checks that cannot be established are NOT_EXECUTED and block scientific acceptance. — VERIFIED
 - Historical ALeRCE raw-cache reproduction is currently blocked by external-data drift; frozen assertions must not be weakened. — VERIFIED / UNRESOLVED for completion
+- Meaningful PRs must carry a validated machine-readable cumulative cycle record; CI must reject changes that bypass this evidence. — VERIFIED
 
 ## Addition rule
 
