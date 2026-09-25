@@ -109,6 +109,8 @@ class ObjectAnalysisResponse(BaseModel):
     observations: list[dict[str, Any]]
     features: dict[str, float]
     feature_schema_version: str
+    feature_backend: str = "native"
+    feature_parameters: dict[str, Any] = Field(default_factory=dict)
     feature_provenance: dict[str, Any]
     prediction: PredictionItem
     model_version: str
