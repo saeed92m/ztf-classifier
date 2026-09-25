@@ -230,6 +230,7 @@ def create_app(
     application_service: ApplicationService | None = None,
     observation_service: ObservationService | None = None,
     analysis_executor: SourceBackedAnalysisExecutor | None = None,
+    feature_engine: ScientificFeatureEngine | None = None,
 ) -> FastAPI:
     """Create the production API application."""
     api_settings = settings or ApiSettings.from_environment()
@@ -250,11 +251,12 @@ def create_app(
     results = ScientificResultStore(api_settings.result_store_path)
     catalog = ScientificCatalogService(results)
     reports = ScientificReportService()
-    feature_engine = ScientificFeatureEngine()
+    selected_feature_engine = feature_engine or ScientificFeatureEngine()
     executor = analysis_executor or SourceBackedAnalysisExecutor(
         api_settings,
         observation_service=observations,
         application_service=service,
+        feature_engine=selected_feature_engine,
     )
 
     static_dir = Path(__file__).resolve().parents[1] / "web" / "static"
@@ -370,7 +372,7 @@ def create_app(
         return FeatureBackendListResponse(
             backends=[
                 FeatureBackendResponse(**metadata)
-                for metadata in feature_engine.all_backend_metadata()
+                for metadata in selected_feature_engine.all_backend_metadata()
             ]
         )
 
@@ -433,7 +435,7 @@ def create_app(
         request: AnalysisJobRequest,
     ) -> AnalysisJobResponse:
         """Persist an analysis request for asynchronous execution."""
-        if request.feature_backend not in feature_engine.list_backends():
+        if request.feature_backend not in selected_feature_engine.list_backends():
             raise ApiContractError(
                 "feature_backend_not_found",
                 f"Feature backend is not registered: {request.feature_backend}",
