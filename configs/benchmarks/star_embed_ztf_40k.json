@@ -2,7 +2,7 @@
   "benchmark_id": "star_embed_ztf_40k",
   "dataset_name": "StarEmbed ZTF_40k",
   "source": "Hugging Face StarEmbed/ZTF_40k",
-  "version": "2026-05 dataset snapshot",
+  "version": "2026-05 dataset snapshot @ 18db85e",
   "retrieval_date": "2026-09-25",
   "source_url": "https://huggingface.co/datasets/StarEmbed/ZTF_40k",
   "doi": "10.48550/arXiv.2510.06200",
@@ -37,7 +37,7 @@
     "no_fit_on_test": true
   },
   "input_contract": {
-    "adapter": "star_embed",
+    "adapter": "star_embed_ztf_40k",
     "prediction_column": "y_pred"
   },
   "ground_truth_provenance": {

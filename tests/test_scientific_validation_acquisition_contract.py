@@ -17,13 +17,13 @@ def test_request_from_benchmark_binds_canonical_source_and_version():
     assert request.source_version == "v1 published 2020-06-11"
 
 
-def test_request_from_benchmark_uses_canonical_adapter_plan_when_urls_omitted():
-    request = request_from_benchmark(
-        "configs/benchmarks",
-        "star_embed_ztf_40k",
-        destination="/tmp/star_embed.snapshot",
-    )
-    assert request.urls == ("https://huggingface.co/datasets/StarEmbed/ZTF_40k",)
+def test_request_from_benchmark_fails_closed_without_verified_star_embed_revision():
+    with pytest.raises(AcquisitionError, match="invalid canonical adapter contract"):
+        request_from_benchmark(
+            "configs/benchmarks",
+            "star_embed_ztf_40k",
+            destination="/tmp/star_embed.snapshot",
+        )
 
 
 def test_730k_request_requires_parent_evidence_binding():
@@ -38,10 +38,10 @@ def test_730k_request_requires_parent_evidence_binding():
 def test_acquisition_rejects_html_payload_without_creating_evidence(tmp_path):
     request = AcquisitionRequest(
         benchmark_id="ztf_periodic_781k",
-        source_id="ztf_periodic_781k",
+        source_id="star_embed_ztf_40k",
         destination=tmp_path / "artifact.bin",
         urls=("https://example.test/landing",),
-        source_version="v1 published 2020-06-11",
+        source_version="2026-05 dataset snapshot",
     )
 
     def fetcher(_url: str, _timeout: float) -> bytes:
@@ -51,3 +51,19 @@ def test_acquisition_rejects_html_payload_without_creating_evidence(tmp_path):
     assert result.status == "BLOCKED_EXTERNAL"
     assert not request.destination.exists()
     assert result.evidence_manifest is None
+
+
+def test_multi_artifact_acquisition_binds_all_artifacts(tmp_path):
+    payloads = {"https://example.test/a": b"alpha", "https://example.test/b": b"beta"}
+    request = AcquisitionRequest(
+        benchmark_id="ztf_periodic_781k",
+        source_id="star_embed_ztf_40k",
+        destination=tmp_path / "snapshot",
+        urls=tuple(payloads),
+        artifact_names=("a.bin", "b.bin"),
+        source_version="2026-05 dataset snapshot",
+    )
+    result = acquire_source(request, code_version="test", fetcher=lambda url, _timeout: payloads[url])
+    assert result.status == "ACQUIRED"
+    assert result.evidence_manifest is not None
+    assert len(result.evidence_manifest.artifacts) == 2

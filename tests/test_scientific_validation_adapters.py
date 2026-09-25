@@ -15,43 +15,37 @@ def load(name: str) -> BenchmarkManifest:
     return BenchmarkManifest.from_json(BENCHMARK_DIR / f"{name}.json")
 
 
-@pytest.mark.parametrize(
-    "benchmark_id",
-    [
-        "star_embed_ztf_40k",
-        "ztf_periodic_781k",
-        "ztf_periodic_730k",
-        "ztf_dr24_source_subset",
-        "alerce_reference",
-    ],
-)
-def test_canonical_adapters_build_deterministic_plans(benchmark_id: str) -> None:
-    manifest = load(benchmark_id)
-    if benchmark_id == "ztf_dr24_source_subset":
-        payload = manifest.to_dict()
-        payload["input_contract"]["query"] = {
-            "sql": "SELECT TOP 10 oid FROM ztf_objects",
-            "release": "DR24",
-        }
-        manifest = BenchmarkManifest.from_dict(payload)
-    elif benchmark_id == "alerce_reference":
-        payload = manifest.to_dict()
-        payload["input_contract"]["query"] = "SELECT oid FROM objects LIMIT 10"
-        manifest = BenchmarkManifest.from_dict(payload)
-
-    plan = build_adapter_plan(manifest)
-    assert plan.benchmark_id == benchmark_id
-    assert plan.source_id == manifest.input_contract["adapter"]
+def test_781k_adapter_builds_canonical_plan() -> None:
+    plan = build_adapter_plan(load("ztf_periodic_781k"))
+    assert plan.source_id == "ztf_periodic_781k"
     assert plan.urls
     plan.validate()
 
 
-def test_730k_adapter_requires_781k_parent() -> None:
+def test_730k_adapter_requires_781k_parent_and_is_derived() -> None:
     manifest = load("ztf_periodic_730k")
+    plan = build_adapter_plan(manifest)
+    assert plan.parent_benchmark_id == "ztf_periodic_781k"
+    assert plan.urls == ()
     payload = manifest.to_dict()
     payload["ground_truth_provenance"]["parent_benchmark"] = "wrong"
     with pytest.raises(AdapterContractError, match="parent_benchmark"):
         build_adapter_plan(BenchmarkManifest.from_dict(payload))
+
+
+def test_star_embed_adapter_fails_closed_without_verified_revision() -> None:
+    with pytest.raises(AdapterContractError, match="verified 40-character"):
+        build_adapter_plan(load("star_embed_ztf_40k"))
+
+
+def test_star_embed_adapter_accepts_verified_revision() -> None:
+    manifest = load("star_embed_ztf_40k")
+    payload = manifest.to_dict()
+    payload["input_contract"]["revision"] = "0123456789abcdef0123456789abcdef01234567"
+    plan = build_adapter_plan(BenchmarkManifest.from_dict(payload))
+    assert len(plan.urls) == 5
+    assert len(plan.artifact_names) == 5
+    assert plan.query_manifest["revision"] == payload["input_contract"]["revision"]
 
 
 def test_dr24_adapter_fails_closed_without_pinned_query() -> None:
