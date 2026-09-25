@@ -71,6 +71,12 @@ def _resolve_model_version(
     settings: ApiSettings,
 ) -> str:
     """Resolve an explicit request model or the server default."""
+    if settings.registry_dir is None:
+        raise ApiContractError(
+            "model_not_configured",
+            "No model registry is configured for this API instance.",
+            status_code=503,
+        )
     version = requested or settings.default_model_version
     if not version:
         raise ApiContractError(
