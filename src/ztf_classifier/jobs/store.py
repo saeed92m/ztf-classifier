@@ -54,6 +54,12 @@ class JobStore:
     _STATUSES: ClassVar[frozenset[str]] = frozenset(
         {"queued", "running", "succeeded", "failed"}
     )
+    _ALLOWED_TRANSITIONS: ClassVar[dict[str, frozenset[str]]] = {
+        "queued": frozenset({"running"}),
+        "running": frozenset({"succeeded", "failed"}),
+        "succeeded": frozenset(),
+        "failed": frozenset(),
+    }
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -308,6 +314,17 @@ class JobStore:
             raise ValueError(f"Unsupported job status: {status}")
         now = self._now()
         with sqlite3.connect(self.path) as connection:
+            current = connection.execute(
+                "SELECT status FROM analysis_jobs WHERE job_id = ?",
+                (job_id,),
+            ).fetchone()
+            if current is None:
+                raise KeyError(job_id)
+            current_status = current[0]
+            if status not in self._ALLOWED_TRANSITIONS[current_status]:
+                raise ValueError(
+                    f"Invalid job transition: {current_status} -> {status}"
+                )
             updated = connection.execute(
                 """
                 UPDATE analysis_jobs
