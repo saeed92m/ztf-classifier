@@ -287,7 +287,10 @@ src/ztf_classifier/
 ├── application/       Application and batch inference services
 ├── cli/               Command-line interface
 ├── dataset/           Dataset construction and validation
-├── features/          Feature engineering
+├── features/          Scientific Feature Engine and extensible backends
+├── incremental/       Restart-safe incremental analysis checkpoints
+├── catalog/            Durable scientific catalog query/export
+├── reporting/          Deterministic scientific report generation
 ├── io/                ZTF / ALeRCE data access and storage
 ├── models/             Model, calibration, conformal, OOD, and inference
 ├── pipeline/          Dataset and model pipelines
@@ -308,3 +311,30 @@ The benchmark is intentionally small and balanced. Its labels originate from ALe
 Performance measured on the current 150-object benchmark should not be interpreted as representative of the full ZTF population.
 
 The system is intended as a reproducible foundation for future scaling, broader validation, and deployment-oriented development. See `docs/DATA_CARD.md` and `docs/MODEL_CARD.md` for the current dataset and model limitations.
+
+
+## Astronomical Data Analysis & Discovery Platform layer
+
+The classifier is being expanded into a unified astronomical analysis application while preserving the frozen scientific v0.2.0 baseline.
+
+Current platform contracts include:
+
+* normalized ALeRCE-backed observation APIs;
+* source-backed single-object scientific analysis;
+* persistent analysis jobs with leases and stable result references;
+* a durable scientific-result repository;
+* Workbench views backed by real observations and persisted results;
+* paginated scientific catalog queries and deterministic CSV export;
+* deterministic Markdown reports derived from persisted scientific results;
+* restart-safe incremental result cursors and durable checkpoints;
+* an extensible Scientific Feature Engine with explicit backend registration, schema versions, and provenance;
+* optional API-key protection for versioned endpoints and generated request IDs.
+
+The native feature backend remains the default and preserves the frozen 42-feature v0.2 contract. New feature backends are versioned independently and do not mutate historical results.
+
+### API and Workbench
+
+The FastAPI service exposes the versioned API contract documented in docs/api/API_V1.md. The Scientific Analysis Workbench is served at /workbench/ and consumes the same API boundaries rather than duplicating scientific logic.
+
+Runtime result/job/checkpoint databases are external runtime state and are intentionally ignored by Git. Deployment configuration is documented in .env.example.
+
