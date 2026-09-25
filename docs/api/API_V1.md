@@ -107,3 +107,15 @@ Server-side observation caching is configured with ZTF_API_OBSERVATION_CACHE_DIR
 - The initial implementation uses SQLite and explicit states: `queued`, `running`, `succeeded`, and `failed`.
 - Server configuration: `ZTF_API_JOB_STORE` selects the SQLite path; the default is `data/jobs/jobs.sqlite3`.
 - Job persistence is deliberately separated from execution. A worker/orchestrator can claim queued jobs without changing the public API contract.
+
+## Durable scientific results
+
+Completed jobs persist their scientific payload through `ScientificResultStore`.
+
+- `GET /v1/jobs/{job_id}/result` returns the canonical durable result for a completed job.
+- `GET /v1/results/{result_id}` returns the same versioned result by stable result id.
+- The result response includes `result_id`, `job_id`, object/survey/model metadata, schema version, creation time, and the persisted scientific payload.
+- A queued or running job returns `job_result_not_ready` with HTTP 409.
+- A missing result returns a stable 404 error.
+- Server configuration: `ZTF_API_RESULT_STORE` selects the SQLite result database; the default is `data/results/results.sqlite3`.
+- The job queue remains the lifecycle boundary; `ScientificResultStore` is the canonical scientific-history boundary.
