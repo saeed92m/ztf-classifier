@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="ZTF Classifier Scientific Analysis Workbench" />
+    <title>ZTF Scientific Analysis Workbench</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell" id="app">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">α</div>
+          <div>
+            <div class="brand-name">ALPHA</div>
+            <div class="brand-product">Scientific Analysis Workbench</div>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span class="connection-state"><span class="status-dot"></span>API ready</span>
+          <button class="icon-button" id="themeButton" type="button" aria-label="Open theme settings">◐</button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <aside class="sidebar" aria-label="Workbench navigation">
+          <div class="section-label">ANALYSIS</div>
+          <button class="nav-item active" data-view="overview">Overview</button>
+          <button class="nav-item" data-view="observations">Observations</button>
+          <button class="nav-item" data-view="features">Features</button>
+          <button class="nav-item" data-view="classification">Classification</button>
+          <button class="nav-item" data-view="uncertainty">Uncertainty &amp; OOD</button>
+          <button class="nav-item" data-view="provenance">Provenance</button>
+          <div class="section-label">WORKSPACE</div>
+          <button class="nav-item" data-view="batch">Batch jobs</button>
+          <button class="nav-item" data-view="catalog">Catalog</button>
+          <button class="nav-item" data-view="reports">Reports</button>
+          <div class="sidebar-footer">
+            <div class="mini-label">MODEL</div>
+            <div class="model-chip">baseline_v0.2</div>
+            <div class="mini-label">API</div>
+            <div class="muted">v1 · registry-backed</div>
+          </div>
+        </aside>
+
+        <main class="main-canvas">
+          <div class="canvas-header">
+            <div>
+              <div class="eyebrow">OBJECT ANALYSIS</div>
+              <h1 id="viewTitle">ZTF17aaanmso</h1>
+              <p id="viewSubtitle">Scientific overview · 150-sample benchmark workspace</p>
+            </div>
+            <div class="object-actions">
+              <button class="secondary-button" type="button">Export report</button>
+              <button class="primary-button" type="button">Run analysis</button>
+            </div>
+          </div>
+
+          <section class="metric-grid" aria-label="Object summary">
+            <article class="metric-card"><span>Predicted class</span><strong id="predictedClass">CEP</strong><small>calibrated model output</small></article>
+            <article class="metric-card"><span>Top probability</span><strong>38.7%</strong><small>15-class probability vector</small></article>
+            <article class="metric-card"><span>Conformal set</span><strong>3 classes</strong><small>α = 0.10</small></article>
+            <article class="metric-card"><span>OOD percentile</span><strong>92.7</strong><small>reference distribution</small></article>
+          </section>
+
+          <section class="panel chart-panel">
+            <div class="panel-header">
+              <div><div class="panel-title">Light curve</div><div class="panel-subtitle">Observation-domain view · flux/magnitude history</div></div>
+              <div class="legend"><span><i class="legend-dot observation"></i>observations</span><span><i class="legend-dot uncertainty"></i>uncertainty</span></div>
+            </div>
+            <div class="chart" role="img" aria-label="Illustrative light curve">
+              <svg viewBox="0 0 900 280" preserveAspectRatio="none">
+                <g class="grid-lines">
+                  <line x1="0" y1="55" x2="900" y2="55"></line><line x1="0" y1="110" x2="900" y2="110"></line>
+                  <line x1="0" y1="165" x2="900" y2="165"></line><line x1="0" y1="220" x2="900" y2="220"></line>
+                </g>
+                <path class="curve-band" d="M0 164 C55 150 82 185 135 142 S218 104 270 146 S355 197 405 125 S485 76 540 128 S620 194 674 119 S750 90 805 143 S865 175 900 122 L900 154 C845 203 805 157 750 116 S680 171 620 210 S545 151 485 105 S410 152 355 218 S270 168 218 128 S150 171 95 201 S42 180 0 188 Z"></path>
+                <path class="curve-line" d="M0 176 C55 162 82 197 135 154 S218 116 270 158 S355 209 405 137 S485 88 540 140 S620 206 674 131 S750 102 805 155 S865 187 900 134"></path>
+                <g class="points">
+                  <circle cx="32" cy="169" r="3"></circle><circle cx="98" cy="187" r="3"></circle><circle cx="168" cy="133" r="3"></circle>
+                  <circle cx="236" cy="137" r="3"></circle><circle cx="305" cy="176" r="3"></circle><circle cx="377" cy="176" r="3"></circle>
+                  <circle cx="447" cy="105" r="3"></circle><circle cx="515" cy="122" r="3"></circle><circle cx="588" cy="176" r="3"></circle>
+                  <circle cx="654" cy="144" r="3"></circle><circle cx="728" cy="112" r="3"></circle><circle cx="801" cy="152" r="3"></circle><circle cx="873" cy="169" r="3"></circle>
+                </g>
+              </svg>
+              <div class="axis-label x">MJD →</div>
+              <div class="axis-label y">mag</div>
+            </div>
+          </section>
+
+          <div class="lower-grid">
+            <section class="panel">
+              <div class="panel-header"><div><div class="panel-title">Classification</div><div class="panel-subtitle">Calibrated probability distribution</div></div><button class="text-button">Details</button></div>
+              <div class="probability-list">
+                <div class="prob-row"><span>CEP</span><div class="bar"><i style="width:38.7%"></i></div><b>38.7%</b></div>
+                <div class="prob-row"><span>RRAB</span><div class="bar"><i style="width:21.4%"></i></div><b>21.4%</b></div>
+                <div class="prob-row"><span>DSCT</span><div class="bar"><i style="width:14.8%"></i></div><b>14.8%</b></div>
+                <div class="prob-row"><span>EA</span><div class="bar"><i style="width:8.2%"></i></div><b>8.2%</b></div>
+                <div class="prob-row"><span>Other</span><div class="bar"><i style="width:16.9%"></i></div><b>16.9%</b></div>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><div><div class="panel-title">Scientific context</div><div class="panel-subtitle">Traceable analysis metadata</div></div></div>
+              <dl class="metadata">
+                <div><dt>Object ID</dt><dd>ZTF17aaanmso</dd></div>
+                <div><dt>Feature schema</dt><dd>42 features</dd></div>
+                <div><dt>Model</dt><dd>baseline_v0.2 · XGBoost</dd></div>
+                <div><dt>Calibration</dt><dd>Temperature scaling</dd></div>
+                <div><dt>OOD</dt><dd>Isolation Forest</dd></div>
+                <div><dt>Data provenance</dt><dd>Benchmark v0.2</dd></div>
+              </dl>
+            </section>
+          </div>
+        </main>
+
+        <aside class="inspector" aria-label="Object inspector">
+          <div class="inspector-header"><span>OBJECT INSPECTOR</span><button class="icon-button" type="button">⋯</button></div>
+          <div class="object-identity">
+            <span class="object-type">ZTF OBJECT</span>
+            <strong>ZTF17aaanmso</strong>
+            <span class="muted">RA 267.1124° · Dec +32.4198°</span>
+          </div>
+          <div class="inspector-section">
+            <div class="mini-label">ANALYSIS STATE</div>
+            <div class="state-row"><span>Inference</span><b class="state-good">complete</b></div>
+            <div class="state-row"><span>Calibration</span><b class="state-good">active</b></div>
+            <div class="state-row"><span>Conformal</span><b class="state-good">active</b></div>
+            <div class="state-row"><span>OOD</span><b class="state-warn">watch</b></div>
+          </div>
+          <div class="inspector-section">
+            <div class="mini-label">PROVENANCE</div>
+            <div class="provenance-item"><span>Dataset</span><b>benchmark_v0.2</b></div>
+            <div class="provenance-item"><span>Model artifact</span><b>baseline_v0.2</b></div>
+            <div class="provenance-item"><span>Schema</span><b>1.1</b></div>
+          </div>
+          <button class="outline-button full" type="button">Open provenance graph</button>
+        </aside>
+      </div>
+
+      <div class="theme-popover" id="themePopover" hidden>
+        <div class="popover-title">Appearance</div>
+        <label>Theme<select id="themeSelect">
+          <option value="auto">Auto</option><option value="system">System</option>
+          <option value="deep-space">Deep Space</option><option value="alpha">Alpha Theme</option><option value="light">Light</option>
+        </select></label>
+        <label class="schedule-row">Day starts<input id="dayStart" type="time" value="06:00" /></label>
+        <label class="schedule-row">Night starts<input id="nightStart" type="time" value="18:00" /></label>
+        <p class="popover-note">Auto follows local clock; System follows the operating-system preference.</p>
+      </div>
+    </div>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
