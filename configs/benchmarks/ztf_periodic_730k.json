@@ -1,27 +1,25 @@
 {
   "benchmark_id": "ztf_periodic_730k",
-  "dataset_name": "Classification of The Zwicky Transient Facility Catalog of Periodic Variable Stars",
-  "source": "Zenodo record 5764899",
-  "version": "2021-12-07 release",
+  "dataset_name": "ZTF CPVS deterministic quality-selected 730,184-object subset",
+  "source": "Derived from the pinned ZTF CPVS 781,602-object snapshot",
+  "version": "derived subset from Zenodo 3886372 / ZTF DR2",
   "retrieval_date": "2026-09-25",
-  "source_url": "https://zenodo.org/records/5764899",
-  "doi": "10.5281/zenodo.5764899",
-  "license": "CC BY 4.0",
-  "object_id_column": "source_id",
+  "source_url": "https://zenodo.org/records/3886372",
+  "doi": "10.5281/zenodo.3886372",
+  "license": "inherits parent snapshot terms",
+  "object_id_column": "SourceID",
   "label_column": "class",
   "label_taxonomy": "source-native ZTF CPVS classification release taxonomy",
-  "class_mapping": {
-    "source_native": "source_native"
-  },
+  "class_mapping": {"source_native": "source_native"},
   "split_definition": {
-    "strategy": "versioned object-level split defined by benchmark runner"
+    "strategy": "deterministic quality selection from pinned 781,602-object parent snapshot"
   },
   "leakage_exclusions": [
     "object IDs overlapping training artifacts are excluded",
     "cross-match evidence is kept separate from labels"
   ],
   "preprocessing_contract": {
-    "source_schema": "preserve source schema before adapter mapping",
+    "source_schema": "preserve parent source schema before adapter mapping",
     "normalization": "versioned"
   },
   "input_contract": {
@@ -29,21 +27,22 @@
     "prediction_column": "y_pred"
   },
   "ground_truth_provenance": {
-    "kind": "catalog classification labels",
-    "source": "Zenodo 5764899",
-    "is_model_agreement": false
+    "kind": "derived catalog classification labels",
+    "source": "ZTF CPVS 781,602-object parent snapshot",
+    "is_model_agreement": false,
+    "derivation": "deterministic published g/r detection-quality selection",
+    "parent_benchmark": "ztf_periodic_781k"
   },
   "reference_system_provenance": {
     "kind": "catalog cross-match/reference evidence",
-    "notes": "SIMBAD/cross-match evidence is not universal ground truth"
+    "notes": "Reference evidence is not universal ground truth"
   },
   "benchmark_code_version": "benchmark-registry-v1",
   "required_leakage_checks": [
-    "object_overlap",
-    "duplicate_objects",
-    "target_leakage",
-    "future_data_leakage",
-    "benchmark_trained_artifacts",
-    "preprocessing_consistency"
+    "object_overlap", "duplicate_objects", "target_leakage",
+    "future_data_leakage", "benchmark_trained_artifacts",
+    "preprocessing_consistency", "schema_compatibility",
+    "feature_generation_determinism", "qc_acceptance",
+    "inference_reproducibility", "failure_code_correctness"
   ]
 }
