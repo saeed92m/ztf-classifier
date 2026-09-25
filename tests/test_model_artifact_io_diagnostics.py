@@ -376,7 +376,7 @@ def test_diagnostic_artifact_rejects_path_escape(
 
     with pytest.raises(
         ValueError,
-        match="Artifact path escapes artifact directory",
+        match=r"Artifact (?:\w+ )?path escapes artifact directory\.",
     ):
         ModelArtifactLoader().load(artifact_dir)
 
