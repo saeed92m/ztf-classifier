@@ -1,9 +1,4 @@
-"""Source-backed acquisition contracts for scientific-validation evidence.
-
-The acquisition layer is intentionally separate from benchmark evaluation. It
-downloads or derives exact artifacts, records content hashes, and emits an
-immutable EvidenceManifest. Network access is dependency-injected for tests.
-"""
+"""Source-backed acquisition contracts for scientific-validation evidence."""
 
 from __future__ import annotations
 
@@ -67,6 +62,9 @@ def _requests_fetch(url: str, timeout_seconds: float) -> bytes:
 
     response = requests.get(url, timeout=timeout_seconds)
     response.raise_for_status()
+    content_type = response.headers.get("content-type", "")
+    if "text/html" in content_type.lower():
+        raise AcquisitionError(f"source returned HTML instead of a data artifact: {url}")
     return response.content
 
 
@@ -93,12 +91,7 @@ def acquire_source(
     code_version: str,
     fetcher: Fetcher = _requests_fetch,
 ) -> AcquisitionResult:
-    """Acquire one source artifact and bind it to an immutable evidence manifest.
-
-    URLs are tried in order. A successful response is written atomically to the
-    destination. No source is treated as immutable merely because it is reachable:
-    the resulting manifest records the exact bytes and canonical source version.
-    """
+    """Acquire one source artifact and bind it to an immutable evidence manifest."""
     source = get_source(request.source_id)
     if request.source_version is not None and request.source_version != source.version:
         raise AcquisitionError(
@@ -165,7 +158,6 @@ def acquire_all(
     code_version: str,
     fetcher: Fetcher = _requests_fetch,
 ) -> tuple[AcquisitionResult, ...]:
-    """Acquire multiple sources without hiding individual external failures."""
     return tuple(acquire_source(item, code_version=code_version, fetcher=fetcher) for item in requests)
 
 
@@ -174,12 +166,16 @@ def request_from_benchmark(
     benchmark_id: str,
     *,
     destination: str | Path,
-    urls: tuple[str, ...],
+    urls: tuple[str, ...] = (),
     query_manifest: dict[str, object] | None = None,
     expected_sha256: str | None = None,
     parent_evidence_sha256: str | None = None,
 ) -> AcquisitionRequest:
-    """Construct an acquisition request from the canonical benchmark manifest."""
+    """Construct an acquisition request from the canonical benchmark manifest.
+
+    Caller-supplied URLs are accepted only as explicit fallback endpoints; the
+    canonical source identity/version always come from the adapter contract.
+    """
     manifest = BenchmarkRegistry(registry_dir).load(benchmark_id)
     try:
         plan = build_adapter_plan(manifest)

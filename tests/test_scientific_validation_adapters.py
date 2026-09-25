@@ -7,7 +7,6 @@ import pytest
 from ztf_classifier.validation.adapters import AdapterContractError, build_adapter_plan
 from ztf_classifier.validation.manifest import BenchmarkManifest
 
-
 ROOT = Path(__file__).parents[1]
 BENCHMARK_DIR = ROOT / "configs" / "benchmarks"
 
@@ -18,12 +17,31 @@ def load(name: str) -> BenchmarkManifest:
 
 @pytest.mark.parametrize(
     "benchmark_id",
-    ["star_embed_ztf_40k", "ztf_periodic_781k", "ztf_periodic_730k"],
+    [
+        "star_embed_ztf_40k",
+        "ztf_periodic_781k",
+        "ztf_periodic_730k",
+        "ztf_dr24_source_subset",
+        "alerce_reference",
+    ],
 )
 def test_canonical_adapters_build_deterministic_plans(benchmark_id: str) -> None:
-    plan = build_adapter_plan(load(benchmark_id))
+    manifest = load(benchmark_id)
+    if benchmark_id == "ztf_dr24_source_subset":
+        payload = manifest.to_dict()
+        payload["input_contract"]["query"] = {
+            "sql": "SELECT TOP 10 oid FROM ztf_objects",
+            "release": "DR24",
+        }
+        manifest = BenchmarkManifest.from_dict(payload)
+    elif benchmark_id == "alerce_reference":
+        payload = manifest.to_dict()
+        payload["input_contract"]["query"] = "SELECT oid FROM objects LIMIT 10"
+        manifest = BenchmarkManifest.from_dict(payload)
+
+    plan = build_adapter_plan(manifest)
     assert plan.benchmark_id == benchmark_id
-    assert plan.source_id == load(benchmark_id).input_contract["adapter"]
+    assert plan.source_id == manifest.input_contract["adapter"]
     assert plan.urls
     plan.validate()
 

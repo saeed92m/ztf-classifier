@@ -29,6 +29,7 @@ REQUIRED_SCIENTIFIC_CHECKS = (
     "qc_acceptance",
     "inference_reproducibility",
     "failure_code_correctness",
+    "provenance",
 )
 
 
@@ -62,10 +63,8 @@ def evaluate_release_gate(
 
         if report is not None:
             if report.get("status") != "PASS":
-                manifest_blockers.append(
-                    f"benchmark status is {report.get('status', 'UNKNOWN')}"
-                )
-            checks = report.get("checks", report.get("leakage", {}))
+                manifest_blockers.append(f"benchmark status is {report.get('status', 'UNKNOWN')}")
+            checks = report.get("checks", {})
             if not isinstance(checks, dict):
                 manifest_blockers.append("scientific checks are missing or invalid")
                 checks = {}
@@ -73,34 +72,19 @@ def evaluate_release_gate(
                 value = checks.get(check, "NOT_EXECUTED")
                 status = value.get("status") if isinstance(value, dict) else value
                 if status != "PASS":
-                    manifest_blockers.append(
-                        f"scientific check {check} is {status}"
-                    )
-            provenance_check = checks.get("provenance")
-            if provenance_check is not None:
-                provenance_status = (
-                    provenance_check.get("status")
-                    if isinstance(provenance_check, dict)
-                    else provenance_check
-                )
-                if provenance_status != "PASS":
-                    manifest_blockers.append(
-                        f"scientific check provenance is {provenance_status}"
-                    )
+                    manifest_blockers.append(f"scientific check {check} is {status}")
             if not report.get("provenance_complete", False):
                 manifest_blockers.append("provenance is incomplete")
 
         if manifest_blockers:
             blockers.extend(f"{benchmark_id}: {item}" for item in manifest_blockers)
 
-        benchmarks.append(
-            {
-                "benchmark_id": benchmark_id,
-                "evaluation_role": manifest.evaluation_role,
-                "status": "PASS" if not manifest_blockers else "BLOCKED",
-                "blockers": manifest_blockers,
-            }
-        )
+        benchmarks.append({
+            "benchmark_id": benchmark_id,
+            "evaluation_role": manifest.evaluation_role,
+            "status": "PASS" if not manifest_blockers else "BLOCKED",
+            "blockers": manifest_blockers,
+        })
 
     status = "PASS" if not blockers else "NOT_VERIFIED"
     return {
@@ -110,9 +94,9 @@ def evaluate_release_gate(
         "benchmarks": benchmarks,
         "blockers": blockers,
         "interpretation": (
-            "Benchmark success is not proof of universal correctness; it is "
-            "quantitative and reproducible evidence for the declared population, "
-            "source/version, labels, preprocessing, and evaluation conditions."
+            "Benchmark success is not proof of universal correctness; it is quantitative "
+            "and reproducible evidence for the declared population, source/version, labels, "
+            "preprocessing, and evaluation conditions."
         ),
     }
 
@@ -126,10 +110,7 @@ def _manifest_blockers(manifest: BenchmarkManifest) -> list[str]:
     blockers.extend(manifest.validate_release_contract())
     if manifest.evaluation_role == "ground_truth" and not manifest.ground_truth_provenance:
         blockers.append("ground-truth provenance is missing")
-    if (
-        manifest.evaluation_role == "reference_system"
-        and not manifest.reference_system_provenance
-    ):
+    if manifest.evaluation_role == "reference_system" and not manifest.reference_system_provenance:
         blockers.append("reference-system provenance is missing")
     return blockers
 
@@ -142,5 +123,6 @@ def write_release_gate_report(
     result = evaluate_release_gate(registry_dir, evidence_dir)
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(result, indent=2, sort_keys=True) + "
+", encoding="utf-8")
     return result
