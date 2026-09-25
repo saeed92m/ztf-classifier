@@ -4,11 +4,16 @@ on:
   pull_request:
     paths:
       - "configs/benchmarks/**"
+      - "configs/process/**"
       - "src/ztf_classifier/validation/**"
+      - "src/ztf_classifier/lifecycle.py"
+      - "src/ztf_classifier/lifecycle_schema.py"
       - "tests/test_scientific_validation_registry.py"
+      - "tests/test_cumulative_lifecycle.py"
       - "docs/SCIENTIFIC_VALIDATION_BENCHMARK.md"
-      - "docs/architecture/SCIENTIFIC_VALIDATION_ARCHITECTURE.md"
-      - "docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md"
+      - "docs/architecture/**"
+      - "docs/roadmap/**"
+      - "docs/knowledge/**"
   push:
     branches:
       - main
@@ -21,7 +26,7 @@ permissions:
 
 jobs:
   registry-contract:
-    name: Validate benchmark registry
+    name: Validate benchmark and cumulative lifecycle contracts
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -41,8 +46,11 @@ jobs:
       - name: Validate registry manifests
         run: python -m ztf_classifier.validation list
 
-      - name: Run validation contract tests
+      - name: Run scientific validation contract tests
         run: python -m pytest -q tests/test_scientific_validation_registry.py
+
+      - name: Run cumulative lifecycle contract tests
+        run: python -m pytest -q tests/test_cumulative_lifecycle.py
 
   scheduled-scientific-validation:
     name: Scheduled scientific validation readiness
@@ -56,4 +64,5 @@ jobs:
         run: |
           grep -q "Scientific Validation" docs/PRODUCTION_ACCEPTANCE_CHECKLIST.md
           grep -q "NOT VERIFIED" docs/PRODUCTION_ACCEPTANCE_CHECKLIST.md
+          grep -q "Cumulative Learning" docs/PRODUCTION_ACCEPTANCE_CHECKLIST.md
           echo "Heavy source-backed benchmark adapters remain scheduled/manual and release-blocking."

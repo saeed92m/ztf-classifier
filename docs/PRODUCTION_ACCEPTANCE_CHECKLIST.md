@@ -93,3 +93,21 @@ A product release is scientifically complete only when all applicable conditions
 - the release workflow records an explicit Scientific Validation Gate result.
 
 A benchmark passing is evidence for its declared scope, not proof of universal correctness.
+
+
+## Cumulative Learning & Continuous Improvement — permanent product process gate
+
+- [x] Cumulative-learning principle is documented as a lifecycle requirement.
+- [x] Mandatory lifecycle includes Audit, Previous Knowledge Retrieval, Baseline, Implementation, Test, Measure, Validate, Root Cause, Knowledge Extraction, Knowledge Update, Regression Update, Baseline Comparison, and Accept/Revise.
+- [x] Operational Knowledge Layer exists under docs/knowledge/.
+- [x] Cumulative Improvement Ledger exists and is version-controlled.
+- [x] Knowledge statuses are explicitly classified as FACT, VERIFIED, SUPPORTED, HYPOTHESIS, ASSUMPTION, UNRESOLVED, or REJECTED.
+- [x] Executable lifecycle contract exists in ztf_classifier.lifecycle.
+- [x] Lifecycle contract has regression tests.
+- [x] Multi-objective quality vector is defined for relevant changes.
+- [x] Performance baseline dimensions are defined and NOT_MEASURED is allowed when evidence is unavailable or not applicable.
+- [x] Local optimization cannot override scientific validity, reproducibility, or release integrity.
+- [ ] Every future product stage has a completed cumulative cycle record and measured evidence.
+- [ ] Process-performance trends are measured over enough cycles to establish a meaningful baseline.
+
+The cumulative-learning gate is complementary to the permanent Scientific Validation Product-Level Gate and cannot downgrade or bypass scientific blockers.

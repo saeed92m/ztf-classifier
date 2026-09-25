@@ -120,3 +120,17 @@ The gate has two distinct operational modes:
 - release validation requires complete source-backed evidence for every required benchmark and exits non-zero while any benchmark remains `NOT_VERIFIED`, `BLOCKED`, or missing.
 
 This separation prevents expensive external acquisition from contaminating ordinary unit-test feedback while preserving a hard scientific release boundary.
+
+
+## Cumulative learning integration
+
+Scientific validation is both a gate and a knowledge generator. Every execution produces evidence that must be consumed by later iterations.
+
+The lifecycle is:
+AUDIT -> RETRIEVE PREVIOUS KNOWLEDGE -> DEFINE OBJECTIVE -> DEFINE BASELINE -> PLAN -> IMPLEMENT -> TEST -> MEASURE -> VALIDATE -> FAILURE/ROOT-CAUSE ANALYSIS -> KNOWLEDGE EXTRACTION -> UPDATE KNOWLEDGE BASE -> UPDATE TESTS/RULES -> COMPARE AGAINST PREVIOUS BASELINE -> ACCEPT/REVISE -> NEXT STAGE.
+
+The cumulative quality vector is contextual: Accuracy, Correctness, Speed, Efficiency, Reliability, Robustness, Coverage, Reproducibility, and Scientific Validity. Scientific validity and release integrity take precedence over local optimization.
+
+Benchmark evidence is propagated through the operational knowledge layer at docs/knowledge/. Important failures must become root-cause records and executable regression protection where possible. The cumulative improvement ledger at docs/knowledge/CUMULATIVE_IMPROVEMENT_LEDGER.md records baseline, change, evidence, regression, knowledge IDs, tests, decision, and next-stage impact.
+
+Changes to feature generation, preprocessing, model, inference, calibration, conformal prediction, OOD, normalization, or scientific APIs must carry forward the relevant prior benchmark lessons and produce updated evidence where applicable.
