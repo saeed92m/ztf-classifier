@@ -275,7 +275,7 @@ class PredictionResult:
             if value not in valid:
                 raise ValueError(f"{name} has an invalid status: {value}")
         if not isinstance(self.warnings, tuple):
-            raise ValueError("warnings must be a tuple of strings.")
+            raise TypeError("warnings must be a tuple of strings.")
         if not all(isinstance(item, str) for item in self.warnings):
             raise ValueError("warnings must contain only strings.")
 
