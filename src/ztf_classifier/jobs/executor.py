@@ -83,6 +83,13 @@ class SourceBackedAnalysisExecutor:
             },
         }
 
+        model_provenance = prediction_response.provenance.to_dict()
+        for section in ("dataset", "feature_schema", "model_configuration", "calibration"):
+            value = model_provenance.get(section)
+            if isinstance(value, dict):
+                value.pop("path", None)
+                value.pop("source_path", None)
+
         return {
             "schema_version": "1.0",
             "oid": job.oid,
@@ -100,7 +107,7 @@ class SourceBackedAnalysisExecutor:
                 "conformal": result.conformal_status,
                 "ood": result.ood_status,
             },
-            "model_provenance": prediction_response.provenance.to_dict(),
+            "model_provenance": model_provenance,
             "observation_provenance": observation_provenance.to_dict(),
             "warnings": list(result.warnings),
         }
