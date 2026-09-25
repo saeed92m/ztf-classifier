@@ -54,9 +54,9 @@ For applicable benchmarks:
 
 ## Stage V4 — Product integration
 
-- [ ] validation service integrated with the application layer
+- [x] validation service integrated with the application layer
 - [ ] Benchmark Registry exposed through scientific operations APIs
-- [ ] Scientific Validation Dashboard/Report integrated into Workbench
+- [x] Scientific Validation Dashboard/Report integrated into Workbench
 - [ ] release evidence generated automatically
 - [ ] benchmark regression status visible per release
 - [ ] out-of-domain scope and known failure cases visible to users
@@ -64,11 +64,11 @@ For applicable benchmarks:
 ## Stage V5 — CI/release operations
 
 - [x] registry contract validation in ordinary CI
-- [ ] scheduled heavy benchmark execution
-- [ ] manual release-candidate benchmark execution
-- [ ] regression artifacts retained as release evidence
-- [ ] release workflow consumes scientific validation status
-- [ ] no final release can bypass the scientific gate
+- [x] scheduled heavy benchmark execution
+- [x] manual release-candidate benchmark execution
+- [x] regression artifacts retained as release evidence
+- [x] release workflow consumes scientific validation status
+- [x] no final release can bypass the scientific gate
 
 ## Permanent change-trigger policy
 
