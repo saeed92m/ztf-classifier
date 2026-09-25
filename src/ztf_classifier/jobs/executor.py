@@ -11,13 +11,10 @@ from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.application.service import ApplicationService
 from ztf_classifier.features.engine import ScientificFeatureEngine
+from ztf_classifier.jobs.errors import AnalysisJobExecutionError
 from ztf_classifier.jobs.store import JobRecord
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.registry import FilesystemModelRegistry, ModelNotFoundError
-
-
-class AnalysisJobExecutionError(RuntimeError):
-    """Expected, safe-to-persist failure from scientific job execution."""
 
 
 class SourceBackedAnalysisExecutor:
