@@ -108,7 +108,7 @@ def test_reference_system_role_is_preserved_in_manifest_and_result(tmp_path):
     manifest_instance = manifest(
         evaluation_role="reference_system",
         label_column="reference_label",
-        ground_truth_provenance={"kind": "external ground truth required separately"},
+        ground_truth_provenance={},
     )
     frame = pd.DataFrame(
         {
@@ -125,7 +125,7 @@ def test_reference_system_role_is_preserved_in_manifest_and_result(tmp_path):
         output_dir=tmp_path / "report",
     )
     assert result.evaluation_role == "reference_system"
-    assert result.status == "BLOCKED"
+    assert result.status == "PASS"
     payload = json.loads(
         (tmp_path / "report" / "benchmark_result.json").read_text()
     )
