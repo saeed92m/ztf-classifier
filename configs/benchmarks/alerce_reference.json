@@ -1,0 +1,49 @@
+{
+  "benchmark_id": "alerce_reference",
+  "dataset_name": "ALeRCE API/TAP independent reference system",
+  "source": "ALeRCE public API/TAP",
+  "version": "live service; pin response manifest per run",
+  "retrieval_date": "2026-09-25",
+  "source_url": "https://alerce.online/",
+  "doi": "NOT_APPLICABLE",
+  "license": "ALeRCE service terms",
+  "object_id_column": "oid",
+  "label_column": "ground_truth_label",
+  "label_taxonomy": "reference-system output taxonomy; not ground truth",
+  "class_mapping": {
+    "source_native": "source_native"
+  },
+  "split_definition": {
+    "strategy": "object manifest supplied by benchmark run"
+  },
+  "leakage_exclusions": [
+    "ALeRCE outputs are never promoted to ground truth",
+    "live responses are content-addressed per run"
+  ],
+  "preprocessing_contract": {
+    "response_schema": "versioned",
+    "query": "manifest-recorded"
+  },
+  "input_contract": {
+    "adapter": "alerce_reference",
+    "prediction_column": "y_pred"
+  },
+  "ground_truth_provenance": {
+    "kind": "external ground truth required separately",
+    "is_model_agreement": false
+  },
+  "reference_system_provenance": {
+    "kind": "independent classifier/reference prediction",
+    "source": "ALeRCE API/TAP",
+    "is_ground_truth": false
+  },
+  "benchmark_code_version": "benchmark-registry-v1",
+  "required_leakage_checks": [
+    "object_overlap",
+    "duplicate_objects",
+    "target_leakage",
+    "future_data_leakage",
+    "benchmark_trained_artifacts",
+    "preprocessing_consistency"
+  ]
+}
