@@ -14,7 +14,6 @@ from ztf_classifier.domain.observations import (
     Observation,
     ObservationProvenance,
 )
-from ztf_classifier.jobs import JobStore
 from ztf_classifier.models.results import PredictionResult
 
 
@@ -332,10 +331,12 @@ class FakeAnalysisService:
 
 def test_object_analysis_contract_uses_shared_executor(tmp_path: Path) -> None:
     class FakeExecutor:
-        def execute(self, *, oid: str, survey: str, model_version: str | None):
+        def execute(\n            self,\n            *,\n            oid: str,\n            survey: str,\n            model_version: str | None,\n            feature_backend: str = "native",\n            feature_parameters: dict | None = None,\n        ):
             assert oid == "ZTF17test"
             assert survey == "ztf"
             assert model_version is None
+            assert feature_backend == "native"
+            assert feature_parameters == {}
             return {
                 "oid": oid,
                 "survey": survey,
@@ -343,6 +344,8 @@ def test_object_analysis_contract_uses_shared_executor(tmp_path: Path) -> None:
                 "observations": [{"mjd": 60000.5}],
                 "features": {"feature_1": 1.0},
                 "feature_schema_version": "v0.2",
+                "feature_backend": "native",
+                "feature_parameters": {},
                 "feature_provenance": {},
                 "prediction": {
                     "predicted_class": "AGN",
@@ -503,9 +506,7 @@ def test_latest_object_scientific_result_retrieval(tmp_path: Path) -> None:
     assert response.json()["result_id"] == stored.result_id
 
 
-def test_latest_object_scientific_result_missing_is_stable_not_found(
-    tmp_path: Path,
-) -> None:
+def test_latest_object_scientific_result_missing_is_stable_not_found(tmp_path: Path) -> None:
     settings = ApiSettings(result_store_path=tmp_path / "results.sqlite3")
     client = TestClient(create_app(settings))
 
@@ -605,3 +606,55 @@ def test_durable_job_listing_rejects_invalid_status(tmp_path: Path) -> None:
 
     assert response.status_code == 422
     assert response.json()["code"] == "job_query_invalid"
+
+
+def test_feature_backend_discovery_endpoint() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/v1/features/backends")
+
+    assert response.status_code == 200
+    assert response.json()["backends"][0] == {
+        "name": "native",
+        "software_version": "ztf-classifier-native-v0.2",
+        "feature_schema_version": "v0.2",
+    }
+
+
+def test_object_analysis_rejects_unknown_feature_backend(tmp_path: Path) -> None:
+    settings = ApiSettings()
+    client = TestClient(create_app(settings))
+
+    response = client.post(
+        "/v1/objects/ZTF17test/analysis",
+        json={"survey": "ztf", "feature_backend": "missing"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "feature_backend_not_found"
+
+
+def test_optional_api_key_protects_versioned_endpoints(tmp_path: Path) -> None:
+    settings = ApiSettings(api_key="secret-key", result_store_path=tmp_path / "results.sqlite3")
+    client = TestClient(create_app(settings))
+
+    unauthorized = client.get("/v1/results/missing", headers={"X-Request-ID": "req-1"})
+    assert unauthorized.status_code == 401
+    assert unauthorized.json()["code"] == "authentication_required"
+    assert unauthorized.headers["X-Request-ID"] == "req-1"
+
+    authorized = client.get(
+        "/v1/results/missing",
+        headers={"Authorization": "Bearer secret-key"},
+    )
+    assert authorized.status_code == 404
+    assert authorized.json()["code"] == "scientific_result_not_found"
+
+
+def test_health_remains_public_when_api_key_is_configured() -> None:
+    client = TestClient(create_app(ApiSettings(api_key="secret-key")))
+
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.headers["X-Request-ID"]
