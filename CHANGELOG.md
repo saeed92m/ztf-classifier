@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- durable scientific-result catalog queries and CSV export;
+- deterministic scientific report generation;
+- Workbench catalog, jobs, and report integration;
+- restart-safe incremental result cursors and durable checkpoints;
+- extensible Scientific Feature Engine backend registration and discovery;
+- feature-backend selection persisted through analysis jobs and results;
+- optional API-key protection and request-ID observability;
+- production environment template and platform-oriented package metadata.
+
 ## [0.4.0] — Reproducibility and production hardening
 
 ### Added
