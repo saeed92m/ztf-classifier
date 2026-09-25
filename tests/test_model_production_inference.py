@@ -87,6 +87,7 @@ def test_service_loads_production_artifact() -> None:
     assert service.loaded_artifact.model_artifact.model_family == (
         "XGBoost"
     )
+    assert service.loaded_artifact.artifact_schema_version == "1.0"
 
 
 def test_service_returns_prediction_result() -> None:
@@ -260,6 +261,7 @@ def test_diagnostic_artifact_loads_all_persisted_components(
     assert service.loaded_artifact.conformal is not None
     assert service.loaded_artifact.ood is not None
     assert service.loaded_artifact.ood_model is not None
+    assert service.loaded_artifact.artifact_schema_version == "1.1"
 
 
 def test_diagnostic_artifact_returns_conformal_outputs(
