@@ -9,7 +9,11 @@ from fastapi.testclient import TestClient
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.application.schemas import PredictionResponse
-from ztf_classifier.domain.observations import Observation, ObservationProvenance, ObjectObservationSummary
+from ztf_classifier.domain.observations import (
+    ObjectObservationSummary,
+    Observation,
+    ObservationProvenance,
+)
 from ztf_classifier.models.results import PredictionResult
 
 
