@@ -1,6 +1,6 @@
 """Scientific validation and external benchmark infrastructure."""
 
-from ztf_classifier.validation.gate import (
+from ztf_classifier.validation.evidence import (\n    EvidenceArtifact,\n    EvidenceManifest,\n    sha256_file,\n    write_evidence_manifest,\n)\nfrom ztf_classifier.validation.gate import (
     evaluate_release_gate,
     write_release_gate_report,
 )
@@ -14,15 +14,15 @@ from ztf_classifier.validation.runner import BenchmarkRunResult, run_table_bench
 from ztf_classifier.validation.sources import ValidationSource, get_source, source_ids
 
 __all__ = [
-    "BenchmarkManifest",
+    "BenchmarkManifest",\n    "EvidenceArtifact",\n    "EvidenceManifest",
     "BenchmarkRegistry",
     "BenchmarkRunResult",
     "ValidationSource",
-    "evaluate_release_gate",
+    "evaluate_release_gate",\n    "sha256_file",
     "render_scientific_validation_report",
     "run_table_benchmark",
     "get_source",
     "source_ids",
-    "write_release_gate_report",
+    "write_release_gate_report",\n    "write_evidence_manifest",
     "write_scientific_validation_report",
 ]
