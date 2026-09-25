@@ -17,6 +17,8 @@ class ApiSettings:
     job_store_path: Path = Path("data/jobs/jobs.sqlite3")
     result_store_path: Path = Path("data/results/results.sqlite3")
     api_key: str | None = None
+    scientific_registry_dir: Path = Path("configs/benchmarks")
+    scientific_evidence_dir: Path = Path("reports/scientific_validation")
 
     @classmethod
     def from_environment(cls) -> ApiSettings:
@@ -27,6 +29,8 @@ class ApiSettings:
         job_store = os.getenv("ZTF_API_JOB_STORE")
         result_store = os.getenv("ZTF_API_RESULT_STORE")
         api_key = os.getenv("ZTF_API_KEY")
+        scientific_registry = os.getenv("ZTF_SCIENTIFIC_REGISTRY_DIR")
+        scientific_evidence = os.getenv("ZTF_SCIENTIFIC_EVIDENCE_DIR")
         return cls(
             registry_dir=Path(registry).expanduser() if registry else None,
             default_model_version=model_version or None,
@@ -44,4 +48,6 @@ class ApiSettings:
             if cache_dir
             else Path("data/raw/alerce"),
             api_key=api_key or None,
+            scientific_registry_dir=(Path(scientific_registry).expanduser() if scientific_registry else Path("configs/benchmarks")),
+            scientific_evidence_dir=(Path(scientific_evidence).expanduser() if scientific_evidence else Path("reports/scientific_validation")),
         )
