@@ -576,3 +576,29 @@ def test_scientific_catalog_rejects_invalid_limit(tmp_path: Path) -> None:
 
     assert response.status_code == 422
     assert response.json()["code"] == "request_validation_failed"
+
+
+def test_durable_job_listing_endpoint(tmp_path: Path) -> None:
+    settings = ApiSettings(job_store_path=tmp_path / "jobs.sqlite3")
+    job_store = JobStore(settings.job_store_path)
+    job_store.create(
+        oid="ZTF17listed",
+        survey="ztf",
+        model_version="baseline_v0.2",
+    )
+
+    client = TestClient(create_app(settings))
+    response = client.get("/v1/jobs", params={"status": "queued"})
+
+    assert response.status_code == 200
+    assert response.json()["items"][0]["oid"] == "ZTF17listed"
+
+
+def test_durable_job_listing_rejects_invalid_status(tmp_path: Path) -> None:
+    settings = ApiSettings(job_store_path=tmp_path / "jobs.sqlite3")
+    client = TestClient(create_app(settings))
+
+    response = client.get("/v1/jobs", params={"status": "invalid"})
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "job_query_invalid"
