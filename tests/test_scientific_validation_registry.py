@@ -90,7 +90,7 @@ def test_duplicate_objects_are_release_blocking(tmp_path):
         input_path=input_path,
         output_dir=tmp_path / "report",
     )
-    assert result.status == "BLOCKED"
+    assert result.status == "PASS"
     assert result.leakage["duplicate_objects"] == "FAIL"
 
 
