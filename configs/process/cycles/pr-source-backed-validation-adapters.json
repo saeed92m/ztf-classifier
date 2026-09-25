@@ -1,0 +1,30 @@
+{
+  "cycle_id": "source-backed-validation-adapters",
+  "change": {
+    "scope": "Add canonical source contracts for the five permanent scientific-validation adapters.",
+    "intent": "Make external benchmark provenance and acquisition semantics explicit and machine-testable."
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Source registry has exactly five permanent validation sources.",
+      "ALeRCE is explicitly typed as reference_system.",
+      "The 730,184-object benchmark is explicitly derived from the pinned 781,602-object CPVS snapshot."
+    ]
+  },
+  "failure_analysis": {
+    "status": "no-known-failure",
+    "root_causes": []
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "SF-001",
+    "SF-002",
+    "FD-001"
+  ]
+}
