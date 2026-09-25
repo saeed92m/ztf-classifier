@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+from datetime import datetime
 from dataclasses import dataclass
 from typing import Any
 
@@ -31,6 +32,23 @@ class ScientificCatalogService:
     def __init__(self, store: ScientificResultStore) -> None:
         self.store = store
 
+    @staticmethod
+    def _validate_window(
+        created_after: str | None,
+        created_before: str | None,
+    ) -> None:
+        parsed_after = None
+        parsed_before = None
+        try:
+            if created_after is not None:
+                parsed_after = datetime.fromisoformat(created_after)
+            if created_before is not None:
+                parsed_before = datetime.fromisoformat(created_before)
+        except ValueError as exc:
+            raise ValueError("created_after/created_before must be ISO-8601 timestamps") from exc
+        if parsed_after is not None and parsed_before is not None and parsed_after > parsed_before:
+            raise ValueError("created_after must not be later than created_before")
+
     def query(
         self,
         *,
@@ -43,6 +61,7 @@ class ScientificCatalogService:
         offset: int = 0,
     ) -> CatalogPage:
         """Return a bounded, deterministic catalog page."""
+        self._validate_window(created_after, created_before)
         total = self.store.count(
             oid=oid,
             survey=survey,
