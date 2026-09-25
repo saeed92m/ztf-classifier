@@ -53,16 +53,16 @@
               <p id="viewSubtitle">Live ZTF observation view · ALeRCE-backed</p>
             </div>
             <div class="object-actions">
-              <button class="secondary-button" type="button">Export report</button>
-              <button class="primary-button" type="button">Run analysis</button>
+              <button class="secondary-button" id="exportReportButton" type="button">Export report</button>
+              <button class="primary-button" id="runAnalysisButton" type="button">Run analysis</button>
             </div>
           </div>
 
           <section class="metric-grid" aria-label="Object summary">
             <article class="metric-card"><span>Predicted class</span><strong id="predictedClass">CEP</strong><small>calibrated model output</small></article>
-            <article class="metric-card"><span>Top probability</span><strong>38.7%</strong><small>15-class probability vector</small></article>
-            <article class="metric-card"><span>Conformal set</span><strong>3 classes</strong><small>α = 0.10</small></article>
-            <article class="metric-card"><span>OOD percentile</span><strong>92.7</strong><small>reference distribution</small></article>
+            <article class="metric-card"><span>Top probability</span><strong id="topProbability">—</strong><small>15-class probability vector</small></article>
+            <article class="metric-card"><span>Conformal set</span><strong id="conformalSet">—</strong><small>α = 0.10</small></article>
+            <article class="metric-card"><span>OOD percentile</span><strong id="oodPercentile">—</strong><small>reference distribution</small></article>
           </section>
 
           <section class="panel chart-panel">
@@ -87,23 +87,17 @@
           <div class="lower-grid">
             <section class="panel">
               <div class="panel-header"><div><div class="panel-title">Classification</div><div class="panel-subtitle">Calibrated probability distribution</div></div><button class="text-button">Details</button></div>
-              <div class="probability-list">
-                <div class="prob-row"><span>CEP</span><div class="bar"><i style="width:38.7%"></i></div><b>38.7%</b></div>
-                <div class="prob-row"><span>RRAB</span><div class="bar"><i style="width:21.4%"></i></div><b>21.4%</b></div>
-                <div class="prob-row"><span>DSCT</span><div class="bar"><i style="width:14.8%"></i></div><b>14.8%</b></div>
-                <div class="prob-row"><span>EA</span><div class="bar"><i style="width:8.2%"></i></div><b>8.2%</b></div>
-                <div class="prob-row"><span>Other</span><div class="bar"><i style="width:16.9%"></i></div><b>16.9%</b></div>
-              </div>
+              <div class="probability-list" id="probabilityList"><div class="muted">No result loaded.</div></div>
             </section>
             <section class="panel">
               <div class="panel-header"><div><div class="panel-title">Scientific context</div><div class="panel-subtitle">Traceable analysis metadata</div></div></div>
               <dl class="metadata">
                 <div><dt>Object ID</dt><dd>ZTF17aaanmso</dd></div>
-                <div><dt>Feature schema</dt><dd>42 features</dd></div>
-                <div><dt>Model</dt><dd>baseline_v0.2 · XGBoost</dd></div>
-                <div><dt>Calibration</dt><dd>Temperature scaling</dd></div>
-                <div><dt>OOD</dt><dd>Isolation Forest</dd></div>
-                <div><dt>Data provenance</dt><dd>Benchmark v0.2</dd></div>
+                <div><dt>Feature schema</dt><dd id="featureSchema">—</dd></div>
+                <div><dt>Model</dt><dd id="modelValue">—</dd></div>
+                <div><dt>Calibration</dt><dd id="calibrationValue">—</dd></div>
+                <div><dt>OOD</dt><dd id="oodValue">—</dd></div>
+                <div><dt>Data provenance</dt><dd id="provenanceValue">—</dd></div>
               </dl>
             </section>
           </div>
@@ -118,7 +112,7 @@
           </div>
           <div class="inspector-section">
             <div class="mini-label">ANALYSIS STATE</div>
-            <div class="state-row"><span>Inference</span><b class="state-good">complete</b></div>
+            <div class="state-row"><span>Inference</span><b id="resultState" class="state-good">loading</b></div>
             <div class="state-row"><span>Calibration</span><b class="state-good">active</b></div>
             <div class="state-row"><span>Conformal</span><b class="state-good">active</b></div>
             <div class="state-row"><span>OOD</span><b class="state-warn">watch</b></div>
