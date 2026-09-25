@@ -22,7 +22,9 @@ def test_worker_claims_oldest_queued_job_and_persists_result(tmp_path: Path) -> 
     assert store.get(second.job_id).status == "queued"
 
 
-def test_worker_persists_executor_failure_without_leaking_exception(tmp_path: Path) -> None:
+def test_worker_persists_executor_failure_without_leaking_exception(
+    tmp_path: Path,
+) -> None:
     store = JobStore(tmp_path / "jobs.sqlite3")
     store.create(oid="ZTF-failure", survey="ztf", model_version=None)
 
