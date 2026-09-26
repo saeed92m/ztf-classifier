@@ -96,6 +96,7 @@ def test_acquisition_rejects_non_http_urls(tmp_path: Path):
             fetcher=lambda url, timeout: b"never",
         )
 
+
 def test_star_embed_revision_resolution_uses_supported_expand_parameters(monkeypatch):
     from ztf_classifier.validation import acquisition
 
@@ -140,4 +141,3 @@ def test_star_embed_revision_resolution_uses_supported_expand_parameters(monkeyp
     assert captured["params"] == [("expand", "sha"), ("expand", "siblings")]
     assert urls[0].endswith("/resolve/" + "a" * 40 + "/data/train-00000-of-00002.parquet")
     assert manifest["revision"] == "a" * 40
-\n
