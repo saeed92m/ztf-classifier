@@ -86,12 +86,55 @@ def _zip_member_matches_header(
     return False
 
 
+def _path_member_matches_header(
+    path: Path,
+    required_columns: Iterable[str],
+) -> bool:
+    required = {column.strip().lower() for column in required_columns}
+    if not required:
+        return False
+    with path.open("rb") as raw:
+        sample = raw.read(256 * 1024).decode("utf-8", errors="replace")
+    for line in sample.splitlines():
+        if not line.strip():
+            continue
+        tokens = {token.lower() for token in _split_fields(line)}
+        if required.issubset(tokens):
+            return True
+    return False
+
+
 def _open_text(
     path: Path,
     member: str | None = None,
     *,
     required_columns: Iterable[str] = (),
 ):
+    if path.is_dir():
+        files = sorted(item for item in path.rglob("*") if item.is_file())
+        if member is not None:
+            matches = [item for item in files if item.name == member or str(item.relative_to(path)) == member]
+        else:
+            candidates = [
+                item for item in files
+                if _path_member_matches_header(item, required_columns)
+            ]
+            if len(candidates) == 1:
+                matches = candidates
+            elif len(candidates) == 0:
+                raise ValueError(
+                    f"{path} contains no file matching required columns "
+                    f"{tuple(required_columns)!r}"
+                )
+            else:
+                raise ValueError(
+                    f"{path} has multiple files matching required columns "
+                    f"{tuple(required_columns)!r}: "
+                    f"{tuple(str(item.relative_to(path)) for item in candidates)!r}"
+                )
+        if len(matches) != 1:
+            raise ValueError(f"member {member!r} not found or not unique in {path}")
+        return None, matches[0].open("rb")
     if path.suffix.lower() == ".zip":
         zf = zipfile.ZipFile(path)
         names = [name for name in zf.namelist() if not name.endswith("/")]
