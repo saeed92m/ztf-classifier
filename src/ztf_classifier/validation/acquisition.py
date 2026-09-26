@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Callable, Iterable
 from urllib.parse import urlparse
 
+import requests
+
 from ztf_classifier.validation.adapters import build_adapter_plan
 from ztf_classifier.validation.evidence import EvidenceArtifact, EvidenceManifest, write_evidence_manifest
 from ztf_classifier.validation.registry import BenchmarkRegistry
@@ -61,8 +63,6 @@ Fetcher = Callable[[str, float], bytes]
 
 
 def _requests_fetch(url: str, timeout_seconds: float) -> bytes:
-    import requests
-
     response = requests.get(url, timeout=timeout_seconds, allow_redirects=True)
     response.raise_for_status()
     content_type = response.headers.get("content-type", "")
@@ -238,7 +238,7 @@ def acquire_source(
             manifest.artifacts[0],
             manifest,
         )
-    except Exception as exc:
+    except (AcquisitionError, OSError, ValueError, requests.RequestException) as exc:
         for part in temporary:
             part.unlink(missing_ok=True)
         return AcquisitionResult(
