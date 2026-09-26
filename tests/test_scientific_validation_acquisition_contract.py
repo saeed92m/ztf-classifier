@@ -79,7 +79,7 @@ def test_multi_artifact_acquisition_binds_all_artifacts(tmp_path):
         source_id="ztf_periodic_781k",
         destination=tmp_path / "snapshot",
         urls=tuple(payloads),
-        artifact_names=("a.bin", "b.bin"),
+        artifact_names=("a.zip", "b.bin"),
     )
     result = acquire_source(request, code_version="test", fetcher=lambda url, _timeout: payloads[url])
     assert result.status == "ACQUIRED"
