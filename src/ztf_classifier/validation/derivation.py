@@ -188,8 +188,8 @@ def _iter_rows(
         if header_line is None:
             return
 
-        if "\t" in header_line:
-            parse = lambda value: [item.strip() for item in value.split("\t")]
+        if "	" in header_line:
+            parse = lambda value: [item.strip() for item in value.split("	")]
         elif "," in header_line:
             parse = lambda value: [
                 item.strip() for item in next(csv.reader([value], delimiter=","))
@@ -239,19 +239,14 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
-        started = False
         ordinal = 0
         for encoded in raw:
             line = encoded.decode("utf-8", errors="replace").strip()
-            if not line or line.startswith("#"):
+            if not line:
                 continue
             first_token = line.split()[0]
-            if not started:
-                if not first_token.upper().startswith("ZTF"):
-                    continue
-                started = True
             if not first_token.upper().startswith("ZTF"):
-                break
+                continue
             ordinal += 1
             source_ids.add(str(ordinal))
         return source_ids
@@ -349,10 +344,13 @@ def derive_730k(
     output.parent.mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha256()
     with output.open("w", encoding="utf-8", newline="") as handle:
-        handle.write("SourceID\n")
-        digest.update(b"SourceID\n")
+        handle.write("SourceID
+")
+        digest.update(b"SourceID
+")
         for oid in selected:
-            encoded = f"{oid}\n".encode()
+            encoded = f"{oid}
+".encode()
             handle.write(encoded.decode("utf-8"))
             digest.update(encoded)
 
@@ -381,7 +379,8 @@ def derive_730k(
         query_manifest_sha256=hashlib.sha256(selection_manifest).hexdigest(),
     )
     output.with_name(output.name + ".derivation.json").write_text(
-        json.dumps(result.to_dict(), indent=2, sort_keys=True) + "\n",
+        json.dumps(result.to_dict(), indent=2, sort_keys=True) + "
+",
         encoding="utf-8",
     )
     return result
