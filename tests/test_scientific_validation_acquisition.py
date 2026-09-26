@@ -2,7 +2,11 @@ from pathlib import Path
 
 import pytest
 
-from ztf_classifier.validation.acquisition import AcquisitionError, AcquisitionRequest, acquire_source
+from ztf_classifier.validation.acquisition import (
+    AcquisitionError,
+    AcquisitionRequest,
+    acquire_source,
+)
 
 
 def test_acquisition_is_content_addressed_and_emits_evidence(tmp_path: Path):
