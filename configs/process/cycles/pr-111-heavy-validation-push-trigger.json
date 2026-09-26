@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-111-heavy-validation-push-trigger",
+  "objective": "Add a narrowly scoped ci/heavy/** push trigger for reproducible source-backed heavy scientific validation execution.",
+  "previous_knowledge_consumed": [
+    "AD-CI-011"
+  ],
+  "baseline": {
+    "revision": "2f7d6cf3e50aa5d6f8131862fdbd9b127dbd2635",
+    "description": "Heavy scientific validation is available only through schedule or manual dispatch."
+  },
+  "expected_improvement": [
+    "operational_reproducibility",
+    "scientific_validation_execution"
+  ],
+  "measurement": {
+    "metrics": {
+      "operational_reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "Post-change CI and a dedicated heavy-validation branch execution are required."
+      },
+      "scientific_validation_execution": {
+        "status": "NOT_MEASURED",
+        "reason": "The dedicated heavy-validation branch has not yet executed source-backed acquisition."
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "The push trigger is restricted to branches matching ci/heavy/**.",
+      "Existing pull_request, schedule, and workflow_dispatch triggers remain preserved."
+    ],
+    "blocker": "Post-change CI and dedicated heavy source-backed execution are required before this lifecycle stage is finalized."
+  },
+  "failure_analysis": {
+    "status": "resolved",
+    "root_causes": [
+      "The available GitHub connector does not expose workflow_dispatch write capability.",
+      "Heavy scientific validation therefore lacked an autonomous execution path."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Expensive source-backed validation should have a narrowly scoped reproducible execution trigger in addition to scheduled and manual execution."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Post-change CI must pass.",
+      "Dedicated ci/heavy/** execution must complete and emit source-backed evidence."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "AD-CI-011"
+  ]
+}
