@@ -16,7 +16,6 @@ from urllib.request import Request, urlopen
 
 from ztf_classifier.validation.sources import SOURCES
 
-
 PROBES = {
     "star_embed_ztf_40k": "https://huggingface.co/api/datasets/StarEmbed/ZTF_40k",
     "ztf_periodic_781k": "https://zenodo.org/api/records/3886372",
