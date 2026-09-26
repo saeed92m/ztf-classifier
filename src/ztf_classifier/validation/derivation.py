@@ -376,8 +376,7 @@ def derive_730k(
         query_manifest_sha256=hashlib.sha256(selection_manifest).hexdigest(),
     )
     output.with_name(output.name + ".derivation.json").write_text(
-        json.dumps(result.to_dict(), indent=2, sort_keys=True) + "
-",
+        json.dumps(result.to_dict(), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return result
