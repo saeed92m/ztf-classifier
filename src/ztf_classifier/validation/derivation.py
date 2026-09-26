@@ -110,31 +110,6 @@ def _open_text(
     *,
     required_columns: Iterable[str] = (),
 ):
-    if path.is_dir():
-        files = sorted(item for item in path.rglob("*") if item.is_file())
-        if member is not None:
-            matches = [item for item in files if item.name == member or str(item.relative_to(path)) == member]
-        else:
-            candidates = [
-                item for item in files
-                if _path_member_matches_header(item, required_columns)
-            ]
-            if len(candidates) == 1:
-                matches = candidates
-            elif len(candidates) == 0:
-                raise ValueError(
-                    f"{path} contains no file matching required columns "
-                    f"{tuple(required_columns)!r}"
-                )
-            else:
-                raise ValueError(
-                    f"{path} has multiple files matching required columns "
-                    f"{tuple(required_columns)!r}: "
-                    f"{tuple(str(item.relative_to(path)) for item in candidates)!r}"
-                )
-        if len(matches) != 1:
-            raise ValueError(f"member {member!r} not found or not unique in {path}")
-        return None, matches[0].open("rb")
     if path.suffix.lower() == ".zip":
         zf = zipfile.ZipFile(path)
         names = [name for name in zf.namelist() if not name.endswith("/")]
@@ -174,6 +149,26 @@ def _iter_rows(
     required_columns: Iterable[str] = (),
 ) -> Iterator[dict[str, str]]:
     """Yield rows from CPVS files while handling metadata and common delimiters."""
+    if path.is_dir():
+        candidates = sorted(
+            item
+            for item in path.rglob("*")
+            if item.is_file()
+            and item.suffix.lower() in {".csv", ".txt", ".dat", ".json", ""}
+            and _path_member_matches_header(item, required_columns)
+        )
+        if not candidates:
+            raise ValueError(
+                f"{path} contains no file matching required columns "
+                f"{tuple(required_columns)!r}"
+            )
+        for candidate in candidates:
+            yield from _iter_rows(
+                candidate,
+                required_columns=required_columns,
+            )
+        return
+
     owner, raw = _open_text(path, member, required_columns=required_columns)
     try:
         lines = (line.decode("utf-8", errors="replace") for line in raw)
