@@ -257,11 +257,35 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
 
 
 def _source_ids(parent_path: Path, member: str | None) -> set[str]:
-    # CPVS Table2 is a published catalog table whose data rows are identified
-    # by their ZTF name in the first column.  Its metadata/header sections can
-    # contain SourceID-like tokens and can terminate a generic tabular parser
-    # early, so the catalog-specific ordinal fallback is authoritative here.
-    return _source_ids_from_catalog(parent_path, member)
+    """Resolve IDs for either published CPVS Table2 or generic test/artifact tables."""
+    owner, raw = _open_text(parent_path, member)
+    try:
+        saw_catalog_row = False
+        for encoded in raw:
+            line = encoded.decode("utf-8", errors="replace").strip()
+            if line and line.split()[0].upper().startswith("ZTF"):
+                saw_catalog_row = True
+                break
+    finally:
+        raw.close()
+        if owner is not None:
+            owner.close()
+
+    if saw_catalog_row:
+        # CPVS Table2 uses ZTF names as row identifiers; SourceID is the
+        # published ordinal. Metadata/header sections must not terminate scan.
+        return _source_ids_from_catalog(parent_path, member)
+
+    rows = _iter_rows(parent_path, member, required_columns=("SourceID",))
+    first = next(rows, None)
+    if first is None:
+        return set()
+    key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
+    return {
+        row[key].strip()
+        for row in chain((first,), rows)
+        if row.get(key, "").strip()
+    }
 
 
 def _qualified_ids(
