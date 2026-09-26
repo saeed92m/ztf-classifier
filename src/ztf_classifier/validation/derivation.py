@@ -55,15 +55,86 @@ class DerivationResult:
         }
 
 
-def _open_text(path: Path, member: str | None = None):
+def _split_fields(line: str) -> list[str]:
+    """Split CPVS text rows across tab-, comma-, or whitespace-delimited formats."""
+    stripped = line.strip()
+    if stripped.startswith("#"):
+        stripped = stripped[1:].lstrip()
+    if "\t" in stripped:
+        return [item.strip() for item in stripped.split("\t")]
+    if "," in stripped:
+        return [item.strip() for item in next(csv.reader([stripped], delimiter=","))]
+    return stripped.split()
+
+
+def _zip_member_matches_header(
+    zf: zipfile.ZipFile,
+    member: str,
+    required_columns: Iterable[str],
+) -> bool:
+    required = {column.strip().lower() for column in required_columns}
+    if not required:
+        return False
+    with zf.open(member, "r") as raw:
+        sample = raw.read(256 * 1024).decode("utf-8", errors="replace")
+    for line in sample.splitlines():
+        if not line.strip():
+            continue
+        tokens = {token.lower() for token in _split_fields(line)}
+        if required.issubset(tokens):
+            return True
+    return False
+
+
+def _path_member_matches_header(
+    path: Path,
+    required_columns: Iterable[str],
+) -> bool:
+    required = {column.strip().lower() for column in required_columns}
+    if not required:
+        return False
+    with path.open("rb") as raw:
+        sample = raw.read(256 * 1024).decode("utf-8", errors="replace")
+    for line in sample.splitlines():
+        if not line.strip():
+            continue
+        tokens = {token.lower() for token in _split_fields(line)}
+        if required.issubset(tokens):
+            return True
+    return False
+
+
+def _open_text(
+    path: Path,
+    member: str | None = None,
+    *,
+    required_columns: Iterable[str] = (),
+):
     if path.suffix.lower() == ".zip":
         zf = zipfile.ZipFile(path)
         names = [name for name in zf.namelist() if not name.endswith("/")]
         if member is None:
             if len(names) != 1:
-                zf.close()
-                raise ValueError(f"{path} contains {len(names)} files; specify member explicitly")
-            member = names[0]
+                candidates = [
+                    name
+                    for name in names
+                    if _zip_member_matches_header(zf, name, required_columns)
+                ]
+                if len(candidates) == 1:
+                    member = candidates[0]
+                else:
+                    zf.close()
+                    if not candidates:
+                        raise ValueError(
+                            f"{path} contains {len(names)} files; no member matches "
+                            f"required columns {tuple(required_columns)!r}"
+                        )
+                    raise ValueError(
+                        f"{path} has multiple members matching required columns "
+                        f"{tuple(required_columns)!r}: {tuple(candidates)!r}; specify member explicitly"
+                    )
+            else:
+                member = names[0]
         if member not in names:
             zf.close()
             raise ValueError(f"member {member!r} not found in {path}")
@@ -71,28 +142,72 @@ def _open_text(path: Path, member: str | None = None):
     return None, path.open("rb")
 
 
-def _iter_rows(path: Path, member: str | None = None) -> Iterator[dict[str, str]]:
-    owner, raw = _open_text(path, member)
+def _iter_rows(
+    path: Path,
+    member: str | None = None,
+    *,
+    required_columns: Iterable[str] = (),
+) -> Iterator[dict[str, str]]:
+    """Yield rows from CPVS files while handling metadata and common delimiters."""
+    if path.is_dir():
+        candidates = sorted(
+            item
+            for item in path.rglob("*")
+            if item.is_file()
+            and item.suffix.lower() in {".csv", ".txt", ".dat", ".json", ""}
+            and _path_member_matches_header(item, required_columns)
+        )
+        if not candidates:
+            raise ValueError(
+                f"{path} contains no file matching required columns "
+                f"{tuple(required_columns)!r}"
+            )
+        for candidate in candidates:
+            yield from _iter_rows(
+                candidate,
+                required_columns=required_columns,
+            )
+        return
+
+    owner, raw = _open_text(path, member, required_columns=required_columns)
     try:
         lines = (line.decode("utf-8", errors="replace") for line in raw)
-        header_line = next(
-            (
-                line
-                for line in lines
-                if line.strip()
-                and not line.lstrip().startswith("#")
-                and any(
-                    token.strip().lower() in {"sourceid", "source_id", "oid", "ztf_id"}
-                    for token in line.replace(",", "\t").split("\t")
-                )
-            ),
-            None,
-        )
+        header_line = None
+        header_tokens: list[str] = []
+        source_tokens = {"sourceid", "source_id", "oid", "ztf_id"}
+        for line in lines:
+            if not line.strip():
+                continue
+            stripped = line.strip()
+            tokens = _split_fields(stripped)
+            normalized = {token.strip().lower() for token in tokens}
+            if source_tokens.intersection(normalized):
+                header_line = stripped
+                header_tokens = tokens
+                break
         if header_line is None:
             return
-        delimiter = "\t" if "\t" in header_line else ","
-        header = [item.strip() for item in next(csv.reader([header_line], delimiter=delimiter))]
-        for values in csv.reader(lines, delimiter=delimiter):
+
+        if "\t" in header_line:
+            parse = lambda value: [item.strip() for item in value.split("\t")]
+        elif "," in header_line:
+            parse = lambda value: [
+                item.strip() for item in next(csv.reader([value], delimiter=","))
+            ]
+        else:
+            parse = lambda value: value.split()
+
+        header = header_tokens
+        if not header:
+            header = parse(header_line)
+
+        for line in lines:
+            if not line.strip():
+                continue
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                continue
+            values = parse(stripped)
             if values and len(values) == len(header):
                 yield dict(zip(header, values))
     finally:
@@ -119,13 +234,47 @@ def _snr_from_mag_error(value: str) -> float:
     return 1.0857362047581296 / error
 
 
+def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
+    """Resolve CPVS SourceIDs from the published Table2 row order."""
+    owner, raw = _open_text(parent_path, member)
+    try:
+        source_ids: set[str] = set()
+        started = False
+        ordinal = 0
+        for encoded in raw:
+            line = encoded.decode("utf-8", errors="replace").strip()
+            if not line or line.startswith("#"):
+                continue
+            first_token = line.split()[0]
+            if not started:
+                if not first_token.upper().startswith("ZTF"):
+                    continue
+                started = True
+            if not first_token.upper().startswith("ZTF"):
+                break
+            ordinal += 1
+            source_ids.add(str(ordinal))
+        return source_ids
+    finally:
+        raw.close()
+        if owner is not None:
+            owner.close()
+
+
 def _source_ids(parent_path: Path, member: str | None) -> set[str]:
     rows = _iter_rows(parent_path, member)
     first = next(rows, None)
-    if first is None:
-        return set()
-    key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
-    return {first[key].strip(), *(row[key].strip() for row in rows if row.get(key, "").strip())}
+    if first is not None:
+        try:
+            key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
+        except ValueError:
+            pass
+        else:
+            return {
+                first[key].strip(),
+                *(row[key].strip() for row in rows if row.get(key, "").strip()),
+            }
+    return _source_ids_from_catalog(parent_path, member)
 
 
 def _qualified_ids(
@@ -134,13 +283,18 @@ def _qualified_ids(
     sigma: float,
     parent_ids: set[str],
     member: str | None,
+    error_columns: Iterable[str],
 ) -> set[str]:
-    rows = _iter_rows(path, member)
+    rows = _iter_rows(
+        path,
+        member,
+        required_columns=("SourceID", *error_columns),
+    )
     first = next(rows, None)
     if first is None:
         return set()
     id_key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
-    error_key = _find_key(first, ("e_gmag", "e_rmag", "magerr", "mag_err", "error"))
+    error_key = _find_key(first, error_columns)
     selected: set[str] = set()
     for row in chain((first,), rows):
         oid = row.get(id_key, "").strip()
@@ -168,13 +322,29 @@ def derive_730k(
     config.validate()
     parent_ids = _source_ids(parent_path, parent_member)
     if len(parent_ids) != expected_parent_rows:
-        raise ValueError(f"parent row/object count mismatch: expected {expected_parent_rows}, got {len(parent_ids)}")
+        raise ValueError(
+            f"parent row/object count mismatch: expected {expected_parent_rows}, got {len(parent_ids)}"
+        )
 
-    g_ids = _qualified_ids(g_lightcurve, sigma=config.g_sigma, parent_ids=parent_ids, member=g_member)
-    r_ids = _qualified_ids(r_lightcurve, sigma=config.r_sigma, parent_ids=parent_ids, member=r_member)
+    g_ids = _qualified_ids(
+        g_lightcurve,
+        sigma=config.g_sigma,
+        parent_ids=parent_ids,
+        member=g_member,
+        error_columns=("e_gmag", "magerr", "mag_err", "error"),
+    )
+    r_ids = _qualified_ids(
+        r_lightcurve,
+        sigma=config.r_sigma,
+        parent_ids=parent_ids,
+        member=r_member,
+        error_columns=("e_rmag", "magerr", "mag_err", "error"),
+    )
     selected = sorted(g_ids & r_ids)
     if len(selected) != expected_selected_rows:
-        raise ValueError(f"derived subset count mismatch: expected {expected_selected_rows}, got {len(selected)}")
+        raise ValueError(
+            f"derived subset count mismatch: expected {expected_selected_rows}, got {len(selected)}"
+        )
 
     output.parent.mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha256()
@@ -186,10 +356,20 @@ def derive_730k(
             handle.write(encoded.decode("utf-8"))
             digest.update(encoded)
 
-    result = DerivationResult(len(parent_ids), len(selected), digest.hexdigest(), output, config)
+    result = DerivationResult(
+        len(parent_ids),
+        len(selected),
+        digest.hexdigest(),
+        output,
+        config,
+    )
     if parent_evidence_sha256 is None:
         raise ValueError("parent_evidence_sha256 is required to emit scientific 730k evidence")
-    selection_manifest = json.dumps(result.to_dict()["selection"], sort_keys=True, separators=(",", ":")).encode("utf-8")
+    selection_manifest = json.dumps(
+        result.to_dict()["selection"],
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
     write_evidence_manifest(
         output.with_name(output.name + ".evidence.json"),
         benchmark_id="ztf_periodic_730k",

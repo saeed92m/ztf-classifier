@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       run_heavy:
-        description: "Download and execute source-backed benchmark acquisition/derivation"
+        description: "Run full source-backed benchmark acquisition and derivation"
         required: false
-        default: false
+        default: true
         type: boolean
 
 permissions:
@@ -49,66 +49,150 @@ jobs:
 
   heavy-scientific-validation:
     name: Execute source-backed benchmark acquisition and derivation
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/heavy/'))
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/heavy/')) ||
+      (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v7
+
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11.16"
           cache: pip
+
       - name: Install locked dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.lock
           python -m pip install -e .
+
       - name: Acquire 781k CPVS parent evidence
         run: |
           mkdir -p reports/scientific_validation/ztf_periodic_781k
-          python -m ztf_classifier.validation acquire \
-            --benchmark-id ztf_periodic_781k \
-            --output reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
-            --code-version "${GITHUB_SHA}"
+          python -m ztf_classifier.validation acquire             --benchmark-id ztf_periodic_781k             --output reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip             --code-version "${GITHUB_SHA}"
+
       - name: Acquire StarEmbed source package
         run: |
           mkdir -p reports/scientific_validation/ztf_star_embed
-          python -m ztf_classifier.validation acquire \
-            --benchmark-id star_embed_ztf_40k \
-            --output reports/scientific_validation/ztf_star_embed \
-            --code-version "${GITHUB_SHA}"
-      - name: Download CPVS light-curve inputs for 730k derivation
+          python -m ztf_classifier.validation acquire             --benchmark-id star_embed_ztf_40k             --output reports/scientific_validation/ztf_star_embed             --code-version "${GITHUB_SHA}"
+
+      - name: Download and normalize CPVS light-curve inputs for 730k derivation
         run: |
-          mkdir -p reports/scientific_validation/ztf_periodic_730k
-          curl -L --fail --retry 3 "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \
-            -o reports/scientific_validation/ztf_periodic_730k/ztf2g.zip
-          curl -L --fail --retry 3 "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" \
-            -o reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
-          echo "850fcef561dd7407fbe8e19e99100d7a  reports/scientific_validation/ztf_periodic_730k/ztf2g.zip" | md5sum -c -
-          echo "daa7bc45c67579253eebe6b1c09dfbd9  reports/scientific_validation/ztf_periodic_730k/ztf2r.zip" | md5sum -c -
-      - name: Derive published 730k subset
+          set -euo pipefail
+
+          root=reports/scientific_validation/ztf_periodic_730k
+          mkdir -p "$root/g" "$root/r"
+
+          curl -L --fail --retry 3 --retry-all-errors             "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1"             -o "$root/ztf2g.zip"
+          curl -L --fail --retry 3 --retry-all-errors             "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1"             -o "$root/ztf2r.zip"
+
+          echo "850fcef561dd7407fbe8e19e99100d7a  $root/ztf2g.zip" | md5sum -c -
+          echo "daa7bc45c67579253eebe6b1c09dfbd9  $root/ztf2r.zip" | md5sum -c -
+
+          unzip -q "$root/ztf2g.zip" -d "$root/g"
+          unzip -q "$root/ztf2r.zip" -d "$root/r"
+
+          # The Zenodo downloads are outer archives and may contain nested
+          # archive containers. Normalize them to actual text data files.
+          for band in g r; do
+            while find "$root/$band" -type f -iname '*.zip' -print -quit | grep -q .; do
+              while IFS= read -r -d '' nested; do
+                target="${nested%.zip}"
+                mkdir -p "$target"
+                unzip -q "$nested" -d "$target"
+                rm -f "$nested"
+              done < <(find "$root/$band" -type f -iname '*.zip' -print0)
+            done
+          done
+
+          printf 'g files: '
+          find "$root/g" -type f | wc -l
+          printf 'r files: '
+          find "$root/r" -type f | wc -l
+
+      - name: Validate parent evidence integrity
         run: |
+          set -euo pipefail
           parent="reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip"
           evidence="$parent.evidence.json"
-          if test -f "$parent" && test -f "$evidence"; then
-            parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
-            python -m ztf_classifier.validation derive-730k \
-              --parent "$parent" \
-              --g-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2g.zip \
-              --r-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2r.zip \
-              --output reports/scientific_validation/ztf_periodic_730k/selected.tsv \
-              --parent-evidence-sha256 "$parent_sha" \
-              --code-version "${GITHUB_SHA}"
-          else
-            echo "Parent evidence unavailable; 730k derivation cannot execute." >&2
+          expected_count=781602
+
+          test -f "$parent" || {
+            echo "ERROR: Parent file not found: $parent" >&2
+            exit 1
+          }
+
+          test -f "$evidence" || {
+            echo "ERROR: Parent evidence file not found: $evidence" >&2
+            exit 1
+          }
+
+          row_count="$(
+            python - "$evidence" <<'PY'
+          import json
+          import sys
+
+          path = sys.argv[1]
+          with open(path, encoding="utf-8") as f:
+              evidence = json.load(f)
+
+          if isinstance(evidence, list):
+              count = len(evidence)
+          elif isinstance(evidence, dict):
+              value = evidence.get("row_count")
+              if isinstance(value, bool) or not isinstance(value, int):
+                  keys = ", ".join(sorted(evidence))
+                  raise SystemExit(
+                      "ERROR: Evidence must contain integer row_count; "
+                      f"available keys: {keys}"
+                  )
+              count = value
+          else:
+              raise SystemExit(
+                  "ERROR: Evidence must be a JSON list or object containing row_count"
+              )
+
+          print(count)
+          PY
+          )"
+
+          if [ "$row_count" -ne "$expected_count" ]; then
+            echo "ERROR: Parent evidence row count mismatch: expected $expected_count, got $row_count" >&2
             exit 1
           fi
+
+          echo "Parent evidence validated: $row_count rows"
+          echo "Parent SHA256: $(sha256sum "$parent" | awk '{print $1}')"
+          echo "Evidence SHA256: $(sha256sum "$evidence" | awk '{print $1}')"
+
+      - name: Derive published 730k subset
+        run: |
+          set -euo pipefail
+          parent="reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip"
+          evidence="$parent.evidence.json"
+
+          test -f "$parent" || {
+            echo "ERROR: Parent evidence unavailable: $parent" >&2
+            exit 1
+          }
+
+          test -f "$evidence" || {
+            echo "ERROR: Parent evidence metadata unavailable: $evidence" >&2
+            exit 1
+          }
+
+          parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
+          python -m ztf_classifier.validation derive-730k             --parent "$parent"             --g-lightcurve reports/scientific_validation/ztf_periodic_730k/g             --r-lightcurve reports/scientific_validation/ztf_periodic_730k/r             --output reports/scientific_validation/ztf_periodic_730k/selected.tsv             --parent-evidence-sha256 "$parent_sha"             --code-version "${GITHUB_SHA}"
+
       - name: Evaluate fail-closed scientific gate
         if: always()
         run: |
-          python -m ztf_classifier.validation gate \
-            --evidence-dir reports/scientific_validation \
-            --output reports/scientific_validation/release_gate.json
+          python -m ztf_classifier.validation gate             --evidence-dir reports/scientific_validation             --output reports/scientific_validation/release_gate.json
+
       - name: Upload heavy scientific evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -119,7 +203,7 @@ jobs:
 
   scheduled-scientific-validation:
     name: Source provenance acquisition and scientific gate readiness
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_heavy == false)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -142,9 +226,7 @@ jobs:
       - name: Evaluate scientific gate status
         if: always()
         run: |
-          python -m ztf_classifier.validation gate \
-            --evidence-dir reports/scientific_validation \
-            --output reports/scientific_validation/release_gate.json
+          python -m ztf_classifier.validation gate             --evidence-dir reports/scientific_validation             --output reports/scientific_validation/release_gate.json
 
       - name: Upload provenance and gate evidence
         uses: actions/upload-artifact@v4
