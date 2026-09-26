@@ -257,18 +257,10 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
 
 
 def _source_ids(parent_path: Path, member: str | None) -> set[str]:
-    rows = _iter_rows(parent_path, member)
-    first = next(rows, None)
-    if first is not None:
-        try:
-            key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
-        except ValueError:
-            pass
-        else:
-            return {
-                first[key].strip(),
-                *(row[key].strip() for row in rows if row.get(key, "").strip()),
-            }
+    # CPVS Table2 is a published catalog table whose data rows are identified
+    # by their ZTF name in the first column.  Its metadata/header sections can
+    # contain SourceID-like tokens and can terminate a generic tabular parser
+    # early, so the catalog-specific ordinal fallback is authoritative here.
     return _source_ids_from_catalog(parent_path, member)
 
 
@@ -315,7 +307,7 @@ def derive_730k(
 ) -> DerivationResult:
     """Derive the published subset from the pinned parent and source lightcurves."""
     config.validate()
-    parent_ids = _source_ids(parent_path, parent_member)
+    parent_ids = _source_ids_from_catalog(parent_path, parent_member)
     if len(parent_ids) != expected_parent_rows:
         raise ValueError(
             f"parent row/object count mismatch: expected {expected_parent_rows}, got {len(parent_ids)}"
