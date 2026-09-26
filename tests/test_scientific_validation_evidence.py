@@ -26,6 +26,46 @@ def test_manifest_round_trip_and_verify(tmp_path):
     assert loaded.verify(tmp_path) == []
     assert manifest.to_dict() == loaded.to_dict()
 
+def test_manifest_round_trip_preserves_integer_row_count(tmp_path):
+    artifact = tmp_path / "snapshot.bin"
+    artifact.write_bytes(b"snapshot")
+    item = EvidenceArtifact.from_path(artifact, "source_snapshot")
+    path = tmp_path / "evidence.json"
+    manifest = write_evidence_manifest(
+        path,
+        benchmark_id="ztf_periodic_781k",
+        source_id="ztf_periodic_781k",
+        acquisition_timestamp="2026-09-26T20:00:00Z",
+        code_version="test",
+        artifacts=[item],
+        row_count=781602,
+    )
+    payload = json.loads(path.read_text())
+    assert payload["row_count"] == 781602
+    assert isinstance(payload["row_count"], int)
+    loaded = EvidenceManifest.from_dict(payload)
+    assert loaded.row_count == 781602
+    assert manifest.to_dict() == loaded.to_dict()
+
+
+def test_manifest_rejects_non_integer_row_count():
+    with pytest.raises(ValueError, match="row_count"):
+        EvidenceManifest.from_dict({
+            "benchmark_id": "star_embed_ztf_40k",
+            "source_id": "star_embed_ztf_40k",
+            "source_version": "ICML-2026 dataset release",
+            "acquisition_timestamp": "2026-09-25T20:00:00Z",
+            "code_version": "test",
+            "artifacts": [{
+                "path": "snapshot.bin",
+                "sha256": "0" * 64,
+                "size_bytes": 1,
+                "role": "source_snapshot",
+            }],
+            "row_count": "781602",
+        })
+
+
 def test_manifest_detects_mutation(tmp_path):
     artifact = tmp_path / "snapshot.bin"
     artifact.write_bytes(b"snapshot")
