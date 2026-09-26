@@ -21,26 +21,30 @@
   "measurement": {
     "metrics": {
       "reliability": {
-        "status": "NOT_MEASURED",
-        "reason": "Post-change CI execution is required."
+        "status": "MEASURED",
+        "value": "8/8 gated CI jobs succeeded",
+        "evidence": "GitHub Actions run 36221891239"
       },
       "reproducibility": {
-        "status": "NOT_MEASURED",
-        "reason": "Post-change CI execution is required."
+        "status": "MEASURED",
+        "value": "The same gated dependency sequence completed successfully on the PR head",
+        "evidence": "GitHub Actions run 36221891239"
       }
     }
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "PASS",
     "scientific_gate_affected": false,
     "evidence": [
-      "The dependency graph now gates each quality stage on the preceding stage.",
-      "Ruff format validation now covers the complete src and tests trees.",
-      "Runtime smoke validation covers the CLI, API, and worker entry points.",
-      "Coverage and JUnit test reports are uploaded as CI artifacts.",
-      "Dependency Review is enforced for pull requests targeting main."
-    ],
-    "blocker": "Post-change CI must execute successfully before this lifecycle stage is finalized."
+      "Format Check succeeded in GitHub Actions run 36221891239.",
+      "Lint succeeded after Format Check.",
+      "Cumulative Lifecycle Gate succeeded after Lint.",
+      "Test Suite succeeded after the cumulative lifecycle gate and uploaded test/coverage reports.",
+      "Runtime Smoke Tests succeeded after the Test Suite.",
+      "Build & Verify Package succeeded after Runtime Smoke Tests.",
+      "Dependency Audit succeeded after Build & Verify Package.",
+      "CI Gate succeeded after Dependency Audit."
+    ]
   },
   "failure_analysis": {
     "status": "resolved",
@@ -59,13 +63,10 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
-    "open_blockers": [
-      "Post-change CI must pass.",
-      "Repository branch protection / required status checks must be configured on main before merge governance is complete."
-    ]
+    "status": "PASS",
+    "open_blockers": []
   },
-  "decision": "BLOCKED",
+  "decision": "ACCEPT",
   "knowledge_carried_forward": [
     "AD-CI-011"
   ]
