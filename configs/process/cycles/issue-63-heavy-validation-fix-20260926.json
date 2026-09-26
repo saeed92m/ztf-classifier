@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "issue-63-heavy-validation-fix-20260926",
+  "objective": "Repair the source-backed CPVS 781k parent resolution failure observed during Issue #63 heavy scientific validation and rerun the complete fail-closed path.",
+  "previous_knowledge_consumed": [
+    "FD-001",
+    "SF-003",
+    "heavy-run-36242863730"
+  ],
+  "baseline": {
+    "revision": "9ab910ddd04d2352e81f7c02c5715bcddf5944c6",
+    "issue": 63,
+    "blocker_issue": 51
+  },
+  "expected_improvement": [
+    "scientific_validity",
+    "reproducibility",
+    "release_evidence"
+  ],
+  "measurement": {
+    "metrics": {
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED"
+      }
+    },
+    "method": "GitHub Actions Scientific Validation heavy job with source-backed 781k acquisition, 730k derivation, and fail-closed gate."
+  },
+  "validation": {
+    "status": "BLOCKED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Heavy run 36242863730 completed 781k acquisition, StarEmbed acquisition, and source downloads successfully but failed during 730k derivation because the CPVS Table2 parser produced zero parent IDs.",
+      "The repair adds a documented ordinal SourceID fallback for the published Table2 catalog and a regression test."
+    ],
+    "blocker": "A fresh heavy execution must verify the repaired derivation and produce the required immutable benchmark evidence."
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_cause": "The published CPVS Table2 artifact exposes ZTF identifiers in its catalog rows rather than an explicit SourceID header; the previous generic parser therefore returned zero parent IDs.",
+    "observed_failure": "parent row/object count mismatch: expected 781602, got 0"
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "CPVS Table2 SourceID must be resolved from the 1-based published catalog row order when no explicit SourceID column is present.",
+      "The companion ztf2g and ztf2r artifacts use the numeric SourceID join key."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Fresh heavy source-backed execution has not yet verified the repaired 781k-to-730k derivation.",
+      "Issue #51 historical ALeRCE snapshot reproduction remains unresolved."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "FD-001",
+    "SF-003",
+    "CPVS ordinal SourceID mapping"
+  ]
+}
