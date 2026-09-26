@@ -139,7 +139,7 @@ def _resolve_star_embed_urls(
     response = requests.get(
         "https://huggingface.co/api/datasets/StarEmbed/ZTF_40k",
         timeout=timeout_seconds,
-        params={"expand": "sha,siblings"},
+        params=[("expand", "sha"), ("expand", "siblings")],
     )
     response.raise_for_status()
     payload = response.json()
