@@ -53,6 +53,17 @@ class ModelResponse(BaseModel):
     feature_schema_sha256: str
 
 
+class ScientificValidationResponse(BaseModel):
+    """Fail-closed scientific release-gate state exposed by the API."""
+
+    status: str
+    release_blocking: bool
+    benchmarks: list[dict[str, Any]]
+    blockers: list[str]
+    source_probe: dict[str, Any] | None = None
+    interpretation: str
+
+
 class ServiceStatusResponse(BaseModel):
     """Health/readiness response."""
 
