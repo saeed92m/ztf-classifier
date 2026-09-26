@@ -88,6 +88,20 @@ def _looks_like_html(payload: bytes) -> bool:
     return sample.startswith((b"<!doctype html", b"<html", b"<head", b"<body"))
 
 
+def _derive_row_count(request: AcquisitionRequest, artifact: Path) -> int | None:
+    """Derive a canonical row count for benchmark-specific tabular evidence."""
+    if request.benchmark_id != "ztf_periodic_781k":
+        return None
+    from ztf_classifier.validation.derivation import _source_ids
+
+    count = len(_source_ids(artifact, None))
+    if count <= 0:
+        raise AcquisitionError(
+            f"{request.benchmark_id} produced no catalog rows in {artifact}"
+        )
+    return count
+
+
 def _query_manifest_hash(payload: dict[str, object] | None) -> str | None:
     if payload is None:
         return None
@@ -268,6 +282,7 @@ def acquire_source(
             artifacts=tuple(EvidenceArtifact.from_path(path, request.artifact_role) for path in destinations),
             parent_evidence_sha256=request.parent_evidence_sha256,
             query_manifest_sha256=_query_manifest_hash(request.query_manifest),
+            row_count=_derive_row_count(request, destinations[0]),
         )
         return AcquisitionResult(
             request.benchmark_id,
