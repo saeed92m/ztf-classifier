@@ -1,8 +1,29 @@
 {
-  "cycle_id": "scientific-validation-dashboard",
-  "change": {
-    "scope": "Expose the fail-closed Scientific Validation Gate through the API and Workbench.",
-    "intent": "Make release-blocking scientific evidence visible as a first-class product surface without converting missing evidence into PASS."
+  "schema_version": "1.1",
+  "stage_id": "pr-scientific-validation-dashboard",
+  "objective": "Expose the fail-closed Scientific Validation Gate through the API and Workbench.",
+  "previous_knowledge_consumed": ["SF-001", "SF-002", "FD-001"],
+  "baseline": {
+    "revision": "not-recorded",
+    "description": "Historical cycle record predates the current cumulative-lifecycle schema; the original baseline revision was not captured in the record."
+  },
+  "expected_improvement": ["reliability", "coverage", "scientific_validity"],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "Historical record did not preserve a before/after reliability measurement."
+      },
+      "coverage": {
+        "status": "NOT_MEASURED",
+        "reason": "Historical record did not preserve a before/after coverage measurement."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "This process change exposes validation evidence but does not itself constitute external scientific benchmark evidence."
+      }
+    },
+    "trade_off": "Missing scientific evidence remains release-blocking."
   },
   "validation": {
     "status": "PASS",
@@ -17,14 +38,17 @@
     "status": "no-known-failure",
     "root_causes": []
   },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Release-blocking scientific evidence should be visible as a first-class product surface.",
+      "Missing scientific evidence must remain distinct from successful validation."
+    ]
+  },
   "regression": {
     "status": "PASS",
     "open_blockers": []
   },
   "decision": "ACCEPT",
-  "knowledge_carried_forward": [
-    "SF-001",
-    "SF-002",
-    "FD-001"
-  ]
+  "knowledge_carried_forward": ["SF-001", "SF-002", "FD-001"]
 }
