@@ -217,9 +217,9 @@ def run_table_benchmark(
         name for name in manifest.required_leakage_checks
         if leakage.get(name) != "PASS"
     ]
-    if provenance_result is not None and provenance_result.status != "PASS":
-        blockers.append("provenance")
-    elif provenance_result is None and not provenance_complete:
+    if (provenance_result is not None and provenance_result.status != "PASS") or (
+        provenance_result is None and not provenance_complete
+    ):
         blockers.append("provenance")
     status = "PASS" if not blockers else "BLOCKED"
     elapsed = time.perf_counter() - started
