@@ -43,6 +43,5 @@ def test_runner_is_fail_closed_when_declared_check_cannot_execute(tmp_path):
 
 
 def test_provenance_requires_canonical_adapter():
-    frame = pd.DataFrame({"oid": ["A"], "truth": ["A"], "prediction": ["A"]})
     result = check_provenance(manifest(required_leakage_checks=["provenance"]), "missing.csv")
     assert result.status == "BLOCKED"
