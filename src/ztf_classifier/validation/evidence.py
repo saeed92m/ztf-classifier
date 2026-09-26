@@ -52,6 +52,7 @@ class EvidenceManifest:
     artifacts: tuple[EvidenceArtifact, ...]
     parent_evidence_sha256: str | None = None
     query_manifest_sha256: str | None = None
+    row_count: int | None = None
     immutable: bool = True
 
     @classmethod
@@ -75,7 +76,9 @@ class EvidenceManifest:
             source_version=source.version, acquisition_timestamp=str(payload["acquisition_timestamp"]),
             code_version=str(payload["code_version"]), artifacts=artifacts,
             parent_evidence_sha256=payload.get("parent_evidence_sha256"),
-            query_manifest_sha256=payload.get("query_manifest_sha256"), immutable=True,
+            query_manifest_sha256=payload.get("query_manifest_sha256"),
+            row_count=payload.get("row_count"),
+            immutable=True,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -86,6 +89,7 @@ class EvidenceManifest:
             "code_version": self.code_version, "immutable": self.immutable,
             "parent_evidence_sha256": self.parent_evidence_sha256,
             "query_manifest_sha256": self.query_manifest_sha256,
+            "row_count": self.row_count,
             "artifacts": [artifact.to_dict() for artifact in self.artifacts],
         }
 
@@ -117,13 +121,14 @@ def write_evidence_manifest(
     artifacts: Iterable[EvidenceArtifact],
     parent_evidence_sha256: str | None = None,
     query_manifest_sha256: str | None = None,
+    row_count: int | None = None,
 ) -> EvidenceManifest:
     source = get_source(source_id)
     manifest = EvidenceManifest(
         benchmark_id=benchmark_id, source_id=source.source_id, source_version=source.version,
         acquisition_timestamp=acquisition_timestamp, code_version=code_version,
         artifacts=tuple(artifacts), parent_evidence_sha256=parent_evidence_sha256,
-        query_manifest_sha256=query_manifest_sha256,
+        query_manifest_sha256=query_manifest_sha256, row_count=row_count,
     )
     if not manifest.artifacts:
         raise ValueError("Evidence manifest requires at least one artifact")
