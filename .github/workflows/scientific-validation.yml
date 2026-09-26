@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       run_heavy:
-        description: "Download and execute source-backed benchmark acquisition/derivation"
+        description: "Run full source-backed benchmark acquisition and derivation"
         required: false
-        default: false
+        default: true
         type: boolean
 
 permissions:
@@ -49,66 +49,64 @@ jobs:
 
   heavy-scientific-validation:
     name: Execute source-backed benchmark acquisition and derivation
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/heavy/'))
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/heavy/'))
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v7
+
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11.16"
           cache: pip
+
       - name: Install locked dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.lock
           python -m pip install -e .
+
       - name: Acquire 781k CPVS parent evidence
         run: |
           mkdir -p reports/scientific_validation/ztf_periodic_781k
-          python -m ztf_classifier.validation acquire \
-            --benchmark-id ztf_periodic_781k \
-            --output reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
-            --code-version "${GITHUB_SHA}"
+          python -m ztf_classifier.validation acquire             --benchmark-id ztf_periodic_781k             --output reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip             --code-version "${GITHUB_SHA}"
+
       - name: Acquire StarEmbed source package
         run: |
           mkdir -p reports/scientific_validation/ztf_star_embed
-          python -m ztf_classifier.validation acquire \
-            --benchmark-id star_embed_ztf_40k \
-            --output reports/scientific_validation/ztf_star_embed \
-            --code-version "${GITHUB_SHA}"
+          python -m ztf_classifier.validation acquire             --benchmark-id star_embed_ztf_40k             --output reports/scientific_validation/ztf_star_embed             --code-version "${GITHUB_SHA}"
+
       - name: Download CPVS light-curve inputs for 730k derivation
         run: |
+          set -euo pipefail
           mkdir -p reports/scientific_validation/ztf_periodic_730k
-          curl -L --fail --retry 3 "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \
-            -o reports/scientific_validation/ztf_periodic_730k/ztf2g.zip
-          curl -L --fail --retry 3 "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" \
-            -o reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
+          curl -L --fail --retry 3 --retry-all-errors             "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1"             -o reports/scientific_validation/ztf_periodic_730k/ztf2g.zip
+          curl -L --fail --retry 3 --retry-all-errors             "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1"             -o reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
           echo "850fcef561dd7407fbe8e19e99100d7a  reports/scientific_validation/ztf_periodic_730k/ztf2g.zip" | md5sum -c -
           echo "daa7bc45c67579253eebe6b1c09dfbd9  reports/scientific_validation/ztf_periodic_730k/ztf2r.zip" | md5sum -c -
+          ls -lh reports/scientific_validation/ztf_periodic_730k/ztf2g.zip             reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
+          du -h reports/scientific_validation/ztf_periodic_730k/ztf2g.zip             reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
+
       - name: Derive published 730k subset
         run: |
           parent="reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip"
           evidence="$parent.evidence.json"
           if test -f "$parent" && test -f "$evidence"; then
             parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
-            python -m ztf_classifier.validation derive-730k \
-              --parent "$parent" \
-              --g-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2g.zip \
-              --r-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2r.zip \
-              --output reports/scientific_validation/ztf_periodic_730k/selected.tsv \
-              --parent-evidence-sha256 "$parent_sha" \
-              --code-version "${GITHUB_SHA}"
+            python -m ztf_classifier.validation derive-730k               --parent "$parent"               --g-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2g.zip               --r-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2r.zip               --output reports/scientific_validation/ztf_periodic_730k/selected.tsv               --parent-evidence-sha256 "$parent_sha"               --code-version "${GITHUB_SHA}"
           else
             echo "Parent evidence unavailable; 730k derivation cannot execute." >&2
             exit 1
           fi
+
       - name: Evaluate fail-closed scientific gate
         if: always()
         run: |
-          python -m ztf_classifier.validation gate \
-            --evidence-dir reports/scientific_validation \
-            --output reports/scientific_validation/release_gate.json
+          python -m ztf_classifier.validation gate             --evidence-dir reports/scientific_validation             --output reports/scientific_validation/release_gate.json
+
       - name: Upload heavy scientific evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -119,7 +117,7 @@ jobs:
 
   scheduled-scientific-validation:
     name: Source provenance acquisition and scientific gate readiness
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_heavy == false)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -142,9 +140,7 @@ jobs:
       - name: Evaluate scientific gate status
         if: always()
         run: |
-          python -m ztf_classifier.validation gate \
-            --evidence-dir reports/scientific_validation \
-            --output reports/scientific_validation/release_gate.json
+          python -m ztf_classifier.validation gate             --evidence-dir reports/scientific_validation             --output reports/scientific_validation/release_gate.json
 
       - name: Upload provenance and gate evidence
         uses: actions/upload-artifact@v4

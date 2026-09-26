@@ -68,7 +68,11 @@ def _split_fields(line: str) -> list[str]:
     return stripped.split()
 
 
-def _zip_member_matches_header(zf: zipfile.ZipFile, member: str, required_columns: Iterable[str]) -> bool:
+def _zip_member_matches_header(
+    zf: zipfile.ZipFile,
+    member: str,
+    required_columns: Iterable[str],
+) -> bool:
     required = {column.strip().lower() for column in required_columns}
     if not required:
         return False
@@ -127,27 +131,49 @@ def _iter_rows(
     *,
     required_columns: Iterable[str] = (),
 ) -> Iterator[dict[str, str]]:
+    """Yield rows from CPVS files while handling metadata and common delimiters."""
     owner, raw = _open_text(path, member, required_columns=required_columns)
     try:
         lines = (line.decode("utf-8", errors="replace") for line in raw)
-        header_line = next(
-            (
-                line
-                for line in lines
-                if line.strip()
-                and not line.lstrip().startswith("#")
-                and any(
-                    token.strip().lower() in {"sourceid", "source_id", "oid", "ztf_id"}
-                    for token in line.replace(",", "\t").split("\t")
-                )
-            ),
-            None,
-        )
+        header_line = None
+        header_tokens: list[str] = []
+        source_tokens = {"sourceid", "source_id", "oid", "ztf_id"}
+        for line in lines:
+            if not line.strip():
+                continue
+            stripped = line.strip()
+            tokens = _split_fields(stripped)
+            normalized = {token.strip().lower() for token in tokens}
+            if source_tokens.intersection(normalized):
+                header_line = stripped
+                header_tokens = tokens
+                break
         if header_line is None:
             return
-        delimiter = "\t" if "\t" in header_line else ","
-        header = [item.strip() for item in next(csv.reader([header_line], delimiter=delimiter))]
-        for values in csv.reader(lines, delimiter=delimiter):
+
+        if "\t" in header_line:
+            delimiter = "\t"
+            parse = lambda value: [item.strip() for item in value.split("\t")]
+        elif "," in header_line:
+            delimiter = ","
+            parse = lambda value: [
+                item.strip() for item in next(csv.reader([value], delimiter=","))
+            ]
+        else:
+            delimiter = None
+            parse = lambda value: value.split()
+
+        header = header_tokens
+        if not header:
+            header = parse(header_line)
+
+        for line in lines:
+            if not line.strip():
+                continue
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                continue
+            values = parse(stripped)
             if values and len(values) == len(header):
                 yield dict(zip(header, values))
     finally:
@@ -175,15 +201,7 @@ def _snr_from_mag_error(value: str) -> float:
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Resolve CPVS SourceIDs from the published Table2 row order.
-
-    The Zenodo Table2 catalog exposes the ZTF identifier as its first column,
-    while the companion ztf2g/ztf2r files use the internal numeric SourceID.
-    The published source documentation defines that SourceID as the join key
-    and gives the third Table2 object as SourceID=3. Therefore, when Table2
-    does not contain an explicit SourceID column, SourceIDs are the 1-based
-    ordinal positions of valid ZTF catalog rows.
-    """
+    """Resolve CPVS SourceIDs from the published Table2 row order."""
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
@@ -270,7 +288,9 @@ def derive_730k(
     config.validate()
     parent_ids = _source_ids(parent_path, parent_member)
     if len(parent_ids) != expected_parent_rows:
-        raise ValueError(f"parent row/object count mismatch: expected {expected_parent_rows}, got {len(parent_ids)}")
+        raise ValueError(
+            f"parent row/object count mismatch: expected {expected_parent_rows}, got {len(parent_ids)}"
+        )
 
     g_ids = _qualified_ids(
         g_lightcurve,
@@ -288,7 +308,9 @@ def derive_730k(
     )
     selected = sorted(g_ids & r_ids)
     if len(selected) != expected_selected_rows:
-        raise ValueError(f"derived subset count mismatch: expected {expected_selected_rows}, got {len(selected)}")
+        raise ValueError(
+            f"derived subset count mismatch: expected {expected_selected_rows}, got {len(selected)}"
+        )
 
     output.parent.mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha256()
@@ -300,10 +322,20 @@ def derive_730k(
             handle.write(encoded.decode("utf-8"))
             digest.update(encoded)
 
-    result = DerivationResult(len(parent_ids), len(selected), digest.hexdigest(), output, config)
+    result = DerivationResult(
+        len(parent_ids),
+        len(selected),
+        digest.hexdigest(),
+        output,
+        config,
+    )
     if parent_evidence_sha256 is None:
         raise ValueError("parent_evidence_sha256 is required to emit scientific 730k evidence")
-    selection_manifest = json.dumps(result.to_dict()["selection"], sort_keys=True, separators=(",", ":")).encode("utf-8")
+    selection_manifest = json.dumps(
+        result.to_dict()["selection"],
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
     write_evidence_manifest(
         output.with_name(output.name + ".evidence.json"),
         benchmark_id="ztf_periodic_730k",
