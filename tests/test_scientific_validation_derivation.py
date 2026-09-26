@@ -89,6 +89,22 @@ def test_cpvs_table_falls_back_to_ordinal_sourceids(tmp_path: Path):
     assert _source_ids(parent, None) == {"1", "2", "3"}
 
 
+def test_cpvs_table_source_ids_ignore_metadata_after_header(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _source_ids
+
+    parent = tmp_path / "Table2.txt"
+    parent.write_text(
+        "SourceID\tName\n"
+        "metadata row with SourceID token\n"
+        "ZTFJ000000.13+620605.8 0.00056 62.10163 1.9449979 BYDra\n"
+        "ZTFJ000000.14+721413.7 0.00061 72.23716 0.2991500 EW\n"
+        "footer SourceID token\n",
+        encoding="utf-8",
+    )
+
+    assert _source_ids(parent, None) == {"1", "2"}
+
+
 def test_cpvs_table_fallback_scans_past_interleaved_metadata(tmp_path: Path):
     from ztf_classifier.validation.derivation import _source_ids
 
