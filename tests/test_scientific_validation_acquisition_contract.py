@@ -1,8 +1,11 @@
-from pathlib import Path
-
 import pytest
 
-from ztf_classifier.validation.acquisition import AcquisitionError, AcquisitionRequest, acquire_source, request_from_benchmark
+from ztf_classifier.validation.acquisition import (
+    AcquisitionError,
+    AcquisitionRequest,
+    acquire_source,
+    request_from_benchmark,
+)
 
 
 def test_request_from_benchmark_binds_canonical_source_and_version():
