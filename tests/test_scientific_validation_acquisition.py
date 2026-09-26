@@ -1,4 +1,6 @@
+from io import BytesIO
 from pathlib import Path
+import zipfile
 
 import pytest
 
@@ -9,9 +11,19 @@ from ztf_classifier.validation.acquisition import (
 )
 
 
+def _cpvs_payload(*source_ids: str) -> bytes:
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr(
+            "Table2.txt",
+            "SourceID\n" + "".join(f"{source_id}\n" for source_id in source_ids),
+        )
+    return buffer.getvalue()
+
+
 def test_acquisition_is_content_addressed_and_emits_evidence(tmp_path: Path):
-    payload = b"immutable benchmark bytes"
-    destination = tmp_path / "snapshot.bin"
+    payload = _cpvs_payload("1", "2", "3")
+    destination = tmp_path / "snapshot.zip"
 
     def fetcher(url: str, timeout: float) -> bytes:
         assert url == "https://example.test/snapshot"
@@ -33,6 +45,7 @@ def test_acquisition_is_content_addressed_and_emits_evidence(tmp_path: Path):
     assert result.status == "ACQUIRED"
     assert result.artifact is not None
     assert result.evidence_manifest is not None
+    assert result.evidence_manifest.row_count == 3
     assert destination.read_bytes() == payload
     assert result.evidence_manifest.verify(tmp_path) == []
 
