@@ -130,3 +130,32 @@ def test_lightcurve_zip_fails_closed_on_ambiguous_members(tmp_path: Path):
 
     with pytest.raises(ValueError, match="multiple members matching required columns"):
         list(_iter_rows(archive, required_columns=("SourceID", "e_gmag")))
+
+def test_lightcurve_zip_accepts_whitespace_delimited_header(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _iter_rows
+
+    archive = tmp_path / "ztf2g-whitespace.zip"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("README.txt", "CPVS g-band documentation\n")
+        zf.writestr(
+            "ztf2g",
+            "# SourceID RAdeg DEdeg HJD gmag e_gmag g_flag\n"
+            "1 1 2 3 15.0 0.1 0\n",
+        )
+
+    assert list(
+        _iter_rows(
+            archive,
+            required_columns=("SourceID", "e_gmag"),
+        )
+    ) == [
+        {
+            "SourceID": "1",
+            "RAdeg": "1",
+            "DEdeg": "2",
+            "HJD": "3",
+            "gmag": "15.0",
+            "e_gmag": "0.1",
+            "g_flag": "0",
+        }
+    ]
