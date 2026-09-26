@@ -10,6 +10,7 @@ from ztf_classifier.validation.acquisition import (
     request_from_benchmark,
 )
 
+
 def test_request_from_benchmark_binds_canonical_source_and_version():
     request = request_from_benchmark(
         "configs/benchmarks",
