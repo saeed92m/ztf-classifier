@@ -10,8 +10,8 @@
     "description": "Heavy scientific validation is available only through schedule or manual dispatch."
   },
   "expected_improvement": [
-    "operational_reproducibility",
-    "scientific_validation_execution"
+    "reproducibility",
+    "scientific_validity"
   ],
   "measurement": {
     "metrics": {
