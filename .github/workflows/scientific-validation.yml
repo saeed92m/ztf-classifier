@@ -52,7 +52,8 @@ jobs:
     if: >-
       github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/heavy/'))
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/heavy/')) ||
+      (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
