@@ -62,6 +62,11 @@ class EvidenceManifest:
         if missing:
             raise ValueError("Evidence manifest missing required fields: " + ", ".join(missing))
         source = get_source(str(payload["source_id"]))
+        row_count = payload.get("row_count")
+        if row_count is not None and (
+            isinstance(row_count, bool) or not isinstance(row_count, int) or row_count < 0
+        ):
+            raise ValueError("Evidence manifest row_count must be a non-negative integer")
         if payload["source_version"] != source.version:
             raise ValueError(
                 f"source version mismatch for {source.source_id}: expected {source.version!r}, got {payload['source_version']!r}"
