@@ -7,11 +7,11 @@ import hashlib
 import json
 import math
 import zipfile
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from itertools import chain
 from pathlib import Path
-from collections.abc import Iterable, Iterator
 
 from ztf_classifier.validation.evidence import (
     EvidenceArtifact,
