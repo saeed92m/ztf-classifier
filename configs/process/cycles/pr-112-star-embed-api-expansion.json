@@ -15,13 +15,13 @@
   ],
   "measurement": {
     "metrics": {
-      "api_request_contract": {
-        "status": "IMPLEMENTED",
-        "reason": "The resolver now sends sha and siblings as repeated expand query parameters, with a regression test covering the exact request contract."
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The API request contract is corrected and covered by a regression test; scientific validity requires real source-backed heavy execution."
       },
-      "ci_validation": {
-        "status": "NOT_VERIFIED",
-        "reason": "Post-change CI is currently blocked by the cumulative lifecycle record requirement; source-backed heavy execution remains separately release-gated."
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "Post-change heavy source-backed execution is required to measure external acquisition reliability."
       }
     }
   },
