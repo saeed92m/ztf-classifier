@@ -1,4 +1,5 @@
 from pathlib import Path
+import zipfile
 
 import pytest
 
@@ -71,7 +72,6 @@ def test_cpvs_table_parser_skips_metadata_before_sourceid_header(tmp_path: Path)
     ]
 
 
-
 def test_cpvs_table_falls_back_to_ordinal_sourceids(tmp_path: Path):
     from ztf_classifier.validation.derivation import _source_ids
 
@@ -87,3 +87,46 @@ def test_cpvs_table_falls_back_to_ordinal_sourceids(tmp_path: Path):
     )
 
     assert _source_ids(parent, None) == {"1", "2", "3"}
+
+
+def test_lightcurve_zip_auto_selects_data_member(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _iter_rows
+
+    archive = tmp_path / "ztf2g.zip"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("README.txt", "CPVS g-band documentation\n")
+        zf.writestr(
+            "ztf2g",
+            "SourceID\tRAdeg\tDEdeg\tHJD\tgmag\te_gmag\tg_flag\n"
+            "1\t1\t2\t3\t15.0\t0.1\t0\n",
+        )
+
+    assert list(
+        _iter_rows(
+            archive,
+            required_columns=("SourceID", "e_gmag"),
+        )
+    ) == [
+        {
+            "SourceID": "1",
+            "RAdeg": "1",
+            "DEdeg": "2",
+            "HJD": "3",
+            "gmag": "15.0",
+            "e_gmag": "0.1",
+            "g_flag": "0",
+        }
+    ]
+
+
+def test_lightcurve_zip_fails_closed_on_ambiguous_members(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _iter_rows
+
+    archive = tmp_path / "ambiguous.zip"
+    payload = "SourceID\te_gmag\n1\t0.1\n"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("part1", payload)
+        zf.writestr("part2", payload)
+
+    with pytest.raises(ValueError, match="multiple members matching required columns"):
+        list(_iter_rows(archive, required_columns=("SourceID", "e_gmag")))
