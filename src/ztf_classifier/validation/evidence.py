@@ -55,7 +55,7 @@ class EvidenceManifest:
     immutable: bool = True
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "EvidenceManifest":
+    def from_dict(cls, payload: dict[str, Any]) -> EvidenceManifest:
         required = ("benchmark_id","source_id","source_version","acquisition_timestamp","code_version","artifacts")
         missing = [key for key in required if key not in payload]
         if missing:
