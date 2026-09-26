@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from ztf_classifier.validation.manifest import BenchmarkManifest
 from ztf_classifier.validation.sources import ValidationSource, get_source
