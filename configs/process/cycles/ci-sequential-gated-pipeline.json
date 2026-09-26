@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "stage_id": "ci-sequential-gated-pipeline",
-  "objective": "Make CI quality stages execute as a dependency-gated sequence so unresolved failures block dependent validation stages.",
+  "objective": "Harden the CI quality pipeline with explicit dependency-gated sequencing, complete format coverage, runtime smoke validation, test/coverage artifacts, and dependency-change review.",
   "previous_knowledge_consumed": [
     "AD-CI-008",
     "AD-CI-009",
@@ -14,7 +14,9 @@
   "expected_improvement": [
     "reliability",
     "debugging_efficiency",
-    "reproducibility"
+    "reproducibility",
+    "runtime_entrypoint_confidence",
+    "dependency_governance"
   ],
   "measurement": {
     "metrics": {
@@ -32,7 +34,11 @@
     "status": "NOT_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
-      "The dependency graph now gates each quality stage on the preceding stage."
+      "The dependency graph now gates each quality stage on the preceding stage.",
+      "Ruff format validation now covers the complete src and tests trees.",
+      "Runtime smoke validation covers the CLI, API, and worker entry points.",
+      "Coverage and JUnit test reports are uploaded as CI artifacts.",
+      "Dependency Review is enforced for pull requests targeting main."
     ],
     "blocker": "Post-change CI must execute successfully before this lifecycle stage is finalized."
   },
@@ -47,13 +53,16 @@
     "status": "SUPPORTED",
     "findings": [
       "CI stages should form an explicit dependency graph when later stages consume the confidence established by earlier stages.",
-      "The final gate remains useful as an aggregate invariant even when execution is sequential."
+      "The final gate remains useful as an aggregate invariant even when execution is sequential.",
+      "Runtime entry-point smoke checks catch packaging or startup regressions that package import checks alone cannot detect.",
+      "Machine-readable CI artifacts improve post-failure diagnosis without changing scientific behavior."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Post-change CI must pass."
+      "Post-change CI must pass.",
+      "Repository branch protection / required status checks must be configured on main before merge governance is complete."
     ]
   },
   "decision": "BLOCKED",
