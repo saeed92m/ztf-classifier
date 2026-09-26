@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Callable, Iterable
 from urllib.parse import urlparse
 
 import requests
@@ -229,7 +229,7 @@ def acquire_source(
             root / (root.name + ".evidence.json") if multi else root.with_name(root.name + ".evidence.json"),
             benchmark_id=request.benchmark_id,
             source_id=source.source_id,
-            acquisition_timestamp=datetime.now(timezone.utc).isoformat(),
+            acquisition_timestamp=datetime.now(UTC).isoformat(),
             code_version=code_version,
             artifacts=tuple(EvidenceArtifact.from_path(path, request.artifact_role) for path in destinations),
             parent_evidence_sha256=request.parent_evidence_sha256,
