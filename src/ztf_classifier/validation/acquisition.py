@@ -134,25 +134,23 @@ def _resolve_star_embed_urls(
 ) -> tuple[tuple[str, ...], dict[str, object] | None]:
     if not query_manifest or query_manifest.get("revision") != "resolve_at_acquisition":
         return urls, query_manifest
-    from huggingface_hub import HfApi
-
-    api = HfApi()
-    info = api.dataset_info(
-        "StarEmbed/ZTF_40k",
+    response = requests.get(
+        "https://huggingface.co/api/datasets/StarEmbed/ZTF_40k",
         timeout=timeout_seconds,
-        expand=["sha", "siblings"],
     )
-    revision = info.sha
-    siblings = info.siblings or []
+    response.raise_for_status()
+    payload = response.json()
+    revision = payload.get("sha")
+    siblings = payload.get("siblings")
     if not isinstance(revision, str) or len(revision) != 40:
         raise AcquisitionError("Hugging Face did not return a valid dataset commit SHA")
     names = tuple(query_manifest.get("artifact_names", ()))
     if not names:
         names = tuple(Path(url).name for url in urls)
     available = {
-        Path(str(item.rfilename)).name
-        for item in siblings
-        if getattr(item, "rfilename", None)
+        Path(str(item.get("rfilename"))).name
+        for item in siblings or []
+        if isinstance(item, dict) and item.get("rfilename")
     }
     missing = [name for name in names if name not in available]
     if missing:
