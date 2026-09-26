@@ -7,7 +7,10 @@ import json
 import sys
 from pathlib import Path
 
-from ztf_classifier.validation.acquisition import acquire_source, request_from_benchmark
+from ztf_classifier.validation.acquisition import (
+    acquire_source,
+    request_from_benchmark,
+)
 from ztf_classifier.validation.derivation import derive_730k
 from ztf_classifier.validation.gate import write_release_gate_report
 from ztf_classifier.validation.registry import BenchmarkRegistry
