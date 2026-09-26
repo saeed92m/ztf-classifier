@@ -24,14 +24,51 @@
     "scientific_basis": "Zenodo documents ztf2g as g-band single-exposure data with SourceID and e_gmag, and ztf2r as r-band single-exposure data with SourceID and e_rmag."
   },
   "validation": {
-    "status": "PENDING_HEAVY_RERUN",
-    "required": [
-      "781602 parent IDs",
-      "730184 selected IDs",
-      "immutable derivation evidence",
-      "fail-closed scientific gate PASS"
-    ],
-    "remaining_blocker": "Fresh heavy source-backed execution must verify the repaired derivation and produce immutable evidence. Issue #51 remains separately unresolved."
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [],
+    "blocker": "Fresh source-backed Heavy execution must verify 781602 parent IDs, 730184 selected IDs, immutable derivation evidence, and a fail-closed scientific gate PASS. Issue #51 remains separately unresolved."
   },
-  "decision": "BLOCKED_PENDING_HEAVY_RERUN"
+  "decision": "BLOCKED",
+  "previous_knowledge_consumed": [
+    "issue-63-source-backed-validation-acceptance",
+    "issue-51-historical-alerce-drift"
+  ],
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility",
+    "scientific_validity"
+  ],
+  "measurement": {
+    "metrics": {
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "The CPVS published Table2 artifact requires the documented 1-based ordinal SourceID fallback when no explicit SourceID header is present.",
+      "The published ztf2g and ztf2r archives require schema-based unique member selection when multiple ZIP members are present.",
+      "Ambiguous or schema-mismatched source artifacts must fail closed rather than guess.",
+      "The repair is not scientifically accepted until a fresh full Heavy execution produces immutable evidence."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Fresh source-backed Heavy rerun has not yet verified the repaired 781602/730184 derivation.",
+      "Issue #51 historical ALeRCE snapshot/live-data drift remains unresolved."
+    ]
+  },
+  "knowledge_carried_forward": [
+    "Fail-closed source-backed derivation",
+    "Immutable scientific evidence required before acceptance",
+    "Historical/live provenance must remain distinct"
+  ]
 }
