@@ -125,8 +125,6 @@ def _expected_hashes(request: AcquisitionRequest) -> tuple[str | None, ...]:
     return tuple(request.expected_sha256 for _ in request.urls)
 
 
-
-
 def _resolve_star_embed_urls(
     urls: tuple[str, ...],
     query_manifest: dict[str, object] | None,
@@ -134,12 +132,10 @@ def _resolve_star_embed_urls(
 ) -> tuple[tuple[str, ...], dict[str, object] | None]:
     if not query_manifest or query_manifest.get("revision") != "resolve_at_acquisition":
         return urls, query_manifest
-    import requests
-
     response = requests.get(
         "https://huggingface.co/api/datasets/StarEmbed/ZTF_40k",
         timeout=timeout_seconds,
-        params={"expand": "sha,siblings"},
+        params=[("expand", "sha"), ("expand", "siblings")],
     )
     response.raise_for_status()
     payload = response.json()
