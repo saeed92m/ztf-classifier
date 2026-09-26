@@ -119,13 +119,55 @@ def _snr_from_mag_error(value: str) -> float:
     return 1.0857362047581296 / error
 
 
+def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
+    """Resolve CPVS SourceIDs from the published Table2 row order.
+
+    The Zenodo Table2 catalog exposes the ZTF identifier as its first column,
+    while the companion ztf2g/ztf2r files use the internal numeric SourceID.
+    The published source documentation defines that SourceID as the join key
+    and gives the third Table2 object as SourceID=3. Therefore, when Table2
+    does not contain an explicit SourceID column, SourceIDs are the 1-based
+    ordinal positions of valid ZTF catalog rows.
+    """
+    owner, raw = _open_text(parent_path, member)
+    try:
+        source_ids: set[str] = set()
+        started = False
+        ordinal = 0
+        for encoded in raw:
+            line = encoded.decode("utf-8", errors="replace").strip()
+            if not line or line.startswith("#"):
+                continue
+            first_token = line.split()[0]
+            if not started:
+                if not first_token.upper().startswith("ZTF"):
+                    continue
+                started = True
+            if not first_token.upper().startswith("ZTF"):
+                break
+            ordinal += 1
+            source_ids.add(str(ordinal))
+        return source_ids
+    finally:
+        raw.close()
+        if owner is not None:
+            owner.close()
+
+
 def _source_ids(parent_path: Path, member: str | None) -> set[str]:
     rows = _iter_rows(parent_path, member)
     first = next(rows, None)
-    if first is None:
-        return set()
-    key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
-    return {first[key].strip(), *(row[key].strip() for row in rows if row.get(key, "").strip())}
+    if first is not None:
+        try:
+            key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
+        except ValueError:
+            pass
+        else:
+            return {
+                first[key].strip(),
+                *(row[key].strip() for row in rows if row.get(key, "").strip()),
+            }
+    return _source_ids_from_catalog(parent_path, member)
 
 
 def _qualified_ids(
