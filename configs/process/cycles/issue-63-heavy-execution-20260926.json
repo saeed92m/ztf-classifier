@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "issue-63-heavy-execution-trigger-20260926",
+  "objective": "Trigger the source-backed heavy scientific validation path from a dedicated ci/heavy/** branch so Issue #63 acceptance can be measured from real external evidence.",
+  "baseline": {
+    "revision": "9ab910ddd04d2352e81f7c02c5715bcddf5944c6",
+    "issue": 63,
+    "blocker_issue": 51
+  },
+  "decision": "EXECUTION_REQUIRED",
+  "validation": {
+    "status": "PENDING_EXECUTION",
+    "scientific_gate_affected": true
+  }
+}
