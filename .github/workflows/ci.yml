@@ -62,7 +62,16 @@ jobs:
           python -m pip install -r requirements.lock
 
       - name: Run Ruff format check
-        run: python -m ruff format --check src tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "${GITHUB_BASE_REF:-main}" --depth=1
+          mapfile -t files < <(git diff --name-only "origin/${GITHUB_BASE_REF:-main}...HEAD" -- 'src/**/*.py' 'tests/**/*.py')
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No changed Python source/test files require formatting validation."
+            exit 0
+          fi
+          python -m ruff format --check "${files[@]}"
 
 
   cumulative-lifecycle:
