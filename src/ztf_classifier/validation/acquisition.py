@@ -14,7 +14,11 @@ from urllib.parse import urlparse
 import requests
 
 from ztf_classifier.validation.adapters import build_adapter_plan
-from ztf_classifier.validation.evidence import EvidenceArtifact, EvidenceManifest, write_evidence_manifest
+from ztf_classifier.validation.evidence import (
+    EvidenceArtifact,
+    EvidenceManifest,
+    write_evidence_manifest,
+)
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.sources import get_source
 
