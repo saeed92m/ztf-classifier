@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "heavy-scientific-validation-20260926",
+  "objective": "Execute source-backed heavy scientific validation against the canonical benchmark acquisition and derivation pipeline.",
+  "previous_knowledge_consumed": [
+    "AD-CI-011",
+    "pr-111-heavy-validation-push-trigger"
+  ],
+  "baseline": {
+    "revision": "4d1c188920e6e1ec8df2282ddd8d0f8bc1c06c10",
+    "description": "Sequential CI is verified; dedicated ci/heavy/** execution trigger is present on the execution branch."
+  },
+  "expected_improvement": [
+    "scientific_validity",
+    "reproducibility",
+    "reliability"
+  ],
+  "measurement": {
+    "metrics": {
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "Heavy source-backed execution is in progress."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "Heavy source-backed evidence manifests are not yet available."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "Heavy execution outcome is not yet known."
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Execution branch uses the dedicated ci/heavy/** push trigger.",
+      "Canonical acquisition and derivation contracts remain fail-closed."
+    ],
+    "blocker": "Heavy source-backed acquisition, derivation, validation, and evidence emission must complete before this stage can be accepted."
+  },
+  "failure_analysis": {
+    "status": "UNRESOLVED",
+    "root_causes": []
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Heavy validation must be judged from real source-backed evidence rather than contract-only CI success."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Heavy source-backed execution is pending."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "AD-CI-011"
+  ]
+}
