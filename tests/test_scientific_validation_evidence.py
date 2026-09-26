@@ -8,6 +8,7 @@ from ztf_classifier.validation.evidence import (
     write_evidence_manifest,
 )
 
+
 def test_evidence_artifact_hashes_are_reproducible(tmp_path):
     artifact = tmp_path / "snapshot.bin"
     artifact.write_bytes(b"immutable scientific evidence")
