@@ -2,19 +2,6 @@ name: Scientific Validation
 
 on:
   pull_request:
-    paths:
-      - ".github/workflows/**"
-      - "configs/benchmarks/**"
-      - "configs/process/**"
-      - "src/ztf_classifier/validation/**"
-      - "src/ztf_classifier/lifecycle.py"
-      - "src/ztf_classifier/lifecycle_schema.py"
-      - "tests/test_scientific_validation_registry.py"
-      - "tests/test_cumulative_lifecycle.py"
-      - "docs/SCIENTIFIC_VALIDATION_BENCHMARK.md"
-      - "docs/architecture/**"
-      - "docs/roadmap/**"
-      - "docs/knowledge/**"
   push:
     branches:
       - main
