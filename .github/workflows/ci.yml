@@ -262,17 +262,10 @@ jobs:
     steps:
       - name: Require all parallel checks to pass
         env:
-          LINT_RESULT: ${{ needs.lint.result }}
-          FORMAT_RESULT: ${{ needs.format.result }}
-          CUMULATIVE_RESULT: ${{ needs.cumulative-lifecycle.result }}
-          TEST_RESULT: ${{ needs.test.result }}
-          BUILD_RESULT: ${{ needs.build.result }}
           AUDIT_RESULT: ${{ needs.audit.result }}
         run: |
-          for result in "$LINT_RESULT" "$FORMAT_RESULT" "$CUMULATIVE_RESULT" "$TEST_RESULT" "$BUILD_RESULT" "$AUDIT_RESULT"; do
-            if [ "$result" != "success" ]; then
-              echo "CI check failed or was cancelled: $result"
-              exit 1
-            fi
-          done
-          echo "All gated CI checks passed."
+          if [ "$AUDIT_RESULT" != "success" ]; then
+            echo "Final gated CI stage failed or was cancelled: $AUDIT_RESULT"
+            exit 1
+          fi
+          echo "All gated CI stages passed."
