@@ -5,8 +5,7 @@ import pandas as pd
 from ztf_classifier.validation.checks import (
     check_future_data_leakage,
     check_object_overlap,
-    check_target_leakage ,
-
+    check_target_leakage,
 )
 from ztf_classifier.validation.manifest import BenchmarkManifest
 
