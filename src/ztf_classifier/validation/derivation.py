@@ -56,6 +56,18 @@ class DerivationResult:
         }
 
 
+def _split_fields(line: str) -> list[str]:
+    """Split CPVS text rows across tab-, comma-, or whitespace-delimited formats."""
+    stripped = line.strip()
+    if stripped.startswith("#"):
+        stripped = stripped[1:].lstrip()
+    if "\t" in stripped:
+        return [item.strip() for item in stripped.split("\t")]
+    if "," in stripped:
+        return [item.strip() for item in next(csv.reader([stripped], delimiter=","))]
+    return stripped.split()
+
+
 def _zip_member_matches_header(zf: zipfile.ZipFile, member: str, required_columns: Iterable[str]) -> bool:
     required = {column.strip().lower() for column in required_columns}
     if not required:
@@ -63,9 +75,9 @@ def _zip_member_matches_header(zf: zipfile.ZipFile, member: str, required_column
     with zf.open(member, "r") as raw:
         sample = raw.read(256 * 1024).decode("utf-8", errors="replace")
     for line in sample.splitlines():
-        if not line.strip() or line.lstrip().startswith("#"):
+        if not line.strip():
             continue
-        tokens = {token.strip().lower() for token in line.replace(",", "\t").split("\t")}
+        tokens = {token.lower() for token in _split_fields(line)}
         if required.issubset(tokens):
             return True
     return False
