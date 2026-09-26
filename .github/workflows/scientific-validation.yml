@@ -141,12 +141,18 @@ jobs:
 
           if isinstance(evidence, list):
               count = len(evidence)
-          elif isinstance(evidence, dict) and isinstance(evidence.get("row_count"), int):
-              count = evidence["row_count"]
+          elif isinstance(evidence, dict):
+              value = evidence.get("row_count")
+              if isinstance(value, bool) or not isinstance(value, int):
+                  keys = ", ".join(sorted(evidence))
+                  raise SystemExit(
+                      "ERROR: Evidence must contain integer row_count; "
+                      f"available keys: {keys}"
+                  )
+              count = value
           else:
               raise SystemExit(
-                  "ERROR: Unsupported parent evidence schema; "
-                  "cannot determine row_count"
+                  "ERROR: Evidence must be a JSON list or object containing row_count"
               )
 
           print(count)
