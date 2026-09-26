@@ -90,17 +90,73 @@ jobs:
           ls -lh reports/scientific_validation/ztf_periodic_730k/ztf2g.zip             reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
           du -h reports/scientific_validation/ztf_periodic_730k/ztf2g.zip             reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
 
-      - name: Derive published 730k subset
+      - name: Validate parent evidence integrity
         run: |
+          set -euo pipefail
           parent="reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip"
           evidence="$parent.evidence.json"
-          if test -f "$parent" && test -f "$evidence"; then
-            parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
-            python -m ztf_classifier.validation derive-730k               --parent "$parent"               --g-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2g.zip               --r-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2r.zip               --output reports/scientific_validation/ztf_periodic_730k/selected.tsv               --parent-evidence-sha256 "$parent_sha"               --code-version "${GITHUB_SHA}"
-          else
-            echo "Parent evidence unavailable; 730k derivation cannot execute." >&2
+          expected_count=781602
+
+          test -f "$parent" || {
+            echo "ERROR: Parent file not found: $parent" >&2
+            exit 1
+          }
+
+          test -f "$evidence" || {
+            echo "ERROR: Parent evidence file not found: $evidence" >&2
+            exit 1
+          }
+
+          row_count="$(
+            python - "$evidence" <<'PY'
+          import json
+          import sys
+
+          path = sys.argv[1]
+          with open(path, encoding="utf-8") as f:
+              evidence = json.load(f)
+
+          if isinstance(evidence, list):
+              count = len(evidence)
+          elif isinstance(evidence, dict) and isinstance(evidence.get("row_count"), int):
+              count = evidence["row_count"]
+          else:
+              raise SystemExit(
+                  "ERROR: Unsupported parent evidence schema; "
+                  "cannot determine row_count"
+              )
+
+          print(count)
+          PY
+          )"
+
+          if [ "$row_count" -ne "$expected_count" ]; then
+            echo "ERROR: Parent evidence row count mismatch: expected $expected_count, got $row_count" >&2
             exit 1
           fi
+
+          echo "Parent evidence validated: $row_count rows"
+          echo "Parent SHA256: $(sha256sum "$parent" | awk '{print $1}')"
+          echo "Evidence SHA256: $(sha256sum "$evidence" | awk '{print $1}')"
+
+      - name: Derive published 730k subset
+        run: |
+          set -euo pipefail
+          parent="reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip"
+          evidence="$parent.evidence.json"
+
+          test -f "$parent" || {
+            echo "ERROR: Parent evidence unavailable: $parent" >&2
+            exit 1
+          }
+
+          test -f "$evidence" || {
+            echo "ERROR: Parent evidence metadata unavailable: $evidence" >&2
+            exit 1
+          }
+
+          parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
+          python -m ztf_classifier.validation derive-730k             --parent "$parent"             --g-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2g.zip             --r-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2r.zip             --output reports/scientific_validation/ztf_periodic_730k/selected.tsv             --parent-evidence-sha256 "$parent_sha"             --code-version "${GITHUB_SHA}"
 
       - name: Evaluate fail-closed scientific gate
         if: always()
