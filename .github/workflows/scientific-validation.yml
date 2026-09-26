@@ -4,10 +4,8 @@ on:
   pull_request:
   push:
     branches:
-      - "ci/heavy/**"
-  push:
-    branches:
       - main
+      - "ci/heavy/**"
   schedule:
     - cron: "17 3 * * 1"
   workflow_dispatch:
