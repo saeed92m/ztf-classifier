@@ -4,8 +4,8 @@ import pytest
 
 from ztf_classifier.validation.derivation import (
     DerivationConfig,
-    derive_730k,
     _snr_from_mag_error,
+    derive_730k,
 )
 
 
