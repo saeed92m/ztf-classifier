@@ -2,7 +2,11 @@ from pathlib import Path
 
 import pytest
 
-from ztf_classifier.validation.derivation import DerivationConfig, _snr_from_mag_error, derive_730k
+from ztf_classifier.validation.derivation import (
+    DerivationConfig,
+    _snr_from_mag_error,
+    derive_730k,
+)
 
 
 def test_published_sigma_defaults():
