@@ -10,7 +10,8 @@ import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from ztf_classifier.validation.sources import get_source
 
@@ -31,7 +32,7 @@ class EvidenceArtifact:
     role: str
 
     @classmethod
-    def from_path(cls, path: str | Path, role: str) -> "EvidenceArtifact":
+    def from_path(cls, path: str | Path, role: str) -> EvidenceArtifact:
         p = Path(path)
         if not p.is_file():
             raise FileNotFoundError(p)
