@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "ci-heavy-run-20260926-v2",
+  "objective": "Execute the source-backed heavy scientific-validation path from a reproducible ci/heavy branch.",
+  "previous_knowledge_consumed": ["AD-CI-011"],
+  "baseline": {
+    "revision": "4d1c188920e6e1ec8df2282ddd8d0f8bc1c06c10",
+    "description": "CI-heavy push trigger is present and validated by the PR quality checks."
+  },
+  "expected_improvement": ["scientific_validity", "reproducibility"],
+  "measurement": {
+    "metrics": {
+      "scientific_validity": {"status": "PENDING", "reason": "Awaiting source-backed heavy execution."},
+      "reproducibility": {"status": "PENDING", "reason": "Awaiting source-backed heavy execution."}
+    }
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": true,
+    "evidence": [],
+    "blocker": "Awaiting dedicated heavy workflow result."
+  },
+  "failure_analysis": {
+    "status": "in_progress",
+    "root_causes": []
+  },
+  "knowledge_extraction": {
+    "status": "PENDING",
+    "findings": []
+  },
+  "regression": {
+    "status": "PENDING",
+    "open_blockers": ["Dedicated heavy source-backed execution must complete."]
+  },
+  "decision": "PENDING",
+  "knowledge_carried_forward": ["AD-CI-011"]
+}
