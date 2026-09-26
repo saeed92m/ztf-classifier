@@ -151,7 +151,6 @@ def _iter_rows(
             return
 
         if "\t" in header_line:
-            delimiter = "\t"
             parse = lambda value: [item.strip() for item in value.split("\t")]
         elif "," in header_line:
             parse = lambda value: [
