@@ -1,6 +1,5 @@
-import requests
-
 import pytest
+import requests
 
 from ztf_classifier.validation.acquisition import (
     AcquisitionError,
