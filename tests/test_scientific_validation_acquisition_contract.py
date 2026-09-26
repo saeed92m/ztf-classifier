@@ -11,8 +11,8 @@ from ztf_classifier.validation.acquisition import (
 
 
 def _cpvs_payload() -> bytes:
-    from io import BytesIO
     import zipfile
+    from io import BytesIO
 
     buffer = BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
