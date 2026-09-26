@@ -3,6 +3,7 @@ name: Scientific Validation
 on:
   pull_request:
     paths:
+      - ".github/workflows/**"
       - "configs/benchmarks/**"
       - "configs/process/**"
       - "src/ztf_classifier/validation/**"
