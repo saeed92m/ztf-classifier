@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from itertools import chain
 from pathlib import Path
 
+
 from ztf_classifier.validation.evidence import (
     EvidenceArtifact,
     write_evidence_manifest,
@@ -55,15 +56,52 @@ class DerivationResult:
         }
 
 
-def _open_text(path: Path, member: str | None = None):
+def _zip_member_matches_header(zf: zipfile.ZipFile, member: str, required_columns: Iterable[str]) -> bool:
+    required = {column.strip().lower() for column in required_columns}
+    if not required:
+        return False
+    with zf.open(member, "r") as raw:
+        sample = raw.read(256 * 1024).decode("utf-8", errors="replace")
+    for line in sample.splitlines():
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        tokens = {token.strip().lower() for token in line.replace(",", "\t").split("\t")}
+        if required.issubset(tokens):
+            return True
+    return False
+
+
+def _open_text(
+    path: Path,
+    member: str | None = None,
+    *,
+    required_columns: Iterable[str] = (),
+):
     if path.suffix.lower() == ".zip":
         zf = zipfile.ZipFile(path)
         names = [name for name in zf.namelist() if not name.endswith("/")]
         if member is None:
             if len(names) != 1:
-                zf.close()
-                raise ValueError(f"{path} contains {len(names)} files; specify member explicitly")
-            member = names[0]
+                candidates = [
+                    name
+                    for name in names
+                    if _zip_member_matches_header(zf, name, required_columns)
+                ]
+                if len(candidates) == 1:
+                    member = candidates[0]
+                else:
+                    zf.close()
+                    if not candidates:
+                        raise ValueError(
+                            f"{path} contains {len(names)} files; no member matches "
+                            f"required columns {tuple(required_columns)!r}"
+                        )
+                    raise ValueError(
+                        f"{path} has multiple members matching required columns "
+                        f"{tuple(required_columns)!r}: {tuple(candidates)!r}; specify member explicitly"
+                    )
+            else:
+                member = names[0]
         if member not in names:
             zf.close()
             raise ValueError(f"member {member!r} not found in {path}")
@@ -71,8 +109,13 @@ def _open_text(path: Path, member: str | None = None):
     return None, path.open("rb")
 
 
-def _iter_rows(path: Path, member: str | None = None) -> Iterator[dict[str, str]]:
-    owner, raw = _open_text(path, member)
+def _iter_rows(
+    path: Path,
+    member: str | None = None,
+    *,
+    required_columns: Iterable[str] = (),
+) -> Iterator[dict[str, str]]:
+    owner, raw = _open_text(path, member, required_columns=required_columns)
     try:
         lines = (line.decode("utf-8", errors="replace") for line in raw)
         header_line = next(
@@ -176,13 +219,18 @@ def _qualified_ids(
     sigma: float,
     parent_ids: set[str],
     member: str | None,
+    error_columns: Iterable[str],
 ) -> set[str]:
-    rows = _iter_rows(path, member)
+    rows = _iter_rows(
+        path,
+        member,
+        required_columns=("SourceID", *error_columns),
+    )
     first = next(rows, None)
     if first is None:
         return set()
     id_key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
-    error_key = _find_key(first, ("e_gmag", "e_rmag", "magerr", "mag_err", "error"))
+    error_key = _find_key(first, error_columns)
     selected: set[str] = set()
     for row in chain((first,), rows):
         oid = row.get(id_key, "").strip()
@@ -212,8 +260,20 @@ def derive_730k(
     if len(parent_ids) != expected_parent_rows:
         raise ValueError(f"parent row/object count mismatch: expected {expected_parent_rows}, got {len(parent_ids)}")
 
-    g_ids = _qualified_ids(g_lightcurve, sigma=config.g_sigma, parent_ids=parent_ids, member=g_member)
-    r_ids = _qualified_ids(r_lightcurve, sigma=config.r_sigma, parent_ids=parent_ids, member=r_member)
+    g_ids = _qualified_ids(
+        g_lightcurve,
+        sigma=config.g_sigma,
+        parent_ids=parent_ids,
+        member=g_member,
+        error_columns=("e_gmag", "magerr", "mag_err", "error"),
+    )
+    r_ids = _qualified_ids(
+        r_lightcurve,
+        sigma=config.r_sigma,
+        parent_ids=parent_ids,
+        member=r_member,
+        error_columns=("e_rmag", "magerr", "mag_err", "error"),
+    )
     selected = sorted(g_ids & r_ids)
     if len(selected) != expected_selected_rows:
         raise ValueError(f"derived subset count mismatch: expected {expected_selected_rows}, got {len(selected)}")
