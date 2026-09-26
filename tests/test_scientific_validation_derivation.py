@@ -52,3 +52,20 @@ def test_derivation_emits_immutable_evidence_manifest(tmp_path: Path):
     assert result.selected_rows == 1
     evidence = (tmp_path / "selected.tsv.evidence.json").read_text(encoding="utf-8")
     assert '"parent_evidence_sha256": "' + "0" * 64 in evidence
+
+
+def test_cpvs_table_parser_skips_metadata_before_sourceid_header(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _iter_rows
+
+    parent = tmp_path / "Table2.txt"
+    parent.write_text(
+        "Table: ZTF variables catalog\n"
+        "This metadata line must not become the header.\n"
+        "SourceID\tName\n"
+        "3\tZTFJ000000.19+320847.2\n",
+        encoding="utf-8",
+    )
+
+    assert list(_iter_rows(parent)) == [
+        {"SourceID": "3", "Name": "ZTFJ000000.19+320847.2"}
+    ]
