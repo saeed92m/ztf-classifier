@@ -16,7 +16,7 @@
   ],
   "measurement": {
     "metrics": {
-      "scientific_validation_workflow_execution": {
+      "lifecycle_contract_coverage": {
         "status": "MEASURED",
         "before": "workflow parser/runtime could not reliably execute the heavy job",
         "after": "Scientific Validation run 149 completed successfully",
