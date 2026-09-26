@@ -89,6 +89,47 @@ def test_cpvs_table_falls_back_to_ordinal_sourceids(tmp_path: Path):
     assert _source_ids(parent, None) == {"1", "2", "3"}
 
 
+
+
+def test_lightcurve_directory_auto_selects_data_file(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _iter_rows
+
+    root = tmp_path / "g"
+    root.mkdir()
+    (root / "README.txt").write_text("CPVS g-band documentation\n", encoding="utf-8")
+    (root / "nested").mkdir()
+    (root / "nested" / "ztf2g.txt").write_text(
+        "SourceID RAdeg DEdeg HJD gmag e_gmag g_flag\n"
+        "1 1 2 3 15.0 0.1 0\n",
+        encoding="utf-8",
+    )
+
+    assert list(_iter_rows(root, required_columns=("SourceID", "e_gmag"))) == [
+        {
+            "SourceID": "1",
+            "RAdeg": "1",
+            "DEdeg": "2",
+            "HJD": "3",
+            "gmag": "15.0",
+            "e_gmag": "0.1",
+            "g_flag": "0",
+        }
+    ]
+
+
+def test_lightcurve_directory_fails_closed_on_ambiguous_data_files(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _iter_rows
+
+    root = tmp_path / "g"
+    root.mkdir()
+    payload = "SourceID e_gmag\n1 0.1\n"
+    (root / "part1.txt").write_text(payload, encoding="utf-8")
+    (root / "part2.txt").write_text(payload, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="multiple files matching required columns"):
+        list(_iter_rows(root, required_columns=("SourceID", "e_gmag")))
+
+
 def test_lightcurve_zip_auto_selects_data_member(tmp_path: Path):
     from ztf_classifier.validation.derivation import _iter_rows
 
