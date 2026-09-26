@@ -120,7 +120,6 @@ def run_table_benchmark(
         raise ValueError("Benchmark input is missing required columns: " + ", ".join(missing))
 
     object_ids = frame[manifest.object_id_column].astype(str)
-    duplicate_count = int(object_ids.duplicated().sum())
     y_true = frame[manifest.label_column].astype(str)
     y_pred = frame[prediction_column].astype(str)
     labels = list(manifest.class_mapping.values())
