@@ -21,14 +21,14 @@
   "measurement": {
     "metrics": {
       "reliability": {
-        "status": "MEASURED",
-        "value": "8/8 gated CI jobs succeeded",
-        "evidence": "GitHub Actions run 36221891239"
+        "before": "parallel sibling quality jobs",
+        "after": "8/8 gated CI jobs succeeded in dependency order",
+        "evidence": "GitHub Actions run 36221891179"
       },
       "reproducibility": {
-        "status": "MEASURED",
-        "value": "The same gated dependency sequence completed successfully on the PR head",
-        "evidence": "GitHub Actions run 36221891239"
+        "before": "downstream validation could execute independently of upstream failure",
+        "after": "the gated dependency sequence completed successfully",
+        "evidence": "GitHub Actions run 36221891179"
       }
     }
   },
@@ -36,7 +36,7 @@
     "status": "PASS",
     "scientific_gate_affected": false,
     "evidence": [
-      "Format Check succeeded in GitHub Actions run 36221891239.",
+      "Format Check succeeded in GitHub Actions run 36221891179.",
       "Lint succeeded after Format Check.",
       "Cumulative Lifecycle Gate succeeded after Lint.",
       "Test Suite succeeded after the cumulative lifecycle gate and uploaded test/coverage reports.",
