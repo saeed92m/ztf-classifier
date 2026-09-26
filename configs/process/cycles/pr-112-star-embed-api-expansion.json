@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-112-star-embed-api-expansion",
+  "objective": "Repair the StarEmbed Hub dataset_info expansion request contract so source-backed heavy validation can resolve the dataset revision without weakening provenance checks.",
+  "previous_knowledge_consumed": [
+    "AD-SOURCE-STAR-EMBED-001"
+  ],
+  "baseline": {
+    "revision": "2f7d6cf3e50aa5d6f8131862fdbd9b127dbd2635",
+    "description": "Heavy scientific validation reaches the StarEmbed resolver but the dataset_info expansion request returns HTTP 400."
+  },
+  "expected_improvement": [
+    "scientific_validity",
+    "external_acquisition_reliability"
+  ],
+  "measurement": {
+    "metrics": {
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The API request contract is corrected and covered by a regression test; scientific validity requires real source-backed heavy execution."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "Post-change heavy source-backed execution is required to measure external acquisition reliability."
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "The StarEmbed resolver change is covered by a regression test for the repeated expand parameter contract.",
+      "No provenance, checksum, revision, or scientific validation assertion is weakened."
+    ],
+    "blocker": "Post-change CI must pass and the real source-backed heavy validation path must complete before this lifecycle stage can be finalized."
+  },
+  "failure_analysis": {
+    "status": "resolved",
+    "root_causes": [
+      "The StarEmbed Hub dataset_info endpoint rejected the previous comma-separated expand parameter encoding with HTTP 400."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "External API request encoding is part of the reproducible acquisition contract and requires an explicit regression test."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Post-change CI must pass.",
+      "Real StarEmbed source-backed acquisition and heavy scientific validation must complete without external-resolution failure."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "AD-SOURCE-STAR-EMBED-001"
+  ]
+}
