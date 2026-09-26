@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-107-scientific-validation-workflow-yaml",
+  "objective": "Restore executable scientific-validation workflow syntax before source-backed benchmark execution.",
+  "previous_knowledge_consumed": [
+    "AD-CI-008",
+    "AD-CI-009"
+  ],
+  "baseline": {
+    "revision": "133e78681e88dab38edd735d52252b18c3c9ff60",
+    "description": "The heavy scientific-validation job contained malformed step indentation and non-normalized multiline shell commands."
+  },
+  "expected_improvement": [
+    "reliability",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "scientific_validation_workflow_execution": {
+        "status": "MEASURED",
+        "before": "workflow parser/runtime could not reliably execute the heavy job",
+        "after": "Scientific Validation run 149 completed successfully",
+        "unit": "workflow_run"
+      }
+    }
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Scientific Validation workflow run 149 completed successfully.",
+      "Registry and cumulative lifecycle contract validation completed successfully."
+    ],
+    "blocker": null
+  },
+  "failure_analysis": {
+    "status": "resolved",
+    "root_causes": [
+      "Malformed indentation placed heavy-job run keys at the wrong YAML level.",
+      "Several shell commands were flattened into hard-to-audit single lines."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Workflow syntax must be validated by the live Scientific Validation workflow, not only by static source inspection.",
+      "Multiline scientific acquisition commands should remain structurally readable and executable."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "PR CI must complete successfully before this lifecycle stage is finalized."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "AD-CI-010"
+  ]
+}
