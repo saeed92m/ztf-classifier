@@ -344,13 +344,10 @@ def derive_730k(
     output.parent.mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha256()
     with output.open("w", encoding="utf-8", newline="") as handle:
-        handle.write("SourceID
-")
-        digest.update(b"SourceID
-")
+        handle.write("SourceID\n")
+        digest.update(b"SourceID\n")
         for oid in selected:
-            encoded = f"{oid}
-".encode()
+            encoded = f"{oid}\n".encode()
             handle.write(encoded.decode("utf-8"))
             digest.update(encoded)
 
