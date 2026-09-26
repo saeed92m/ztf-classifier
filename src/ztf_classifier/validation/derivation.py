@@ -75,11 +75,23 @@ def _iter_rows(path: Path, member: str | None = None) -> Iterator[dict[str, str]
     owner, raw = _open_text(path, member)
     try:
         lines = (line.decode("utf-8", errors="replace") for line in raw)
-        first = next((line for line in lines if line.strip() and not line.lstrip().startswith("#")), None)
-        if first is None:
+        header_line = next(
+            (
+                line
+                for line in lines
+                if line.strip()
+                and not line.lstrip().startswith("#")
+                and any(
+                    token.strip().lower() in {"sourceid", "source_id", "oid", "ztf_id"}
+                    for token in line.replace(",", "\t").split("\t")
+                )
+            ),
+            None,
+        )
+        if header_line is None:
             return
-        delimiter = "\t" if "\t" in first else ","
-        header = [item.strip() for item in next(csv.reader([first], delimiter=delimiter))]
+        delimiter = "\t" if "\t" in header_line else ","
+        header = [item.strip() for item in next(csv.reader([header_line], delimiter=delimiter))]
         for values in csv.reader(lines, delimiter=delimiter):
             if values and len(values) == len(header):
                 yield dict(zip(header, values))
