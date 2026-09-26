@@ -117,17 +117,19 @@ def test_lightcurve_directory_auto_selects_data_file(tmp_path: Path):
     ]
 
 
-def test_lightcurve_directory_fails_closed_on_ambiguous_data_files(tmp_path: Path):
+def test_lightcurve_directory_aggregates_data_files(tmp_path: Path):
     from ztf_classifier.validation.derivation import _iter_rows
 
     root = tmp_path / "g"
     root.mkdir()
-    payload = "SourceID e_gmag\n1 0.1\n"
-    (root / "part1.txt").write_text(payload, encoding="utf-8")
-    (root / "part2.txt").write_text(payload, encoding="utf-8")
+    payload = "SourceID e_gmag\n"
+    (root / "part1.txt").write_text(payload + "1 0.1\n", encoding="utf-8")
+    (root / "part2.txt").write_text(payload + "2 0.2\n", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="multiple files matching required columns"):
-        list(_iter_rows(root, required_columns=("SourceID", "e_gmag")))
+    assert list(_iter_rows(root, required_columns=("SourceID", "e_gmag"))) == [
+        {"SourceID": "1", "e_gmag": "0.1"},
+        {"SourceID": "2", "e_gmag": "0.2"},
+    ]
 
 
 def test_lightcurve_zip_auto_selects_data_member(tmp_path: Path):
