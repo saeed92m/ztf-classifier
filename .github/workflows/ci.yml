@@ -19,6 +19,7 @@ concurrency:
 jobs:
   lint:
     name: Lint
+    needs: format
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -103,6 +104,7 @@ jobs:
 
   cumulative-lifecycle:
     name: Cumulative Lifecycle Gate
+    needs: lint
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -163,6 +165,7 @@ jobs:
 
   test:
     name: Test Suite
+    needs: cumulative-lifecycle
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -192,6 +195,7 @@ jobs:
 
   build:
     name: Build & Verify Package
+    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -221,6 +225,7 @@ jobs:
 
   audit:
     name: Dependency Audit
+    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -251,11 +256,6 @@ jobs:
     name: CI Gate
     if: ${{ always() }}
     needs:
-      - lint
-      - format
-      - cumulative-lifecycle
-      - test
-      - build
       - audit
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -275,4 +275,4 @@ jobs:
               exit 1
             fi
           done
-          echo "All parallel CI checks passed."
+          echo "All gated CI checks passed."
