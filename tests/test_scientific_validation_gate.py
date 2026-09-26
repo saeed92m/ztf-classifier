@@ -2,7 +2,10 @@ import json
 
 import pytest
 
-from ztf_classifier.validation.gate import REQUIRED_SCIENTIFIC_CHECKS, evaluate_release_gate
+from ztf_classifier.validation.gate import (
+    REQUIRED_SCIENTIFIC_CHECKS,
+    evaluate_release_gate,
+)
 from ztf_classifier.validation.manifest import BenchmarkManifest
 
 
