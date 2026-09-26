@@ -4,9 +4,9 @@ import requests
 from ztf_classifier.validation.acquisition import (
     AcquisitionError,
     AcquisitionRequest,
+    _resolve_star_embed_urls,
     acquire_source,
     request_from_benchmark,
-    _resolve_star_embed_urls,
 )
 
 
