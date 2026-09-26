@@ -1,5 +1,5 @@
-from pathlib import Path
 import zipfile
+from pathlib import Path
 
 import pytest
 
@@ -130,6 +130,7 @@ def test_lightcurve_zip_fails_closed_on_ambiguous_members(tmp_path: Path):
 
     with pytest.raises(ValueError, match="multiple members matching required columns"):
         list(_iter_rows(archive, required_columns=("SourceID", "e_gmag")))
+
 
 def test_lightcurve_zip_accepts_whitespace_delimited_header(tmp_path: Path):
     from ztf_classifier.validation.derivation import _iter_rows
