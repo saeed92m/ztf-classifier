@@ -89,6 +89,22 @@ def test_cpvs_table_falls_back_to_ordinal_sourceids(tmp_path: Path):
     assert _source_ids(parent, None) == {"1", "2", "3"}
 
 
+def test_cpvs_table_fallback_scans_past_interleaved_metadata(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _source_ids
+
+    parent = tmp_path / "Table2.txt"
+    parent.write_text(
+        "Table 2. ZTF Variables Catalog\n"
+        "ZTFJ000000.13+620605.8 0.00056 62.10163 1.9449979 BYDra\n"
+        "page 1 footer\n"
+        "ZTFJ000000.14+721413.7 0.00061 72.23716 0.2991500 EW\n"
+        "repeated catalog header\n"
+        "ZTFJ000000.19+320847.2 0.00080 32.14645 0.2870590 EW\n"
+        "end of table\n",
+        encoding="utf-8",
+    )
+
+    assert _source_ids(parent, None) == {"1", "2", "3"}
 
 
 def test_lightcurve_directory_auto_selects_data_file(tmp_path: Path):
