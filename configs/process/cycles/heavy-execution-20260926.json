@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "heavy-execution-20260926",
+  "objective": "Execute the source-backed heavy scientific-validation path on a dedicated ci/heavy branch and capture real external acquisition evidence.",
+  "previous_knowledge_consumed": [
+    "AD-CI-011",
+    "AD-SOURCE-STAR-EMBED-001"
+  ],
+  "baseline": {
+    "revision": "4d1c188920e6e1ec8df2282ddd8d0f8bc1c06c10",
+    "description": "Heavy validation trigger exists on ci/heavy branches; real source-backed execution must produce evidence without bypassing scientific gates."
+  },
+  "expected_improvement": [
+    "scientific_validity",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "source_backed_execution": {
+        "status": "NOT_MEASURED",
+        "reason": "This commit is intended to trigger the heavy workflow; final status must come from GitHub Actions evidence."
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Dedicated branch matches ci/heavy/**.",
+      "Heavy job is configured to run on push events for ci/heavy/** branches."
+    ],
+    "blocker": "Workflow execution and emitted acquisition/derivation evidence must be inspected before acceptance."
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "root_causes": [
+      "Heavy validation previously lacked an autonomous push-triggered execution path on a dedicated branch."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A dedicated ci/heavy branch provides a reproducible trigger for expensive source-backed validation without changing main runtime behavior."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Heavy workflow must complete.",
+      "External source acquisition and deterministic 730k derivation must either produce valid evidence or fail closed with a concrete external blocker."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "AD-CI-011",
+    "AD-SOURCE-STAR-EMBED-001"
+  ]
+}
