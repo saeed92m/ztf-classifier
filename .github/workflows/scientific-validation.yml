@@ -79,16 +79,39 @@ jobs:
           mkdir -p reports/scientific_validation/ztf_star_embed
           python -m ztf_classifier.validation acquire             --benchmark-id star_embed_ztf_40k             --output reports/scientific_validation/ztf_star_embed             --code-version "${GITHUB_SHA}"
 
-      - name: Download CPVS light-curve inputs for 730k derivation
+      - name: Download and normalize CPVS light-curve inputs for 730k derivation
         run: |
           set -euo pipefail
-          mkdir -p reports/scientific_validation/ztf_periodic_730k
-          curl -L --fail --retry 3 --retry-all-errors             "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1"             -o reports/scientific_validation/ztf_periodic_730k/ztf2g.zip
-          curl -L --fail --retry 3 --retry-all-errors             "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1"             -o reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
-          echo "850fcef561dd7407fbe8e19e99100d7a  reports/scientific_validation/ztf_periodic_730k/ztf2g.zip" | md5sum -c -
-          echo "daa7bc45c67579253eebe6b1c09dfbd9  reports/scientific_validation/ztf_periodic_730k/ztf2r.zip" | md5sum -c -
-          ls -lh reports/scientific_validation/ztf_periodic_730k/ztf2g.zip             reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
-          du -h reports/scientific_validation/ztf_periodic_730k/ztf2g.zip             reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
+
+          root=reports/scientific_validation/ztf_periodic_730k
+          mkdir -p "$root/g" "$root/r"
+
+          curl -L --fail --retry 3 --retry-all-errors             "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1"             -o "$root/ztf2g.zip"
+          curl -L --fail --retry 3 --retry-all-errors             "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1"             -o "$root/ztf2r.zip"
+
+          echo "850fcef561dd7407fbe8e19e99100d7a  $root/ztf2g.zip" | md5sum -c -
+          echo "daa7bc45c67579253eebe6b1c09dfbd9  $root/ztf2r.zip" | md5sum -c -
+
+          unzip -q "$root/ztf2g.zip" -d "$root/g"
+          unzip -q "$root/ztf2r.zip" -d "$root/r"
+
+          # The Zenodo downloads are outer archives and may contain nested
+          # archive containers. Normalize them to actual text data files.
+          for band in g r; do
+            while find "$root/$band" -type f -iname '*.zip' -print -quit | grep -q .; do
+              while IFS= read -r -d '' nested; do
+                target="${nested%.zip}"
+                mkdir -p "$target"
+                unzip -q "$nested" -d "$target"
+                rm -f "$nested"
+              done < <(find "$root/$band" -type f -iname '*.zip' -print0)
+            done
+          done
+
+          printf 'g files: '
+          find "$root/g" -type f | wc -l
+          printf 'r files: '
+          find "$root/r" -type f | wc -l
 
       - name: Validate parent evidence integrity
         run: |
@@ -156,7 +179,7 @@ jobs:
           }
 
           parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
-          python -m ztf_classifier.validation derive-730k             --parent "$parent"             --g-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2g.zip             --r-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2r.zip             --output reports/scientific_validation/ztf_periodic_730k/selected.tsv             --parent-evidence-sha256 "$parent_sha"             --code-version "${GITHUB_SHA}"
+          python -m ztf_classifier.validation derive-730k             --parent "$parent"             --g-lightcurve reports/scientific_validation/ztf_periodic_730k/g             --r-lightcurve reports/scientific_validation/ztf_periodic_730k/r             --output reports/scientific_validation/ztf_periodic_730k/selected.tsv             --parent-evidence-sha256 "$parent_sha"             --code-version "${GITHUB_SHA}"
 
       - name: Evaluate fail-closed scientific gate
         if: always()
