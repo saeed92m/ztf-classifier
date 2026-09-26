@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "issue-63-heavy-validation-execution-20260926",
+  "objective": "Execute real source-backed scientific validation for Issue #63 after the StarEmbed resolution fix.",
+  "previous_knowledge_consumed": [
+    "FD-001",
+    "SF-003"
+  ],
+  "baseline": {
+    "revision": "main",
+    "description": "PR #112 merged StarEmbed dataset_info expansion fix; heavy validation trigger is available on ci/heavy/** branches."
+  },
+  "expected_improvement": [
+    "scientific_validity",
+    "reproducibility",
+    "release_evidence"
+  ],
+  "measurement": {
+    "metrics": {
+      "heavy_source_execution": {
+        "status": "PENDING"
+      }
+    },
+    "method": "GitHub Actions Scientific Validation heavy job on ci/heavy/**"
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Execution commit triggers the existing fail-closed heavy validation path."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PENDING"
+  },
+  "knowledge_extraction": {
+    "status": "PENDING"
+  },
+  "regression": {
+    "status": "PENDING",
+    "open_blockers": [
+      "Await heavy source-backed execution and gate result."
+    ]
+  },
+  "decision": "PENDING",
+  "knowledge_carried_forward": [
+    "FD-001",
+    "SF-003"
+  ]
+}
