@@ -56,5 +56,10 @@
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "AD-SOURCE-STAR-EMBED-001"
-  ]
+  ],
+  "execution_trigger": {
+    "status": "REQUESTED",
+    "reason": "Trigger the dedicated ci/heavy/** workflow path after the StarEmbed resolver correction.",
+    "requested_at": "2026-09-26"
+  }
 }
