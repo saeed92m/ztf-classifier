@@ -11,6 +11,7 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from ztf_classifier.validation.sources import SOURCES
@@ -63,7 +64,7 @@ def run(output: str | Path, fetcher=fetch) -> dict[str, object]:
                     "version": source.version,
                 }
             )
-        except Exception as exc:  # pragma: no cover - network-dependent
+        except (OSError, URLError, ValueError, RuntimeError) as exc:  # pragma: no cover - network-dependent
             results.append(
                 {
                     "source_id": source.source_id,
