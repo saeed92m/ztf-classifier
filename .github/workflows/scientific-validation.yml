@@ -49,7 +49,7 @@ jobs:
 
   heavy-scientific-validation:
     name: Execute source-backed benchmark acquisition and derivation
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) || (github.event_name == 'push' && github.ref == 'refs/heads/ops/run-heavy-scientific-validation')
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) || (github.event_name == 'push' && github.ref == 'refs/heads/ops/run-heavy-scientific-validation') || (github.event_name == 'pull_request' && github.head_ref == 'ops/run-heavy-scientific-validation')
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
