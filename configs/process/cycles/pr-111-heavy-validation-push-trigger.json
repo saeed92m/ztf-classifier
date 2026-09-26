@@ -15,11 +15,11 @@
   ],
   "measurement": {
     "metrics": {
-      "operational_reproducibility": {
+      "reproducibility": {
         "status": "NOT_MEASURED",
         "reason": "Post-change CI and a dedicated heavy-validation branch execution are required."
       },
-      "scientific_validation_execution": {
+      "scientific_validity": {
         "status": "NOT_MEASURED",
         "reason": "The dedicated heavy-validation branch has not yet executed source-backed acquisition."
       }
