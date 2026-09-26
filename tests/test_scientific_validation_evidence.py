@@ -1,6 +1,12 @@
 import json
+
 import pytest
-from ztf_classifier.validation.evidence import EvidenceArtifact, EvidenceManifest, write_evidence_manifest
+
+from ztf_classifier.validation.evidence import (
+    EvidenceArtifact,
+    EvidenceManifest,
+    write_evidence_manifest,
+)
 
 def test_evidence_artifact_hashes_are_reproducible(tmp_path):
     artifact = tmp_path / "snapshot.bin"
