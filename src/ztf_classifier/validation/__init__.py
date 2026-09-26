@@ -1,6 +1,10 @@
 """Scientific validation and external benchmark infrastructure."""
 
-from ztf_classifier.validation.adapters import AdapterContractError, AdapterPlan, build_adapter_plan
+from ztf_classifier.validation.adapters import (
+    AdapterContractError,
+    AdapterPlan,
+    build_adapter_plan,
+)
 from ztf_classifier.validation.acquisition import (
     AcquisitionRequest,
     AcquisitionResult,
@@ -9,7 +13,11 @@ from ztf_classifier.validation.acquisition import (
     request_from_benchmark,
 )
 from ztf_classifier.validation.checks import CheckResult, run_scientific_checks
-from ztf_classifier.validation.derivation import DerivationConfig, DerivationResult, derive_730k
+from ztf_classifier.validation.derivation import (
+    DerivationConfig,
+    DerivationResult,
+    derive_730k,
+)
 from ztf_classifier.validation.evidence import (
     EvidenceArtifact,
     EvidenceManifest,
@@ -26,8 +34,15 @@ from ztf_classifier.validation.report import (
     render_scientific_validation_report,
     write_scientific_validation_report,
 )
-from ztf_classifier.validation.runner import BenchmarkRunResult, run_table_benchmark
-from ztf_classifier.validation.sources import ValidationSource, get_source, source_ids
+from ztf_classifier.validation.runner import (
+    BenchmarkRunResult,
+    run_table_benchmark,
+)
+from ztf_classifier.validation.sources import (
+    ValidationSource,
+    get_source,
+    source_ids,
+)
 
 __all__ = [
     "AcquisitionRequest",
