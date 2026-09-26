@@ -14,9 +14,8 @@ from typing import Any
 import pandas as pd
 
 from ztf_classifier.validation.evidence import EvidenceManifest
-from ztf_classifier.validation.sources import get_source
 from ztf_classifier.validation.manifest import BenchmarkManifest
-
+from ztf_classifier.validation.sources import get_source
 
 VALID_STATUSES = ("PASS", "FAIL", "BLOCKED", "NOT_EXECUTED")
 

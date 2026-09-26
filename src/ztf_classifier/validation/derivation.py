@@ -7,13 +7,16 @@ import hashlib
 import json
 import math
 import zipfile
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from itertools import chain
 from pathlib import Path
-from typing import Iterable, Iterator
 
-from ztf_classifier.validation.evidence import EvidenceArtifact, write_evidence_manifest
+from ztf_classifier.validation.evidence import (
+    EvidenceArtifact,
+    write_evidence_manifest,
+)
 
 
 @dataclass(frozen=True)
@@ -24,6 +27,9 @@ class DerivationConfig:
     def validate(self) -> None:
         if self.g_sigma <= 0 or self.r_sigma <= 0:
             raise ValueError("sigma thresholds must be positive")
+
+
+_DEFAULT_DERIVATION_CONFIG = DerivationConfig()
 
 
 @dataclass(frozen=True)
@@ -137,7 +143,7 @@ def derive_730k(
     r_lightcurve: Path,
     output: Path,
     *,
-    config: DerivationConfig = DerivationConfig(),
+    config: DerivationConfig = _DEFAULT_DERIVATION_CONFIG,
     parent_member: str | None = None,
     g_member: str | None = None,
     r_member: str | None = None,
@@ -164,7 +170,7 @@ def derive_730k(
         handle.write("SourceID\n")
         digest.update(b"SourceID\n")
         for oid in selected:
-            encoded = f"{oid}\n".encode("utf-8")
+            encoded = f"{oid}\n".encode()
             handle.write(encoded.decode("utf-8"))
             digest.update(encoded)
 
@@ -176,7 +182,7 @@ def derive_730k(
         output.with_name(output.name + ".evidence.json"),
         benchmark_id="ztf_periodic_730k",
         source_id="ztf_periodic_730k",
-        acquisition_timestamp=datetime.now(timezone.utc).isoformat(),
+        acquisition_timestamp=datetime.now(UTC).isoformat(),
         code_version=code_version,
         artifacts=(EvidenceArtifact.from_path(output, "derived_benchmark_snapshot"),),
         parent_evidence_sha256=parent_evidence_sha256,

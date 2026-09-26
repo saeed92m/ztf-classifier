@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from ztf_classifier.validation.sources import get_source
 
@@ -31,7 +32,7 @@ class EvidenceArtifact:
     role: str
 
     @classmethod
-    def from_path(cls, path: str | Path, role: str) -> "EvidenceArtifact":
+    def from_path(cls, path: str | Path, role: str) -> EvidenceArtifact:
         p = Path(path)
         if not p.is_file():
             raise FileNotFoundError(p)
@@ -54,7 +55,7 @@ class EvidenceManifest:
     immutable: bool = True
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "EvidenceManifest":
+    def from_dict(cls, payload: dict[str, Any]) -> EvidenceManifest:
         required = ("benchmark_id","source_id","source_version","acquisition_timestamp","code_version","artifacts")
         missing = [key for key in required if key not in payload]
         if missing:

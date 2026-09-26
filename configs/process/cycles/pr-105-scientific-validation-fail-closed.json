@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-105-scientific-validation-fail-closed",
+  "objective": "Make source-backed scientific validation execution fail closed so acquisition failures cannot be silently converted into a successful workflow.",
+  "previous_knowledge_consumed": [
+    "AD-CI-006",
+    "AD-CI-007",
+    "AD-CI-008"
+  ],
+  "baseline": {
+    "revision": "551c3ab02a44a1bf02965a946e395b174ba3426a",
+    "description": "Scientific validation acquisition and derivation steps still used continue-on-error and the scheduled gate accepted exit code 2."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "reason": "CI execution is required to establish the post-change measurement."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "CI execution is required to establish the post-change measurement."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "CI execution is required to establish the post-change measurement."
+      }
+    },
+    "trade_off": "The workflow may now fail when external scientific evidence is unavailable; evidence artifacts remain retained for diagnosis."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Workflow changes remove silent continuation from source acquisition and 730k derivation.",
+      "The gate is evaluated even after upstream acquisition failure so release evidence is retained."
+    ],
+    "blocker": "Post-change CI and external scientific acquisition still require execution before this lifecycle stage can be marked fully verified."
+  },
+  "failure_analysis": {
+    "status": "resolved",
+    "root_causes": [
+      "Source acquisition and derivation failures were previously allowed to continue.",
+      "The scheduled workflow previously accepted scientific gate exit code 2."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Fail-closed scientific validation must propagate acquisition and derivation failures to workflow status.",
+      "Diagnostic evidence should still be uploaded after a blocking failure."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Post-change CI must pass.",
+      "Real source-backed scientific evidence acquisition remains external and release-blocking."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "AD-CI-009"
+  ]
+}

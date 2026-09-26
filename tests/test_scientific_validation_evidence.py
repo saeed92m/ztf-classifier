@@ -1,6 +1,13 @@
 import json
+
 import pytest
-from ztf_classifier.validation.evidence import EvidenceArtifact, EvidenceManifest, write_evidence_manifest
+
+from ztf_classifier.validation.evidence import (
+    EvidenceArtifact,
+    EvidenceManifest,
+    write_evidence_manifest,
+)
+
 
 def test_evidence_artifact_hashes_are_reproducible(tmp_path):
     artifact = tmp_path / "snapshot.bin"
@@ -33,4 +40,4 @@ def test_manifest_rejects_source_version_drift():
 
 def test_manifest_requires_immutable_evidence():
     with pytest.raises(ValueError, match="immutable"):
-        EvidenceManifest.from_dict({"benchmark_id":"star_embed_ztf_40k","source_id":"star_embed_ztf_40k","source_version":"ICML-2026 dataset release","acquisition_timestamp":"2026-09-25T20:00:00Z","code_version":"test","immutable":False,"artifacts":[{"path":"snapshot.bin","sha256":"0"*64,"size_bytes":1,"role":"source_snapshot"}]})
+        EvidenceManifest.from_dict({"benchmark_id":"star_embed_ztf_40k","source_id":"star_embed_ztf_40k","source_version":"2026-05 dataset snapshot","acquisition_timestamp":"2026-09-25T20:00:00Z","code_version":"test","immutable":False,"artifacts":[{"path":"snapshot.bin","sha256":"0"*64,"size_bytes":1,"role":"source_snapshot"}]})

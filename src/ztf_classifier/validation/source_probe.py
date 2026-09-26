@@ -9,12 +9,12 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from ztf_classifier.validation.sources import SOURCES
-
 
 PROBES = {
     "star_embed_ztf_40k": "https://huggingface.co/api/datasets/StarEmbed/ZTF_40k",
@@ -33,7 +33,7 @@ def fetch(url: str, timeout: int = 30) -> tuple[int, bytes, str]:
 
 
 def run(output: str | Path, fetcher=fetch) -> dict[str, object]:
-    retrieved_at = datetime.now(timezone.utc).isoformat()
+    retrieved_at = datetime.now(UTC).isoformat()
     results: list[dict[str, object]] = []
 
     for source in SOURCES:
@@ -63,7 +63,7 @@ def run(output: str | Path, fetcher=fetch) -> dict[str, object]:
                     "version": source.version,
                 }
             )
-        except Exception as exc:  # pragma: no cover - network-dependent
+        except (OSError, URLError, ValueError, RuntimeError) as exc:  # pragma: no cover - network-dependent
             results.append(
                 {
                     "source_id": source.source_id,

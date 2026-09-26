@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import secrets
 from pathlib import Path
 from typing import Any
@@ -33,8 +34,8 @@ from ztf_classifier.api.schemas import (
     PredictionResponse,
     ScientificCatalogResponse,
     ScientificResultResponse,
-    ServiceStatusResponse,
     ScientificValidationResponse,
+    ServiceStatusResponse,
 )
 from ztf_classifier.application.errors import ApplicationInferenceError
 from ztf_classifier.application.observations import ObservationService
@@ -49,8 +50,8 @@ from ztf_classifier.models.registry import (
     ModelNotFoundError,
 )
 from ztf_classifier.reporting import ScientificReportService
-from ztf_classifier.validation.gate import evaluate_release_gate
 from ztf_classifier.results import ScientificResultStore
+from ztf_classifier.validation.gate import evaluate_release_gate
 
 API_VERSION = "v1"
 
@@ -379,7 +380,6 @@ def create_app(
         source_probe = None
         if probe_path.is_file():
             try:
-                import json
                 source_probe = json.loads(probe_path.read_text(encoding="utf-8"))
             except (OSError, ValueError):
                 source_probe = {"status": "INVALID_EVIDENCE"}

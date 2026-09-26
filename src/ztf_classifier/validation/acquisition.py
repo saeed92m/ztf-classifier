@@ -5,14 +5,20 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Callable, Iterable
 from urllib.parse import urlparse
 
+import requests
+
 from ztf_classifier.validation.adapters import build_adapter_plan
-from ztf_classifier.validation.evidence import EvidenceArtifact, EvidenceManifest, write_evidence_manifest
+from ztf_classifier.validation.evidence import (
+    EvidenceArtifact,
+    EvidenceManifest,
+    write_evidence_manifest,
+)
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.sources import get_source
 
@@ -61,8 +67,6 @@ Fetcher = Callable[[str, float], bytes]
 
 
 def _requests_fetch(url: str, timeout_seconds: float) -> bytes:
-    import requests
-
     response = requests.get(url, timeout=timeout_seconds, allow_redirects=True)
     response.raise_for_status()
     content_type = response.headers.get("content-type", "")
@@ -105,7 +109,7 @@ def _artifact_names(request: AcquisitionRequest) -> tuple[str, ...]:
     elif len(request.urls) == 1:
         names = (request.destination.name,)
     else:
-        raise AcquisitionError("multiple acquisition URLs require explicit artifact_names")
+        return (request.destination.name,)
     if any(not name or Path(name).name != name for name in names):
         raise AcquisitionError("invalid artifact name")
     return names
@@ -118,7 +122,7 @@ def _expected_hashes(request: AcquisitionRequest) -> tuple[str | None, ...]:
         return tuple(request.expected_sha256s)
     if len(request.urls) == 1:
         return (request.expected_sha256,)
-    return tuple(None for _ in request.urls)
+    return tuple(request.expected_sha256 for _ in request.urls)
 
 
 
@@ -146,7 +150,11 @@ def _resolve_star_embed_urls(
     names = tuple(query_manifest.get("artifact_names", ()))
     if not names:
         names = tuple(Path(url).name for url in urls)
-    available = {item.get("rfilename") for item in siblings or [] if isinstance(item, dict)}
+    available = {
+        Path(str(item.get("rfilename"))).name
+        for item in siblings or []
+        if isinstance(item, dict) and item.get("rfilename")
+    }
     missing = [name for name in names if name not in available]
     if missing:
         raise AcquisitionError("StarEmbed source artifacts missing from resolved revision: " + ", ".join(missing))
@@ -189,7 +197,8 @@ def acquire_source(
     names = _artifact_names(request)
     expected_hashes = _expected_hashes(request)
     root = request.destination
-    multi = len(request.urls) > 1
+    fallback = len(request.urls) > 1 and not request.artifact_names
+    multi = len(request.urls) > 1 and not fallback
     if multi:
         root.mkdir(parents=True, exist_ok=True)
         destinations = tuple(root / name for name in names)
@@ -198,7 +207,7 @@ def acquire_source(
 
     temporary: list[Path] = []
     try:
-        for url, destination, expected in zip(request.urls, destinations, expected_hashes, strict=True):
+        def fetch_payload(url: str, expected: str | None) -> bytes:
             payload = fetcher(url, request.timeout_seconds)
             if not payload:
                 raise AcquisitionError(f"empty response from {url}")
@@ -206,13 +215,42 @@ def acquire_source(
                 raise AcquisitionError(f"source returned HTML instead of a data artifact: {url}")
             digest = _sha256_bytes(payload)
             if expected and digest != expected:
-                raise AcquisitionError(f"SHA-256 mismatch for {url}: expected {expected}, got {digest}")
-            if source.expected_md5 and _md5_bytes(payload) != source.expected_md5:
-                raise AcquisitionError(f"MD5 mismatch for {url}: expected {source.expected_md5}, got {_md5_bytes(payload)}")
+                raise AcquisitionError(
+                    f"SHA-256 mismatch for {url}: expected {expected}, got {digest}"
+                )
+            if source.expected_md5 and url == source.acquisition_url:
+                actual_md5 = _md5_bytes(payload)
+                if actual_md5 != source.expected_md5:
+                    raise AcquisitionError(
+                        f"MD5 mismatch for {url}: expected {source.expected_md5}, got {actual_md5}"
+                    )
+            return payload
+
+        if fallback:
+            payload = None
+            last_error: Exception | None = None
+            for url, expected in zip(request.urls, expected_hashes, strict=True):
+                try:
+                    payload = fetch_payload(url, expected)
+                    break
+                except (AcquisitionError, OSError, ValueError, requests.RequestException) as exc:
+                    last_error = exc
+            if payload is None:
+                raise AcquisitionError(f"all acquisition URLs failed: {last_error}")
+            destination = destinations[0]
             destination.parent.mkdir(parents=True, exist_ok=True)
             part = destination.with_suffix(destination.suffix + ".part")
             part.write_bytes(payload)
             temporary.append(part)
+        else:
+            for url, destination, expected in zip(
+                request.urls, destinations, expected_hashes, strict=True
+            ):
+                payload = fetch_payload(url, expected)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                part = destination.with_suffix(destination.suffix + ".part")
+                part.write_bytes(payload)
+                temporary.append(part)
 
         for part, destination in zip(temporary, destinations, strict=True):
             part.replace(destination)
@@ -225,7 +263,7 @@ def acquire_source(
             root / (root.name + ".evidence.json") if multi else root.with_name(root.name + ".evidence.json"),
             benchmark_id=request.benchmark_id,
             source_id=source.source_id,
-            acquisition_timestamp=datetime.now(timezone.utc).isoformat(),
+            acquisition_timestamp=datetime.now(UTC).isoformat(),
             code_version=code_version,
             artifacts=tuple(EvidenceArtifact.from_path(path, request.artifact_role) for path in destinations),
             parent_evidence_sha256=request.parent_evidence_sha256,
@@ -238,7 +276,7 @@ def acquire_source(
             manifest.artifacts[0],
             manifest,
         )
-    except Exception as exc:
+    except (AcquisitionError, OSError, ValueError, requests.RequestException) as exc:
         for part in temporary:
             part.unlink(missing_ok=True)
         return AcquisitionResult(

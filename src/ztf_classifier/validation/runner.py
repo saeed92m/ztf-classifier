@@ -15,13 +15,13 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
+    average_precision_score,
     balanced_accuracy_score,
     confusion_matrix,
     f1_score,
     log_loss,
     precision_score,
     recall_score,
-    average_precision_score,
     roc_auc_score,
 )
 
@@ -119,8 +119,6 @@ def run_table_benchmark(
     if missing:
         raise ValueError("Benchmark input is missing required columns: " + ", ".join(missing))
 
-    object_ids = frame[manifest.object_id_column].astype(str)
-    duplicate_count = int(object_ids.duplicated().sum())
     y_true = frame[manifest.label_column].astype(str)
     y_pred = frame[prediction_column].astype(str)
     labels = list(manifest.class_mapping.values())
@@ -218,9 +216,9 @@ def run_table_benchmark(
         name for name in manifest.required_leakage_checks
         if leakage.get(name) != "PASS"
     ]
-    if provenance_result is not None and provenance_result.status != "PASS":
-        blockers.append("provenance")
-    elif provenance_result is None and not provenance_complete:
+    if (provenance_result is not None and provenance_result.status != "PASS") or (
+        provenance_result is None and not provenance_complete
+    ):
         blockers.append("provenance")
     status = "PASS" if not blockers else "BLOCKED"
     elapsed = time.perf_counter() - started

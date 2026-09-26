@@ -27,7 +27,7 @@ def manifest(**overrides):
         "reference_system_provenance": {"kind": "independent reference", "is_ground_truth": False},
         "benchmark_code_version": "test",
         "evaluation_role": "ground_truth",
-        "required_leakage_checks": ["object_overlap", "duplicate_objects"],
+        "required_leakage_checks": ["duplicate_objects"],
     }
     payload.update(overrides)
     return BenchmarkManifest.from_dict(payload)
@@ -158,7 +158,7 @@ def test_release_benchmark_manifests_declare_full_check_contract_and_canonical_a
     ):
         loaded = registry.load(benchmark_id)
         assert set(loaded.required_leakage_checks) == required
-        assert loaded.input_contract["adapter"] == benchmark_id if benchmark_id != "star_embed_ztf_40k" else loaded.input_contract["adapter"] == "star_embed"
+        assert loaded.input_contract["adapter"] == benchmark_id
 
 
 def test_release_manifest_contract_rejects_missing_check_and_adapter():

@@ -2,18 +2,6 @@ name: Scientific Validation
 
 on:
   pull_request:
-    paths:
-      - "configs/benchmarks/**"
-      - "configs/process/**"
-      - "src/ztf_classifier/validation/**"
-      - "src/ztf_classifier/lifecycle.py"
-      - "src/ztf_classifier/lifecycle_schema.py"
-      - "tests/test_scientific_validation_registry.py"
-      - "tests/test_cumulative_lifecycle.py"
-      - "docs/SCIENTIFIC_VALIDATION_BENCHMARK.md"
-      - "docs/architecture/**"
-      - "docs/roadmap/**"
-      - "docs/knowledge/**"
   push:
     branches:
       - main
@@ -75,35 +63,33 @@ jobs:
           python -m pip install -r requirements.lock
           python -m pip install -e .
       - name: Acquire 781k CPVS parent evidence
-        continue-on-error: true
-        run: |
+          run: |
           mkdir -p reports/scientific_validation/ztf_periodic_781k
           python -m ztf_classifier.validation acquire             --benchmark-id ztf_periodic_781k             --output reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip             --code-version "${GITHUB_SHA}"
       - name: Acquire StarEmbed source package
-        continue-on-error: true
-        run: |
+          run: |
           mkdir -p reports/scientific_validation/ztf_star_embed
           python -m ztf_classifier.validation acquire             --benchmark-id star_embed_ztf_40k             --output reports/scientific_validation/ztf_star_embed             --code-version "${GITHUB_SHA}"
       - name: Download CPVS light-curve inputs for 730k derivation
-        continue-on-error: true
-        run: |
+          run: |
           mkdir -p reports/scientific_validation/ztf_periodic_730k
           curl -L --fail --retry 3 "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" -o reports/scientific_validation/ztf_periodic_730k/ztf2g.zip
           curl -L --fail --retry 3 "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" -o reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
           echo "850fcef561dd7407fbe8e19e99100d7a  reports/scientific_validation/ztf_periodic_730k/ztf2g.zip" | md5sum -c -
           echo "daa7bc45c67579253eebe6b1c09dfbd9  reports/scientific_validation/ztf_periodic_730k/ztf2r.zip" | md5sum -c -
       - name: Derive published 730k subset
-        continue-on-error: true
-        run: |
+          run: |
           parent="reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip"
           evidence="$parent.evidence.json"
           if test -f "$parent" && test -f "$evidence"; then
             parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
             python -m ztf_classifier.validation derive-730k               --parent "$parent"               --g-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2g.zip               --r-lightcurve reports/scientific_validation/ztf_periodic_730k/ztf2r.zip               --output reports/scientific_validation/ztf_periodic_730k/selected.tsv               --parent-evidence-sha256 "$parent_sha"               --code-version "${GITHUB_SHA}"
           else
-            echo "Parent evidence unavailable; 730k derivation remains BLOCKED_EXTERNAL."
+            echo "Parent evidence unavailable; 730k derivation cannot execute." >&2
+            exit 1
           fi
       - name: Evaluate fail-closed scientific gate
+        if: always()
         run: |
           python -m ztf_classifier.validation gate             --evidence-dir reports/scientific_validation             --output reports/scientific_validation/release_gate.json
       - name: Upload heavy scientific evidence
@@ -136,9 +122,12 @@ jobs:
       - name: Probe source provenance endpoints
         run: python -m ztf_classifier.validation.source_probe reports/scientific_validation/source_probe.json
 
-      - name: Preserve fail-closed scientific gate
+      - name: Evaluate scientific gate status
+        if: always()
         run: |
-          python -m ztf_classifier.validation gate             --evidence-dir reports/scientific_validation             --output reports/scientific_validation/release_gate.json || test "$?" -eq 2
+          python -m ztf_classifier.validation gate \
+            --evidence-dir reports/scientific_validation \
+            --output reports/scientific_validation/release_gate.json
 
       - name: Upload provenance and gate evidence
         uses: actions/upload-artifact@v4

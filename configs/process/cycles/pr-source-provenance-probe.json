@@ -1,8 +1,29 @@
 {
-  "cycle_id": "source-provenance-probe",
-  "change": {
-    "scope": "Operationalize external-source provenance probing in scheduled/manual scientific validation.",
-    "intent": "Capture response hashes and endpoint reachability without treating live data as benchmark truth."
+  "schema_version": "1.1",
+  "stage_id": "pr-source-provenance-probe",
+  "objective": "Operationalize external-source provenance probing in scheduled/manual scientific validation.",
+  "previous_knowledge_consumed": ["SF-001", "SF-002", "FD-001"],
+  "baseline": {
+    "revision": "not-recorded",
+    "description": "Historical cycle record predates the current cumulative-lifecycle schema; the original baseline revision was not captured in the record."
+  },
+  "expected_improvement": ["reliability", "reproducibility", "coverage"],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "Historical record did not preserve a before/after reliability measurement."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "Historical record did not preserve a before/after reproducibility measurement."
+      },
+      "coverage": {
+        "status": "NOT_MEASURED",
+        "reason": "Historical record did not preserve a before/after coverage measurement."
+      }
+    },
+    "trade_off": "Live source reachability is provenance evidence, not immutable benchmark truth."
   },
   "validation": {
     "status": "PASS",
@@ -17,14 +38,17 @@
     "status": "no-known-failure",
     "root_causes": []
   },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Source probes can establish endpoint provenance without promoting mutable live data to benchmark truth.",
+      "Scientific validation must remain fail-closed when immutable evidence is absent."
+    ]
+  },
   "regression": {
     "status": "PASS",
     "open_blockers": []
   },
   "decision": "ACCEPT",
-  "knowledge_carried_forward": [
-    "SF-001",
-    "SF-002",
-    "FD-001"
-  ]
+  "knowledge_carried_forward": ["SF-001", "SF-002", "FD-001"]
 }

@@ -48,6 +48,14 @@ class ApiSettings:
             if cache_dir
             else Path("data/raw/alerce"),
             api_key=api_key or None,
-            scientific_registry_dir=(Path(scientific_registry).expanduser() if scientific_registry else Path("configs/benchmarks")),
-            scientific_evidence_dir=(Path(scientific_evidence).expanduser() if scientific_evidence else Path("reports/scientific_validation")),
+            scientific_registry_dir=(
+                Path(scientific_registry).expanduser()
+                if scientific_registry
+                else Path("configs/benchmarks")
+            ),
+            scientific_evidence_dir=(
+                Path(scientific_evidence).expanduser()
+                if scientific_evidence
+                else Path("reports/scientific_validation")
+            ),
         )
