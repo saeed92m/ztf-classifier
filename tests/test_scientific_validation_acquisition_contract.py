@@ -1,12 +1,14 @@
+import requests
+
 import pytest
 
 from ztf_classifier.validation.acquisition import (
     AcquisitionError,
     AcquisitionRequest,
+    _resolve_star_embed_urls,
     acquire_source,
     request_from_benchmark,
 )
-
 
 def test_request_from_benchmark_binds_canonical_source_and_version():
     request = request_from_benchmark(
@@ -74,9 +76,6 @@ def test_multi_artifact_acquisition_binds_all_artifacts(tmp_path):
 
 
 def test_star_embed_resolution_records_resolved_revision(monkeypatch):
-    import requests
-    from ztf_classifier.validation.acquisition import _resolve_star_embed_urls
-
     class Response:
         def raise_for_status(self):
             return None
