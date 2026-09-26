@@ -154,7 +154,6 @@ def _iter_rows(
             delimiter = "\t"
             parse = lambda value: [item.strip() for item in value.split("\t")]
         elif "," in header_line:
-            delimiter = ","
             parse = lambda value: [
                 item.strip() for item in next(csv.reader([value], delimiter=","))
             ]
