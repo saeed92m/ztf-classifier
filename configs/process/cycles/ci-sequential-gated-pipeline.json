@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "ci-sequential-gated-pipeline",
+  "objective": "Make CI quality stages execute as a dependency-gated sequence so unresolved failures block dependent validation stages.",
+  "previous_knowledge_consumed": [
+    "AD-CI-008",
+    "AD-CI-009",
+    "AD-CI-010"
+  ],
+  "baseline": {
+    "revision": "1e0c1558bb064d7d8f2c05a18204522e79f20ec5",
+    "description": "Core CI quality jobs execute independently and a final gate aggregates their results."
+  },
+  "expected_improvement": [
+    "reliability",
+    "debugging_efficiency",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "Post-change CI execution is required."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "Post-change CI execution is required."
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The dependency graph now gates each quality stage on the preceding stage."
+    ],
+    "blocker": "Post-change CI must execute successfully before this lifecycle stage is finalized."
+  },
+  "failure_analysis": {
+    "status": "resolved",
+    "root_causes": [
+      "Quality jobs were siblings with only the final aggregate gate depending on all of them.",
+      "Dependent validation could therefore execute despite an earlier unrelated failure."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "CI stages should form an explicit dependency graph when later stages consume the confidence established by earlier stages.",
+      "The final gate remains useful as an aggregate invariant even when execution is sequential."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Post-change CI must pass."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "AD-CI-011"
+  ]
+}
