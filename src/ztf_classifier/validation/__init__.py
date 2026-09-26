@@ -1,16 +1,16 @@
 """Scientific validation and external benchmark infrastructure."""
 
-from ztf_classifier.validation.adapters import (
-    AdapterContractError,
-    AdapterPlan,
-    build_adapter_plan,
-)
 from ztf_classifier.validation.acquisition import (
     AcquisitionRequest,
     AcquisitionResult,
     acquire_all,
     acquire_source,
     request_from_benchmark,
+)
+from ztf_classifier.validation.adapters import (
+    AdapterContractError,
+    AdapterPlan,
+    build_adapter_plan,
 )
 from ztf_classifier.validation.checks import CheckResult, run_scientific_checks
 from ztf_classifier.validation.derivation import (
