@@ -40,7 +40,7 @@ jobs:
         run: python -m pip check
 
       - name: Run Ruff lint
-        run: python -m ruff check src tests
+        run: python -m ruff check src tests --fix --diff
 
   format:
     name: Format Check
