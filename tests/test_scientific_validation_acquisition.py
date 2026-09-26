@@ -95,3 +95,49 @@ def test_acquisition_rejects_non_http_urls(tmp_path: Path):
             code_version="test",
             fetcher=lambda url, timeout: b"never",
         )
+
+
+def test_star_embed_revision_resolution_uses_supported_expand_parameters(monkeypatch):
+    from ztf_classifier.validation import acquisition
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "sha": "a" * 40,
+                "siblings": [
+                    {"rfilename": "data/train-00000-of-00002.parquet"},
+                    {"rfilename": "data/train-00001-of-00002.parquet"},
+                ],
+            }
+
+    captured = {}
+
+    def fake_get(url, **kwargs):
+        captured["url"] = url
+        captured["params"] = kwargs["params"]
+        return Response()
+
+    monkeypatch.setattr(acquisition.requests, "get", fake_get)
+    urls, manifest = acquisition._resolve_star_embed_urls(
+        (
+            "https://huggingface.co/datasets/StarEmbed/ZTF_40k/resolve/resolve_at_acquisition/data/train-00000-of-00002.parquet",
+            "https://huggingface.co/datasets/StarEmbed/ZTF_40k/resolve/resolve_at_acquisition/data/train-00001-of-00002.parquet",
+        ),
+        {
+            "provider": "huggingface",
+            "dataset": "StarEmbed/ZTF_40k",
+            "revision": "resolve_at_acquisition",
+            "artifact_names": [
+                "train-00000-of-00002.parquet",
+                "train-00001-of-00002.parquet",
+            ],
+        },
+        5.0,
+    )
+
+    assert captured["params"] == [("expand", "sha"), ("expand", "siblings")]
+    assert urls[0].endswith("/resolve/" + "a" * 40 + "/data/train-00000-of-00002.parquet")
+    assert manifest["revision"] == "a" * 40
