@@ -86,6 +86,40 @@ def _zip_member_matches_header(
     return False
 
 
+def _headerless_lightcurve_schema(required_columns: Iterable[str]) -> list[str] | None:
+    """Return the canonical CPVS light-curve schema when the source omits a header."""
+    required = {column.strip().lower() for column in required_columns}
+    if "e_gmag" in required:
+        return ["SourceID", "RAdeg", "DEdeg", "HJD", "gmag", "e_gmag", "g_flag"]
+    if "e_rmag" in required:
+        return ["SourceID", "RAdeg", "DEdeg", "HJD", "rmag", "e_rmag", "r_flag"]
+    return None
+
+
+def _looks_like_headerless_lightcurve(path: Path, required_columns: Iterable[str]) -> bool:
+    schema = _headerless_lightcurve_schema(required_columns)
+    if schema is None:
+        return False
+    try:
+        with path.open("rb") as raw:
+            for encoded in raw:
+                line = encoded.decode("utf-8", errors="replace").strip()
+                if not line or line.startswith("#"):
+                    continue
+                values = _split_fields(line)
+                if len(values) != len(schema):
+                    return False
+                int(values[0])
+                for value in values[1:5]:
+                    float(value)
+                float(values[5])
+                int(float(values[6]))
+                return True
+    except (OSError, TypeError, ValueError):
+        return False
+    return False
+
+
 def _path_member_matches_header(
     path: Path,
     required_columns: Iterable[str],
@@ -101,7 +135,7 @@ def _path_member_matches_header(
         tokens = {token.lower() for token in _split_fields(line)}
         if required.issubset(tokens):
             return True
-    return False
+    return _looks_like_headerless_lightcurve(path, required_columns)
 
 
 def _open_text(
@@ -175,6 +209,7 @@ def _iter_rows(
         header_line = None
         header_tokens: list[str] = []
         source_tokens = {"sourceid", "source_id", "oid", "ztf_id"}
+        buffered_lines: list[str] = []
         for line in lines:
             if not line.strip():
                 continue
@@ -185,7 +220,19 @@ def _iter_rows(
                 header_line = stripped
                 header_tokens = tokens
                 break
+            if _headerless_lightcurve_schema(required_columns) is not None:
+                buffered_lines.append(stripped)
+                if len(buffered_lines) >= 1:
+                    break
         if header_line is None:
+            schema = _headerless_lightcurve_schema(required_columns)
+            if schema is None:
+                return
+            header = schema
+            for line in buffered_lines:
+                values = _split_fields(line)
+                if len(values) == len(header):
+                    yield dict(zip(header, values))
             return
 
         if "	" in header_line:
