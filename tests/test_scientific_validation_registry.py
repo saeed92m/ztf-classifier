@@ -3,6 +3,7 @@ import json
 import pandas as pd
 
 from ztf_classifier.validation.manifest import BenchmarkManifest
+from ztf_classifier.validation.gate import _evidence_blockers
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.regression import compare_metrics
 from ztf_classifier.validation.runner import run_table_benchmark
@@ -211,3 +212,29 @@ def test_runner_reports_ood_and_performance_metrics(tmp_path):
     assert result.metrics["ood"]["false_reject_rate"] == 0.0
     assert result.metrics["performance"]["runtime_seconds"] >= 0.0
     assert result.metrics["performance"]["peak_rss_mb"] > 0.0
+
+
+def test_runtime_bound_immutable_evidence_can_satisfy_artifact_binding(tmp_path):
+    from ztf_classifier.validation.evidence import EvidenceArtifact, write_evidence_manifest
+
+    benchmark_dir = tmp_path / "runtime_bound"
+    benchmark_dir.mkdir()
+    artifact = benchmark_dir / "source.bin"
+    artifact.write_bytes(b"immutable-evidence")
+    manifest_path = benchmark_dir / "source.bin.evidence.json"
+    write_evidence_manifest(
+        manifest_path,
+        benchmark_id="runtime_bound",
+        source_id="ztf_periodic_781k",
+        acquisition_timestamp="2026-09-27T00:00:00+00:00",
+        code_version="test",
+        artifacts=(EvidenceArtifact.from_path(artifact, "benchmark_snapshot"),),
+    )
+
+    # EvidenceManifest paths are repository-relative in production; emulate that
+    # contract here by validating the artifact from the temporary repository root.
+    payload = json.loads(manifest_path.read_text())
+    payload["artifacts"][0]["path"] = str(artifact.relative_to(tmp_path))
+    manifest_path.write_text(json.dumps(payload))
+    blockers = _evidence_blockers("runtime_bound", tmp_path)
+    assert blockers == []
