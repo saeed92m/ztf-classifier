@@ -14,6 +14,7 @@ import hashlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from xml.etree import ElementTree
 
 import pandas as pd
 import requests
@@ -46,7 +47,27 @@ def _tap_query(endpoint: str, query: str, timeout: float) -> bytes:
     return payload
 
 
+def _tap_error_message(payload: bytes) -> str | None:
+    """Extract a TAP QUERY_STATUS error before table parsing hides the cause."""
+    try:
+        root = ElementTree.fromstring(payload)
+    except ElementTree.ParseError:
+        return None
+    for element in root.iter():
+        local_name = element.tag.rsplit("}", 1)[-1].upper()
+        if local_name != "INFO" or element.attrib.get("name", "").upper() != "QUERY_STATUS":
+            continue
+        value = element.attrib.get("value", "").strip().upper()
+        message = " ".join((element.text or "").split())
+        if value == "ERROR":
+            return message or "TAP returned QUERY_STATUS=ERROR"
+    return None
+
+
 def _table_from_votable(payload: bytes) -> pd.DataFrame:
+    tap_error = _tap_error_message(payload)
+    if tap_error:
+        raise SourceQueryError(f"TAP query failed: {tap_error}")
     try:
         resource = votable.parse(BytesIO(payload))
         table = resource.get_first_table().to_table(use_names_over_ids=True)
