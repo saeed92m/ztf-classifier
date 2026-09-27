@@ -29,7 +29,29 @@
   },
   "input_contract": {
     "adapter": "ztf_dr24_source_subset",
-    "prediction_column": "y_pred"
+    "prediction_column": "y_pred",
+    "query": {
+      "provider": "IRSA ZTF DR24 HATS",
+      "release": "DR24",
+      "release_date": "2026-01-22",
+      "bucket": "ipac-irsa-ztf",
+      "objects_prefix": "ztf/enhanced/dr24/objects/hats",
+      "object_id_column": "objectid",
+      "selection": {
+        "method": "deterministic_lexicographic",
+        "order_by": [
+          "objectid"
+        ],
+        "limit": 150
+      },
+      "observation_cutoff": "DR24 release boundary; no post-release observations",
+      "expected_columns": [
+        "objectid",
+        "objra",
+        "objdec",
+        "nepochs"
+      ]
+    }
   },
   "ground_truth_provenance": {
     "kind": "benchmark-specific independent labels/catalog evidence",
