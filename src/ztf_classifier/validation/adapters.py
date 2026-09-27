@@ -192,8 +192,8 @@ def _alerce_plan(manifest: BenchmarkManifest) -> AdapterPlan:
         )
     if query_manifest["endpoint"] != "https://tap.alerce.online/tap":
         raise AdapterContractError("ALeRCE TAP endpoint is not canonical")
-    if query_manifest["schema"] != "alerce_tap":
-        raise AdapterContractError("ALeRCE TAP schema must be alerce_tap")
+    if query_manifest["schema"] != "ztf":
+        raise AdapterContractError("ALeRCE ZTF TAP schema must be ztf")
     if query_manifest["max_rows"] != 150:
         raise AdapterContractError("ALeRCE reference subset must cap at 150 rows")
     if query_manifest["reference_only"] is not True:
