@@ -206,7 +206,7 @@ jobs:
           set -euo pipefail
           root=reports/scientific_validation/ztf_periodic_730k
           curl -L --fail --retry 3 --retry-all-errors \
-            "https://cdsarc.cds.unistra.fr/ftp/cats/J/ApJ/932/118/table4.dat" \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
             -o "$root/published_table4.dat"
           test -s "$root/published_table4.dat"
           echo "Published VizieR membership downloaded."
