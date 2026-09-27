@@ -304,11 +304,14 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
             line = encoded.decode("utf-8", errors="replace").strip()
             if not line:
                 continue
-            first_token = line.split()[0]
-            if not first_token.upper().startswith("ZTF"):
+            tokens = line.split()
+            if not tokens or not tokens[0].upper().startswith("ZTF"):
                 continue
-            ordinal += 1
-            source_ids.add(str(ordinal))
+            # CPVS Table2's stable internal source identifier is the Seq field,
+            # not the row ordinal. Seq spans 1..781604 with two gaps.
+            if len(tokens) < 2 or not tokens[1].isdigit():
+                raise ValueError(f"invalid CPVS Table2 row: {line!r}")
+            source_ids.add(tokens[1])
         return source_ids
     finally:
         raw.close()
