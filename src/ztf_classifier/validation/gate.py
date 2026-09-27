@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ztf_classifier.validation.evidence import EvidenceManifest
 from ztf_classifier.validation.manifest import BenchmarkManifest
 from ztf_classifier.validation.registry import BenchmarkRegistry
 
@@ -51,6 +52,7 @@ def evaluate_release_gate(
             continue
 
         manifest_blockers = _manifest_blockers(manifest)
+        manifest_blockers.extend(_evidence_blockers(benchmark_id, evidence_root))
         report_path = evidence_root / benchmark_id / "benchmark_result.json"
         report: dict[str, Any] | None = None
         if report_path.is_file():
@@ -103,16 +105,50 @@ def evaluate_release_gate(
 
 def _manifest_blockers(manifest: BenchmarkManifest) -> list[str]:
     blockers: list[str] = []
-    if not manifest.hashes:
-        blockers.append("source/object hashes are not recorded")
-    if not manifest.file_object_ids and manifest.evaluation_role != "reference_system":
-        blockers.append("benchmark object/file identifiers are not pinned")
     blockers.extend(manifest.validate_release_contract())
     if manifest.evaluation_role == "ground_truth" and not manifest.ground_truth_provenance:
         blockers.append("ground-truth provenance is missing")
     if manifest.evaluation_role == "reference_system" and not manifest.reference_system_provenance:
         blockers.append("reference-system provenance is missing")
     return blockers
+
+
+def _evidence_blockers(benchmark_id: str, evidence_root: Path) -> list[str]:
+    """Require immutable source evidence when registry values are resolved at runtime.
+
+    Static registry hashes/object IDs are appropriate for frozen manifests, but some
+    adapters (for example revision-resolved sources and derived benchmarks) can only
+    bind exact artifacts at acquisition/derivation time. Their immutable evidence
+    manifests are therefore the authoritative artifact-level binding.
+    """
+    benchmark_dir = evidence_root / benchmark_id
+    candidates = sorted(benchmark_dir.glob("*.evidence.json"))
+    if not candidates:
+        return ["immutable evidence manifest is missing"]
+
+    errors: list[str] = []
+    valid = False
+    for evidence_path in candidates:
+        try:
+            evidence = EvidenceManifest.from_dict(
+                json.loads(evidence_path.read_text(encoding="utf-8"))
+            )
+            errors.extend(
+                f"{evidence_path.name}: {item}"
+                for item in evidence.verify(".")
+            )
+            if evidence.benchmark_id != benchmark_id:
+                errors.append(
+                    f"{evidence_path.name}: evidence benchmark ID is {evidence.benchmark_id!r}"
+                )
+            if evidence.immutable and evidence.benchmark_id == benchmark_id:
+                valid = True
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            errors.append(f"{evidence_path.name}: invalid evidence manifest: {exc}")
+
+    if not valid:
+        errors.append("no valid immutable evidence manifest was found")
+    return errors
 
 
 def write_release_gate_report(
