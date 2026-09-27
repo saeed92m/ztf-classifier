@@ -71,6 +71,21 @@ jobs:
         with:
           ref: ${{ steps.ref.outputs.tag }}
 
+      - name: Verify checked-out tag still points to validated SHA
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ steps.ref.outputs.sha }}
+        run: |
+          set -euo pipefail
+          actual_sha="$(git rev-parse HEAD)"
+          if [ "$actual_sha" != "$EXPECTED_SHA" ]; then
+            echo "ERROR: validated tag no longer resolves to the Scientific Validation SHA." >&2
+            echo "Expected: $EXPECTED_SHA" >&2
+            echo "Checked out: $actual_sha" >&2
+            exit 1
+          fi
+          echo "Validated release tag resolves to expected SHA: $actual_sha"
+
       - name: Restore validated scientific evidence
         shell: bash
         run: |
