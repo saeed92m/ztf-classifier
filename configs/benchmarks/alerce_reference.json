@@ -27,7 +27,7 @@
   "input_contract": {
     "adapter": "alerce_reference",
     "prediction_column": "y_pred",
-    "query": "SELECT TOP 150\n    oid,\n    class_name,\n    probability,\n    classifier_name,\n    classifier_version\nFROM alerce_tap.probability\nWHERE classifier_name = 'lc_classifier'\n  AND ranking = 1\n  AND oid LIKE 'ZTF%'\nORDER BY oid",
+    "query": "SELECT TOP 150\n    oid,\n    class_name,\n    probability,\n    classifier_name,\n    classifier_version\nFROM alerce_tap.probability\nWHERE classifier_name = 'lc_classifier'\n  AND ranking = 1\n  AND oid LIKE 'ZTF%'\nORDER BY oid ASC",
     "query_manifest": {
       "provider": "ALeRCE TAP",
       "endpoint": "https://tap.alerce.online/tap",
