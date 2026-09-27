@@ -194,6 +194,8 @@ def _alerce_plan(manifest: BenchmarkManifest) -> AdapterPlan:
         raise AdapterContractError("ALeRCE TAP endpoint is not canonical")
     if query_manifest["schema"] != "ztf":
         raise AdapterContractError("ALeRCE ZTF TAP schema must be ztf")
+    if query_manifest.get("probability_table") != "ztf.probability":
+        raise AdapterContractError("ALeRCE ZTF probability table must be ztf.probability")
     if query_manifest["max_rows"] != 150:
         raise AdapterContractError("ALeRCE reference subset must cap at 150 rows")
     if query_manifest["reference_only"] is not True:
