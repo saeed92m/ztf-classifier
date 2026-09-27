@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ztf_classifier.validation.evidence import EvidenceManifest
 from ztf_classifier.validation.adapters import AdapterContractError, build_adapter_plan
+from ztf_classifier.validation.evidence import EvidenceManifest
 from ztf_classifier.validation.manifest import BenchmarkManifest
 from ztf_classifier.validation.registry import BenchmarkRegistry
 
