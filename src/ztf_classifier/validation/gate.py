@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ztf_classifier.validation.evidence import EvidenceManifest
+from ztf_classifier.validation.adapters import AdapterContractError, build_adapter_plan
 from ztf_classifier.validation.manifest import BenchmarkManifest
 from ztf_classifier.validation.registry import BenchmarkRegistry
 
@@ -106,6 +107,10 @@ def evaluate_release_gate(
 def _manifest_blockers(manifest: BenchmarkManifest) -> list[str]:
     blockers: list[str] = []
     blockers.extend(manifest.validate_release_contract())
+    try:
+        build_adapter_plan(manifest)
+    except (AdapterContractError, KeyError, ValueError) as exc:
+        blockers.append(f"canonical adapter contract is not executable: {exc}")
     if manifest.evaluation_role == "ground_truth" and not manifest.ground_truth_provenance:
         blockers.append("ground-truth provenance is missing")
     if manifest.evaluation_role == "reference_system" and not manifest.reference_system_provenance:
