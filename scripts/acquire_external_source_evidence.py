@@ -42,7 +42,11 @@ def _tap_query(endpoint: str, query: str, timeout: float) -> bytes:
         timeout=timeout,
         headers={"User-Agent": "ztf-classifier-scientific-validation/0.4"},
     )
-    response.raise_for_status()
+    if response.status_code >= 400:
+        detail = " ".join(response.text.split())
+        raise SourceQueryError(
+            f"TAP HTTP {response.status_code}: {detail[:1000] or 'empty response body'}"
+        )
     payload = response.content
     if not payload.lstrip().lower().startswith((b"<?xml", b"<votable", b"<vo:")):
         raise SourceQueryError("TAP response is not a VOTable")
