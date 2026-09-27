@@ -35,25 +35,25 @@
       "release": "DR24",
       "release_date": "2026-01-22",
       "bucket": "ipac-irsa-ztf",
-      "objects_prefix": "ztf/enhanced/dr24/objects/hats",
-      "object_id_column": "objectid",
+      "objects_prefix": "ztf/enhanced/dr24/objects/hats/ztf_dr24_objects-hats",
+      "object_id_column": "oid",
       "selection": {
         "method": "deterministic_lexicographic",
         "order_by": [
-          "objectid"
+          "oid"
         ],
         "limit": 150,
-        "source": "IRSA ZTF Objects database table exposed by the DR24-era Catalog Query service"
+        "source": "HATS secondary index over the DR24 Objects Table"
       },
-      "observation_cutoff": "DR24 release boundary; source is the DR24 Objects Table",
+      "observation_cutoff": "DR24 release boundary; source catalog is the DR24 Objects Table HATS collection",
       "expected_columns": [
-        "objectid",
-        "objra",
-        "objdec",
+        "oid",
+        "ra",
+        "dec",
         "ngoodobsrel"
       ],
-      "tap_endpoint": "https://irsa.ipac.caltech.edu/TAP",
-      "tap_query": "SELECT TOP 150 oid AS objectid, ra AS objra, dec AS objdec, ngoodobsrel FROM ztf_objects ORDER BY oid"
+      "index_prefix": "ztf/enhanced/dr24/objects/hats/ztf_dr24_objects-hats_index_oid",
+      "source": "IRSA ZTF DR24 Objects Table HATS secondary index"
     }
   },
   "ground_truth_provenance": {
