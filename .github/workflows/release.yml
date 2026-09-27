@@ -62,8 +62,8 @@ jobs:
           print(f"tag={tag}")
           import os
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
-              out.write(f"tag={tag}\\n")
-              out.write(f"sha={sha}\\n")
+              out.write(f"tag={tag}\n")
+              out.write(f"sha={sha}\n")
           PY
 
       - name: Checkout validated release tag
