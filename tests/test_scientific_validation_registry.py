@@ -245,7 +245,10 @@ def test_runner_reports_ood_and_performance_metrics(tmp_path):
 
 
 def test_runtime_bound_immutable_evidence_can_satisfy_artifact_binding(tmp_path):
-    from ztf_classifier.validation.evidence import EvidenceArtifact, write_evidence_manifest
+    from ztf_classifier.validation.evidence import (
+        EvidenceArtifact,
+        write_evidence_manifest,
+    )
 
     benchmark_dir = tmp_path / "runtime_bound"
     benchmark_dir.mkdir()
