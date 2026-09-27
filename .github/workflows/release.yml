@@ -23,17 +23,17 @@ jobs:
     steps:
       - name: Download tag-bound scientific evidence
         uses: actions/download-artifact@v5
-        with
+        with:
           name: scientific-validation-heavy
-          path: \${{ runner.temp }}/scientific-evidence
-          run-id: \${{ github.event.workflow_run.id }}
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/scientific-evidence
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Resolve and verify release ref
         id: ref
         shell: bash
         env:
-          EXPECTED_SHA: \${{ github.event.workflow_run.head_sha }}
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           ref_file="$(find "$RUNNER_TEMP/scientific-evidence" -type f -name release_ref.json -print -quit)"
@@ -60,7 +60,8 @@ jobs:
               )
 
           print(f"tag={tag}")
-          with open("${GITHUB_OUTPUT}", "a", encoding="utf-8") as out:
+          import os
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               out.write(f"tag={tag}\\n")
               out.write(f"sha={sha}\\n")
           PY
@@ -68,7 +69,7 @@ jobs:
       - name: Checkout validated release tag
         uses: actions/checkout@v7
         with:
-          ref: \${{ steps.ref.outputs.tag }}
+          ref: ${{ steps.ref.outputs.tag }}
 
       - name: Restore validated scientific evidence
         shell: bash
@@ -108,7 +109,7 @@ jobs:
 
       - name: Verify package version matches validated tag
         env:
-          RELEASE_TAG: \${{ steps.ref.outputs.tag }}
+          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
         run: |
           python - <<'PY'
           import os
