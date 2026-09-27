@@ -162,7 +162,7 @@ def test_release_benchmark_manifests_declare_full_check_contract_and_canonical_a
         assert loaded.input_contract["adapter"] == benchmark_id
 
 
-def test_release_gate_surfaces_unexecutable_external_adapter_contracts():
+def test_release_gate_accepts_executable_external_adapter_contracts():
     from ztf_classifier.validation.gate import _manifest_blockers
 
     registry = BenchmarkRegistry("configs/benchmarks")
@@ -264,7 +264,7 @@ def test_runtime_bound_immutable_evidence_can_satisfy_artifact_binding(tmp_path)
     # EvidenceManifest paths are repository-relative in production; emulate that
     # contract here by validating the artifact from the temporary repository root.
     payload = json.loads(manifest_path.read_text())
-    payload["artifacts"][0]["path"] = str(artifact.relative_to(tmp_path))
+    payload["artifacts"][0]["path"] = artifact.name
     manifest_path.write_text(json.dumps(payload))
     blockers = _evidence_blockers("runtime_bound", tmp_path)
     assert blockers == []
