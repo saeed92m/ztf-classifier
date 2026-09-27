@@ -194,7 +194,7 @@ def _select_hats_index_rows(
         )
 
     tables = [
-        fragment.to_table(columns=[object_id, "Norder", "Dir", "Npix"])
+        fragment.to_table(columns=[object_id, "Norder", "Npix"])
         for fragment in selected_fragments
     ]
     index = pa.concat_tables(tables, promote_options="default")
@@ -215,13 +215,13 @@ def _read_hats_objects(
 ) -> pd.DataFrame:
     ids = index_rows[object_id].to_pylist()
     grouped: dict[tuple[int, int, int], list[object]] = {}
-    for oid, norder, directory, npix in zip(
+    for oid, norder, npix in zip(
         ids,
         index_rows["Norder"].to_pylist(),
-        index_rows["Dir"].to_pylist(),
         index_rows["Npix"].to_pylist(),
     ):
-        grouped.setdefault((int(norder), int(directory), int(npix)), []).append(oid)
+        directory = (int(npix) // 10_000) * 10_000
+        grouped.setdefault((int(norder), directory, int(npix)), []).append(oid)
 
     frames: list[pd.DataFrame] = []
     source_rows: list[dict[str, object]] = []
