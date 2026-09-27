@@ -229,12 +229,16 @@ def _read_hats_objects(
         partition = (
             f"{objects_root}/dataset/Norder={norder}/Dir={directory}/Npix={npix}"
         )
-        info = filesystem.get_file_info(pafs.FileSelector(partition, recursive=True))
-        files = [
-            item.path
-            for item in info
-            if item.type == pafs.FileType.File and item.path.endswith(".parquet")
-        ]
+        direct = filesystem.get_file_info(partition)
+        if direct.type == pafs.FileType.File:
+            files = [partition] if partition.endswith(".parquet") else []
+        else:
+            info = filesystem.get_file_info(pafs.FileSelector(partition, recursive=True))
+            files = [
+                item.path
+                for item in info
+                if item.type == pafs.FileType.File and item.path.endswith(".parquet")
+            ]
         if not files:
             raise SourceQueryError(f"DR24 HATS partition has no Parquet data: {partition}")
         partition_dataset = ds.dataset(files, filesystem=filesystem, format="parquet")
