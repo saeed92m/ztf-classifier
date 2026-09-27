@@ -51,7 +51,7 @@ class DerivationResult:
             "selection": {
                 "g_sigma": self.config.g_sigma,
                 "r_sigma": self.config.r_sigma,
-                "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma, with g_flag == 0 and r_flag == 0",
+                "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma, with zero quality flags and finite non-zero magnitudes",
                 "snr_from_magnitude_error": "1.0857362047581296 / mag_error",
             },
         }
@@ -361,13 +361,14 @@ def _qualified_ids(
     rows = _iter_rows(
         path,
         member,
-        required_columns=("SourceID", *error_columns),
+        required_columns=("SourceID", *error_columns, "gmag" if "e_gmag" in error_columns else "rmag"),
     )
     first = next(rows, None)
     if first is None:
         return set()
     id_key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
     error_key = _find_key(first, error_columns)
+    mag_key = _find_key(first, ("gmag",) if "e_gmag" in error_columns else ("rmag",))
     flag_key = None
     try:
         flag_key = _find_key(first, flag_columns)
@@ -378,11 +379,18 @@ def _qualified_ids(
     flag_zero: set[str] = set()
     flag_lt_32768: set[str] = set()
     flag_values: Counter[str] = Counter()
+    valid_magnitude: set[str] = set()
 
     for row in chain((first,), rows):
         oid = row.get(id_key, "").strip()
         if oid not in parent_ids or _snr_from_mag_error(row.get(error_key, "")) < sigma:
             continue
+        try:
+            magnitude = float(row.get(mag_key, ""))
+        except (TypeError, ValueError):
+            magnitude = float("nan")
+        if math.isfinite(magnitude) and magnitude != 0.0:
+            valid_magnitude.add(oid)
         selected.add(oid)
         if flag_key is None:
             continue
@@ -404,10 +412,12 @@ def _qualified_ids(
             "eligible": len(selected),
             "flag_zero": len(flag_zero),
             "flag_nonzero": len(selected - flag_zero),
+            "valid_magnitude": len(valid_magnitude),
+            "flag_zero_valid_magnitude": len(flag_zero & valid_magnitude),
             "flag_lt_32768": len(flag_lt_32768),
             "top_flags": flag_values.most_common(10),
         }
-    return selected, flag_zero
+    return selected, flag_zero & valid_magnitude
 
 
 def derive_730k(
@@ -458,7 +468,7 @@ def derive_730k(
         "snr_only_count": len(snr_selected),
         "both_bands_flag_zero_count": len(flag_zero_selected),
         "snr_removed_by_flag_quality": len(snr_selected - flag_zero_selected),
-        "selection_predicate": "g SNR >= 2.5 AND r SNR >= 3.0 AND g_flag == 0 AND r_flag == 0",
+        "selection_predicate": "g SNR >= 2.5 AND r SNR >= 3.0 AND g_flag == 0 AND r_flag == 0 AND finite non-zero g/r magnitudes",
     }
     selected = sorted(flag_zero_selected)
 
