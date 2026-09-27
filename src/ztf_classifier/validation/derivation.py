@@ -331,7 +331,7 @@ def derive_730k(
 ) -> DerivationResult:
     """Derive the published subset from the pinned parent and source lightcurves."""
     config.validate()
-    parent_ids = _source_ids_from_catalog(parent_path, parent_member)
+    parent_ids = _source_ids(parent_path, parent_member)
     if len(parent_ids) != expected_parent_rows:
         raise ValueError(
             f"parent row/object count mismatch: expected {expected_parent_rows}, got {len(parent_ids)}"
