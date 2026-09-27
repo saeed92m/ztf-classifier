@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import gzip
 import hashlib
 import json
 import math
@@ -127,7 +128,8 @@ def _path_member_matches_header(
     required = {column.strip().lower() for column in required_columns}
     if not required:
         return False
-    with path.open("rb") as raw:
+    opener = gzip.open if path.suffix.lower() == ".gz" else open
+    with opener(path, "rb") as raw:
         sample = raw.read(256 * 1024).decode("utf-8", errors="replace")
     for line in sample.splitlines():
         if not line.strip():
@@ -173,6 +175,8 @@ def _open_text(
             zf.close()
             raise ValueError(f"member {member!r} not found in {path}")
         return zf, zf.open(member, "r")
+    if path.suffix.lower() == ".gz":
+        return None, gzip.open(path, "rb")
     return None, path.open("rb")
 
 
@@ -188,7 +192,7 @@ def _iter_rows(
             item
             for item in path.rglob("*")
             if item.is_file()
-            and item.suffix.lower() in {".csv", ".txt", ".dat", ".json", ""}
+            and item.suffix.lower() in {".csv", ".txt", ".dat", ".json", ".gz", ""}
             and _path_member_matches_header(item, required_columns)
         )
         if not candidates:
