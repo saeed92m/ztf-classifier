@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-113-cpvs-quality-selection-diagnostic",
+  "objective": "Resolve the remaining scientific-validation mismatch by measuring CPVS light-curve quality-flag semantics against the published 730,184-object selection without weakening the fail-closed gate.",
+  "previous_knowledge_consumed": [
+    "AD-CI-010",
+    "SF-001",
+    "FD-004"
+  ],
+  "baseline": {
+    "revision": "55eccfc2cb70445d252fc2bdd4c186c535d74e69",
+    "description": "CPVS parent evidence validates at 781,602 rows, but deterministic g/r threshold derivation produced 741,785 instead of the published 730,184 subset."
+  },
+  "expected_improvement": [
+    "correctness",
+    "scientific_validity",
+    "diagnosability",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "published_subset_count": {
+        "status": "NOT_VERIFIED",
+        "before": "741785",
+        "after": "diagnostic pending",
+        "unit": "objects"
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Live Scientific Validation execution identified a reproducible 11,601-object excess in the derived subset.",
+      "New diagnostics report source quality-flag distributions and candidate counts without relaxing the expected-count gate."
+    ],
+    "blocker": "The correct CPVS quality-flag interpretation remains to be verified by the next source-backed execution."
+  },
+  "failure_analysis": {
+    "status": "in_progress",
+    "root_causes": [
+      "Magnitude-error threshold alone is insufficient to reproduce the published 730,184-object subset from the supplied CPVS light curves.",
+      "The supplementary light curves expose band-specific quality flags that must be measured against the published selection."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "The parent catalog is correctly resolved at 781,602 objects.",
+      "The remaining mismatch is in light-curve quality selection, not parent-ID parsing or archive discovery."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Next Scientific Validation run must identify and implement the source-backed quality selection that reproduces 730,184 exactly."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "SF-CPVS-QUALITY-SELECTION-001"
+  ]
+}
