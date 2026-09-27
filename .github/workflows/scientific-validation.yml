@@ -195,8 +195,8 @@ jobs:
         run: |
           set -euo pipefail
           root=reports/scientific_validation/ztf_periodic_730k
-          curl -L --fail --retry 3 --retry-all-errors \\
-            "https://cdsarc.cds.unistra.fr/ftp/cats/J/ApJ/932/118/table4.dat" \\
+          curl -L --fail --retry 3 --retry-all-errors \
+            "https://cdsarc.cds.unistra.fr/ftp/cats/J/ApJ/932/118/table4.dat" \
             -o "$root/published_table4.dat"
           test -s "$root/published_table4.dat"
           echo "Published VizieR membership downloaded."
@@ -205,15 +205,15 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
-          python scripts/audit_cpvs_membership.py \\
-            --candidate reports/scientific_validation/ztf_periodic_730k/selected.tsv \\
-            --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \\
+          python scripts/audit_cpvs_membership.py \
+            --candidate reports/scientific_validation/ztf_periodic_730k/selected.tsv \
+            --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
             --output reports/scientific_validation/ztf_periodic_730k/membership_audit.json
 
       - name: Enforce CPVS derivation and membership audit
         if: always()
         env:
-          DERIVE_OUTCOME: \${{ steps.derive_730k.outcome }}
+          DERIVE_OUTCOME: ${{ steps.derive_730k.outcome }}
         run: |
           set -euo pipefail
           if [ "$DERIVE_OUTCOME" != "success" ]; then
