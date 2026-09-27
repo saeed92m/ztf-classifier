@@ -133,6 +133,11 @@ def _evidence_blockers(benchmark_id: str, evidence_root: Path) -> list[str]:
 
     errors: list[str] = []
     valid = False
+    verification_root = evidence_root.resolve()
+    for candidate_root in (verification_root, *verification_root.parents):
+        if (candidate_root / ".git").exists():
+            verification_root = candidate_root
+            break
     for evidence_path in candidates:
         try:
             evidence = EvidenceManifest.from_dict(
@@ -140,7 +145,7 @@ def _evidence_blockers(benchmark_id: str, evidence_root: Path) -> list[str]:
             )
             errors.extend(
                 f"{evidence_path.name}: {item}"
-                for item in evidence.verify(".")
+                for item in evidence.verify(verification_root)
             )
             if evidence.benchmark_id != benchmark_id:
                 errors.append(
