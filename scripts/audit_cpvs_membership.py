@@ -19,9 +19,27 @@ def read_selected(path: Path) -> set[int]:
 
 
 def read_vizier(path: Path) -> set[int]:
+    """Read either the published fixed-width table or a VizieR TSV export."""
     ids: set[int] = set()
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        if not line.strip() or line.lstrip().startswith(("#", "\")):
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    header_index: int | None = None
+    for index, line in enumerate(lines):
+        fields = [field.strip().lower() for field in line.split("\t")]
+        if "id" in fields and "ztf" in fields:
+            header_index = index
+            break
+    if header_index is not None:
+        fields = [field.strip().lower() for field in lines[header_index].split("\t")]
+        id_index = fields.index("id")
+        for line in lines[header_index + 1:]:
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            values = line.split("\t")
+            if len(values) > id_index and values[id_index].strip().isdigit():
+                ids.add(int(values[id_index].strip()))
+        return ids
+    for line in lines:
+        if not line.strip() or line.lstrip().startswith("#") or line.startswith('"'):
             continue
         raw = line[23:29].strip()
         if raw.isdigit():
