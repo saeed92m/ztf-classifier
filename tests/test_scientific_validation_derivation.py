@@ -1,3 +1,4 @@
+import gzip
 import zipfile
 from pathlib import Path
 
@@ -224,6 +225,38 @@ def test_lightcurve_zip_auto_selects_data_member(tmp_path: Path):
             "e_gmag": "0.1",
             "g_flag": "0",
         }
+    ]
+
+
+def test_lightcurve_gzip_accepts_headerless_cpvs_file(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _iter_rows
+
+    path = tmp_path / "ztf2g.gz"
+    with gzip.open(path, "wt", encoding="utf-8") as handle:
+        handle.write(
+            "1 1.0 2.0 3.0 15.0 0.1 0\n"
+            "2 1.1 2.1 4.0 16.0 0.2 1\n"
+        )
+
+    assert list(_iter_rows(path, required_columns=("SourceID", "e_gmag"))) == [
+        {
+            "SourceID": "1",
+            "RAdeg": "1.0",
+            "DEdeg": "2.0",
+            "HJD": "3.0",
+            "gmag": "15.0",
+            "e_gmag": "0.1",
+            "g_flag": "0",
+        },
+        {
+            "SourceID": "2",
+            "RAdeg": "1.1",
+            "DEdeg": "2.1",
+            "HJD": "4.0",
+            "gmag": "16.0",
+            "e_gmag": "0.2",
+            "g_flag": "1",
+        },
     ]
 
 
