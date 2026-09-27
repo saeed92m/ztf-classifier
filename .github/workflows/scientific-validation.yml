@@ -170,6 +170,8 @@ jobs:
           echo "Evidence SHA256: $(sha256sum "$evidence" | awk '{print $1}')"
 
       - name: Derive published 730k subset
+        id: derive_730k
+        continue-on-error: true
         run: |
           set -euo pipefail
           parent="reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip"
@@ -187,6 +189,46 @@ jobs:
 
           parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
           python -m ztf_classifier.validation derive-730k             --parent "$parent"             --g-lightcurve reports/scientific_validation/ztf_periodic_730k/g             --r-lightcurve reports/scientific_validation/ztf_periodic_730k/r             --output reports/scientific_validation/ztf_periodic_730k/selected.tsv             --parent-evidence-sha256 "$parent_sha"             --code-version "${GITHUB_SHA}"
+
+      - name: Download independent published 730k membership
+        if: always()
+        run: |
+          set -euo pipefail
+          root=reports/scientific_validation/ztf_periodic_730k
+          curl -L --fail --retry 3 --retry-all-errors \
+            "https://cdsarc.cds.unistra.fr/ftp/cats/J/ApJ/932/118/table4.dat" \
+            -o "$root/published_table4.dat"
+          test -s "$root/published_table4.dat"
+          echo "Published VizieR membership downloaded."
+
+      - name: Audit 730k membership against independent publication
+        if: always()
+        run: |
+          set -euo pipefail
+          python scripts/audit_cpvs_membership.py \
+            --candidate reports/scientific_validation/ztf_periodic_730k/selected.tsv \
+            --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
+            --output reports/scientific_validation/ztf_periodic_730k/membership_audit.json
+
+      - name: Enforce CPVS derivation and membership audit
+        if: always()
+        env:
+          DERIVE_OUTCOME: ${{ steps.derive_730k.outcome }}
+        run: |
+          set -euo pipefail
+          if [ "$DERIVE_OUTCOME" != "success" ]; then
+            echo "CPVS derivation did not reproduce the published cardinality." >&2
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("reports/scientific_validation/ztf_periodic_730k/membership_audit.json")
+          report = json.loads(path.read_text(encoding="utf-8"))
+          if not report.get("exact_membership_match"):
+              raise SystemExit("Independent VizieR membership does not exactly match the derived candidate.")
+          print("730k membership exactly matches the independent published table.")
+          PY
 
       - name: Validate heavy execution evidence contract
         if: always()

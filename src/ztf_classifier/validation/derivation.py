@@ -452,13 +452,11 @@ def derive_730k(
         diagnostics=diagnostics,
     )
     selected = sorted(g_ids & r_ids)
-    if len(selected) != expected_selected_rows:
-        raise ValueError(
-            "derived subset count mismatch: "
-            f"expected {expected_selected_rows}, got {len(selected)}; "
-            f"quality diagnostics={json.dumps(diagnostics, sort_keys=True)}"
-        )
 
+    # Always materialize the candidate membership before asserting the
+    # published cardinality. This is diagnostic evidence, not acceptance:
+    # a cardinality mismatch must remain a hard failure, but the candidate
+    # set must be available for an independent membership audit.
     output.parent.mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha256()
     with output.open("w", encoding="utf-8", newline="") as handle:
@@ -468,6 +466,24 @@ def derive_730k(
             encoded = f"{oid}\n".encode()
             handle.write(encoded.decode("utf-8"))
             digest.update(encoded)
+
+    if len(selected) != expected_selected_rows:
+        diagnostic = {
+            "status": "COUNT_MISMATCH",
+            "expected_selected_rows": expected_selected_rows,
+            "observed_selected_rows": len(selected),
+            "quality_diagnostics": diagnostics,
+            "candidate_sha256": digest.hexdigest(),
+        }
+        output.with_name(output.name + ".diagnostic.json").write_text(
+            json.dumps(diagnostic, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        raise ValueError(
+            "derived subset count mismatch: "
+            f"expected {expected_selected_rows}, got {len(selected)}; "
+            f"quality diagnostics={json.dumps(diagnostics, sort_keys=True)}"
+        )
 
     result = DerivationResult(
         len(parent_ids),
