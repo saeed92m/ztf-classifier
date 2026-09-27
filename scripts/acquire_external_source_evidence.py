@@ -64,6 +64,30 @@ def _tap_error_message(payload: bytes) -> str | None:
     return None
 
 
+def _tap_schema_hint(endpoint: str, timeout: float) -> str | None:
+    """Return current TAP table names matching ZTF, for actionable failures."""
+    query = (
+        "SELECT TOP 50 table_name FROM TAP_SCHEMA.tables "
+        "WHERE LOWER(table_name) LIKE '%ztf%' ORDER BY table_name"
+    )
+    try:
+        response = requests.post(
+            endpoint.rstrip("/") + "/sync",
+            data={"REQUEST": "doQuery", "LANG": "ADQL", "FORMAT": "csv", "QUERY": query},
+            timeout=timeout,
+            headers={"User-Agent": "ztf-classifier-scientific-validation/0.4"},
+        )
+        response.raise_for_status()
+        names = [
+            line.strip()
+            for line in response.text.splitlines()[1:]
+            if line.strip()
+        ]
+        return ", ".join(names) if names else None
+    except requests.RequestException:
+        return None
+
+
 def _table_from_votable(payload: bytes) -> pd.DataFrame:
     tap_error = _tap_error_message(payload)
     if tap_error:
@@ -159,7 +183,13 @@ def acquire_benchmark(registry_dir: Path, benchmark_id: str, output_root: Path,
     else:
         raise SourceQueryError(f"unsupported external benchmark: {benchmark_id}")
 
-    payload = _tap_query(endpoint, str(query), timeout)
+    try:
+        payload = _tap_query(endpoint, str(query), timeout)
+    except SourceQueryError as exc:
+        hint = _tap_schema_hint(endpoint, timeout)
+        if hint:
+            raise SourceQueryError(f"{exc}; available ZTF TAP tables: {hint}") from exc
+        raise
     frame = _table_from_votable(payload)
     _validate(frame, expected, object_id, limit)
     root = output_root / benchmark_id
