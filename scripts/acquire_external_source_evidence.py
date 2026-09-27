@@ -270,6 +270,7 @@ def _read_hats_objects(
     frame = pd.concat(frames, ignore_index=True)
     frame.columns = [str(column).lower() for column in frame.columns]
     frame = frame.rename(columns={"oid": "oid", "ra": "ra", "dec": "dec"})
+    frame = frame.sort_values(object_id, kind="mergesort").reset_index(drop=True)
     _validate(frame, expected_columns, object_id, len(ids))
     frame.attrs["source_rows"] = source_rows
     return frame
