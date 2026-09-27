@@ -233,6 +233,10 @@ def _read_hats_objects(
         if direct.type == pafs.FileType.File:
             files = [partition] if partition.endswith(".parquet") else []
         else:
+            flat_file = filesystem.get_file_info(partition + ".parquet")
+            if flat_file.type == pafs.FileType.File:
+                files = [partition + ".parquet"]
+            else:
             info = filesystem.get_file_info(pafs.FileSelector(partition, recursive=True))
             files = [
                 item.path
