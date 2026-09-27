@@ -162,6 +162,15 @@ def test_release_benchmark_manifests_declare_full_check_contract_and_canonical_a
         assert loaded.input_contract["adapter"] == benchmark_id
 
 
+def test_release_gate_surfaces_unexecutable_external_adapter_contracts():
+    from ztf_classifier.validation.gate import _manifest_blockers
+
+    registry = BenchmarkRegistry("configs/benchmarks")
+    for benchmark_id in ("ztf_dr24_source_subset", "alerce_reference"):
+        blockers = _manifest_blockers(registry.load(benchmark_id))
+        assert any("canonical adapter contract is not executable" in item for item in blockers)
+
+
 def test_release_manifest_contract_rejects_missing_check_and_adapter():
     loaded = manifest(required_leakage_checks=["duplicate_objects"], input_contract={"prediction_column": "prediction"})
     blockers = loaded.validate_release_contract()
