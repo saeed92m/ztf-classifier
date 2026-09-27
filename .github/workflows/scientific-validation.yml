@@ -6,6 +6,8 @@ on:
     branches:
       - main
       - "ci/heavy/**"
+    tags:
+      - "v*.*.*"
   schedule:
     - cron: "17 3 * * 1"
   workflow_dispatch:
@@ -53,6 +55,7 @@ jobs:
       github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/heavy/')) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
       (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
     runs-on: ubuntu-latest
     timeout-minutes: 180
@@ -253,6 +256,30 @@ jobs:
           echo "Heavy execution evidence contract satisfied."
           echo "Product-level scientific release gate is intentionally evaluated separately."
 
+      - name: Record release provenance
+        if: always() && startsWith(github.ref, 'refs/tags/v')
+        env:
+          RELEASE_TAG: \${{ github.ref_name }}
+          RELEASE_SHA: \${{ github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p reports/scientific_validation/release
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = {
+              "tag": os.environ["RELEASE_TAG"],
+              "sha": os.environ["RELEASE_SHA"],
+              "workflow": "Scientific Validation",
+              "artifact_name": "scientific-validation-heavy",
+          }
+          Path("reports/scientific_validation/release/release_ref.json").write_text(
+              json.dumps(payload, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
       - name: Upload heavy scientific evidence
         if: always()
         uses: actions/upload-artifact@v4
