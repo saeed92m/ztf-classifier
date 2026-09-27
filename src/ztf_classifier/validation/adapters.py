@@ -141,16 +141,62 @@ def _dr24_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     plan = _source_plan(manifest, get_source("ztf_dr24_source_subset"))
     query = manifest.input_contract.get("query")
     if not isinstance(query, dict) or not query:
-        raise AdapterContractError("DR24 adapter requires input_contract.query for a pinned source subset")
+        raise AdapterContractError(
+            "DR24 adapter requires input_contract.query for a pinned source subset"
+        )
+    required = {
+        "provider", "release", "release_date", "bucket", "objects_prefix",
+        "object_id_column", "selection", "observation_cutoff", "expected_columns",
+    }
+    missing = sorted(required - set(query))
+    if missing:
+        raise AdapterContractError(
+            "DR24 query contract is incomplete: " + ", ".join(missing)
+        )
+    selection = query["selection"]
+    if not isinstance(selection, dict):
+        raise AdapterContractError("DR24 selection contract must be an object")
+    if selection.get("method") != "deterministic_lexicographic":
+        raise AdapterContractError("DR24 selection must be deterministic_lexicographic")
+    if selection.get("order_by") != ["objectid"]:
+        raise AdapterContractError("DR24 selection must order by objectid")
+    if selection.get("limit") != 150:
+        raise AdapterContractError("DR24 benchmark subset must contain exactly 150 requested objects")
+    if query["object_id_column"] != "objectid":
+        raise AdapterContractError("DR24 object_id_column must be objectid")
+    if not isinstance(query["expected_columns"], list) or "objectid" not in query["expected_columns"]:
+        raise AdapterContractError("DR24 expected_columns must include objectid")
     return AdapterPlan(**{**plan.__dict__, "query_manifest": dict(query)})
 
 
 def _alerce_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     plan = _source_plan(manifest, get_source("alerce_reference"))
     query = manifest.input_contract.get("query")
+    query_manifest = manifest.input_contract.get("query_manifest")
     if not isinstance(query, str) or not query.strip():
         raise AdapterContractError("ALeRCE adapter requires a non-empty TAP query")
-    return AdapterPlan(**{**plan.__dict__, "query_manifest": {"tap_query": query}})
+    if not isinstance(query_manifest, dict) or not query_manifest:
+        raise AdapterContractError("ALeRCE adapter requires a structured query_manifest")
+    required = {
+        "provider", "endpoint", "schema", "object_table", "probability_table",
+        "survey", "selection", "max_rows", "expected_columns", "reference_only",
+    }
+    missing = sorted(required - set(query_manifest))
+    if missing:
+        raise AdapterContractError(
+            "ALeRCE TAP query contract is incomplete: " + ", ".join(missing)
+        )
+    if query_manifest["endpoint"] != "https://tap.alerce.online/tap":
+        raise AdapterContractError("ALeRCE TAP endpoint is not canonical")
+    if query_manifest["schema"] != "alerce_tap":
+        raise AdapterContractError("ALeRCE TAP schema must be alerce_tap")
+    if query_manifest["max_rows"] != 150:
+        raise AdapterContractError("ALeRCE reference subset must cap at 150 rows")
+    if query_manifest["reference_only"] is not True:
+        raise AdapterContractError("ALeRCE output must remain reference-only")
+    if not isinstance(query_manifest["expected_columns"], list) or "oid" not in query_manifest["expected_columns"]:
+        raise AdapterContractError("ALeRCE expected_columns must include oid")
+    return AdapterPlan(**{**plan.__dict__, "query_manifest": {"tap_query": query, **query_manifest}})
 
 
 def build_adapter_plan(manifest: BenchmarkManifest) -> AdapterPlan:
