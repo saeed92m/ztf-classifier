@@ -87,9 +87,7 @@ jobs:
         run: |
           mkdir -p reports/scientific_validation/ztf_periodic_730k
           set -euo pipefail
-          python scripts/acquire_external_source_evidence.py \\
-            --output-root reports/scientific_validation \\
-            --code-version "${GITHUB_SHA}"
+          python scripts/acquire_external_source_evidence.py --output-root reports/scientific_validation --code-version "${GITHUB_SHA}"
 
       - name: Download and normalize CPVS light-curve inputs for 730k derivation
         run: |
