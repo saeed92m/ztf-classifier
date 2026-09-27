@@ -51,7 +51,7 @@ class DerivationResult:
             "selection": {
                 "g_sigma": self.config.g_sigma,
                 "r_sigma": self.config.r_sigma,
-                "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma",
+                "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma, with g_flag == 0 and r_flag == 0",
                 "snr_from_magnitude_error": "1.0857362047581296 / mag_error",
             },
         }
@@ -357,7 +357,7 @@ def _qualified_ids(
     error_columns: Iterable[str],
     flag_columns: Iterable[str] = (),
     diagnostics: dict[str, object] | None = None,
-) -> set[str]:
+) -> tuple[set[str], set[str]]:
     rows = _iter_rows(
         path,
         member,
@@ -403,10 +403,11 @@ def _qualified_ids(
             "flag_column": flag_key,
             "eligible": len(selected),
             "flag_zero": len(flag_zero),
+            "flag_nonzero": len(selected - flag_zero),
             "flag_lt_32768": len(flag_lt_32768),
             "top_flags": flag_values.most_common(10),
         }
-    return selected
+    return selected, flag_zero
 
 
 def derive_730k(
@@ -433,7 +434,7 @@ def derive_730k(
         )
 
     diagnostics: dict[str, object] = {}
-    g_ids = _qualified_ids(
+    g_ids, g_flag_zero = _qualified_ids(
         g_lightcurve,
         sigma=config.g_sigma,
         parent_ids=parent_ids,
@@ -442,7 +443,7 @@ def derive_730k(
         flag_columns=("g_flag", "catflags", "flag"),
         diagnostics=diagnostics,
     )
-    r_ids = _qualified_ids(
+    r_ids, r_flag_zero = _qualified_ids(
         r_lightcurve,
         sigma=config.r_sigma,
         parent_ids=parent_ids,
@@ -451,7 +452,15 @@ def derive_730k(
         flag_columns=("r_flag", "catflags", "flag"),
         diagnostics=diagnostics,
     )
-    selected = sorted(g_ids & r_ids)
+    snr_selected = g_ids & r_ids
+    flag_zero_selected = g_flag_zero & r_flag_zero
+    diagnostics["intersection"] = {
+        "snr_only_count": len(snr_selected),
+        "both_bands_flag_zero_count": len(flag_zero_selected),
+        "snr_removed_by_flag_quality": len(snr_selected - flag_zero_selected),
+        "selection_predicate": "g SNR >= 2.5 AND r SNR >= 3.0 AND g_flag == 0 AND r_flag == 0",
+    }
+    selected = sorted(flag_zero_selected)
 
     # Always materialize the candidate membership before asserting the
     # published cardinality. This is diagnostic evidence, not acceptance:
