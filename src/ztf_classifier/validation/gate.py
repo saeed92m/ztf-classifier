@@ -140,7 +140,7 @@ def _evidence_blockers(benchmark_id: str, evidence_root: Path) -> list[str]:
             )
             errors.extend(
                 f"{evidence_path.name}: {item}"
-                for item in evidence.verify(".")
+                for item in evidence.verify(evidence_root)
             )
             if evidence.benchmark_id != benchmark_id:
                 errors.append(
