@@ -42,7 +42,8 @@
         "order_by": [
           "objectid"
         ],
-        "limit": 150
+        "limit": 150,
+        "source": "IRSA ZTF Objects database table exposed by the DR24-era Catalog Query service"
       },
       "observation_cutoff": "DR24 release boundary; no post-release observations",
       "expected_columns": [
@@ -50,7 +51,9 @@
         "objra",
         "objdec",
         "nepochs"
-      ]
+      ],
+      "tap_endpoint": "https://irsa.ipac.caltech.edu/TAP",
+      "tap_query": "SELECT TOP 150 oid AS objectid, ra AS objra, dec AS objdec, nepochs FROM ztf_objects ORDER BY oid"
     }
   },
   "ground_truth_provenance": {
