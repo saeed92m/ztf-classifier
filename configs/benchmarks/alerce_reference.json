@@ -27,20 +27,22 @@
   "input_contract": {
     "adapter": "alerce_reference",
     "prediction_column": "y_pred",
-    "query": "SELECT TOP 150\n    oid,\n    class AS class_name,\n    probability\nFROM ztf.object\nORDER BY oid",
+    "query": "SELECT TOP 150\n    oid,\n    class_name,\n    probability,\n    classifier_name,\n    classifier_version\nFROM ztf.probability\nWHERE classifier_name = 'lc_classifier'\n  AND ranking = 1\n  AND oid LIKE 'ZTF%'\nORDER BY oid",
     "query_manifest": {
       "provider": "ALeRCE TAP",
       "endpoint": "https://tap.alerce.online/tap",
       "schema": "ztf",
       "object_table": "ztf.object",
-      "probability_table": "ztf.object",
+      "probability_table": "ztf.probability",
       "survey": "ZTF",
-      "selection": "first 150 ZTF objects by oid using the ALeRCE object table default classifier output (lc_classifier, ranking 1)",
+      "selection": "first 150 ZTF objects with ranking=1 from lc_classifier probability output, deterministic ORDER BY oid",
       "max_rows": 150,
       "expected_columns": [
         "oid",
         "class_name",
-        "probability"
+        "probability",
+        "classifier_name",
+        "classifier_version"
       ],
       "reference_only": true
     }
