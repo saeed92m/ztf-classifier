@@ -10,6 +10,16 @@ from ztf_classifier.validation.acquisition import (
 )
 
 
+def _cpvs_payload() -> bytes:
+    import zipfile
+    from io import BytesIO
+
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("Table2.txt", "SourceID\n1\n2\n")
+    return buffer.getvalue()
+
+
 def test_request_from_benchmark_binds_canonical_source_and_version():
     request = request_from_benchmark(
         "configs/benchmarks",
@@ -60,19 +70,22 @@ def test_acquisition_rejects_html_payload_without_creating_evidence(tmp_path):
 
 
 def test_multi_artifact_acquisition_binds_all_artifacts(tmp_path):
-    payloads = {"https://example.test/a": b"alpha", "https://example.test/b": b"beta"}
+    payloads = {
+        "https://example.test/a": _cpvs_payload(),
+        "https://example.test/b": b"beta",
+    }
     request = AcquisitionRequest(
         benchmark_id="ztf_periodic_781k",
-        source_id="star_embed_ztf_40k",
+        source_id="ztf_periodic_781k",
         destination=tmp_path / "snapshot",
         urls=tuple(payloads),
-        artifact_names=("a.bin", "b.bin"),
-        source_version="2026-05 dataset snapshot",
+        artifact_names=("a.zip", "b.bin"),
     )
     result = acquire_source(request, code_version="test", fetcher=lambda url, _timeout: payloads[url])
     assert result.status == "ACQUIRED"
     assert result.evidence_manifest is not None
     assert len(result.evidence_manifest.artifacts) == 2
+    assert result.evidence_manifest.row_count == 2
 
 
 def test_star_embed_resolution_records_resolved_revision(monkeypatch):
