@@ -264,7 +264,7 @@ def test_runtime_bound_immutable_evidence_can_satisfy_artifact_binding(tmp_path)
     # EvidenceManifest paths are repository-relative in production; emulate that
     # contract here by validating the artifact from the temporary repository root.
     payload = json.loads(manifest_path.read_text())
-    payload["artifacts"][0]["path"] = artifact.name
+    payload["artifacts"][0]["path"] = str(artifact.relative_to(tmp_path))
     manifest_path.write_text(json.dumps(payload))
     blockers = _evidence_blockers("runtime_bound", tmp_path)
     assert blockers == []
