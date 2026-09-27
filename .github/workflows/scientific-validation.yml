@@ -85,6 +85,7 @@ jobs:
 
       - name: Acquire executable DR24 and ALeRCE source evidence
         run: |
+          mkdir -p reports/scientific_validation/ztf_periodic_730k
           set -euo pipefail
           python scripts/acquire_external_source_evidence.py \\
             --output-root reports/scientific_validation \\
