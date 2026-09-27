@@ -168,7 +168,7 @@ def test_release_gate_accepts_executable_external_adapter_contracts():
     registry = BenchmarkRegistry("configs/benchmarks")
     for benchmark_id in ("ztf_dr24_source_subset", "alerce_reference"):
         blockers = _manifest_blockers(registry.load(benchmark_id))
-        assert any("canonical adapter contract is not executable" in item for item in blockers)
+        assert not any("canonical adapter contract is not executable" in item for item in blockers)
 
 
 def test_release_manifest_contract_rejects_missing_check_and_adapter():
