@@ -146,7 +146,8 @@ def _dr24_plan(manifest: BenchmarkManifest) -> AdapterPlan:
         )
     required = {
         "provider", "release", "release_date", "bucket", "objects_prefix",
-        "object_id_column", "selection", "observation_cutoff", "expected_columns",
+        "index_prefix", "object_id_column", "selection", "observation_cutoff",
+        "expected_columns",
     }
     missing = sorted(required - set(query))
     if missing:
@@ -158,14 +159,17 @@ def _dr24_plan(manifest: BenchmarkManifest) -> AdapterPlan:
         raise AdapterContractError("DR24 selection contract must be an object")
     if selection.get("method") != "deterministic_lexicographic":
         raise AdapterContractError("DR24 selection must be deterministic_lexicographic")
-    if selection.get("order_by") != ["objectid"]:
-        raise AdapterContractError("DR24 selection must order by objectid")
+    if selection.get("order_by") != ["oid"]:
+        raise AdapterContractError("DR24 selection must order by oid")
     if selection.get("limit") != 150:
         raise AdapterContractError("DR24 benchmark subset must contain exactly 150 requested objects")
-    if query["object_id_column"] != "objectid":
-        raise AdapterContractError("DR24 object_id_column must be objectid")
-    if not isinstance(query["expected_columns"], list) or "objectid" not in query["expected_columns"]:
-        raise AdapterContractError("DR24 expected_columns must include objectid")
+    if query["object_id_column"] != "oid":
+        raise AdapterContractError("DR24 object_id_column must be oid")
+    if not isinstance(query["expected_columns"], list) or "oid" not in query["expected_columns"]:
+        raise AdapterContractError("DR24 expected_columns must include oid")
+    for key in ("bucket", "objects_prefix", "index_prefix"):
+        if not isinstance(query[key], str) or not query[key].strip():
+            raise AdapterContractError(f"DR24 {key} must be a non-empty S3 path component")
     return AdapterPlan(**{**plan.__dict__, "query_manifest": dict(query)})
 
 
