@@ -83,6 +83,13 @@ jobs:
           mkdir -p reports/scientific_validation/ztf_star_embed
           python -m ztf_classifier.validation acquire             --benchmark-id star_embed_ztf_40k             --output reports/scientific_validation/ztf_star_embed             --code-version "${GITHUB_SHA}"
 
+      - name: Acquire executable DR24 and ALeRCE source evidence
+        run: |
+          set -euo pipefail
+          python scripts/acquire_external_source_evidence.py \\
+            --output-root reports/scientific_validation \\
+            --code-version "${GITHUB_SHA}"
+
       - name: Download and normalize CPVS light-curve inputs for 730k derivation
         run: |
           set -euo pipefail
