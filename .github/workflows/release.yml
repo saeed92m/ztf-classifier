@@ -1,39 +1,99 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: Release tag to publish
-        required: true
-        type: string
+  workflow_run:
+    workflows:
+      - Scientific Validation
+    types:
+      - completed
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   release:
     name: Build and publish release
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
-      - name: Resolve release ref
+      - name: Download tag-bound scientific evidence
+        uses: actions/download-artifact@v5
+        with
+          name: scientific-validation-heavy
+          path: \${{ runner.temp }}/scientific-evidence
+          run-id: \${{ github.event.workflow_run.id }}
+          github-token: \${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve and verify release ref
         id: ref
         shell: bash
+        env:
+          EXPECTED_SHA: \${{ github.event.workflow_run.head_sha }}
         run: |
-          if [ -n "${{ github.event.inputs.tag }}" ]; then
-            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-          fi
+          set -euo pipefail
+          ref_file="$(find "$RUNNER_TEMP/scientific-evidence" -type f -name release_ref.json -print -quit)"
+          test -n "$ref_file" || {
+            echo "ERROR: scientific validation did not publish release_ref.json" >&2
+            exit 1
+          }
 
-      - name: Checkout release tag
+          python - "$ref_file" "$EXPECTED_SHA" <<'PY'
+          import json
+          import sys
+
+          path, expected_sha = sys.argv[1:3]
+          payload = json.load(open(path, encoding="utf-8"))
+
+          tag = payload.get("tag")
+          sha = payload.get("sha")
+          if not isinstance(tag, str) or not tag.startswith("v"):
+              raise SystemExit(f"Invalid release tag in evidence: {tag!r}")
+          if sha != expected_sha:
+              raise SystemExit(
+                  "Release evidence SHA mismatch: "
+                  f"workflow_run={expected_sha}, evidence={sha}"
+              )
+
+          print(f"tag={tag}")
+          with open("${GITHUB_OUTPUT}", "a", encoding="utf-8") as out:
+              out.write(f"tag={tag}\\n")
+              out.write(f"sha={sha}\\n")
+          PY
+
+      - name: Checkout validated release tag
         uses: actions/checkout@v7
         with:
-          ref: ${{ steps.ref.outputs.tag }}
+          ref: \${{ steps.ref.outputs.tag }}
+
+      - name: Restore validated scientific evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="$RUNNER_TEMP/scientific-evidence"
+          mkdir -p reports/scientific_validation
+
+          evidence_root="$(find "$source_root" -type d -path '*/reports/scientific_validation' -print -quit)"
+          test -n "$evidence_root" || {
+            echo "ERROR: scientific validation artifact has no reports/scientific_validation tree" >&2
+            exit 1
+          }
+
+          cp -a "$evidence_root/." reports/scientific_validation/
+          test -f reports/scientific_validation/release/release_ref.json
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("reports/scientific_validation/release/release_ref.json")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          print(json.dumps(payload, indent=2, sort_keys=True))
+          PY
 
       - uses: actions/setup-python@v7
         with:
@@ -46,15 +106,16 @@ jobs:
           python -m pip install -r requirements.lock
           python -m pip install build
 
-      - name: Verify package version matches tag
+      - name: Verify package version matches validated tag
         env:
-          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
+          RELEASE_TAG: \${{ steps.ref.outputs.tag }}
         run: |
           python - <<'PY'
+          import os
           import tomllib
           from pathlib import Path
 
-          tag = __import__("os").environ["RELEASE_TAG"]
+          tag = os.environ["RELEASE_TAG"]
           expected = tag.removeprefix("v")
           actual = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
           if actual != expected:
@@ -64,7 +125,9 @@ jobs:
       - name: Enforce scientific validation gate
         run: |
           python -m pip install -e .
-          python -m ztf_classifier.validation gate             --evidence-dir reports/scientific_validation             --output reports/scientific_validation/release_gate.json
+          python -m ztf_classifier.validation gate \
+            --evidence-dir reports/scientific_validation \
+            --output reports/scientific_validation/release_gate.json
 
       - name: Run release validation
         run: |
