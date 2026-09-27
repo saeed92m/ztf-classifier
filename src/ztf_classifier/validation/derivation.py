@@ -209,7 +209,7 @@ def _iter_rows(
         header_line = None
         header_tokens: list[str] = []
         source_tokens = {"sourceid", "source_id", "oid", "ztf_id"}
-        buffered_lines: list[str] = []
+        first_data_line: str | None = None
         for line in lines:
             if not line.strip():
                 continue
@@ -221,16 +221,24 @@ def _iter_rows(
                 header_tokens = tokens
                 break
             if _headerless_lightcurve_schema(required_columns) is not None:
-                buffered_lines.append(stripped)
-                if len(buffered_lines) >= 1:
-                    break
+                first_data_line = stripped
+                break
         if header_line is None:
             schema = _headerless_lightcurve_schema(required_columns)
             if schema is None:
                 return
             header = schema
-            for line in buffered_lines:
-                values = _split_fields(line)
+            if first_data_line is not None:
+                values = _split_fields(first_data_line)
+                if len(values) == len(header):
+                    yield dict(zip(header, values))
+            for line in lines:
+                if not line.strip():
+                    continue
+                stripped = line.strip()
+                if stripped.startswith("#"):
+                    continue
+                values = _split_fields(stripped)
                 if len(values) == len(header):
                     yield dict(zip(header, values))
             return
