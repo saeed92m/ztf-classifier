@@ -178,6 +178,27 @@ def test_release_manifest_contract_rejects_missing_check_and_adapter():
     assert "manifest does not declare canonical input_contract.adapter" in blockers
 
 
+def test_external_benchmark_adapters_have_pinned_query_contracts():
+    registry = BenchmarkRegistry("configs/benchmarks")
+
+    dr24 = registry.load("ztf_dr24_source_subset")
+    dr24_plan = __import__(
+        "ztf_classifier.validation.adapters",
+        fromlist=["build_adapter_plan"],
+    ).build_adapter_plan(dr24)
+    assert dr24_plan.query_manifest["selection"]["limit"] == 150
+    assert dr24_plan.query_manifest["object_id_column"] == "objectid"
+
+    alerce = registry.load("alerce_reference")
+    alerce_plan = __import__(
+        "ztf_classifier.validation.adapters",
+        fromlist=["build_adapter_plan"],
+    ).build_adapter_plan(alerce)
+    assert alerce_plan.query_manifest["endpoint"] == "https://tap.alerce.online/tap"
+    assert alerce_plan.query_manifest["max_rows"] == 150
+    assert alerce_plan.query_manifest["reference_only"] is True
+
+
 def test_release_benchmark_manifests_have_complete_contract():
     registry = BenchmarkRegistry("configs/benchmarks")
     for benchmark_id in (
