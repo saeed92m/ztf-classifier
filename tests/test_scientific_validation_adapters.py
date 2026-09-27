@@ -57,9 +57,11 @@ def test_star_embed_adapter_accepts_verified_revision() -> None:
     assert plan.query_manifest["revision"] == payload["input_contract"]["revision"]
 
 
-def test_dr24_adapter_fails_closed_without_pinned_query() -> None:
-    with pytest.raises(AdapterContractError, match="pinned source subset"):
-        build_adapter_plan(load("ztf_dr24_source_subset"))
+def test_dr24_adapter_builds_hats_index_plan() -> None:
+    plan = build_adapter_plan(load("ztf_dr24_source_subset"))
+    assert plan.query_manifest["index_prefix"].endswith("ztf_dr24_objects-hats_index_oid")
+    assert plan.query_manifest["selection"]["order_by"] == ["oid"]
+    plan.validate()
 
 
 def test_alerce_adapter_fails_closed_without_tap_query() -> None:
