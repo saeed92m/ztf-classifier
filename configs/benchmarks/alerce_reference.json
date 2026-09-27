@@ -26,7 +26,26 @@
   },
   "input_contract": {
     "adapter": "alerce_reference",
-    "prediction_column": "y_pred"
+    "prediction_column": "y_pred",
+    "query": "SELECT TOP 150\n    p.oid,\n    p.class_name,\n    p.probability,\n    p.classifier_name,\n    p.classifier_version\nFROM alerce_tap.probability AS p\nJOIN alerce_tap.object AS o\n  ON p.oid = o.oid\nWHERE o.sid = 1\n  AND p.probability IS NOT NULL\nORDER BY p.oid, p.class_name",
+    "query_manifest": {
+      "provider": "ALeRCE TAP",
+      "endpoint": "https://tap.alerce.online/tap",
+      "schema": "alerce_tap",
+      "object_table": "alerce_tap.object",
+      "probability_table": "alerce_tap.probability",
+      "survey": "ZTF",
+      "selection": "first 150 distinct ZTF object IDs with classifier probabilities, deterministic ORDER BY p.oid,p.class_name",
+      "max_rows": 150,
+      "expected_columns": [
+        "oid",
+        "class_name",
+        "probability",
+        "classifier_name",
+        "classifier_version"
+      ],
+      "reference_only": true
+    }
   },
   "ground_truth_provenance": {
     "kind": "external ground truth required separately",
