@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "scientific-validation-blockers-20260928",
+  "objective": "Resolve the currently observed CPVS 730k derivation and ALeRCE TAP acquisition blockers without weakening scientific release gates.",
+  "previous_knowledge_consumed": [
+    "SF-001",
+    "SF-002",
+    "FD-001",
+    "AD-CI-008"
+  ],
+  "baseline": {
+    "revision": "cc846ee5a2c3a3fba8d2a2c2c2dea489d79ade7a",
+    "description": "Scientific validation contracts are executable, but the heavy gate is blocked by an ALeRCE TAP parser failure, CPVS 730k derivation mismatch, and a CI lifecycle-record omission."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility",
+    "scientific_validity"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "reason": "Live source-backed rerun is required to establish the corrected CPVS membership and ALeRCE acquisition results."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "The blocker fixes must be validated by GitHub Actions on the complete source-backed workflow."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "The corrected source-selection contract must first produce immutable evidence in CI."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The scientific gate remains blocked until the source-backed evidence passes."
+      }
+    },
+    "trade_off": "No scientific assertion is relaxed; failures remain release-blocking until independently evidenced."
+  },
+  "validation": {
+    "status": "BLOCKED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Previous heavy validation observed 741,787 CPVS candidates before quality-flag filtering, while the published target is 730,184.",
+      "The same run reported non-zero g/r quality flags among SNR-eligible observations, providing a concrete selection-semantics hypothesis to validate.",
+      "The current ALeRCE TAP query failed at the server parser on the ORDER BY clause."
+    ],
+    "blocker": "Live heavy scientific validation has not yet re-run on this correction branch."
+  },
+  "failure_analysis": {
+    "status": "known-failure",
+    "root_causes": [
+      "CPVS derivation treated every SNR-qualified exposure as a valid detection without enforcing zero quality flags.",
+      "ALeRCE query used a server-side ordering form rejected by the current TAP parser.",
+      "The pull request changed meaningful files without carrying a cumulative lifecycle record."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Published benchmark counts must be reproduced from the source's detection-quality semantics, not from SNR alone.",
+      "Live TAP adapters must be tested against the provider's current ADQL parser while retaining deterministic selection semantics.",
+      "Scientific recovery changes must carry their cumulative lifecycle record from the first reviewable commit."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "CPVS 730,184 exact derivation has not yet been verified on the correction branch.",
+      "ALeRCE source-backed acquisition has not yet passed on the correction branch.",
+      "Historical ALeRCE snapshot drift remains unresolved and is intentionally not weakened."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "SF-001",
+    "SF-002",
+    "FD-001",
+    "AD-CI-008"
+  ]
+}
