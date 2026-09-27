@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 import zipfile
+from collections import Counter
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -354,6 +355,8 @@ def _qualified_ids(
     parent_ids: set[str],
     member: str | None,
     error_columns: Iterable[str],
+    flag_columns: Iterable[str] = (),
+    diagnostics: dict[str, object] | None = None,
 ) -> set[str]:
     rows = _iter_rows(
         path,
@@ -365,11 +368,44 @@ def _qualified_ids(
         return set()
     id_key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
     error_key = _find_key(first, error_columns)
+    flag_key = None
+    try:
+        flag_key = _find_key(first, flag_columns)
+    except ValueError:
+        pass
+
     selected: set[str] = set()
+    flag_zero: set[str] = set()
+    flag_lt_32768: set[str] = set()
+    flag_values: Counter[str] = Counter()
+
     for row in chain((first,), rows):
         oid = row.get(id_key, "").strip()
-        if oid in parent_ids and _snr_from_mag_error(row.get(error_key, "")) >= sigma:
-            selected.add(oid)
+        if oid not in parent_ids or _snr_from_mag_error(row.get(error_key, "")) < sigma:
+            continue
+        selected.add(oid)
+        if flag_key is None:
+            continue
+        raw_flag = row.get(flag_key, "").strip()
+        flag_values[raw_flag] += 1
+        try:
+            flag = int(float(raw_flag))
+        except (TypeError, ValueError):
+            continue
+        if flag == 0:
+            flag_zero.add(oid)
+        if 0 <= flag < 32768:
+            flag_lt_32768.add(oid)
+
+    if diagnostics is not None:
+        band = "g" if "e_gmag" in {c.strip().lower() for c in error_columns} else "r"
+        diagnostics[band] = {
+            "flag_column": flag_key,
+            "eligible": len(selected),
+            "flag_zero": len(flag_zero),
+            "flag_lt_32768": len(flag_lt_32768),
+            "top_flags": flag_values.most_common(10),
+        }
     return selected
 
 
@@ -396,12 +432,15 @@ def derive_730k(
             f"parent row/object count mismatch: expected {expected_parent_rows}, got {len(parent_ids)}"
         )
 
+    diagnostics: dict[str, object] = {}
     g_ids = _qualified_ids(
         g_lightcurve,
         sigma=config.g_sigma,
         parent_ids=parent_ids,
         member=g_member,
         error_columns=("e_gmag", "magerr", "mag_err", "error"),
+        flag_columns=("g_flag", "catflags", "flag"),
+        diagnostics=diagnostics,
     )
     r_ids = _qualified_ids(
         r_lightcurve,
@@ -409,11 +448,15 @@ def derive_730k(
         parent_ids=parent_ids,
         member=r_member,
         error_columns=("e_rmag", "magerr", "mag_err", "error"),
+        flag_columns=("r_flag", "catflags", "flag"),
+        diagnostics=diagnostics,
     )
     selected = sorted(g_ids & r_ids)
     if len(selected) != expected_selected_rows:
         raise ValueError(
-            f"derived subset count mismatch: expected {expected_selected_rows}, got {len(selected)}"
+            "derived subset count mismatch: "
+            f"expected {expected_selected_rows}, got {len(selected)}; "
+            f"quality diagnostics={json.dumps(diagnostics, sort_keys=True)}"
         )
 
     output.parent.mkdir(parents=True, exist_ok=True)
