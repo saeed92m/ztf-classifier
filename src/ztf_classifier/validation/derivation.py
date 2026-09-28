@@ -51,8 +51,8 @@ class DerivationResult:
             "selection": {
                 "g_sigma": self.config.g_sigma,
                 "r_sigma": self.config.r_sigma,
-                "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma, with zero quality flags and finite non-zero magnitudes",
-                "snr_from_magnitude_error": "1.0857362047581296 / mag_error",
+                "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma, with finite non-zero magnitudes",
+                "snr_from_magnitude_error": "1.0 / mag_error",
             },
         }
 
@@ -291,7 +291,7 @@ def _snr_from_mag_error(value: str) -> float:
         return float("nan")
     if not math.isfinite(error) or error <= 0:
         return float("nan")
-    return 1.0857362047581296 / error
+    return 1.0 / error
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
@@ -450,7 +450,7 @@ def derive_730k(
         parent_ids=parent_ids,
         member=g_member,
         error_columns=("e_gmag", "magerr", "mag_err", "error"),
-        flag_columns=("g_flag", "catflags", "flag"),
+        flag_columns=(),
         diagnostics=diagnostics,
     )
     r_ids, r_flag_zero = _qualified_ids(
@@ -459,7 +459,7 @@ def derive_730k(
         parent_ids=parent_ids,
         member=r_member,
         error_columns=("e_rmag", "magerr", "mag_err", "error"),
-        flag_columns=("r_flag", "catflags", "flag"),
+        flag_columns=(),
         diagnostics=diagnostics,
     )
     snr_selected = g_ids & r_ids
@@ -468,7 +468,7 @@ def derive_730k(
         "snr_only_count": len(snr_selected),
         "both_bands_flag_zero_count": len(flag_zero_selected),
         "snr_removed_by_flag_quality": len(snr_selected - flag_zero_selected),
-        "selection_predicate": "g SNR >= 2.5 AND r SNR >= 3.0 AND g_flag == 0 AND r_flag == 0 AND finite non-zero g/r magnitudes",
+        "selection_predicate": "g SNR >= 2.5 AND r SNR >= 3.0 AND finite non-zero g/r magnitudes",
     }
     selected = sorted(flag_zero_selected)
 
