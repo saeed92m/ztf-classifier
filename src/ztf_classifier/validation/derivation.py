@@ -52,7 +52,7 @@ class DerivationResult:
                 "g_sigma": self.config.g_sigma,
                 "r_sigma": self.config.r_sigma,
                 "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma, with finite non-zero magnitudes",
-                "snr_from_magnitude_error": "1.0 / mag_error",
+                "snr_from_magnitude_error": "1.0857362047581296 / mag_error",
             },
         }
 
@@ -291,7 +291,7 @@ def _snr_from_mag_error(value: str) -> float:
         return float("nan")
     if not math.isfinite(error) or error <= 0:
         return float("nan")
-    return 1.0 / error
+    return 1.0857362047581296 / error
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
