@@ -417,7 +417,8 @@ def _qualified_ids(
             "flag_lt_32768": len(flag_lt_32768),
             "top_flags": flag_values.most_common(10),
         }
-    return selected, flag_zero & valid_magnitude
+    quality_ids = flag_zero & valid_magnitude if flag_key is not None else valid_magnitude
+    return selected, quality_ids
 
 
 def derive_730k(
