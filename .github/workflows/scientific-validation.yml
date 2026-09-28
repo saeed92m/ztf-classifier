@@ -204,6 +204,16 @@ jobs:
           test -s "$root/published_table4.dat"
           echo "Published VizieR membership downloaded."
 
+      - name: Diagnose CPVS selection semantics
+        if: always()
+        run: |
+          set -euo pipefail
+          python scripts/diagnose_cpvs_selection.py \
+            --g reports/scientific_validation/ztf_periodic_730k/g \
+            --r reports/scientific_validation/ztf_periodic_730k/r \
+            --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
+            --output reports/scientific_validation/ztf_periodic_730k/selection_diagnostics.json
+
       - name: Audit 730k membership against independent publication
         if: always()
         run: |
