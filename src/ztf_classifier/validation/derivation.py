@@ -307,8 +307,14 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
             first_token = line.split()[0]
             if not first_token.upper().startswith("ZTF"):
                 continue
-            ordinal += 1
-            source_ids.add(str(ordinal))
+            fields = _split_fields(line)
+            if len(fields) < 2:
+                continue
+            try:
+                source_id = str(int(float(fields[1])))
+            except (TypeError, ValueError):
+                continue
+            source_ids.add(source_id)
         return source_ids
     finally:
         raw.close()
