@@ -2,8 +2,8 @@ import json
 
 import pandas as pd
 
-from ztf_classifier.validation.manifest import BenchmarkManifest
 from ztf_classifier.validation.gate import _evidence_blockers
+from ztf_classifier.validation.manifest import BenchmarkManifest
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.regression import compare_metrics
 from ztf_classifier.validation.runner import run_table_benchmark
