@@ -8,7 +8,7 @@ import math
 from pathlib import Path
 
 from audit_cpvs_membership import read_vizier
-from ztf_classifier.validation.derivation import _iter_rows
+from ztf_classifier.validation.derivation import _iter_rows, _source_ids
 
 
 def band_metrics(path: Path, parent: set[str], error_key: str, mag_key: str):
@@ -35,13 +35,16 @@ def band_metrics(path: Path, parent: set[str], error_key: str, mag_key: str):
 
 def main() -> int:
     p = argparse.ArgumentParser()
+    p.add_argument("--parent", type=Path, required=True)
     p.add_argument("--g", type=Path, required=True)
     p.add_argument("--r", type=Path, required=True)
     p.add_argument("--published", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
     published = read_vizier(a.published)
-    parent = {str(i) for i in range(1, 781605)}
+    if len(parent) != 781_602:
+        raise ValueError(f"expected 781602 parent SourceIDs, got {len(parent)}")
+    parent = _source_ids(a.parent, None)
     g = band_metrics(a.g, parent, "e_gmag", "gmag")
     r = band_metrics(a.r, parent, "e_rmag", "rmag")
     predicates = {
