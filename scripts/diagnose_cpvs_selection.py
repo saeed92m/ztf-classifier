@@ -42,9 +42,9 @@ def main() -> int:
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
     published = read_vizier(a.published)
+    parent = _source_ids(a.parent, None)
     if len(parent) != 781_602:
         raise ValueError(f"expected 781602 parent SourceIDs, got {len(parent)}")
-    parent = _source_ids(a.parent, None)
     g = band_metrics(a.g, parent, "e_gmag", "gmag")
     r = band_metrics(a.r, parent, "e_rmag", "rmag")
     predicates = {
