@@ -209,6 +209,7 @@ jobs:
         run: |
           set -euo pipefail
           python scripts/diagnose_cpvs_selection.py \
+            --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
             --g reports/scientific_validation/ztf_periodic_730k/g \
             --r reports/scientific_validation/ztf_periodic_730k/r \
             --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
