@@ -7,7 +7,7 @@ import json
 import math
 from pathlib import Path
 
-from scripts.audit_cpvs_membership import read_vizier
+from audit_cpvs_membership import read_vizier
 from ztf_classifier.validation.derivation import _iter_rows
 
 
