@@ -370,7 +370,7 @@ def _qualified_ids(
     )
     first = next(rows, None)
     if first is None:
-        return set()
+        return set(), set()
     id_key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
     error_key = _find_key(first, error_columns)
     mag_key = _find_key(first, ("gmag",) if "e_gmag" in error_columns else ("rmag",))
@@ -456,7 +456,7 @@ def derive_730k(
         parent_ids=parent_ids,
         member=g_member,
         error_columns=("e_gmag", "magerr", "mag_err", "error"),
-        flag_columns=(),
+        flag_columns=("g_flag", "catflags", "flag"),
         diagnostics=diagnostics,
     )
     r_ids, r_flag_zero = _qualified_ids(
@@ -465,7 +465,7 @@ def derive_730k(
         parent_ids=parent_ids,
         member=r_member,
         error_columns=("e_rmag", "magerr", "mag_err", "error"),
-        flag_columns=(),
+        flag_columns=("r_flag", "catflags", "flag"),
         diagnostics=diagnostics,
     )
     snr_selected = g_ids & r_ids
