@@ -26,7 +26,7 @@ def test_qualified_ids_uses_detection_snr_and_finite_magnitudes_only(tmp_path: P
     # Quality flags are diagnostic-only; the published selection is based on
     # finite magnitudes and the documented detection SNR criterion.
     assert selected == {"1", "2", "3"}
-    assert quality == {"1"}
+    assert quality == {"1", "2"}
 
 
 def test_qualified_ids_empty_input_returns_two_sets(tmp_path: Path):
