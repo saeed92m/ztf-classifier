@@ -3,7 +3,7 @@ from pathlib import Path
 from ztf_classifier.validation.derivation import _qualified_ids
 
 
-def test_qualified_ids_enforces_zero_quality_flags_and_finite_magnitudes(tmp_path: Path):
+def test_qualified_ids_uses_detection_snr_and_finite_magnitudes_only(tmp_path: Path):
     path = tmp_path / "g.tsv"
     path.write_text(
         "SourceID\tgmag\te_gmag\tg_flag\n"
