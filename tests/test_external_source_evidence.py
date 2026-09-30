@@ -32,8 +32,8 @@ def test_external_source_validation_fails_closed(frame, message):
 def test_alerce_preparation_deduplicates_versions_before_truncation():
     rows = [
         {"oid": "ZTF0002", "classifier_version": "2.0", "class_name": "A", "probability": 0.9, "classifier_name": "lc_classifier"},
-        {"oid": "ZTF0001", "classifier_version": "1.0", "class_name": "B", "probability": 0.7, "classifier_name": "lc_classifier"},
         {"oid": "ZTF0001", "classifier_version": "2.0", "class_name": "B", "probability": 0.8, "classifier_name": "lc_classifier"},
+        {"oid": "ZTF0001", "classifier_version": "1.0", "class_name": "B", "probability": 0.7, "classifier_name": "lc_classifier"},
         {"oid": "ZTF0003", "classifier_version": "1.0", "class_name": "C", "probability": 0.6, "classifier_name": "lc_classifier"},
     ]
     frame = pd.DataFrame(rows)
