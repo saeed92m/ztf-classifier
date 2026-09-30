@@ -38,9 +38,9 @@ def test_derivation_emits_immutable_evidence_manifest(tmp_path: Path):
     parent = tmp_path / "parent.tsv"
     parent.write_text("SourceID\nA\nB\n", encoding="utf-8")
     g = tmp_path / "g.tsv"
-    g.write_text("SourceID\te_gmag\nA\t0.1\nB\t0.8\n", encoding="utf-8")
+    g.write_text("SourceID\tgmag\te_gmag\nA\t15.0\t0.1\nB\t16.0\t0.8\n", encoding="utf-8")
     r = tmp_path / "r.tsv"
-    r.write_text("SourceID\te_rmag\nA\t0.1\nB\t0.8\n", encoding="utf-8")
+    r.write_text("SourceID\trmag\te_rmag\nA\t15.0\t0.1\nB\t16.0\t0.8\n", encoding="utf-8")
     result = derive_730k(
         parent,
         g,
