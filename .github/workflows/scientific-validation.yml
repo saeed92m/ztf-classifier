@@ -393,9 +393,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p reports/scientific_validation/external_source_evidence
-          python scripts/acquire_external_source_evidence.py \\
-            --output-root reports/scientific_validation/external_source_evidence \\
-            --code-version "${GITHUB_SHA}"
+          python scripts/acquire_external_source_evidence.py --output-root reports/scientific_validation/external_source_evidence --code-version "${GITHUB_SHA}"
 
       - name: Validate external evidence contract
         run: |
