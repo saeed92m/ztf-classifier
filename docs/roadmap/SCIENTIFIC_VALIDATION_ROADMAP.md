@@ -1,6 +1,6 @@
 # Scientific Validation Roadmap
 
-Scientific validation is a permanent Product-Level Gate for the final Astronomical Data Analysis & Discovery Platform.
+Scientific validation is a permanent Product-Level Gate for the final Astronomical Data Analysis & Discovery Platform. Historical external-benchmark reconstruction is a separate evidence scope and must not be conflated with the product execution path.
 
 ## Stage V0 — Registry foundation
 
@@ -148,3 +148,34 @@ These outputs feed the project knowledge layer and subsequent benchmark planning
 Where relevant, validation records runtime, throughput, latency, memory, CPU/GPU utilization, I/O, batch efficiency, feature-generation time, and inference time. Missing measurements are recorded as NOT_MEASURED, never fabricated.
 
 This overlay does not relax the permanent Scientific Validation Product-Level Gate.
+
+
+## Recovery architecture — CPVS exact-membership reconstruction
+
+The CPVS 730k reconstruction is now explicitly split from the product gate.
+
+Observed evidence:
+- parent CPVS: 781,602
+- published membership: 730,184
+- current candidate: 741,788
+- exact intersection: 730,184
+- published-only: 0
+- candidate-only: 11,604
+
+Interpretation: the current selection predicate contains the complete published membership but also admits 11,604 additional parent objects. This is an unresolved historical-selection reconstruction discrepancy, not an ML error.
+
+Policy:
+1. Do not introduce a threshold solely to force the candidate count to 730,184.
+2. Preserve candidate, diagnostic, and membership-audit evidence.
+3. Mark exact historical CPVS reproduction `UNRESOLVED` until source semantics are independently established.
+4. Do not let this claim-specific unresolved state block unrelated product ingestion, feature, analysis, or product-scope validation work.
+5. Keep the product Scientific Gate release-blocking for its own declared evidence scope.
+
+### Product-scope validation path
+
+The release-blocking product path must continue independently through:
+source acquisition -> ingestion -> normalization/QC -> feature generation -> analysis/inference -> calibration/OOD -> scientific result/provenance -> known-answer/external validation.
+
+### External-reproduction path
+
+The CPVS path remains responsible for proving the narrower claim of exact historical reproduction. It is fail-closed for that claim.
