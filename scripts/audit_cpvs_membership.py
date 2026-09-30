@@ -15,38 +15,43 @@ def read_selected(path: Path) -> set[int]:
 
 
 def read_vizier(path: Path) -> set[int]:
+    """Read VizieR TSV/fixed-width membership IDs robustly."""
     lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    ids: set[int] = []
-    header_index = None
-    id_index = None
+    ids: set[int] = set()
+    header_index: int | None = None
+    id_index: int | None = None
 
     for index, line in enumerate(lines):
-        if not line.strip() or line.lstrip().startswith("#"):
+        stripped = line.strip()
+        if not stripped:
             continue
-        columns = [item.strip().lower() for item in line.split("\t")]
-        if "id" in columns:
+        candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
+        columns = [item.strip().lower() for item in candidate.split("\t")]
+        if "id" in columns and ("ztf" in columns or "ztf identifier" in columns):
             header_index = index
             id_index = columns.index("id")
             break
 
     if header_index is not None and id_index is not None:
         for line in lines[header_index + 1:]:
-            if not line.strip() or line.lstrip().startswith("#"):
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
                 continue
-            columns = line.split("\t")
+            columns = [item.strip() for item in line.split("\t")]
             if id_index < len(columns):
-                raw = columns[id_index].strip()
+                raw = columns[id_index]
                 if raw.isdigit():
-                    ids.append(int(raw))
-        return set(ids)
+                    ids.add(int(raw))
+        return ids
 
+    # CDS fixed-width table4.dat fallback: ID occupies bytes 24-29.
     for line in lines:
-        if not line.strip() or line.lstrip().startswith(("#", '"')):
+        if not line.strip() or line.lstrip().startswith("#"):
             continue
         raw = line[23:29].strip()
         if raw.isdigit():
-            ids.append(int(raw))
-    return set(ids)
+            ids.add(int(raw))
+    return ids
 
 
 def main() -> int:
