@@ -40,14 +40,14 @@
     "trade_off": "No scientific assertion is relaxed; failures remain release-blocking until independently evidenced."
   },
   "validation": {
-    "status": "PARTIALLY_UNBLOCKED",
+    "status": "NOT_VERIFIED",
     "scientific_gate_affected": true,
     "evidence": [
       "Previous heavy validation observed 741,787 CPVS candidates before quality-flag filtering, while the published target is 730,184.",
       "The same run reported non-zero g/r quality flags among SNR-eligible observations, providing a concrete selection-semantics hypothesis to validate.",
       "The current ALeRCE TAP query failed at the server parser on the ORDER BY clause."
     ],
-    "blocker": "Live heavy scientific validation has not yet re-run on this correction branch."
+    "blocker": "Live heavy scientific validation is still running; external reproduction remains release-blocking until the corrected evidence completes."
   },
   "failure_analysis": {
     "status": "known-failure",
@@ -73,7 +73,7 @@
       "Historical ALeRCE snapshot drift remains unresolved and is intentionally not weakened."
     ]
   },
-  "decision": "PARTIALLY_UNBLOCKED_EXTERNAL_REPRODUCTION_REMAINS_FAIL_CLOSED",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "SF-001",
     "SF-002",
