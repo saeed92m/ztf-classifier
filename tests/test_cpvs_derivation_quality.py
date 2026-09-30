@@ -23,6 +23,8 @@ def test_qualified_ids_uses_detection_snr_and_finite_magnitudes_only(tmp_path: P
         flag_columns=("g_flag", "catflags", "flag"),
     )
 
+    # Quality flags are diagnostic-only; the published selection is based on
+    # finite magnitudes and the documented detection SNR criterion.
     assert selected == {"1", "2", "3"}
     assert quality == {"1"}
 
