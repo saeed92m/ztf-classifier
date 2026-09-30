@@ -283,7 +283,6 @@ jobs:
             "reports/scientific_validation/ztf_periodic_730k/ztf2g.zip"
             "reports/scientific_validation/ztf_periodic_730k/ztf2r.zip"
             "reports/scientific_validation/ztf_periodic_730k/selected.tsv"
-            "reports/scientific_validation/ztf_periodic_730k/selected.tsv.diagnostic.json"
             "reports/scientific_validation/ztf_periodic_730k/cpvs_reconstruction_status.json"
             "reports/scientific_validation/ztf_star_embed"
           )
@@ -293,6 +292,17 @@ jobs:
               exit 1
             fi
           done
+
+          root="reports/scientific_validation/ztf_periodic_730k"
+          if [ -f "$root/selected.tsv.evidence.json" ]; then
+            echo "CPVS derivation produced immutable derived-benchmark evidence."
+          elif [ -f "$root/selected.tsv.diagnostic.json" ]; then
+            echo "CPVS exact reconstruction remains unresolved; diagnostic evidence is retained."
+          else
+            echo "Missing CPVS derivation evidence: expected immutable evidence or diagnostic evidence." >&2
+            exit 1
+          fi
+
           echo "Heavy source-backed execution evidence contract satisfied."
           echo "CPVS exact-membership reconstruction is external benchmark evidence, not the product execution path."
           echo "Product-level scientific release gate is evaluated separately and remains release-blocking."
