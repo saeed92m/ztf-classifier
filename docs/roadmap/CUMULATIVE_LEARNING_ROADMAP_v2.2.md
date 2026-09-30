@@ -1,4 +1,4 @@
-# Cumulative Learning & Product Roadmap — v2.2
+# Cumulative Learning & Product Roadmap — v2.3
 
 This roadmap combines the cumulative-learning lifecycle with the current product-unblocking direction. It does not erase domain-specific scientific-validation planning.
 
@@ -20,8 +20,12 @@ The project is an **Astronomical Data Analysis & Discovery Platform**. The immed
 - [x] CPVS diagnostic/audit evidence is retained.
 - [x] Contract tests verify benchmark scope separation.
 - [ ] Final release-gate behavior verified by a completed heavy run.
+- [x] Product validation scope is separated from historical CPVS reproduction scope.
+- [x] Current run #447 has passed registry/lifecycle contract validation; heavy derivation remains in progress.
 
 ## 2. P1 — Operational data platform
+
+**Critical product principle:** the platform is source-driven. ZTF/DR24 is an operational input source, not a benchmark reconstruction exercise. Benchmark datasets validate the platform; they do not define its architecture.
 
 **Goal:** real astronomical data enters through a deterministic, auditable pipeline.
 
@@ -33,6 +37,8 @@ The project is an **Astronomical Data Analysis & Discovery Platform**. The immed
 - [ ] temporal cutoff support
 - [ ] provenance graph
 - [ ] reproducible subset materialization
+- [ ] source adapters for archive/HATS access patterns appropriate to the selected ZTF release
+- [ ] source snapshot/version pinning and retrieval-date evidence
 
 **Exit:** a pinned source subset can be acquired, normalized, validated, and replayed from its manifest.
 
@@ -80,6 +86,7 @@ The project is an **Astronomical Data Analysis & Discovery Platform**. The immed
 - [ ] benchmark-trained-artifact audits
 - [ ] full OOD/failure suite
 - [ ] CPVS exact-reproduction investigation
+- [x] CPVS discrepancy classified as claim-specific external evidence; unresolved exact membership must not block unrelated product work
 
 **CPVS rule:** unresolved historical reconstruction does not block unrelated product work, but the exact-reproduction claim remains fail-closed.
 
@@ -106,6 +113,12 @@ The project is an **Astronomical Data Analysis & Discovery Platform**. The immed
 - [ ] discovery workflows beyond predefined classification tasks
 
 ## 8. Release gates
+
+**Gate architecture:**
+- Product Scientific Gate: release-blocking for the actual platform.
+- External CPVS Reproduction Gate: fail-closed only for the exact historical reproduction claim.
+
+This separation is an architectural requirement, not a temporary CI workaround.
 
 A release candidate must satisfy:
 
