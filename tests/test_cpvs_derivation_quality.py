@@ -42,3 +42,17 @@ def test_qualified_ids_empty_input_returns_two_sets(tmp_path: Path):
 
     assert selected == set()
     assert quality == set()
+
+
+def test_read_vizier_accepts_commented_tsv_header(tmp_path: Path):
+    from scripts.audit_cpvs_membership import read_vizier
+
+    path = tmp_path / "table4.dat"
+    path.write_text(
+        "# ZTF\tID\n"
+        "ZTF1\t1\n"
+        "ZTF2\t730184\n",
+        encoding="utf-8",
+    )
+
+    assert read_vizier(path) == {1, 730184}
