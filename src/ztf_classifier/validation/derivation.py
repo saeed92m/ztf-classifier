@@ -428,7 +428,7 @@ def _qualified_ids(
             "flag_lt_32768": len(flag_lt_32768),
             "top_flags": flag_values.most_common(10),
         }
-    quality_ids = flag_zero & valid_magnitude if flag_key is not None else valid_magnitude
+    # The paper specifies detection SNR thresholds, not a flag==0 filter.\n    # Keep flags diagnostic-only.\n    quality_ids = valid_magnitude
     return selected, quality_ids
 
 
