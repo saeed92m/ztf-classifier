@@ -348,16 +348,14 @@ An unresolved external reproduction claim must not silently become a product fai
 ### Current recovery status
 
 - PR #124: `ci/heavy/fix-scientific-validation-blockers-20260928`
-- Latest verified head: `d867349215660ee6f44eb1195781184c6373f75d`
-- Scientific Validation run #447: `36689743353`
-- 781k parent acquisition: passed
-- StarEmbed acquisition: passed
-- CPVS light-curve acquisition/normalization: passed
-- parent evidence integrity: passed
-- registry/scientific-validation/cumulative-lifecycle contract job: passed
-- heavy 730k derivation: running at the latest observation; final run outcome is not assumed
-
-For the latest project lifecycle, architecture, evidence semantics, and roadmap, see `docs/HANDBOOK_UPDATED_v2.2.md` (current handbook content v2.3) and `docs/roadmap/CUMULATIVE_LEARNING_ROADMAP_v2.2.md` (current roadmap content v2.3).
+- Latest observed Scientific Validation run before the current fix: #526 / `36756251456`
+- The contract-validation job passed.
+- The heavy CPVS job reached CPVS light-curve download/normalization after successful 781k parent and StarEmbed acquisition.
+- The independent DR24/ALeRCE job exposed a validator-ordering bug: the ALeRCE query intentionally fetched 1,000 rows for deterministic duplicate resolution, while validation incorrectly required 150 rows before truncation.
+- The fix now performs deterministic sort → deduplication by object ID → 150-row selection → final exact-shape validation, with a regression test.
+- Scientific Validation is **not yet PASS**; the next real source-backed run must verify the fix and complete the remaining evidence gates.
+- The project completion contract is documented in `docs/HANDBOOK_UPDATED_v2.3.md`.
+- The finite completion roadmap is documented in `docs/roadmap/CUMULATIVE_LEARNING_ROADMAP_v2.3.md`.
 
 ## Astronomical Data Analysis & Discovery Platform layer
 
