@@ -299,7 +299,6 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
-        ordinal = 0
         for encoded in raw:
             line = encoded.decode("utf-8", errors="replace").strip()
             if not line:
