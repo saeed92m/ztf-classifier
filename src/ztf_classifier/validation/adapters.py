@@ -158,14 +158,14 @@ def _dr24_plan(manifest: BenchmarkManifest) -> AdapterPlan:
         raise AdapterContractError("DR24 selection contract must be an object")
     if selection.get("method") != "deterministic_lexicographic":
         raise AdapterContractError("DR24 selection must be deterministic_lexicographic")
-    if selection.get("order_by") != ["objectid"]:
-        raise AdapterContractError("DR24 selection must order by objectid")
+    if selection.get("order_by") != ["oid"]:
+        raise AdapterContractError("DR24 selection must order by oid")
     if selection.get("limit") != 150:
         raise AdapterContractError("DR24 benchmark subset must contain exactly 150 requested objects")
-    if query["object_id_column"] != "objectid":
-        raise AdapterContractError("DR24 object_id_column must be objectid")
-    if not isinstance(query["expected_columns"], list) or "objectid" not in query["expected_columns"]:
-        raise AdapterContractError("DR24 expected_columns must include objectid")
+    if query["object_id_column"] != "oid":
+        raise AdapterContractError("DR24 object_id_column must be oid")
+    if not isinstance(query["expected_columns"], list) or "oid" not in query["expected_columns"]:
+        raise AdapterContractError("DR24 expected_columns must include oid")
     return AdapterPlan(**{**plan.__dict__, "query_manifest": dict(query)})
 
 
@@ -188,8 +188,8 @@ def _alerce_plan(manifest: BenchmarkManifest) -> AdapterPlan:
         )
     if query_manifest["endpoint"] != "https://tap.alerce.online/tap":
         raise AdapterContractError("ALeRCE TAP endpoint is not canonical")
-    if query_manifest["schema"] != "alerce_tap":
-        raise AdapterContractError("ALeRCE TAP schema must be alerce_tap")
+    if query_manifest["schema"] != "ztf":
+        raise AdapterContractError("ALeRCE TAP schema must be ztf")
     if query_manifest["max_rows"] != 150:
         raise AdapterContractError("ALeRCE reference subset must cap at 150 rows")
     if query_manifest["reference_only"] is not True:
