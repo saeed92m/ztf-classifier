@@ -12,7 +12,7 @@ from ztf_classifier.validation.derivation import _iter_rows, _source_ids
 
 
 def band_metrics(path: Path, parent: set[str], error_key: str, mag_key: str):
-    metrics = {oid: {"snr": False, "snr1": False, "mag206": False} for oid in parent}
+    metrics = {oid: {"snr": False, "snr1": False, "mag206": False, "mag206_only": False} for oid in parent}
     threshold = 2.5 if error_key == "e_gmag" else 3.0
     for row in _iter_rows(path, required_columns=("SourceID", error_key, mag_key)):
         oid = row.get("SourceID", "").strip()
@@ -30,6 +30,7 @@ def band_metrics(path: Path, parent: set[str], error_key: str, mag_key: str):
         metrics[oid]["snr"] |= snr >= threshold
         metrics[oid]["snr1"] |= snr1 >= threshold
         metrics[oid]["mag206"] |= mag <= 20.6 and snr >= threshold
+        metrics[oid]["mag206_only"] |= mag <= 20.6
     return metrics
 
 
@@ -51,6 +52,7 @@ def main() -> int:
         "baseline_1p085": {o for o in parent if g[o]["snr"] and r[o]["snr"]},
         "baseline_1p0": {o for o in parent if g[o]["snr1"] and r[o]["snr1"]},
         "baseline_plus_mag206": {o for o in parent if g[o]["mag206"] and r[o]["mag206"]},
+        "baseline_plus_rmag206": {o for o in parent if g[o]["snr"] and r[o]["snr"] and r[o]["mag206_only"]},
     }
     report = {}
     for name, ids in predicates.items():
