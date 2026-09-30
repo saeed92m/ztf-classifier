@@ -201,7 +201,7 @@ def test_external_benchmark_adapters_have_pinned_query_contracts():
         fromlist=["build_adapter_plan"],
     ).build_adapter_plan(dr24)
     assert dr24_plan.query_manifest["selection"]["limit"] == 150
-    assert dr24_plan.query_manifest["object_id_column"] == "objectid"
+    assert dr24_plan.query_manifest["object_id_column"] == "oid"
 
     alerce = registry.load("alerce_reference")
     alerce_plan = __import__(
