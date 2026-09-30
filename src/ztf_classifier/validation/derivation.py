@@ -295,10 +295,16 @@ def _snr_from_mag_error(value: str) -> float:
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Resolve CPVS SourceIDs from the published Table2 row order."""
+    """Resolve CPVS SourceIDs from the published Table2 catalog row order.
+
+    The published table uses ZTF object names as the row identifiers in its
+    catalog presentation; the benchmark SourceID is the one-based ordinal of
+    catalog rows. Metadata, page furniture, and repeated headers are ignored.
+    """
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
+        ordinal = 0
         for encoded in raw:
             line = encoded.decode("utf-8", errors="replace").strip()
             if not line:
@@ -309,11 +315,11 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
             fields = _split_fields(line)
             if len(fields) < 2:
                 continue
-            try:
-                source_id = str(int(float(fields[1])))
-            except (TypeError, ValueError):
-                continue
-            source_ids.add(source_id)
+            # A valid catalog row starts with a ZTF identifier and has at
+            # least one following field. Do not interpret the next field as
+            # SourceID: in Table2 it is a numeric catalog attribute (e.g. RA).
+            ordinal += 1
+            source_ids.add(str(ordinal))
         return source_ids
     finally:
         raw.close()
