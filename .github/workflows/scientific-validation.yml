@@ -341,6 +341,56 @@ jobs:
           path: reports/scientific_validation/**
           if-no-files-found: warn
 
+  external-source-evidence:
+    name: Execute DR24 and ALeRCE source-backed evidence
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/heavy/')) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: pip
+
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Acquire DR24 and ALeRCE evidence
+        run: |
+          set -euo pipefail
+          mkdir -p reports/scientific_validation/external_source_evidence
+          python scripts/acquire_external_source_evidence.py \\
+            --output-root reports/scientific_validation/external_source_evidence \\
+            --code-version "${GITHUB_SHA}"
+
+      - name: Validate external evidence contract
+        run: |
+          set -euo pipefail
+          root=reports/scientific_validation/external_source_evidence
+          test -s "$root/ztf_dr24_source_subset/response.tsv"
+          test -s "$root/ztf_dr24_source_subset/response.tsv.evidence.json"
+          test -s "$root/alerce_reference/response.tsv"
+          test -s "$root/alerce_reference/response.tsv.evidence.json"
+          echo "DR24 and ALeRCE source-backed evidence contracts satisfied."
+
+      - name: Upload external source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scientific-validation-external-source-evidence
+          path: reports/scientific_validation/external_source_evidence/**
+          if-no-files-found: warn
+
   scheduled-scientific-validation:
     name: Source provenance acquisition and scientific gate readiness
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_heavy == false)
