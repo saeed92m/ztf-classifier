@@ -355,12 +355,12 @@ def _prepare_alerce_frame(
         raise SourceQueryError("source response missing expected columns: " + ", ".join(missing))
     if frame[object_id].isna().any():
         raise SourceQueryError(f"{object_id} contains null values")
-    frame = frame.sort_values(
-        [object_id, "classifier_version"],
-        ascending=[True, False],
-        kind="mergesort",
-    )
+    # Preserve the source ordering contract: the TAP query orders by OID
+    # and classifier_version DESC, so the first row for each OID is the
+    # deterministic winner. Do not reinterpret classifier-version strings in
+    # Python (for example, lexical "10" vs "2" ordering).
     frame = frame.drop_duplicates(subset=[object_id], keep="first")
+    frame = frame.sort_values(object_id, kind="mergesort")
     if len(frame) < limit:
         raise SourceQueryError(
             f"source response contains only {len(frame)} unique {object_id} values; "
