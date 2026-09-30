@@ -361,6 +361,26 @@ def _acquire_alerce(
     limit = int(query_manifest["max_rows"])
     payload = _tap_query(endpoint, query, timeout)
     frame = _table_from_votable(payload)
+    missing = [name for name in expected if name not in frame.columns]
+    if missing:
+        raise SourceQueryError("source response missing expected columns: " + ", ".join(missing))
+    if frame[object_id].isna().any():
+        raise SourceQueryError(f"{object_id} contains null values")
+    # The TAP query intentionally fetches more rows than the benchmark limit so
+    # duplicate OIDs from multiple classifier versions can be resolved
+    # deterministically before the final 150-object evidence set is validated.
+    frame = frame.sort_values(
+        [object_id, "classifier_version"],
+        ascending=[True, False],
+        kind="mergesort",
+    )
+    frame = frame.drop_duplicates(subset=[object_id], keep="first")
+    if len(frame) < limit:
+        raise SourceQueryError(
+            f"source response contains only {len(frame)} unique {object_id} values; "
+            f"need {limit}"
+        )
+    frame = frame.head(limit).reset_index(drop=True)
     _validate(frame, expected, object_id, limit)
     root = output_root / "alerce_reference"
     raw = root / "response.vot"
