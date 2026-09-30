@@ -482,7 +482,7 @@ def derive_730k(
         "snr_removed_by_flag_quality": len(snr_selected - flag_zero_selected),
         "selection_predicate": "g SNR >= 2.5 AND r SNR >= 3.0 AND finite non-zero g/r magnitudes",
     }
-    selected = sorted(flag_zero_selected)
+    selected = sorted(snr_selected)
 
     # Always materialize the candidate membership before asserting the
     # published cardinality. This is diagnostic evidence, not acceptance:
