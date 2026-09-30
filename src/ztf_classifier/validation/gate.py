@@ -107,13 +107,13 @@ def evaluate_release_gate(
             "blockers": manifest_blockers,
         })
 
-    # Only product-scope evidence blocks the product release gate.
-    # External reconstruction remains fail-closed for its own claim, but does
-    # not block development/testing of the actual ingestion/analysis path.
+    # Product execution and historical external reproduction are separate
+    # evidence scopes, but both are release-blocking scientific evidence.
     product_status = "PASS" if not product_blockers else "NOT_VERIFIED"
     external_status = "PASS" if not external_blockers else "NOT_VERIFIED"
+    overall_status = "PASS" if not blockers else "NOT_VERIFIED"
     return {
-        "status": product_status,
+        "status": overall_status,
         "release_blocking": True,
         "required_checks": list(REQUIRED_SCIENTIFIC_CHECKS),
         "product_gate": {
@@ -124,7 +124,7 @@ def evaluate_release_gate(
         },
         "external_reproduction": {
             "status": external_status,
-            "release_blocking": False,
+            "release_blocking": True,
             "claim": "exact historical CPVS membership reconstruction",
             "benchmarks": list(EXTERNAL_REPRODUCTION_BENCHMARKS),
             "blockers": external_blockers,
