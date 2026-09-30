@@ -90,8 +90,10 @@ jobs:
           root=reports/scientific_validation/ztf_periodic_730k
           mkdir -p "$root/g" "$root/r"
 
-          curl -L --fail --retry 3 --retry-all-errors             "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1"             -o "$root/ztf2g.zip"
-          curl -L --fail --retry 3 --retry-all-errors             "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1"             -o "$root/ztf2r.zip"
+          # Large Zenodo archives must fail fast on stalled connections while
+          # retaining retries for transient transport failures.
+          curl --location --fail --show-error --silent             --retry 5 --retry-all-errors --retry-delay 5             --connect-timeout 30 --speed-time 120 --speed-limit 1024             "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1"             -o "$root/ztf2g.zip"
+          curl --location --fail --show-error --silent             --retry 5 --retry-all-errors --retry-delay 5             --connect-timeout 30 --speed-time 120 --speed-limit 1024             "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1"             -o "$root/ztf2r.zip"
 
           echo "850fcef561dd7407fbe8e19e99100d7a  $root/ztf2g.zip" | md5sum -c -
           echo "daa7bc45c67579253eebe6b1c09dfbd9  $root/ztf2r.zip" | md5sum -c -
