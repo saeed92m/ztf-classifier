@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "stage_id": "scientific-validation-blockers-20260928",
-  "objective": "Resolve the currently observed CPVS 730k derivation and ALeRCE TAP acquisition blockers without weakening scientific release gates.",
+  "objective": "Resolve source-backed validation blockers while separating product release evidence from historical CPVS reproduction evidence.",
   "previous_knowledge_consumed": [
     "SF-001",
     "SF-002",
@@ -34,13 +34,13 @@
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
-        "reason": "The scientific gate remains blocked until the source-backed evidence passes."
+        "reason": "Product-level scientific release evidence must be measured independently from the unresolved historical CPVS reconstruction claim."
       }
     },
     "trade_off": "No scientific assertion is relaxed; failures remain release-blocking until independently evidenced."
   },
   "validation": {
-    "status": "BLOCKED",
+    "status": "PARTIALLY_UNBLOCKED",
     "scientific_gate_affected": true,
     "evidence": [
       "Previous heavy validation observed 741,787 CPVS candidates before quality-flag filtering, while the published target is 730,184.",
@@ -73,7 +73,7 @@
       "Historical ALeRCE snapshot drift remains unresolved and is intentionally not weakened."
     ]
   },
-  "decision": "BLOCKED",
+  "decision": "PARTIALLY_UNBLOCKED_EXTERNAL_REPRODUCTION_REMAINS_FAIL_CLOSED",
   "knowledge_carried_forward": [
     "SF-001",
     "SF-002",
