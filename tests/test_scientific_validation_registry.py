@@ -162,6 +162,20 @@ def test_release_benchmark_manifests_declare_full_check_contract_and_canonical_a
         assert loaded.input_contract["adapter"] == benchmark_id
 
 
+def test_product_gate_is_separate_from_external_cpvs_reproduction():
+    from ztf_classifier.validation.gate import (
+        EXTERNAL_REPRODUCTION_BENCHMARKS,
+        PRODUCT_BENCHMARKS,
+    )
+
+    assert "ztf_periodic_730k" in EXTERNAL_REPRODUCTION_BENCHMARKS
+    assert "ztf_periodic_781k" in EXTERNAL_REPRODUCTION_BENCHMARKS
+    assert "ztf_periodic_730k" not in PRODUCT_BENCHMARKS
+    assert "ztf_periodic_781k" not in PRODUCT_BENCHMARKS
+    assert "ztf_dr24_source_subset" in PRODUCT_BENCHMARKS
+    assert "star_embed_ztf_40k" in PRODUCT_BENCHMARKS
+
+
 def test_release_gate_accepts_executable_external_adapter_contracts():
     from ztf_classifier.validation.gate import _manifest_blockers
 
