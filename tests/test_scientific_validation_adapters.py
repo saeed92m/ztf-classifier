@@ -58,10 +58,16 @@ def test_star_embed_adapter_accepts_verified_revision() -> None:
 
 
 def test_dr24_adapter_fails_closed_without_pinned_query() -> None:
+    manifest = load("ztf_dr24_source_subset")
+    payload = manifest.to_dict()
+    payload["input_contract"].pop("query")
     with pytest.raises(AdapterContractError, match="pinned source subset"):
-        build_adapter_plan(load("ztf_dr24_source_subset"))
+        build_adapter_plan(BenchmarkManifest.from_dict(payload))
 
 
 def test_alerce_adapter_fails_closed_without_tap_query() -> None:
+    manifest = load("alerce_reference")
+    payload = manifest.to_dict()
+    payload["input_contract"].pop("query")
     with pytest.raises(AdapterContractError, match="TAP query"):
-        build_adapter_plan(load("alerce_reference"))
+        build_adapter_plan(BenchmarkManifest.from_dict(payload))
