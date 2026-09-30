@@ -36,7 +36,8 @@
       "probability_table": "ztf.probability",
       "survey": "ZTF",
       "selection": "first 150 ZTF objects with the top-ranked lc_classifier probability, deterministic ORDER BY oid",
-      "max_rows": 150,\n      "query_fetch_rows": 1000,
+      "max_rows": 150,
+      "query_fetch_rows": 1000,
       "expected_columns": [
         "oid",
         "class_name",
