@@ -94,16 +94,16 @@ jobs:
           # retaining retries for transient transport failures.
           # The two immutable Zenodo archives are ~754 MB and ~882 MB. Download them
           # concurrently so one slow transfer does not unnecessarily serialize the job.
-          curl --location --fail --show-error --silent \\
-            --retry 5 --retry-all-errors --retry-delay 5 \\
-            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \\
-            "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \\
+          curl --location --fail --show-error --silent \
+            --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \
             -o "$root/ztf2g.zip" >"$root/ztf2g.download.log" 2>&1 &
           g_pid=$!
-          curl --location --fail --show-error --silent \\
-            --retry 5 --retry-all-errors --retry-delay 5 \\
-            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \\
-            "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" \\
+          curl --location --fail --show-error --silent \
+            --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" \
             -o "$root/ztf2r.zip" >"$root/ztf2r.download.log" 2>&1 &
           r_pid=$!
 
