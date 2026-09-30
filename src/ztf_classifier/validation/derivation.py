@@ -429,7 +429,7 @@ def _qualified_ids(
             "top_flags": flag_values.most_common(10),
         }
     # The paper specifies detection SNR thresholds, not a flag==0 filter.\n    # Keep flags diagnostic-only.\n    quality_ids = valid_magnitude
-    return selected, quality_ids
+    return selected, valid_magnitude
 
 
 def derive_730k(
