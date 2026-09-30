@@ -1,8 +1,8 @@
-# ZTF Classifier — Project Continuity Handbook v2.2
+# ZTF Classifier — Project Continuity Handbook v2.3
 
 ## Status and purpose
 
-This handbook supersedes v2.1 as the current cumulative project handbook draft for the recovery and product-unblocking stage. It preserves the immutable historical baseline and all validated lifecycle rules while incorporating the latest scientific-validation findings and the architectural separation between the product path and historical external-benchmark reconstruction.
+This handbook supersedes v2.2 as the current cumulative project handbook draft for the recovery and product-unblocking stage. It preserves the immutable historical baseline and all validated lifecycle rules while incorporating the latest scientific-validation findings and the architectural separation between the product path and historical external-benchmark reconstruction.
 
 - Repository: `saeed92m/ztf-classifier`
 - Product identity: **Astronomical Data Analysis & Discovery Platform**
@@ -113,13 +113,20 @@ As of this handbook update:
 
 - PR #124 is open and mergeable.
 - Scientific Validation run #447 is active.
-- Source-backed job has successfully completed dependency installation, acquisition of the 781k parent evidence, and StarEmbed acquisition.
-- It is currently processing the CPVS light-curve inputs.
-- The independent benchmark/lifecycle contract job has completed successfully, including registry validation, scientific validation contract tests, and cumulative lifecycle contract tests.
+- Source-backed job has successfully completed dependency installation, acquisition of the 781k parent evidence, StarEmbed acquisition, CPVS light-curve download/normalization, and parent-integrity validation.
+- It is currently executing the 730k derivation step.
+- The benchmark/lifecycle contract job has completed successfully: registry validation, scientific validation contract tests, and cumulative lifecycle tests all passed.
+
 
 The final heavy source-backed outcome is intentionally not recorded as PASS until the live run completes.
 
-## 8. Product roadmap
+## 8. Current product execution contract
+
+The intended operational product is source-driven rather than benchmark-driven. A supported ZTF release such as DR24 is treated as an input source; the platform acquires a declared subset, records source/version/manifest/checksums, normalizes observations, applies QC and temporal/leakage controls, computes versioned scientific features, runs analysis/inference, quantifies uncertainty and OOD status where applicable, and emits reproducible scientific results with provenance. DR24 is currently the latest public ZTF data release according to IRSA, with Objects and Lightcurves available through archive services and HATS/Parquet interfaces.
+
+The historical CPVS benchmark is therefore an external validation instrument. It is not the definition of the production data path and must not dictate arbitrary product selection thresholds.
+
+## 9. Product roadmap
 
 ### P0 — Unblock and stabilize the scientific core
 - complete PR #124 validation;
@@ -169,7 +176,7 @@ The final heavy source-backed outcome is intentionally not recorded as PASS unti
 - resource/performance evidence;
 - reproducible release packages.
 
-## 9. Definition of Done
+## 10. Definition of Done
 
 A stage is complete only when:
 
@@ -187,7 +194,7 @@ A stage is complete only when:
 12. output is reusable by the next stage;
 13. release-gate semantics are preserved.
 
-## 10. Source-of-truth hierarchy
+## 11. Source-of-truth hierarchy
 
 1. GitHub source, merged history, tags, and release records for code and implementation state.
 2. Source-backed benchmark manifests and evidence for scientific claims.
@@ -196,7 +203,7 @@ A stage is complete only when:
 
 Notion must never be treated as a substitute for Git history.
 
-## 11. Current open scientific questions
+## 12. Current open scientific questions
 
 - What exact historical quality/selection semantics account for the 11,604 candidate-only CPVS objects?
 - Which CPVS source snapshot and undocumented preprocessing details are required for exact reproduction?
@@ -205,9 +212,9 @@ Notion must never be treated as a substitute for Git history.
 
 These are tracked questions, not reasons to stop unrelated product development.
 
-## 12. Permanent engineering rule
+## 13. Permanent engineering rule
 
 Never optimize a benchmark number in isolation. Reproduce the scientific meaning first, preserve provenance, distinguish evidence scopes, and keep the product moving through independently validated stages.
 
 ---
-Source lineage: repository `saeed92m/ztf-classifier`; handbook v2.1; Scientific Validation roadmap; cumulative-learning roadmap; current PR #124 recovery work and run #447 evidence.
+Source lineage: repository `saeed92m/ztf-classifier`; handbook v2.2; Scientific Validation roadmap; cumulative-learning roadmap; PR #124 recovery work; current run #447 evidence; IRSA ZTF DR24 documentation.
