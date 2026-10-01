@@ -2,8 +2,8 @@ import json
 
 import pandas as pd
 
-from ztf_classifier.validation.manifest import BenchmarkManifest
 from ztf_classifier.validation.gate import _evidence_blockers
+from ztf_classifier.validation.manifest import BenchmarkManifest
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.regression import compare_metrics
 from ztf_classifier.validation.runner import run_table_benchmark
@@ -162,6 +162,20 @@ def test_release_benchmark_manifests_declare_full_check_contract_and_canonical_a
         assert loaded.input_contract["adapter"] == benchmark_id
 
 
+def test_product_gate_is_separate_from_external_cpvs_reproduction():
+    from ztf_classifier.validation.gate import (
+        EXTERNAL_REPRODUCTION_BENCHMARKS,
+        PRODUCT_BENCHMARKS,
+    )
+
+    assert "ztf_periodic_730k" in EXTERNAL_REPRODUCTION_BENCHMARKS
+    assert "ztf_periodic_781k" in EXTERNAL_REPRODUCTION_BENCHMARKS
+    assert "ztf_periodic_730k" not in PRODUCT_BENCHMARKS
+    assert "ztf_periodic_781k" not in PRODUCT_BENCHMARKS
+    assert "ztf_dr24_source_subset" in PRODUCT_BENCHMARKS
+    assert "star_embed_ztf_40k" in PRODUCT_BENCHMARKS
+
+
 def test_release_gate_accepts_executable_external_adapter_contracts():
     from ztf_classifier.validation.gate import _manifest_blockers
 
@@ -187,7 +201,7 @@ def test_external_benchmark_adapters_have_pinned_query_contracts():
         fromlist=["build_adapter_plan"],
     ).build_adapter_plan(dr24)
     assert dr24_plan.query_manifest["selection"]["limit"] == 150
-    assert dr24_plan.query_manifest["object_id_column"] == "objectid"
+    assert dr24_plan.query_manifest["object_id_column"] == "oid"
 
     alerce = registry.load("alerce_reference")
     alerce_plan = __import__(
@@ -245,7 +259,10 @@ def test_runner_reports_ood_and_performance_metrics(tmp_path):
 
 
 def test_runtime_bound_immutable_evidence_can_satisfy_artifact_binding(tmp_path):
-    from ztf_classifier.validation.evidence import EvidenceArtifact, write_evidence_manifest
+    from ztf_classifier.validation.evidence import (
+    EvidenceArtifact,
+    write_evidence_manifest,
+)
 
     benchmark_dir = tmp_path / "runtime_bound"
     benchmark_dir.mkdir()
@@ -264,7 +281,7 @@ def test_runtime_bound_immutable_evidence_can_satisfy_artifact_binding(tmp_path)
     # EvidenceManifest paths are repository-relative in production; emulate that
     # contract here by validating the artifact from the temporary repository root.
     payload = json.loads(manifest_path.read_text())
-    payload["artifacts"][0]["path"] = artifact.name
+    payload["artifacts"][0]["path"] = str(artifact.relative_to(tmp_path))
     manifest_path.write_text(json.dumps(payload))
     blockers = _evidence_blockers("runtime_bound", tmp_path)
     assert blockers == []

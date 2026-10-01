@@ -1,8 +1,4 @@
-"""Compare derived CPVS candidate membership with the published VizieR table.
-
-This is an audit tool, not a release bypass. A mismatch is reported explicitly
-and returns a non-zero exit status.
-"""
+"""Compare derived CPVS candidate membership with the published VizieR table."""
 
 from __future__ import annotations
 
@@ -19,9 +15,38 @@ def read_selected(path: Path) -> set[int]:
 
 
 def read_vizier(path: Path) -> set[int]:
+    """Read VizieR TSV/fixed-width membership IDs robustly."""
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
     ids: set[int] = set()
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        if not line.strip() or line.lstrip().startswith(("#", "\")):
+    header_index: int | None = None
+    id_index: int | None = None
+
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
+        columns = [item.strip().lower() for item in candidate.split("\t")]
+        if "id" in columns and ("ztf" in columns or "ztf identifier" in columns):
+            header_index = index
+            id_index = columns.index("id")
+            break
+
+    if header_index is not None and id_index is not None:
+        for line in lines[header_index + 1:]:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            columns = [item.strip() for item in line.split("\t")]
+            if id_index < len(columns):
+                raw = columns[id_index]
+                if raw.isdigit():
+                    ids.add(int(raw))
+        return ids
+
+    # CDS fixed-width table4.dat fallback: ID occupies bytes 24-29.
+    for line in lines:
+        if not line.strip() or line.lstrip().startswith("#"):
             continue
         raw = line[23:29].strip()
         if raw.isdigit():
@@ -50,7 +75,10 @@ def main() -> int:
         "published_source": "VizieR J/ApJ/932/118 table4.dat",
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if report["exact_membership_match"] else 2
 

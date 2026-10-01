@@ -51,7 +51,7 @@ class DerivationResult:
             "selection": {
                 "g_sigma": self.config.g_sigma,
                 "r_sigma": self.config.r_sigma,
-                "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma",
+                "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma, with finite non-zero magnitudes",
                 "snr_from_magnitude_error": "1.0857362047581296 / mag_error",
             },
         }
@@ -295,7 +295,12 @@ def _snr_from_mag_error(value: str) -> float:
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Resolve CPVS SourceIDs from the published Table2 row order."""
+    """Resolve CPVS SourceIDs from the published Table2 catalog row order.
+
+    The published table uses ZTF object names as the row identifiers in its
+    catalog presentation; the benchmark SourceID is the one-based ordinal of
+    catalog rows. Metadata, page furniture, and repeated headers are ignored.
+    """
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
@@ -307,6 +312,12 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
             first_token = line.split()[0]
             if not first_token.upper().startswith("ZTF"):
                 continue
+            fields = _split_fields(line)
+            if len(fields) < 2:
+                continue
+            # A valid catalog row starts with a ZTF identifier and has at
+            # least one following field. Do not interpret the next field as
+            # SourceID: in Table2 it is a numeric catalog attribute (e.g. RA).
             ordinal += 1
             source_ids.add(str(ordinal))
         return source_ids
@@ -357,17 +368,18 @@ def _qualified_ids(
     error_columns: Iterable[str],
     flag_columns: Iterable[str] = (),
     diagnostics: dict[str, object] | None = None,
-) -> set[str]:
+) -> tuple[set[str], set[str]]:
     rows = _iter_rows(
         path,
         member,
-        required_columns=("SourceID", *error_columns),
+        required_columns=("SourceID", *error_columns, "gmag" if "e_gmag" in error_columns else "rmag"),
     )
     first = next(rows, None)
     if first is None:
-        return set()
+        return set(), set()
     id_key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
     error_key = _find_key(first, error_columns)
+    mag_key = _find_key(first, ("gmag",) if "e_gmag" in error_columns else ("rmag",))
     flag_key = None
     try:
         flag_key = _find_key(first, flag_columns)
@@ -378,11 +390,18 @@ def _qualified_ids(
     flag_zero: set[str] = set()
     flag_lt_32768: set[str] = set()
     flag_values: Counter[str] = Counter()
+    valid_magnitude: set[str] = set()
 
     for row in chain((first,), rows):
         oid = row.get(id_key, "").strip()
         if oid not in parent_ids or _snr_from_mag_error(row.get(error_key, "")) < sigma:
             continue
+        try:
+            magnitude = float(row.get(mag_key, ""))
+        except (TypeError, ValueError):
+            magnitude = float("nan")
+        if math.isfinite(magnitude) and magnitude != 0.0:
+            valid_magnitude.add(oid)
         selected.add(oid)
         if flag_key is None:
             continue
@@ -403,10 +422,14 @@ def _qualified_ids(
             "flag_column": flag_key,
             "eligible": len(selected),
             "flag_zero": len(flag_zero),
+            "flag_nonzero": len(selected - flag_zero),
+            "valid_magnitude": len(valid_magnitude),
+            "flag_zero_valid_magnitude": len(flag_zero & valid_magnitude),
             "flag_lt_32768": len(flag_lt_32768),
             "top_flags": flag_values.most_common(10),
         }
-    return selected
+    # The paper specifies detection SNR thresholds, not a flag==0 filter.\n    # Keep flags diagnostic-only.\n    quality_ids = valid_magnitude
+    return selected, valid_magnitude
 
 
 def derive_730k(
@@ -433,7 +456,7 @@ def derive_730k(
         )
 
     diagnostics: dict[str, object] = {}
-    g_ids = _qualified_ids(
+    g_ids, g_flag_zero = _qualified_ids(
         g_lightcurve,
         sigma=config.g_sigma,
         parent_ids=parent_ids,
@@ -442,7 +465,7 @@ def derive_730k(
         flag_columns=("g_flag", "catflags", "flag"),
         diagnostics=diagnostics,
     )
-    r_ids = _qualified_ids(
+    r_ids, r_flag_zero = _qualified_ids(
         r_lightcurve,
         sigma=config.r_sigma,
         parent_ids=parent_ids,
@@ -451,7 +474,15 @@ def derive_730k(
         flag_columns=("r_flag", "catflags", "flag"),
         diagnostics=diagnostics,
     )
-    selected = sorted(g_ids & r_ids)
+    snr_selected = g_ids & r_ids
+    flag_zero_selected = g_flag_zero & r_flag_zero
+    diagnostics["intersection"] = {
+        "snr_only_count": len(snr_selected),
+        "both_bands_flag_zero_count": len(flag_zero_selected),
+        "snr_removed_by_flag_quality": len(snr_selected - flag_zero_selected),
+        "selection_predicate": "g SNR >= 2.5 AND r SNR >= 3.0 AND finite non-zero g/r magnitudes",
+    }
+    selected = sorted(snr_selected)
 
     # Always materialize the candidate membership before asserting the
     # published cardinality. This is diagnostic evidence, not acceptance:

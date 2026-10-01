@@ -313,6 +313,50 @@ Performance measured on the current 150-object benchmark should not be interpret
 The system is intended as a reproducible foundation for future scaling, broader validation, and deployment-oriented development. See `docs/DATA_CARD.md` and `docs/MODEL_CARD.md` for the current dataset and model limitations.
 
 
+## Current platform direction and scientific-validation boundary
+
+The project is evolving from a classifier-centered research pipeline into an **Astronomical Data Analysis & Discovery Platform**. The intended operational flow is:
+
+`ZTF/source data -> ingestion -> normalization/QC -> scientific feature generation -> ML/statistical analysis -> uncertainty/calibration/OOD -> scientific outputs -> provenance/evidence`
+
+A benchmark is evidence about this system; it is not the system's architecture.
+
+### Current CPVS reconstruction finding
+
+| Population | Objects |
+|---|---:|
+| CPVS parent | 781,602 |
+| Published membership | 730,184 |
+| Current candidate | 741,788 |
+| Published ∩ candidate | 730,184 |
+| Published-only | 0 |
+| Candidate-only | 11,604 |
+
+The 11,604 objects are a **historical selection-reconstruction discrepancy**, not 11,604 ML errors or 11,604 production failures. The current predicate contains all published members but admits additional parent objects. The exact historical selection semantics remain unresolved and are being investigated as external-reproduction evidence.
+
+No threshold or predicate is to be introduced solely to force the candidate cardinality to 730,184 without independent scientific evidence.
+
+### Scientific gate architecture
+
+The repository now separates:
+
+- **Product Scientific Gate — release blocking:** validates the actual ingestion/analysis/inference product, including reproducibility, leakage controls, feature determinism, provenance, uncertainty/OOD where applicable, and product-scope benchmark evidence.
+- **External CPVS Reproduction Evidence — claim-specific fail-closed:** exact historical 730k/781k reproduction remains unresolved until source evidence proves the selection semantics.
+
+An unresolved external reproduction claim must not silently become a product failure. Conversely, the project must not claim exact historical reproduction without exact evidence.
+
+### Current recovery status
+
+- PR #124: `ci/heavy/fix-scientific-validation-blockers-20260928`
+- Latest observed Scientific Validation run before the current fix: #526 / `36756251456`
+- The contract-validation job passed.
+- The heavy CPVS job reached CPVS light-curve download/normalization after successful 781k parent and StarEmbed acquisition.
+- The independent DR24/ALeRCE job exposed a validator-ordering bug: the ALeRCE query intentionally fetched 1,000 rows for deterministic duplicate resolution, while validation incorrectly required 150 rows before truncation.
+- The fix now performs deterministic sort → deduplication by object ID → 150-row selection → final exact-shape validation, with a regression test.
+- Scientific Validation is **not yet PASS**; the next real source-backed run must verify the fix and complete the remaining evidence gates.
+- The project completion contract is documented in `docs/HANDBOOK_UPDATED_v2.3.md`.
+- The finite completion roadmap is documented in `docs/roadmap/CUMULATIVE_LEARNING_ROADMAP_v2.3.md`.
+
 ## Astronomical Data Analysis & Discovery Platform layer
 
 The classifier is being expanded into a unified astronomical analysis application while preserving the frozen scientific v0.2.0 baseline.

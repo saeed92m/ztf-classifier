@@ -6,18 +6,24 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ztf_classifier.validation.evidence import EvidenceManifest
 from ztf_classifier.validation.adapters import AdapterContractError, build_adapter_plan
+from ztf_classifier.validation.evidence import EvidenceManifest
 from ztf_classifier.validation.manifest import BenchmarkManifest
 from ztf_classifier.validation.registry import BenchmarkRegistry
 
-REQUIRED_BENCHMARKS = (
+# Product validation proves the platform's ability to ingest, analyze, and
+# produce reproducible scientific outputs. Historical benchmark reconstruction
+# is separate evidence for a narrower external-reproduction claim.
+PRODUCT_BENCHMARKS = (
     "star_embed_ztf_40k",
-    "ztf_periodic_730k",
-    "ztf_periodic_781k",
     "ztf_dr24_source_subset",
     "alerce_reference",
 )
+EXTERNAL_REPRODUCTION_BENCHMARKS = (
+    "ztf_periodic_730k",
+    "ztf_periodic_781k",
+)
+REQUIRED_BENCHMARKS = PRODUCT_BENCHMARKS + EXTERNAL_REPRODUCTION_BENCHMARKS
 
 REQUIRED_SCIENTIFIC_CHECKS = (
     "object_overlap",
@@ -43,6 +49,8 @@ def evaluate_release_gate(
     registry = BenchmarkRegistry(registry_dir)
     evidence_root = Path(evidence_dir)
     blockers: list[str] = []
+    product_blockers: list[str] = []
+    external_blockers: list[str] = []
     benchmarks: list[dict[str, Any]] = []
 
     for benchmark_id in REQUIRED_BENCHMARKS:
@@ -80,20 +88,47 @@ def evaluate_release_gate(
                 manifest_blockers.append("provenance is incomplete")
 
         if manifest_blockers:
-            blockers.extend(f"{benchmark_id}: {item}" for item in manifest_blockers)
+            items = [f"{benchmark_id}: {item}" for item in manifest_blockers]
+            blockers.extend(items)
+            if benchmark_id in PRODUCT_BENCHMARKS:
+                product_blockers.extend(items)
+            else:
+                external_blockers.extend(items)
 
         benchmarks.append({
             "benchmark_id": benchmark_id,
             "evaluation_role": manifest.evaluation_role,
+            "validation_scope": (
+                "product"
+                if benchmark_id in PRODUCT_BENCHMARKS
+                else "external_reproduction"
+            ),
             "status": "PASS" if not manifest_blockers else "BLOCKED",
             "blockers": manifest_blockers,
         })
 
-    status = "PASS" if not blockers else "NOT_VERIFIED"
+    # Product execution and historical external reproduction are separate
+    # evidence scopes, but both are release-blocking scientific evidence.
+    product_status = "PASS" if not product_blockers else "NOT_VERIFIED"
+    external_status = "PASS" if not external_blockers else "NOT_VERIFIED"
+    overall_status = "PASS" if not blockers else "NOT_VERIFIED"
     return {
-        "status": status,
+        "status": overall_status,
         "release_blocking": True,
         "required_checks": list(REQUIRED_SCIENTIFIC_CHECKS),
+        "product_gate": {
+            "status": product_status,
+            "release_blocking": True,
+            "benchmarks": list(PRODUCT_BENCHMARKS),
+            "blockers": product_blockers,
+        },
+        "external_reproduction": {
+            "status": external_status,
+            "release_blocking": True,
+            "claim": "exact historical CPVS membership reconstruction",
+            "benchmarks": list(EXTERNAL_REPRODUCTION_BENCHMARKS),
+            "blockers": external_blockers,
+        },
         "benchmarks": benchmarks,
         "blockers": blockers,
         "interpretation": (
@@ -140,7 +175,7 @@ def _evidence_blockers(benchmark_id: str, evidence_root: Path) -> list[str]:
             )
             errors.extend(
                 f"{evidence_path.name}: {item}"
-                for item in evidence.verify(".")
+                for item in evidence.verify(evidence_root)
             )
             if evidence.benchmark_id != benchmark_id:
                 errors.append(
