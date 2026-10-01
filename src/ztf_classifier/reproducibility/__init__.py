@@ -9,7 +9,7 @@ from ztf_classifier.reproducibility.manifest import (
     ReproducibilityManifest,
     ReproducibilityManifestBuilder,
 )
-from ztf_classifier.reproducibility.validation import (
+from ztf_classifier.reproducibility.source_manifest import (\n    SourceArtifact,\n    SourceSubsetManifest,\n)\nfrom ztf_classifier.reproducibility.validation import (
     ReproducibilityValidationResult,
     ReproducibilityValidator,
 )
@@ -17,7 +17,7 @@ from ztf_classifier.reproducibility.validation import (
 __all__ = [
     "ReproducibilityManifest",
     "ReproducibilityManifestBuilder",
-    "ReproducibilityValidationResult",
+    "ReproducibilityValidationResult",\n    "SourceArtifact",\n    "SourceSubsetManifest",
     "ReproducibilityValidator",
     "collect_dependency_versions",
     "collect_environment",
