@@ -1,7 +1,11 @@
 import pandas as pd
 import pytest
 
-from scripts.acquire_external_source_evidence import SourceQueryError, _prepare_alerce_frame, _validate
+from scripts.acquire_external_source_evidence import (
+    SourceQueryError,
+    _prepare_alerce_frame,
+    _validate,
+)
 
 
 def test_external_source_validation_accepts_exact_sorted_subset():
