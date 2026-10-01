@@ -11,30 +11,13 @@
     "revision": "c226fa4bcf98a49e5620ec770c617d6fe5fd0a43",
     "description": "PR #124 is merged to main. Engineering CI and CodeQL are green; heavy source-backed scientific validation has not yet executed on the merged revision because ordinary main pushes intentionally skip the heavy job."
   },
-  "expected_improvement": [
-    "correctness",
-    "reliability",
-    "reproducibility",
-    "scientific_validity"
-  ],
+  "expected_improvement": ["correctness", "reliability", "reproducibility", "scientific_validity"],
   "measurement": {
     "metrics": {
-      "correctness": {
-        "status": "MEASURED",
-        "reason": "Heavy source-backed validation run #544 completed successfully on the merged PR-124 revision."
-      },
-      "reliability": {
-        "status": "MEASURED",
-        "reason": "Heavy source-backed workflow completed successfully, including DR24 and ALeRCE evidence acquisition."
-      },
-      "reproducibility": {
-        "status": "MEASURED",
-        "reason": "Source-backed evidence artifacts were generated and uploaded; historical mutable-source snapshot parity remains a separate unresolved claim."
-      },
-      "scientific_validity": {
-        "status": "PARTIAL",
-        "reason": "Current source-backed validation evidence is successful, but historical ALeRCE frozen raw-cache reproduction remains unresolved and release-blocking."
-      }
+      "correctness": {"status": "MEASURED", "before": "NOT_MEASURED", "after": "MEASURED", "reason": "Heavy source-backed validation completed successfully on the merged PR-124 revision."},
+      "reliability": {"status": "MEASURED", "before": "NOT_MEASURED", "after": "MEASURED", "reason": "Heavy source-backed workflow completed successfully, including DR24 and ALeRCE evidence acquisition."},
+      "reproducibility": {"status": "MEASURED", "before": "NOT_MEASURED", "after": "MEASURED", "reason": "Source-backed evidence artifacts were generated and uploaded; historical mutable-source snapshot parity remains a separate unresolved claim."},
+      "scientific_validity": {"status": "PARTIAL", "before": "NOT_MEASURED", "after": "PARTIAL", "reason": "Current source-backed validation evidence is successful, but historical ALeRCE frozen raw-cache reproduction remains unresolved and release-blocking."}
     },
     "trade_off": "No scientific predicate, threshold, quality assertion, or historical snapshot requirement is weakened to obtain PASS."
   },
@@ -65,12 +48,8 @@
   },
   "regression": {
     "status": "BLOCKED",
-    "open_blockers": [
-      "Issue #51: historical immutable ALeRCE raw-cache reproduction and exact downstream parity remain unresolved."
-    ]
+    "open_blockers": ["Issue #51: historical immutable ALeRCE raw-cache reproduction and exact downstream parity remain unresolved."]
   },
   "decision": "BLOCKED",
-  "knowledge_carried_forward": [
-    "scientific-validation-blockers-20260928"
-  ]
+  "knowledge_carried_forward": ["scientific-validation-blockers-20260928"]
 }
