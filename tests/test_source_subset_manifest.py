@@ -3,7 +3,10 @@ from pathlib import Path
 import pytest
 
 from ztf_classifier.dataset.artifact import sha256_file
-from ztf_classifier.reproducibility.source_manifest import SourceArtifact, SourceSubsetManifest
+from ztf_classifier.reproducibility.source_manifest import (
+    SourceArtifact,
+    SourceSubsetManifest,
+)
 
 
 def _manifest(tmp_path: Path, artifact_path: Path) -> SourceSubsetManifest:
