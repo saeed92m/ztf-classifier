@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-131-download-artifact-v8",
+  "objective": "Upgrade actions/download-artifact from v5 to v8 without changing release semantics, while preserving strict evidence retrieval and release validation.",
+  "previous_knowledge_consumed": [
+    "SF-001",
+    "SF-002",
+    "FD-001"
+  ],
+  "baseline": {
+    "revision": "3ca58c1ad829dca80f33ec358f6b039e70d815c0",
+    "description": "Release workflow consumes tag-bound Scientific Validation evidence and must remain fail-closed."
+  },
+  "expected_improvement": [
+    "security",
+    "maintainability",
+    "dependency-freshness"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "reason": "Dependency-only workflow change; correctness is established by CI and release-path validation."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "No production reliability delta is claimed before post-change CI validation."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "No scientific-data or model contract is changed."
+      },
+      "coverage": {
+        "status": "NOT_MEASURED",
+        "reason": "No benchmark coverage change."
+      }
+    },
+    "trade_off": "actions/download-artifact v8 enforces stricter digest mismatch behavior; this is acceptable because release evidence integrity should fail closed."
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Only the download-artifact action version changes.",
+      "The release evidence name, run-id binding, release_ref verification, and SHA checks remain unchanged."
+    ]
+  },
+  "failure_analysis": {
+    "status": "known-ci-process-failure",
+    "root_causes": [
+      "Initial PR omitted the required cumulative lifecycle record because the change touched a workflow file outside the cycle-record directory."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Dependency-only workflow changes are still meaningful PR changes and must carry a machine-readable lifecycle record."
+    ]
+  },
+  "regression": {
+    "status": "PENDING",
+    "open_blockers": []
+  },
+  "decision": "PENDING_CI",
+  "knowledge_carried_forward": [
+    "SF-001",
+    "SF-002",
+    "FD-001"
+  ]
+}
