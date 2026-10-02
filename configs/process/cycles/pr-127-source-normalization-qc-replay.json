@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-127-source-normalization-qc-replay",
+  "objective": "Add an executable source-subset normalization and QC contract, fail-closed temporal controls, and deterministic materialization without weakening scientific validation semantics.",
+  "previous_knowledge_consumed": ["SF-001", "SF-002", "FD-001"],
+  "baseline": {
+    "revision": "d5ebe7bdc52667b64f1603a3dfe563a3bfbf650f",
+    "description": "Source-backed validation requires explicit provenance, normalization, QC, temporal controls, and deterministic evidence materialization; immutable benchmark truth remains separate from mutable live-source evidence."
+  },
+  "expected_improvement": ["correctness", "reliability", "reproducibility", "coverage"],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "reason": "This change establishes executable contracts and regression coverage; no scientific accuracy delta is claimed."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "Operational reliability is protected by deterministic normalization, QC, and fail-closed temporal controls; no production reliability delta is claimed."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "The change improves reproducibility controls but does not yet establish immutable external-source reproduction."
+      },
+      "coverage": {
+        "status": "NOT_MEASURED",
+        "reason": "Source-subset coverage is contractually checked; this PR does not claim completion of the full external benchmark set."
+      }
+    },
+    "trade_off": "Large source datasets remain external; only normalized evidence and manifests are materialized. Live-source data is never promoted to immutable benchmark truth."
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Source-subset normalization and QC are executable and regression-tested.",
+      "Temporal cutoff enforcement is fail-closed and deterministic.",
+      "Materialization is deterministic and keeps large source data outside Git.",
+      "The permanent scientific gate remains fail-closed; this PR does not weaken benchmark thresholds or resolve the independent historical ALeRCE drift blocker."
+    ]
+  },
+  "failure_analysis": {
+    "status": "no-known-failure",
+    "root_causes": []
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Source-backed validation requires normalization and QC contracts before evidence can be consumed reproducibly.",
+      "Temporal controls must fail closed when a source subset cannot establish the required cutoff.",
+      "Deterministic evidence materialization should version manifests and derived evidence, not large external datasets."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": ["SF-001", "SF-002", "FD-001"]
+}
