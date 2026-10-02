@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 40
     steps:
       - name: Download tag-bound scientific evidence
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: scientific-validation-heavy
           path: ${{ runner.temp }}/scientific-evidence
