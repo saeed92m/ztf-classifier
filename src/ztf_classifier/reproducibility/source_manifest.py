@@ -117,7 +117,7 @@ class SourceSubsetManifest:
                 )
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SourceSubsetManifest":
+    def from_dict(cls, data: dict[str, Any]) -> SourceSubsetManifest:
         if data.get("schema_version") != SOURCE_SUBSET_MANIFEST_SCHEMA_VERSION:
             raise ValueError("Unsupported source-subset manifest schema version.")
         source = data.get("source") or {}
