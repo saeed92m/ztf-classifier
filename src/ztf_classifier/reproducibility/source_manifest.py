@@ -56,7 +56,7 @@ class SourceSubsetManifest:
         _require_nonempty(self.normalization_contract, "normalization_contract")
 
         try:
-            datetime.fromisoformat(self.retrieval_utc.replace("Z", "+00:00"))
+            datetime.fromisoformat(self.retrieval_utc)
         except ValueError as exc:
             raise ValueError("retrieval_utc must be ISO-8601.") from exc
 
