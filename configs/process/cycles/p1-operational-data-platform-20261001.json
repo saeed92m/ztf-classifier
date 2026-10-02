@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "p1-operational-data-platform-20261001",
+  "objective": "Build the first executable source-subset manifest and replay contract for the operational astronomical data platform.",
+  "previous_knowledge_consumed": [
+    "scientific-validation-recovery-20261001",
+    "source-backed DR24 evidence contract",
+    "production reproducibility manifest contract"
+  ],
+  "baseline": {
+    "revision": "25423f7926edf91e5e80e94df180590b638399fd",
+    "description": "P0 recovery work is merged to main. The repository already has dataset/reproducibility primitives, but P1 lacks a dedicated source-subset manifest and replay-verification contract."
+  },
+  "expected_improvement": ["correctness", "reliability", "reproducibility", "scientific_validity"],
+  "measurement": {
+    "metrics": {
+      "correctness": {"status":"NOT_MEASURED","reason":"P1 implementation and regression tests have not yet executed in CI."},
+      "reliability": {"status":"NOT_MEASURED","reason":"P1 implementation and CI validation are pending."},
+      "reproducibility": {"status":"NOT_MEASURED","reason":"Replay verification is the objective of this stage and has not yet been measured."},
+      "scientific_validity": {"status":"NOT_MEASURED","reason":"P1 source-subset replay semantics must be validated before this metric is measured."}
+    },
+    "trade_off": "No source semantics, temporal cutoff, checksum requirement, or provenance requirement is weakened."
+  },
+  "validation": {
+    "status":"NOT_VERIFIED",
+    "scientific_gate_affected":false,
+    "evidence":[],
+    "blocker":"P1 implementation is in progress."
+  },
+  "failure_analysis": {"status":"not_applicable","root_causes":[]},
+  "knowledge_extraction": {"status":"SUPPORTED","findings":["Source acquisition provenance must be represented separately from model/feature reproducibility metadata.","Replay must verify immutable artifact hashes and the declared temporal/source contract rather than merely re-running code."]},
+  "regression": {"status":"BLOCKED","open_blockers":["P1 source-subset manifest and replay verification tests are not yet implemented."]},
+  "decision":"BLOCKED",
+  "knowledge_carried_forward":["scientific-validation-recovery-20261001"]
+}
