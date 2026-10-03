@@ -171,6 +171,25 @@ def _serialize_prediction(
                     }
                 )
 
+        scientific_anomaly: dict[str, Any] | None = None
+        if result.scientific_anomaly is not None:
+            anomaly = result.scientific_anomaly
+            scientific_anomaly = {
+                "status": anomaly.status,
+                "method": anomaly.method,
+                "evidence_version": anomaly.evidence_version,
+                "score": (
+                    float(anomaly.score[row_index])
+                    if anomaly.score is not None
+                    else None
+                ),
+                "flag": (
+                    bool(anomaly.flags[row_index])
+                    if anomaly.flags is not None
+                    else None
+                ),
+            }
+
         ood: dict[str, Any] | None = None
         if result.ood is not None:
             ood = {
@@ -199,6 +218,7 @@ def _serialize_prediction(
                 },
                 conformal=conformal,
                 ood=ood,
+                scientific_anomaly=scientific_anomaly,
             )
         )
 
@@ -211,6 +231,7 @@ def _serialize_prediction(
             "calibration": result.calibration_status,
             "conformal": result.conformal_status,
             "ood": result.ood_status,
+            "scientific_anomaly": result.scientific_anomaly_status,
         },
         provenance=result_provenance(response),
         warnings=list(result.warnings),
