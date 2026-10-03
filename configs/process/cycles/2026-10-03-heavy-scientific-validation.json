@@ -18,17 +18,18 @@
   ],
   "measurement": {
     "metrics": {
-      "source_backed_workflow_run": "37121555621",
-      "source_acquisition_status": "SUCCESS",
-      "cpvs_parent_source_ids": 781602,
-      "cpvs_published_membership": 730184,
-      "cpvs_membership_intersection": 730182,
-      "cpvs_exact_reproduction": "UNRESOLVED",
-      "published_only_ids": [
-        781603,
-        781604
-      ],
-      "evidence_retained": "YES"
+      "reproducibility": {
+        "before": "PENDING_EXECUTION",
+        "after": "IMMUTABLE_SOURCE_EVIDENCE_RETAINED"
+      },
+      "scientific_validity": {
+        "before": "NOT_VERIFIED",
+        "after": "CPVS_EXACT_REPRODUCTION_UNRESOLVED"
+      },
+      "reliability": {
+        "before": "NO_HEAVY_EVIDENCE",
+        "after": "SOURCE_BACKED_EVIDENCE_ACQUIRED"
+      }
     }
   },
   "validation": {
