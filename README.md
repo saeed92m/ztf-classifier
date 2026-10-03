@@ -382,3 +382,9 @@ The FastAPI service exposes the versioned API contract documented in docs/api/AP
 
 Runtime result/job/checkpoint databases are external runtime state and are intentionally ignored by Git. Deployment configuration is documented in .env.example.
 
+
+## Discovery-platform contract status
+
+The platform architecture now has executable domain contracts for external catalog/cross-match context, diagnostic separation, discovery candidates and human review, controlled learning feedback, explainability evidence, and explicit light-curve/image/catalog modality declarations. These contracts extend the platform without changing the immutable v0.2.0 scientific baseline or introducing parity-driven GPU, LLM, DVC, or distributed infrastructure.
+
+The current production model explicitly does **not** claim a scientific-anomaly detector: OOD diagnostics and scientific anomaly evidence are separate result channels. Scientific anomaly evidence remains `not_evaluated` until a dedicated analysis mode supplies and versions such evidence.
