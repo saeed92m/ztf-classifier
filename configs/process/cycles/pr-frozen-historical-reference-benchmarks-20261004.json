@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-frozen-historical-reference-benchmarks-20261004",
+  "objective": "Replace mutable live-source historical reproduction dependencies with immutable published benchmark snapshots while preserving live sources as drift-monitoring/reference lanes.",
+  "previous_knowledge_consumed": [
+    "issue-51",
+    "issue-63",
+    "alerce_reference",
+    "ztf_periodic_781k",
+    "ztf_periodic_730k",
+    "public ZTF/ALeRCE classifier repository review"
+  ],
+  "baseline": {
+    "revision": "df9720d8d273b85b85abfc3632549dacafc09000",
+    "description": "Live ALeRCE drift blocked exact historical reproduction; 730,184 membership was being reconstructed from current light-curve artifacts."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "historical exact reference unavailable",
+        "after": "immutable published ALeRCE and CPVS reference contracts pinned"
+      },
+      "reliability": {
+        "before": "live mutable service required for historical validation",
+        "after": "archive MD5/SHA-256 validation with fail-closed acquisition"
+      },
+      "reproducibility": {
+        "before": "CPVS current-source derivation and live ALeRCE could drift",
+        "after": "published 730,184 membership and ALeRCE 2020-06-09 snapshot are immutable reference inputs"
+      }
+    },
+    "trade_off": "Current-source derivation remains diagnostic; it is not silently promoted to the historical published benchmark."
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Zenodo 4279623 provides the historical ALeRCE labeled set, features, and classifier outputs through 2020-06-09.",
+      "Zenodo 5764899 provides the published 730,184-object CPVS quality-selected population.",
+      "Archive acquisition utility validates published MD5 and records SHA-256/member evidence.",
+      "Live ALeRCE remains reference/drift monitoring and is not treated as ground truth."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "Historical ALeRCE blocker was caused by mutable live data replacing an immutable 2020 snapshot.",
+      "CPVS exact-count reconstruction from present-day source artifacts is a reproduction diagnostic, not a valid replacement for the published membership release."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Published benchmark membership and deterministic source reconstruction must be separate evidence lanes.",
+      "Historical classifier parity can be validated against an archived feature/output release without requiring current API equality.",
+      "The public ZTF ecosystem consistently uses versioned/frozen catalogs and explicit data provenance."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [
+      "The new immutable artifacts still need to be acquired in CI before final release-gate closure.",
+      "CPVS source-derivation mismatch remains diagnostic evidence, not an acceptance blocker.",
+      "Live ALeRCE drift remains monitored independently."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "issue-51",
+    "issue-63",
+    "immutable benchmark evidence",
+    "live-vs-frozen source separation"
+  ]
+}
