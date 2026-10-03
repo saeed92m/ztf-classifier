@@ -1,0 +1,68 @@
+{
+  "stage_id": "2026-10-03-discovery-contracts",
+  "objective": "Add first-class contracts for external catalog context, discovery candidates and human review feedback, explainability evidence, and explicit analysis modalities.",
+  "previous_knowledge_consumed": [
+    "docs/architecture/DISCOVERY_PLATFORM_EXTENSIONS_v0.1.md",
+    "GitHub issues #132, #134, #135",
+    "PR #137 diagnostic semantics boundary"
+  ],
+  "baseline": {
+    "status": "VERIFIED",
+    "description": "Architecture documented these capabilities but lacked executable domain contracts."
+  },
+  "expected_improvement": [
+    "Make provenance-bearing external context explicit.",
+    "Prevent human feedback from silently becoming training truth.",
+    "Make explainability and modality consumption explicit registry-facing concepts."
+  ],
+  "measurement": {
+    "metrics": {
+      "lifecycle_contract_coverage": {
+        "before": "partial",
+        "after": "explicit"
+      },
+      "regression_protection_count": {
+        "before": 3,
+        "after": 8
+      },
+      "reproducibility": {
+        "before": "VERIFIED",
+        "after": "VERIFIED"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "scientific_gate_affected": false,
+    "status": "VERIFIED",
+    "evidence": [
+      "Executable dataclasses validate catalog provenance/evaluation role, candidate/review versioning, controlled feedback dataset identity, explainability alignment, and modality uniqueness."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "findings": [
+      "Architecture-only statements are insufficient to prevent semantic drift; executable contracts provide fail-fast boundaries."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "Catalog context is evidence, not implicit ground truth.",
+      "Training/validation feedback requires explicit dataset version.",
+      "Missing modalities must be represented by contract state rather than fabricated."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "v0.2.0 remains immutable.",
+    "Scientific Validation remains release-blocking.",
+    "No GPU/LLM/distributed implementation is introduced by these contracts."
+  ]
+}
