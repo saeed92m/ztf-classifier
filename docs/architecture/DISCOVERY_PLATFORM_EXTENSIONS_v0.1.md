@@ -86,3 +86,13 @@ The production result contract now carries **scientific anomaly evidence separat
 The current production v0.2 model does **not** claim a scientific-anomaly detector. Therefore its scientific-anomaly state remains `not_evaluated` unless a future, explicitly registered scientific anomaly analysis mode supplies evidence.
 
 This prevents the historical ambiguity in which an Isolation Forest OOD diagnostic could be rendered or interpreted as an astrophysical anomaly finding.
+## 12. Executable P1 domain contracts
+
+PR #138 implements the architecture boundaries as executable domain contracts:
+
+- `CatalogMatch` / `CatalogContext` for provenance-bearing external catalog evidence;
+- `DiscoveryCandidate`, `HumanReview`, and `LearningFeedback` for versioned candidate review and controlled feedback;
+- `ExplainabilityEvidence` for supplementary model explanations;
+- `ModalityDeclaration` and `AnalysisModeContract` for explicit modality consumption and future specialized analysis modes.
+
+The contracts enforce evaluation-role semantics, version identity, feedback dataset identity for training/validation candidates, explanation alignment, and unique modality declarations. They do not add GPU/CNN/LLM/distributed infrastructure.
