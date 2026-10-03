@@ -1,7 +1,11 @@
 import pytest
 
 from ztf_classifier.models.catalog_context import CatalogContext, CatalogMatch
-from ztf_classifier.models.discovery import DiscoveryCandidate, HumanReview, LearningFeedback
+from ztf_classifier.models.discovery import (
+    DiscoveryCandidate,
+    HumanReview,
+    LearningFeedback,
+)
 from ztf_classifier.models.explainability import (
     AnalysisModeContract,
     ExplainabilityEvidence,
