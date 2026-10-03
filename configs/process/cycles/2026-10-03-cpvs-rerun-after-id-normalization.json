@@ -1,0 +1,64 @@
+{
+  "stage_id": "2026-10-03-cpvs-rerun-after-id-normalization",
+  "objective": "Re-run the real source-backed CPVS derivation after the SourceID normalization fix in PR #140 and verify the diagnostic semantics without changing scientific thresholds or assertions.",
+  "previous_knowledge_consumed": [
+    "configs/process/cycles/2026-10-03-heavy-scientific-validation.json",
+    "PR #140",
+    "GitHub issue #63"
+  ],
+  "baseline": {
+    "status": "VERIFIED",
+    "description": "Main contains the CPVS diagnostic SourceID normalization fix; heavy source-backed execution evidence from the pre-fix run remains retained."
+  },
+  "expected_improvement": [
+    "Confirm diagnostic intersections use normalized integer SourceIDs.",
+    "Separate parser/diagnostic defects from genuine historical source drift.",
+    "Retain immutable evidence for the post-fix result."
+  ],
+  "measurement": {
+    "metrics": {
+      "reproducibility": {
+        "before": "PRE_FIX_DIAGNOSTIC_EVIDENCE",
+        "after": "POST_FIX_HEAVY_RERUN"
+      },
+      "scientific_validity": {
+        "before": "CPVS_EXACT_REPRODUCTION_UNRESOLVED",
+        "after": "PENDING_RERUN"
+      },
+      "reliability": {
+        "before": "SOURCE_BACKED_EVIDENCE_ACQUIRED",
+        "after": "SOURCE_BACKED_POST_FIX_EVIDENCE_ACQUIRED"
+      }
+    }
+  },
+  "validation": {
+    "scientific_gate_affected": true,
+    "status": "PENDING",
+    "evidence": [
+      "Heavy workflow rerun on post-PR-140 main state.",
+      "No threshold, assertion, or release-gate weakening."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PENDING",
+    "findings": [
+      "Awaiting post-fix source-backed CPVS derivation and independent membership audit."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "PENDING",
+    "findings": []
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [
+      "CPVS exact historical membership reconstruction unless post-fix evidence proves exact equivalence.",
+      "Issue #51 historical ALeRCE frozen-cache reproduction."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not force published cardinality by changing thresholds.",
+    "Do not promote external benchmark membership to ground truth."
+  ]
+}
