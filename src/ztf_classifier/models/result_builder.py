@@ -8,11 +8,11 @@ from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.conformal import ConformalResult
 from ztf_classifier.models.inference import InferenceResult
 from ztf_classifier.models.ood import OODResult
-from ztf_classifier.models.scientific_anomaly import ScientificAnomalyResult
 from ztf_classifier.models.production_conformal import (
     ProductionConformalDiagnostics,
 )
 from ztf_classifier.models.results import PredictionResult
+from ztf_classifier.models.scientific_anomaly import ScientificAnomalyResult
 
 
 class PredictionResultBuilder:

@@ -57,10 +57,10 @@ class ScientificAnomalyResult:
     @property
     def sample_count(self) -> int:
         """Return the number of evaluated samples."""
-        return 0 if self.score is None else int(len(self.score))
+        return 0 if self.score is None else len(self.score)
 
 
 __all__ = [
-    "ScientificAnomalyResult",
     "VALID_SCIENTIFIC_ANOMALY_STATUSES",
+    "ScientificAnomalyResult",
 ]
