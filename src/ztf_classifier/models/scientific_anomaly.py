@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import dataclasses
+from dataclasses import dataclass
 from typing import Any
 
 
@@ -13,7 +13,7 @@ VALID_SCIENTIFIC_ANOMALY_STATUSES = {
 }
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclass(frozen=True)
 class ScientificAnomalyResult:
     """Scientific anomaly evidence; never an alias for model OOD."""
 
