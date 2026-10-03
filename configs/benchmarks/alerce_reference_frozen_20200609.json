@@ -43,7 +43,7 @@
     "live_api_comparison": "diagnostic_only",
     "byte_for_byte_live_api_reproduction": "not_required"
   },
-  "evaluation_role": "historical_reference_snapshot",
+  "evaluation_role": "reference_system",
   "class_mapping": {
     "source_native": "source_native"
   },
