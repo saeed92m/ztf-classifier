@@ -11,11 +11,18 @@ from audit_cpvs_membership import read_vizier
 from ztf_classifier.validation.derivation import _iter_rows, _source_ids
 
 
-def band_metrics(path: Path, parent: set[str], error_key: str, mag_key: str):
-    metrics = {oid: {"snr": False, "snr1": False, "mag206": False, "mag206_only": False} for oid in parent}
+def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
+    metrics = {
+        oid: {"snr": False, "snr1": False, "mag206": False, "mag206_only": False}
+        for oid in parent
+    }
     threshold = 2.5 if error_key == "e_gmag" else 3.0
     for row in _iter_rows(path, required_columns=("SourceID", error_key, mag_key)):
-        oid = row.get("SourceID", "").strip()
+        raw_oid = row.get("SourceID", "").strip()
+        try:
+            oid = int(raw_oid)
+        except (TypeError, ValueError):
+            continue
         if oid not in metrics:
             continue
         try:
@@ -43,7 +50,7 @@ def main() -> int:
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
     published = read_vizier(a.published)
-    parent = _source_ids(a.parent, None)
+    parent = {int(source_id) for source_id in _source_ids(a.parent, None)}
     if len(parent) != 781_602:
         raise ValueError(f"expected 781602 parent SourceIDs, got {len(parent)}")
     g = band_metrics(a.g, parent, "e_gmag", "gmag")
@@ -51,8 +58,12 @@ def main() -> int:
     predicates = {
         "baseline_1p085": {o for o in parent if g[o]["snr"] and r[o]["snr"]},
         "baseline_1p0": {o for o in parent if g[o]["snr1"] and r[o]["snr1"]},
-        "baseline_plus_mag206": {o for o in parent if g[o]["mag206"] and r[o]["mag206"]},
-        "baseline_plus_rmag206": {o for o in parent if g[o]["snr"] and r[o]["snr"] and r[o]["mag206_only"]},
+        "baseline_plus_mag206": {
+            o for o in parent if g[o]["mag206"] and r[o]["mag206"]
+        },
+        "baseline_plus_rmag206": {
+            o for o in parent if g[o]["snr"] and r[o]["snr"] and r[o]["mag206_only"]
+        },
     }
     report = {}
     for name, ids in predicates.items():
@@ -63,7 +74,10 @@ def main() -> int:
             "published_only": len(published - ids),
         }
     a.output.parent.mkdir(parents=True, exist_ok=True)
-    a.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    a.output.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0
 
