@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import dataclasses
 
 import numpy as np
 
@@ -14,7 +14,7 @@ VALID_SCIENTIFIC_ANOMALY_STATUSES = {
 }
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class ScientificAnomalyResult:
     """Scientific anomaly evidence; never an alias for model OOD."""
 
