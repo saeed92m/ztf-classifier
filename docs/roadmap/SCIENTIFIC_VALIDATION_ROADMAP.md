@@ -15,10 +15,13 @@ Scientific validation is a permanent Product-Level Gate for the final Astronomic
 ## Stage V1 — Benchmark adapters
 
 - [ ] StarEmbed ZTF_40k adapter and reproducible subset retrieval
-- [ ] ZTF periodic-variable classification release (~730k) adapter
-- [x] historical ZTF periodic-variable catalog (~781k) adapter
+- [x] ZTF periodic-variable published membership contract (~730k) — immutable Zenodo 5764899
+- [ ] ZTF periodic-variable published membership acquisition + execution (~730k) — release-blocking evidence
+- [x] historical ZTF periodic-variable catalog (~781k) adapter — Zenodo 3886372
 - [ ] pinned ZTF DR24 source-backed adapter
-- [ ] ALeRCE API/TAP independent-reference adapter
+- [x] ALeRCE API/TAP independent-reference adapter
+- [x] ALeRCE frozen historical reference contract — Zenodo 4279623
+- [ ] ALeRCE frozen historical reference acquisition + execution — release-blocking evidence
 
 Each adapter must preserve source/version/DOI/retrieval date/object IDs/hashes/schema/taxonomy/split/leakage/preprocessing/provenance.
 
@@ -96,7 +99,20 @@ The permanent source set is:
 4. pinned ZTF DR24 source-backed subset
 5. ALeRCE API/TAP as an independent reference system
 
-The benchmark source data remains external to Git; Git stores the contracts, manifests, hashes, configurations, and reports.
+The benchmark source data remains external to Git; Git stores the contracts, manifests, hashes, configurations, and reports. Immutable publisher snapshots are preferred for historical claims; live services are retained for drift monitoring only. A benchmark contract is not considered evidence until its archive is acquired, hash-verified, schema-validated, and executed.
+
+## V6 — Frozen historical reference completion
+
+- [x] ALeRCE frozen-reference contract (Zenodo 4279623)
+- [x] CPVS published-membership contract (Zenodo 5764899)
+- [x] CPVS parent-source contract (Zenodo 3886372)
+- [x] fail-closed acquisition utility
+- [ ] acquire and verify ALeRCE frozen archive
+- [ ] acquire and verify CPVS published membership archive
+- [ ] acquire and verify CPVS parent archive
+- [ ] execute historical-reference adapters
+- [ ] close issues #51 and #63 with evidence
+- [ ] final scientific release gate PASS
 
 
 ## Cumulative Learning overlay — permanent lifecycle control

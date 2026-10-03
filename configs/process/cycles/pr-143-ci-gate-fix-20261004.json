@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-143-ci-gate-fix-20261004",
+  "objective": "Restore cumulative lifecycle gate compliance for the frozen-reference completion PR without weakening the gate.",
+  "previous_knowledge_consumed": [
+    "PR-142",
+    "PR-143",
+    "cumulative-lifecycle-gate"
+  ],
+  "baseline": {
+    "revision": "38daa4dddb68afe3ff289611b5eeb2e97013549c",
+    "status": "CI cumulative gate failed because PR changes outside configs/process/cycles lacked a cycle record."
+  },
+  "expected_improvement": [
+    "CI correctness",
+    "release reliability",
+    "process compliance"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "cumulative gate failure",
+        "after": "all meaningful PR changes represented by machine-readable cycle record"
+      },
+      "reliability": {
+        "before": "merge blocked by process gate",
+        "after": "gate can evaluate full PR"
+      },
+      "reproducibility": {
+        "before": "not applicable",
+        "after": "cycle record captures the exact corrective rationale"
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "This record is process metadata only; it does not weaken or bypass scientific validation."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "PR-143 changed workflow/documentation files but did not add a configs/process/cycles record recognized by the cumulative gate."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Every meaningful PR, including documentation and workflow changes, must carry a machine-readable cycle record."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [
+      "PR-143 CI rerun must pass."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "cumulative lifecycle gate",
+    "fail-closed scientific validation",
+    "frozen historical reference contracts"
+  ]
+}

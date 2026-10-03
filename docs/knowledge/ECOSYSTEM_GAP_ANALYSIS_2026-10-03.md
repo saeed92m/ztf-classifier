@@ -1,6 +1,8 @@
 # ZTF Classifier — ZTF Ecosystem Gap Analysis
 
-**Date:** 2026-10-03  
+**Date:** 2026-10-04
+
+**Follow-up:** Public repository review was converted into implementation changes and frozen-reference contracts on 2026-10-04.  
 **Scope:** comparison of `saeed92m/ztf-classifier` with representative public ZTF/time-domain astronomy ML repositories discovered through GitHub repository search.
 
 ## Executive conclusion
@@ -95,3 +97,15 @@ The platform direction is confirmed as:
 `source data → canonical observations → QC → scientific feature/context layers → analysis modes → uncertainty/calibration/OOD → candidate ranking → evidence/provenance → human/scientific validation → reproducible discovery outputs`
 
 The frozen v0.2.0 scientific baseline is unchanged.
+
+## 2026-10-04 implementation outcome
+
+The ecosystem review found a direct solution to the current validation deadlock:
+
+- ALeRCE historical data has an immutable Zenodo reference (4279623).
+- CPVS published 730,184 membership has an immutable Zenodo release (5764899).
+- The 781,602 parent has an immutable Zenodo release (3886372).
+- These are now first-class benchmark contracts in the repository.
+- Live ALeRCE and current-source CPVS reconstruction remain diagnostic/drift lanes.
+
+This closes the architectural gap identified by the comparison. The remaining work is execution: acquire, hash-verify, execute, and attach evidence to #51/#63 and the final scientific gate.
