@@ -1,0 +1,47 @@
+{
+  "benchmark_id": "alerce_reference_frozen_20200609",
+  "dataset_name": "ALeRCE Light Curve Classifier frozen reference snapshot",
+  "source": "Zenodo 4279623",
+  "version": "v1 published 2020-11-18; ZTF alert stream through 2020-06-09",
+  "retrieval_date": "2026-10-04",
+  "source_url": "https://zenodo.org/records/4279623",
+  "doi": "10.5281/zenodo.4279623",
+  "license": "source dataset terms",
+  "archive": {
+    "filename": "files_for_lc_classifier_SanchezSaez2020.tar.gz",
+    "md5": "f0c8c47fb530613718a3cf0c4678a3e4",
+    "size_bytes": 1181116000
+  },
+  "artifacts": [
+    "labeled_set_lc_classifier_SanchezSaez_2020.csv",
+    "features_for_lc_classifier_20200609.csv",
+    "ALeRCE_lc_classifier_outputs_ZTF_unlabeled_set_20200609.csv"
+  ],
+  "object_id_column": "oid",
+  "label_column": "class",
+  "label_taxonomy": "ALeRCE hierarchical 15-class taxonomy; reference only unless independently grounded",
+  "ground_truth_provenance": {
+    "kind": "external labels/reference dataset",
+    "is_model_agreement": false,
+    "note": "ALeRCE predictions are not ground truth; use this snapshot to reproduce the historical reference pipeline and to compare feature/classifier parity."
+  },
+  "input_contract": {
+    "adapter": "alerce_reference_frozen_20200609",
+    "cutoff": "2020-06-09",
+    "minimum_detections": 6,
+    "selection": "ALeRCE historical unlabeled set"
+  },
+  "acceptance": {
+    "required": [
+      "archive_hash_match",
+      "artifact_schema_match",
+      "object_id_uniqueness",
+      "feature_schema_match",
+      "classifier_output_schema_match",
+      "provenance_completeness"
+    ],
+    "live_api_comparison": "diagnostic_only",
+    "byte_for_byte_live_api_reproduction": "not_required"
+  },
+  "evaluation_role": "historical_reference_snapshot"
+}
