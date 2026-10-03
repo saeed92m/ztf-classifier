@@ -1,0 +1,71 @@
+{
+  "stage_id": "2026-10-03-diagnostic-semantics",
+  "objective": "Separate classification uncertainty/OOD semantics from scientific-anomaly evidence in the production result and API contracts.",
+  "previous_knowledge_consumed": [
+    "docs/architecture/DISCOVERY_PLATFORM_EXTENSIONS_v0.1.md",
+    "docs/knowledge/ECOSYSTEM_GAP_ANALYSIS_2026-10-03.md",
+    "GitHub issue #133"
+  ],
+  "baseline": {
+    "status": "VERIFIED",
+    "description": "Production results exposed OOD diagnostics, while Workbench/API semantics could present anomaly terminology without an explicit scientific-anomaly contract."
+  },
+  "expected_improvement": [
+    "Make scientific anomaly an explicit, independent result channel.",
+    "Prevent OOD diagnostics from being interpreted as astrophysical anomaly evidence.",
+    "Keep the current v0.2 production model fail-safe: no scientific-anomaly detector is claimed."
+  ],
+  "measurement": {
+    "metrics": {
+      "lifecycle_contract_coverage": {
+        "before": "partial",
+        "after": "explicit"
+      },
+      "regression_protection_count": {
+        "before": 0,
+        "after": 3
+      },
+      "reproducibility": {
+        "before": "VERIFIED",
+        "after": "VERIFIED"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "scientific_gate_affected": false,
+    "status": "VERIFIED",
+    "evidence": [
+      "ScientificAnomalyResult contract validates status, alignment, finiteness and explicit method/version.",
+      "PredictionResult and API schemas preserve separate OOD and scientific_anomaly fields.",
+      "Regression tests cover available, not_evaluated and invalid mixed states.",
+      "Workbench diagnostic view now renders the channels independently."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "findings": [
+      "OOD anomaly_score terminology is an implementation diagnostic and does not establish astrophysical anomaly.",
+      "The prior UI grouped OOD and anomaly diagnostics under a combined label, creating semantic ambiguity."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "OOD, classification uncertainty, and scientific anomaly require independent contract fields and statuses.",
+      "The current v0.2 production model must keep scientific_anomaly_status=not_evaluated unless a dedicated analysis mode supplies evidence."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "Scientific anomaly remains a future explicit analysis mode rather than a reinterpretation of the existing OOD model.",
+    "v0.2.0 scientific baseline remains immutable.",
+    "Scientific Validation remains release-blocking and is not weakened by this architectural change."
+  ]
+}
