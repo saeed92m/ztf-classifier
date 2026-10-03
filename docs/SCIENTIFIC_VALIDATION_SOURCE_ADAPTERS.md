@@ -11,8 +11,9 @@ repository stores the **source contract**, not mutable external benchmark data.
 | `ztf_dr24_source_subset` | official ZTF DR24 | source-backed | release metadata + query/artifact hashes |
 | `alerce_reference` | ALeRCE TAP | independent reference | query + response hashes + schema |
 
-The 730k source is a **derived, deterministic subset** of the pinned ZTF CPVS
-snapshot; it is not treated as a second independent catalog.
+The 730k **published membership** is now pinned separately to Zenodo 5764899. It is the exact historical membership benchmark. The existing deterministic derivation from the 781,602-parent snapshot remains valuable, but is explicitly diagnostic: a current-source reconstruction is not allowed to replace the published membership when validating the historical release.
+
+ALeRCE now has two distinct lanes: the live TAP adapter remains useful for current-source drift monitoring, while Zenodo 4279623 is the immutable historical reference snapshot for the 2020-06-09 classifier/features/output state.
 
 ALeRCE remains an independent reference system. Its predictions cannot satisfy
 ground-truth provenance requirements.
