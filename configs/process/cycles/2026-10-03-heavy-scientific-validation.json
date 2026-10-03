@@ -1,0 +1,12 @@
+{
+  "cycle_id": "2026-10-03-heavy-scientific-validation",
+  "purpose": "Trigger the real source-backed Scientific Validation execution required by issue #63.",
+  "baseline": "main@d330ea91a7baee55d740170f848fae7d847bb1a6",
+  "expected_state": "PENDING_EXECUTION",
+  "release_gate": "fail_closed",
+  "notes": [
+    "Do not synthesize or weaken benchmark evidence.",
+    "Retain immutable source-backed artifacts from the workflow.",
+    "Historical ALeRCE drift remains governed by issue #51."
+  ]
+}
