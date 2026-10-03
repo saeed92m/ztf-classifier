@@ -73,3 +73,16 @@ The application layer should accept modality declarations and report missing/uns
 8. CPU-first operation remains a supported product constraint.
 9. Scientific validation remains release-blocking at product level.
 10. Large external scientific datasets remain outside Git.
+## 11. Implemented diagnostic-semantics boundary
+
+The production result contract now carries **scientific anomaly evidence separately from OOD**.
+
+- `ood` describes deviation from the model/reference input distribution.
+- `scientific_anomaly` is a separate evidence channel and is not populated merely because an OOD score is high.
+- `scientific_anomaly_status` is explicitly one of `available`, `unavailable`, or `not_evaluated`.
+- When scientific anomaly evidence is available, its method and evidence version are required and its score/flag arrays must align with the prediction sample count.
+- API consumers receive separate `ood` and `scientific_anomaly` fields.
+
+The current production v0.2 model does **not** claim a scientific-anomaly detector. Therefore its scientific-anomaly state remains `not_evaluated` unless a future, explicitly registered scientific anomaly analysis mode supplies evidence.
+
+This prevents the historical ambiguity in which an Isolation Forest OOD diagnostic could be rendered or interpreted as an astrophysical anomaly finding.

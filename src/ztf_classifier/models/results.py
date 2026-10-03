@@ -11,6 +11,7 @@ from ztf_classifier.models.classes import (
     NUM_CLASSES,
 )
 from ztf_classifier.models.ood import OODResult
+from ztf_classifier.models.scientific_anomaly import ScientificAnomalyResult
 from ztf_classifier.models.production_conformal import (
     ProductionConformalDiagnostics,
 )
@@ -30,9 +31,11 @@ class PredictionResult:
 
     conformal: ProductionConformalDiagnostics | None = None
     ood: OODResult | None = None
+    scientific_anomaly: ScientificAnomalyResult | None = None
     calibration_status: str = "unavailable"
     conformal_status: str = "unavailable"
     ood_status: str = "unavailable"
+    scientific_anomaly_status: str = "not_evaluated"
     warnings: tuple[str, ...] = ()
     artifact_schema_version: str = ""
     artifact_hash: str = ""
@@ -274,6 +277,11 @@ class PredictionResult:
         ):
             if value not in valid:
                 raise ValueError(f"{name} has an invalid status: {value}")
+        if self.scientific_anomaly_status not in {"available", "unavailable", "not_evaluated"}:
+            raise ValueError(
+                "scientific_anomaly_status has an invalid status: "
+                f"{self.scientific_anomaly_status}"
+            )
         if not isinstance(self.warnings, tuple):
             raise TypeError("warnings must be a tuple of strings.")
         if not all(isinstance(item, str) for item in self.warnings):
@@ -297,6 +305,15 @@ class PredictionResult:
         ):
             raise ValueError(
                 "OOD result sample count does not match "
+                "prediction result."
+            )
+
+        if (
+            self.scientific_anomaly is not None
+            and self.scientific_anomaly.sample_count != self.sample_count
+        ):
+            raise ValueError(
+                "Scientific anomaly result sample count does not match "
                 "prediction result."
             )
 

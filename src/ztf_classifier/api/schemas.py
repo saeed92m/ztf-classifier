@@ -25,6 +25,7 @@ class PredictionItem(BaseModel):
     probabilities: dict[str, float]
     conformal: list[dict[str, Any]] = Field(default_factory=list)
     ood: dict[str, Any] | None = None
+    scientific_anomaly: dict[str, Any] | None = None
 
 
 class PredictionResponse(BaseModel):

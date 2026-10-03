@@ -8,6 +8,7 @@ from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.conformal import ConformalResult
 from ztf_classifier.models.inference import InferenceResult
 from ztf_classifier.models.ood import OODResult
+from ztf_classifier.models.scientific_anomaly import ScientificAnomalyResult
 from ztf_classifier.models.production_conformal import (
     ProductionConformalDiagnostics,
 )
@@ -26,9 +27,11 @@ class PredictionResultBuilder:
         ConformalResult | ProductionConformalDiagnostics | None
     ) = None,
         ood: OODResult | None = None,
+        scientific_anomaly: ScientificAnomalyResult | None = None,
         calibration_status: str = "unavailable",
         conformal_status: str = "unavailable",
         ood_status: str = "unavailable",
+        scientific_anomaly_status: str = "not_evaluated",
         warnings: tuple[str, ...] = (),
         artifact_schema_version: str = "",
         artifact_hash: str = "",
@@ -68,9 +71,11 @@ class PredictionResultBuilder:
             calibrated_predicted_labels=calibrated_labels,
             conformal=conformal,
             ood=ood,
+            scientific_anomaly=scientific_anomaly,
             calibration_status=calibration_status,
             conformal_status=conformal_status,
             ood_status=ood_status,
+            scientific_anomaly_status=scientific_anomaly_status,
             warnings=tuple(warnings),
             artifact_schema_version=artifact_schema_version,
             artifact_hash=artifact_hash,
