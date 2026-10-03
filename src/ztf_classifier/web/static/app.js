@@ -232,7 +232,7 @@ const titles = {
   observations: ["Observations", "Normalized observation stream"],
   features: ["Features", "Scientific Feature Engine output"],
   classification: ["Classification", "Model prediction and probabilities"],
-  uncertainty: ["Uncertainty & OOD", "Conformal and anomaly diagnostics"],
+  uncertainty: ["Uncertainty / OOD / Anomaly", "Independent diagnostic channels"],
   provenance: ["Provenance", "Traceable scientific metadata"],
   batch: ["Batch jobs", "Durable analysis jobs"],
   catalog: ["Catalog", "Catalog query and export module"],
@@ -407,6 +407,7 @@ function renderAnalysisModule(view) {
       escapeHtml(JSON.stringify({
         conformal: payload.prediction?.conformal || [],
         ood: payload.prediction?.ood || null,
+        scientific_anomaly: payload.prediction?.scientific_anomaly || null,
         diagnostics: payload.diagnostics || {},
       }, null, 2)) + "</pre>";
   } else {
