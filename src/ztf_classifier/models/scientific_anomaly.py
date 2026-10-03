@@ -1,6 +1,6 @@
 """Scientific-anomaly diagnostic contract, deliberately independent from OOD."""
 
-# Ruff 0.16.x reports a file-local I001 here despite the project-standard import order.
+# ruff: noqa: I001  # Ruff 0.16.x reports a false-positive import-order diagnostic here.
 # Keep the exception narrow; all other lint rules remain enforced.
 
 from dataclasses import dataclass
