@@ -27,9 +27,9 @@
   },
   "input_contract": {
     "adapter": "alerce_reference_frozen_20200609",
-    "cutoff": "2020-06-09",
-    "minimum_detections": 6,
-    "selection": "ALeRCE historical unlabeled set"
+    "prediction_column": "y_pred",
+    "source_artifact": "immutable Zenodo archive",
+    "query": "historical snapshot through 2020-06-09"
   },
   "acceptance": {
     "required": [
