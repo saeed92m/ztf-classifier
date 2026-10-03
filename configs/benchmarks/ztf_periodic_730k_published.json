@@ -36,5 +36,27 @@
     "derivation_reproduction": "diagnostic_only",
     "current_vizier_reconstruction": "diagnostic_only"
   },
-  "evaluation_role": "published_membership_benchmark"
+  "evaluation_role": "published_membership_benchmark",
+  "class_mapping": {
+    "source_native": "source_native"
+  },
+  "split_definition": {
+    "strategy": "object-level published snapshot; no training/evaluation overlap permitted"
+  },
+  "leakage_exclusions": [
+    "object overlap",
+    "duplicate objects",
+    "target leakage",
+    "future data leakage",
+    "benchmark-trained artifacts"
+  ],
+  "preprocessing_contract": {
+    "source_schema": "preserve source schema before adapter mapping",
+    "normalization": "versioned"
+  },
+  "reference_system_provenance": {
+    "kind": "independent historical reference evidence",
+    "is_ground_truth": false
+  },
+  "benchmark_code_version": "benchmark-registry-v1"
 }
