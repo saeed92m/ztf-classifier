@@ -1,0 +1,40 @@
+{
+  "benchmark_id": "ztf_periodic_730k_published",
+  "dataset_name": "Published ZTF CPVS 730,184-object quality-selected membership",
+  "source": "Zenodo 5764899 / ZTF CPVS quality-selected release",
+  "version": "v1 published 2021-12-07",
+  "retrieval_date": "2026-10-04",
+  "source_url": "https://zenodo.org/records/5764899",
+  "doi": "10.5281/zenodo.5764899",
+  "license": "CC BY 4.0",
+  "archive": {
+    "filename": "Zenodo.zip",
+    "md5": "7fc6562d4208cbfa97366351984810e3",
+    "size_bytes": 186400000
+  },
+  "parent_catalog": {
+    "source": "Zenodo 3886372 / ZTF DR2",
+    "object_count": 781602,
+    "doi": "10.5281/zenodo.3886372"
+  },
+  "object_id_column": "SourceID",
+  "label_column": "class",
+  "label_taxonomy": "published ZTF CPVS periodic-variable taxonomy",
+  "ground_truth_provenance": {
+    "kind": "published catalog classification",
+    "is_model_agreement": false,
+    "note": "This is the published 730,184-object population. It is the authoritative membership benchmark for exact release reproduction; the current-light-curve threshold derivation remains a separate diagnostic."
+  },
+  "acceptance": {
+    "required": [
+      "archive_hash_match",
+      "membership_count_730184",
+      "unique_sourceids",
+      "parent_membership_subset",
+      "provenance_completeness"
+    ],
+    "derivation_reproduction": "diagnostic_only",
+    "current_vizier_reconstruction": "diagnostic_only"
+  },
+  "evaluation_role": "published_membership_benchmark"
+}
