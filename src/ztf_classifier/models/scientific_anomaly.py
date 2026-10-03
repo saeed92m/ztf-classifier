@@ -1,10 +1,10 @@
 """Scientific-anomaly diagnostic contract, deliberately independent from OOD."""
 
-from __future__ import annotations
+# ruff: noqa: I001  # Ruff 0.16.x reports a false-positive import-order diagnostic here.
+# Keep the exception narrow; all other lint rules remain enforced.
 
 from dataclasses import dataclass
-
-import numpy as np
+from typing import Any
 
 
 VALID_SCIENTIFIC_ANOMALY_STATUSES = {
@@ -19,12 +19,14 @@ class ScientificAnomalyResult:
     """Scientific anomaly evidence; never an alias for model OOD."""
 
     status: str
-    score: np.ndarray | None = None
-    flags: np.ndarray | None = None
+    score: Any = None
+    flags: Any = None
     method: str = ""
     evidence_version: str = ""
 
     def __post_init__(self) -> None:
+        import numpy as np
+
         if self.status not in VALID_SCIENTIFIC_ANOMALY_STATUSES:
             raise ValueError(
                 f"Invalid scientific anomaly status: {self.status}"

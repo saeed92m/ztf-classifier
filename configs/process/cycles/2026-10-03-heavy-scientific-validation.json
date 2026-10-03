@@ -1,12 +1,74 @@
 {
-  "cycle_id": "2026-10-03-heavy-scientific-validation",
-  "purpose": "Trigger the real source-backed Scientific Validation execution required by issue #63.",
-  "baseline": "main@d330ea91a7baee55d740170f848fae7d847bb1a6",
-  "expected_state": "PENDING_EXECUTION",
-  "release_gate": "fail_closed",
-  "notes": [
-    "Do not synthesize or weaken benchmark evidence.",
-    "Retain immutable source-backed artifacts from the workflow.",
-    "Historical ALeRCE drift remains governed by issue #51."
+  "stage_id": "2026-10-03-heavy-scientific-validation",
+  "objective": "Execute and retain real source-backed Scientific Validation evidence for issue #63 without weakening scientific assertions.",
+  "previous_knowledge_consumed": [
+    "configs/process/cycles/2026-10-03-diagnostic-semantics.json",
+    "configs/process/cycles/2026-10-03-discovery-contracts.json",
+    "GitHub issue #63",
+    "GitHub issue #51"
+  ],
+  "baseline": {
+    "status": "VERIFIED",
+    "description": "Repository-side Scientific Validation contracts and fail-closed gate are implemented; acceptance requires real immutable source-backed execution evidence."
+  },
+  "expected_improvement": [
+    "Acquire immutable source-backed CPVS/DR24/ALeRCE evidence.",
+    "Retain exact CPVS membership diagnostics instead of weakening the historical assertion.",
+    "Make the execution outcome auditable and reproducible."
+  ],
+  "measurement": {
+    "metrics": {
+      "reproducibility": {
+        "before": "PENDING_EXECUTION",
+        "after": "IMMUTABLE_SOURCE_EVIDENCE_RETAINED"
+      },
+      "scientific_validity": {
+        "before": "NOT_VERIFIED",
+        "after": "CPVS_EXACT_REPRODUCTION_UNRESOLVED"
+      },
+      "reliability": {
+        "before": "NO_HEAVY_EVIDENCE",
+        "after": "SOURCE_BACKED_EVIDENCE_ACQUIRED"
+      }
+    }
+  },
+  "validation": {
+    "scientific_gate_affected": true,
+    "status": "VERIFIED",
+    "evidence": [
+      "Real heavy source-backed acquisition completed successfully.",
+      "Immutable source/provenance evidence was retained in the workflow artifact.",
+      "Published CPVS membership was compared independently against the derived candidate membership.",
+      "No threshold, assertion, or release-gate weakening was introduced."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "findings": [
+      "The source-derived CPVS quality predicate does not reproduce the published 730,184 membership.",
+      "The current evidence establishes 730,182 IDs in common, with published-only IDs 781603 and 781604.",
+      "The remaining candidate-membership discrepancy is an external historical reconstruction problem, not a CI or schema defect."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "Published benchmark membership must remain separate from a source-derived reconstruction unless exact equivalence is proven.",
+      "Historical external-reproduction claims require immutable membership evidence.",
+      "ALeRCE historical drift remains independently governed by issue #51."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [
+      "CPVS exact historical membership reconstruction remains unresolved.",
+      "Issue #51 historical ALeRCE frozen-cache reproduction remains unresolved."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not change CPVS thresholds merely to force the published cardinality.",
+    "Do not treat VizieR published membership as proof that the current source-derived predicate reproduces the historical pipeline.",
+    "Keep issue #63 release-blocking until all evidence-level acceptance criteria are satisfied."
   ]
 }
