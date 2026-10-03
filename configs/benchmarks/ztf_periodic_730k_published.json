@@ -58,5 +58,11 @@
     "kind": "independent historical reference evidence",
     "is_ground_truth": false
   },
-  "benchmark_code_version": "benchmark-registry-v1"
+  "benchmark_code_version": "benchmark-registry-v1",
+  "input_contract": {
+    "adapter": "ztf_periodic_730k_published",
+    "prediction_column": "y_pred",
+    "source_artifact": "immutable Zenodo archive",
+    "selection": "published 730,184-object quality-selected population"
+  }
 }
