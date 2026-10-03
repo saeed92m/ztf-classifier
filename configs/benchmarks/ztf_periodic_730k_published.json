@@ -36,7 +36,7 @@
     "derivation_reproduction": "diagnostic_only",
     "current_vizier_reconstruction": "diagnostic_only"
   },
-  "evaluation_role": "published_membership_benchmark",
+  "evaluation_role": "ground_truth",
   "class_mapping": {
     "source_native": "source_native"
   },
