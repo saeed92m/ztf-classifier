@@ -11,10 +11,10 @@ from ztf_classifier.models.classes import (
     NUM_CLASSES,
 )
 from ztf_classifier.models.ood import OODResult
-from ztf_classifier.models.scientific_anomaly import ScientificAnomalyResult
 from ztf_classifier.models.production_conformal import (
     ProductionConformalDiagnostics,
 )
+from ztf_classifier.models.scientific_anomaly import ScientificAnomalyResult
 
 
 @dataclass(frozen=True)
