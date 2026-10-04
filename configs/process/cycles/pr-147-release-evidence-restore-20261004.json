@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-147-release-evidence-restore-20261004",
+  "objective": "Restore v0.5.0 release evidence without duplicating the multi-gigabyte validation artifact on the runner filesystem.",
+  "previous_knowledge_consumed": [
+    "PR-146",
+    "release-candidate-heavy-validation-20261004",
+    "cumulative-lifecycle-gate"
+  ],
+  "baseline": {
+    "revision": "c645b1aadb7f1e5f45a09d88e1bc7417240a9f75",
+    "status": "v0.5.0 Release workflow failed while restoring validated scientific evidence because the workflow duplicated a ~3.77 GB artifact with cp -a."
+  },
+  "expected_improvement": [
+    "release reliability",
+    "runner disk efficiency",
+    "release asset publication"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "release evidence restore failed",
+        "after": "validated evidence tree is restored by move without a second full copy"
+      },
+      "reliability": {
+        "before": "Release run 336 failed at Restore validated scientific evidence",
+        "after": "release workflow can proceed to package build and publication"
+      },
+      "reproducibility": {
+        "before": "validated evidence existed only in workflow artifact",
+        "after": "same evidence tree is restored into the expected workspace path without scientific transformation"
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Process/release automation change only; scientific validation contracts and release-gate semantics are unchanged."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "Release workflow used cp -a to duplicate the ~3.77 GB validated scientific evidence tree, exhausting runner disk during restoration."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Large validated evidence artifacts must be moved or restored without unnecessary second copies when runner disk capacity is constrained."
+    ]
+  },
+  "regression": {
+    "status": "PENDING",
+    "open_blockers": [
+      "PR-147 CI and release workflow rerun must pass."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "cumulative lifecycle gate",
+    "fail-closed scientific validation",
+    "frozen historical reference contracts",
+    "release evidence provenance"
+  ]
+}
