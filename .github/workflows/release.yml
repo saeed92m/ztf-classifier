@@ -99,7 +99,7 @@ jobs:
             exit 1
           }
 
-          cp -a "$evidence_root/." reports/scientific_validation/
+          # Move instead of copying: the heavy scientific artifact can exceed 3 GB.\n          # Copying duplicates it on the runner filesystem and can exhaust disk space.\n          rm -rf reports/scientific_validation\n          mv "$evidence_root" reports/scientific_validation
           test -f reports/scientific_validation/release/release_ref.json
 
           python - <<'PY'
