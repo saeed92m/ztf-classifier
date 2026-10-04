@@ -1,14 +1,60 @@
 {
-  "cycle_id": "release-gate-scope-20261004",
-  "date": "2026-10-04",
-  "stage": "final-release-audit",
-  "status": "implemented",
-  "change": "Separate the product scientific release gate from claim-specific historical external reproduction evidence.",
-  "problem": "The release gate treated unresolved CPVS historical reconstruction as product release-blocking even though the handbook and scientific-validation architecture explicitly classify it as an external claim that must remain fail-closed without blocking unrelated product validation.",
-  "root_cause": "evaluate_release_gate aggregated product and external blockers into one overall status and marked external_reproduction.release_blocking=true.",
-  "rule": "Only declared product-scope scientific evidence blocks the product release. External historical reproduction claims remain explicit, auditable, and fail-closed but do not become product failures unless the release explicitly claims that reconstruction.",
-  "regression_protection": [
-    "tests/test_scientific_validation_gate.py::test_external_reproduction_does_not_block_product_gate"
+  "stage_id": "release-gate-scope-20261004",
+  "objective": "Separate product release-blocking scientific evidence from claim-specific historical external reproduction evidence without weakening fail-closed validation.",
+  "previous_knowledge_consumed": [
+    "Frozen historical-reference architecture and P0 completion record.",
+    "Scientific validation policy distinguishing product validation from external reproduction claims."
   ],
-  "remaining": "Product-scope benchmark evidence and final engineering/product audits must still pass before any v1.0 release."
+  "baseline": {
+    "status": "VERIFIED",
+    "description": "The release gate aggregated product and external reproduction blockers into one overall release-blocking status."
+  },
+  "expected_improvement": [
+    "External historical reconstruction remains explicit and auditable but does not block a product release unless that claim is part of the declared release scope.",
+    "Product-scope scientific checks remain fully release-blocking."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED"
+      },
+      "regression_protection_count": {
+        "before": 0,
+        "after": 1
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "scientific_gate_affected": true,
+    "status": "VERIFIED",
+    "evidence": "Regression test locks the separation of product and external gate scope.",
+    "blocker": null
+  },
+  "failure_analysis": {
+    "status": "FACT",
+    "root_cause": "evaluate_release_gate aggregated external reproduction blockers into the overall product gate and marked external_reproduction release_blocking=true.",
+    "resolution": "Product gate now derives only from product blockers; external blockers remain separately reported."
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "Release-blocking scope must follow the declared product claim, not every optional historical reproduction claim.",
+      "External reproduction remains fail-closed and visible as claim-specific evidence."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [],
+    "tests": [
+      "tests/test_scientific_validation_gate.py::test_external_reproduction_does_not_block_product_gate"
+    ]
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "Do not weaken product scientific checks to accommodate unresolved external reproduction.",
+    "Do not present unresolved historical reconstruction as product failure when the release does not claim exact reconstruction."
+  ]
 }
