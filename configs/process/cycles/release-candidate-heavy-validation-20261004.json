@@ -1,0 +1,78 @@
+{
+  "stage_id": "release-candidate-heavy-validation-20261004",
+  "objective": "Execute the final release-scope source-backed scientific validation on the merged main baseline before any v1.0.0 certification.",
+  "previous_knowledge_consumed": [
+    {
+      "status": "VERIFIED",
+      "knowledge": "P0 frozen historical reference recovery is complete and external CPVS exact reproduction remains claim-specific and fail-closed."
+    },
+    {
+      "status": "VERIFIED",
+      "knowledge": "PR #144 separates product release-blocking scientific evidence from external historical reconstruction evidence."
+    }
+  ],
+  "baseline": {
+    "status": "VERIFIED",
+    "reference": "main@189ada2dcb7a0b690c299b1790cb343eb4c97014",
+    "release_version": "0.4.0"
+  },
+  "expected_improvement": [
+    "Execute the full source-backed scientific validation on the release-candidate commit.",
+    "Produce immutable evidence sufficient for final release-scope certification, or preserve explicit fail-closed blockers."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED"
+      },
+      "regression_protection_count": {
+        "before": 1,
+        "after": 1
+      }
+    }
+  },
+  "validation": {
+    "scientific_gate_affected": true,
+    "status": "NOT_VERIFIED",
+    "evidence": [
+      "Heavy Scientific Validation run 37190564481 completed successfully for release-candidate commit 824a9065e9255872be4f30d17deb5523eb1bcd8c.",
+      "CPVS parent evidence validated at 781602 rows and immutable ALeRCE/CPVS publisher references were acquired and verified.",
+      "The CPVS derivation predicate produced 741787 objects rather than the published 730184 membership; independent membership audit evidence was retained.",
+      "The heavy workflow explicitly classified exact CPVS reconstruction as UNRESOLVED and marked its product_gate_effect as none."
+    ],
+    "blocker": "Final release certification is not yet verified because the release-candidate CI run 37190564489 failed its cumulative lifecycle gate; the lifecycle record required correction before the candidate can be revalidated."
+  },
+  "failure_analysis": {
+    "status": "FACT",
+    "root_cause": "The release-candidate lifecycle record used the older permissive shape and failed the current executable lifecycle contract.",
+    "resolution": "Correct the lifecycle record to use non-empty expected_improvement and knowledge_extraction.findings, structured measurement.metrics, and validation.status=NOT_VERIFIED while the release blocker remains open."
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "Heavy source-backed acquisition and immutable reference verification completed successfully.",
+      "CPVS exact reconstruction remains an external unresolved claim and does not block the product gate.",
+      "Release-candidate certification must not proceed while the lifecycle contract itself is failing."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [],
+    "tests": [
+      "Scientific Validation workflow registry/lifecycle contracts",
+      "Cumulative lifecycle contract validation"
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "External reproduction claims remain separate from the product release gate.",
+    "No release tag or v1.0.0 claim is permitted before final scientific evidence and release-candidate CI are verified.",
+    "Lifecycle records are themselves release evidence and must satisfy the executable contract."
+  ]
+}
