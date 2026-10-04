@@ -18,6 +18,8 @@
 
 ## Unreleased
 
+- Post-v0.5.0 documentation alignment and ecosystem-derived platform guidance.
+
 - Frozen historical ALeRCE and CPVS publisher-reference contracts.
 - Immutable archive acquisition with MD5/SHA-256 evidence manifests.
 - Frozen/live separation for historical reproduction versus current-source drift monitoring.
