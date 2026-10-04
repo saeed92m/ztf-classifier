@@ -1,7 +1,7 @@
 # ZTF Classifier — Model Card
 
 ## Model identity
-- Software milestone: 0.4.0
+- Software milestone: 0.5.0
 - Scientific baseline: v0.2.0
 - Production model version: baseline_v0.2
 - Model family: XGBoost
