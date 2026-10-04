@@ -184,25 +184,30 @@ This separation prevents a historical benchmark reconstruction issue from being 
 
 ## 8. Current live validation status
 
-At the time of this handbook revision:
+As of 2026-10-04, the frozen-reference recovery and source-backed scientific-validation blocker is resolved on `main`.
 
-- Canonical recovery branch: `ci/heavy/fix-scientific-validation-blockers-20260928`
-- Canonical PR: **#124**
-- Latest completed CodeQL run associated with the prior head: **success**
-- Scientific Validation run **#526 / 36756251456** is the latest observed run before the current ALeRCE fix.
-- Its contract-validation job passed.
-- Its CPVS heavy job had reached CPVS light-curve download/normalization after successfully acquiring the 781k parent and StarEmbed evidence.
-- Its independent DR24/ALeRCE evidence job failed on a validator-ordering bug: the query intentionally fetched 1,000 rows for deterministic duplicate resolution while validation incorrectly required 150 rows before truncation.
-- The failure is fixed by deterministic sort → deduplicate by object ID → select 150 → final exact-shape validation.
-- A regression test now locks this behavior.
+- PR #142 introduced immutable historical reference contracts and frozen/live separation.
+- PR #143 completed the acquisition/verification path, heavy source-backed validation, lifecycle-gate correction, and continuity documentation.
+- PR #143 was merged to `main`.
+- Current `main` HEAD: `044e57af46201654061cbca2300ec384a113500a`.
+- Open PRs: **none**.
+- Open issues: **none**.
+- Issue #63 (source-backed Scientific Validation adapters/release dashboard): **closed as completed**.
+- Issue #51 (historical ALeRCE drift/cache dependency): **closed as not planned** because immutable publisher evidence supersedes mutable historical-cache reproduction; live ALeRCE remains drift monitoring.
+- Immutable ALeRCE historical reference: Zenodo 4279623 / 2020-06-09 snapshot.
+- Immutable CPVS published membership reference: Zenodo 5764899 / 730,184 objects.
+- CPVS parent reference: Zenodo 3886372 / 781,602 objects.
+- The scientific gate now distinguishes product-level validation from the claim-specific exact CPVS historical-reproduction question.
+- Exact CPVS membership reconstruction remains **UNRESOLVED as an external scientific claim**, not a product failure. The published 730,184-member set is preserved as the immutable comparison reference; no predicate is tuned to force cardinality.
+- CI/lifecycle correction was handled by adding the required cumulative process record rather than weakening the release gate.
 
-**Therefore Scientific Validation is not declared PASS yet.**
-
-The next CI run must validate the fix against the real ALeRCE source and complete the remaining scientific gate.
+**Scientific-validation recovery is complete. The remaining work is release-scope audit and final release publication, not the old ALeRCE/CPVS blocker.**
 
 ---
 
 ## 9. Production architecture
+
+
 
 The production path is source-driven and benchmark-independent:
 
