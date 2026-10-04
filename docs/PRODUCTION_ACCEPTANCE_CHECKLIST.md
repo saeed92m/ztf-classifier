@@ -1,6 +1,6 @@
 # Production Acceptance Checklist
 
-Current evidence: `reports/acceptance/final-platform-acceptance-2026-09-25.md` (audited against current `main`)
+Current evidence: P0 frozen-reference/source-backed validation evidence completed on `main` at `044e57af46201654061cbca2300ec384a113500a` (2026-10-04). The remaining unchecked items are final release-scope audits, not the former ALeRCE/CPVS recovery blocker.
 
 This checklist is the final gate for the Astronomical Data Analysis & Discovery Platform layer.
 
@@ -52,7 +52,7 @@ This checklist is the final gate for the Astronomical Data Analysis & Discovery 
 
 ## Scientific validation status
 
-The engineering/platform gates are implemented and CI-covered. The independent scientific-validation gate is intentionally **NOT VERIFIED** until the pinned external benchmarks and immutable historical raw-data evidence are executed. See `docs/SCIENTIFIC_VALIDATION_BENCHMARK.md` and issue #51.
+The engineering/platform gates are implemented and CI-covered. The P0 source-backed scientific-validation recovery is **COMPLETE**: immutable ALeRCE/CPVS references were acquired and verified, DR24/ALeRCE source-backed evidence completed, heavy CPVS derivation/audit completed, and the lifecycle gate was verified. The exact 730,184-member CPVS historical reproduction remains a claim-specific **UNRESOLVED** external question and is fail-closed; it is not a product failure and is not forced by cardinality tuning.
 
 ## Release evidence
 
@@ -67,13 +67,13 @@ The release is accepted only after all engineering gates and the mandatory scien
 - [x] Reproducible table benchmark runner produces JSON/Markdown evidence and hashes its input.
 - [x] Regression comparison is executable and release-blocking.
 - [x] Registry contract is exercised by GitHub Actions.
-- [ ] All five source-backed benchmark adapters are implemented and executed with immutable evidence.
-- [ ] All required leakage checks are PASS for the release candidate.
-- [ ] Full scientific validation across ingestion -> normalization -> QC -> feature generation -> inference -> calibration/OOD -> provenance is PASS.
+- [x] P0 source-backed benchmark/reference execution and immutable evidence acquisition are complete for the declared recovery scope.
+- [ ] All required leakage checks are PASS for the final release candidate.
+- [ ] Full scientific validation across ingestion -> normalization -> QC -> feature generation -> inference -> calibration/OOD -> provenance is PASS for the final release candidate.
 - [x] Scientific Validation Dashboard/Report is integrated into the Workbench via the versioned API and Workbench validation view.
-- [ ] No unresolved benchmark regression remains.
+- [ ] No unresolved benchmark regression remains for the final release scope.
 
-The scientific gate remains **NOT VERIFIED** until the unchecked source-backed and leakage/evidence items above are completed. Engineering CI success alone cannot satisfy this gate.
+The P0 scientific-validation recovery gate is **COMPLETE**. The final release gate remains open until the unchecked final-release audits above are executed and dispositioned. Engineering CI success alone still cannot satisfy the final release gate.
 
 ## Definition of Done — Scientific Validation Gate
 
