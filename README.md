@@ -4,7 +4,7 @@ A CPU-oriented machine-learning research pipeline for classification of astronom
 
 ## Project status
 
-**Version:** v0.4.0
+**Version:** v0.5.0
 **Status:** Hardened production-oriented research pipeline with reproducibility, provenance, registry-backed inference, strict ingestion diagnostics, and validated CLI E2E paths
 
 The v0.2 core pipeline includes:
@@ -278,7 +278,7 @@ Current validated areas include:
 
 The full test suite is the release gate. CI runs installation, dependency verification, Ruff, the complete pytest suite, and package import verification. Registry-backed prediction and batch paths are covered by real subprocess E2E tests.
 
-The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the software package milestone is `v0.4.0`.
+The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the software package milestone is `v0.5.0`.
 
 ## Repository structure
 
