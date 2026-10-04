@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-146-v050-release-preparation",
+  "objective": "Freeze and certify the v0.5.0 package release metadata without changing scientific behavior or weakening the release gates.",
+  "previous_knowledge_consumed": ["PR-145", "release-gate-scope-20261004", "cumulative-lifecycle-gate", "heavy-scientific-validation-20261004"],
+  "baseline": {
+    "revision": "982d65ae04934c1b43950af919355c7e377cb4f8",
+    "status": "Scientifically validated release candidate; package version and changelog are being frozen for v0.5.0."
+  },
+  "expected_improvement": ["release reproducibility", "release traceability", "process compliance"],
+  "measurement": {
+    "metrics": {
+      "correctness": {"before": "v0.5.0 package metadata was not yet frozen", "after": "package metadata and changelog identify the same intended v0.5.0 release"},
+      "reproducibility": {"before": "release metadata remained mutable", "after": "version and scientific-status notes are committed to the release branch"},
+      "reliability": {"before": "release candidate lacked final package-version freeze", "after": "release automation can validate the frozen v0.5.0 version"}
+    }
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "This change only freezes package metadata and release documentation.",
+      "Heavy source-backed Scientific Validation already passed on the release candidate.",
+      "The unresolved exact CPVS reconstruction remains explicitly external-only and is not reclassified by this release-preparation change."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": ["The initial CI run for PR-146 failed because the cumulative lifecycle gate requires a machine-readable cycle record for every meaningful pull request."]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": ["Release-only documentation and version changes still require an executable cumulative lifecycle record.", "Release metadata must not be used to conceal unresolved external historical reproduction claims."]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": ["PR-146 CI must pass after this lifecycle record is corrected.", "The v0.5.0 tag and GitHub release must only be created after the final gated main revision is verified."]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": ["cumulative lifecycle gate", "fail-closed scientific validation", "product-gate versus external-claim separation", "frozen historical reference contracts"]
+}
