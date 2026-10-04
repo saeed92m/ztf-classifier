@@ -1,0 +1,62 @@
+{
+  "stage_id": "release-candidate-heavy-validation-20261004",
+  "objective": "Execute the final release-scope source-backed scientific validation on the merged main baseline before any v1.0.0 certification.",
+  "previous_knowledge_consumed": [
+    {
+      "status": "VERIFIED",
+      "knowledge": "P0 frozen historical reference recovery is complete and external CPVS exact reproduction remains claim-specific and fail-closed."
+    },
+    {
+      "status": "VERIFIED",
+      "knowledge": "PR #144 separates product release-blocking scientific evidence from external historical reconstruction evidence."
+    }
+  ],
+  "baseline": {
+    "status": "VERIFIED",
+    "reference": "main@189ada2dcb7a0b690c299b1790cb343eb4c97014",
+    "release_version": "0.4.0"
+  },
+  "expected_improvement": {
+    "status": "SUPPORTED",
+    "target": "Obtain executable final-release evidence for product-scope source acquisition and scientific validation, or retain explicit fail-closed blockers."
+  },
+  "measurement": {
+    "correctness": "NOT_MEASURED",
+    "scientific_validity": "NOT_MEASURED",
+    "reproducibility": "NOT_MEASURED",
+    "regression_protection_count": {
+      "before": 1,
+      "after": 1
+    }
+  },
+  "validation": {
+    "scientific_gate_affected": true,
+    "status": "SUPPORTED",
+    "evidence": [
+      "This ci/heavy branch intentionally triggers the full source-backed validation workflow.",
+      "No release tag is created by this stage."
+    ],
+    "blocker": "Final release certification remains pending until the heavy execution and final release evidence are verified."
+  },
+  "failure_analysis": {
+    "status": "FACT",
+    "root_cause": "The ordinary main CI path validates contracts but does not execute the full source-backed heavy benchmark path.",
+    "resolution": "Run the declared heavy validation path on a dedicated release-candidate branch before release freeze."
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "knowledge": "Release certification requires executable evidence on the release candidate, not only ordinary CI contract success."
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [],
+    "tests": [
+      "Scientific Validation workflow registry/lifecycle contracts"
+    ]
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "External reproduction claims remain separate from the product release gate.",
+    "No release tag or v1.0.0 claim is permitted before final scientific evidence is verified."
+  ]
+}
