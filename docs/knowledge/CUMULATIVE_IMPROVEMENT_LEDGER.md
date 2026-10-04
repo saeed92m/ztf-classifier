@@ -13,3 +13,7 @@ This ledger is the auditable growth record for meaningful implementation cycles.
 ## Measurement rule
 
 If numeric measurement is not applicable or not yet available, record NOT_MEASURED rather than inventing a value and explain why in the cycle evidence.
+
+
+| PR #147 / v0.5.0 release hardening | v0.5.0 release publication | Avoid duplication of ~3.77 GB validated evidence | Release runner disk exhausted by cp -a | Move extracted evidence tree without duplicating it | Release reliability improved; scientific semantics unchanged | Re-verify release publication after the infrastructure fix | Heavy artifact restoration copied the full tree unnecessarily | AD-CI-RELEASE-001 | PR lifecycle gate + release workflow verification | Accepted after successful release rerun | Keep heavy-artifact handling storage-aware |
+| Ecosystem review / 2026-10-05 | Public ZTF/ALeRCE project patterns | Adopt only high-value architecture lessons | Some capabilities existed implicitly | QC, cross-match, anomaly, provenance and representation-diagnostic boundaries explicitly documented | Architecture clarity improved without parity-driven dependencies | Future capabilities remain unimplemented by design | Similarity to external repositories is not sufficient justification for scope | ECOSYS-001..007 | Documentation/release-scope review | Accepted as roadmap guidance | Revisit in future milestones with independent evidence/profiling |
