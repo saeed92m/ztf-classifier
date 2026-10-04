@@ -413,6 +413,67 @@ jobs:
           path: reports/scientific_validation/external_source_evidence/**
           if-no-files-found: warn
 
+
+  frozen-historical-reference:
+    name: Verify immutable historical ALeRCE and CPVS references
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/heavy/')) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        benchmark:
+          - alerce_reference_frozen_20200609
+          - ztf_periodic_730k_published
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+
+      - name: Acquire and verify immutable publisher snapshot
+        run: |
+          set -euo pipefail
+          root="reports/scientific_validation/frozen_reference/${{ matrix.benchmark }}"
+          mkdir -p "$root"
+          python scripts/acquire_frozen_reference_evidence.py "${{ matrix.benchmark }}" --output "$root"
+
+      - name: Validate evidence manifest
+        run: |
+          set -euo pipefail
+          manifest="reports/scientific_validation/frozen_reference/${{ matrix.benchmark }}/evidence_manifest.json"
+          test -s "$manifest"
+          python - "$manifest" <<'PY'
+          import json, sys
+          from pathlib import Path
+          p=Path(sys.argv[1])
+          x=json.loads(p.read_text(encoding="utf-8"))
+          for k in ("benchmark_id","source_url","archive","md5","sha256","member_count"):
+              if not x.get(k):
+                  raise SystemExit(f"missing evidence field: {k}")
+          print(json.dumps({k:x[k] for k in ("benchmark_id","archive","md5","sha256","member_count")}, indent=2))
+          PY
+
+      - name: Remove large source archive before artifact upload
+        if: always()
+        run: |
+          find reports/scientific_validation/frozen_reference -type f \
+            ! -name 'evidence_manifest.json' -delete
+
+      - name: Upload immutable-reference evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-reference-evidence-${{ matrix.benchmark }}
+          path: reports/scientific_validation/frozen_reference/${{ matrix.benchmark }}/evidence_manifest.json
+          if-no-files-found: error
+
   scheduled-scientific-validation:
     name: Source provenance acquisition and scientific gate readiness
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_heavy == false)

@@ -272,3 +272,39 @@ The product may claim only what the evidence supports.
 Every benchmark manifest must explicitly declare whether its labels are `ground_truth` or `reference_system` evidence.
 
 A `reference_system` benchmark such as ALeRCE must use a reference-specific label field and provenance. Its predictions may be compared with the product output, but they must never be represented as ground truth or satisfy a ground-truth provenance requirement.
+
+
+## Immutable historical reference policy — 2026-10-04
+
+For historical claims, the validation runner MUST prefer an immutable publisher snapshot when one exists.
+
+### ALeRCE
+
+- Historical reference: Zenodo 4279623, DOI 10.5281/zenodo.4279623.
+- Scope: classifier/features/outputs through 2020-06-09.
+- Evaluation role: reference_system, never ground_truth.
+- Live ALeRCE: drift/reference monitoring only.
+
+### CPVS
+
+- Parent: Zenodo 3886372, 781,602 objects.
+- Published membership: Zenodo 5764899, 730,184 objects.
+- Evaluation role: published catalog/membership benchmark.
+- Current-source derivation: diagnostic reconstruction only.
+
+### Acceptance invariant
+
+A current-source reconstruction MUST NOT replace an immutable published benchmark. A row-count mismatch MUST NOT be repaired by changing scientific predicates without source evidence.
+
+### Evidence requirement
+
+Contracts in Git do not constitute benchmark execution evidence. The release gate requires:
+
+1. archive acquisition;
+2. checksum verification;
+3. schema/member validation;
+4. object-ID integrity checks;
+5. provenance manifest;
+6. adapter execution;
+7. generated comparison/report artifacts;
+8. evidence attached to the release decision.

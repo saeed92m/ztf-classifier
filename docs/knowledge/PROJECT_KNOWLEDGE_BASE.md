@@ -32,3 +32,23 @@ Every implementation cycle consumes validated prior knowledge, records its inher
 4. Encode prevention as a test, invariant, contract, benchmark, or rule when possible.
 5. Link the knowledge to the cumulative ledger and affected roadmap/architecture item.
 6. Carry the knowledge into the next implementation cycle.
+
+
+## Frozen historical-reference knowledge — 2026-10-04
+
+- ALeRCE Zenodo **4279623** is the immutable historical reference for the 2020-06-09 classifier/features/output state. — VERIFIED
+- Live ALeRCE API/TAP is a mutable current-source drift/reference lane and must not be substituted for the frozen historical snapshot. — VERIFIED
+- ZTF CPVS parent population is **781,602** from Zenodo **3886372**. — VERIFIED
+- Published CPVS quality-selected membership is **730,184** from Zenodo **5764899**. — VERIFIED
+- Published 730,184 membership is the historical membership benchmark; current-source reconstruction is diagnostic only. — VERIFIED
+- Archive acquisition must validate published checksums and emit SHA-256/member evidence before benchmark execution. — VERIFIED
+- Public ecosystem review supports explicit preprocessing/feature lineage, versioned frozen data releases, and source-specific feature mappings. — SUPPORTED
+- Cross-match/catalog context, explainability, human review, and multimodal/image readiness are roadmap capabilities; they are not reasons to add unnecessary GPU infrastructure to the current release. — SUPPORTED
+- Ground truth, reference predictions, classification uncertainty, OOD, and scientific anomaly remain separate semantic layers. — VERIFIED
+
+### New permanent prevention rules
+
+1. Never reconstruct a historical published benchmark solely from today's mutable API/source if an immutable publisher snapshot exists.
+2. Never tune a scientific selection predicate to reproduce a published row count.
+3. Never allow a reference-system prediction to satisfy an independent-ground-truth requirement.
+4. Every immutable external archive used for release validation must be hash-verified and provenance-recorded.
