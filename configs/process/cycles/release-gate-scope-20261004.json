@@ -1,0 +1,14 @@
+{
+  "cycle_id": "release-gate-scope-20261004",
+  "date": "2026-10-04",
+  "stage": "final-release-audit",
+  "status": "implemented",
+  "change": "Separate the product scientific release gate from claim-specific historical external reproduction evidence.",
+  "problem": "The release gate treated unresolved CPVS historical reconstruction as product release-blocking even though the handbook and scientific-validation architecture explicitly classify it as an external claim that must remain fail-closed without blocking unrelated product validation.",
+  "root_cause": "evaluate_release_gate aggregated product and external blockers into one overall status and marked external_reproduction.release_blocking=true.",
+  "rule": "Only declared product-scope scientific evidence blocks the product release. External historical reproduction claims remain explicit, auditable, and fail-closed but do not become product failures unless the release explicitly claims that reconstruction.",
+  "regression_protection": [
+    "tests/test_scientific_validation_gate.py::test_external_reproduction_does_not_block_product_gate"
+  ],
+  "remaining": "Product-scope benchmark evidence and final engineering/product audits must still pass before any v1.0 release."
+}
