@@ -16,47 +16,63 @@
     "reference": "main@189ada2dcb7a0b690c299b1790cb343eb4c97014",
     "release_version": "0.4.0"
   },
-  "expected_improvement": {
-    "status": "SUPPORTED",
-    "target": "Obtain executable final-release evidence for product-scope source acquisition and scientific validation, or retain explicit fail-closed blockers."
-  },
+  "expected_improvement": [
+    "Execute the full source-backed scientific validation on the release-candidate commit.",
+    "Produce immutable evidence sufficient for final release-scope certification, or preserve explicit fail-closed blockers."
+  ],
   "measurement": {
-    "correctness": "NOT_MEASURED",
-    "scientific_validity": "NOT_MEASURED",
-    "reproducibility": "NOT_MEASURED",
-    "regression_protection_count": {
-      "before": 1,
-      "after": 1
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED"
+      },
+      "regression_protection_count": {
+        "before": 1,
+        "after": 1
+      }
     }
   },
   "validation": {
     "scientific_gate_affected": true,
-    "status": "SUPPORTED",
+    "status": "NOT_VERIFIED",
     "evidence": [
-      "This ci/heavy branch intentionally triggers the full source-backed validation workflow.",
-      "No release tag is created by this stage."
+      "Heavy Scientific Validation run 37190564481 completed successfully for release-candidate commit 824a9065e9255872be4f30d17deb5523eb1bcd8c.",
+      "CPVS parent evidence validated at 781602 rows and immutable ALeRCE/CPVS publisher references were acquired and verified.",
+      "The CPVS derivation predicate produced 741787 objects rather than the published 730184 membership; independent membership audit evidence was retained.",
+      "The heavy workflow explicitly classified exact CPVS reconstruction as UNRESOLVED and marked its product_gate_effect as none."
     ],
-    "blocker": "Final release certification remains pending until the heavy execution and final release evidence are verified."
+    "blocker": "Final release certification is not yet verified because the release-candidate CI run 37190564489 failed its cumulative lifecycle gate; the lifecycle record required correction before the candidate can be revalidated."
   },
   "failure_analysis": {
     "status": "FACT",
-    "root_cause": "The ordinary main CI path validates contracts but does not execute the full source-backed heavy benchmark path.",
-    "resolution": "Run the declared heavy validation path on a dedicated release-candidate branch before release freeze."
+    "root_cause": "The release-candidate lifecycle record used the older permissive shape and failed the current executable lifecycle contract.",
+    "resolution": "Correct the lifecycle record to use non-empty expected_improvement and knowledge_extraction.findings, structured measurement.metrics, and validation.status=NOT_VERIFIED while the release blocker remains open."
   },
   "knowledge_extraction": {
     "status": "VERIFIED",
-    "knowledge": "Release certification requires executable evidence on the release candidate, not only ordinary CI contract success."
+    "findings": [
+      "Heavy source-backed acquisition and immutable reference verification completed successfully.",
+      "CPVS exact reconstruction remains an external unresolved claim and does not block the product gate.",
+      "Release-candidate certification must not proceed while the lifecycle contract itself is failing."
+    ]
   },
   "regression": {
     "status": "PASS",
     "open_blockers": [],
     "tests": [
-      "Scientific Validation workflow registry/lifecycle contracts"
+      "Scientific Validation workflow registry/lifecycle contracts",
+      "Cumulative lifecycle contract validation"
     ]
   },
-  "decision": "ACCEPT",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "External reproduction claims remain separate from the product release gate.",
-    "No release tag or v1.0.0 claim is permitted before final scientific evidence is verified."
+    "No release tag or v1.0.0 claim is permitted before final scientific evidence and release-candidate CI are verified.",
+    "Lifecycle records are themselves release evidence and must satisfy the executable contract."
   ]
 }
