@@ -18,7 +18,7 @@ The roadmap ends only at:
 
 ## 1. P0 — Scientific validation recovery
 
-**Current state: In Progress**
+**Current state: Completed (2026-10-04)**
 
 - [x] Product-vs-external-reproduction scopes separated.
 - [x] CPVS unresolved state represented explicitly.
@@ -28,11 +28,11 @@ The roadmap ends only at:
 - [x] ALeRCE ZTF schema contract pinned to `ztf`.
 - [x] Deterministic duplicate-resolution design specified.
 - [x] Regression test added for ALeRCE duplicate-version handling.
-- [ ] Real ALeRCE source-backed evidence run passes after the validator-ordering fix.
-- [ ] CPVS heavy source-backed derivation completes.
-- [ ] Independent 730,184 membership audit completes.
-- [ ] Scientific gate classifies the final evidence correctly.
-- [ ] Final release-gate behavior verified by a completed heavy run.
+- [x] Real ALeRCE source-backed evidence run passes after the validator-ordering fix.
+- [x] CPVS heavy source-backed derivation completes.
+- [x] Independent 730,184 membership audit completes; exact historical membership remains correctly classified as UNRESOLVED where it does not match the independent published set.
+- [x] Scientific gate classifies the final evidence correctly.
+- [x] Final release-gate behavior verified by a completed heavy run.
 
 **Exit:** scientific validation run completed; every release-blocking evidence contract is PASS, or any explicitly unresolved claim is outside the release scope and documented as such.
 
@@ -253,5 +253,6 @@ No hidden phase remains after v1.0. Post-release work is a new lifecycle/release
 
 ---
 
-**Current status:** P0 In Progress.  
-**Current blocker:** real scientific-validation evidence must complete after the latest ALeRCE validator fix; the project is not yet declared complete.
+**Current status:** P0 Completed.  
+**Current blocker:** none in the former scientific-validation recovery scope.  
+**Next:** release-scope audit → release freeze → publication of the currently declared software release. v1.0 remains gated by the complete product-scope audit.
