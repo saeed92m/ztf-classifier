@@ -345,19 +345,25 @@ The repository now separates:
 
 An unresolved external reproduction claim must not silently become a product failure. Conversely, the project must not claim exact historical reproduction without exact evidence.
 
-### Current recovery status
+### Current scientific-validation status
 
-- PR #124: `ci/heavy/fix-scientific-validation-blockers-20260928`
-- Latest observed Scientific Validation run before the current fix: #526 / `36756251456`
-- The contract-validation job passed.
-- The heavy CPVS job reached CPVS light-curve download/normalization after successful 781k parent and StarEmbed acquisition.
-- The independent DR24/ALeRCE job exposed a validator-ordering bug: the ALeRCE query intentionally fetched 1,000 rows for deterministic duplicate resolution, while validation incorrectly required 150 rows before truncation.
-- The fix now performs deterministic sort → deduplication by object ID → 150-row selection → final exact-shape validation, with a regression test.
-- Scientific Validation is **not yet PASS**; the next real source-backed run must verify the fix and complete the remaining evidence gates.
-- The project completion contract is documented in `docs/HANDBOOK_UPDATED_v2.3.md`.
-- The finite completion roadmap is documented in `docs/roadmap/CUMULATIVE_LEARNING_ROADMAP_v2.3.md`.
+The frozen historical-reference recovery and source-backed validation blocker was completed on 2026-10-04.
+
+- PR #142 introduced immutable historical reference contracts and frozen/live separation.
+- PR #143 completed immutable ALeRCE/CPVS acquisition and verification, source-backed evidence, heavy validation, and lifecycle-gate correction; it was merged to `main`.
+- Current `main` HEAD: `044e57af46201654061cbca2300ec384a113500a`.
+- Open pull requests: **none**.
+- Open issues: **none**.
+- Issue #63 is closed as completed; issue #51 is closed as not planned because immutable historical publisher evidence supersedes mutable live-cache reproduction.
+- Immutable references are retained for historical reproduction: ALeRCE 2020-06-09 snapshot (Zenodo 4279623), CPVS parent 781,602 objects (Zenodo 3886372), and published CPVS membership 730,184 objects (Zenodo 5764899).
+- Exact CPVS historical membership reproduction remains **UNRESOLVED as an external claim** and is fail-closed; it is not represented as a product failure and must not be forced by cardinality-tuning.
+- Live ALeRCE is used for current source/drift evidence, while immutable archives are used for historical reproduction.
+
+The project is therefore past the former scientific-validation blocker. The remaining work toward a final release is the release-scope audit, evidence bundle, release freeze, and publication of the declared software release.
 
 ## Astronomical Data Analysis & Discovery Platform layer
+
+
 
 The classifier is being expanded into a unified astronomical analysis application while preserving the frozen scientific v0.2.0 baseline.
 
