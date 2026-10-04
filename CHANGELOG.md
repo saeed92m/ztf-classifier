@@ -2,14 +2,11 @@
 
 ## Unreleased
 
-- durable scientific-result catalog queries and CSV export;
-- deterministic scientific report generation;
-- Workbench catalog, jobs, and report integration;
-- restart-safe incremental result cursors and durable checkpoints;
-- extensible Scientific Feature Engine backend registration and discovery;
-- feature-backend selection persisted through analysis jobs and results;
-- optional API-key protection and request-ID observability;
-- production environment template and platform-oriented package metadata.
+- Frozen historical ALeRCE and CPVS publisher-reference contracts.
+- Immutable archive acquisition with MD5/SHA-256 evidence manifests.
+- Frozen/live separation for historical reproduction versus current-source drift monitoring.
+- Heavy source-backed scientific-validation evidence and lifecycle-gate correction.
+- Scientific-validation completion record for 2026-10-04.
 
 ## [0.4.0] — Reproducibility and production hardening
 
