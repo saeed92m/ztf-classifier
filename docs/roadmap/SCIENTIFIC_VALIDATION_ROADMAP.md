@@ -107,12 +107,14 @@ The benchmark source data remains external to Git; Git stores the contracts, man
 - [x] CPVS published-membership contract (Zenodo 5764899)
 - [x] CPVS parent-source contract (Zenodo 3886372)
 - [x] fail-closed acquisition utility
-- [ ] acquire and verify ALeRCE frozen archive
-- [ ] acquire and verify CPVS published membership archive
-- [ ] acquire and verify CPVS parent archive
-- [ ] execute historical-reference adapters
-- [ ] close issues #51 and #63 with evidence
-- [ ] final scientific release gate PASS
+- [x] acquire and verify ALeRCE frozen archive
+- [x] acquire and verify CPVS published membership archive
+- [x] acquire and verify CPVS parent archive
+- [x] execute historical-reference/source-backed adapters for the declared P0 recovery scope
+- [x] close issues #51 and #63 with evidence
+- [x] complete P0 scientific-validation recovery and classify the CPVS exact-reproduction claim fail-closed
+
+**P0 exit status (2026-10-04): COMPLETE.** The remaining final-release work is leakage/integrity/temporal audit, full product-scope replay/evidence, release evidence generation, and release freeze; these are not retroactive blockers for the completed historical-reference recovery.
 
 
 ## Cumulative Learning overlay — permanent lifecycle control
