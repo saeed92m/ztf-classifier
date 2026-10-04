@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0] — Scientific validation release candidate
+
+### Added
+- Source-backed DR24 and ALeRCE scientific-validation evidence contracts and immutable historical publisher references.
+- Heavy release-candidate validation and executable cumulative lifecycle evidence.
+- Explicit separation of product release-blocking validation from claim-specific historical external reproduction.
+
+### Changed
+- Release certification now requires the release candidate to satisfy the scientific gate, lifecycle contracts, package checks, and reproducibility evidence.
+
+### Scientific status
+- CPVS parent evidence: 781,602 rows verified.
+- Published CPVS membership reference: 730,184 objects retained as immutable external reference.
+- Exact CPVS reconstruction remains explicitly unresolved and does not block the product gate unless exact reconstruction is part of the declared release claim.
+
+
 ## Unreleased
 
 - Frozen historical ALeRCE and CPVS publisher-reference contracts.
