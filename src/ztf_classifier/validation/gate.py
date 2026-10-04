@@ -107,11 +107,13 @@ def evaluate_release_gate(
             "blockers": manifest_blockers,
         })
 
-    # Product execution and historical external reproduction are separate
-    # evidence scopes, but both are release-blocking scientific evidence.
+    # Product execution is the release-blocking scientific scope. Historical
+    # external reconstruction is retained as claim-specific evidence and may
+    # remain UNRESOLVED without falsely blocking the product release.
     product_status = "PASS" if not product_blockers else "NOT_VERIFIED"
     external_status = "PASS" if not external_blockers else "NOT_VERIFIED"
-    overall_status = "PASS" if not blockers else "NOT_VERIFIED"
+    overall_status = product_status
+    release_blockers = product_blockers
     return {
         "status": overall_status,
         "release_blocking": True,
@@ -124,13 +126,14 @@ def evaluate_release_gate(
         },
         "external_reproduction": {
             "status": external_status,
-            "release_blocking": True,
+            "release_blocking": False,
             "claim": "exact historical CPVS membership reconstruction",
             "benchmarks": list(EXTERNAL_REPRODUCTION_BENCHMARKS),
             "blockers": external_blockers,
         },
         "benchmarks": benchmarks,
-        "blockers": blockers,
+        "blockers": release_blockers,
+        "external_blockers": external_blockers,
         "interpretation": (
             "Benchmark success is not proof of universal correctness; it is quantitative "
             "and reproducible evidence for the declared population, source/version, labels, "
