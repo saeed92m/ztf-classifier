@@ -54,3 +54,20 @@ def test_manifest_rejects_unknown_scientific_checks():
     }
     with pytest.raises(ValueError, match="unknown scientific checks"):
         BenchmarkManifest.from_dict(payload)
+
+
+def test_external_reproduction_does_not_block_product_gate(tmp_path):
+    evidence = tmp_path / "alerce_reference"
+    evidence.mkdir()
+    checks = {name: "PASS" for name in REQUIRED_SCIENTIFIC_CHECKS}
+    (evidence / "benchmark_result.json").write_text(
+        json.dumps({"status": "PASS", "provenance_complete": True, "checks": checks}),
+        encoding="utf-8",
+    )
+    result = evaluate_release_gate(registry_dir="configs/benchmarks", evidence_dir=tmp_path)
+    assert result["release_blocking"] is True
+    assert result["product_gate"]["release_blocking"] is True
+    assert result["external_reproduction"]["release_blocking"] is False
+    assert result["status"] == "NOT_VERIFIED"
+    assert any("star_embed_ztf_40k" in item for item in result["blockers"])
+    assert result["external_blockers"]
