@@ -118,10 +118,15 @@ jobs:
                 echo "Existing tag points to validated SHA: $selected"
                 break
               fi
-              echo "Existing tag $selected points to $tag_sha, expected $EXPECTED_SHA"
+              echo "Stale pre-release tag $selected points to $tag_sha, expected $EXPECTED_SHA"
+              echo "Deleting stale tag so the immutable release can be created at the validated SHA."
+              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${selected}"
+              gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+                -f "ref=refs/tags/${selected}" \
+                -f "sha=${EXPECTED_SHA}" >/tmp/tag-recreated.json
+              echo "Recreated validated tag: $selected"
+              break
             fi
-            suffix=$((suffix + 1))
-            selected="${REQUESTED_TAG}.${suffix}"
           done
           {
             echo "tag=$selected"
