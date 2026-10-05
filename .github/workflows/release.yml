@@ -28,6 +28,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
+      - name: Checkout release manifest
+        if: github.event_name == 'push'
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          sparse-checkout: |
+            .github/release-manifest.json
+          sparse-checkout-cone-mode: false
+
       - name: Resolve release target
         id: target
         shell: bash
