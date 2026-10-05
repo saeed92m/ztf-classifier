@@ -61,7 +61,7 @@ def test_build_captures_expected_provenance():
     assert provenance.python_version
     assert provenance.platform
     assert provenance.machine
-    assert provenance.dependencies["ztf-classifier"] == "0.5.0"
+    assert provenance.dependencies["ztf-classifier"] == "1.0.0"
     assert provenance.dependencies["numpy"] == "2.4.6"
     assert provenance.dependencies["pandas"] == "3.0.6"
     assert provenance.dependencies["scipy"] == "1.17.1"
@@ -88,7 +88,7 @@ def test_to_dict_has_stable_top_level_contract():
     }
     assert data["provenance_schema_version"] == "1.1"
     assert data["model"] == {"version": "baseline_v0.2", "family": "XGBoost"}
-    assert data["software"]["version"] == "0.5.0"
+    assert data["software"]["version"] == "1.0.0"
     assert data["dataset"]["version"] == "benchmark_v0.2"
     assert data["dataset"]["sha256"] == sha256(DATASET_PATH)
     assert data["feature_schema"]["version"] == "v0.2"
