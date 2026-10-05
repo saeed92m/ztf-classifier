@@ -301,6 +301,7 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ steps.ref.outputs.tag }}
           generate_release_notes: true
           files: |
             dist/*.whl
