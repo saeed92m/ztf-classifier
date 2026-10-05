@@ -33,9 +33,6 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: main
-          sparse-checkout: |
-            .github/release-manifest.json
-          sparse-checkout-cone-mode: false
 
       - name: Resolve release target
         id: target
