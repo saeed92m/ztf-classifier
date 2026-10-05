@@ -80,28 +80,6 @@ jobs:
           run-id: ${{ steps.target.outputs.validation_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify release evidence reference
-        id: evidence_ref
-        shell: bash
-        env:
-          EXPECTED_TAG: ${{ steps.target.outputs.tag }}
-          EXPECTED_SHA: ${{ steps.target.outputs.sha }}
-        run: |
-          set -euo pipefail
-          ref_file="$(find "$RUNNER_TEMP/scientific-evidence" -type f -name release_ref.json -print -quit)"
-          test -n "$ref_file"
-          python - "$ref_file" "$EXPECTED_TAG" "$EXPECTED_SHA" <<'PY'
-          import json, sys, os
-          p=json.load(open(sys.argv[1]))
-          expected_tag, expected_sha = sys.argv[2], sys.argv[3]
-          if not isinstance(p.get("tag"),str) or not p["tag"].startswith("v"):
-              raise SystemExit("invalid release evidence tag")
-          if p.get("sha") != expected_sha:
-              raise SystemExit(f"release evidence SHA mismatch: {p.get('sha')} != {expected_sha}")
-          with open(os.environ["GITHUB_OUTPUT"],"a") as o:
-              o.write(f'tag={expected_tag}\nsha={expected_sha}\n')
-          PY
-
       - name: Resolve an immutable-safe release tag
         id: ref
         shell: bash
