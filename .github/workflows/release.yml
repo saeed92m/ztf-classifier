@@ -1,9 +1,6 @@
 name: Release
 
 on:
-  push:
-    paths:
-      - ".github/release-manifest.json"
   workflow_run:
     workflows:
       - Scientific Validation
@@ -18,18 +15,15 @@ jobs:
   release:
     name: Build and publish release
     if: >-
-      github.event_name == 'push' ||
-      (
-        github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success'
-      )
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
       - name: Checkout release source
         uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Resolve release target
         id: target
@@ -40,11 +34,14 @@ jobs:
           import json, os
           from pathlib import Path
           p=json.loads(Path(".github/release-manifest.json").read_text())
-          for k in ("tag","sha","validation_run_id"):
-              assert k in p, f"missing {k}"
-          assert p["tag"].startswith("v") and len(p["sha"]) == 40 and p["validation_run_id"] > 0
+          event_sha=os.environ["EVENT_SHA"]
+          if p.get("sha") != event_sha:
+              raise SystemExit(f"release manifest SHA {p.get('sha')} does not match validation SHA {event_sha}; release skipped")
+          tag=p.get("tag", "")
+          assert tag.startswith("v"), tag
           with open(os.environ["GITHUB_OUTPUT"],"a") as o:
-              o.write(f'tag={p["tag"]}\nsha={p["sha"]}\nvalidation_run_id={p["validation_run_id"]}\n')
+              o.write(f'tag={tag}\nsha={event_sha}\nvalidation_run_id={os.environ["VALIDATION_RUN_ID"]}\n')
+
           PY
 
       - name: Download scientific validation evidence
