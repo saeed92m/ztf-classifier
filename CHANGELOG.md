@@ -1,8 +1,10 @@
 # Changelog
 
-## [0.5.0] — Scientific validation release candidate
+## [0.5.0] — Scientific validation and immutable release
 
 ### Added
+- Immutable GitHub Release `v0.5.0-release` with verified wheel and source distribution.
+- Immutable-safe release-tag resolution and final asset verification.
 - Source-backed DR24 and ALeRCE scientific-validation evidence contracts and immutable historical publisher references.
 - Heavy release-candidate validation and executable cumulative lifecycle evidence.
 - Explicit separation of product release-blocking validation from claim-specific historical external reproduction.
@@ -17,6 +19,8 @@
 
 
 ## Unreleased
+
+- Final product-scope completion and v1.0 audit.
 
 - Post-v0.5.0 documentation alignment and ecosystem-derived platform guidance.
 
