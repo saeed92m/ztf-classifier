@@ -6,6 +6,23 @@ on:
       - Scientific Validation
     types:
       - completed
+  workflow_dispatch:
+    inputs:
+      validation_run_id:
+        description: "Successful Scientific Validation workflow run ID"
+        required: true
+        type: string
+        default: "37228748953"
+      release_tag:
+        description: "Validated release tag"
+        required: true
+        type: string
+        default: "v0.5.0"
+      release_sha:
+        description: "Validated release commit SHA"
+        required: true
+        type: string
+        default: "c645b1aadb7f1e5f45a09d88e1bc7417240a9f75"
 
 permissions:
   contents: write
@@ -15,9 +32,11 @@ jobs:
   release:
     name: Build and publish release
     if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      startsWith(github.event.workflow_run.head_branch, 'v')
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       startsWith(github.event.workflow_run.head_branch, 'v')) ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -26,14 +45,14 @@ jobs:
         with:
           name: scientific-validation-heavy
           path: ${{ runner.temp }}/scientific-evidence
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event_name == 'workflow_dispatch' && inputs.validation_run_id || github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Resolve and verify release ref
         id: ref
         shell: bash
         env:
-          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+          EXPECTED_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.release_sha || github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           ref_file="$(find "$RUNNER_TEMP/scientific-evidence" -type f -name release_ref.json -print -quit)"
