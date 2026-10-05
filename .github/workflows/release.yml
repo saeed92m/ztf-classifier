@@ -49,7 +49,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download tag-bound external source evidence
-        if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v8
         with:
           name: scientific-validation-external-source-evidence
@@ -58,7 +57,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download tag-bound frozen reference evidence
-        if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v8
         with:
           name: frozen-reference-evidence-alerce_reference_frozen_20200609
@@ -67,7 +65,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download tag-bound frozen CPVS reference evidence
-        if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v8
         with:
           name: frozen-reference-evidence-ztf_periodic_730k_published
