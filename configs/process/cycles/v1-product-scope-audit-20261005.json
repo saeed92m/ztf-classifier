@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "v1-product-scope-audit-20261005",
+  "objective": "Execute an evidence-backed audit of the declared P1-P6 Astronomical Data Analysis & Discovery Platform scope before release freeze.",
+  "previous_knowledge_consumed": [
+    "p1-operational-data-platform-20261001",
+    "pr-127-source-normalization-qc-replay",
+    "pr-146-v050-release-preparation",
+    "release-candidate-heavy-validation-20261004",
+    "immutable-release-publication-lesson-20261005"
+  ],
+  "baseline": {
+    "main_sha": "c7d05cded26f57031eb1d46301b1c6df20549a39",
+    "release": "v0.5.0-release",
+    "scientific_gate": "PASS"
+  },
+  "implementation": {
+    "status": "implemented",
+    "workflow": ".github/workflows/product-scope-audit.yml",
+    "scope": ["P1", "P2", "P3", "P4", "P5", "P6"]
+  },
+  "validation": {
+    "status": "pending",
+    "evidence": "GitHub Actions product-scope-audit workflow",
+    "acceptance": "All selected contract/integration tests and declared product-surface checks pass."
+  },
+  "failures": [],
+  "lessons": [
+    "Repository code presence is not sufficient for stage completion; the declared product surfaces require explicit executable audit evidence."
+  ],
+  "prevention_rules": [
+    "Do not mark P1-P6 complete from implementation inspection alone.",
+    "Require a reproducible audit workflow and retained evidence artifact before release freeze."
+  ],
+  "next_stage": "If PASS: final release-scope audit, freeze, and v1.0 evidence bundle. If FAIL: fix evidenced defects and rerun."
+}
