@@ -295,7 +295,8 @@ jobs:
           python -m pytest -q
           python -m build
 
-      - name: Remove incomplete published release shell
+      - name: Check whether GitHub Release already exists
+        id: existing_release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
@@ -303,22 +304,20 @@ jobs:
         run: |
           set -euo pipefail
           api="repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}"
-          release_id="$(gh api "$api" --jq .id 2>/dev/null || true)"
-          if [ -z "$release_id" ]; then
-            echo "No existing GitHub Release for $RELEASE_TAG; creation can proceed."
-            exit 0
+          if release_json="$(gh api "$api" 2>/dev/null)"; then
+            release_id="$(printf '%s' "$release_json" | jq -r '.id')"
+            draft="$(printf '%s' "$release_json" | jq -r '.draft')"
+            prerelease="$(printf '%s' "$release_json" | jq -r '.prerelease')"
+            asset_count="$(printf '%s' "$release_json" | jq '.assets | length')"
+            echo "GitHub Release already exists: tag=$RELEASE_TAG id=$release_id draft=$draft prerelease=$prerelease assets=$asset_count"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No GitHub Release exists for $RELEASE_TAG; creation can proceed."
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
-
-          asset_count="$(gh api "repos/${GITHUB_REPOSITORY}/releases/${release_id}" --jq ".assets | length")"
-          if [ "$asset_count" -ne 0 ]; then
-            echo "ERROR: existing release $RELEASE_TAG has $asset_count asset(s); refusing destructive replacement." >&2
-            exit 1
-          fi
-
-          echo "Removing incomplete published release shell id=$release_id for $RELEASE_TAG."
-          gh api --method DELETE "repos/${GITHUB_REPOSITORY}/releases/${release_id}"
 
       - name: Create GitHub release
+        if: steps.existing_release.outputs.exists != 'true'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.ref.outputs.tag }}
@@ -327,3 +326,9 @@ jobs:
             dist/*.whl
             dist/*.tar.gz
           fail_on_unmatched_files: true
+
+      - name: Verify existing release was preserved
+        if: steps.existing_release.outputs.exists == 'true'
+        run: |
+          echo "Release ${{ steps.ref.outputs.tag }} already exists and will not be recreated."
+          echo "This is intentional: immutable GitHub Releases/tags must never be deleted or recreated."
