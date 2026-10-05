@@ -148,7 +148,6 @@ jobs:
           root="$source"
           [ -d "$source/reports/scientific_validation" ] && root="$source/reports/scientific_validation"
           [ -d "$source/scientific_validation" ] && root="$source/scientific_validation"
-          test -f "$root/release/release_ref.json"
           mkdir -p reports
           rm -rf reports/scientific_validation
           mv "$root" reports/scientific_validation
