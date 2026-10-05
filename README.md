@@ -4,7 +4,7 @@ A CPU-oriented machine-learning research pipeline for classification of astronom
 
 ## Project status
 
-**Version:** v0.4.0
+**Version:** v0.5.0
 **Status:** Hardened production-oriented research pipeline with reproducibility, provenance, registry-backed inference, strict ingestion diagnostics, and validated CLI E2E paths
 
 The v0.2 core pipeline includes:
@@ -278,7 +278,7 @@ Current validated areas include:
 
 The full test suite is the release gate. CI runs installation, dependency verification, Ruff, the complete pytest suite, and package import verification. Registry-backed prediction and batch paths are covered by real subprocess E2E tests.
 
-The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the software package milestone is `v0.4.0`.
+The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the software package milestone is `v0.5.0`.
 
 ## Repository structure
 
@@ -327,39 +327,34 @@ A benchmark is evidence about this system; it is not the system's architecture.
 |---|---:|
 | CPVS parent | 781,602 |
 | Published membership | 730,184 |
-| Current candidate | 741,788 |
+| Current candidate | 741,787 |
 | Published ∩ candidate | 730,184 |
 | Published-only | 0 |
 | Candidate-only | 11,604 |
 
-The 11,604 objects are a **historical selection-reconstruction discrepancy**, not 11,604 ML errors or 11,604 production failures. The current predicate contains all published members but admits additional parent objects. The exact historical selection semantics remain unresolved and are being investigated as external-reproduction evidence.
+The 11,604 objects are a **historical selection-reconstruction discrepancy**, not ML errors or production failures. The current predicate contains all published members but admits additional parent objects. Exact historical selection semantics remain unresolved as external-reproduction evidence.
 
 No threshold or predicate is to be introduced solely to force the candidate cardinality to 730,184 without independent scientific evidence.
 
 ### Scientific gate architecture
 
-The repository now separates:
+The repository separates:
 
-- **Product Scientific Gate — release blocking:** validates the actual ingestion/analysis/inference product, including reproducibility, leakage controls, feature determinism, provenance, uncertainty/OOD where applicable, and product-scope benchmark evidence.
-- **External CPVS Reproduction Evidence — claim-specific fail-closed:** exact historical 730k/781k reproduction remains unresolved until source evidence proves the selection semantics.
+- **Product Scientific Gate — release blocking:** validates the actual ingestion/analysis/inference product and its declared evidence contracts.
+- **External CPVS Reproduction Evidence — claim-specific fail-closed:** exact historical 730,184/781,602 reproduction remains unresolved until source evidence proves the selection semantics.
 
 An unresolved external reproduction claim must not silently become a product failure. Conversely, the project must not claim exact historical reproduction without exact evidence.
 
-### Current scientific-validation status
+### v0.5.0 release state
 
-The frozen historical-reference recovery and source-backed validation blocker was completed on 2026-10-04.
+- Release tag: `v0.5.0`
+- Scientific Validation evidence: passed for the release candidate, including immutable ALeRCE/CPVS reference verification and the heavy source-backed run.
+- CPVS parent: 781,602 verified; published membership: 730,184 retained as immutable external reference.
+- Exact CPVS reconstruction: **UNRESOLVED**, external-only and non-blocking unless exact reconstruction is explicitly part of a future release claim.
+- Release infrastructure hardening: PR #147 changed heavy evidence restoration from filesystem copy to move, preventing the ~3.77 GB duplication that exhausted runner disk.
 
-- PR #142 introduced immutable historical reference contracts and frozen/live separation.
-- PR #143 completed immutable ALeRCE/CPVS acquisition and verification, source-backed evidence, heavy validation, and lifecycle-gate correction; it was merged to `main`.
-- Current `main` HEAD: `044e57af46201654061cbca2300ec384a113500a`.
-- Open pull requests: **none**.
-- Open issues: **none**.
-- Issue #63 is closed as completed; issue #51 is closed as not planned because immutable historical publisher evidence supersedes mutable live-cache reproduction.
-- Immutable references are retained for historical reproduction: ALeRCE 2020-06-09 snapshot (Zenodo 4279623), CPVS parent 781,602 objects (Zenodo 3886372), and published CPVS membership 730,184 objects (Zenodo 5764899).
-- Exact CPVS historical membership reproduction remains **UNRESOLVED as an external claim** and is fail-closed; it is not represented as a product failure and must not be forced by cardinality-tuning.
-- Live ALeRCE is used for current source/drift evidence, while immutable archives are used for historical reproduction.
+The remaining work after v0.5.0 is platform expansion and continuous scientific validation, not rewriting the frozen v0.2.0 baseline.
 
-The project is therefore past the former scientific-validation blocker. The remaining work toward a final release is the release-scope audit, evidence bundle, release freeze, and publication of the declared software release.
 
 ## Astronomical Data Analysis & Discovery Platform layer
 
