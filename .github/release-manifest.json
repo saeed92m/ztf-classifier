@@ -3,8 +3,8 @@
   "sha": "c645b1aadb7f1e5f45a09d88e1bc7417240a9f75",
   "validation_run_id": 37228748953,
   "mode": "immutable-historical-validation-publication",
-  "reason": "Publish the already validated immutable v0.5.0 tag using its successful source-backed Scientific Validation evidence; recovery is event-driven from a manifest change and never deletes or recreates an existing release.",
+  "reason": "Publish the already validated immutable v0.5.0 tag from its successful source-backed Scientific Validation evidence; manifest-change push is the deterministic non-manual recovery trigger and existing releases are repaired in place, never deleted or recreated.",
   "schema_version": 1,
   "workflow_contract": "event-driven",
-  "workflow_contract_revision": 6
+  "workflow_contract_revision": 7
 }
