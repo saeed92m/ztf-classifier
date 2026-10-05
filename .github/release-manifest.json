@@ -3,8 +3,8 @@
   "sha": "c645b1aadb7f1e5f45a09d88e1bc7417240a9f75",
   "validation_run_id": 37228748953,
   "mode": "immutable-historical-validation-publication",
-  "reason": "Publish the validated 0.5.0 package under a fresh release tag because v0.5.0 is permanently consumed by an immutable GitHub release; reuse the original validated evidence and never recreate or mutate the original tag.",
+  "reason": "Publish the validated 0.5.0 package under the requested fresh release tag when available; if that name is already consumed by an immutable release, automatically select the next deterministic suffix tag without mutating the immutable release.",
   "schema_version": 1,
   "workflow_contract": "event-driven",
-  "workflow_contract_revision": 13
+  "workflow_contract_revision": 14
 }
