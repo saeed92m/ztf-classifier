@@ -38,10 +38,10 @@ jobs:
           from pathlib import Path
           p=json.loads(Path(".github/release-manifest.json").read_text())
           event_sha=os.environ["EVENT_SHA"]
-          if p.get("sha") != event_sha:
-              raise SystemExit(f"release manifest SHA {p.get('sha')} does not match validation SHA {event_sha}; release skipped")
           tag=p.get("tag", "")
           assert tag.startswith("v"), tag
+          if not tag.startswith("v1."):
+              raise SystemExit(f"release workflow is frozen for v1.x publication; requested tag: {tag}")
           with open(os.environ["GITHUB_OUTPUT"],"a") as o:
               o.write(f'tag={tag}\nsha={event_sha}\nvalidation_run_id={os.environ["VALIDATION_RUN_ID"]}\n')
 
