@@ -34,14 +34,9 @@ jobs:
       - name: Resolve release target
         id: target
         shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
-          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = "push" ]; then
-            python - <<'PY'
+          python - <<'PY'
           import json, os
           from pathlib import Path
           p=json.loads(Path(".github/release-manifest.json").read_text())
@@ -51,15 +46,6 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"],"a") as o:
               o.write(f'tag={p["tag"]}\nsha={p["sha"]}\nvalidation_run_id={p["validation_run_id"]}\n')
           PY
-          else
-            python - <<'PY'
-          import os, json
-          from pathlib import Path
-          p=json.loads(Path(".github/release-manifest.json").read_text())
-          with open(os.environ["GITHUB_OUTPUT"],"a") as o:
-              o.write(f'tag={p["tag"]}\nsha={p["sha"]}\nvalidation_run_id={os.environ["WORKFLOW_RUN_ID"]}\n')
-          PY
-          fi
 
       - name: Download scientific validation evidence
         uses: actions/download-artifact@v8
