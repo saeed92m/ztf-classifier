@@ -28,6 +28,9 @@ jobs:
       - name: Resolve release target
         id: target
         shell: bash
+        env:
+          EVENT_SHA: ${{ github.event.workflow_run.head_sha }}
+          VALIDATION_RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           set -euo pipefail
           python - <<'PY'
