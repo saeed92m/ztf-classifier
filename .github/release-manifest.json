@@ -1,10 +1,10 @@
 {
-  "tag": "v0.5.0",
+  "tag": "v0.5.0-release",
   "sha": "c645b1aadb7f1e5f45a09d88e1bc7417240a9f75",
-  "validation_run_id": 37228748953,
+  "validation_run_id": 37305876702,
   "mode": "immutable-historical-validation-publication",
-  "reason": "Retry immutable v0.5.0 publication using direct gh release asset operations; never recreate/finalize an immutable release.",
+  "reason": "Publish the validated 0.5.0 package under a fresh release tag because v0.5.0 is permanently consumed by an immutable GitHub release; never recreate or mutate the original tag.",
   "schema_version": 1,
   "workflow_contract": "event-driven",
-  "workflow_contract_revision": 9
+  "workflow_contract_revision": 10
 }
