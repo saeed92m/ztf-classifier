@@ -6,5 +6,5 @@
   "reason": "Retry immutable v0.5.0 publication using direct gh release asset operations; never recreate/finalize an immutable release.",
   "schema_version": 1,
   "workflow_contract": "event-driven",
-  "workflow_contract_revision": 8
+  "workflow_contract_revision": 9
 }
