@@ -6,23 +6,11 @@ on:
       - Scientific Validation
     types:
       - completed
-  workflow_dispatch:
-    inputs:
-      validation_run_id:
-        description: "Successful Scientific Validation workflow run ID"
-        required: true
-        type: string
-        default: "37228748953"
-      release_tag:
-        description: "Validated release tag"
-        required: true
-        type: string
-        default: "v0.5.0"
-      release_sha:
-        description: "Validated release commit SHA"
-        required: true
-        type: string
-        default: "c645b1aadb7f1e5f45a09d88e1bc7417240a9f75"
+  push:
+    branches:
+      - main
+    paths:
+      - .github/release-manifest.json
 
 permissions:
   contents: write
@@ -32,20 +20,52 @@ jobs:
   release:
     name: Build and publish release
     if: >-
+      github.event_name == 'push' ||
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push' &&
-       startsWith(github.event.workflow_run.head_branch, 'v')) ||
-      github.event_name == 'workflow_dispatch'
+       startsWith(github.event.workflow_run.head_branch, 'v'))
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
+      - name: Resolve release target
+        id: target
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "push" ]; then
+            test -f .github/release-manifest.json
+            python - <<'PY'
+          import json, os
+          from pathlib import Path
+          payload=json.loads(Path(".github/release-manifest.json").read_text(encoding="utf-8"))
+          for key in ("tag","sha","validation_run_id"):
+              if key not in payload: raise SystemExit(f"release manifest missing {key!r}")
+          tag, sha, run_id = payload["tag"], payload["sha"], payload["validation_run_id"]
+          if not isinstance(tag,str) or not tag.startswith("v"): raise SystemExit(f"invalid release tag: {tag!r}")
+          if not isinstance(sha,str) or len(sha)!=40: raise SystemExit(f"invalid release SHA: {sha!r}")
+          if not isinstance(run_id,int) or run_id<=0: raise SystemExit(f"invalid validation run ID: {run_id!r}")
+          with open(os.environ["GITHUB_OUTPUT"],"a",encoding="utf-8") as out:
+              out.write(f"tag={tag}\nsha={sha}\nvalidation_run_id={run_id}\n")
+          PY
+          else
+            python - <<'PY'
+          import os
+          with open(os.environ["GITHUB_OUTPUT"],"a",encoding="utf-8") as out:
+              out.write(f"tag=\nsha={os.environ['WORKFLOW_RUN_SHA']}\nvalidation_run_id={os.environ['WORKFLOW_RUN_ID']}\n")
+          PY
+          fi
+
       - name: Download tag-bound scientific evidence
         uses: actions/download-artifact@v8
         with:
           name: scientific-validation-heavy
           path: ${{ runner.temp }}/scientific-evidence
-          run-id: ${{ github.event_name == 'workflow_dispatch' && inputs.validation_run_id || github.event.workflow_run.id }}
+          run-id: ${{ steps.target.outputs.validation_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download tag-bound external source evidence
@@ -53,7 +73,7 @@ jobs:
         with:
           name: scientific-validation-external-source-evidence
           path: ${{ runner.temp }}/scientific-external-evidence
-          run-id: ${{ github.event_name == 'workflow_dispatch' && inputs.validation_run_id || github.event.workflow_run.id }}
+          run-id: ${{ steps.target.outputs.validation_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download tag-bound frozen reference evidence
@@ -61,7 +81,7 @@ jobs:
         with:
           name: frozen-reference-evidence-alerce_reference_frozen_20200609
           path: ${{ runner.temp }}/scientific-frozen-alerce
-          run-id: ${{ github.event_name == 'workflow_dispatch' && inputs.validation_run_id || github.event.workflow_run.id }}
+          run-id: ${{ steps.target.outputs.validation_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download tag-bound frozen CPVS reference evidence
@@ -69,14 +89,14 @@ jobs:
         with:
           name: frozen-reference-evidence-ztf_periodic_730k_published
           path: ${{ runner.temp }}/scientific-frozen-cpvs
-          run-id: ${{ github.event_name == 'workflow_dispatch' && inputs.validation_run_id || github.event.workflow_run.id }}
+          run-id: ${{ steps.target.outputs.validation_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Resolve and verify release ref
         id: ref
         shell: bash
         env:
-          EXPECTED_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.release_sha || github.event.workflow_run.head_sha }}
+          EXPECTED_SHA: ${{ steps.target.outputs.sha }}
         run: |
           set -euo pipefail
           ref_file="$(find "$RUNNER_TEMP/scientific-evidence" -type f -name release_ref.json -print -quit)"
@@ -209,7 +229,7 @@ jobs:
       - name: Enforce scientific validation gate
         env:
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
-          VALIDATION_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.validation_run_id || github.event.workflow_run.id }}
+          VALIDATION_RUN_ID: ${{ steps.target.outputs.validation_run_id }}
         run: |
           python -m pip install -e .
           if [ "$RELEASE_TAG" = "v0.5.0" ]; then
