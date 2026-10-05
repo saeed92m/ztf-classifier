@@ -1,3 +1,18 @@
+## [1.0.0] — Platform release freeze
+
+### Added
+- Final P1–P6 Astronomical Data Analysis & Discovery Platform product-scope audit and acceptance record.
+- Event-driven release publication bound to the exact successful Scientific Validation workflow run SHA.
+- Immutable-safe v1.0 release publication with deterministic tag collision handling and release asset verification.
+
+### Changed
+- Software package version advances to `1.0.0`; the frozen v0.2 scientific baseline and `baseline_v0.2` production model remain unchanged.
+- Release publication no longer depends on manual dispatch or a mutable validation-run identifier in the repository manifest.
+
+### Scientific status
+- Product Scientific Gate: release-blocking and validated through the accepted P1–P6 audit.
+- CPVS exact historical reconstruction remains claim-specific external evidence and is not promoted to a product failure.
+
 # Changelog
 
 ## [0.5.0] — Scientific validation and immutable release
