@@ -318,7 +318,7 @@ This is how the project is considered finished: **not by elapsed work, but by an
 
 Canonical roadmap:
 
-`docs/roadmap/CUMULATIVE_LEARNING_ROADMAP_v2.3.md`
+`docs/roadmap/CUMULATIVE_LEARNING_ROADMAP_v2.4.md`
 
 Scientific validation details:
 
