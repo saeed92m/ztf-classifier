@@ -1,6 +1,11 @@
 name: Release
 
 on:
+  # Event-driven publication. Manifest changes provide deterministic recovery
+  # for an already-validated immutable release without manual dispatch.
+  push:
+    paths:
+      - ".github/release-manifest.json"
   workflow_run:
     workflows:
       - Scientific Validation
@@ -15,8 +20,12 @@ jobs:
   release:
     name: Build and publish release
     if: >-
-      github.event_name == 'workflow_run' &&
-      github.event.workflow_run.conclusion == 'success' &&
+      (
+        (github.event_name == 'workflow_run' &&
+         github.event.workflow_run.conclusion == 'success') ||
+        (github.event_name == 'push' &&
+         github.ref == 'refs/heads/main')
+      ) &&
       (
         (github.event.workflow_run.event == 'push' &&
          startsWith(github.event.workflow_run.head_branch, 'v')) ||
@@ -327,8 +336,31 @@ jobs:
             dist/*.tar.gz
           fail_on_unmatched_files: true
 
-      - name: Verify existing release was preserved
+      - name: Repair existing GitHub release without deleting it
         if: steps.existing_release.outputs.exists == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
+        shell: bash
         run: |
-          echo "Release ${{ steps.ref.outputs.tag }} already exists and will not be recreated."
-          echo "This is intentional: immutable GitHub Releases/tags must never be deleted or recreated."
+          set -euo pipefail
+          echo "Existing release detected for $RELEASE_TAG. Never delete or recreate it."
+          echo "Uploading the validated package artifacts to the existing release..."
+          gh release upload "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --clobber
+          echo "Publishing the existing draft release..."
+          gh release edit "$RELEASE_TAG" --draft=false
+          echo "Existing release repaired and published."
+
+      - name: Verify published GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_json="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}")"
+          draft="$(printf '%s' "$release_json" | jq -r '.draft')"
+          asset_count="$(printf '%s' "$release_json" | jq '.assets | length')"
+          test "$draft" = "false"
+          test "$asset_count" -ge 2
+          echo "Release verified: tag=$RELEASE_TAG draft=$draft assets=$asset_count"
