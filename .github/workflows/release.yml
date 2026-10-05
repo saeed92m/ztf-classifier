@@ -97,21 +97,41 @@ jobs:
         id: ref
         shell: bash
         env:
+          EXPECTED_TAG: ${{ steps.target.outputs.tag }}
           EXPECTED_SHA: ${{ steps.target.outputs.sha }}
         run: |
           set -euo pipefail
           ref_file="$(find "$RUNNER_TEMP/scientific-evidence" -type f -name release_ref.json -print -quit)"
           test -n "$ref_file"
-          python - "$ref_file" "$EXPECTED_SHA" <<'PY'
+          python - "$ref_file" "$EXPECTED_TAG" "$EXPECTED_SHA" <<'PY'
           import json, sys, os
           p=json.load(open(sys.argv[1]))
+          expected_tag, expected_sha = sys.argv[2], sys.argv[3]
           if not isinstance(p.get("tag"),str) or not p["tag"].startswith("v"):
-              raise SystemExit("invalid release tag")
-          if p.get("sha") != sys.argv[2]:
-              raise SystemExit(f"release evidence SHA mismatch: {p.get('sha')} != {sys.argv[2]}")
+              raise SystemExit("invalid release evidence tag")
+          if p.get("sha") != expected_sha:
+              raise SystemExit(f"release evidence SHA mismatch: {p.get('sha')} != {expected_sha}")
           with open(os.environ["GITHUB_OUTPUT"],"a") as o:
-              o.write(f'tag={p["tag"]}\nsha={p["sha"]}\n')
+              o.write(f'tag={expected_tag}\nsha={expected_sha}\n')
           PY
+
+      - name: Ensure release tag exists at validated SHA
+        env:
+          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
+          EXPECTED_SHA: ${{ steps.ref.outputs.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          encoded_tag="$(python -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=""))' "$RELEASE_TAG")"
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${encoded_tag}" >/tmp/tag-ref.json 2>/dev/null; then
+            actual="$(jq -r '.object.sha' /tmp/tag-ref.json)"
+            if [ "$actual" != "$EXPECTED_SHA" ]; then
+              echo "Existing release tag $RELEASE_TAG points to $actual, expected $EXPECTED_SHA" >&2
+              exit 1
+            fi
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f "ref=refs/tags/${RELEASE_TAG}" -f "sha=${EXPECTED_SHA}" >/tmp/tag-created.json
+          fi
 
       - name: Checkout validated release tag
         uses: actions/checkout@v7
