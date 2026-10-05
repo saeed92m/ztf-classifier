@@ -2,18 +2,80 @@
   "schema_version": "1.1",
   "stage_id": "v1-product-scope-audit-acceptance-20261005",
   "objective": "Record acceptance of the P1-P6 product-scope audit after executable evidence completed.",
-  "previous_knowledge_consumed": ["v1-product-scope-audit-20261005", "pr-146-v050-release-preparation", "release-candidate-heavy-validation-20261004", "immutable-release-publication-lesson-20261005"],
-  "baseline": {"revision": "8accdd55db324b1f3e51ad559eaf3f89412589d7", "status": "Product Scope Audit, Scientific Validation, CodeQL, and PR CI passed on the audited revision."},
-  "expected_improvement": ["formal P1-P6 validation acceptance", "release-freeze readiness", "retained current evidence"],
-  "measurement": {"metrics": {
-    "correctness": {"before": "P1-P6 scope had implementation evidence but no unified acceptance record", "after": "P1-P6 unified audit passed"},
-    "reliability": {"before": "product-scope completion was not a single release gate", "after": "dedicated audit workflow passed and is retained"},
-    "reproducibility": {"before": "scope evidence was distributed", "after": "workflow run and exact audited revision are recorded"}
-  }},
-  "validation": {"status": "PASS", "scientific_gate_affected": false, "evidence": ["Product Scope Audit run 37321993688 passed.", "Scientific Validation run 37321994121 passed.", "CodeQL run 37321993461 passed.", "PR CI run 37321993505 passed all gated stages.", "No open repository issues remain."]},
-  "failure_analysis": {"status": "VERIFIED", "root_causes": ["The audit process caught and corrected invalid lifecycle-record drafts before acceptance."]},
-  "knowledge_extraction": {"status": "SUPPORTED", "findings": ["The cumulative lifecycle validator must remain release-blocking.", "P1-P6 completion requires executable current-revision evidence rather than source inspection alone."]},
-  "regression": {"status": "PASS", "open_blockers": [], "evidence": ["Dedicated product-scope audit passed.", "Full PR CI passed.", "Scientific Validation passed.", "CodeQL passed."]},
+  "previous_knowledge_consumed": [
+    "v1-product-scope-audit-20261005",
+    "pr-146-v050-release-preparation",
+    "release-candidate-heavy-validation-20261004",
+    "immutable-release-publication-lesson-20261005"
+  ],
+  "baseline": {
+    "revision": "8accdd55db324b1f3e51ad559eaf3f89412589d7",
+    "status": "Product Scope Audit, Scientific Validation, CodeQL, and PR CI passed on the audited revision."
+  },
+  "expected_improvement": [
+    "formal P1-P6 validation acceptance",
+    "release-freeze readiness",
+    "retained current evidence"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "P1-P6 scope had implementation evidence but no unified acceptance record",
+        "after": "P1-P6 unified audit passed"
+      },
+      "reliability": {
+        "before": "product-scope completion was not a single release gate",
+        "after": "dedicated audit workflow passed and is retained"
+      },
+      "reproducibility": {
+        "before": "scope evidence was distributed",
+        "after": "workflow run and exact audited revision are recorded"
+      }
+    }
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Product Scope Audit run 37321993688 passed.",
+      "Scientific Validation run 37321994121 passed.",
+      "CodeQL run 37321993461 passed.",
+      "PR CI run 37321993505 passed all gated stages.",
+      "No open repository issues remain."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "The audit process caught and corrected invalid lifecycle-record drafts before acceptance."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "The cumulative lifecycle validator must remain release-blocking.",
+      "P1-P6 completion requires executable current-revision evidence rather than source inspection alone."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [],
+    "evidence": [
+      "Dedicated product-scope audit passed.",
+      "Full PR CI passed.",
+      "Scientific Validation passed.",
+      "CodeQL passed."
+    ]
+  },
   "decision": "ACCEPT",
-  "knowledge_carried_forward": ["cumulative lifecycle gate", "fail-closed scientific validation", "product-gate versus external-claim separation", "immutable release safety", "P1-P6 product-scope audit requirement"]
+  "knowledge_carried_forward": [
+    "cumulative lifecycle gate",
+    "fail-closed scientific validation",
+    "product-gate versus external-claim separation",
+    "immutable release safety",
+    "P1-P6 product-scope audit requirement"
+  ],
+  "release_freeze_authorized": true,
+  "release_target": "v1.0.0",
+  "release_freeze_note": "Final v1.0.0 release candidate. Publication is permitted only from a successful Scientific Validation workflow run for this exact main SHA."
 }
