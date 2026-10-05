@@ -110,15 +110,27 @@ jobs:
         run: |
           set -euo pipefail
           source_root="$RUNNER_TEMP/scientific-evidence"
-          mkdir -p reports/scientific_validation
 
-          evidence_root="$(find "$source_root" -type d -path '*/reports/scientific_validation' -print -quit)"
-          test -n "$evidence_root" || {
-            echo "ERROR: scientific validation artifact has no reports/scientific_validation tree" >&2
+          # actions/upload-artifact preserves paths relative to its least common
+          # ancestor. The scientific-validation job uploads
+          # reports/scientific_validation/**, so the downloaded artifact normally
+          # contains that directory's contents directly at source_root.
+          evidence_root="$source_root"
+          if [ -d "$source_root/reports/scientific_validation" ]; then
+            evidence_root="$source_root/reports/scientific_validation"
+          elif [ -d "$source_root/scientific_validation" ]; then
+            evidence_root="$source_root/scientific_validation"
+          fi
+
+          test -f "$evidence_root/release/release_ref.json" || {
+            echo "ERROR: scientific validation artifact is missing release/release_ref.json" >&2
+            find "$source_root" -maxdepth 3 -type f | sort | head -200 >&2
             exit 1
           }
 
-          # Move instead of copying: the heavy scientific artifact can exceed 3 GB.\n          # Copying duplicates it on the runner filesystem and can exhaust disk space.\n          rm -rf reports/scientific_validation\n          mv "$evidence_root" reports/scientific_validation
+          mkdir -p reports
+          rm -rf reports/scientific_validation
+          mv "$evidence_root" reports/scientific_validation
           test -f reports/scientific_validation/release/release_ref.json
 
           python - <<'PY'
@@ -160,9 +172,7 @@ jobs:
       - name: Enforce scientific validation gate
         run: |
           python -m pip install -e .
-          python -m ztf_classifier.validation gate \
-            --evidence-dir reports/scientific_validation \
-            --output reports/scientific_validation/release_gate.json
+          python -m ztf_classifier.validation gate             --evidence-dir reports/scientific_validation             --output reports/scientific_validation/release_gate.json
 
       - name: Run release validation
         run: |
