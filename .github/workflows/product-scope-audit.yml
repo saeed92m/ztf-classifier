@@ -1,0 +1,77 @@
+name: Product Scope Audit
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: P1-P6 Product Scope Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: pip
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -r requirements.lock
+          python -m pip install -e . --no-deps
+      - name: Verify dependencies
+        run: python -m pip check
+      - name: Run product-scope contract audit
+        run: |
+          python -m pytest -q             tests/test_source_subset_manifest.py             tests/test_source_subset_pipeline.py             tests/test_raw_dataset_validation.py             tests/test_raw_dataset_validation_integration.py             tests/test_raw_dataset_validation_report.py             tests/test_feature_engine.py             tests/test_feature_pipeline.py             tests/test_feature_pipeline_parity.py             tests/test_feature_temporal_invariance.py             tests/test_jobs_executor.py             tests/test_jobs_runner.py             tests/test_jobs_worker.py             tests/test_scientific_result_store.py             tests/test_reporting.py             tests/test_incremental.py             tests/test_api.py             tests/test_web_workbench.py             tests/test_discovery_contracts.py             tests/test_scientific_anomaly_semantics.py             tests/test_reproducibility.py             tests/test_external_source_evidence.py
+      - name: Verify audit surfaces
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          required = [
+              "src/ztf_classifier/features/engine.py",
+              "src/ztf_classifier/jobs/executor.py",
+              "src/ztf_classifier/jobs/store.py",
+              "src/ztf_classifier/results/store.py",
+              "src/ztf_classifier/reporting",
+              "src/ztf_classifier/incremental",
+              "src/ztf_classifier/catalog",
+              "src/ztf_classifier/web/static",
+              "src/ztf_classifier/validation",
+          ]
+          missing = [p for p in required if not Path(p).exists()]
+          if missing:
+              raise SystemExit(f"Missing declared product surfaces: {missing}")
+          print("All declared product surfaces are present.")
+          PY
+      - name: Emit audit evidence
+        run: |
+          mkdir -p audit-evidence
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          evidence = {
+              "schema_version": "1.0",
+              "audit": "v1-product-scope",
+              "commit": os.environ["GITHUB_SHA"],
+              "workflow_run": os.environ["GITHUB_RUN_ID"],
+              "status": "PASS",
+              "validated_surfaces": ["P1", "P2", "P3", "P4", "P5", "P6"],
+          }
+          Path("audit-evidence/product-scope-audit.json").write_text(
+              json.dumps(evidence, indent=2) + "\n", encoding="utf-8"
+          )
+          PY
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-scope-audit
+          path: audit-evidence/product-scope-audit.json
+          if-no-files-found: error
