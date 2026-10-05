@@ -311,29 +311,25 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          api="repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}"
-          if release_json="$(gh api "$api" 2>/dev/null)"; then
-            release_id="$(printf '%s' "$release_json" | jq -r '.id')"
-            draft="$(printf '%s' "$release_json" | jq -r '.draft')"
-            prerelease="$(printf '%s' "$release_json" | jq -r '.prerelease')"
-            asset_count="$(printf '%s' "$release_json" | jq '.assets | length')"
-            echo "GitHub Release already exists: tag=$RELEASE_TAG id=$release_id draft=$draft prerelease=$prerelease assets=$asset_count"
+          release_json="$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100")"
+          release_id="$(printf '%s' "$release_json" | jq -r --arg tag "$RELEASE_TAG" '.[] | select(.tag_name == $tag) | .id' | head -n1)"
+          if [ -n "$release_id" ]; then
+            echo "GitHub Release already exists: tag=$RELEASE_TAG id=$release_id"
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No GitHub Release exists for $RELEASE_TAG; creation can proceed."
+            echo "No GitHub Release exists for $RELEASE_TAG."
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create GitHub release
         if: steps.existing_release.outputs.exists != 'true'
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ steps.ref.outputs.tag }}
-          generate_release_notes: true
-          files: |
-            dist/*.whl
-            dist/*.tar.gz
-          fail_on_unmatched_files: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --generate-notes
 
       - name: Repair existing GitHub release without deleting it
         if: steps.existing_release.outputs.exists == 'true'
