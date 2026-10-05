@@ -79,8 +79,8 @@ jobs:
           run-id: ${{ steps.target.outputs.validation_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve and verify release ref
-        id: ref
+      - name: Verify release evidence reference
+        id: evidence_ref
         shell: bash
         env:
           EXPECTED_TAG: ${{ steps.target.outputs.tag }}
