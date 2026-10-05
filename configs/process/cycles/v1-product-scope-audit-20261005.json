@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "v1-product-scope-audit-20261005",
+  "objective": "Execute an evidence-backed audit of the declared P1-P6 Astronomical Data Analysis & Discovery Platform scope before release freeze.",
+  "previous_knowledge_consumed": ["p1-operational-data-platform-20261001", "pr-127-source-normalization-qc-replay", "pr-146-v050-release-preparation", "release-candidate-heavy-validation-20261004", "immutable-release-publication-lesson-20261005"],
+  "baseline": {"revision": "c7d05cded26f57031eb1d46301b1c6df20549a39", "status": "v0.5.0-release is published immutable; P1-P6 implementation surfaces exist but require one explicit current-revision audit."},
+  "expected_improvement": ["explicit P1-P6 validation evidence", "reproducible release-scope audit", "pre-freeze defect detection"],
+  "measurement": {"metrics": {
+    "correctness": {"before": "P1-P6 completion was distributed across component evidence", "after": "one reproducible workflow exercises the declared P1-P6 contract/integration surfaces"},
+    "reliability": {"before": "no single pre-freeze product-scope gate existed", "after": "a dedicated product-scope gate is executed on every audit PR"},
+    "reproducibility": {"before": "product-scope evidence was distributed across prior cycles", "after": "the workflow retains an exact commit/run evidence artifact"}
+  }},
+  "validation": {"status": "PENDING", "scientific_gate_affected": false, "evidence": ["Product Scope Audit workflow", "Scientific Validation workflow", "CodeQL workflow"]},
+  "failure_analysis": {"status": "VERIFIED", "root_causes": ["The audit record is intentionally kept pending until the current-revision audit completes."]},
+  "knowledge_extraction": {"status": "SUPPORTED", "findings": ["Product-scope evidence must be executable and tied to the audited revision.", "The lifecycle record itself must satisfy the cumulative lifecycle contract."]},
+  "regression": {"status": "NOT_VERIFIED", "open_blockers": ["Product Scope Audit must pass before the stage is accepted."]},
+  "decision": "REVISE",
+  "knowledge_carried_forward": ["cumulative lifecycle gate", "fail-closed scientific validation", "product-gate versus external-claim separation", "immutable release safety", "P1-P6 product-scope audit requirement"]
+}
