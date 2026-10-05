@@ -21,7 +21,7 @@ jobs:
         (github.event.workflow_run.event == 'push' &&
          startsWith(github.event.workflow_run.head_branch, 'v')) ||
         (github.event.workflow_run.event == 'workflow_dispatch' &&
-         startsWith(github.event.workflow_run.head_branch, 'ci/heavy/release-candidate'))
+         startsWith(github.event.workflow_run.head_branch, 'v'))
       )
     runs-on: ubuntu-latest
     timeout-minutes: 40
