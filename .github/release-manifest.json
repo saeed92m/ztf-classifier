@@ -6,5 +6,5 @@
   "reason": "Publish the validated 0.5.0 package under the requested fresh release tag when available; if that name is already consumed by an immutable release, automatically select the next deterministic suffix tag without mutating the immutable release.",
   "schema_version": 1,
   "workflow_contract": "event-driven",
-  "workflow_contract_revision": 14
+  "workflow_contract_revision": 15
 }
