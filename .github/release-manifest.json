@@ -6,5 +6,5 @@
   "reason": "Publish the already validated immutable v0.5.0 tag using its successful source-backed Scientific Validation evidence without requiring manual workflow dispatch.",
   "schema_version": 1,
   "workflow_contract": "event-driven",
-  "workflow_contract_revision": 4
+  "workflow_contract_revision": 5
 }
