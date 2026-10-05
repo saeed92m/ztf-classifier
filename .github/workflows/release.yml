@@ -101,23 +101,53 @@ jobs:
               o.write(f'tag={expected_tag}\nsha={expected_sha}\n')
           PY
 
-      - name: Ensure release tag exists at validated SHA
+      - name: Resolve an immutable-safe release tag
+        id: ref
+        shell: bash
         env:
-          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
-          EXPECTED_SHA: ${{ steps.ref.outputs.sha }}
+          REQUESTED_TAG: ${{ steps.target.outputs.tag }}
+          EXPECTED_SHA: ${{ steps.target.outputs.sha }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          encoded_tag="$(python -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=""))' "$RELEASE_TAG")"
-          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${encoded_tag}" >/tmp/tag-ref.json 2>/dev/null; then
-            actual="$(jq -r '.object.sha' /tmp/tag-ref.json)"
-            if [ "$actual" != "$EXPECTED_SHA" ]; then
-              echo "Existing release tag $RELEASE_TAG points to $actual, expected $EXPECTED_SHA" >&2
-              exit 1
+          selected="$REQUESTED_TAG"
+          suffix=0
+          while true; do
+            release_json=""
+            if release_json="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${selected}" 2>/dev/null)"; then
+              immutable="$(jq -r '.immutable // false' <<<"$release_json")"
+              release_tag_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${selected}" 2>/dev/null | jq -r '.object.sha // empty' || true)"
+              asset_count="$(jq '.assets | length' <<<"$release_json")"
+              if [ "$immutable" = "true" ]; then
+                if [ "$release_tag_sha" = "$EXPECTED_SHA" ] && [ "$asset_count" -ge 2 ]; then
+                  echo "Immutable release already complete: $selected"
+                  break
+                fi
+                echo "Immutable release name is already consumed/incomplete: $selected"
+              else
+                echo "Mutable release exists and will be repaired in place: $selected"
+                break
+              fi
+            else
+              tag_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${selected}" 2>/dev/null | jq -r '.object.sha // empty' || true)"
+              if [ -z "$tag_sha" ]; then
+                echo "Release tag is free: $selected"
+                gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs"                   -f "ref=refs/tags/${selected}"                   -f "sha=${EXPECTED_SHA}" >/tmp/tag-created.json
+                break
+              fi
+              if [ "$tag_sha" = "$EXPECTED_SHA" ]; then
+                echo "Existing tag points to validated SHA: $selected"
+                break
+              fi
+              echo "Existing tag $selected points to $tag_sha, expected $EXPECTED_SHA"
             fi
-          else
-            gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f "ref=refs/tags/${RELEASE_TAG}" -f "sha=${EXPECTED_SHA}" >/tmp/tag-created.json
-          fi
+            suffix=$((suffix + 1))
+            selected="${REQUESTED_TAG}.${suffix}"
+          done
+          {
+            echo "tag=$selected"
+            echo "sha=$EXPECTED_SHA"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Checkout validated release tag
         uses: actions/checkout@v7
@@ -226,26 +256,38 @@ jobs:
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
         run: |
           set -euo pipefail
-          id="$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" | jq -r --arg t "$RELEASE_TAG" '.[]|select(.tag_name==$t)|.id' | head -n1)"
-          if [ -n "$id" ]; then echo "exists=true" >> "$GITHUB_OUTPUT"; echo "Existing release id=$id"; else echo "exists=false" >> "$GITHUB_OUTPUT"; fi
+          j="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" 2>/dev/null || true)"
+          if [ -z "$j" ]; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "No existing release for $RELEASE_TAG"
+            exit 0
+          fi
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+          echo "immutable=$(jq -r '.immutable // false' <<<"$j")" >> "$GITHUB_OUTPUT"
+          echo "assets=$(jq '.assets | length' <<<"$j")" >> "$GITHUB_OUTPUT"
 
-      - name: Create new release
+      - name: Create new release with assets
         if: steps.existing.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
-        run: gh release create "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --generate-notes
+        run: gh release create "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --verify-tag --generate-notes
 
-      - name: Repair existing release in place
-        if: steps.existing.outputs.exists == 'true'
+      - name: Repair existing mutable release in place
+        if: steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
         run: |
           set -euo pipefail
           gh release upload "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --clobber
-          echo "Existing release retained; attempting publish."
           gh release edit "$RELEASE_TAG" --draft=false
+
+      - name: Accept already-complete immutable release
+        if: steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable == 'true'
+        run: |
+          test "${{ steps.existing.outputs.assets }}" -ge 2
+          echo "Immutable release is already complete; no mutation attempted."
 
       - name: Verify published release
         env:
