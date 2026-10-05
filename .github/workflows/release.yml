@@ -298,6 +298,29 @@ jobs:
           python -m pytest -q
           python -m build
 
+      - name: Remove incomplete published release shell
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          api="repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}"
+          release_id="$(gh api "$api" --jq .id 2>/dev/null || true)"
+          if [ -z "$release_id" ]; then
+            echo "No existing GitHub Release for $RELEASE_TAG; creation can proceed."
+            exit 0
+          fi
+
+          asset_count="$(gh api "repos/${GITHUB_REPOSITORY}/releases/${release_id}" --jq ".assets | length")"
+          if [ "$asset_count" -ne 0 ]; then
+            echo "ERROR: existing release $RELEASE_TAG has $asset_count asset(s); refusing destructive replacement." >&2
+            exit 1
+          fi
+
+          echo "Removing incomplete published release shell id=$release_id for $RELEASE_TAG."
+          gh api --method DELETE "repos/${GITHUB_REPOSITORY}/releases/${release_id}"
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
@@ -306,3 +329,4 @@ jobs:
           files: |
             dist/*.whl
             dist/*.tar.gz
+          fail_on_unmatched_files: true
