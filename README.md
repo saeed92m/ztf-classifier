@@ -1,12 +1,12 @@
 # ZTF Classifier
 
-A CPU-oriented machine-learning research pipeline for classification of astronomical transient and variable objects using public Zwicky Transient Facility (ZTF) light-curve data.
+A CPU-first Astronomical Data Analysis & Discovery Platform for Zwicky Transient Facility (ZTF) data, scientific feature generation, machine-learning and statistical analysis, uncertainty/OOD diagnostics, provenance, and discovery-oriented workflows.
 
 ## Project status
 
 **Version:** v1.0.0
 **Release:** `v1.0.0` (immutable publication target)
-**Status:** Final product-scope release candidate; P1–P6 audit accepted, scientific validation release gate enforced, reproducibility and provenance evidence required
+**Status:** v1.0.0 released and immutable; Scientific Validation, CI, CodeQL, release publication, and artifact verification passed
 
 The v0.2 core pipeline includes:
 
@@ -346,16 +346,16 @@ The repository separates:
 
 An unresolved external reproduction claim must not silently become a product failure. Conversely, the project must not claim exact historical reproduction without exact evidence.
 
-### v0.5.0 release state
+### v1.0.0 release state
 
-- Release tag: `v0.5.0`
-- Scientific Validation evidence: passed for the release candidate, including immutable ALeRCE/CPVS reference verification and the heavy source-backed run.
-- CPVS parent: 781,602 verified; published membership: 730,184 retained as immutable external reference.
-- Exact CPVS reconstruction: **UNRESOLVED**, external-only and non-blocking unless exact reconstruction is explicitly part of a future release claim.
-- Release infrastructure hardening: PR #147 changed heavy evidence restoration from filesystem copy to move, preventing the ~3.77 GB duplication that exhausted runner disk.
+- Software release: v1.0.0, published and immutable.
+- Release infrastructure is event-driven from successful Scientific Validation and no longer depends on manual dispatch.
+- Curated release notes are mandatory for every future release.
+- The frozen scientific baseline remains v0.2.0 and the production model remains baseline_v0.2.
+- Exact historical CPVS reconstruction remains claim-specific UNRESOLVED evidence: 781,602 parent, 730,184 published membership, 741,787 current candidate, 11,604 candidate-only.
+- This reconstruction discrepancy is not an ML or production failure and must not be hidden or forced away by threshold tuning.
 
-The remaining work after v0.5.0 is platform expansion and continuous scientific validation, not rewriting the frozen v0.2.0 baseline.
-
+The v1.0.0 software milestone is complete as a release. The broader discovery platform continues through documented product expansion and independent scientific benchmarking.
 
 ## Astronomical Data Analysis & Discovery Platform layer
 
