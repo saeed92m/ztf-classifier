@@ -1,74 +1,63 @@
-## [1.0.0] — Platform release freeze
+# Changelog
+
+## [1.0.0] — Stable product release — 2026-10-06
 
 ### Added
-- Final P1–P6 Astronomical Data Analysis & Discovery Platform product-scope audit and acceptance record.
-- Event-driven release publication bound to the exact successful Scientific Validation workflow run SHA.
-- Immutable-safe v1.0 release publication with deterministic tag collision handling and release asset verification.
+- Stable software release of the Astronomical Data Analysis & Discovery Platform.
+- Event-driven release publication bound to the successful Scientific Validation workflow commit.
+- Immutable-safe release handling with final tag/asset verification.
+- Curated release notes as a mandatory release contract for future versions.
 
 ### Changed
-- Software package version advances to `1.0.0`; the frozen v0.2 scientific baseline and `baseline_v0.2` production model remain unchanged.
-- Release publication no longer depends on manual dispatch or a mutable validation-run identifier in the repository manifest.
+- Software package version is 1.0.0.
+- The frozen scientific baseline remains v0.2.0.
+- The production model remains baseline_v0.2.
+- Release publication no longer depends on manual dispatch.
+- Scientific validation evidence is restored from workflow artifacts without requiring large external datasets in Git.
 
 ### Scientific status
-- Product Scientific Gate: release-blocking and validated through the accepted P1–P6 audit.
-- CPVS exact historical reconstruction remains claim-specific external evidence and is not promoted to a product failure.
+- Product Scientific Gate: PASS.
+- Latest source-backed Scientific Validation: PASS.
+- Historical ALeRCE and CPVS references are immutable evidence lanes.
+- Exact historical CPVS reconstruction remains UNRESOLVED / claim-specific: current candidate 741,787 vs published membership 730,184, with all 730,184 published members contained in the candidate set.
+- This unresolved reconstruction claim is not presented as an ML or production failure.
 
-# Changelog
+### Release artifacts
+- ztf_classifier-1.0.0-py3-none-any.whl
+- ztf_classifier-1.0.0.tar.gz
 
 ## [0.5.0] — Scientific validation and immutable release
 
 ### Added
-- Immutable GitHub Release `v0.5.0-release` with verified wheel and source distribution.
 - Immutable-safe release-tag resolution and final asset verification.
 - Source-backed DR24 and ALeRCE scientific-validation evidence contracts and immutable historical publisher references.
 - Heavy release-candidate validation and executable cumulative lifecycle evidence.
 - Explicit separation of product release-blocking validation from claim-specific historical external reproduction.
 
 ### Changed
-- Release certification now requires the release candidate to satisfy the scientific gate, lifecycle contracts, package checks, and reproducibility evidence.
+- Release certification requires scientific gate, lifecycle contracts, package checks, and reproducibility evidence.
 
 ### Scientific status
 - CPVS parent evidence: 781,602 rows verified.
 - Published CPVS membership reference: 730,184 objects retained as immutable external reference.
-- Exact CPVS reconstruction remains explicitly unresolved and does not block the product gate unless exact reconstruction is part of the declared release claim.
-
-
-## Unreleased
-
-- Final product-scope completion and v1.0 audit.
-
-- Post-v0.5.0 documentation alignment and ecosystem-derived platform guidance.
-
-- Frozen historical ALeRCE and CPVS publisher-reference contracts.
-- Immutable archive acquisition with MD5/SHA-256 evidence manifests.
-- Frozen/live separation for historical reproduction versus current-source drift monitoring.
-- Heavy source-backed scientific-validation evidence and lifecycle-gate correction.
-- Scientific-validation completion record for 2026-10-04.
+- Exact CPVS reconstruction remains explicitly unresolved.
 
 ## [0.4.0] — Reproducibility and production hardening
 
 ### Added
-- Streaming SHA-256 checksum utility for reproducibility and artifact validation.
+- Streaming SHA-256 checksum utility.
 - Explicit production calibration, conformal, and OOD status fields.
-- Artifact manifest hashing and explicit legacy integrity warnings.
-- Strict ALeRCE ingestion diagnostics for invalid observations, coordinates, bands, duplicates, and photometry fallback.
-- Data card and model card documentation.
+- Artifact manifest hashing and integrity warnings.
+- Strict ALeRCE ingestion diagnostics.
+- Data Card and Model Card.
 - CI format, coverage, package-build, wheel-install, and dependency-audit gates.
-- Upgrade baseline and verification report structure.
 
 ### Changed
 - Production diagnostic execution is independent: missing conformal data no longer disables OOD evaluation and vice versa.
-- Package metadata advances to software version 0.4.0 while the scientific baseline remains v0.2.0 and the production model remains baseline_v0.2.
-- ALeRCE normalization preserves the existing default DataFrame API while offering an additive diagnostics return mode.
+- Package metadata advances independently from the immutable scientific baseline.
 
 ### Compatibility
-- The v0.2.0 scientific baseline remains immutable.
+- v0.2.0 scientific baseline remains immutable.
 - Dataset contract benchmark_v0.2 remains unchanged.
-- The frozen v0.2 feature schema remains 42 features.
+- Frozen v0.2 feature schema remains 42 features.
 - Artifact schemas 1.0 and 1.1 remain readable.
-- Existing CLI output fields remain available; new diagnostic/provenance fields are additive.
-
-### Limitations
-- The 150-object benchmark is small and is not representative of the full ZTF population.
-- ALeRCE labels are reference/weak labels rather than independent astrophysical ground truth.
-- Source-data licensing and attribution requirements remain applicable to future ingestion and publication.
