@@ -136,6 +136,7 @@ jobs:
             echo "tag=$selected"
             echo "sha=$EXPECTED_SHA"
             echo "existing_immutable=$existing_immutable"
+            echo "asset_count=${asset_count:-0}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Checkout validated release tag
