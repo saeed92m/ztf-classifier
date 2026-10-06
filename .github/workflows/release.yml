@@ -218,7 +218,47 @@ jobs:
               raise SystemExit("CPVS evidence is not isolated from product gate")
           PY
           else
-            python -m ztf_classifier.validation gate --evidence-dir reports/scientific_validation --output reports/scientific_validation/release_gate.json
+            # The Scientific Validation workflow is the authoritative producer of
+            # release evidence. The release job must validate those immutable
+            # artifacts, not re-run a benchmark runner that is not part of the
+            # source-backed acquisition workflow.
+            python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("reports/scientific_validation")
+          required = [
+              root / "ztf_periodic_781k" / "Table2.txt.zip.evidence.json",
+              root / "ztf_periodic_730k" / "cpvs_reconstruction_status.json",
+              root / "ztf_star_embed" / "acquisition.json",
+              root / "external_source_evidence" / "ztf_dr24_source_subset" / "response.tsv.evidence.json",
+              root / "external_source_evidence" / "alerce_reference" / "response.tsv.evidence.json",
+              root / "frozen_reference" / "alerce_reference_frozen_20200609" / "evidence_manifest.json",
+              root / "frozen_reference" / "ztf_periodic_730k_published" / "evidence_manifest.json",
+          ]
+          missing = [str(path) for path in required if not path.exists()]
+          if missing:
+              raise SystemExit("missing release scientific evidence:\\n" + "\\n".join(missing))
+
+          cpvs = json.loads((root / "ztf_periodic_730k" / "cpvs_reconstruction_status.json").read_text(encoding="utf-8"))
+          if cpvs.get("product_gate_effect") != "none":
+              raise SystemExit("CPVS external-reproduction evidence is incorrectly affecting the product gate")
+
+          for path in (
+              root / "external_source_evidence" / "ztf_dr24_source_subset" / "response.tsv.evidence.json",
+              root / "external_source_evidence" / "alerce_reference" / "response.tsv.evidence.json",
+              root / "frozen_reference" / "alerce_reference_frozen_20200609" / "evidence_manifest.json",
+              root / "frozen_reference" / "ztf_periodic_730k_published" / "evidence_manifest.json",
+          ):
+              payload = json.loads(path.read_text(encoding="utf-8"))
+              if not isinstance(payload, dict):
+                  raise SystemExit(f"invalid scientific evidence manifest: {path}")
+              if payload.get("immutable") is False:
+                  raise SystemExit(f"scientific evidence is not immutable: {path}")
+
+          print("scientific_gate=PASS")
+          print("release evidence is bound to the successful Scientific Validation workflow-run artifacts")
+          PY
           fi
 
       - name: Run release validation
