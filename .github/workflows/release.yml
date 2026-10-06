@@ -288,7 +288,9 @@ jobs:
         run: |
           set -euo pipefail
           j="$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" 2>/dev/null || true)"
-          if [ -z "$j" ]; then
+          # gh api can return a JSON error object on some runner/API paths;
+          # only a payload with a real release id and matching tag is a release.
+          if [ -z "$j" ] || ! jq -e --arg tag "$RELEASE_TAG" '.id and .tag_name == $tag' <<<"$j" >/dev/null 2>&1; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
             echo "No existing release for $RELEASE_TAG"
             exit 0
