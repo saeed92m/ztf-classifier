@@ -90,6 +90,7 @@ jobs:
         run: |
           set -euo pipefail
           selected="$REQUESTED_TAG"
+          existing_immutable=false
           suffix=0
           while true; do
             release_json=""
@@ -99,10 +100,13 @@ jobs:
               asset_count="$(jq '.assets | length' <<<"$release_json")"
               if [ "$immutable" = "true" ]; then
                 if [ "$release_tag_sha" = "$EXPECTED_SHA" ] && [ "$asset_count" -ge 2 ]; then
-                  echo "Immutable release already complete: $selected"
-                  break
+                  echo "Immutable release already complete at validated SHA: $selected"
+                else
+                  echo "Immutable release already exists at $release_tag_sha; refusing to mutate or delete immutable release $selected."
                 fi
-                echo "Immutable release name is already consumed/incomplete: $selected"
+                existing_immutable=true
+                EXPECTED_SHA="$release_tag_sha"
+                break
               else
                 echo "Mutable release exists and will be repaired in place: $selected"
                 break
@@ -131,6 +135,7 @@ jobs:
           {
             echo "tag=$selected"
             echo "sha=$EXPECTED_SHA"
+            echo "existing_immutable=$existing_immutable"
           } >> "$GITHUB_OUTPUT"
 
       - name: Checkout validated release tag
@@ -146,6 +151,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
 
       - name: Restore scientific evidence
+        if: steps.ref.outputs.existing_immutable != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -174,12 +180,14 @@ jobs:
           python-version: "3.11.16"
 
       - name: Install locked dependencies
+        if: steps.ref.outputs.existing_immutable != 'true'
         run: |
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -r requirements.lock
           python -m pip install build
 
       - name: Verify package version
+        if: steps.ref.outputs.existing_immutable != 'true'
         env:
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
         run: |
@@ -192,6 +200,7 @@ jobs:
           PY
 
       - name: Enforce scientific validation gate
+        if: steps.ref.outputs.existing_immutable != 'true'
         env:
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
           VALIDATION_RUN_ID: ${{ steps.target.outputs.validation_run_id }}
@@ -262,6 +271,7 @@ jobs:
           fi
 
       - name: Require curated release notes
+        if: steps.ref.outputs.existing_immutable != 'true'
         env:
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
         shell: bash
@@ -276,6 +286,7 @@ jobs:
           echo "Using curated release notes: $notes"
 
       - name: Run release validation
+        if: steps.ref.outputs.existing_immutable != 'true'
         env:
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
         run: |
@@ -295,6 +306,7 @@ jobs:
           python -m build
 
       - name: Detect existing GitHub release
+        if: steps.ref.outputs.existing_immutable != 'true'
         id: existing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -314,14 +326,14 @@ jobs:
           echo "assets=$(jq '.assets | length' <<<"$j")" >> "$GITHUB_OUTPUT"
 
       - name: Create new release with assets
-        if: steps.existing.outputs.exists != 'true'
+        if: steps.ref.outputs.existing_immutable != 'true' && steps.existing.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
         run: gh release create "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --verify-tag --notes-file ".github/release-notes/\${RELEASE_TAG}.md"
 
       - name: Repair existing mutable release in place
-        if: steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable != 'true'
+        if: steps.ref.outputs.existing_immutable != 'true' && steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
@@ -331,7 +343,7 @@ jobs:
           gh release edit "$RELEASE_TAG" --draft=false --notes-file ".github/release-notes/\${RELEASE_TAG}.md"
 
       - name: Accept already-complete immutable release
-        if: steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable == 'true'
+        if: steps.ref.outputs.existing_immutable == 'true' || (steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable == 'true')
         run: |
           test "${{ steps.existing.outputs.assets }}" -ge 2
           echo "Immutable release is already complete; no mutation attempted."
