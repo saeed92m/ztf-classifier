@@ -345,7 +345,7 @@ jobs:
       - name: Accept already-complete immutable release
         if: steps.ref.outputs.existing_immutable == 'true' || (steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable == 'true')
         run: |
-          test "${{ steps.existing.outputs.assets }}" -ge 2
+          test "${{ steps.ref.outputs.asset_count }}" -ge 2
           echo "Immutable release is already complete; no mutation attempted."
 
       - name: Verify published release
