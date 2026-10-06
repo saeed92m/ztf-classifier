@@ -261,6 +261,20 @@ jobs:
           PY
           fi
 
+      - name: Require curated release notes
+        env:
+          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes=".github/release-notes/\${RELEASE_TAG}.md"
+          if [ ! -s "$notes" ]; then
+            echo "Missing curated release notes: $notes"
+            echo "Every GitHub Release must have a release-specific, committed release-note file."
+            exit 1
+          fi
+          echo "Using curated release notes: $notes"
+
       - name: Run release validation
         env:
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
@@ -304,7 +318,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
-        run: gh release create "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --verify-tag --generate-notes
+        run: gh release create "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --verify-tag --notes-file ".github/release-notes/\${RELEASE_TAG}.md"
 
       - name: Repair existing mutable release in place
         if: steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable != 'true'
@@ -314,7 +328,7 @@ jobs:
         run: |
           set -euo pipefail
           gh release upload "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --clobber
-          gh release edit "$RELEASE_TAG" --draft=false
+          gh release edit "$RELEASE_TAG" --draft=false --notes-file ".github/release-notes/\${RELEASE_TAG}.md"
 
       - name: Accept already-complete immutable release
         if: steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable == 'true'
