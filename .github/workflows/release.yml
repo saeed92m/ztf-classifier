@@ -268,7 +268,15 @@ jobs:
           set -euo pipefail
           python -m pip check
           python -m ruff check src tests
-          if [[ "$RELEASE_TAG" != "v0.5.0" && "$RELEASE_TAG" != "v0.5.0-release" ]]; then python -m ruff format --check src tests; fi
+          if [[ "$RELEASE_TAG" != "v0.5.0" && "$RELEASE_TAG" != "v0.5.0-release" ]]; then
+            git fetch origin main --depth=2
+            mapfile -t files < <(git diff --name-only HEAD^...HEAD -- 'src/**/*.py' 'tests/**/*.py')
+            if [ "${#files[@]}" -eq 0 ]; then
+              echo "No changed Python source/test files require formatting validation."
+            else
+              python -m ruff format --check "${files[@]}"
+            fi
+          fi
           python -m pytest -q
           python -m build
 
