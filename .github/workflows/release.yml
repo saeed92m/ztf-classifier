@@ -34,16 +34,21 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import json, os
+          import os
+          import tomllib
           from pathlib import Path
-          p=json.loads(Path(".github/release-manifest.json").read_text())
-          event_sha=os.environ["EVENT_SHA"]
-          tag=p.get("tag", "")
-          assert tag.startswith("v"), tag
+
+          event_sha = os.environ["EVENT_SHA"]
+          version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+          tag = f"v{version}"
           if not tag.startswith("v1."):
-              raise SystemExit(f"release workflow is frozen for v1.x publication; requested tag: {tag}")
-          with open(os.environ["GITHUB_OUTPUT"],"a") as o:
-              o.write(f'tag={tag}\nsha={event_sha}\nvalidation_run_id={os.environ["VALIDATION_RUN_ID"]}\n')
+              raise SystemExit(f"release workflow is frozen for v1.x publication; derived tag: {tag}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as o:
+              o.write(
+                  f'tag={tag}\n'
+                  f'sha={event_sha}\n'
+                  f'validation_run_id={os.environ["VALIDATION_RUN_ID"]}\n'
+              )
 
           PY
 
