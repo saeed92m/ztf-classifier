@@ -4,9 +4,9 @@ A CPU-first Astronomical Data Analysis & Discovery Platform for Zwicky Transient
 
 ## Project status
 
-**Version:** v1.0.0
-**Release:** `v1.0.0` (immutable publication target)
-**Status:** v1.0.0 released and immutable; Scientific Validation, CI, CodeQL, release publication, and artifact verification passed
+**Version:** v1.0.1
+**Release:** `v1.0.1` (immutable)
+**Status:** v1.0.1 released and immutable; v1.0.0 remains immutable; Scientific Validation, CI, CodeQL, release publication, and artifact verification passed
 
 The v0.2 core pipeline includes:
 
@@ -22,6 +22,28 @@ The v0.2 core pipeline includes:
 * single-object and batch inference interfaces.
 
 The current benchmark contains **150 ZTF objects across 15 ALeRCE classes**. ALeRCE classifications are used as benchmark labels and are not treated as independent ground truth.
+
+## Product direction
+
+ZTF Classifier is being expanded into a cross-platform **Astronomical Data Analysis & Discovery Platform**.
+
+The planned end-user experience is a self-contained desktop application for Windows, macOS, and Linux. Users should not need to install Python, pip, virtual environments, Git, or use a terminal for normal operation. CLI and API interfaces remain available for advanced users.
+
+The product expansion includes:
+- Data Manager and ingestion abstraction;
+- Object/Source Explorer;
+- light-curve and scientific visualization;
+- classification, uncertainty, calibration, conformal prediction, and OOD;
+- separate scientific-anomaly and Real/Bogus channels;
+- discovery candidate generation and transparent ranking;
+- catalog/cross-match evidence;
+- similar-object search;
+- human-in-the-loop review and feedback;
+- explainability and provenance/evidence views;
+- integrated Help and Troubleshooting;
+- reproducible reports and exports.
+
+See `docs/ECOSYSTEM_REVIEW_PRODUCT_EXPANSION_2026-10-08.md` and `docs/architecture/V1_PRODUCT_ARCHITECTURE.md` for the canonical expansion record.
 
 ## Scientific objective
 
