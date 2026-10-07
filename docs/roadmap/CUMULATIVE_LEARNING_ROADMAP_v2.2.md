@@ -1,4 +1,4 @@
-# Cumulative Learning & Product Roadmap — v2.3
+# Cumulative Learning & Product Roadmap — v2.4
 
 This roadmap combines the cumulative-learning lifecycle with the current product-unblocking direction. It does not erase domain-specific scientific-validation planning.
 
@@ -10,6 +10,40 @@ The project is an **Astronomical Data Analysis & Discovery Platform**. The immed
 - CPVS exact 730,184-member reconstruction: external, claim-specific evidence.
 - Current discrepancy: 741,788 candidate objects vs 730,184 published members; 730,184 intersection; 11,604 candidate-only.
 - Do not force cardinality with unsupported thresholds.
+
+
+## 0.1 — Product foundation from ecosystem review (2026-10-08)
+
+The product-expansion layer is now explicit and must be carried forward by every future stage.
+
+### P0 — Cross-platform user product
+- [ ] Desktop application shell with stable Application/Core API boundary
+- [ ] Windows self-contained installer
+- [ ] macOS application distribution
+- [ ] Linux AppImage baseline
+- [ ] Data Manager / ingestion abstraction
+- [ ] Object/Source Explorer
+- [ ] Integrated Help and Troubleshooting
+- [ ] Provenance/Evidence UI
+- [ ] Explainability + uncertainty/calibration/conformal/OOD presentation
+- [ ] Discovery/Anomaly workflow
+
+### P1 — Scientific exploration
+- [ ] Cross-match framework with evidence/provenance
+- [ ] Similar-object search
+- [ ] Human-in-the-loop review and feedback
+- [ ] Transparent discovery ranking
+- [ ] Real/Bogus integration boundary
+- [ ] Additional validated analysis modes
+
+### P2 — Scale and operations
+- [ ] ZTF Alert/AVRO ingestion
+- [ ] Offline/batch/streaming execution contracts
+- [ ] Follow-up integrations where scientifically justified
+- [ ] Additional models/features only with explicit validation contracts
+
+### Product UX exit criteria
+A non-developer scientist can install the application on a supported OS, import/connect supported ZTF data, inspect an object/light curve, run an analysis, understand diagnostics/evidence/provenance, investigate discovery candidates, review candidates, export results, and access Help without a terminal.
 
 ## 1. P0 — Scientific validation recovery
 
