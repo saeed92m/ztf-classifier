@@ -1,3 +1,5 @@
+import pytest
+
 from ztf_classifier.application.contracts import (
     AnalysisRequest,
     AnalysisResult,
@@ -31,9 +33,5 @@ def test_application_contracts_are_immutable_and_composable():
     assert result.request_id == "req-1"
     assert result.provenance[0].source.source_id == "ZTF-test-1"
 
-    try:
+    with pytest.raises(AttributeError):
         source.source_id = "mutated"
-    except AttributeError:
-        pass
-    else:
-        raise AssertionError("DataSourceRef must remain immutable")
