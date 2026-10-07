@@ -66,6 +66,7 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -r requirements.lock
           python -m pip install build
+          python -m pip install -e .
           python -m pip check
           python -m ruff check src tests
           python -m pytest -q
