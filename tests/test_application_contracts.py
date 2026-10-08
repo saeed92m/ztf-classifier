@@ -1,7 +1,5 @@
 import pytest
 
-from ztf_classifier.application.errors import ApplicationInputError
-
 from ztf_classifier.application.contracts import (
     AnalysisExecution,
     AnalysisRequest,
@@ -10,6 +8,7 @@ from ztf_classifier.application.contracts import (
     DataSourceRef,
     ProvenanceRecord,
 )
+from ztf_classifier.application.errors import ApplicationInputError
 
 
 def test_application_contracts_are_immutable_and_composable():
