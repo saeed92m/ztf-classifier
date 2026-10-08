@@ -78,7 +78,7 @@ def test_application_service_validates_and_envelopes_execution() -> None:
 
 
 @pytest.mark.parametrize(
-    "request",
+    "analysis_request",
     [
         AnalysisRequest(request_id="", sources=(), operation="classify"),
         AnalysisRequest(request_id="req", sources=(), operation="classify"),
@@ -97,7 +97,7 @@ def test_application_service_validates_and_envelopes_execution() -> None:
     ],
 )
 def test_application_service_rejects_invalid_requests(
-    request: AnalysisRequest,
+    analysis_request: AnalysisRequest,
 ) -> None:
     service = ApplicationService(
         lambda _: pytest.fail("executor must not be called"),
@@ -105,4 +105,4 @@ def test_application_service_rejects_invalid_requests(
     )
 
     with pytest.raises(ApplicationInputError):
-        service.analyze(request)
+        service.analyze(analysis_request)
