@@ -6,8 +6,9 @@ scientific algorithms. Desktop GUI, CLI, API, and future adapters consume them.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 
 @dataclass(frozen=True)
