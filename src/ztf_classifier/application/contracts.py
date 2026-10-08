@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from ztf_classifier.application.errors import ApplicationInputError
 
