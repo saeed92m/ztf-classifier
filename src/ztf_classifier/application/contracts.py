@@ -6,9 +6,8 @@ scientific algorithms. Desktop GUI, CLI, API, and future adapters consume them.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from collections.abc import Callable
 from typing import Any
 
 from ztf_classifier.application.errors import ApplicationInputError
