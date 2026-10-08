@@ -10,6 +10,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
+from ztf_classifier.application.errors import ApplicationInputError
+
 
 @dataclass(frozen=True)
 class DataSourceRef:
