@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-160-application-orchestration-services-20261008",
+  "objective": "Introduce an application orchestration service over immutable application contracts without changing scientific algorithms or model artifacts.",
+  "previous_knowledge_consumed": [
+    "v1-product-scope-audit-20261005",
+    "pr-current-enforce-cycle-records",
+    "pr-143-ci-gate-fix-20261004"
+  ],
+  "baseline": {
+    "revision": "11b972e62e71c7a14ab2e740a09fd6429afe6ece",
+    "status": "Application data contracts merged; orchestration service is proposed on feat/product-application-services."
+  },
+  "expected_improvement": [
+    "centralized request validation",
+    "immutable analysis result envelope",
+    "explicit provenance and diagnostics boundary"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "No application orchestration boundary existed above the data contracts.",
+        "after": "Service validates request identity, operation and source references, then returns a typed immutable result envelope."
+      },
+      "reliability": {
+        "before": "Application-level request validation was not centralized.",
+        "after": "Focused tests cover invalid requests and result wrapping; CI runs test, package, smoke and security checks."
+      },
+      "reproducibility": {
+        "before": "Orchestration contract had no dedicated focused tests.",
+        "after": "Contract and service behavior are covered by versioned tests and CI evidence tied to the commit."
+      }
+    }
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "CI push run 37858327464 passed including test suite, package build, runtime smoke tests, dependency audit and CI Gate.",
+      "Scientific Validation run 37858331211 passed its contract/lifecycle validation job.",
+      "CodeQL run 37858331441 passed.",
+      "Product Scope Audit run 37858331286 passed."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "The initial pull_request CI event failed because the cumulative lifecycle gate requires a machine-readable cycle record whenever source or test files change.",
+      "A subsequent push-triggered CI run on the same head commit passed; the missing cycle record still needs to be added to make the PR event pass consistently."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Any PR changing implementation or tests must include a cumulative lifecycle cycle record under configs/process/cycles/.",
+      "A successful push CI run does not erase a failed pull_request event; both event paths must be reviewed."
+    ]
+  },
+  "regression": {
+    "status": "PENDING",
+    "open_blockers": [
+      "Re-run pull_request checks after adding this cycle record and verify every required check is green before merge."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "immutable application contracts",
+    "provenance boundary",
+    "scientific algorithm/artifact freeze",
+    "cumulative lifecycle gate",
+    "verify all PR event checks before merge"
+  ]
+}
