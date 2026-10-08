@@ -57,7 +57,7 @@
     ]
   },
   "regression": {
-    "status": "PENDING",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
       "Re-run pull_request checks after adding this cycle record and verify every required check is green before merge."
     ]
