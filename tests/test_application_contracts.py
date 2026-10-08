@@ -1,10 +1,12 @@
 import pytest
 
+from ztf_classifier.application.errors import ApplicationInputError
+
 from ztf_classifier.application.contracts import (
     AnalysisExecution,
-    ApplicationService,
     AnalysisRequest,
     AnalysisResult,
+    ApplicationService,
     DataSourceRef,
     ProvenanceRecord,
 )
@@ -103,5 +105,5 @@ def test_application_service_rejects_invalid_requests(
         software_version="1.0.1",
     )
 
-    with pytest.raises(Exception):
+    with pytest.raises(ApplicationInputError):
         service.analyze(request)
