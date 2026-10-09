@@ -21,6 +21,7 @@ from ztf_classifier.api.schemas import (
     AnalysisJobListResponse,
     AnalysisJobRequest,
     AnalysisJobResponse,
+    ApplicationSettingsRequest,
     ErrorResponse,
     FeatureBackendListResponse,
     FeatureBackendResponse,
@@ -37,9 +38,13 @@ from ztf_classifier.api.schemas import (
     ScientificValidationResponse,
     ServiceStatusResponse,
 )
-from ztf_classifier.application.errors import ApplicationInferenceError
+from ztf_classifier.application.errors import (
+    ApplicationInferenceError,
+    ApplicationInputError,
+)
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.application.service import ApplicationService
+from ztf_classifier.application.state import ApplicationSettings, ApplicationStateStore
 from ztf_classifier.catalog import ScientificCatalogService
 from ztf_classifier.features import ScientificFeatureEngine
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
@@ -271,6 +276,7 @@ def create_app(
     )
     app.state.settings = api_settings
     app.state.application_service = service
+    settings_store = ApplicationStateStore(api_settings.application_state_path)
     jobs = JobStore(api_settings.job_store_path)
     results = ScientificResultStore(api_settings.result_store_path)
     catalog = ScientificCatalogService(results)
@@ -371,6 +377,49 @@ def create_app(
     def health() -> ServiceStatusResponse:
         """Return process-level liveness."""
         return ServiceStatusResponse(status="ok")
+
+    @app.get(
+        "/v1/settings",
+        response_model=ApplicationSettingsRequest,
+        tags=["application-settings"],
+    )
+    def get_application_settings() -> ApplicationSettingsRequest:
+        """Return persisted non-scientific workbench preferences."""
+        try:
+            stored = settings_store.load()
+        except ApplicationInputError as exc:
+            raise ApiContractError(
+                "application_settings_unavailable",
+                "Saved application settings are invalid or unreadable.",
+                status_code=500,
+            ) from exc
+        return ApplicationSettingsRequest(**stored.__dict__)
+
+    @app.put(
+        "/v1/settings",
+        response_model=ApplicationSettingsRequest,
+        tags=["application-settings"],
+    )
+    def save_application_settings(
+        payload: ApplicationSettingsRequest,
+    ) -> ApplicationSettingsRequest:
+        """Validate and atomically persist non-scientific workbench preferences."""
+        try:
+            stored = ApplicationSettings(
+                theme=payload.theme,
+                workspace_directory=payload.workspace_directory,
+                max_import_bytes=payload.max_import_bytes,
+                day_start=payload.day_start,
+                night_start=payload.night_start,
+            )
+            settings_store.save(stored)
+        except ApplicationInputError as exc:
+            raise ApiContractError(
+                "application_settings_invalid",
+                "Application settings failed validation.",
+                status_code=422,
+            ) from exc
+        return ApplicationSettingsRequest(**stored.__dict__)
 
     @app.get(
         "/ready",

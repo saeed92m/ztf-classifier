@@ -17,7 +17,7 @@ from typing import Any
 from ztf_classifier.application.errors import ApplicationInputError
 
 _STATE_SCHEMA_VERSION = 1
-_ALLOWED_THEMES = frozenset({"system", "light", "deep-space", "alpha"})
+_ALLOWED_THEMES = frozenset({"system", "auto", "light", "deep-space", "alpha"})
 
 
 @dataclass(frozen=True)
@@ -27,9 +27,11 @@ class ApplicationSettings:
     theme: str = "system"
     workspace_directory: str | None = None
     max_import_bytes: int = 250 * 1024 * 1024
+    day_start: str = "06:00"
+    night_start: str = "18:00"
 
     def __post_init__(self) -> None:
-        if self.theme not in _ALLOWED_THEMES:
+        if not isinstance(self.theme, str) or self.theme not in _ALLOWED_THEMES:
             raise ApplicationInputError(
                 f"Unsupported theme {self.theme!r}; choose one of "
                 f"{', '.join(sorted(_ALLOWED_THEMES))}."
@@ -43,6 +45,9 @@ class ApplicationSettings:
                 raise ApplicationInputError(
                     "workspace_directory must be non-empty when provided."
                 )
+        for field_name, value in (("day_start", self.day_start), ("night_start", self.night_start)):
+            if not isinstance(value, str) or len(value) != 5 or value[2] != ":" or not value[:2].isdigit() or not value[3:].isdigit() or not (0 <= int(value[:2]) <= 23 and 0 <= int(value[3:]) <= 59):
+                raise ApplicationInputError(f"{field_name} must use HH:MM in 24-hour time.")
         if (
             not isinstance(self.max_import_bytes, int)
             or isinstance(self.max_import_bytes, bool)

@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-persist-workbench-settings-20261009",
+  "objective": "Connect the versioned application settings store to the API and workbench UI so appearance preferences persist server-side across browsers and sessions.",
+  "previous_knowledge_consumed": [
+    "Issue #158 application/core boundary: user preferences must not mutate scientific model artifacts or validation state.",
+    "PR #166 merged versioned atomic JSON settings store.",
+    "PR #161 established local-data ingestion and provenance boundaries.",
+    "Lifecycle gate requires machine-readable records with only supported metric names."
+  ],
+  "baseline": {
+    "revision": "47a716eba056f78573f309532c6d551766385ea7",
+    "status": "Settings store exists but is not yet exposed through the API or consumed by the workbench."
+  },
+  "expected_improvement": [
+    "Expose a validated GET/PUT settings contract at /v1/settings.",
+    "Persist settings outside the repository by default and allow explicit ZTF_API_STATE_PATH override.",
+    "Load and save theme and day/night appearance preferences through the API with localStorage fallback when API persistence is unavailable.",
+    "Cover persistence and validation with API tests while preserving scientific boundary."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Settings store had no HTTP contract or UI integration.",
+        "after": "GET/PUT contract and focused API test cover defaults, persistence, invalid values, and preservation of previous valid state."
+      },
+      "reliability": {
+        "before": "Appearance preferences were browser-local only.",
+        "after": "Preferences use atomic server-side JSON persistence when the API is available; localStorage is retained as offline fallback."
+      },
+      "scientific_validity": {
+        "before": "Application state store was isolated but not connected to the product.",
+        "after": "Only application preference routes and UI wiring are added; scientific model artifacts and release gate are untouched."
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Awaiting CI, CodeQL, Product Scope Audit, and lifecycle validation for this PR head."
+    ]
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "root_causes": [
+      "The previous settings store was not wired to API routes or workbench controls.",
+      "The UI used localStorage only, so preferences were not shared with server-side application state."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Keep user preferences in the application-state store and never use them to configure or override scientific model artifacts.",
+      "Keep localStorage as a degraded/offline fallback while server-side API persistence is the preferred source.",
+      "Validate theme and time strings before atomic persistence; invalid updates must not replace the last valid state."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run full CI and required PR checks on the final commit before merge.",
+      "Confirm test coverage and static audit are green."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Scientific baseline v0.2.0 remains immutable.",
+    "Application settings are non-scientific state and must not bypass validation or model artifact integrity.",
+    "Do not merge while required checks are pending or failing."
+  ]
+}

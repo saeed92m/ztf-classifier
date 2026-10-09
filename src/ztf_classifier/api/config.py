@@ -16,6 +16,7 @@ class ApiSettings:
     observation_cache_dir: Path = Path("data/raw/alerce")
     job_store_path: Path = Path("data/jobs/jobs.sqlite3")
     result_store_path: Path = Path("data/results/results.sqlite3")
+    application_state_path: Path = Path.home() / ".ztf-classifier" / "settings.json"
     api_key: str | None = None
     scientific_registry_dir: Path = Path("configs/benchmarks")
     scientific_evidence_dir: Path = Path("reports/scientific_validation")
@@ -28,6 +29,7 @@ class ApiSettings:
         cache_dir = os.getenv("ZTF_API_OBSERVATION_CACHE_DIR")
         job_store = os.getenv("ZTF_API_JOB_STORE")
         result_store = os.getenv("ZTF_API_RESULT_STORE")
+        application_state = os.getenv("ZTF_API_STATE_PATH")
         api_key = os.getenv("ZTF_API_KEY")
         scientific_registry = os.getenv("ZTF_SCIENTIFIC_REGISTRY_DIR")
         scientific_evidence = os.getenv("ZTF_SCIENTIFIC_EVIDENCE_DIR")
@@ -43,6 +45,11 @@ class ApiSettings:
                 Path(result_store).expanduser()
                 if result_store
                 else Path("data/results/results.sqlite3")
+            ),
+            application_state_path=(
+                Path(application_state).expanduser()
+                if application_state
+                else Path.home() / ".ztf-classifier" / "settings.json"
             ),
             observation_cache_dir=Path(cache_dir).expanduser()
             if cache_dir
