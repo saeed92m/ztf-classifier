@@ -40,7 +40,7 @@ dependencies = [
     "lightgbm",
     "shap",
     "requests",
-    "fastapi>=0.141.1,<0.142",
+    "fastapi>=0.141.1,<0.143",
     "uvicorn>=0.53.0,<0.54",
 ]
 
