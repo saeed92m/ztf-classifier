@@ -1,0 +1,65 @@
+{
+  "stage_id": "pr-161-local-data-ingestion-20261009",
+  "objective": "Add a bounded local CSV/Parquet ingestion service with content hashing and source provenance for the desktop product.",
+  "previous_knowledge_consumed": [
+    "Issue #158 product implementation sequence",
+    "PR #160 application service contracts",
+    "Existing DataSourceRef provenance contract",
+    "Executable lifecycle schema in src/ztf_classifier/lifecycle.py"
+  ],
+  "baseline": {
+    "status": "VERIFIED",
+    "description": "Application request/result contracts are merged into main; local file ingestion was not yet exposed as a focused service."
+  },
+  "expected_improvement": [
+    "Provide a reusable import boundary for desktop, CLI, and future API adapters.",
+    "Record SHA-256 content identity, row count, columns, format, and local source locator.",
+    "Reject unsupported formats, empty inputs, missing required columns, and files above a configurable size limit."
+  ],
+  "measurement": {
+    "metrics": {
+      "lifecycle_contract_coverage": {
+        "before": "no dedicated application import service",
+        "after": "CSV/Parquet import boundary with provenance"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "scientific_gate_affected": false,
+    "status": "NOT_VERIFIED",
+    "evidence": [
+      "Focused tests cover CSV ingestion, provenance, invalid/empty inputs, required columns, size limits, and source-file immutability.",
+      "CI and scientific validation must pass before merge."
+    ]
+  },
+  "failure_analysis": {
+    "status": "NOT_VERIFIED",
+    "findings": [
+      "CI and lifecycle validation have not yet completed for this change."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Successful file parsing is not evidence of scientific validity or ground truth.",
+      "Content hashes and explicit local source locators improve import traceability.",
+      "Import size limits and required-column checks should fail closed before analysis."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Await CI, CodeQL, product scope audit, and scientific validation."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "v0.2.0 remains immutable.",
+    "External data retrieval is not performed implicitly by local file import.",
+    "Scientific Validation remains release-blocking.",
+    "Import provenance does not imply scientific correctness or ground truth."
+  ]
+}
