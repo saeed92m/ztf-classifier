@@ -4,7 +4,8 @@
   "previous_knowledge_consumed": [
     "Issue #158 product implementation sequence",
     "PR #160 application service contracts",
-    "Existing DataSourceRef provenance contract"
+    "Existing DataSourceRef provenance contract",
+    "Executable lifecycle schema in src/ztf_classifier/lifecycle.py"
   ],
   "baseline": {
     "status": "VERIFIED",
@@ -17,13 +18,9 @@
   ],
   "measurement": {
     "metrics": {
-      "supported_local_formats": {
+      "lifecycle_contract_coverage": {
         "before": "no dedicated application import service",
-        "after": "CSV and Parquet"
-      },
-      "source_content_identity": {
-        "before": "not provided by the import boundary",
-        "after": "SHA-256 recorded in source provenance"
+        "after": "CSV/Parquet import boundary with provenance"
       },
       "scientific_validity": {
         "status": "NOT_MEASURED"
@@ -41,7 +38,15 @@
   "failure_analysis": {
     "status": "NOT_VERIFIED",
     "findings": [
-      "The GitHub Actions test and lifecycle gates are pending for this change."
+      "CI and lifecycle validation have not yet completed for this change."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Successful file parsing is not evidence of scientific validity or ground truth.",
+      "Content hashes and explicit local source locators improve import traceability.",
+      "Import size limits and required-column checks should fail closed before analysis."
     ]
   },
   "regression": {
@@ -50,7 +55,7 @@
       "Await CI, CodeQL, product scope audit, and scientific validation."
     ]
   },
-  "decision": "PENDING",
+  "decision": "REVISE",
   "knowledge_carried_forward": [
     "v0.2.0 remains immutable.",
     "External data retrieval is not performed implicitly by local file import.",
