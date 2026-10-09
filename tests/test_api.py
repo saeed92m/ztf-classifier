@@ -692,3 +692,42 @@ def test_scientific_validation_dashboard_is_fail_closed(tmp_path: Path) -> None:
     assert payload["status"] == "NOT_VERIFIED"
     assert len(payload["benchmarks"]) == 5
     assert payload["blockers"]
+
+
+def test_application_settings_are_persisted_and_validated(tmp_path: Path) -> None:
+    settings_path = tmp_path / "state" / "settings.json"
+    client = TestClient(create_app(ApiSettings(application_state_path=settings_path)))
+
+    initial = client.get("/v1/settings")
+    assert initial.status_code == 200
+    assert initial.json()["theme"] == "system"
+    assert not settings_path.exists()
+
+    saved = client.put(
+        "/v1/settings",
+        json={
+            "theme": "deep-space",
+            "workspace_directory": None,
+            "max_import_bytes": 1024,
+            "day_start": "07:15",
+            "night_start": "19:45",
+        },
+    )
+    assert saved.status_code == 200
+    assert saved.json()["theme"] == "deep-space"
+    assert saved.json()["day_start"] == "07:15"
+    assert client.get("/v1/settings").json() == saved.json()
+    assert settings_path.is_file()
+
+    invalid = client.put(
+        "/v1/settings",
+        json={
+            "theme": "not-a-theme",
+            "workspace_directory": None,
+            "max_import_bytes": 1024,
+            "day_start": "25:99",
+            "night_start": "19:45",
+        },
+    )
+    assert invalid.status_code == 422
+    assert client.get("/v1/settings").json() == saved.json()
