@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "fix-frozen-reference-download-integrity-20261009",
+  "objective": "Recover source-backed scientific validation when a frozen Zenodo archive download is incomplete or corrupt, without weakening publisher checksum verification.",
+  "previous_knowledge_consumed": [
+    "Scientific Validation run 37907714047 failed because the downloaded ALeRCE archive MD5 differed from the publisher-declared checksum.",
+    "Zenodo record 4279623 publishes MD5 f0c8c47fb530613718a3cf0c4678a3e4 for the immutable historical archive.",
+    "Existing downloader left invalid archives in place and did not retry; subsequent attempts could reuse the invalid file."
+  ],
+  "baseline": {
+    "revision": "4caf8f1db4585c6ae80ca09deb94ac77bf689605",
+    "status": "The frozen-reference acquisition fails closed on MD5 mismatch, but a mismatched download is retained and not retried, making a transient transport/cache problem persist across reruns."
+  },
+  "expected_improvement": [
+    "Download to a temporary file and atomically promote only a publisher-checksum-matching archive.",
+    "Retry one failed/corrupt transfer while retaining the authoritative expected MD5.",
+    "Replace invalid cached archives rather than reusing them and add a regression test for retry behavior."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Checksum mismatch terminates acquisition and leaves the mismatched archive in place.",
+        "after": "Only an archive matching the publisher-declared MD5 is accepted; mismatched transfers are discarded and retried once."
+      },
+      "reliability": {
+        "before": "A stale corrupt archive blocks subsequent retries because the file already exists.",
+        "after": "Corrupt cached files are removed, downloads use a temporary file, and one retry is attempted before a clear fail-closed error."
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Regression test simulates a corrupt cached archive and first failed transfer followed by a valid publisher-checksum-matching archive.",
+      "CI, CodeQL, product scope audit, and Scientific Validation must pass before merge."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "Scientific Validation reported expected MD5 f0c8c47fb530613718a3cf0c4678a3e4 but received f5bc08bbfa05fa1f0054a31686785a3c.",
+      "The acquisition script did not retry and did not remove a previously downloaded archive after checksum failure."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Never update a frozen publisher checksum solely to make a failing download pass.",
+      "Validate large external downloads before atomic promotion and discard checksum-invalid transfer bytes.",
+      "A retry improves resilience but does not replace independent publisher-checksum verification."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "The regression test and full CI have not yet run.",
+      "The full main Scientific Validation must pass source-backed frozen-reference checks before a release can publish."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep v0.2.0 scientific baseline immutable.",
+    "Never weaken scientific gates to hide missing or corrupted evidence.",
+    "Only verified publisher snapshots may be recorded as frozen reference evidence."
+  ]
+}
