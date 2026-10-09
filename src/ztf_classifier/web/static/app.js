@@ -8,8 +8,8 @@ const state = {
   observations: [],
   result: null,
 };
-
-function loadPreferences() {
+let storedSettings = { theme: "system", workspace_directory: null, max_import_bytes: 250 * 1024 * 1024, day_start: "06:00", night_start: "18:00" };
+function localPreferences() {
   try { return { ...defaults, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") }; }
   catch { return { ...defaults }; }
 }
@@ -26,23 +26,43 @@ function resolveTheme(p) {
   return isDay ? "light" : "alpha";
 }
 function applyTheme(p) { document.documentElement.dataset.theme = resolveTheme(p); }
-function savePreferences(p) { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); applyTheme(p); }
-
-const preferences = loadPreferences();
-applyTheme(preferences);
-const themeButton = document.getElementById("themeButton");
-const popover = document.getElementById("themePopover");
-const themeSelect = document.getElementById("themeSelect");
-const dayStart = document.getElementById("dayStart");
-const nightStart = document.getElementById("nightStart");
-themeSelect.value = preferences.theme;
-dayStart.value = preferences.dayStart;
-nightStart.value = preferences.nightStart;
-themeButton.addEventListener("click", () => { popover.hidden = !popover.hidden; });
-themeSelect.addEventListener("change", () => { preferences.theme = themeSelect.value; savePreferences(preferences); });
-dayStart.addEventListener("change", () => { preferences.dayStart = dayStart.value; savePreferences(preferences); });
-nightStart.addEventListener("change", () => { preferences.nightStart = nightStart.value; savePreferences(preferences); });
-setInterval(() => { if (preferences.theme === "auto") applyTheme(preferences); }, 60000);
+function readPreferencesFromServer(payload) {
+  storedSettings = { ...storedSettings, ...payload };
+  return { theme: payload.theme || defaults.theme, dayStart: payload.day_start || defaults.dayStart, nightStart: payload.night_start || defaults.nightStart };
+}
+async function persistPreferences(p) {
+  const body = { ...storedSettings, theme: p.theme, day_start: p.dayStart, night_start: p.nightStart };
+  try {
+    const saved = await fetchJson("/v1/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    storedSettings = saved;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+    setConnectionState("Settings saved", true);
+  } catch {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+    setConnectionState("Settings local only", false);
+  }
+  applyTheme(p);
+}
+async function initializePreferences() {
+  let preferences;
+  try { preferences = readPreferencesFromServer(await fetchJson("/v1/settings")); }
+  catch { preferences = localPreferences(); }
+  applyTheme(preferences);
+  const themeButton = document.getElementById("themeButton");
+  const popover = document.getElementById("themePopover");
+  const themeSelect = document.getElementById("themeSelect");
+  const dayStart = document.getElementById("dayStart");
+  const nightStart = document.getElementById("nightStart");
+  themeSelect.value = preferences.theme;
+  dayStart.value = preferences.dayStart;
+  nightStart.value = preferences.nightStart;
+  themeButton.addEventListener("click", () => { popover.hidden = !popover.hidden; });
+  themeSelect.addEventListener("change", () => { preferences.theme = themeSelect.value; void persistPreferences(preferences); });
+  dayStart.addEventListener("change", () => { preferences.dayStart = dayStart.value; void persistPreferences(preferences); });
+  nightStart.addEventListener("change", () => { preferences.nightStart = nightStart.value; void persistPreferences(preferences); });
+  setInterval(() => { if (preferences.theme === "auto") applyTheme(preferences); }, 60000);
+}
+void initializePreferences();
 
 function setConnectionState(label, ok) {
   const node = document.querySelector(".connection-state");
