@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-166-versioned-application-settings-20261009",
+  "objective": "Add a versioned, validated, atomic JSON settings store for application preferences without changing scientific computation or model artifacts.",
+  "previous_knowledge_consumed": [
+    "Issue #158 application/core boundary",
+    "PR #160 application orchestration services",
+    "PR #161 local ingestion size-limit and provenance contracts",
+    "PR #160 lifecycle lesson requiring cycle records for implementation and test changes"
+  ],
+  "baseline": {
+    "revision": "382176900e5d1dcc0c123a247f0d7f611f3a5337",
+    "status": "Application service and ingestion boundaries are merged; durable application settings persistence was not yet available."
+  },
+  "expected_improvement": [
+    "Provide versioned application preferences with explicit defaults and validation.",
+    "Persist settings atomically using a same-directory temporary file and os.replace.",
+    "Fail closed on malformed or unsupported state rather than silently resetting user preferences."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "No dedicated durable settings store existed.",
+        "after": "Focused tests cover defaults, round-trip persistence, input validation, unsupported schema versions, corrupt state, and temporary-file cleanup."
+      },
+      "reliability": {
+        "before": "Application settings had no defined atomic persistence contract.",
+        "after": "Writes flush and fsync a temporary file before atomic replacement."
+      },
+      "scientific_validity": {
+        "before": "Scientific artifacts and baseline must remain unchanged.",
+        "after": "Change is limited to application settings storage and its tests; scientific algorithms and model artifacts are not modified."
+      }
+    }
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "CI run 37939951026 passed Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate for head f6f534f83959dac7caa6978c1f9341182a16491f.",
+      "Scientific Validation run 37939975891 passed.",
+      "CodeQL run 37939975801 passed.",
+      "Product Scope Audit run 37939975803 passed.",
+      "The initial pull_request CI run failed only because this required lifecycle record was absent; the record is added in this commit and pull_request checks must be rerun."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "The first pull_request CI event failed at the cumulative lifecycle gate because meaningful source and test changes did not include a JSON cycle record.",
+      "A subsequent push-triggered CI run passed all jobs, but the failed pull_request event remained unresolved until a cycle record is added."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Every meaningful source or test change must include a machine-readable cycle record under configs/process/cycles/.",
+      "A successful push CI run does not erase a failed pull_request event; verify the PR-triggered checks after adding the record.",
+      "Application settings persistence must remain separate from scientific model artifacts and validation state."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Re-run pull_request CI after adding this record and confirm all required checks pass before merge.",
+      "Settings are not yet wired into the UI or platform-specific application data directories."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "v0.2.0 scientific baseline remains immutable.",
+    "Application state must not override scientific validation or model artifact integrity.",
+    "Malformed or unsupported settings state must fail closed.",
+    "Verify all PR event checks before merge."
+  ]
+}
