@@ -14,7 +14,9 @@ from ztf_classifier.application.ingestion import (
 
 def test_import_csv_returns_table_and_content_provenance(tmp_path):
     path = tmp_path / "detections.csv"
-    path.write_text("oid,mjd,mag\nZTF1,60000.1,18.2\nZTF1,60001.1,18.4\n")
+    path.write_text(
+        "oid,mjd,mag\nZTF1,60000.1,18.2\nZTF1,60001.1,18.4\n"
+    )
 
     result = DataIngestionService().import_file(
         ImportRequest(path=path, required_columns=("oid", "mjd"))
@@ -25,7 +27,8 @@ def test_import_csv_returns_table_and_content_provenance(tmp_path):
     assert result.data["oid"].tolist() == ["ZTF1", "ZTF1"]
     assert result.source.source_type == "local_csv"
     assert result.source.schema_version == "tabular-v1"
-    assert result.source.content_hash == hashlib.sha256(path.read_bytes()).hexdigest()
+    expected_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    assert result.source.content_hash == expected_hash
     assert result.content_sha256 == result.source.content_hash
     assert result.source.metadata["row_count"] == 2
 
@@ -37,7 +40,9 @@ def test_import_csv_returns_table_and_content_provenance(tmp_path):
         ("oid,mjd\nZTF1,60000\n", "missing required columns"),
     ],
 )
-def test_import_rejects_empty_data_or_missing_columns(tmp_path, contents, message):
+def test_import_rejects_empty_data_or_missing_columns(
+    tmp_path, contents, message
+):
     path = tmp_path / "input.csv"
     path.write_text(contents)
     required = ("oid", "mag") if "ZTF1" in contents else ()
