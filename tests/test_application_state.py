@@ -34,6 +34,8 @@ def test_settings_round_trip_and_atomic_file_shape(tmp_path) -> None:
             "theme": "deep-space",
             "workspace_directory": "/data/ztf",
             "max_import_bytes": 1024,
+            "day_start": "06:00",
+            "night_start": "18:00",
         },
     }
     assert list(path.parent.glob(".state.json.*.tmp")) == []
