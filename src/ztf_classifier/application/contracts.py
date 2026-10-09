@@ -6,9 +6,11 @@ scientific algorithms. Desktop GUI, CLI, API, and future adapters consume them.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
+
+from ztf_classifier.application.errors import ApplicationInputError
 
 
 @dataclass(frozen=True)
@@ -59,3 +61,58 @@ class AnalysisResult:
     payload: Mapping[str, Any]
     provenance: Sequence[ProvenanceRecord]
     diagnostics: Mapping[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class AnalysisExecution:
+    """Scientific execution payload returned to the application boundary."""
+
+    result_type: str
+    payload: Mapping[str, Any]
+    diagnostics: Mapping[str, Any]
+    provenance: Sequence[ProvenanceRecord]
+
+
+class ApplicationService:
+    """Orchestrate application requests without implementing science."""
+
+    def __init__(
+        self,
+        executor: Callable[[AnalysisRequest], AnalysisExecution],
+        *,
+        software_version: str,
+    ) -> None:
+        if not isinstance(software_version, str) or not software_version.strip():
+            raise ValueError("software_version must be a non-empty string.")
+        self._executor = executor
+        self._software_version = software_version
+
+    def analyze(self, request: AnalysisRequest) -> AnalysisResult:
+        """Validate and execute one application-level analysis request."""
+        self._validate_request(request)
+        execution = self._executor(request)
+        return AnalysisResult(
+            request_id=request.request_id,
+            status="success",
+            result_type=execution.result_type,
+            payload=execution.payload,
+            provenance=tuple(execution.provenance),
+            diagnostics=execution.diagnostics,
+        )
+
+    @staticmethod
+    def _validate_request(request: AnalysisRequest) -> None:
+        if not request.request_id.strip():
+            raise ApplicationInputError("request_id must be a non-empty string.")
+        if not request.operation.strip():
+            raise ApplicationInputError("operation must be a non-empty string.")
+        if not request.sources:
+            raise ApplicationInputError("at least one data source is required.")
+        if any(not source.source_id.strip() for source in request.sources):
+            raise ApplicationInputError("source_id must be non-empty.")
+        if any(not source.source_type.strip() for source in request.sources):
+            raise ApplicationInputError("source_type must be non-empty.")
+        if any(not source.locator.strip() for source in request.sources):
+            raise ApplicationInputError("locator must be non-empty.")
+        if any(not source.schema_version.strip() for source in request.sources):
+            raise ApplicationInputError("schema_version must be non-empty.")
