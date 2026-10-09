@@ -17,13 +17,13 @@
   ],
   "measurement": {
     "metrics": {
-      "release_trigger_scope": {
-        "before": "Any successful Scientific Validation workflow_run can start the release job.",
-        "after": "Only a successful Scientific Validation workflow_run on main can start the release job."
+      "correctness": {
+        "before": "Any successful Scientific Validation workflow_run, including a pull-request branch, can enter the release job.",
+        "after": "The release job requires both successful Scientific Validation and workflow_run.head_branch equal to main."
       },
-      "release_integrity": {
-        "before": "Non-main validation can enter release and fail during evidence download.",
-        "after": "Non-main validation events are skipped before release checkout and evidence acquisition."
+      "reliability": {
+        "before": "Non-main validation events can trigger production publication and fail when release-only evidence artifacts are unavailable.",
+        "after": "Non-main validation events are skipped before release checkout and evidence downloads; main validation retains all existing publication gates."
       }
     }
   },
