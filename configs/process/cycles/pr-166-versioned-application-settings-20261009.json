@@ -27,7 +27,7 @@
         "before": "Application settings had no defined atomic persistence contract.",
         "after": "Writes flush and fsync a temporary file before atomic replacement."
       },
-      "scientific_boundary": {
+      "scientific_validity": {
         "before": "Scientific artifacts and baseline must remain unchanged.",
         "after": "Change is limited to application settings storage and its tests; scientific algorithms and model artifacts are not modified."
       }
