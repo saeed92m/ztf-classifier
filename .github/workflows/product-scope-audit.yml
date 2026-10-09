@@ -68,7 +68,7 @@ jobs:
           Path("audit-evidence/product-scope-audit.json").write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
           PY
       - name: Upload audit evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: product-scope-audit
           path: audit-evidence/product-scope-audit.json
