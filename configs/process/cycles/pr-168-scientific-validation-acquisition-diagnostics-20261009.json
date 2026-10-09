@@ -36,18 +36,18 @@
     "status": "IN_PROGRESS",
     "scientific_gate_affected": true,
     "evidence": [
-      "PR CI run 38000299005: Format Check and Lint passed.",
-      "Cumulative Lifecycle Gate failed because the required cycle record was absent; the cycle record is added in this commit and PR checks must rerun.",
-      "Runtime Smoke Tests, Test Suite, Dependency Audit, and Build & Verify Package were skipped downstream of the failed lifecycle gate.",
-      "Source-backed CPVS acquisition and frozen historical ALeRCE reference acquisition still require successful evidence-backed reruns."
+      "Commit 2747913f5631a961508d22d7c6243754bf172bbd: CodeQL, Product Scope Audit, and all CI jobs passed.",
+      "Scientific Validation run 38001959142 passed registry and lifecycle contract tests.",
+      "Source provenance, DR24/ALeRCE evidence, frozen historical references, and CPVS source-backed derivation were skipped because this PR branch does not match the workflow's ci/heavy/* trigger condition.",
+      "A dedicated ci/heavy/pr168-source-validation branch is being used to request the source-backed workflow without weakening any gate."
     ]
   },
   "failure_analysis": {
     "status": "VERIFIED",
     "root_causes": [
-      "The PR-triggered Cumulative Lifecycle Gate failed because the workflow source change had no machine-readable record under configs/process/cycles/.",
-      "The earlier CPVS failure's underlying external acquisition cause remains unknown until the diagnostic change is exercised by a new run.",
-      "The earlier historical ALeRCE reference acquisition experienced HTTP 504; this is not evidence of a checksum or data-integrity failure."
+      "The workflow's heavy jobs are conditional and intentionally skipped for ordinary fix/* pull request branches.",
+      "The earlier CPVS acquisition's underlying external failure remains unverified until a fresh source-backed run emits the acquisition report.",
+      "The earlier frozen historical ALeRCE acquisition returned HTTP 504; a successful immutable-reference manifest and checksums are still required."
     ]
   },
   "knowledge_extraction": {
@@ -59,17 +59,19 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "IN_PROGRESS",
     "open_blockers": [
-      "Rerun PR checks and confirm all required CI jobs pass.",
-      "Inspect a fresh CPVS acquisition report to identify the underlying external acquisition failure.",
-      "Confirm successful immutable historical ALeRCE reference verification with manifest and checksums."
+      "Run source-backed CPVS acquisition and inspect the full acquisition report.",
+      "Verify frozen historical ALeRCE reference acquisition and manifest checksums.",
+      "Confirm the independent CPVS membership audit and DR24/ALeRCE evidence contracts.",
+      "Do not claim scientific readiness until these external-evidence steps complete."
     ]
   },
   "decision": "REVISE",
   "knowledge_carried_forward": [
     "The v0.2.0 scientific baseline remains immutable.",
     "Never weaken scientific gates or claim source-backed reproduction without verified source evidence.",
-    "A successful lint/format check is not equivalent to passing the full CI or scientific validation."
+    "A successful lint/format/contract CI run is not equivalent to full source-backed scientific validation.",
+    "Heavy workflow conditions must be satisfied explicitly when external evidence is required."
   ]
 }
