@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "fix-release-only-on-main-validation-20261009",
+  "objective": "Prevent pull-request Scientific Validation runs from triggering the production release workflow; publish only from successful validation of main.",
+  "previous_knowledge_consumed": [
+    "pr-160-application-orchestration-services-20261008",
+    "release workflow run 37889771724 failed while attempting to download heavy scientific evidence from a non-main validation run"
+  ],
+  "baseline": {
+    "revision": "752781d56796130c1a59153b45910c65834c0089",
+    "status": "Release workflow triggers after every successful Scientific Validation workflow_run, including pull-request branches; release evidence download then fails for runs that do not publish heavy release artifacts."
+  },
+  "expected_improvement": [
+    "Restrict production release workflow to successful Scientific Validation runs whose head branch is main.",
+    "Avoid misleading failed release attempts from pull-request validation events.",
+    "Preserve evidence-bound release publication and existing scientific gates."
+  ],
+  "measurement": {
+    "metrics": {
+      "release_trigger_scope": {
+        "before": "Any successful Scientific Validation workflow_run can start the release job.",
+        "after": "Only a successful Scientific Validation workflow_run on main can start the release job."
+      },
+      "release_integrity": {
+        "before": "Non-main validation can enter release and fail during evidence download.",
+        "after": "Non-main validation events are skipped before release checkout and evidence acquisition."
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Workflow condition adds github.event.workflow_run.head_branch == 'main'.",
+      "CI, CodeQL, product-scope audit, and scientific validation must pass before merge."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "Release workflow's workflow_run trigger listened to Scientific Validation completion without restricting the source branch to main.",
+      "A successful pull-request Scientific Validation run therefore started a production release job and failed when expected heavy scientific-validation artifacts were unavailable."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "workflow_run release workflows must explicitly constrain the source branch before attempting release-only artifact downloads.",
+      "Pull-request scientific validation and main-branch release validation have different artifact contracts and must not share the same publication path."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Required checks on this PR have not yet completed.",
+      "Post-merge verification must confirm pull-request validation no longer launches a release job and successful main validation remains eligible."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Never weaken scientific validation or release artifact checks to hide missing evidence.",
+    "Keep v0.2.0 scientific baseline immutable.",
+    "Release workflow must be bound to successful main-branch validation and its run artifacts."
+  ]
+}
