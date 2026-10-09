@@ -38,7 +38,10 @@ from ztf_classifier.api.schemas import (
     ScientificValidationResponse,
     ServiceStatusResponse,
 )
-from ztf_classifier.application.errors import ApplicationInferenceError, ApplicationInputError
+from ztf_classifier.application.errors import (
+    ApplicationInferenceError,
+    ApplicationInputError,
+)
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.application.service import ApplicationService
 from ztf_classifier.application.state import ApplicationSettings, ApplicationStateStore
