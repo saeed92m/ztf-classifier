@@ -3,6 +3,7 @@
 This module is an application boundary: it reads user-selected CSV/Parquet files
 without changing scientific artifacts or silently fetching external datasets.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -39,9 +40,13 @@ class ImportRequest:
             raise ApplicationInputError("max_bytes must be a positive integer.")
         if self.max_bytes <= 0:
             raise ApplicationInputError("max_bytes must be a positive integer.")
-        if any(not isinstance(column, str) or not column.strip()
-               for column in self.required_columns):
-            raise ApplicationInputError("required_columns must contain non-empty names.")
+        if any(
+            not isinstance(column, str) or not column.strip()
+            for column in self.required_columns
+        ):
+            raise ApplicationInputError(
+                "required_columns must contain non-empty names."
+            )
         if self.source_id is not None and not self.source_id.strip():
             raise ApplicationInputError("source_id must be non-empty when provided.")
 
