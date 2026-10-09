@@ -68,19 +68,43 @@ def _members(path: Path, archive_type: str) -> list[str]:
         return archive.getnames()
 
 
+def _download_verified(source: dict, archive: Path, benchmark_id: str) -> str:
+    """Download to a temporary file and retry once if transport bytes fail MD5."""
+    if archive.exists():
+        existing_md5 = _md5(archive)
+        if existing_md5 == source["md5"]:
+            return existing_md5
+        # A previous interrupted/invalid download must not poison future retries.
+        archive.unlink()
+
+    temporary = archive.with_name(f".{archive.name}.part")
+    last_error: Exception | None = None
+    for attempt in range(1, 3):
+        temporary.unlink(missing_ok=True)
+        try:
+            _download(source["url"], temporary)
+            actual_md5 = _md5(temporary)
+            if actual_md5 == source["md5"]:
+                temporary.replace(archive)
+                return actual_md5
+            last_error = RuntimeError(
+                f"MD5 mismatch on attempt {attempt}: expected {source['md5']}, got {actual_md5}"
+            )
+        except Exception as exc:
+            last_error = exc
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    raise RuntimeError(
+        f"{benchmark_id}: verified download failed after 2 attempts: {last_error}"
+    ) from last_error
+
+
 def acquire(benchmark_id: str, output: Path) -> Path:
     source = SOURCES[benchmark_id]
     output.mkdir(parents=True, exist_ok=True)
     archive = output / source["filename"]
-    if not archive.exists():
-        _download(source["url"], archive)
-
-    actual_md5 = _md5(archive)
-    if actual_md5 != source["md5"]:
-        raise RuntimeError(
-            f"{benchmark_id}: archive MD5 mismatch: "
-            f"expected {source['md5']}, got {actual_md5}"
-        )
+    actual_md5 = _download_verified(source, archive, benchmark_id)
 
     members = _members(archive, source["archive_type"])
     basenames = {Path(member).name for member in members}
