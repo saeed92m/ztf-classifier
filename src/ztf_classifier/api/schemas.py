@@ -15,8 +15,8 @@ class ApplicationSettingsRequest(BaseModel):
     theme: str = Field(default="system", min_length=1, max_length=32)
     workspace_directory: str | None = Field(default=None, max_length=4096)
     max_import_bytes: int = Field(default=250 * 1024 * 1024, gt=0)
-    day_start: str = Field(default="06:00", pattern=r"^(?:[01]\\d|2[0-3]):[0-5]\\d$")
-    night_start: str = Field(default="18:00", pattern=r"^(?:[01]\\d|2[0-3]):[0-5]\\d$")
+    day_start: str = Field(default="06:00", pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
+    night_start: str = Field(default="18:00", pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
 
 
 class PredictionRequest(BaseModel):
