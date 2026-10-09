@@ -59,7 +59,7 @@
     ]
   },
   "regression": {
-    "status": "IN_PROGRESS",
+    "status": "BLOCKED",
     "open_blockers": [
       "Run source-backed CPVS acquisition and inspect the full acquisition report.",
       "Verify frozen historical ALeRCE reference acquisition and manifest checksums.",
