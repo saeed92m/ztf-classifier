@@ -18,7 +18,7 @@
   ],
   "measurement": {
     "metrics": {
-      "diagnostics": {
+      "correctness": {
         "before": "CPVS acquisition report was not emitted in the failing step's logs.",
         "after": "Failure branch prints the acquisition report when present; verify in a subsequent run."
       },
