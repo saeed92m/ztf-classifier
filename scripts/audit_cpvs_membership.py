@@ -20,11 +20,10 @@ def read_published_ztf_names(path: Path) -> list[str]:
     lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
     header_index: int | None = None
     ztf_index: int | None = None
-    header_delimiter: str | None = None
 
     def columns_for(line: str) -> tuple[list[str], str]:
-        if "\\t" in line:
-            return [item.strip() for item in line.split("\\t")], "tab"
+        if "\t" in line:
+            return [item.strip() for item in line.split("\t")], "tab"
         return line.split(), "whitespace"
 
     # VizieR asu-tsv may include a metadata preamble and a whitespace-delimited
@@ -40,7 +39,6 @@ def read_published_ztf_names(path: Path) -> list[str]:
             if any(item in normalized for item in ("id", "class", "score", "radeg", "recno")):
                 header_index = index
                 ztf_index = normalized.index("ztf" if "ztf" in normalized else "ztf identifier")
-                header_delimiter = delimiter
                 break
 
     names: list[str] = []
