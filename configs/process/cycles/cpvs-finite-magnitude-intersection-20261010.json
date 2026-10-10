@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-finite-magnitude-intersection-20261010",
+  "objective": "Make CPVS derivation enforce its documented finite non-zero magnitude requirement in the final two-band membership intersection.",
+  "previous_knowledge_consumed": [
+    "Scientific Validation run 38005546758 showed 741787 candidate IDs versus 730184 published IDs.",
+    "The derivation computed per-band valid-magnitude sets but intersected raw SNR-qualified sets, so its implementation did not enforce the predicate recorded in the evidence manifest.",
+    "Independent diagnostics that already filter finite non-zero magnitudes still produce 741785 candidates; this correction alone is not expected to resolve the full discrepancy."
+  ],
+  "baseline": {
+    "revision": "main@70ddf8aaadc2fdde16cb8b240fc4bace3b17368a",
+    "status": "derive_730k intersected raw SNR-qualified IDs and did not apply the valid-magnitude sets, despite documenting finite non-zero magnitudes as part of the predicate."
+  },
+  "expected_improvement": [
+    "Intersect SNR-qualified membership with finite non-zero magnitude membership in both bands.",
+    "Report diagnostic counts with accurate magnitude-quality semantics rather than calling them flag-quality counts.",
+    "Add a regression test where a zero-magnitude row passes the SNR threshold but must not enter the final two-band selection."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Final selection used raw SNR IDs; invalid-magnitude rows could enter the output.",
+        "after": "Final selection is the intersection of SNR-qualified IDs and finite non-zero magnitude IDs in both bands."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Added a focused regression test; CI and source-backed CPVS audit are pending."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The derivation calculated valid_magnitude but never intersected it into the final selected ID set."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Documented scientific selection predicates must be enforced in the final membership set, not only calculated for diagnostics.",
+      "This code correction is necessary but insufficient: source-backed diagnostics already show a remaining ~11.6k membership discrepancy after finite-magnitude filtering."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Required PR CI must pass.",
+      "Re-run source-backed membership audit and investigate the remaining mismatch without hardcoding IDs."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not claim exact CPVS reproduction until the independent membership audit passes.",
+    "Never hardcode discrepant IDs or tune thresholds only to match a target count.",
+    "Keep frozen v0.2.0 scientific baseline unchanged."
+  ]
+}
