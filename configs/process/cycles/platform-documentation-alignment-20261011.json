@@ -7,7 +7,8 @@
     "PR #171 merged fail-closed CPVS status classification",
     "PR #173 merged finite non-zero magnitude intersection correction; exact-membership mismatch remains unresolved",
     "Issue #158 defines cross-platform desktop acceptance",
-    "Run 38005546758 was workflow-successful but skipped source-provenance/scientific-gate-readiness"
+    "Run 38005546758 was workflow-successful but skipped source-provenance/scientific-gate-readiness",
+    "PR #176 identifies and corrects a separate audit semantic defect: Table 4 internal ID must not be compared directly to parent row-ordinal SourceID; join by normalized ZTF name."
   ],
   "baseline": {
     "revision": "main",
@@ -17,7 +18,8 @@
     "Publish handbook v2.8 aligned to v1.0.1 and current blockers.",
     "Add canonical roadmap for scientific validation, desktop UX, capability expansion, and reliability.",
     "Clarify that post-fix CPVS source-backed verification remains pending.",
-    "Link the handbook and roadmap from README."
+    "Link the handbook and roadmap from README.",
+    "Document the corrected published-membership join semantics and explicitly retain the residual candidate-only population as unresolved pending source-backed evidence."
   ],
   "measurement": {
     "metrics": {
@@ -48,7 +50,8 @@
     "root_causes": [
       "Handbook version lagged v1.0.1.",
       "Troubleshooting did not distinguish pre-fix CPVS counts from pending post-fix source-backed verification.",
-      "Product roadmap needed a canonical acceptance-driven entry point."
+      "Product roadmap needed a canonical acceptance-driven entry point.",
+      "The membership audit compared the Table 4 catalog-internal ID column directly with parent row-ordinal SourceID values; PR #176 changes the join to normalized ZTF names, pending validation."
     ]
   },
   "knowledge_extraction": {
@@ -56,7 +59,8 @@
     "findings": [
       "A merged scientific correction is not full benchmark resolution until independent audit passes.",
       "Workflow-level success with a skipped required job does not establish scientific release readiness.",
-      "Product completion requires end-to-end user acceptance, not feature presence alone."
+      "Product completion requires end-to-end user acceptance, not feature presence alone.",
+      "An audit can produce internally consistent counts while comparing semantically different identifiers; join keys must be justified from the source schema/ReadMe."
     ]
   },
   "regression": {
@@ -64,7 +68,8 @@
     "open_blockers": [
       "Run CI and lifecycle contract validation for the documentation branch.",
       "Run heavy source-backed validation on intended branch and verify required jobs execute.",
-      "Keep Issue #170 open until evidence supports closure."
+      "Keep Issue #170 open until evidence supports closure.",
+      "Verify PR #176 name-based membership join in CI and inspect the post-fix audit for unmapped/duplicate ZTF names and remaining candidate-only IDs."
     ]
   },
   "decision": "REVISE",

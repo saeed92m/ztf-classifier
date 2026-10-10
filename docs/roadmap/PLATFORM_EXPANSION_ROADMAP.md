@@ -19,7 +19,7 @@ Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issu
 - [ ] Trigger heavy workflow on an intended ci/heavy/* ref and verify source-provenance/scientific-gate-readiness executes.
 - [ ] Re-run CPVS derivation after PR #173's finite/non-zero magnitude correction.
 - [ ] Inspect acquisition report, derived membership, independent VizieR table, and hashes.
-- [ ] Verify Table 4 internal ID ↔ ZTF name ↔ parent-row mapping; investigate IDs 781603/781604 and representative candidate-only IDs.
+- [ ] Verify the name-based Table 4 ZTF-name → parent-row SourceID audit implemented in PR #176; inspect unmapped/duplicate names and candidate-only IDs 781603/781604 plus representative extras.
 - [ ] Explain the remaining candidate-only population using published selection semantics, not tuned thresholds.
 - [ ] Require exact independent membership audit before claiming exact reconstruction.
 - [ ] Keep Issue #170 open until evidence-based disposition.

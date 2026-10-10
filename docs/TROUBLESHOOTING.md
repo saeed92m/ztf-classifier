@@ -135,3 +135,6 @@ Include:
 9. whether the issue is reproducible from a clean environment.
 
 Never attach API keys or other secrets.
+
+
+A separate audit-join defect was also identified: Table 4's internal ID was being compared directly with the parent catalog's row-ordinal SourceID. PR #176 changes the audit to map published ZTF object names to parent SourceIDs and adds regression tests. This is an audit-correctness fix, not proof that the remaining candidate-only population has been explained; wait for CI and fresh source-backed evidence.

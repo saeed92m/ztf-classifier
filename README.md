@@ -420,5 +420,5 @@ The current production model explicitly does **not** claim a scientific-anomaly 
 - Canonical continuity handbook: [HANDBOOK_UPDATED_v2.8.md](docs/HANDBOOK_UPDATED_v2.8.md).
 - Canonical cross-platform product roadmap: [PLATFORM_EXPANSION_ROADMAP.md](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md).
 - Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
-- Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). PR #173 corrected a real magnitude-selection defect but did not prove exact published membership; the required source-backed rerun and ID/name mapping audit remain outstanding.
+- Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). PR #173 corrected a real magnitude-selection defect but did not prove exact published membership. PR #176 also corrects the audit join key by mapping Table 4 ZTF names to parent-row SourceIDs; CI and the fresh source-backed audit remain outstanding.
 - Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.
