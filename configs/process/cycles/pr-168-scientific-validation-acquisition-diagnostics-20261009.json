@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-168-scientific-validation-acquisition-diagnostics-20261009",
+  "objective": "Improve source-backed scientific validation failure diagnostics, ensure the independent VizieR download directory exists, and retry transient HTTP failures without weakening fail-closed validation.",
+  "previous_knowledge_consumed": [
+    "PR #167 scientific-validation workflow fixes",
+    "Previous Scientific Validation run 37999377298 failed at CPVS 781k acquisition with BLOCKED_EXTERNAL; downstream missing-file errors were cascading",
+    "Cumulative Lifecycle Gate requires a machine-readable record for meaningful changes"
+  ],
+  "baseline": {
+    "revision": "15f3f45b9eed25bdfbfe422822fc7cf400316146",
+    "status": "Scientific Validation workflow could fail without printing the acquisition report's underlying error; independent VizieR output could fail when the output directory was absent."
+  },
+  "expected_improvement": [
+    "Print the acquisition JSON report when CPVS acquisition fails, preserving the original non-zero failure.",
+    "Create the independent VizieR output directory before downloading.",
+    "Retry transient VizieR transport failures with explicit connection and total timeouts."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "CPVS acquisition report was not emitted in the failing step's logs.",
+        "after": "Failure branch prints the acquisition report when present; verify in a subsequent run."
+      },
+      "robustness": {
+        "before": "Independent VizieR download could target a missing directory.",
+        "after": "Output root is created and curl retries transient failures."
+      },
+      "scientific_validity": {
+        "before": "Source-backed evidence is required for external benchmark claims.",
+        "after": "Scientific validation remains fail-closed; no source evidence is fabricated and no scientific gate is bypassed."
+      }
+    }
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "PR CI run 38000299005: Format Check and Lint passed.",
+      "Cumulative Lifecycle Gate failed because the required cycle record was absent; the cycle record is added in this commit and PR checks must rerun.",
+      "Runtime Smoke Tests, Test Suite, Dependency Audit, and Build & Verify Package were skipped downstream of the failed lifecycle gate.",
+      "Source-backed CPVS acquisition and frozen historical ALeRCE reference acquisition still require successful evidence-backed reruns."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "The PR-triggered Cumulative Lifecycle Gate failed because the workflow source change had no machine-readable record under configs/process/cycles/.",
+      "The earlier CPVS failure's underlying external acquisition cause remains unknown until the diagnostic change is exercised by a new run.",
+      "The earlier historical ALeRCE reference acquisition experienced HTTP 504; this is not evidence of a checksum or data-integrity failure."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Every meaningful workflow change must include a cumulative lifecycle record.",
+      "A diagnostic improvement does not prove the external source acquisition succeeds; rerun and inspect the acquisition report.",
+      "External benchmark and frozen-reference checks must remain fail-closed."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Rerun PR checks and confirm all required CI jobs pass.",
+      "Inspect a fresh CPVS acquisition report to identify the underlying external acquisition failure.",
+      "Confirm successful immutable historical ALeRCE reference verification with manifest and checksums."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "The v0.2.0 scientific baseline remains immutable.",
+    "Never weaken scientific gates or claim source-backed reproduction without verified source evidence.",
+    "A successful lint/format check is not equivalent to passing the full CI or scientific validation."
+  ]
+}
