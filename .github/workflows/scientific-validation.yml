@@ -74,49 +74,84 @@ jobs:
           python -m pip install -e .
 
       - name: Acquire 781k CPVS parent evidence
+        id: acquire_parent
         run: |
           mkdir -p reports/scientific_validation/ztf_periodic_781k
-          python -m ztf_classifier.validation acquire             --benchmark-id ztf_periodic_781k             --output reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip             --code-version "${GITHUB_SHA}"
+          if ! python -m ztf_classifier.validation acquire \
+            --benchmark-id ztf_periodic_781k \
+            --output reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
+            --code-version "${GITHUB_SHA}"; then
+            report=reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip.acquisition.json
+            if [ -s "$report" ]; then
+              echo "CPVS parent acquisition report:" >&2
+              cat "$report" >&2
+            else
+              echo "CPVS parent acquisition failed without an acquisition report." >&2
+            fi
+            exit 1
+          fi
 
-      - name: Acquire StarEmbed source package
+      - name: Restore immutable CPVS light-curve archive cache
+        id: cpvs_archive_cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            reports/scientific_validation/ztf_periodic_730k/ztf2g.zip
+            reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
+          key: cpvs-lightcurves-zenodo-3886372-850fcef561dd7407fbe8e19e99100d7a-daa7bc45c67579253eebe6b1c09dfbd9
+
+      - name: Download independent published 730k membership
+        id: download_published_membership
+        if: always()
         run: |
-          mkdir -p reports/scientific_validation/ztf_star_embed
-          python -m ztf_classifier.validation acquire             --benchmark-id star_embed_ztf_40k             --output reports/scientific_validation/ztf_star_embed             --code-version "${GITHUB_SHA}"
+          set -euo pipefail
+          root=reports/scientific_validation/ztf_periodic_730k
+          mkdir -p "$root"
+          curl --location --fail --show-error --retry 5 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --max-time 180 \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            -o "$root/published_table4.dat"
+          test -s "$root/published_table4.dat"
+          echo "Published VizieR membership downloaded."
 
       - name: Download and normalize CPVS light-curve inputs for 730k derivation
+        id: download_lightcurves
         run: |
           set -euo pipefail
 
           root=reports/scientific_validation/ztf_periodic_730k
           mkdir -p "$root/g" "$root/r"
 
-          # Large Zenodo archives must fail fast on stalled connections while
-          # retaining retries for transient transport failures.
-          # The two immutable Zenodo archives are ~754 MB and ~882 MB. Download them
-          # concurrently so one slow transfer does not unnecessarily serialize the job.
-          curl --location --fail --show-error --silent \
-            --retry 5 --retry-all-errors --retry-delay 5 \
-            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
-            "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \
-            -o "$root/ztf2g.zip" >"$root/ztf2g.download.log" 2>&1 &
-          g_pid=$!
-          curl --location --fail --show-error --silent \
-            --retry 5 --retry-all-errors --retry-delay 5 \
-            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
-            "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" \
-            -o "$root/ztf2r.zip" >"$root/ztf2r.download.log" 2>&1 &
-          r_pid=$!
+          # Reuse the immutable, checksum-pinned Zenodo archives across runs.
+          # On a cache miss, download both archives concurrently with retries.
+          if [ ! -s "$root/ztf2g.zip" ] || [ ! -s "$root/ztf2r.zip" ]; then
+            rm -f "$root/ztf2g.zip" "$root/ztf2r.zip"
+            curl --location --fail --show-error --silent \
+              --retry 5 --retry-all-errors --retry-delay 5 \
+              --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+              "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \
+              -o "$root/ztf2g.zip" >"$root/ztf2g.download.log" 2>&1 &
+            g_pid=$!
+            curl --location --fail --show-error --silent \
+              --retry 5 --retry-all-errors --retry-delay 5 \
+              --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+              "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" \
+              -o "$root/ztf2r.zip" >"$root/ztf2r.download.log" 2>&1 &
+            r_pid=$!
 
-          g_status=0
-          r_status=0
-          wait "$g_pid" || g_status=$?
-          wait "$r_pid" || r_status=$?
-          if [ "$g_status" -ne 0 ] || [ "$r_status" -ne 0 ]; then
-            echo "g download exit=$g_status" >&2
-            cat "$root/ztf2g.download.log" >&2 || true
-            echo "r download exit=$r_status" >&2
-            cat "$root/ztf2r.download.log" >&2 || true
-            exit 1
+            g_status=0
+            r_status=0
+            wait "$g_pid" || g_status=$?
+            wait "$r_pid" || r_status=$?
+            if [ "$g_status" -ne 0 ] || [ "$r_status" -ne 0 ]; then
+              echo "g download exit=$g_status" >&2
+              cat "$root/ztf2g.download.log" >&2 || true
+              echo "r download exit=$r_status" >&2
+              cat "$root/ztf2r.download.log" >&2 || true
+              exit 1
+            fi
+          else
+            echo "Restored both CPVS archives from cache."
           fi
 
           echo "850fcef561dd7407fbe8e19e99100d7a  $root/ztf2g.zip" | md5sum -c -
@@ -219,19 +254,13 @@ jobs:
           parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
           python -m ztf_classifier.validation derive-730k             --parent "$parent"             --g-lightcurve reports/scientific_validation/ztf_periodic_730k/g             --r-lightcurve reports/scientific_validation/ztf_periodic_730k/r             --output reports/scientific_validation/ztf_periodic_730k/selected.tsv             --parent-evidence-sha256 "$parent_sha"             --code-version "${GITHUB_SHA}"
 
-      - name: Download independent published 730k membership
-        if: always()
-        run: |
-          set -euo pipefail
-          root=reports/scientific_validation/ztf_periodic_730k
-          curl -L --fail --retry 3 --retry-all-errors \
-            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
-            -o "$root/published_table4.dat"
-          test -s "$root/published_table4.dat"
-          echo "Published VizieR membership downloaded."
 
       - name: Diagnose CPVS selection semantics
-        if: always()
+        if: >-
+          always() &&
+          steps.acquire_parent.outcome == 'success' &&
+          steps.download_lightcurves.outcome == 'success' &&
+          steps.download_published_membership.outcome == 'success'
         run: |
           set -euo pipefail
           python scripts/diagnose_cpvs_selection.py \
@@ -243,7 +272,7 @@ jobs:
 
       - name: Audit 730k membership against independent publication
         id: audit_730k
-        if: always()
+        if: always() && steps.derive_730k.outcome == 'success' && steps.download_published_membership.outcome == 'success'
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -255,6 +284,7 @@ jobs:
       - name: Classify CPVS reconstruction result
         if: always()
         env:
+          ACQUIRE_PARENT_OUTCOME: ${{ steps.acquire_parent.outcome }}
           DERIVE_OUTCOME: ${{ steps.derive_730k.outcome }}
           AUDIT_OUTCOME: ${{ steps.audit_730k.outcome }}
         run: |
@@ -276,9 +306,12 @@ jobs:
           reason = "CPVS exact membership is not established; required evidence is incomplete"
 
           if derive_outcome != "success":
-              if not diagnostic.is_file():
-                  raise SystemExit("CPVS derivation failed without required diagnostic evidence.")
-              reason = "published 730,184-object membership was not reproduced; candidate/diagnostic evidence retained"
+              if diagnostic.is_file():
+                  reason = "published 730,184-object membership was not reproduced; candidate/diagnostic evidence retained"
+              elif os.environ.get("ACQUIRE_PARENT_OUTCOME") != "success":
+                  reason = "CPVS parent acquisition failed or was blocked; exact membership cannot be evaluated"
+              else:
+                  reason = "CPVS derivation did not complete and diagnostic evidence is unavailable"
           elif audit_outcome != "success":
               reason = "independent VizieR membership audit did not complete successfully"
           elif not audit.is_file():
@@ -306,6 +339,11 @@ jobs:
           )
           print(json.dumps(result, indent=2, sort_keys=True))
           PY
+      - name: Acquire StarEmbed source package
+        run: |
+          mkdir -p reports/scientific_validation/ztf_star_embed
+          python -m ztf_classifier.validation acquire             --benchmark-id star_embed_ztf_40k             --output reports/scientific_validation/ztf_star_embed             --code-version "${GITHUB_SHA}"
+
       - name: Validate heavy execution evidence contract
         if: always()
         shell: bash
@@ -316,7 +354,6 @@ jobs:
             "reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip.evidence.json"
             "reports/scientific_validation/ztf_periodic_730k/ztf2g.zip"
             "reports/scientific_validation/ztf_periodic_730k/ztf2r.zip"
-            "reports/scientific_validation/ztf_periodic_730k/selected.tsv"
             "reports/scientific_validation/ztf_periodic_730k/cpvs_reconstruction_status.json"
             "reports/scientific_validation/ztf_star_embed"
           )
@@ -487,7 +524,8 @@ jobs:
     if: >-
       github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
