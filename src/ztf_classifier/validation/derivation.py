@@ -402,7 +402,7 @@ def _qualified_ids(
             magnitude = float("nan")
         if math.isfinite(magnitude) and magnitude != 0.0:
             valid_magnitude.add(oid)
-            selected.add(oid)
+        selected.add(oid)
         if flag_key is None:
             continue
         raw_flag = row.get(flag_key, "").strip()
@@ -428,7 +428,8 @@ def _qualified_ids(
             "flag_lt_32768": len(flag_lt_32768),
             "top_flags": flag_values.most_common(10),
         }
-    # The paper specifies detection SNR thresholds, not a flag==0 filter.\n    # Keep flags diagnostic-only.\n    quality_ids = valid_magnitude
+    # Return raw SNR-qualified IDs and the subset with finite non-zero magnitudes.
+    # Catalog flags remain diagnostic-only.
     return selected, valid_magnitude
 
 
@@ -456,7 +457,7 @@ def derive_730k(
         )
 
     diagnostics: dict[str, object] = {}
-    g_ids, g_flag_zero = _qualified_ids(
+    g_ids, g_valid_magnitude = _qualified_ids(
         g_lightcurve,
         sigma=config.g_sigma,
         parent_ids=parent_ids,
@@ -465,7 +466,7 @@ def derive_730k(
         flag_columns=("g_flag", "catflags", "flag"),
         diagnostics=diagnostics,
     )
-    r_ids, r_flag_zero = _qualified_ids(
+    r_ids, r_valid_magnitude = _qualified_ids(
         r_lightcurve,
         sigma=config.r_sigma,
         parent_ids=parent_ids,
@@ -475,14 +476,15 @@ def derive_730k(
         diagnostics=diagnostics,
     )
     snr_selected = g_ids & r_ids
-    flag_zero_selected = g_flag_zero & r_flag_zero
+    both_bands_valid_magnitude = g_valid_magnitude & r_valid_magnitude
+    selected_ids = snr_selected & both_bands_valid_magnitude
     diagnostics["intersection"] = {
         "snr_only_count": len(snr_selected),
-        "both_bands_flag_zero_count": len(flag_zero_selected),
-        "snr_removed_by_flag_quality": len(snr_selected - flag_zero_selected),
+        "both_bands_valid_magnitude_count": len(selected_ids),
+        "snr_candidates_removed_by_magnitude_quality": len(snr_selected - selected_ids),
         "selection_predicate": "g SNR >= 2.5 AND r SNR >= 3.0 AND finite non-zero g/r magnitudes",
     }
-    selected = sorted(snr_selected)
+    selected = sorted(selected_ids)
 
     # Always materialize the candidate membership before asserting the
     # published cardinality. This is diagnostic evidence, not acceptance:
