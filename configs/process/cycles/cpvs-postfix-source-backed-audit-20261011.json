@@ -21,48 +21,54 @@
   ],
   "measurement": {
     "metrics": {
-      "candidate_membership": {
-        "before": "Pre-fix run: 741787 candidates, 730182 intersection, 11605 candidate-only, 2 published-only.",
-        "after": "Measure from fresh post-fix source-backed artifacts; NOT_MEASURED until workflow completes."
+      "reproducibility": {
+        "before": "Previous run retained source evidence but used a membership join whose key semantics were not verified.",
+        "after": "Fresh rerun with normalized ZTF-name to parent-row SourceID mapping is pending."
       },
-      "scientific_gate_execution": {
-        "before": "Required source-provenance/scientific-gate-readiness job was skipped.",
-        "after": "Required job must execute; a skipped job is not a pass."
+      "scientific_validity": {
+        "before": "Exact CPVS membership unresolved; prior audit reported 741787 candidates and false exact_membership_match.",
+        "after": "NOT_MEASURED: rerun with corrected name-based audit required before any exact-reproduction conclusion.",
+        "status": "NOT_MEASURED"
       },
-      "evidence_integrity": {
-        "before": "Previous run lacked a completed exact-membership match.",
-        "after": "Require immutable source hashes, acquisition reports, explicit audit outcome and exact_membership_match=true before PASS."
+      "reliability": {
+        "before": "Source-provenance/readiness job was skipped on heavy refs.",
+        "after": "The job executes successfully on heavy refs; source-backed scientific result still needs review."
       }
     }
   },
   "validation": {
-    "status": "IN_PROGRESS",
+    "status": "NOT_VERIFIED",
     "scientific_gate_affected": true,
     "evidence": [
-      "A dedicated ci/heavy/* branch is being pushed to trigger the repository's heavy workflow condition.",
-      "Results are pending; this record makes no scientific pass claim."
+      "Run 38092797735 executed the source-provenance/scientific-gate-readiness job successfully.",
+      "Run 38092797735 source-backed derivation still reported 741787 candidates versus expected 730184; independent audit reported exact_membership_match=false.",
+      "The workflow run checked out code before the latest name-based audit change was present in the executed workflow; a new run is required to test that correction."
     ]
   },
   "failure_analysis": {
-    "status": "IN_PROGRESS",
+    "status": "SUPPORTED",
     "root_causes": [
-      "The finite/non-zero magnitude predicate defect was corrected, but the remaining membership discrepancy and identifier mapping semantics are unresolved.",
-      "Prior workflow-level success was misleading for readiness because a required provenance/readiness job was skipped."
+      "The final magnitude-quality intersection correction did not resolve the 741787 versus 730184 candidate-count mismatch.",
+      "The readiness job had been skipped on heavy refs; PR #176 changes its condition.",
+      "The membership audit previously compared Table 4 internal ID directly with parent-row SourceID; PR #176 changes the join to normalized ZTF object name, but this correction has not yet been validated by a fresh run."
     ]
   },
   "knowledge_extraction": {
-    "status": "IN_PROGRESS",
+    "status": "UNRESOLVED",
     "findings": [
-      "The corrected derivation must be judged from a fresh source-backed run, not prior counts.",
-      "Workflow status and scientific evidence status must be evaluated separately."
+      "Workflow-level success is not proof of exact CPVS reproduction: the derivation step can retain diagnostics while reporting a mismatch.",
+      "The readiness job must execute on the same refs used for source-backed heavy validation.",
+      "Membership audit keys must follow the source schema: Table 4 internal IDs are not parent-row SourceIDs.",
+      "The remaining candidate-only population is unresolved until the corrected audit is rerun."
     ]
   },
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Heavy workflow must complete and all required jobs must execute.",
-      "Independent CPVS membership audit must be reviewed.",
-      "Table 4 internal ID to ZTF name and parent-catalog mapping must be source-verified."
+      "Push corrected cycle record and run lifecycle contract validation.",
+      "Run heavy source-backed validation against the latest name-based audit code.",
+      "Review candidate-only IDs, unmapped names, duplicate names, and exact_membership_match from fresh artifact.",
+      "Keep Issue #170 open until exact independent membership match is proven."
     ]
   },
   "decision": "REVISE",
