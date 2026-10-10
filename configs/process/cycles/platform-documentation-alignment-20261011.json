@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "platform-documentation-alignment-20261011",
+  "objective": "Synchronize the canonical handbook, scientific-validation status, product roadmap, troubleshooting, and README with verified v1.0.1, the CPVS blocker, and desktop-platform scope.",
+  "previous_knowledge_consumed": [
+    "Issue #170 and its investigation comments",
+    "PR #171 merged fail-closed CPVS status classification",
+    "PR #173 merged finite non-zero magnitude intersection correction; exact-membership mismatch remains unresolved",
+    "Issue #158 defines cross-platform desktop acceptance",
+    "Run 38005546758 was workflow-successful but skipped source-provenance/scientific-gate-readiness"
+  ],
+  "baseline": {
+    "revision": "main",
+    "status": "README identifies v1.0.1, but handbook v2.7 says v1.0.0 and troubleshooting describes pre-fix CPVS counts as current; no canonical product roadmap entry point."
+  },
+  "expected_improvement": [
+    "Publish handbook v2.8 aligned to v1.0.1 and current blockers.",
+    "Add canonical roadmap for scientific validation, desktop UX, capability expansion, and reliability.",
+    "Clarify that post-fix CPVS source-backed verification remains pending.",
+    "Link the handbook and roadmap from README."
+  ],
+  "measurement": {
+    "metrics": {
+      "documentation_accuracy": {
+        "before": "Version/status and post-fix verification state are inconsistent.",
+        "after": "Canonical docs identify v1.0.1, frozen v0.2.0, Issue #170 unresolved, and Issue #158 active."
+      },
+      "traceability": {
+        "before": "Product work is spread across issues and roadmaps.",
+        "after": "README links the canonical handbook/roadmap."
+      },
+      "scientific_validity": {
+        "before": "Exact CPVS membership is not proven.",
+        "after": "Still explicitly unresolved; no scientific claim or gate is weakened."
+      }
+    }
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Documentation-only change; no scientific code, model, or release artifact changed.",
+      "CI, link/content consistency, and lifecycle contract validation pending."
+    ]
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "root_causes": [
+      "Handbook version lagged v1.0.1.",
+      "Troubleshooting did not distinguish pre-fix CPVS counts from pending post-fix source-backed verification.",
+      "Product roadmap needed a canonical acceptance-driven entry point."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A merged scientific correction is not full benchmark resolution until independent audit passes.",
+      "Workflow-level success with a skipped required job does not establish scientific release readiness.",
+      "Product completion requires end-to-end user acceptance, not feature presence alone."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Run CI and lifecycle contract validation for the documentation branch.",
+      "Run heavy source-backed validation on intended branch and verify required jobs execute.",
+      "Keep Issue #170 open until evidence supports closure."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "v0.2.0 baseline remains immutable.",
+    "v1.0.1 release remains immutable.",
+    "Desktop platform remains an explicit deliverable under Issue #158.",
+    "Scientific validation and product usability are parallel workstreams."
+  ]
+}
