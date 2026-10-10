@@ -350,7 +350,7 @@ A benchmark is evidence about this system; it is not the system's architecture.
 |---|---:|
 | CPVS parent | 781,602 |
 | Published membership | 730,184 |
-| Current candidate | 741,787 |
+| Latest measured derivation output (not a valid membership comparison) | 741,787 |
 | Published ∩ candidate | 730,184 |
 | Published-only | 0 |
 | Candidate-only | NOT VERIFIED (latest audit parsed zero published rows) |
