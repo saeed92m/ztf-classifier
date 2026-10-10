@@ -106,7 +106,7 @@ Low confidence indicates uncertainty in the classification output. It is not pro
 
 ### CPVS reproduction mismatch
 
-The current reconstruction contains all 730,184 published CPVS members but also 11,604 additional candidates from the 781,602-object parent. This remains a claim-specific historical reconstruction boundary.
+The pre-fix source-backed run reported 741,787 candidates, including 11,604 candidate-only IDs. PR #173 corrected a real defect in which finite, non-zero magnitude qualification was not applied to the final g/r intersection. This correction is necessary but not sufficient: independent diagnostics that already applied finite/non-zero magnitude filtering reported 741,785 candidates. A full post-fix source-backed derivation and independent membership audit are still required; exact reconstruction remains UNRESOLVED under Issue #170. Do not hardcode IDs or tune thresholds to force the published count. This remains a claim-specific historical reconstruction boundary.
 
 Do not tune thresholds merely to force the reconstructed count to 730,184.
 
