@@ -354,7 +354,6 @@ jobs:
             "reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip.evidence.json"
             "reports/scientific_validation/ztf_periodic_730k/ztf2g.zip"
             "reports/scientific_validation/ztf_periodic_730k/ztf2r.zip"
-            "reports/scientific_validation/ztf_periodic_730k/selected.tsv"
             "reports/scientific_validation/ztf_periodic_730k/cpvs_reconstruction_status.json"
             "reports/scientific_validation/ztf_star_embed"
           )
