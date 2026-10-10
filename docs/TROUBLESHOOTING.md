@@ -138,3 +138,6 @@ Never attach API keys or other secrets.
 
 
 A separate audit-join defect was also identified: Table 4's internal ID was being compared directly with the parent catalog's row-ordinal SourceID. PR #176 changes the audit to map published ZTF object names to parent SourceIDs and adds regression tests. This is an audit-correctness fix, not proof that the remaining candidate-only population has been explained; wait for CI and fresh source-backed evidence.
+
+
+**Latest audit parser issue (2026-10-11):** Heavy run [#38092797735](https://github.com/saeed92m/ztf-classifier/actions/runs/38092797735) reported 741,787 derived candidates, but the downloaded VizieR response was parsed as zero published names. This is an input-format/parser failure and invalidates that run's membership comparison; it does not prove the published catalog is empty. PR #176 adds tab/whitespace/fixed-width parsing and fails explicitly when no names are found. Fresh run [#38095475020](https://github.com/saeed92m/ztf-classifier/actions/runs/38095475020) is in progress. Until it yields a non-zero mapped published set and an independent audit, candidate-only counts are NOT VERIFIED.

@@ -353,9 +353,9 @@ A benchmark is evidence about this system; it is not the system's architecture.
 | Current candidate | 741,787 |
 | Published ∩ candidate | 730,184 |
 | Published-only | 0 |
-| Candidate-only | 11,604 |
+| Candidate-only | NOT VERIFIED (latest audit parsed zero published rows) |
 
-The 11,604 objects are a **historical selection-reconstruction discrepancy**, not ML errors or production failures. The current predicate contains all published members but admits additional parent objects. Exact historical selection semantics remain unresolved as external-reproduction evidence.
+The 11,604 candidate-only figure is a **pre-fix historical diagnostic only**, not a current verified post-fix count. A later source-backed run reported 741,787 candidates but the independent VizieR parser returned zero published rows, making that membership comparison invalid. The current name-based parser is being hardened and rerun; do not interpret these counts as a verified membership result.
 
 No threshold or predicate is to be introduced solely to force the candidate cardinality to 730,184 without independent scientific evidence.
 
@@ -374,7 +374,7 @@ An unresolved external reproduction claim must not silently become a product fai
 - Release infrastructure is event-driven from successful Scientific Validation and no longer depends on manual dispatch.
 - Curated release notes are mandatory for every future release.
 - The frozen scientific baseline remains v0.2.0 and the production model remains baseline_v0.2.
-- Exact historical CPVS reconstruction remains claim-specific UNRESOLVED evidence: 781,602 parent, 730,184 published membership, 741,787 current candidate, 11,604 candidate-only.
+- Exact historical CPVS reconstruction remains claim-specific UNRESOLVED evidence: parent count 781,602 and published target count 730,184 are documented; 741,787 candidates is a measured derivation output, but the latest audit parsed zero published rows and cannot establish candidate-only or exact-membership counts.
 - This reconstruction discrepancy is not an ML or production failure and must not be hidden or forced away by threshold tuning.
 
 The v1.0.0 software milestone is complete as a release. The broader discovery platform continues through documented product expansion and independent scientific benchmarking.

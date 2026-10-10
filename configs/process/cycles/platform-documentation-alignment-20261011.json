@@ -8,7 +8,8 @@
     "PR #173 merged finite non-zero magnitude intersection correction; exact-membership mismatch remains unresolved",
     "Issue #158 defines cross-platform desktop acceptance",
     "Run 38005546758 was workflow-successful but skipped source-provenance/scientific-gate-readiness",
-    "PR #176 identifies and corrects a separate audit semantic defect: Table 4 internal ID must not be compared directly to parent row-ordinal SourceID; join by normalized ZTF name."
+    "PR #176 identifies and corrects a separate audit semantic defect: Table 4 internal ID must not be compared directly to parent row-ordinal SourceID; join by normalized ZTF name.",
+    "Run #38092797735 derived 741,787 candidates but its VizieR membership parser returned zero published rows; that comparison is invalid, so older candidate-only counts must not be presented as current verified metrics."
   ],
   "baseline": {
     "revision": "main",
@@ -19,7 +20,8 @@
     "Add canonical roadmap for scientific validation, desktop UX, capability expansion, and reliability.",
     "Clarify that post-fix CPVS source-backed verification remains pending.",
     "Link the handbook and roadmap from README.",
-    "Document the corrected published-membership join semantics and explicitly retain the residual candidate-only population as unresolved pending source-backed evidence."
+    "Document the corrected published-membership join semantics and explicitly retain the residual candidate-only population as unresolved pending source-backed evidence.",
+    "Clearly distinguish invalid/pre-fix CPVS counts from verified post-fix membership metrics in README, handbook, troubleshooting, and roadmap."
   ],
   "measurement": {
     "metrics": {
@@ -60,7 +62,8 @@
       "A merged scientific correction is not full benchmark resolution until independent audit passes.",
       "Workflow-level success with a skipped required job does not establish scientific release readiness.",
       "Product completion requires end-to-end user acceptance, not feature presence alone.",
-      "An audit can produce internally consistent counts while comparing semantically different identifiers; join keys must be justified from the source schema/ReadMe."
+      "An audit can produce internally consistent counts while comparing semantically different identifiers; join keys must be justified from the source schema/ReadMe.",
+      "A zero-row parse of an external reference is an input-format failure; it must never be interpreted as a real empty reference set or used to report membership metrics."
     ]
   },
   "regression": {
@@ -69,7 +72,8 @@
       "Run CI and lifecycle contract validation for the documentation branch.",
       "Run heavy source-backed validation on intended branch and verify required jobs execute.",
       "Keep Issue #170 open until evidence supports closure.",
-      "Verify PR #176 name-based membership join in CI and inspect the post-fix audit for unmapped/duplicate ZTF names and remaining candidate-only IDs."
+      "Verify PR #176 name-based membership join in CI and inspect the post-fix audit for unmapped/duplicate ZTF names and remaining candidate-only IDs.",
+      "Verify the latest parser returns the expected non-zero published membership and replace all stale candidate-only figures with fresh evidence or mark them NOT VERIFIED."
     ]
   },
   "decision": "REVISE",
