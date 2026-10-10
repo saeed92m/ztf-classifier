@@ -29,6 +29,46 @@ def test_qualified_ids_uses_detection_snr_and_finite_magnitudes_only(tmp_path: P
     assert quality == {"1", "2"}
 
 
+
+def test_derive_intersects_bands_only_after_finite_magnitude_filter(tmp_path: Path):
+    from ztf_classifier.validation.derivation import derive_730k
+
+    parent = tmp_path / "parent.tsv"
+    parent.write_text("SourceID\n1\n2\n3\n", encoding="utf-8")
+    g = tmp_path / "g.tsv"
+    g.write_text(
+        "SourceID\tgmag\te_gmag\tg_flag\n"
+        "1\t18.0\t0.1\t0\n"
+        "2\t18.0\t0.1\t0\n"
+        "3\t0.0\t0.1\t0\n",
+        encoding="utf-8",
+    )
+    r = tmp_path / "r.tsv"
+    r.write_text(
+        "SourceID\trmag\te_rmag\tr_flag\n"
+        "1\t17.0\t0.1\t0\n"
+        "2\t17.0\t0.1\t0\n"
+        "3\t17.0\t0.1\t0\n",
+        encoding="utf-8",
+    )
+
+    result = derive_730k(
+        parent,
+        g,
+        r,
+        tmp_path / "selected.tsv",
+        expected_parent_rows=3,
+        expected_selected_rows=2,
+        parent_evidence_sha256="0" * 64,
+    )
+
+    assert result.selected_rows == 2
+    assert (tmp_path / "selected.tsv").read_text(encoding="utf-8").splitlines() == [
+        "SourceID",
+        "1",
+        "2",
+    ]
+
 def test_qualified_ids_empty_input_returns_two_sets(tmp_path: Path):
     path = tmp_path / "empty.tsv"
     path.write_text("", encoding="utf-8")
