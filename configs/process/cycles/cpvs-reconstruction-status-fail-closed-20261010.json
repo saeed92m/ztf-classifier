@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-reconstruction-status-fail-closed-20261010",
+  "objective": "Prevent CPVS exact-reproduction status from defaulting to PASS when independent membership audit evidence is missing or unsuccessful.",
+  "previous_knowledge_consumed": [
+    "Scientific Validation run 38005546758 reported exact_membership_match=false and reconstruction status UNRESOLVED",
+    "The CPVS status classifier ignored AUDIT_OUTCOME when the audit file was absent, allowing an evidence-incomplete path to retain the default PASS",
+    "External benchmark reproduction is claim-specific evidence and must not be confused with product-level scientific gate readiness"
+  ],
+  "baseline": {
+    "revision": "main",
+    "status": "The inline CPVS status classifier initialized status to PASS and only downgraded it when an existing audit file explicitly reported a mismatch."
+  },
+  "expected_improvement": [
+    "Default reconstruction status to UNRESOLVED.",
+    "Permit PASS only when derivation succeeds, the audit step succeeds, the audit output exists, and exact_membership_match is true.",
+    "Retain product_gate_effect=none and preserve the independent product scientific release gate."
+  ],
+  "measurement": {
+    "correctness": {
+      "before": "Missing audit output or unsuccessful audit outcome could leave status PASS if derivation succeeded.",
+      "after": "Missing/failed audit evidence is explicitly UNRESOLVED; PASS requires an exact positive membership match."
+    },
+    "scientific_validity": {
+      "before": "The status classifier could overstate an external reproduction claim under incomplete evidence.",
+      "after": "Fail-closed status semantics; no benchmark membership, model, feature schema, or product gate is changed."
+    }
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Focused workflow logic change; verify through required PR checks and a source-backed run."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The status variable was initialized to PASS.",
+      "AUDIT_OUTCOME was captured but not used to gate PASS.",
+      "A missing audit file was not treated as an unresolved result."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Evidence claims must default to unresolved and require positive proof for PASS.",
+      "A successful overall workflow is not proof that every optional/continue-on-error evidence lane succeeded."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Required PR CI must pass.",
+      "Verify unresolved result when audit fails or is missing.",
+      "Verify PASS is possible only for a successful exact-match audit."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not weaken scientific gates.",
+    "The immutable v0.2.0 scientific baseline remains unchanged.",
+    "Exact CPVS reconstruction remains unresolved until independent membership matches exactly."
+  ]
+}
