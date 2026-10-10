@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "source-provenance-probe-main-push-20261010",
+  "objective": "Ensure the lightweight source-provenance probe runs on main pushes and full workflow dispatches instead of being silently skipped outside schedules or lightweight dispatches.",
+  "previous_knowledge_consumed": [
+    "Scientific Validation run 38005546758 had Source provenance acquisition and scientific gate readiness skipped on a main-branch heavy run.",
+    "The job condition only allowed schedule or workflow_dispatch with run_heavy=false, so successful heavy evidence did not include a provenance probe.",
+    "CPVS exact-membership mismatch remains unresolved and the product-level scientific gate must remain fail-closed."
+  ],
+  "baseline": {
+    "revision": "main@70ddf8aaadc2fdde16cb8b240fc4bace3b17368a",
+    "status": "The source-provenance job ran only on schedules or workflow_dispatch with run_heavy=false."
+  },
+  "expected_improvement": [
+    "Run source provenance probe on main pushes.",
+    "Run source provenance probe on all workflow_dispatch events, including full heavy runs.",
+    "Keep source probe separate from and non-substitutive for scientific release gate evidence."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Main push and full heavy dispatch skipped the source provenance probe.",
+        "after": "Condition includes schedule, all workflow_dispatch events, and pushes to main."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Required PR checks and a main-push source-probe run are pending."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "Workflow job if-condition excluded push events to main and workflow_dispatch with run_heavy=true."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A green heavy workflow does not establish source-provenance readiness if that job is skipped.",
+      "Job skip conditions should be visible in workflow evidence and tested against intended event types."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Required PR CI must pass.",
+      "Verify source-provenance job runs on main push and full workflow dispatch."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep CPVS exact membership UNRESOLVED until independently reproduced.",
+    "Do not weaken the product scientific release gate.",
+    "Run provenance probes alongside heavy evidence acquisition on main."
+  ]
+}

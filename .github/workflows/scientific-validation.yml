@@ -484,7 +484,10 @@ jobs:
 
   scheduled-scientific-validation:
     name: Source provenance acquisition and scientific gate readiness
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_heavy == false)
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
