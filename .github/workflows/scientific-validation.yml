@@ -91,11 +91,6 @@ jobs:
             exit 1
           fi
 
-      - name: Acquire StarEmbed source package
-        run: |
-          mkdir -p reports/scientific_validation/ztf_star_embed
-          python -m ztf_classifier.validation acquire             --benchmark-id star_embed_ztf_40k             --output reports/scientific_validation/ztf_star_embed             --code-version "${GITHUB_SHA}"
-
       - name: Download and normalize CPVS light-curve inputs for 730k derivation
         id: download_lightcurves
         run: |
@@ -331,6 +326,11 @@ jobs:
           )
           print(json.dumps(result, indent=2, sort_keys=True))
           PY
+      - name: Acquire StarEmbed source package
+        run: |
+          mkdir -p reports/scientific_validation/ztf_star_embed
+          python -m ztf_classifier.validation acquire             --benchmark-id star_embed_ztf_40k             --output reports/scientific_validation/ztf_star_embed             --code-version "${GITHUB_SHA}"
+
       - name: Validate heavy execution evidence contract
         if: always()
         shell: bash
