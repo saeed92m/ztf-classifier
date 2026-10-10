@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-postfix-source-backed-audit-20261011",
+  "objective": "Run source-backed CPVS derivation and independent published-membership audit after PR #173 corrected the finite/non-zero magnitude intersection; verify that required heavy scientific-gate jobs execute on the intended branch.",
+  "previous_knowledge_consumed": [
+    "Issue #170: exact CPVS membership unresolved",
+    "PR #171: CPVS status classifier now fails closed on missing/failed audit evidence",
+    "PR #173: finite non-zero magnitude qualification now intersects final g/r membership; known independent diagnostics still reported 741785 candidates",
+    "Run 38005546758 was green at workflow level but skipped source-provenance/scientific-gate-readiness",
+    "Published Table 4 ID is a catalog-internal identifier; ID-to-ZTF-name and parent-row mapping requires source-backed verification"
+  ],
+  "baseline": {
+    "revision": "main@47855c66fa4123a27d87d3358f1bd62fb21daecd",
+    "status": "The real derivation defect is corrected, but no verified post-fix exact-membership result is available in the current evidence. Exact reconstruction remains UNRESOLVED."
+  },
+  "expected_improvement": [
+    "Execute all heavy source-backed acquisition and derivation steps from the corrected main baseline.",
+    "Produce fresh acquisition reports, hashes, derivation diagnostics, and independent VizieR membership audit.",
+    "Confirm source-provenance/scientific-gate-readiness is executed and its conclusion is evidence-backed.",
+    "Preserve unresolved status unless exact independent membership match is proven."
+  ],
+  "measurement": {
+    "metrics": {
+      "candidate_membership": {
+        "before": "Pre-fix run: 741787 candidates, 730182 intersection, 11605 candidate-only, 2 published-only.",
+        "after": "Measure from fresh post-fix source-backed artifacts; NOT_MEASURED until workflow completes."
+      },
+      "scientific_gate_execution": {
+        "before": "Required source-provenance/scientific-gate-readiness job was skipped.",
+        "after": "Required job must execute; a skipped job is not a pass."
+      },
+      "evidence_integrity": {
+        "before": "Previous run lacked a completed exact-membership match.",
+        "after": "Require immutable source hashes, acquisition reports, explicit audit outcome and exact_membership_match=true before PASS."
+      }
+    }
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "A dedicated ci/heavy/* branch is being pushed to trigger the repository's heavy workflow condition.",
+      "Results are pending; this record makes no scientific pass claim."
+    ]
+  },
+  "failure_analysis": {
+    "status": "IN_PROGRESS",
+    "root_causes": [
+      "The finite/non-zero magnitude predicate defect was corrected, but the remaining membership discrepancy and identifier mapping semantics are unresolved.",
+      "Prior workflow-level success was misleading for readiness because a required provenance/readiness job was skipped."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "IN_PROGRESS",
+    "findings": [
+      "The corrected derivation must be judged from a fresh source-backed run, not prior counts.",
+      "Workflow status and scientific evidence status must be evaluated separately."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Heavy workflow must complete and all required jobs must execute.",
+      "Independent CPVS membership audit must be reviewed.",
+      "Table 4 internal ID to ZTF name and parent-catalog mapping must be source-verified."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not hardcode IDs or tune thresholds to match a target cardinality.",
+    "Keep Issue #170 open until evidence supports closure.",
+    "Keep the immutable v0.2.0 baseline and product gate unchanged."
+  ]
+}
