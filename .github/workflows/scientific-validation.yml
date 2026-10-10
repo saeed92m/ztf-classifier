@@ -487,7 +487,8 @@ jobs:
     if: >-
       github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
