@@ -74,6 +74,7 @@ jobs:
           python -m pip install -e .
 
       - name: Acquire 781k CPVS parent evidence
+        id: acquire_parent
         run: |
           mkdir -p reports/scientific_validation/ztf_periodic_781k
           if ! python -m ztf_classifier.validation acquire \
@@ -96,6 +97,7 @@ jobs:
           python -m ztf_classifier.validation acquire             --benchmark-id star_embed_ztf_40k             --output reports/scientific_validation/ztf_star_embed             --code-version "${GITHUB_SHA}"
 
       - name: Download and normalize CPVS light-curve inputs for 730k derivation
+        id: download_lightcurves
         run: |
           set -euo pipefail
 
@@ -232,6 +234,7 @@ jobs:
           python -m ztf_classifier.validation derive-730k             --parent "$parent"             --g-lightcurve reports/scientific_validation/ztf_periodic_730k/g             --r-lightcurve reports/scientific_validation/ztf_periodic_730k/r             --output reports/scientific_validation/ztf_periodic_730k/selected.tsv             --parent-evidence-sha256 "$parent_sha"             --code-version "${GITHUB_SHA}"
 
       - name: Download independent published 730k membership
+        id: download_published_membership
         if: always()
         run: |
           set -euo pipefail
@@ -245,7 +248,11 @@ jobs:
           echo "Published VizieR membership downloaded."
 
       - name: Diagnose CPVS selection semantics
-        if: always()
+        if: >-
+          always() &&
+          steps.acquire_parent.outcome == 'success' &&
+          steps.download_lightcurves.outcome == 'success' &&
+          steps.download_published_membership.outcome == 'success'
         run: |
           set -euo pipefail
           python scripts/diagnose_cpvs_selection.py \
@@ -257,7 +264,7 @@ jobs:
 
       - name: Audit 730k membership against independent publication
         id: audit_730k
-        if: always()
+        if: always() && steps.derive_730k.outcome == 'success' && steps.download_published_membership.outcome == 'success'
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -269,6 +276,7 @@ jobs:
       - name: Classify CPVS reconstruction result
         if: always()
         env:
+          ACQUIRE_PARENT_OUTCOME: ${{ steps.acquire_parent.outcome }}
           DERIVE_OUTCOME: ${{ steps.derive_730k.outcome }}
           AUDIT_OUTCOME: ${{ steps.audit_730k.outcome }}
         run: |
@@ -290,9 +298,12 @@ jobs:
           reason = "CPVS exact membership is not established; required evidence is incomplete"
 
           if derive_outcome != "success":
-              if not diagnostic.is_file():
-                  raise SystemExit("CPVS derivation failed without required diagnostic evidence.")
-              reason = "published 730,184-object membership was not reproduced; candidate/diagnostic evidence retained"
+              if diagnostic.is_file():
+                  reason = "published 730,184-object membership was not reproduced; candidate/diagnostic evidence retained"
+              elif os.environ.get("ACQUIRE_PARENT_OUTCOME") != "success":
+                  reason = "CPVS parent acquisition failed or was blocked; exact membership cannot be evaluated"
+              else:
+                  reason = "CPVS derivation did not complete and diagnostic evidence is unavailable"
           elif audit_outcome != "success":
               reason = "independent VizieR membership audit did not complete successfully"
           elif not audit.is_file():
