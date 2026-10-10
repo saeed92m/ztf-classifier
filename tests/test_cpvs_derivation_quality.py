@@ -29,7 +29,6 @@ def test_qualified_ids_separates_snr_candidates_from_magnitude_quality(tmp_path:
     assert quality == {"1", "2"}
 
 
-
 def test_derive_intersects_bands_only_after_finite_magnitude_filter(tmp_path: Path):
     from ztf_classifier.validation.derivation import derive_730k
 
@@ -68,6 +67,7 @@ def test_derive_intersects_bands_only_after_finite_magnitude_filter(tmp_path: Pa
         "1",
         "2",
     ]
+
 
 def test_qualified_ids_empty_input_returns_two_sets(tmp_path: Path):
     path = tmp_path / "empty.tsv"
