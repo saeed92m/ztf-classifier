@@ -17,13 +17,14 @@
     "Retain product_gate_effect=none and preserve the independent product scientific release gate."
   ],
   "measurement": {
-    "correctness": {
-      "before": "Missing audit output or unsuccessful audit outcome could leave status PASS if derivation succeeded.",
-      "after": "Missing/failed audit evidence is explicitly UNRESOLVED; PASS requires an exact positive membership match."
-    },
-    "scientific_validity": {
-      "before": "The status classifier could overstate an external reproduction claim under incomplete evidence.",
-      "after": "Fail-closed status semantics; no benchmark membership, model, feature schema, or product gate is changed."
+    "metrics": {
+      "correctness": {
+        "before": "Evidence-incomplete audit paths could be reported as PASS.",
+        "after": "PASS requires successful derivation, successful audit, an audit output file, and exact_membership_match=true."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
     }
   },
   "validation": {
