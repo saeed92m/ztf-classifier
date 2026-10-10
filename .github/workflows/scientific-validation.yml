@@ -270,17 +270,25 @@ jobs:
           diagnostic = root / "selected.tsv.diagnostic.json"
           audit = root / "membership_audit.json"
 
-          status = "PASS"
-          reason = "exact published CPVS membership reproduced"
+          # Exact reproduction is opt-in: every required evidence condition must pass.
+          # Missing/failed audit evidence must never default to PASS.
+          status = "UNRESOLVED"
+          reason = "CPVS exact membership is not established; required evidence is incomplete"
+
           if derive_outcome != "success":
               if not diagnostic.is_file():
                   raise SystemExit("CPVS derivation failed without required diagnostic evidence.")
-              status = "UNRESOLVED"
               reason = "published 730,184-object membership was not reproduced; candidate/diagnostic evidence retained"
-          elif audit.is_file():
+          elif audit_outcome != "success":
+              reason = "independent VizieR membership audit did not complete successfully"
+          elif not audit.is_file():
+              reason = "independent VizieR membership audit output is missing"
+          else:
               payload = json.loads(audit.read_text(encoding="utf-8"))
-              if not payload.get("exact_membership_match"):
-                  status = "UNRESOLVED"
+              if payload.get("exact_membership_match") is True:
+                  status = "PASS"
+                  reason = "exact published CPVS membership reproduced"
+              else:
                   reason = "derived candidate does not exactly match independent VizieR membership"
 
           result = {
