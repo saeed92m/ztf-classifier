@@ -16,21 +16,32 @@ def read_selected(path: Path) -> set[int]:
 
 
 def read_published_ztf_names(path: Path) -> list[str]:
-    """Read published ZTF object names from VizieR TSV or fixed-width Table 4."""
+    """Read published ZTF names from VizieR TSV, whitespace tables, or CDS fixed-width Table 4."""
     lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
     header_index: int | None = None
     ztf_index: int | None = None
+    header_delimiter: str | None = None
 
+    def columns_for(line: str) -> tuple[list[str], str]:
+        if "\\t" in line:
+            return [item.strip() for item in line.split("\\t")], "tab"
+        return line.split(), "whitespace"
+
+    # VizieR asu-tsv may include a metadata preamble and a whitespace-delimited
+    # header (for example "recno ZTF ID"), not only a clean tab-separated header.
     for index, line in enumerate(lines):
         stripped = line.strip()
         if not stripped:
             continue
         candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
-        columns = [item.strip().lower() for item in candidate.split("\t")]
-        if "ztf" in columns or "ztf identifier" in columns:
-            header_index = index
-            ztf_index = columns.index("ztf" if "ztf" in columns else "ztf identifier")
-            break
+        columns, delimiter = columns_for(candidate)
+        normalized = [item.strip().lower().strip("[]:") for item in columns]
+        if "ztf" in normalized or "ztf identifier" in normalized:
+            if any(item in normalized for item in ("id", "class", "score", "radeg", "recno")):
+                header_index = index
+                ztf_index = normalized.index("ztf" if "ztf" in normalized else "ztf identifier")
+                header_delimiter = delimiter
+                break
 
     names: list[str] = []
     if header_index is not None and ztf_index is not None:
@@ -38,25 +49,44 @@ def read_published_ztf_names(path: Path) -> list[str]:
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
                 continue
-            columns = [item.strip() for item in line.split("\t")]
+            columns, delimiter = columns_for(line)
             if ztf_index < len(columns):
                 name = columns[ztf_index].strip()
                 if name.upper().startswith("ZTF"):
                     names.append(name.upper())
-        return names
+                    continue
+            # Some mirrors omit a consistent header delimiter; find the ZTF
+            # token instead of silently producing an empty published set.
+            for token in columns:
+                if token.upper().startswith("ZTF"):
+                    names.append(token.upper())
+                    break
+        if names:
+            return names
 
-    # CDS fixed-width Table 4: ZTF name is the first 22 characters;
-    # the adjacent ID column is an internal catalog identifier, not SourceID.
+    # Robust fallback for whitespace-delimited VizieR rows that include a
+    # leading record number, even when the header is missing or unexpected.
     for line in lines:
-        if not line.strip() or line.lstrip().startswith("#"):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
             continue
+        tokens = stripped.split()
+        ztf_tokens = [token.strip() for token in tokens if token.upper().startswith("ZTF")]
+        if ztf_tokens:
+            names.append(ztf_tokens[0].upper())
+            continue
+        # CDS fixed-width Table 4 stores the A22 ZTF name in bytes 1-22.
         name = line[:22].strip()
         if name.upper().startswith("ZTF"):
             names.append(name.upper())
-    if not names:
-        raise ValueError(f"could not parse any published ZTF names from {path}")
-    return names
 
+    if not names:
+        sample = [line for line in lines if line.strip()][:5]
+        raise ValueError(
+            f"could not parse any published ZTF names from {path}; "
+            f"first non-empty lines: {sample!r}"
+        )
+    return names
 
 def _iter_parent_lines(path: Path):
     """Yield parent catalog lines, selecting the unique member with ZTF rows."""

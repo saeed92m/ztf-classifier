@@ -70,3 +70,17 @@ def test_read_vizier_maps_tsv_names_to_parent_sourceids(tmp_path: Path):
         "ZTFJ000001.00+000000.0",
     ]
     assert read_vizier(published, parent) == {1, 2}
+
+def test_read_published_names_from_whitespace_vizier_output(tmp_path: Path):
+    published = tmp_path / "table4.dat"
+    published.write_text(
+        "#Table J/ApJ/932/118/table4\n"
+        "recno ZTF ID\n"
+        "1 ZTFJ000000.00+000000.0 781603\n"
+        "2 ZTFJ000001.00+000000.0 781604\n",
+        encoding="utf-8",
+    )
+    assert read_published_ztf_names(published) == [
+        "ZTFJ000000.00+000000.0",
+        "ZTFJ000001.00+000000.0",
+    ]
