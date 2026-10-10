@@ -197,3 +197,15 @@ source acquisition -> ingestion -> normalization/QC -> feature generation -> ana
 ### External-reproduction path
 
 The CPVS path remains responsible for proving the narrower claim of exact historical reproduction. It is fail-closed for that claim.
+
+
+## Status update — 2026-10-11 (supersedes earlier operational assumptions)
+
+The earlier **P0 exit status (2026-10-04): COMPLETE** describes the recovery milestone at that time; it does not establish that the CPVS exact-membership claim is now resolved. Issue [#170](https://github.com/saeed92m/ztf-classifier/issues/170) remains open.
+
+- PR [#171](https://github.com/saeed92m/ztf-classifier/pull/171) made the CPVS status classifier fail-closed when audit evidence is absent or unsuccessful.
+- PR [#173](https://github.com/saeed92m/ztf-classifier/pull/173) corrected a genuine derivation defect: finite, non-zero magnitude qualification was not applied to the final two-band membership intersection. The fix is necessary but insufficient; independent diagnostics with that magnitude filter still reported 741,785 candidates versus 730,184 published records.
+- The source-backed run [#38005546758](https://github.com/saeed92m/ztf-classifier/actions/runs/38005546758) was green at workflow level but skipped the source-provenance/scientific-gate-readiness job. It is not evidence of final scientific release readiness.
+- The published Table 4 ID ↔ ZTF name ↔ parent-catalog mapping (including IDs 781603 and 781604) is an investigation lead and must be verified against the pinned source tables; it is not yet a confirmed root cause.
+
+**Required next action:** run the heavy source-backed workflow on its intended ci/heavy/* ref after the merged correction, confirm required jobs execute rather than skip, inspect derivation/acquisition artifacts, and independently audit the membership and ID/name mapping. Keep exact reconstruction UNRESOLVED until evidence justifies a different disposition. Do not weaken the product gate or alter the frozen v0.2.0 baseline.
