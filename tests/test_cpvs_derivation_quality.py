@@ -3,7 +3,7 @@ from pathlib import Path
 from ztf_classifier.validation.derivation import _qualified_ids
 
 
-def test_qualified_ids_uses_detection_snr_and_finite_magnitudes_only(tmp_path: Path):
+def test_qualified_ids_separates_snr_candidates_from_magnitude_quality(tmp_path: Path):
     path = tmp_path / "g.tsv"
     path.write_text(
         "SourceID\tgmag\te_gmag\tg_flag\n"
@@ -23,8 +23,8 @@ def test_qualified_ids_uses_detection_snr_and_finite_magnitudes_only(tmp_path: P
         flag_columns=("g_flag", "catflags", "flag"),
     )
 
-    # Quality flags are diagnostic-only; the published selection is based on
-    # finite magnitudes and the documented detection SNR criterion.
+    # The helper preserves raw SNR candidates separately from the valid-magnitude
+    # subset; derive_730k must intersect both sets before publishing membership.
     assert selected == {"1", "2", "3"}
     assert quality == {"1", "2"}
 
