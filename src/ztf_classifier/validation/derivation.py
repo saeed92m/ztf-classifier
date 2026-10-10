@@ -402,7 +402,7 @@ def _qualified_ids(
             magnitude = float("nan")
         if math.isfinite(magnitude) and magnitude != 0.0:
             valid_magnitude.add(oid)
-        selected.add(oid)
+            selected.add(oid)
         if flag_key is None:
             continue
         raw_flag = row.get(flag_key, "").strip()
