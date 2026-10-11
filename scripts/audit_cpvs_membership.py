@@ -200,8 +200,8 @@ def main() -> int:
             candidate == published and not unmapped_names and duplicate_name_count == 0
         ),
         "published_source": "VizieR J/ApJ/932/118 table4.dat",
-        "membership_join_key": "normalized ZTF object name mapped to one-based parent Table2 row SourceID",
-        "note": "Table 4 ID is a catalog-internal identifier and is not compared directly with parent SourceID.",
+        "membership_join_key": "normalized ZTF object name mapped to the actual parent Table2 Seq/SourceID",
+        "note": "Table 4 ID is not used as the join key; published ZTF names map to the parent Table2 Seq/SourceID used by the light-curve attachments.",
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
