@@ -25,9 +25,9 @@ from ztf_classifier.validation.derivation import (
 
 
 def parent_catalog_metadata(path: Path) -> dict[int, dict[str, Any]]:
-    """Read class and published g/r epoch counts from fixed-width CPVS Table 2.
+    """Read Table 2 metadata from fixed-width CDS rows or whitespace mirrors.
 
-    These fields are descriptive diagnostics only; they do not affect selection.
+    Diagnostics only: these fields never alter the selection predicate.
     """
     metadata: dict[int, dict[str, Any]] = {}
     for line in _iter_parent_lines(path):
@@ -35,16 +35,41 @@ def parent_catalog_metadata(path: Path) -> dict[int, dict[str, Any]]:
         if identity is None:
             continue
         source_id = int(identity[1])
+        ng = nr = -1
+        gmag = rmag = float("nan")
+        variable_type = ""
+
+        # Official CDS Table2 byte positions (Python slices are zero-based).
         try:
             ng = int(line[131:135].strip())
             nr = int(line[136:140].strip())
+            gmag = float(line[89:95].strip())
+            rmag = float(line[96:102].strip())
+            variable_type = line[211:216].strip()
         except (ValueError, IndexError):
-            ng = nr = -1
-        variable_type = line[211:216].strip() if len(line) >= 216 else ""
+            # Zenodo text mirrors can be whitespace-tokenized. The ZTF name
+            # may occupy one token or two ("ZTF", "J..."); locate Seq rather
+            # than assuming a fixed ordinal, then use Table2's documented
+            # field order relative to Seq.
+            fields = line.strip().split()
+            try:
+                seq_index = next(i for i, value in enumerate(fields) if value == identity[1])
+                gmag = float(fields[seq_index + 7])
+                rmag = float(fields[seq_index + 8])
+                ng = int(fields[seq_index + 11])
+                nr = int(fields[seq_index + 12])
+                variable_type = fields[seq_index + 23]
+            except (StopIteration, IndexError, ValueError):
+                ng = nr = -1
+                gmag = rmag = float("nan")
+                variable_type = ""
+
         metadata[source_id] = {
             "type": variable_type or "UNKNOWN",
             "ng": ng,
             "nr": nr,
+            "gmag": gmag,
+            "rmag": rmag,
         }
     return metadata
 
@@ -286,6 +311,26 @@ def main() -> int:
                         for oid in published_intersection
                     ),
                 },
+            },
+            "parent_mean_magnitude_quality": {
+                partition: {
+                    "gmag_zero": sum(catalog_metadata[oid]["gmag"] == 0.0 for oid in ids),
+                    "rmag_zero": sum(catalog_metadata[oid]["rmag"] == 0.0 for oid in ids),
+                    "gmag_or_rmag_zero": sum(
+                        catalog_metadata[oid]["gmag"] == 0.0
+                        or catalog_metadata[oid]["rmag"] == 0.0
+                        for oid in ids
+                    ),
+                    "gmag_or_rmag_unknown": sum(
+                        not math.isfinite(catalog_metadata[oid]["gmag"])
+                        or not math.isfinite(catalog_metadata[oid]["rmag"])
+                        for oid in ids
+                    ),
+                }
+                for partition, ids in (
+                    ("candidate_only", candidate_only),
+                    ("published_intersection", published_intersection),
+                )
             },
         },
         "candidate_only_sample_by_source_id": [
