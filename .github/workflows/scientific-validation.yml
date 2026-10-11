@@ -250,6 +250,7 @@ jobs:
           python scripts/audit_cpvs_membership.py \
             --candidate reports/scientific_validation/ztf_periodic_730k/selected.tsv \
             --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
+            --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
             --output reports/scientific_validation/ztf_periodic_730k/membership_audit.json
 
       - name: Classify CPVS reconstruction result
@@ -370,7 +371,15 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: scientific-validation-heavy
-          path: reports/scientific_validation/**
+          # Keep compact manifests, reports, selected membership and diagnostics;
+          # raw and normalized per-epoch lightcurves are reacquirable from frozen
+          # sources and otherwise inflate every run artifact by multiple GB.
+          path: |
+            reports/scientific_validation/**
+            !reports/scientific_validation/ztf_periodic_730k/g/**
+            !reports/scientific_validation/ztf_periodic_730k/r/**
+            !reports/scientific_validation/ztf_periodic_730k/ztf2g.zip
+            !reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
           if-no-files-found: warn
 
   external-source-evidence:
@@ -487,7 +496,8 @@ jobs:
     if: >-
       github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/ci/heavy/'))) ||
+      (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

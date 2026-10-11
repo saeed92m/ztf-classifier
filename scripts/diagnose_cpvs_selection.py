@@ -7,16 +7,31 @@ import json
 import math
 from pathlib import Path
 
-from audit_cpvs_membership import read_vizier
+try:
+    from audit_cpvs_membership import read_vizier
+except ModuleNotFoundError:  # pytest imports this file as scripts.diagnose_cpvs_selection
+    from scripts.audit_cpvs_membership import read_vizier
 from ztf_classifier.validation.derivation import _iter_rows, _source_ids
 
 
 def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
     metrics = {
-        oid: {"snr": False, "snr1": False, "mag206": False, "mag206_only": False}
+        oid: {
+            "snr": False,
+            "snr1": False,
+            "mag206": False,
+            "mag206_only": False,
+            "snr_flag0": False,
+            "snr_flag_lt_32768": False,
+        }
         for oid in parent
     }
     threshold = 2.5 if error_key == "e_gmag" else 3.0
+    flag_candidates = (
+        ("g_flag", "catflags", "flag")
+        if error_key == "e_gmag"
+        else ("r_flag", "catflags", "flag")
+    )
     for row in _iter_rows(path, required_columns=("SourceID", error_key, mag_key)):
         raw_oid = row.get("SourceID", "").strip()
         try:
@@ -32,14 +47,29 @@ def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
             continue
         if not math.isfinite(err) or err <= 0 or not math.isfinite(mag) or mag == 0:
             continue
+
         snr = 1.0857362047581296 / err
         snr1 = 1.0 / err
-        metrics[oid]["snr"] |= snr >= threshold
-        metrics[oid]["snr1"] |= snr1 >= threshold
-        metrics[oid]["mag206"] |= mag <= 20.6 and snr >= threshold
         metrics[oid]["mag206_only"] |= mag <= 20.6
+        if snr >= threshold:
+            metrics[oid]["snr"] = True
+            metrics[oid]["mag206"] |= mag <= 20.6
+            flag_key_map = {key.strip().lower(): key for key in row}
+            flag_key = next(
+                (flag_key_map[name] for name in flag_candidates if name in flag_key_map),
+                None,
+            )
+            if flag_key is not None:
+                try:
+                    flag = int(float(row.get(flag_key, "")))
+                except (TypeError, ValueError):
+                    flag = -1
+                if flag == 0:
+                    metrics[oid]["snr_flag0"] = True
+                if 0 <= flag < 32768:
+                    metrics[oid]["snr_flag_lt_32768"] = True
+        metrics[oid]["snr1"] |= snr1 >= threshold
     return metrics
-
 
 def main() -> int:
     p = argparse.ArgumentParser()
@@ -49,7 +79,7 @@ def main() -> int:
     p.add_argument("--published", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
-    published = read_vizier(a.published)
+    published = read_vizier(a.published, a.parent)
     parent = {int(source_id) for source_id in _source_ids(a.parent, None)}
     if len(parent) != 781_602:
         raise ValueError(f"expected 781602 parent SourceIDs, got {len(parent)}")
@@ -64,8 +94,27 @@ def main() -> int:
         "baseline_plus_rmag206": {
             o for o in parent if g[o]["snr"] and r[o]["snr"] and r[o]["mag206_only"]
         },
+        # Diagnostic hypothesis only: this is NOT adopted as the published
+        # rule unless source documentation supports that flag policy.
+        "baseline_flag_zero_detection_each_band_diagnostic": {
+            o for o in parent if g[o]["snr_flag0"] and r[o]["snr_flag0"]
+        },
+        "baseline_flag_below_32768_each_band_diagnostic": {
+            o for o in parent if g[o]["snr_flag_lt_32768"] and r[o]["snr_flag_lt_32768"]
+        },
     }
-    report = {}
+    report = {
+        "band_summary": {
+            "g": {
+                "snr_qualified_objects": sum(item["snr"] for item in g.values()),
+                "snr_qualified_flag_zero_objects": sum(item["snr_flag0"] for item in g.values()),
+            },
+            "r": {
+                "snr_qualified_objects": sum(item["snr"] for item in r.values()),
+                "snr_qualified_flag_zero_objects": sum(item["snr_flag0"] for item in r.values()),
+            },
+        }
+    }
     for name, ids in predicates.items():
         report[name] = {
             "count": len(ids),
