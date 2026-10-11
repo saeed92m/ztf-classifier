@@ -1,33 +1,33 @@
 {
   "schema_version": "1.1",
   "stage_id": "cpvs-postfix-source-backed-audit-20261011",
-  "objective": "Run source-backed CPVS derivation and independent published-membership audit after PR #173 corrected the finite/non-zero magnitude intersection; verify that required heavy scientific-gate jobs execute on the intended branch.",
+  "objective": "Reconstruct published CPVS membership using the official Table2 Seq/SourceID key, and rerun source-backed derivation after identifying the row-ordinal mapping defect.",
   "previous_knowledge_consumed": [
     "Issue #170: exact CPVS membership unresolved",
-    "PR #171: CPVS status classifier now fails closed on missing/failed audit evidence",
-    "PR #173: finite non-zero magnitude qualification now intersects final g/r membership; known independent diagnostics still reported 741785 candidates",
-    "Run 38005546758 was green at workflow level but skipped source-provenance/scientific-gate-readiness",
-    "Published Table 4 ID is a catalog-internal identifier; ID-to-ZTF-name and parent-row mapping requires source-backed verification"
+    "PR #171: CPVS reconstruction gate fails closed on missing/failed audit evidence",
+    "PR #173: finite, non-zero magnitude check is applied to the final g/r intersection",
+    "Published Chen et al. (2020) ReadMe: Table2 Seq is the internal source identifier in bytes 24-29; ztf2g/ztf2r use Seq as the light-curve join key; Table2 has 781,602 rows while Seq spans 1..781,604",
+    "Published Chan et al. (2022) ReadMe: Table4 ZTF names identify the 730,184-object subset; earlier audit mapped names to parent row ordinal instead of the official Seq key"
   ],
   "baseline": {
     "revision": "main@47855c66fa4123a27d87d3358f1bd62fb21daecd",
-    "status": "The real derivation defect is corrected, but no verified post-fix exact-membership result is available in the current evidence. Exact reconstruction remains UNRESOLVED."
+    "status": "Historical membership figures derived by mapping published object names to Table2 row ordinals are invalid as a SourceID-space comparison. Exact CPVS reconstruction remains UNRESOLVED pending a fresh audit using the published Seq column."
   },
   "expected_improvement": [
-    "Execute all heavy source-backed acquisition and derivation steps from the corrected main baseline.",
-    "Produce fresh acquisition reports, hashes, derivation diagnostics, and independent VizieR membership audit.",
-    "Confirm source-provenance/scientific-gate-readiness is executed and its conclusion is evidence-backed.",
-    "Preserve unresolved status unless exact independent membership match is proven."
+    "Parse official Table2 Seq identifiers for the source-id universe rather than manufacturing IDs from physical row ordinals.",
+    "Map published Table4 object names to their actual Table2 Seq values and reject duplicate names/IDs or unparseable identifiers.",
+    "Rerun source-backed derivation and independent published membership audit with the corrected ID semantics.",
+    "Keep the scientific gate fail-closed unless evidence-backed membership and selection criteria are resolved."
   ],
   "measurement": {
     "metrics": {
       "reproducibility": {
-        "before": "Previous run retained source evidence but used a membership join whose key semantics were not verified.",
-        "after": "Fresh rerun with normalized ZTF-name to parent-row SourceID mapping is pending."
+        "before": "Prior audit mapped published ZTF names to one-based parent row ordinals, although source lightcurves use the published Table2 Seq field.",
+        "after": "Code now reads the Table2 Seq/SourceID field; fresh heavy run is pending."
       },
       "scientific_validity": {
-        "before": "Exact CPVS membership unresolved; prior audit reported 741787 candidates and false exact_membership_match.",
-        "after": "NOT_MEASURED: rerun with corrected name-based audit required before any exact-reproduction conclusion.",
+        "before": "The run reported 741,787 candidates, 725,101 intersection, 16,686 candidate-only and 5,083 published-only using a row-ordinal mapping; these membership differences are invalid and superseded.",
+        "after": "NOT_MEASURED: rerun using the official Seq identifiers is required before interpreting any candidate-only or published-only counts.",
         "status": "NOT_MEASURED"
       },
       "reliability": {
@@ -40,41 +40,44 @@
     "status": "NOT_VERIFIED",
     "scientific_gate_affected": true,
     "evidence": [
-      "Run 38092797735 executed the source-provenance/scientific-gate-readiness job successfully.",
-      "Run 38092797735 source-backed derivation still reported 741787 candidates versus expected 730184; independent audit reported exact_membership_match=false.",
-      "The workflow run checked out code before the latest name-based audit change was present in the executed workflow; a new run is required to test that correction."
+      "Official CPVS ReadMe documents Table2 Seq at bytes 24-29 as the internal source identifier; ztf2g/ztf2r use the same Seq key. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true",
+      "Official CPVS Table2 contains 781,602 rows but its Seq ID range is 1..781,604, proving row ordinal is not a safe substitute for the identifier. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true",
+      "Official CPVS reconstruction Table4 supplies published ZTF names and an internal ID; audit now maps names to the parent's actual Seq values, not row ordinals. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJ/932/118?format=html&tex=true",
+      "Code changed in PR #176 commits ff65ca4, a5658a7, and ad93566; fresh CI/heavy source-backed validation has not yet been reviewed."
     ]
   },
   "failure_analysis": {
     "status": "SUPPORTED",
     "root_causes": [
-      "The final magnitude-quality intersection correction did not resolve the 741787 versus 730184 candidate-count mismatch.",
-      "The readiness job had been skipped on heavy refs; PR #176 changes its condition.",
-      "The membership audit previously compared Table 4 internal ID directly with parent-row SourceID; PR #176 changes the join to normalized ZTF object name, but this correction has not yet been validated by a fresh run."
+      "Confirmed audit semantic defect: published names were converted to physical Table2 row numbers, while candidate and lightcurve membership use the catalog's Seq/SourceID identifier.",
+      "The derivation's parent source-ID universe also used row ordinals instead of the published Seq column.",
+      "Prior membership counts 725,101 intersection, 16,686 candidate-only and 5,083 published-only were produced in mismatched ID space and are invalid."
     ]
   },
   "knowledge_extraction": {
-    "status": "UNRESOLVED",
+    "status": "SUPPORTED",
     "findings": [
-      "Workflow-level success is not proof of exact CPVS reproduction: the derivation step can retain diagnostics while reporting a mismatch.",
-      "The readiness job must execute on the same refs used for source-backed heavy validation.",
-      "Membership audit keys must follow the source schema: Table 4 internal IDs are not parent-row SourceIDs.",
-      "The remaining candidate-only population is unresolved until the corrected audit is rerun."
+      "Use the data dictionary's explicit key columns; row order is not a substitute for catalog identifiers.",
+      "Independent membership metrics are invalid unless candidate and published sets share the same documented identifier namespace.",
+      "A parser can map every name successfully and still produce a scientifically invalid comparison if the generated identifiers have the wrong semantics.",
+      "The source-backed rerun must publish both the Seq-keyed membership comparison and unambiguously identified unresolved selection criteria."
     ]
   },
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Push corrected cycle record and run lifecycle contract validation.",
-      "Run heavy source-backed validation against the latest name-based audit code.",
-      "Review candidate-only IDs, unmapped names, duplicate names, and exact_membership_match from fresh artifact.",
-      "Keep Issue #170 open until exact independent membership match is proven."
+      "Run unit tests for non-contiguous Seq identifiers and fresh CI on the latest PR #176 head.",
+      "Run heavy source-backed derivation and confirm the parent catalog ID set is derived from Seq, with unique IDs.",
+      "Review the fresh name-to-Seq mapping, unmapped names, duplicate names/IDs, and candidate/published set differences.",
+      "Determine the remaining difference between source-backed SNR selection and the 730,184-object reference without tuning thresholds.",
+      "Keep Issue #170 open until the audit and selection semantics are evidence-backed."
     ]
   },
   "decision": "REVISE",
   "knowledge_carried_forward": [
-    "Do not hardcode IDs or tune thresholds to match a target cardinality.",
+    "Never replace the official CPVS Seq identifier with row ordinal.",
+    "Do not hardcode IDs or tune thresholds to force cardinality equality.",
     "Keep Issue #170 open until evidence supports closure.",
-    "Keep the immutable v0.2.0 baseline and product gate unchanged."
+    "Keep immutable v0.2.0 and released v1.0.1 unchanged."
   ]
 }
