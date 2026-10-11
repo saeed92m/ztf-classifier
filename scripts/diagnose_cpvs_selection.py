@@ -261,18 +261,28 @@ def main() -> int:
             },
             "parent_ng_nr_counts": {
                 "candidate_only": {
-                    "ng_zero": sum(catalog_metadata[oid]["ng"] == 0 for oid in candidate_only),
-                    "nr_zero": sum(catalog_metadata[oid]["nr"] == 0 for oid in candidate_only),
+                    "ng_zero": sum(
+                        catalog_metadata[oid]["ng"] == 0 for oid in candidate_only
+                    ),
+                    "nr_zero": sum(
+                        catalog_metadata[oid]["nr"] == 0 for oid in candidate_only
+                    ),
                     "ng_or_nr_unknown": sum(
-                        catalog_metadata[oid]["ng"] < 0 or catalog_metadata[oid]["nr"] < 0
+                        catalog_metadata[oid]["ng"] < 0
+                        or catalog_metadata[oid]["nr"] < 0
                         for oid in candidate_only
                     ),
                 },
                 "published_intersection": {
-                    "ng_zero": sum(catalog_metadata[oid]["ng"] == 0 for oid in published_intersection),
-                    "nr_zero": sum(catalog_metadata[oid]["nr"] == 0 for oid in published_intersection),
+                    "ng_zero": sum(
+                        catalog_metadata[oid]["ng"] == 0 for oid in published_intersection
+                    ),
+                    "nr_zero": sum(
+                        catalog_metadata[oid]["nr"] == 0 for oid in published_intersection
+                    ),
                     "ng_or_nr_unknown": sum(
-                        catalog_metadata[oid]["ng"] < 0 or catalog_metadata[oid]["nr"] < 0
+                        catalog_metadata[oid]["ng"] < 0
+                        or catalog_metadata[oid]["nr"] < 0
                         for oid in published_intersection
                     ),
                 },
