@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "platform-documentation-alignment-20261011",
+  "objective": "Synchronize the canonical handbook, scientific-validation status, product roadmap, troubleshooting, and README with verified v1.0.1, the CPVS blocker, and desktop-platform scope.",
+  "previous_knowledge_consumed": [
+    "Issue #170 and its investigation comments",
+    "PR #171 merged fail-closed CPVS status classification",
+    "PR #173 merged finite non-zero magnitude intersection correction; exact-membership mismatch remains unresolved",
+    "Issue #158 defines cross-platform desktop acceptance",
+    "Run 38005546758 was workflow-successful but skipped source-provenance/scientific-gate-readiness",
+    "PR #176 identifies and corrects a separate audit semantic defect: Table 4 internal ID must not be compared directly to parent row-ordinal SourceID; join by normalized ZTF name.",
+    "Run #38092797735 derived 741,787 candidates but its VizieR membership parser returned zero published rows; that comparison is invalid, so older candidate-only counts must not be presented as current verified metrics.",
+    "Official CPVS schema: Table2 Seq (bytes 24-29) is the source ID used by ztf2g/ztf2r; row ordinal is not an identifier substitute.",
+    "PR #176 source-schema investigation: historical 725101/16686/5083 membership values are invalid; current Seq-based membership counts remain not verified.",
+    "PR #176 additionally fixed NaN-SNR acceptance and added flag-aware selection diagnostics as hypotheses only, not published selection policy.",
+    "Seq-based heavy run #38121913146 completed: 741786 candidates, 730184 intersection, 11602 candidate-only, 0 published-only, 0 duplicate and 0 unmapped published names.",
+    "Diagnostic-only flag-zero variant: 736225 candidates, 724712 intersection, 5472 published-only; not the published selection rule.",
+    "Diagnostic magnitude 20.6 variant: 712439 candidates, 711319 intersection, 18865 published-only; not an acceptable reconstruction."
+  ],
+  "baseline": {
+    "revision": "main",
+    "status": "README identifies v1.0.1, but handbook v2.7 says v1.0.0 and troubleshooting describes pre-fix CPVS counts as current; no canonical product roadmap entry point."
+  },
+  "expected_improvement": [
+    "Publish handbook v2.8 aligned to v1.0.1 and current blockers.",
+    "Add canonical roadmap for scientific validation, desktop UX, capability expansion, and reliability.",
+    "Clarify that post-fix CPVS source-backed verification remains pending.",
+    "Link the handbook and roadmap from README.",
+    "Document the corrected published-membership join semantics and explicitly retain the residual candidate-only population as unresolved pending source-backed evidence.",
+    "Clearly distinguish invalid/pre-fix CPVS counts from verified post-fix membership metrics in README, handbook, troubleshooting, and roadmap."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Version/status and post-fix verification state are inconsistent.",
+        "after": "Canonical docs identify v1.0.1, frozen v0.2.0, Issue #170 unresolved, and Issue #158 active."
+      },
+      "reproducibility": {
+        "before": "Product work is spread across issues and roadmaps.",
+        "after": "README links the canonical handbook/roadmap."
+      },
+      "scientific_validity": {
+        "before": "Previous comparison 725101 intersection / 16686 candidate-only / 5083 published-only was based on row-ordinal IDs and is invalid.",
+        "after": "Seq-based run #38121913146: 741786 candidate; 730184 intersection; 11602 candidate-only; 0 published-only; 0 duplicate and 0 unmapped names. Exact reconstruction remains unresolved."
+      }
+    }
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Documentation-only changes; no scientific code, model, or release artifact changed on this branch.",
+      "Official CPVS Table2 Seq (bytes 24-29) is the internal source identifier used by the lightcurve attachments; physical row ordinal is not a valid replacement.",
+      "Seq-based heavy run 38121913146 completed derivation and independent audit: candidate 741786, published 730184, intersection 730184, candidate-only 11602, published-only 0, duplicate published names 0, unmapped published names 0.",
+      "The current candidate set fully contains the published Table4 set but includes 11602 additional objects. Exact reconstruction remains unresolved; no threshold or flag rule has been accepted to force the count.",
+      "Flag-zero diagnostic: 736225 candidate, 724712 intersection, 5472 published-only. Magnitude 20.6 diagnostic: 712439 candidate, 711319 intersection, 18865 published-only. Both are rejected as fixes absent source evidence.",
+      "Latest-head CI and documentation checks must pass before PR merge; the previous CI head had six failures in obsolete row-ordinal test expectations, and test fixtures were updated to explicit Seq semantics."
+    ]
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "root_causes": [
+      "Handbook version lagged v1.0.1.",
+      "The prior membership audit and derivation substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID.",
+      "After fixing identifier semantics, the correct baseline selection yields 741786 candidates; all 730184 published objects are present, but 11602 candidate-only objects remain unexplained.",
+      "A separate SNR guard bug allowed NaN values through because the prior comparison checked only snr < sigma; PR #176 now explicitly rejects non-finite SNR.",
+      "The earlier flag-zero and magnitude-cut diagnostics do not reproduce the published set and must not be adopted as arbitrary cardinality tuning."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A catalog membership audit is valid only when both sets use the publisher-defined identifier key.",
+      "The current Seq-based audit has zero duplicate or unmapped published names, but that alone does not prove exact scientific reproduction.",
+      "A set containing every published object but 11602 extras indicates unresolved selection semantics, not a fully reproduced benchmark.",
+      "Flag-zero and magnitude-cut variants fail independent membership comparison and cannot be accepted merely because they change candidate cardinality.",
+      "NaN comparisons are false; threshold guards must explicitly reject non-finite SNR values."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Run CI, CodeQL, Product Scope Audit, and lifecycle contract validation on the latest documentation branch head.",
+      "Confirm the latest PR #176 test suite passes after correcting obsolete ordinal expectations and fixed-width Seq fixtures.",
+      "Investigate the 11602 candidate-only objects with source-backed per-object diagnostics and documented selection semantics; do not force cardinality with thresholds or flags.",
+      "Keep Issue #170 open until exact reproduction is established or a source-supported limitation is documented."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "v0.2.0 baseline remains immutable.",
+    "v1.0.1 release remains immutable.",
+    "Desktop platform remains an explicit deliverable under Issue #158.",
+    "Scientific validation and product usability are parallel workstreams.",
+    "Historical row-ordinal CPVS membership figures are invalid; only current Seq-keyed results with source manifests may support future claims.",
+    "Current valid Seq-based comparison: candidate 741786, intersection 730184, candidate-only 11602, published-only 0, unmapped/duplicate names 0. Exact reconstruction unresolved."
+  ]
+}

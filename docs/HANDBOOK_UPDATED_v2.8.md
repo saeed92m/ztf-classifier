@@ -1,6 +1,6 @@
 # ZTF Classifier — Project Continuity Handbook v2.8
 
-Status date: 2026-10-08
+Status date: 2026-10-11
 Software release: v1.0.1
 Scientific baseline: v0.2.0 (immutable)
 Production model: baseline_v0.2
@@ -20,9 +20,7 @@ source data → ingestion → normalization/QC → scientific feature/context la
 v0.2.0 remains immutable: 150 ZTF objects, 15 ALeRCE benchmark classes, 42 frozen features, XGBoost baseline_v0.2, historical cutoff 59447.224132.
 
 ## Scientific boundary
-CPVS parent: 781,602. Published membership: 730,184. Current candidate: 741,787. Intersection: 730,184. Published-only: 0. Candidate-only: 11,604.
-
-The exact historical reconstruction remains claim-specific UNRESOLVED. No predicate or threshold may be changed merely to force cardinality equality.
+CPVS parent: 781,602 rows. Published membership: 730,184 objects. Prior candidate and membership reports are historical diagnostics only. Source-schema review found the audit converted published ZTF names to the parent table's physical row ordinal instead of Table2's documented `Seq` value. The official CPVS ReadMe specifies Table2 `Seq` in bytes 24–29 and the lightcurve attachment's `Seq` as its running SourceID; Table2 has 781,602 rows but Seq values span 1..781,604. Therefore, the comparison in run #38095650470 (725,101 intersection, 16,686 candidate-only, 5,083 published-only) is invalid and superseded. The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) now reports 741,786 candidates, 730,184 intersection, 11,602 candidate-only, 0 published-only, 0 duplicate published names, and 0 unmapped names. Exact reconstruction remains UNRESOLVED because the candidate set still contains 11,602 extras. Do not tune thresholds or flag policy to force cardinality equality. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
 
 ## Diagnostic semantics
 Classification uncertainty, calibration, conformal prediction, OOD, scientific anomaly evidence, catalog evidence, and explainability evidence remain separate channels. The current production model does not claim a scientific-anomaly detector.
@@ -67,3 +65,24 @@ v1.0.0 is complete as a published software milestone. The broader scientific/pro
 Every meaningful change must update affected documentation, cumulative-learning records, failure-prevention knowledge, roadmap status, and release notes when release behavior changes.
 
 Current status: v1.0.1 Released / Platform Expansion Active.
+
+
+## Current scientific status — 2026-10-11
+
+### CPVS exact reconstruction: unresolved
+- Issue [#170](https://github.com/saeed92m/ztf-classifier/issues/170) remains open.
+- PR [#171](https://github.com/saeed92m/ztf-classifier/pull/171) ensures missing or failed membership-audit evidence cannot default to PASS.
+- PR [#173](https://github.com/saeed92m/ztf-classifier/pull/173) corrected a genuine derivation defect but did not establish exact membership.
+- Source-backed run [#38005546758](https://github.com/saeed92m/ztf-classifier/actions/runs/38005546758) completed successfully at workflow level but skipped source-provenance/scientific-gate-readiness. A green workflow with a skipped required job is not scientific release readiness.
+- A concrete audit defect has been identified in the comparison code: it read Table 4's catalog-internal ID and compared it directly with SourceID values derived from Table2 row order. The source ReadMe describes Table 4 ID as an internal catalog identifier, so the defensible join is by ZTF object name. PR #176 implements this name-based join and adds tests; CI and source-backed results are pending.
+- The parser reads all 730,184 published names without duplicates; however, the previous mapping to row ordinals was semantically wrong. The membership comparison is not valid as a SourceID-space audit until it uses the documented CPVS Table2 Seq column.
+- Heavy run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) did not produce a valid membership comparison: it mapped object names to physical parent row ordinals, not the catalog's SourceID. The 725,101 / 16,686 / 5,083 metrics are invalid and superseded. A fresh Seq-based derivation and independent membership audit is required.
+- The follow-up CI found one stale test calling `read_vizier()` without its required parent path. It was fixed in commit [6416958](https://github.com/saeed92m/ztf-classifier/commit/641695863195edccb4305cb4884aac727baa30e1). Fresh CI [#38097993359](https://github.com/saeed92m/ztf-classifier/actions/runs/38097993359) and heavy Scientific Validation [#38097993346](https://github.com/saeed92m/ztf-classifier/actions/runs/38097993346) are running. Keep Issue #170 open until the mismatch is explained and required checks pass.
+
+### Desktop product: active implementation
+Issue [#158](https://github.com/saeed92m/ztf-classifier/issues/158) is the tracked target for a complete scientist-facing desktop product: dashboard, Data Manager, Object/Source Explorer, analysis/discovery workspaces, visualization, reproducible reports, integrated Help, and self-contained Windows/macOS/Linux packaging. The exit criterion is successful end-to-end use by a non-developer on a clean supported OS without Python, pip, Git, or terminal use for normal operation.
+
+### Documentation synchronization
+The documentation update is under review in [PR #175](https://github.com/saeed92m/ztf-classifier/pull/175). It adds a canonical product roadmap, updates the scientific-validation roadmap and troubleshooting, links the handbook/roadmap from README, and records this stage in the cumulative lifecycle ledger.
+
+**Immutable constraints:** v1.0.1 remains unchanged; scientific baseline v0.2.0 remains frozen; scientific validation stays fail-closed; OOD is not represented as scientific anomaly detection.

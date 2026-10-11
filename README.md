@@ -301,7 +301,7 @@ Current validated areas include:
 
 The full test suite is the release gate. CI runs installation, dependency verification, Ruff, the complete pytest suite, and package import verification. Registry-backed prediction and batch paths are covered by real subprocess E2E tests.
 
-The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the software package milestone is `v1.0.0`.
+The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the current software release is `v1.0.1`.
 
 ## Repository structure
 
@@ -348,14 +348,15 @@ A benchmark is evidence about this system; it is not the system's architecture.
 
 | Population | Objects |
 |---|---:|
-| CPVS parent | 781,602 |
+| CPVS parent | 781,602 rows |
 | Published membership | 730,184 |
-| Current candidate | 741,787 |
+| Current Seq-based candidates | 741,786 |
 | Published ∩ candidate | 730,184 |
 | Published-only | 0 |
-| Candidate-only | 11,604 |
+| Candidate-only | 11,602 |
+| Duplicate / unmapped published names | 0 / 0 |
 
-The 11,604 objects are a **historical selection-reconstruction discrepancy**, not ML errors or production failures. The current predicate contains all published members but admits additional parent objects. Exact historical selection semantics remain unresolved as external-reproduction evidence.
+The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) has completed derivation and an independent membership audit. All 730,184 published names map to actual Table2 Seq/SourceID values; the candidate set contains all published objects but 11,602 additional objects, so exact reconstruction remains **UNRESOLVED**. Earlier metrics 725,101 / 16,686 / 5,083 were invalid because they mapped names to row ordinals. The official CPVS ReadMe defines Table2 `Seq` at bytes 24–29 as the internal source identifier used by the lightcurve attachments. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
 
 No threshold or predicate is to be introduced solely to force the candidate cardinality to 730,184 without independent scientific evidence.
 
@@ -368,16 +369,16 @@ The repository separates:
 
 An unresolved external reproduction claim must not silently become a product failure. Conversely, the project must not claim exact historical reproduction without exact evidence.
 
-### v1.0.0 release state
+### v1.0.1 release state
 
-- Software release: v1.0.0, published and immutable.
+- Software release: v1.0.1, published and immutable.
 - Release infrastructure is event-driven from successful Scientific Validation and no longer depends on manual dispatch.
 - Curated release notes are mandatory for every future release.
 - The frozen scientific baseline remains v0.2.0 and the production model remains baseline_v0.2.
-- Exact historical CPVS reconstruction remains claim-specific UNRESOLVED evidence: 781,602 parent, 730,184 published membership, 741,787 current candidate, 11,604 candidate-only.
+- Exact CPVS reconstruction remains UNRESOLVED: the current Seq-based run finds 741,786 candidates, all 730,184 published objects, and 11,602 candidate-only objects with zero published-only or unmapped names. Selection semantics for the extra candidates remain under investigation; no threshold or flag rule may be tuned solely to force the published cardinality.
 - This reconstruction discrepancy is not an ML or production failure and must not be hidden or forced away by threshold tuning.
 
-The v1.0.0 software milestone is complete as a release. The broader discovery platform continues through documented product expansion and independent scientific benchmarking.
+The v1.0.1 software release is published and immutable. The broader discovery platform continues through documented product expansion and independent scientific benchmarking.
 
 ## Astronomical Data Analysis & Discovery Platform layer
 
@@ -412,3 +413,13 @@ Runtime result/job/checkpoint databases are external runtime state and are inten
 The platform architecture now has executable domain contracts for external catalog/cross-match context, diagnostic separation, discovery candidates and human review, controlled learning feedback, explainability evidence, and explicit light-curve/image/catalog modality declarations. These contracts extend the platform without changing the immutable v0.2.0 scientific baseline or introducing parity-driven GPU, LLM, DVC, or distributed infrastructure.
 
 The current production model explicitly does **not** claim a scientific-anomaly detector: OOD diagnostics and scientific anomaly evidence are separate result channels. Scientific anomaly evidence remains `not_evaluated` until a dedicated analysis mode supplies and versions such evidence.
+
+
+## Current project roadmap and status (2026-10-11)
+
+- Current immutable software release: **v1.0.1**; frozen scientific baseline: **v0.2.0**.
+- Canonical continuity handbook: [HANDBOOK_UPDATED_v2.8.md](docs/HANDBOOK_UPDATED_v2.8.md).
+- Canonical cross-platform product roadmap: [PLATFORM_EXPANSION_ROADMAP.md](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md).
+- Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
+- Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
+- Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.

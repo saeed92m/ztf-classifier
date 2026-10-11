@@ -106,7 +106,7 @@ Low confidence indicates uncertainty in the classification output. It is not pro
 
 ### CPVS reproduction mismatch
 
-The current reconstruction contains all 730,184 published CPVS members but also 11,604 additional candidates from the 781,602-object parent. This remains a claim-specific historical reconstruction boundary.
+The prior run reported 741,787 candidates, but its membership metrics must not be trusted: the audit converted published object names to physical row ordinals, while CPVS lightcurve `SourceID` is Table2's documented `Seq` identifier (bytes 24–29). The 725,101 intersection, 16,686 candidate-only and 5,083 published-only figures in run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are invalid because the identifiers are not in the same namespace. PR #176 corrects both the parent source-ID universe and audit mapping to use Seq. The completed Seq-based run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) reports 741,786 candidates, 730,184 intersection, 11,602 candidate-only, 0 published-only, and zero duplicate/unmapped published names. The remaining 11,602 candidates are real under the current predicate; their scientific selection cause is unresolved. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
 
 Do not tune thresholds merely to force the reconstructed count to 730,184.
 
@@ -135,3 +135,23 @@ Include:
 9. whether the issue is reproducible from a clean environment.
 
 Never attach API keys or other secrets.
+
+
+A separate audit-join defect was also identified: Table 4's internal ID was being compared directly with the parent catalog's row-ordinal SourceID. PR #176 changes the audit to map published ZTF object names to parent SourceIDs and adds regression tests. This is an audit-correctness fix, not proof of the size or cause of any remaining candidate-only population; wait for CI and fresh source-backed evidence.
+
+
+**Audit status update (2026-10-11):** Run [#38092797735](https://github.com/saeed92m/ztf-classifier/actions/runs/38092797735) had an invalid zero-row parse. The parser was hardened, but source-schema review exposed a second defect: published names were mapped to parent row ordinals rather than the documented `Seq` / lightcurve `SourceID` values. Consequently, the 725,101 / 16,686 / 5,083 counts in [run #38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) do **not** establish a valid mismatch and are superseded. PR #176 now reads official Seq identifiers in derivation and audit. Keep Issue #170 open until fresh heavy evidence resolves or accurately dispositions the selection discrepancy.
+
+
+### Follow-up checks after the Seq-key correction (2026-10-11)
+
+A second implementation defect was found in the SNR threshold guard: `_snr_from_mag_error` represents malformed, zero, negative, or non-finite errors as NaN, but comparing NaN with `< sigma` returns false. Without an explicit finiteness check, an invalid SNR could pass the selection guard. PR #176 adds `math.isfinite(snr)` before accepting a detection and regression rows for `nan`, zero, and negative magnitude errors. This does not modify thresholds or the documented selection rule.
+
+The independent diagnostic now reports a flag-zero-per-band variant separately from the baseline SNR predicate. Treat it as a hypothesis only: the cited Chan et al. paper states at least one 2.5σ g-band detection and one 3σ r-band detection, but does not explicitly state a flag-zero requirement. Do not add such a filter to production selection just because it improves cardinality matching.
+
+The fresh heavy runs are tracked at [#38120880783](https://github.com/saeed92m/ztf-classifier/actions/runs/38120880783), [#38121390203](https://github.com/saeed92m/ztf-classifier/actions/runs/38121390203), and latest-head [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146). Accept only the Seq-keyed current membership results, not the superseded row-ordinal counts. PR #176 also excludes raw and normalized per-epoch lightcurves from uploaded artifacts while retaining compact provenance, selection diagnostics, and membership evidence.
+
+
+### Current Seq-based CPVS result (2026-10-11)
+
+The independent audit now maps all 730,184 published Table4 names to actual Table2 Seq IDs, with no duplicates or unmapped names. Candidate set: 741,786; intersection: 730,184; candidate-only: 11,602; published-only: 0. This proves the identifier join is now consistent but does not prove exact reproduction. Flag-zero-only diagnostics worsen the match (736,225 candidates, 724,712 intersection, 5,472 published-only), so do not adopt a zero-flag rule. A magnitude 20.6 diagnostic also loses 18,865 published objects and is not a valid fix. Keep Issue #170 open until the 11,602 extras are explained from source-backed selection semantics.
