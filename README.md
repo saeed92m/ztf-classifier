@@ -350,7 +350,7 @@ A benchmark is evidence about this system; it is not the system's architecture.
 |---|---:|
 | CPVS parent | 781,602 |
 | Published membership | 730,184 |
-| Latest measured derivation output (not a valid membership comparison) | 741,787 |
+| Historical candidate diagnostic (invalid row-ordinal ID universe) | 741,787 — NOT CURRENT VERIFIED |
 | Published ∩ candidate | NOT VERIFIED — previous join used row ordinal |
 | Published-only | NOT VERIFIED — previous join used row ordinal |
 | Candidate-only | NOT VERIFIED — previous join used row ordinal |
