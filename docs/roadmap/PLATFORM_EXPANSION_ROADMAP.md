@@ -83,3 +83,7 @@ Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issu
 | M6 — Stable platform release | All M0–M5 criteria pass, docs/help are complete, release notes and evidence are published. |
 
 No milestone is complete based on code presence alone. Completion requires measured evidence and recorded acceptance.
+
+## Evidence update — 2026-10-11
+
+The parser/join correction in PR [#176](https://github.com/saeed92m/ztf-classifier/pull/176) now reads the full published VizieR membership: 730,184 names, all mapped to parent SourceIDs, with zero duplicate/unmapped names. Heavy run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) reports 741,787 derived candidates, 725,101 intersection, 16,686 candidate-only and 5,083 published-only. Exact CPVS reproduction remains **UNRESOLVED**; this is a valid mismatch, not a root-cause explanation. A stale test call was corrected in commit [6416958](https://github.com/saeed92m/ztf-classifier/commit/641695863195edccb4305cb4884aac727baa30e1). Follow-up CI [#38097993359](https://github.com/saeed92m/ztf-classifier/actions/runs/38097993359) and heavy validation [#38097993346](https://github.com/saeed92m/ztf-classifier/actions/runs/38097993346) are in progress. Keep Issue #170 open and do not adjust thresholds to force cardinality equality.
