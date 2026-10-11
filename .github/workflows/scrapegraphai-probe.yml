@@ -1,0 +1,46 @@
+name: ScrapeGraphAI API Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_scrape:
+        description: "Also scrape the CPVS reference page (may consume credits)"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scrapegraphai-api-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    name: Verify ScrapeGraphAI API
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check API credentials and credits
+        env:
+          SGAI_API_KEY: ${{ secrets.SGAI_API_KEY }}
+          RUN_SCRAPE: ${{ inputs.run_scrape }}
+        run: python scripts/integrations/scrapegraphai_probe.py
+
+      - name: Upload probe output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrapegraphai-probe-output
+          path: scrapegraphai-probe-output/
+          if-no-files-found: ignore
+          retention-days: 7
