@@ -25,11 +25,11 @@
   ],
   "measurement": {
     "metrics": {
-      "documentation_accuracy": {
+      "correctness": {
         "before": "Version/status and post-fix verification state are inconsistent.",
         "after": "Canonical docs identify v1.0.1, frozen v0.2.0, Issue #170 unresolved, and Issue #158 active."
       },
-      "traceability": {
+      "reproducibility": {
         "before": "Product work is spread across issues and roadmaps.",
         "after": "README links the canonical handbook/roadmap."
       },
