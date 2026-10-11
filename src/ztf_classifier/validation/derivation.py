@@ -294,40 +294,66 @@ def _snr_from_mag_error(value: str) -> float:
     return 1.0857362047581296 / error
 
 
-def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Resolve CPVS SourceIDs from the published Table2 Seq column.
+def _parse_cpvs_table2_identity(line: str) -> tuple[str, str] | None:
+    """Parse (ZTF name, Seq) from official CDS fixed-width Table2 or a text mirror.
 
-    The light curves' SourceID is Table2's internal Seq identifier, not the
-    physical row ordinal. The published ReadMe specifies Table2 Seq in bytes
-    24-29 and documents 781,602 rows across the 1..781,604 identifier range.
+    Canonical Table2 uses ID bytes 1–22, Seq bytes 24–29, and RA bytes 31–39.
+    A row ordinal is never a substitute for Seq.
     """
+    raw = line.rstrip("\r\n")
+    stripped = raw.strip()
+    if not stripped:
+        return None
+
+    # Prefer the publisher's byte-defined columns when the row has the expected
+    # fixed-width separators and a parseable RA field.
+    if len(raw) >= 39 and raw[22].isspace() and raw[29].isspace():
+        fixed_name = raw[:22].strip()
+        fixed_seq = raw[23:29].strip()
+        try:
+            float(raw[30:39].strip())
+            valid_ra = True
+        except ValueError:
+            valid_ra = False
+        if (
+            fixed_name.upper().startswith("ZTF")
+            and fixed_seq.isdigit()
+            and valid_ra
+        ):
+            return fixed_name.upper(), str(int(fixed_seq))
+
+    # Text mirrors may tokenize a display-form name as "ZTF J..." rather
+    # than preserving the 22-byte catalog identifier field.
+    fields = _split_fields(stripped)
+    if (
+        len(fields) >= 3
+        and fields[0].upper() == "ZTF"
+        and fields[1].upper().startswith("J")
+        and fields[2].isdigit()
+    ):
+        return f"{fields[0]} {fields[1]}".upper(), str(int(fields[2]))
+    if (
+        len(fields) >= 2
+        and fields[0].upper().startswith("ZTF")
+        and fields[1].isdigit()
+    ):
+        return fields[0].upper(), str(int(fields[1]))
+    return None
+
+
+def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
+    """Resolve CPVS SourceIDs from the published Table2 Seq column."""
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
         seen_ids: set[str] = set()
         seen_names: set[str] = set()
         for encoded in raw:
-            line = encoded.decode("utf-8", errors="replace").rstrip("\r\n")
-            stripped = line.strip()
-            if not stripped:
+            line = encoded.decode("utf-8", errors="replace")
+            identity = _parse_cpvs_table2_identity(line)
+            if identity is None:
                 continue
-            fields = _split_fields(stripped)
-            if not fields or not fields[0].upper().startswith("ZTF"):
-                continue
-            name = fields[0].upper()
-            source_id: str | None = None
-            # For the published fixed-width Table2 and whitespace mirrors,
-            # Seq is the second token; fixed byte positions are fallback.
-            if len(fields) >= 2 and fields[1].isdigit():
-                source_id = str(int(fields[1]))
-            if source_id is None and len(line) >= 29:
-                fixed_seq = line[23:29].strip()
-                if fixed_seq.isdigit():
-                    source_id = str(int(fixed_seq))
-            if source_id is None:
-                raise ValueError(
-                    f"cannot read numeric CPVS Table2 Seq/SourceID for {name!r}: {stripped[:100]!r}"
-                )
+            name, source_id = identity
             if name in seen_names:
                 raise ValueError(f"duplicate ZTF name in parent catalog: {name}")
             if source_id in seen_ids:
@@ -342,7 +368,6 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
         raw.close()
         if owner is not None:
             owner.close()
-
 
 def _source_ids(parent_path: Path, member: str | None) -> set[str]:
     """Resolve IDs for either published CPVS Table2 or generic test/artifact tables."""
@@ -360,8 +385,8 @@ def _source_ids(parent_path: Path, member: str | None) -> set[str]:
             owner.close()
 
     if saw_catalog_row:
-        # CPVS Table2 uses ZTF names as row identifiers; SourceID is the
-        # published ordinal. Metadata/header sections must not terminate scan.
+        # CPVS Table2's documented Seq field is the light-curve SourceID.
+        # Never substitute a physical row ordinal for this identifier.
         return _source_ids_from_catalog(parent_path, member)
 
     rows = _iter_rows(parent_path, member, required_columns=("SourceID",))
