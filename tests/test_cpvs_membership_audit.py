@@ -14,7 +14,7 @@ def test_read_selected_uses_sourceid_values(tmp_path: Path):
     assert read_selected(path) == {1, 3, 5}
 
 
-def test_parent_name_mapping_uses_one_based_catalog_row_order(tmp_path: Path):
+def test_parent_name_mapping_uses_published_seq_sourceids(tmp_path: Path):
     parent = tmp_path / "parent.txt"
     parent.write_text(
         "ZTFJ000000.00+000000.0 100 200\n"
@@ -23,9 +23,9 @@ def test_parent_name_mapping_uses_one_based_catalog_row_order(tmp_path: Path):
         encoding="utf-8",
     )
     assert read_parent_name_to_sourceid(parent) == {
-        "ZTFJ000000.00+000000.0": 1,
-        "ZTFJ000001.00+000000.0": 2,
-        "ZTFJ000002.00+000000.0": 3,
+        "ZTFJ000000.00+000000.0": 100,
+        "ZTFJ000001.00+000000.0": 101,
+        "ZTFJ000002.00+000000.0": 102,
     }
 
 
@@ -47,7 +47,7 @@ def test_read_vizier_maps_fixed_width_ztf_names_not_internal_ids(tmp_path: Path)
         f"{names[2]:<22}{'':1}{999:>6}  RR  0.0  0.0  0.3",
     ]
     published.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    assert read_vizier(published, parent) == {1, 3}
+    assert read_vizier(published, parent) == {100, 102}
 
 
 def test_read_vizier_maps_tsv_names_to_parent_sourceids(tmp_path: Path):
@@ -69,7 +69,7 @@ def test_read_vizier_maps_tsv_names_to_parent_sourceids(tmp_path: Path):
         "ZTFJ000000.00+000000.0",
         "ZTFJ000001.00+000000.0",
     ]
-    assert read_vizier(published, parent) == {1, 2}
+    assert read_vizier(published, parent) == {100, 101}
 
 def test_read_published_names_from_whitespace_vizier_output(tmp_path: Path):
     published = tmp_path / "table4.dat"
