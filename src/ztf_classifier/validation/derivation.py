@@ -295,31 +295,48 @@ def _snr_from_mag_error(value: str) -> float:
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Resolve CPVS SourceIDs from the published Table2 catalog row order.
+    """Resolve CPVS SourceIDs from the published Table2 Seq column.
 
-    The published table uses ZTF object names as the row identifiers in its
-    catalog presentation; the benchmark SourceID is the one-based ordinal of
-    catalog rows. Metadata, page furniture, and repeated headers are ignored.
+    The light curves' SourceID is Table2's internal Seq identifier, not the
+    physical row ordinal. The published ReadMe specifies Table2 Seq in bytes
+    24-29 and documents 781,602 rows across the 1..781,604 identifier range.
     """
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
-        ordinal = 0
+        seen_ids: set[str] = set()
+        seen_names: set[str] = set()
         for encoded in raw:
-            line = encoded.decode("utf-8", errors="replace").strip()
-            if not line:
+            line = encoded.decode("utf-8", errors="replace").rstrip("\r\n")
+            stripped = line.strip()
+            if not stripped:
                 continue
-            first_token = line.split()[0]
-            if not first_token.upper().startswith("ZTF"):
+            fields = _split_fields(stripped)
+            if not fields or not fields[0].upper().startswith("ZTF"):
                 continue
-            fields = _split_fields(line)
-            if len(fields) < 2:
-                continue
-            # A valid catalog row starts with a ZTF identifier and has at
-            # least one following field. Do not interpret the next field as
-            # SourceID: in Table2 it is a numeric catalog attribute (e.g. RA).
-            ordinal += 1
-            source_ids.add(str(ordinal))
+            name = fields[0].upper()
+            source_id: str | None = None
+            # For the published fixed-width Table2 and whitespace mirrors,
+            # Seq is the second token; fixed byte positions are fallback.
+            if len(fields) >= 2 and fields[1].isdigit():
+                source_id = str(int(fields[1]))
+            if source_id is None and len(line) >= 29:
+                fixed_seq = line[23:29].strip()
+                if fixed_seq.isdigit():
+                    source_id = str(int(fixed_seq))
+            if source_id is None:
+                raise ValueError(
+                    f"cannot read numeric CPVS Table2 Seq/SourceID for {name!r}: {stripped[:100]!r}"
+                )
+            if name in seen_names:
+                raise ValueError(f"duplicate ZTF name in parent catalog: {name}")
+            if source_id in seen_ids:
+                raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
+            seen_names.add(name)
+            seen_ids.add(source_id)
+            source_ids.add(source_id)
+        if not source_ids:
+            raise ValueError(f"no ZTF rows with numeric Seq/SourceID found in {parent_path}")
         return source_ids
     finally:
         raw.close()
