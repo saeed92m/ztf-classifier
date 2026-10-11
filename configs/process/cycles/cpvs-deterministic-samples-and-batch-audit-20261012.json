@@ -19,23 +19,27 @@
   ],
   "measurement": {
     "metrics": {
-      "sample_tooling": {
-        "status": "IMPLEMENTED_PENDING_CI"
+      "reproducibility": {
+        "status": "NOT_MEASURED"
       },
-      "source_backed_samples": {
-        "status": "PENDING_SOURCE_BACKED_RUN"
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
       },
-      "full_vs_batch_equivalence": {
-        "status": "PENDING_IMPLEMENTATION_AND_SOURCE_BACKED_RUN"
+      "coverage": {
+        "status": "NOT_MEASURED"
+      },
+      "batch_efficiency": {
+        "status": "NOT_MEASURED"
       }
     }
   },
   "validation": {
-    "status": "PENDING_CI",
+    "status": "NOT_VERIFIED",
     "scientific_gate_affected": true,
     "evidence": [
       "PR #182 adds deterministic sample tooling, unit tests, and a source-backed Scientific Validation workflow step to emit compact sample manifests and reference-relative mismatch reports."
-    ]
+    ],
+    "blocker": "Source-backed sample artifacts and full-vs-batch results are not yet available; PR CI must pass before evaluation."
   },
   "failure_analysis": {
     "status": "OPEN",
@@ -61,7 +65,7 @@
       "Investigate the 11602-object mismatch without tuning thresholds solely to force cardinality equality."
     ]
   },
-  "decision": "CONTINUE",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not merge before required CI passes.",
     "Do not close Issue #180 until sample artifacts and full-versus-batch results are reviewed.",
