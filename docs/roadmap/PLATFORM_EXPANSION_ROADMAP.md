@@ -19,8 +19,8 @@ Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issu
 - [ ] Trigger heavy workflow on an intended ci/heavy/* ref and verify source-provenance/scientific-gate-readiness executes.
 - [ ] Re-run CPVS derivation after PR #173's finite/non-zero magnitude correction.
 - [ ] Inspect acquisition report, derived membership, independent VizieR table, and hashes.
-- [ ] Verify PR #176's robust parser reads the VizieR response as 730,184 published ZTF names; inspect unmapped/duplicate names and then calculate the candidate-only/published-only sets. Previous 11,604/11,605 values are pre-fix or invalid-run diagnostics, not verified current metrics.
-- [ ] Explain the remaining candidate-only population using published selection semantics, not tuned thresholds.
+- [x] Verify the robust parser reads all 730,184 published ZTF names, with zero duplicate/unmapped names, and calculate membership sets: 725,101 intersection, 16,686 candidate-only, 5,083 published-only. The name-join audit is complete; explaining the mismatch remains open.
+- [ ] Explain the 16,686 candidate-only and 5,083 published-only population using source-backed published selection semantics, not tuned thresholds.
 - [ ] Require exact independent membership audit before claiming exact reconstruction.
 - [ ] Keep Issue #170 open until evidence-based disposition.
 
