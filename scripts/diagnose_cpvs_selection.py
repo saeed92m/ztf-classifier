@@ -14,10 +14,48 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from audit_cpvs_membership import read_vizier
+    from audit_cpvs_membership import _iter_parent_lines, read_vizier
 except ModuleNotFoundError:  # pytest imports this file as scripts.diagnose_cpvs_selection
-    from scripts.audit_cpvs_membership import read_vizier
-from ztf_classifier.validation.derivation import _iter_rows, _source_ids
+    from scripts.audit_cpvs_membership import _iter_parent_lines, read_vizier
+from ztf_classifier.validation.derivation import (
+    _iter_rows,
+    _parse_cpvs_table2_identity,
+    _source_ids,
+)
+
+
+def parent_catalog_metadata(path: Path) -> dict[int, dict[str, Any]]:
+    """Read class and published g/r epoch counts from fixed-width CPVS Table 2.
+
+    These fields are descriptive diagnostics only; they do not affect selection.
+    """
+    metadata: dict[int, dict[str, Any]] = {}
+    for line in _iter_parent_lines(path):
+        identity = _parse_cpvs_table2_identity(line)
+        if identity is None:
+            continue
+        source_id = int(identity[1])
+        try:
+            ng = int(line[131:135].strip())
+            nr = int(line[136:140].strip())
+        except (ValueError, IndexError):
+            ng = nr = -1
+        variable_type = line[211:216].strip() if len(line) >= 216 else ""
+        metadata[source_id] = {
+            "type": variable_type or "UNKNOWN",
+            "ng": ng,
+            "nr": nr,
+        }
+    return metadata
+
+
+def membership_by_type(
+    ids: set[int], metadata: dict[int, dict[str, Any]]
+) -> dict[str, int]:
+    counts = Counter(
+        str(metadata[oid]["type"]) for oid in ids if oid in metadata
+    )
+    return dict(sorted(counts.items()))
 
 
 def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
@@ -161,6 +199,12 @@ def main() -> int:
     parent = {int(source_id) for source_id in _source_ids(args.parent, None)}
     if len(parent) != 781_602:
         raise ValueError(f"expected 781602 parent SourceIDs, got {len(parent)}")
+    catalog_metadata = parent_catalog_metadata(args.parent)
+    if len(catalog_metadata) != len(parent):
+        raise ValueError(
+            "parent metadata/SourceID coverage mismatch: "
+            f"{len(catalog_metadata)} metadata rows for {len(parent)} SourceIDs"
+        )
 
     g = band_metrics(args.g, parent, "e_gmag", "gmag")
     r = band_metrics(args.r, parent, "e_rmag", "rmag")
@@ -204,6 +248,35 @@ def main() -> int:
             "candidate_only": summarize_group(candidate_only, g, r),
             "published_and_candidate": summarize_group(published_intersection, g, r),
             "published_only": summarize_group(published_only, g, r),
+        },
+        "parent_catalog_context_diagnostic_only": {
+            "class_counts": {
+                "candidate": membership_by_type(baseline, catalog_metadata),
+                "candidate_only": membership_by_type(candidate_only, catalog_metadata),
+                "published_intersection": membership_by_type(
+                    published_intersection, catalog_metadata
+                ),
+                "published_only": membership_by_type(published_only, catalog_metadata),
+                "published_reference": membership_by_type(published, catalog_metadata),
+            },
+            "parent_ng_nr_counts": {
+                "candidate_only": {
+                    "ng_zero": sum(catalog_metadata[oid]["ng"] == 0 for oid in candidate_only),
+                    "nr_zero": sum(catalog_metadata[oid]["nr"] == 0 for oid in candidate_only),
+                    "ng_or_nr_unknown": sum(
+                        catalog_metadata[oid]["ng"] < 0 or catalog_metadata[oid]["nr"] < 0
+                        for oid in candidate_only
+                    ),
+                },
+                "published_intersection": {
+                    "ng_zero": sum(catalog_metadata[oid]["ng"] == 0 for oid in published_intersection),
+                    "nr_zero": sum(catalog_metadata[oid]["nr"] == 0 for oid in published_intersection),
+                    "ng_or_nr_unknown": sum(
+                        catalog_metadata[oid]["ng"] < 0 or catalog_metadata[oid]["nr"] < 0
+                        for oid in published_intersection
+                    ),
+                },
+            },
         },
         "candidate_only_sample_by_source_id": [
             {
