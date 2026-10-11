@@ -141,10 +141,14 @@ def test_band_diagnostics_keep_flag_policy_separate_from_snr(tmp_path: Path):
 
 
 
-def test_parent_catalog_metadata_reports_type_and_published_detection_counts(tmp_path: Path):
+def test_parent_catalog_metadata_reports_type_and_published_detection_counts(
+    tmp_path: Path,
+):
     from scripts.diagnose_cpvs_selection import parent_catalog_metadata
 
-    def table2_row(name: str, source_id: int, variable_type: str, ng: int, nr: int) -> str:
+    def table2_row(
+        name: str, source_id: int, variable_type: str, ng: int, nr: int
+    ) -> str:
         row = [" "] * 228
         row[0:22] = list(f"{name:<22}")
         row[23:29] = list(f"{source_id:6d}")
