@@ -123,12 +123,12 @@ def test_band_diagnostics_keep_flag_policy_separate_from_snr(tmp_path: Path):
 
     path = tmp_path / "g.tsv"
     path.write_text(
-        "SourceID\\te_gmag\\tgmag\\tg_flag\\n"
-        "1\\t0.1\\t18.0\\t0\\n"
-        "1\\t0.1\\t18.0\\t1\\n"
-        "2\\t0.1\\t18.0\\t1\\n"
-        "3\\tnan\\t18.0\\t0\\n"
-        "4\\t0.0\\t18.0\\t0\\n",
+        "SourceID\te_gmag\tgmag\tg_flag\n"
+        "1\t0.1\t18.0\t0\n"
+        "1\t0.1\t18.0\t1\n"
+        "2\t0.1\t18.0\t1\n"
+        "3\tnan\t18.0\t0\n"
+        "4\t0.0\t18.0\t0\n",
         encoding="utf-8",
     )
     metrics = band_metrics(path, {1, 2, 3, 4}, "e_gmag", "gmag")
