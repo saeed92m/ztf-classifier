@@ -252,6 +252,46 @@ jobs:
             --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
             --output reports/scientific_validation/ztf_periodic_730k/membership_audit.json
 
+      - name: Generate deterministic CPVS 100/1000 samples and membership report
+        if: always()
+        run: |
+          set -euo pipefail
+          root=reports/scientific_validation/ztf_periodic_730k
+          parent=reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip
+          candidate="$root/selected.tsv"
+          published="$root/published_table4.dat"
+          test -s "$parent"
+          test -s "$candidate"
+          test -s "$published"
+          mkdir -p "$root/sample_validation"
+          python - "$parent" "$candidate" "$published" "$root/sample_validation" <<'PY'
+          import sys
+          from pathlib import Path
+          from scripts.audit_cpvs_membership import read_vizier
+          from ztf_classifier.validation.derivation import _source_ids
+
+          parent_path, candidate_path, published_path, output_dir = map(Path, sys.argv[1:])
+          output_dir.mkdir(parents=True, exist_ok=True)
+          parent_ids = sorted(_source_ids(parent_path, None), key=int)
+          candidate_ids = sorted(
+              line.strip() for line in candidate_path.read_text(encoding="utf-8").splitlines()[1:]
+              if line.strip()
+          )
+          published_ids = sorted(read_vizier(published_path, parent_path), key=int)
+          for name, ids in (
+              ("parent_ids.txt", parent_ids),
+              ("candidate_ids.txt", candidate_ids),
+              ("published_ids.txt", published_ids),
+          ):
+              (output_dir / name).write_text("SourceID\\n" + "".join(f"{oid}\\n" for oid in ids), encoding="utf-8")
+          print(f"parent={len(parent_ids)} candidate={len(candidate_ids)} published={len(published_ids)}")
+          PY
+          python scripts/validate_cpvs_samples.py \
+            --parent-ids "$root/sample_validation/parent_ids.txt" \
+            --candidate-ids "$root/sample_validation/candidate_ids.txt" \
+            --published-ids "$root/sample_validation/published_ids.txt" \
+            --output-dir "$root/sample_validation"
+
       - name: Classify CPVS reconstruction result
         if: always()
         env:
