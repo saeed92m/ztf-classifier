@@ -10,14 +10,17 @@ def test_qualified_ids_separates_snr_candidates_from_magnitude_quality(tmp_path:
         "1\t18.0\t0.1\t0\n"
         "2\t18.0\t0.1\t1\n"
         "3\t0.0\t0.1\t0\n"
-        "4\t18.0\t0.5\t0\n",
+        "4\t18.0\t0.5\t0\n"
+        "5\t18.0\tnan\t0\n"
+        "6\t18.0\t0.0\t0\n"
+        "7\t18.0\t-0.1\t0\n",
         encoding="utf-8",
     )
 
     selected, quality = _qualified_ids(
         path,
         sigma=2.5,
-        parent_ids={"1", "2", "3", "4"},
+        parent_ids={"1", "2", "3", "4", "5", "6", "7"},
         member=None,
         error_columns=("e_gmag",),
         flag_columns=("g_flag", "catflags", "flag"),
@@ -89,30 +92,49 @@ def test_qualified_ids_empty_input_returns_two_sets(tmp_path: Path):
 def test_read_vizier_accepts_commented_tsv_header(tmp_path: Path):
     from scripts.audit_cpvs_membership import read_vizier
 
-    path = tmp_path / "table4.dat"
-    path.write_text(
-        "# ZTF\tID\n"
-        "ZTF1\t10\n"
-        "ZTF2\t30\n",
-        encoding="utf-8",
-    )
+    name1 = "ZTF J000000.1+0000"
+    name2 = "ZTF J000001.1+0000"
 
-    parent = tmp_path / "parent.txt"
-    parent.write_text("ZTF1 10 123.0\nZTF2 30 124.0\n", encoding="utf-8")
-
-    assert read_vizier(path, parent) == {10, 30}
-
-
-def test_parent_catalog_uses_seq_ids_not_row_ordinals(tmp_path: Path):
-    from scripts.audit_cpvs_membership import read_parent_name_to_sourceid
-    from ztf_classifier.validation.derivation import _source_ids_from_catalog
+    def parent_row(name: str, seq: int, ra: float) -> str:
+        return f"{name:<22} {seq:6d} {ra:9.5f} {45.0:9.5f}"
 
     parent = tmp_path / "parent.txt"
     parent.write_text(
-        "ZTF1 10 123.0 45.0\n"
-        "ZTF2 30 124.0 46.0\n",
+        parent_row(name1, 10, 123.0) + "\n"
+        + parent_row(name2, 30, 124.0) + "\n",
         encoding="utf-8",
     )
 
-    assert read_parent_name_to_sourceid(parent) == {"ZTF1": 10, "ZTF2": 30}
-    assert _source_ids_from_catalog(parent, None) == {"10", "30"}
+    # Table4 has its own internal ID; mapping must use the ZTF name and the
+    # parent's real Seq key, not Table4 IDs or row ordinals.
+    published = tmp_path / "table4.dat"
+    published.write_text(
+        "# ZTF ID Class RAdeg DEdeg Score\n"
+        + f"{name1:<22} {700:6d} {'Mira':<5} {123.0:9.5f} {45.0:9.5f} {0.9:7.5f}\n"
+        + f"{name2:<22} {701:6d} {'SR':<5} {124.0:9.5f} {46.0:9.5f} {0.8:7.5f}\n",
+        encoding="utf-8",
+    )
+
+    assert read_vizier(published, parent) == {10, 30}
+
+
+def test_band_diagnostics_keep_flag_policy_separate_from_snr(tmp_path: Path):
+    from scripts.diagnose_cpvs_selection import band_metrics
+
+    path = tmp_path / "g.tsv"
+    path.write_text(
+        "SourceID\\te_gmag\\tgmag\\tg_flag\\n"
+        "1\\t0.1\\t18.0\\t0\\n"
+        "1\\t0.1\\t18.0\\t1\\n"
+        "2\\t0.1\\t18.0\\t1\\n"
+        "3\\tnan\\t18.0\\t0\\n"
+        "4\\t0.0\\t18.0\\t0\\n",
+        encoding="utf-8",
+    )
+    metrics = band_metrics(path, {1, 2, 3, 4}, "e_gmag", "gmag")
+    assert metrics[1]["snr"] is True
+    assert metrics[1]["snr_flag0"] is True
+    assert metrics[2]["snr"] is True
+    assert metrics[2]["snr_flag0"] is False
+    assert metrics[3]["snr"] is False
+    assert metrics[4]["snr"] is False
