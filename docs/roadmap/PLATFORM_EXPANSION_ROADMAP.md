@@ -19,8 +19,10 @@ Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issu
 - [ ] Trigger heavy workflow on an intended ci/heavy/* ref and verify source-provenance/scientific-gate-readiness executes.
 - [ ] Re-run CPVS derivation after PR #173's finite/non-zero magnitude correction.
 - [ ] Inspect acquisition report, derived membership, independent VizieR table, and hashes.
-- [x] Verify the robust parser reads all 730,184 published ZTF names, with zero duplicate/unmapped names, and calculate membership sets: 725,101 intersection, 16,686 candidate-only, 5,083 published-only. The name-join audit is complete; explaining the mismatch remains open.
-- [ ] Explain the 16,686 candidate-only and 5,083 published-only population using source-backed published selection semantics, not tuned thresholds.
+- [x] Verify the robust parser reads all 730,184 published ZTF names without duplicates.
+- [x] Identify and correct the audit's invalid row-ordinal substitution: official CPVS lightcurve membership uses Table2 `Seq` (bytes 24–29), not physical row order.
+- [ ] Rerun derivation and independent membership audit using actual Seq values; previous membership metrics are invalid and superseded.
+- [ ] Explain the residual candidate/published membership difference from valid Seq-based evidence and source-backed selection semantics, not tuned thresholds.
 - [ ] Require exact independent membership audit before claiming exact reconstruction.
 - [ ] Keep Issue #170 open until evidence-based disposition.
 
@@ -86,4 +88,4 @@ No milestone is complete based on code presence alone. Completion requires measu
 
 ## Evidence update — 2026-10-11
 
-The parser/join correction in PR [#176](https://github.com/saeed92m/ztf-classifier/pull/176) now reads the full published VizieR membership: 730,184 names, all mapped to parent SourceIDs, with zero duplicate/unmapped names. Heavy run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) reports 741,787 derived candidates, 725,101 intersection, 16,686 candidate-only and 5,083 published-only. Exact CPVS reproduction remains **UNRESOLVED**; this is a valid mismatch, not a root-cause explanation. A stale test call was corrected in commit [6416958](https://github.com/saeed92m/ztf-classifier/commit/641695863195edccb4305cb4884aac727baa30e1). Follow-up CI [#38097993359](https://github.com/saeed92m/ztf-classifier/actions/runs/38097993359) and heavy validation [#38097993346](https://github.com/saeed92m/ztf-classifier/actions/runs/38097993346) are in progress. Keep Issue #170 open and do not adjust thresholds to force cardinality equality.
+A deeper source-schema review found that the previous audit mapped published ZTF names to parent row ordinals instead of the explicit CPVS Table2 `Seq` field (bytes 24–29), while lightcurve `SourceID` joins by `Seq`. Thus the 725,101 / 16,686 / 5,083 values from heavy run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are invalid and superseded. PR [#176](https://github.com/saeed92m/ztf-classifier/pull/176) now reads actual Seq IDs for the derived candidate universe and published-name join. Fresh CI and heavy source-backed validation are required before any updated membership metrics can be accepted. Exact CPVS reproduction remains **UNRESOLVED**; do not tune thresholds to force cardinality equality. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true.
