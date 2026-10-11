@@ -371,7 +371,15 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: scientific-validation-heavy
-          path: reports/scientific_validation/**
+          # Keep compact manifests, reports, selected membership and diagnostics;
+          # raw and normalized per-epoch lightcurves are reacquirable from frozen
+          # sources and otherwise inflate every run artifact by multiple GB.
+          path: |
+            reports/scientific_validation/**
+            !reports/scientific_validation/ztf_periodic_730k/g/**
+            !reports/scientific_validation/ztf_periodic_730k/r/**
+            !reports/scientific_validation/ztf_periodic_730k/ztf2g.zip
+            !reports/scientific_validation/ztf_periodic_730k/ztf2r.zip
           if-no-files-found: warn
 
   external-source-evidence:
