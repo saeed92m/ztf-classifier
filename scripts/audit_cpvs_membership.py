@@ -114,22 +114,48 @@ def _iter_parent_lines(path: Path):
 
 
 def read_parent_name_to_sourceid(path: Path) -> dict[str, int]:
-    """Map each parent-table ZTF name to its one-based catalog-row SourceID."""
+    """Map each parent-table ZTF name to its published Seq/SourceID, never row ordinal.
+
+    CPVS Table2 bytes 24-29 contain Seq. The light-curve files use the same
+    identifier namespace. Table2 has 781,602 rows but Seq spans 1..781,604,
+    so substituting the row ordinal for Seq silently corrupts membership joins.
+    """
     mapping: dict[str, int] = {}
-    ordinal = 0
+    reverse: dict[int, str] = {}
     for line in _iter_parent_lines(path):
-        stripped = line.strip()
+        raw = line.rstrip("\r\n")
+        stripped = raw.strip()
         if not stripped:
             continue
         fields = stripped.split()
         name = fields[0]
-        if not name.upper().startswith("ZTF") or len(fields) < 2:
+        if not name.upper().startswith("ZTF"):
             continue
+
+        source_id: int | None = None
+        # Standard fixed-width CDS Table2 uses columns 24-29 for Seq;
+        # whitespace/TSV mirrors put the same Seq token second.
+        if len(fields) >= 2 and fields[1].isdigit():
+            source_id = int(fields[1])
+        if source_id is None and len(raw) >= 29:
+            fixed_seq = raw[23:29].strip()
+            if fixed_seq.isdigit():
+                source_id = int(fixed_seq)
+        if source_id is None:
+            raise ValueError(
+                f"cannot read numeric CPVS Table2 Seq/SourceID for {name!r}: {raw[:100]!r}"
+            )
+
         normalized = name.upper()
         if normalized in mapping:
             raise ValueError(f"duplicate ZTF name in parent catalog: {normalized}")
-        ordinal += 1
-        mapping[normalized] = ordinal
+        if source_id in reverse:
+            raise ValueError(
+                f"duplicate CPVS Seq/SourceID {source_id}: {reverse[source_id]} and {normalized}"
+            )
+        mapping[normalized] = source_id
+        reverse[source_id] = normalized
+
     if not mapping:
         raise ValueError(f"no ZTF rows found in parent catalog: {path}")
     return mapping
