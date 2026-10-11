@@ -283,7 +283,7 @@ jobs:
               ("candidate_ids.txt", candidate_ids),
               ("published_ids.txt", published_ids),
           ):
-              (output_dir / name).write_text("SourceID\\n" + "".join(f"{oid}\\n" for oid in ids), encoding="utf-8")
+              (output_dir / name).write_text("SourceID\n" + "".join(f"{oid}\n" for oid in ids), encoding="utf-8")
           print(f"parent={len(parent_ids)} candidate={len(candidate_ids)} published={len(published_ids)}")
           PY
           python scripts/validate_cpvs_samples.py \
