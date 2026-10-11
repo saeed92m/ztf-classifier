@@ -98,6 +98,6 @@ def test_read_vizier_accepts_commented_tsv_header(tmp_path: Path):
     )
 
     parent = tmp_path / "parent.txt"
-    parent.write_text("ZTF1 source\\nZTF2 source\\n", encoding="utf-8")
+    parent.write_text("ZTF1 source\nZTF2 source\n", encoding="utf-8")
 
     assert read_vizier(path, parent) == {1, 2}
