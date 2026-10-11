@@ -348,14 +348,15 @@ A benchmark is evidence about this system; it is not the system's architecture.
 
 | Population | Objects |
 |---|---:|
-| CPVS parent | 781,602 |
+| CPVS parent | 781,602 rows |
 | Published membership | 730,184 |
-| Historical candidate diagnostic (invalid row-ordinal ID universe) | 741,787 — NOT CURRENT VERIFIED |
-| Published ∩ candidate | NOT VERIFIED — previous join used row ordinal |
-| Published-only | NOT VERIFIED — previous join used row ordinal |
-| Candidate-only | NOT VERIFIED — previous join used row ordinal |
+| Current Seq-based candidates | 741,786 |
+| Published ∩ candidate | 730,184 |
+| Published-only | 0 |
+| Candidate-only | 11,602 |
+| Duplicate / unmapped published names | 0 / 0 |
 
-The earlier 11,604/11,605 counts and the 725,101 / 16,686 / 5,083 comparison are invalid historical diagnostics. The official CPVS ReadMe states Table2 `Seq` is the internal source identifier (bytes 24–29) and the ztf2g/ztf2r lightcurves use the same `Seq` key. Table2 has 781,602 rows but Seq values span 1..781,604, so substituting row ordinals corrupts membership joins. PR #176 now reads the actual Seq IDs in derivation and audit; fresh heavy results are pending. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
+The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) has completed derivation and an independent membership audit. All 730,184 published names map to actual Table2 Seq/SourceID values; the candidate set contains all published objects but 11,602 additional objects, so exact reconstruction remains **UNRESOLVED**. Earlier metrics 725,101 / 16,686 / 5,083 were invalid because they mapped names to row ordinals. The official CPVS ReadMe defines Table2 `Seq` at bytes 24–29 as the internal source identifier used by the lightcurve attachments. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
 
 No threshold or predicate is to be introduced solely to force the candidate cardinality to 730,184 without independent scientific evidence.
 
@@ -368,13 +369,13 @@ The repository separates:
 
 An unresolved external reproduction claim must not silently become a product failure. Conversely, the project must not claim exact historical reproduction without exact evidence.
 
-### v1.0.0 release state
+### v1.0.1 release state
 
-- Software release: v1.0.0, published and immutable.
+- Software release: v1.0.1, published and immutable.
 - Release infrastructure is event-driven from successful Scientific Validation and no longer depends on manual dispatch.
 - Curated release notes are mandatory for every future release.
 - The frozen scientific baseline remains v0.2.0 and the production model remains baseline_v0.2.
-- Exact CPVS reconstruction remains UNRESOLVED: parent row count 781,602 and published target 730,184 are sourced; 741,787 is a prior diagnostic. The 725,101 / 16,686 / 5,083 comparison is invalid because the audit mapped names to row ordinals rather than the documented CPVS Seq identifier. A Seq-based source-backed rerun is required.
+- Exact CPVS reconstruction remains UNRESOLVED: the current Seq-based run finds 741,786 candidates, all 730,184 published objects, and 11,602 candidate-only objects with zero published-only or unmapped names. Selection semantics for the extra candidates remain under investigation; no threshold or flag rule may be tuned solely to force the published cardinality.
 - This reconstruction discrepancy is not an ML or production failure and must not be hidden or forced away by threshold tuning.
 
 The v1.0.0 software milestone is complete as a release. The broader discovery platform continues through documented product expansion and independent scientific benchmarking.
