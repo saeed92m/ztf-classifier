@@ -9,7 +9,10 @@
     "Issue #158 defines cross-platform desktop acceptance",
     "Run 38005546758 was workflow-successful but skipped source-provenance/scientific-gate-readiness",
     "PR #176 identifies and corrects a separate audit semantic defect: Table 4 internal ID must not be compared directly to parent row-ordinal SourceID; join by normalized ZTF name.",
-    "Run #38092797735 derived 741,787 candidates but its VizieR membership parser returned zero published rows; that comparison is invalid, so older candidate-only counts must not be presented as current verified metrics."
+    "Run #38092797735 derived 741,787 candidates but its VizieR membership parser returned zero published rows; that comparison is invalid, so older candidate-only counts must not be presented as current verified metrics.",
+    "Official CPVS schema: Table2 Seq (bytes 24-29) is the source ID used by ztf2g/ztf2r; row ordinal is not an identifier substitute.",
+    "PR #176 source-schema investigation: historical 725101/16686/5083 membership values are invalid; current Seq-based membership counts remain not verified.",
+    "PR #176 additionally fixed NaN-SNR acceptance and added flag-aware selection diagnostics as hypotheses only, not published selection policy."
   ],
   "baseline": {
     "revision": "main",
@@ -34,8 +37,8 @@
         "after": "README links the canonical handbook/roadmap."
       },
       "scientific_validity": {
-        "before": "Exact CPVS membership is not proven.",
-        "after": "Valid heavy audit reports 730184 published, 725101 intersection, 16686 candidate-only, 5083 published-only; exact membership remains unresolved."
+        "before": "Previous audit reported 725101 intersection / 16686 candidate-only / 5083 published-only using a row-ordinal mapping.",
+        "after": "NOT VERIFIED: those historical metrics are invalid and superseded; current Seq-based candidate and membership counts are pending a fresh heavy source-backed run."
       }
     }
   },
@@ -43,20 +46,23 @@
     "status": "IN_PROGRESS",
     "scientific_gate_affected": false,
     "evidence": [
-      "Documentation-only change; no scientific code, model, or release artifact changed.",
-      "Heavy run 38095650470 parsed all 730184 published ZTF names and mapped all names to parent SourceIDs; zero duplicates or unmapped names.",
-      "Valid membership comparison remains false: candidate 741787, intersection 725101, candidate-only 16686, published-only 5083.",
-      "Follow-up CI 38097993359 and heavy Scientific Validation 38097993346 are still running after commit 641695863195edccb4305cb4884aac727baa30e1 fixed a stale read_vizier test.",
-      "Documentation branch CI, link/content consistency, and lifecycle contract validation remain pending."
+      "Documentation-only changes; no scientific code, model, or release artifact changed on this branch.",
+      "Official CPVS Table2 ReadMe identifies Seq bytes 24-29 as the internal source identifier used by ztf2g/ztf2r; Table2 has 781602 rows but Seq values span 1..781604.",
+      "Heavy run 38095650470 read 730184 published names but mapped them to row ordinals; the reported 725101 intersection / 16686 candidate-only / 5083 published-only counts are invalid and superseded.",
+      "PR #176 now maps published names to actual Table2 Seq IDs in the independent audit and derives the parent ID universe from actual Seq; fresh heavy evidence has not completed at this documentation revision.",
+      "PR #176 also adds an explicit finite-SNR check because NaN < sigma is false, plus flag-zero diagnostics strictly as hypotheses. It does not alter published thresholds or production selection.",
+      "Documentation CI, product-scope audit, CodeQL, and lifecycle validation must pass on this branch's current head before merge."
     ]
   },
   "failure_analysis": {
     "status": "SUPPORTED",
     "root_causes": [
       "Handbook version lagged v1.0.1.",
-      "Troubleshooting did not distinguish pre-fix CPVS counts from pending post-fix source-backed verification.",
+      "Troubleshooting and README had stale CPVS claims that treated invalid or pre-fix membership values as current evidence.",
       "Product roadmap needed a canonical acceptance-driven entry point.",
-      "The membership audit compared the Table 4 catalog-internal ID column directly with parent row-ordinal SourceID values; PR #176 changes the join to normalized ZTF names, pending validation."
+      "Historical membership audit first compared a Table4 catalog-internal ID directly to parent SourceID; later it joined names to physical Table2 row ordinals rather than the true Seq/SourceID. Both comparisons were semantically invalid.",
+      "The derivation also filtered candidate lightcurve SourceIDs against a row-ordinal parent ID universe, so its historical 741787 candidate count is not a verified current count.",
+      "A separate SNR guard bug allowed NaN values through because the prior comparison checked only snr < sigma; PR #176 now explicitly rejects non-finite SNR."
     ]
   },
   "knowledge_extraction": {
@@ -65,18 +71,21 @@
       "A merged scientific correction is not full benchmark resolution until independent audit passes.",
       "Workflow-level success with a skipped required job does not establish scientific release readiness.",
       "Product completion requires end-to-end user acceptance, not feature presence alone.",
-      "An audit can produce internally consistent counts while comparing semantically different identifiers; join keys must be justified from the source schema/ReadMe.",
-      "A zero-row parse of an external reference is an input-format failure; it must never be interpreted as a real empty reference set or used to report membership metrics."
+      "Catalog identifier semantics must come from the publisher schema; physical row order is not a valid replacement for a Seq/SourceID key.",
+      "A parser can read every published name correctly yet still produce an invalid comparison if it maps names into the wrong identifier space.",
+      "A zero-row parse of an external reference is an input-format failure; never interpret it as a real empty reference set.",
+      "NaN comparisons are false: scientific threshold guards must explicitly reject non-finite SNR values, not rely only on a less-than comparison.",
+      "Flag-zero variants are diagnostic hypotheses only unless the published selection documentation establishes that flag policy."
     ]
   },
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Run CI and lifecycle contract validation for the documentation branch.",
-      "Run heavy source-backed validation on intended branch and verify required jobs execute.",
-      "Keep Issue #170 open until evidence supports closure.",
-      "Verify PR #176 name-based membership join in CI and inspect the post-fix audit for unmapped/duplicate ZTF names and remaining candidate-only IDs.",
-      "Valid published membership is now parsed; explain the 16686 candidate-only and 5083 published-only mismatch using source-backed selection semantics without tuning thresholds."
+      "Run CI, CodeQL, Product Scope Audit, and lifecycle contract validation on the latest documentation branch head.",
+      "Verify PR #176 current-head tests complete successfully; an earlier CI attempt had its test job cancelled during repeated pushes.",
+      "Review fresh Seq-based derivation and independent Table4 name-to-Seq membership output, including duplicate/unmapped names and exact set equality.",
+      "Compare the baseline selection against diagnostic-only flag variants without adopting a flag rule or tuning thresholds solely to force cardinality equality.",
+      "Keep Issue #170 open until exact reconstruction is established or a source-supported limitation is documented."
     ]
   },
   "decision": "REVISE",
@@ -84,6 +93,7 @@
     "v0.2.0 baseline remains immutable.",
     "v1.0.1 release remains immutable.",
     "Desktop platform remains an explicit deliverable under Issue #158.",
-    "Scientific validation and product usability are parallel workstreams."
+    "Scientific validation and product usability are parallel workstreams.",
+    "Historical row-ordinal CPVS membership figures are invalid; only current Seq-keyed results with source manifests may support future claims."
   ]
 }
