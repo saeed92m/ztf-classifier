@@ -138,3 +138,33 @@ def test_band_diagnostics_keep_flag_policy_separate_from_snr(tmp_path: Path):
     assert metrics[2]["snr_flag0"] is False
     assert metrics[3]["snr"] is False
     assert metrics[4]["snr"] is False
+
+
+
+def test_parent_catalog_metadata_reports_type_and_published_detection_counts(tmp_path: Path):
+    from scripts.diagnose_cpvs_selection import parent_catalog_metadata
+
+    def table2_row(name: str, source_id: int, variable_type: str, ng: int, nr: int) -> str:
+        row = [" "] * 228
+        row[0:22] = list(f"{name:<22}")
+        row[23:29] = list(f"{source_id:6d}")
+        row[30:39] = list(f"{123.45678:9.5f}")
+        row[131:135] = list(f"{ng:4d}")
+        row[136:140] = list(f"{nr:4d}")
+        row[211:216] = list(f"{variable_type:<5}")
+        return "".join(row)
+
+    parent = tmp_path / "parent_table2.txt"
+    parent.write_text(
+        table2_row("ZTFJ000000.00+000000.0", 100, "Mira", 25, 30)
+        + "\\n"
+        + table2_row("ZTFJ000001.00+000000.0", 102, "EW", 0, 12)
+        + "\\n",
+        encoding="utf-8",
+    )
+
+    metadata = parent_catalog_metadata(parent)
+    assert metadata == {
+        100: {"type": "Mira", "ng": 25, "nr": 30},
+        102: {"type": "EW", "ng": 0, "nr": 12},
+    }
