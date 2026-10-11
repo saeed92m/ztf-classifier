@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 from zipfile import ZipFile
 
+from ztf_classifier.validation.derivation import _parse_cpvs_table2_identity
+
 
 def read_selected(path: Path) -> set[int]:
     lines = path.read_text(encoding="utf-8").splitlines()
@@ -47,6 +49,17 @@ def read_published_ztf_names(path: Path) -> list[str]:
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
                 continue
+            fixed_name = line[:22].strip()
+            fixed_id = line[23:29].strip()
+            if (
+                len(line) >= 36
+                and line[22].isspace()
+                and line[29].isspace()
+                and fixed_name.upper().startswith("ZTF")
+                and fixed_id.isdigit()
+            ):
+                names.append(fixed_name.upper())
+                continue
             columns, delimiter = columns_for(line)
             if ztf_index < len(columns):
                 name = columns[ztf_index].strip()
@@ -67,6 +80,17 @@ def read_published_ztf_names(path: Path) -> list[str]:
     for line in lines:
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
+            continue
+        fixed_name = line[:22].strip()
+        fixed_id = line[23:29].strip()
+        if (
+            len(line) >= 36
+            and line[22].isspace()
+            and line[29].isspace()
+            and fixed_name.upper().startswith("ZTF")
+            and fixed_id.isdigit()
+        ):
+            names.append(fixed_name.upper())
             continue
         tokens = stripped.split()
         ztf_tokens = [token.strip() for token in tokens if token.upper().startswith("ZTF")]
@@ -114,39 +138,15 @@ def _iter_parent_lines(path: Path):
 
 
 def read_parent_name_to_sourceid(path: Path) -> dict[str, int]:
-    """Map each parent-table ZTF name to its published Seq/SourceID, never row ordinal.
-
-    CPVS Table2 bytes 24-29 contain Seq. The light-curve files use the same
-    identifier namespace. Table2 has 781,602 rows but Seq spans 1..781,604,
-    so substituting the row ordinal for Seq silently corrupts membership joins.
-    """
+    """Map each parent-table ZTF name to its actual published Seq/SourceID."""
     mapping: dict[str, int] = {}
     reverse: dict[int, str] = {}
     for line in _iter_parent_lines(path):
-        raw = line.rstrip("\r\n")
-        stripped = raw.strip()
-        if not stripped:
+        identity = _parse_cpvs_table2_identity(line)
+        if identity is None:
             continue
-        fields = stripped.split()
-        name = fields[0]
-        if not name.upper().startswith("ZTF"):
-            continue
-
-        source_id: int | None = None
-        # Standard fixed-width CDS Table2 uses columns 24-29 for Seq;
-        # whitespace/TSV mirrors put the same Seq token second.
-        if len(fields) >= 2 and fields[1].isdigit():
-            source_id = int(fields[1])
-        if source_id is None and len(raw) >= 29:
-            fixed_seq = raw[23:29].strip()
-            if fixed_seq.isdigit():
-                source_id = int(fixed_seq)
-        if source_id is None:
-            raise ValueError(
-                f"cannot read numeric CPVS Table2 Seq/SourceID for {name!r}: {raw[:100]!r}"
-            )
-
-        normalized = name.upper()
+        normalized, raw_source_id = identity
+        source_id = int(raw_source_id)
         if normalized in mapping:
             raise ValueError(f"duplicate ZTF name in parent catalog: {normalized}")
         if source_id in reverse:
@@ -159,7 +159,6 @@ def read_parent_name_to_sourceid(path: Path) -> dict[str, int]:
     if not mapping:
         raise ValueError(f"no ZTF rows found in parent catalog: {path}")
     return mapping
-
 
 def read_vizier(path: Path, parent_path: Path) -> set[int]:
     """Map published Table 4 ZTF names to parent SourceIDs; never compare Table 4 ID directly."""
