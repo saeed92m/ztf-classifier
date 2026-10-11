@@ -92,12 +92,27 @@ def test_read_vizier_accepts_commented_tsv_header(tmp_path: Path):
     path = tmp_path / "table4.dat"
     path.write_text(
         "# ZTF\tID\n"
-        "ZTF1\t1\n"
-        "ZTF2\t730184\n",
+        "ZTF1\t10\n"
+        "ZTF2\t30\n",
         encoding="utf-8",
     )
 
     parent = tmp_path / "parent.txt"
-    parent.write_text("ZTF1 source\nZTF2 source\n", encoding="utf-8")
+    parent.write_text("ZTF1 10 123.0\nZTF2 30 124.0\n", encoding="utf-8")
 
-    assert read_vizier(path, parent) == {1, 2}
+    assert read_vizier(path, parent) == {10, 30}
+
+
+def test_parent_catalog_uses_seq_ids_not_row_ordinals(tmp_path: Path):
+    from scripts.audit_cpvs_membership import read_parent_name_to_sourceid
+    from ztf_classifier.validation.derivation import _source_ids_from_catalog
+
+    parent = tmp_path / "parent.txt"
+    parent.write_text(
+        "ZTF1 10 123.0 45.0\n"
+        "ZTF2 30 124.0 46.0\n",
+        encoding="utf-8",
+    )
+
+    assert read_parent_name_to_sourceid(parent) == {"ZTF1": 10, "ZTF2": 30}
+    assert _source_ids_from_catalog(parent, None) == {"10", "30"}
