@@ -301,7 +301,7 @@ Current validated areas include:
 
 The full test suite is the release gate. CI runs installation, dependency verification, Ruff, the complete pytest suite, and package import verification. Registry-backed prediction and batch paths are covered by real subprocess E2E tests.
 
-The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the software package milestone is `v1.0.0`.
+The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the current software release is `v1.0.1`.
 
 ## Repository structure
 
@@ -378,7 +378,7 @@ An unresolved external reproduction claim must not silently become a product fai
 - Exact CPVS reconstruction remains UNRESOLVED: the current Seq-based run finds 741,786 candidates, all 730,184 published objects, and 11,602 candidate-only objects with zero published-only or unmapped names. Selection semantics for the extra candidates remain under investigation; no threshold or flag rule may be tuned solely to force the published cardinality.
 - This reconstruction discrepancy is not an ML or production failure and must not be hidden or forced away by threshold tuning.
 
-The v1.0.0 software milestone is complete as a release. The broader discovery platform continues through documented product expansion and independent scientific benchmarking.
+The v1.0.1 software release is published and immutable. The broader discovery platform continues through documented product expansion and independent scientific benchmarking.
 
 ## Astronomical Data Analysis & Discovery Platform layer
 
