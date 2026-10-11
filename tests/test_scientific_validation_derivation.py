@@ -80,9 +80,9 @@ def test_cpvs_table_uses_explicit_seq_sourceids(tmp_path: Path):
     parent.write_text(
         "Table 2. ZTF Variables Catalog\n"
         "ID R.A. (J2000) Dec. (J2000) Period Type\n"
-        f"{'ZTFJ000000.13+620605.8':<22} {100:>6} {0.00056:>9.5f} {62.10163:>9.5f} {1.9449979:>10.7f} BYDra\\n"
-        f"{'ZTFJ000000.14+721413.7':<22} {101:>6} {0.00061:>9.5f} {72.23716:>9.5f} {0.2991500:>10.7f} EW\\n"
-        f"{'ZTFJ000000.19+320847.2':<22} {102:>6} {0.00080:>9.5f} {32.14645:>9.5f} {0.2870590:>10.7f} EW\\n"
+        f"{'ZTFJ000000.13+620605.8':<22} {100:>6} {0.00056:>9.5f} {62.10163:>9.5f} {1.9449979:>10.7f} BYDra\n"
+        f"{'ZTFJ000000.14+721413.7':<22} {101:>6} {0.00061:>9.5f} {72.23716:>9.5f} {0.2991500:>10.7f} EW\n"
+        f"{'ZTFJ000000.19+320847.2':<22} {102:>6} {0.00080:>9.5f} {32.14645:>9.5f} {0.2870590:>10.7f} EW\n"
         "Note: footer must not become a catalog row\n",
         encoding="utf-8",
     )
@@ -97,8 +97,8 @@ def test_cpvs_table_source_ids_ignore_metadata_after_header(tmp_path: Path):
     parent.write_text(
         "SourceID\tName\n"
         "metadata row with SourceID token\n"
-        f"{'ZTFJ000000.13+620605.8':<22} {100:>6} {0.00056:>9.5f} {62.10163:>9.5f} {1.9449979:>10.7f} BYDra\\n"
-        f"{'ZTFJ000000.14+721413.7':<22} {101:>6} {0.00061:>9.5f} {72.23716:>9.5f} {0.2991500:>10.7f} EW\\n"
+        f"{'ZTFJ000000.13+620605.8':<22} {100:>6} {0.00056:>9.5f} {62.10163:>9.5f} {1.9449979:>10.7f} BYDra\n"
+        f"{'ZTFJ000000.14+721413.7':<22} {101:>6} {0.00061:>9.5f} {72.23716:>9.5f} {0.2991500:>10.7f} EW\n"
         "footer SourceID token\n",
         encoding="utf-8",
     )
@@ -112,16 +112,16 @@ def test_cpvs_table_fallback_scans_past_interleaved_metadata(tmp_path: Path):
     parent = tmp_path / "Table2.txt"
     parent.write_text(
         "Table 2. ZTF Variables Catalog\n"
-        f"{'ZTFJ000000.13+620605.8':<22} {100:>6} {0.00056:>9.5f} {62.10163:>9.5f} {1.9449979:>10.7f} BYDra\\n"
+        f"{'ZTFJ000000.13+620605.8':<22} {100:>6} {0.00056:>9.5f} {62.10163:>9.5f} {1.9449979:>10.7f} BYDra\n"
         "page 1 footer\n"
-        f"{'ZTFJ000000.14+721413.7':<22} {101:>6} {0.00061:>9.5f} {72.23716:>9.5f} {0.2991500:>10.7f} EW\\n"
+        f"{'ZTFJ000000.14+721413.7':<22} {101:>6} {0.00061:>9.5f} {72.23716:>9.5f} {0.2991500:>10.7f} EW\n"
         "repeated catalog header\n"
-        f"{'ZTFJ000000.19+320847.2':<22} {102:>6} {0.00080:>9.5f} {32.14645:>9.5f} {0.2870590:>10.7f} EW\\n"
+        f"{'ZTFJ000000.19+320847.2':<22} {102:>6} {0.00080:>9.5f} {32.14645:>9.5f} {0.2870590:>10.7f} EW\n"
         "end of table\n",
         encoding="utf-8",
     )
 
-    assert _source_ids(parent, None) == {"1", "2", "3"}
+    assert _source_ids(parent, None) == {"100", "101", "102"}
 
 
 def test_lightcurve_directory_auto_selects_data_file(tmp_path: Path):
