@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import csv
-import json
-
 from scripts.validate_cpvs_samples import read_decisions, sha256, stratified_sample
 
 
