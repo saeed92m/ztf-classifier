@@ -137,7 +137,7 @@ Include:
 Never attach API keys or other secrets.
 
 
-A separate audit-join defect was also identified: Table 4's internal ID was being compared directly with the parent catalog's row-ordinal SourceID. PR #176 changes the audit to map published ZTF object names to parent SourceIDs and adds regression tests. This is an audit-correctness fix, not proof that the remaining candidate-only population has been explained; wait for CI and fresh source-backed evidence.
+A separate audit-join defect was also identified: Table 4's internal ID was being compared directly with the parent catalog's row-ordinal SourceID. PR #176 changes the audit to map published ZTF object names to parent SourceIDs and adds regression tests. This is an audit-correctness fix, not proof of the size or cause of any remaining candidate-only population; wait for CI and fresh source-backed evidence.
 
 
 **Audit status update (2026-10-11):** Run [#38092797735](https://github.com/saeed92m/ztf-classifier/actions/runs/38092797735) had an invalid zero-row parse. The parser was hardened, but source-schema review exposed a second defect: published names were mapped to parent row ordinals rather than the documented `Seq` / lightcurve `SourceID` values. Consequently, the 725,101 / 16,686 / 5,083 counts in [run #38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) do **not** establish a valid mismatch and are superseded. PR #176 now reads official Seq identifiers in derivation and audit. Keep Issue #170 open until fresh heavy evidence resolves or accurately dispositions the selection discrepancy.
