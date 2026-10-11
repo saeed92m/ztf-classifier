@@ -351,11 +351,11 @@ A benchmark is evidence about this system; it is not the system's architecture.
 | CPVS parent | 781,602 |
 | Published membership | 730,184 |
 | Latest measured derivation output (not a valid membership comparison) | 741,787 |
-| Published ∩ candidate | 730,184 |
-| Published-only | 0 |
-| Candidate-only | NOT VERIFIED (latest audit parsed zero published rows) |
+| Published ∩ candidate | 725,101 |
+| Published-only | 5,083 |
+| Candidate-only | 16,686 |
 
-The 11,604 candidate-only figure is a **pre-fix historical diagnostic only**, not a current verified post-fix count. A later source-backed run reported 741,787 candidates but the independent VizieR parser returned zero published rows, making that membership comparison invalid. The current name-based parser is being hardened and rerun; do not interpret these counts as a verified membership result.
+The earlier 11,604/11,605 candidate-only counts and zero-row-parser comparison are historical invalid/pre-fix diagnostics, not current membership results. The corrected name-based audit in run #38095650470 parsed all 730,184 published names and found 725,101 in common, 16,686 candidate-only, and 5,083 published-only. This is a valid mismatch; its scientific cause remains unresolved.
 
 No threshold or predicate is to be introduced solely to force the candidate cardinality to 730,184 without independent scientific evidence.
 
@@ -374,7 +374,7 @@ An unresolved external reproduction claim must not silently become a product fai
 - Release infrastructure is event-driven from successful Scientific Validation and no longer depends on manual dispatch.
 - Curated release notes are mandatory for every future release.
 - The frozen scientific baseline remains v0.2.0 and the production model remains baseline_v0.2.
-- Exact historical CPVS reconstruction remains claim-specific UNRESOLVED evidence: parent count 781,602 and published target count 730,184 are documented; 741,787 candidates is a measured derivation output, but the latest audit parsed zero published rows and cannot establish candidate-only or exact-membership counts.
+- Exact historical CPVS reconstruction remains claim-specific UNRESOLVED evidence: parent count 781,602 and published target count 730,184 are documented; 741,787 candidates is a measured derivation output; the valid name-based audit reports 725,101 common, 16,686 candidate-only, and 5,083 published-only. Exact membership remains unresolved.
 - This reconstruction discrepancy is not an ML or production failure and must not be hidden or forced away by threshold tuning.
 
 The v1.0.0 software milestone is complete as a release. The broader discovery platform continues through documented product expansion and independent scientific benchmarking.
