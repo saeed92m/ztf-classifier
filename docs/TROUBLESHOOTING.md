@@ -141,3 +141,12 @@ A separate audit-join defect was also identified: Table 4's internal ID was bein
 
 
 **Audit status update (2026-10-11):** Run [#38092797735](https://github.com/saeed92m/ztf-classifier/actions/runs/38092797735) had an invalid zero-row parse. The parser was hardened, but source-schema review exposed a second defect: published names were mapped to parent row ordinals rather than the documented `Seq` / lightcurve `SourceID` values. Consequently, the 725,101 / 16,686 / 5,083 counts in [run #38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) do **not** establish a valid mismatch and are superseded. PR #176 now reads official Seq identifiers in derivation and audit. Keep Issue #170 open until fresh heavy evidence resolves or accurately dispositions the selection discrepancy.
+
+
+### Follow-up checks after the Seq-key correction (2026-10-11)
+
+A second implementation defect was found in the SNR threshold guard: `_snr_from_mag_error` represents malformed, zero, negative, or non-finite errors as NaN, but comparing NaN with `< sigma` returns false. Without an explicit finiteness check, an invalid SNR could pass the selection guard. PR #176 adds `math.isfinite(snr)` before accepting a detection and regression rows for `nan`, zero, and negative magnitude errors. This does not modify thresholds or the documented selection rule.
+
+The independent diagnostic now reports a flag-zero-per-band variant separately from the baseline SNR predicate. Treat it as a hypothesis only: the cited Chan et al. paper states at least one 2.5σ g-band detection and one 3σ r-band detection, but does not explicitly state a flag-zero requirement. Do not add such a filter to production selection just because it improves cardinality matching.
+
+The fresh heavy runs are tracked at [#38120880783](https://github.com/saeed92m/ztf-classifier/actions/runs/38120880783), [#38121390203](https://github.com/saeed92m/ztf-classifier/actions/runs/38121390203), and latest-head [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146). Accept only the Seq-keyed current membership results, not the superseded row-ordinal counts. PR #176 also excludes raw and normalized per-epoch lightcurves from uploaded artifacts while retaining compact provenance, selection diagnostics, and membership evidence.
