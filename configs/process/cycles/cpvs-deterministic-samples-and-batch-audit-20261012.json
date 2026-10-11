@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-deterministic-samples-and-batch-audit-20261012",
+  "objective": "Add reproducible 100/1000 CPVS membership samples and source-backed full-versus-batch equivalence evidence without modifying scientific selection policy.",
+  "previous_knowledge_consumed": [
+    "Issue #170 remains UNRESOLVED: 741786 candidate IDs, 730184 published IDs, 11602 candidate-only IDs, and zero published-only IDs.",
+    "Issue #180 requires deterministic samples from the complete 781602-SourceID parent catalog, explicit coverage of published and non-published objects, hashes, and object-level comparison.",
+    "Published CPVS membership is a comparison reference, not independent astrophysical ground truth."
+  ],
+  "baseline": {
+    "revision": "main@d331036dddbbdbe399f18a58c7a204b7ca039558",
+    "status": "CPVS exact-membership reconstruction remains fail-closed and UNRESOLVED; v0.2.0 and v1.0.1 are immutable."
+  },
+  "expected_improvement": [
+    "Generate deterministic 100- and 1000-object sample manifests stratified by published-reference membership.",
+    "Record input and manifest SHA-256 values, random seeds, exact SourceIDs, and inclusion counts.",
+    "Report candidate-only and published-only SourceIDs without changing thresholds or hardcoding membership.",
+    "Provide an optional complete-SourceID keyed comparator for full and batch decision tables."
+  ],
+  "measurement": {
+    "metrics": {
+      "sample_tooling": {
+        "status": "IMPLEMENTED_PENDING_CI"
+      },
+      "source_backed_samples": {
+        "status": "PENDING_SOURCE_BACKED_RUN"
+      },
+      "full_vs_batch_equivalence": {
+        "status": "PENDING_IMPLEMENTATION_AND_SOURCE_BACKED_RUN"
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "PR #182 adds deterministic sample tooling, unit tests, and a source-backed Scientific Validation workflow step to emit compact sample manifests and reference-relative mismatch reports."
+    ]
+  },
+  "failure_analysis": {
+    "status": "OPEN",
+    "root_causes": [
+      "The residual 11602 candidate-only CPVS objects remain unexplained.",
+      "Full-versus-batch source-backed equivalence has not yet been demonstrated."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Sampling manifests must include exact object IDs, deterministic seed, stratification counts, and input hashes.",
+      "Membership decisions must be keyed by complete CPVS SourceID, not light-curve row position.",
+      "Reference-relative FP/FN terminology must not be presented as independent astrophysical truth."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "PR CI must pass.",
+      "Source-backed CI must generate and review the 100/1000 sample artifacts.",
+      "Implement and run the actual full-versus-batch object-level comparison.",
+      "Investigate the 11602-object mismatch without tuning thresholds solely to force cardinality equality."
+    ]
+  },
+  "decision": "CONTINUE",
+  "knowledge_carried_forward": [
+    "Do not merge before required CI passes.",
+    "Do not close Issue #180 until sample artifacts and full-versus-batch results are reviewed.",
+    "Keep the exact-membership scientific gate UNRESOLVED until evidence supports a different result.",
+    "Do not change released v0.2.0 or v1.0.1."
+  ]
+}
