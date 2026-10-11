@@ -351,11 +351,11 @@ A benchmark is evidence about this system; it is not the system's architecture.
 | CPVS parent | 781,602 |
 | Published membership | 730,184 |
 | Latest measured derivation output (not a valid membership comparison) | 741,787 |
-| Published ∩ candidate | 725,101 |
-| Published-only | 5,083 |
-| Candidate-only | 16,686 |
+| Published ∩ candidate | NOT VERIFIED — previous join used row ordinal |
+| Published-only | NOT VERIFIED — previous join used row ordinal |
+| Candidate-only | NOT VERIFIED — previous join used row ordinal |
 
-The earlier 11,604/11,605 candidate-only counts and zero-row-parser comparison are historical invalid/pre-fix diagnostics, not current membership results. The corrected name-based audit in run #38095650470 parsed all 730,184 published names and found 725,101 in common, 16,686 candidate-only, and 5,083 published-only. This is a valid mismatch; its scientific cause remains unresolved.
+The earlier 11,604/11,605 counts and the 725,101 / 16,686 / 5,083 comparison are invalid historical diagnostics. The official CPVS ReadMe states Table2 `Seq` is the internal source identifier (bytes 24–29) and the ztf2g/ztf2r lightcurves use the same `Seq` key. Table2 has 781,602 rows but Seq values span 1..781,604, so substituting row ordinals corrupts membership joins. PR #176 now reads the actual Seq IDs in derivation and audit; fresh heavy results are pending. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
 
 No threshold or predicate is to be introduced solely to force the candidate cardinality to 730,184 without independent scientific evidence.
 
@@ -374,7 +374,7 @@ An unresolved external reproduction claim must not silently become a product fai
 - Release infrastructure is event-driven from successful Scientific Validation and no longer depends on manual dispatch.
 - Curated release notes are mandatory for every future release.
 - The frozen scientific baseline remains v0.2.0 and the production model remains baseline_v0.2.
-- Exact historical CPVS reconstruction remains claim-specific UNRESOLVED evidence: parent count 781,602 and published target count 730,184 are documented; 741,787 candidates is a measured derivation output; the valid name-based audit reports 725,101 common, 16,686 candidate-only, and 5,083 published-only. Exact membership remains unresolved.
+- Exact CPVS reconstruction remains UNRESOLVED: parent row count 781,602 and published target 730,184 are sourced; 741,787 is a prior diagnostic. The 725,101 / 16,686 / 5,083 comparison is invalid because the audit mapped names to row ordinals rather than the documented CPVS Seq identifier. A Seq-based source-backed rerun is required.
 - This reconstruction discrepancy is not an ML or production failure and must not be hidden or forced away by threshold tuning.
 
 The v1.0.0 software milestone is complete as a release. The broader discovery platform continues through documented product expansion and independent scientific benchmarking.
@@ -420,5 +420,5 @@ The current production model explicitly does **not** claim a scientific-anomaly 
 - Canonical continuity handbook: [HANDBOOK_UPDATED_v2.8.md](docs/HANDBOOK_UPDATED_v2.8.md).
 - Canonical cross-platform product roadmap: [PLATFORM_EXPANSION_ROADMAP.md](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md).
 - Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
-- Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). PR #173 corrected a real magnitude-selection defect; PR #176 fixes the audit join and parser. Heavy run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) successfully parsed all 730,184 published names and found 725,101 in the derived set, 16,686 candidate-only, and 5,083 published-only; exact membership remains UNRESOLVED. Fresh CI and heavy validation after the latest regression-test fix are running.
+- Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
 - Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.
