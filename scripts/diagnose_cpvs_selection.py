@@ -49,7 +49,7 @@ def main() -> int:
     p.add_argument("--published", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
-    published = read_vizier(a.published)
+    published = read_vizier(a.published, a.parent)
     parent = {int(source_id) for source_id in _source_ids(a.parent, None)}
     if len(parent) != 781_602:
         raise ValueError(f"expected 781602 parent SourceIDs, got {len(parent)}")
