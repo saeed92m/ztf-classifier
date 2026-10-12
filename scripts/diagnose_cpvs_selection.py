@@ -88,6 +88,7 @@ def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
     metrics = {
         oid: {
             "snr": False,
+            "snr_exact": False,
             "snr1": False,
             "mag206": False,
             "mag206_only": False,
@@ -124,9 +125,13 @@ def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
 
         item = metrics[oid]
         snr = 1.0857362047581296 / err
+        # Exact inverse of the magnitude-error transform, retained as a diagnostic
+        # until validated against the published selection semantics.
+        snr_exact = 1.0 / math.expm1(err * math.log(10.0) / 2.5)
         snr1 = 1.0 / err
         item["mag206_only"] |= mag <= 20.6
         item["snr1"] |= snr1 >= threshold
+        item["snr_exact"] |= snr_exact >= threshold
         if snr < threshold:
             continue
 
@@ -236,6 +241,25 @@ def main() -> int:
     predicates = {
         "baseline_1p085": {oid for oid in parent if g[oid]["snr"] and r[oid]["snr"]},
         "baseline_1p0": {oid for oid in parent if g[oid]["snr1"] and r[oid]["snr1"]},
+        "exact_magnitude_error_snr_diagnostic": {
+            oid for oid in parent if g[oid]["snr_exact"] and r[oid]["snr_exact"]
+        },
+        "baseline_plus_nonzero_parent_mean_magnitudes_diagnostic": {
+            oid for oid in parent
+            if g[oid]["snr"] and r[oid]["snr"]
+            and math.isfinite(catalog_metadata[oid]["gmag"])
+            and math.isfinite(catalog_metadata[oid]["rmag"])
+            and catalog_metadata[oid]["gmag"] != 0.0
+            and catalog_metadata[oid]["rmag"] != 0.0
+        },
+        "exact_snr_plus_nonzero_parent_mean_magnitudes_diagnostic": {
+            oid for oid in parent
+            if g[oid]["snr_exact"] and r[oid]["snr_exact"]
+            and math.isfinite(catalog_metadata[oid]["gmag"])
+            and math.isfinite(catalog_metadata[oid]["rmag"])
+            and catalog_metadata[oid]["gmag"] != 0.0
+            and catalog_metadata[oid]["rmag"] != 0.0
+        },
         "baseline_plus_mag206": {
             oid for oid in parent if g[oid]["mag206"] and r[oid]["mag206"]
         },
