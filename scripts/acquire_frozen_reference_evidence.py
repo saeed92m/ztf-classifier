@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import tarfile
+import time
 import zipfile
 from pathlib import Path
 from urllib.request import Request, urlopen
@@ -69,7 +70,7 @@ def _members(path: Path, archive_type: str) -> list[str]:
 
 
 def _download_verified(source: dict, archive: Path, benchmark_id: str) -> str:
-    """Download to a temporary file and retry once if transport bytes fail MD5."""
+    """Download to a temporary file with bounded retries for transient network failures."""
     if archive.exists():
         existing_md5 = _md5(archive)
         if existing_md5 == source["md5"]:
@@ -79,7 +80,8 @@ def _download_verified(source: dict, archive: Path, benchmark_id: str) -> str:
 
     temporary = archive.with_name(f".{archive.name}.part")
     last_error: Exception | None = None
-    for attempt in range(1, 3):
+    attempts = 6
+    for attempt in range(1, attempts + 1):
         temporary.unlink(missing_ok=True)
         try:
             _download(source["url"], temporary)
@@ -95,8 +97,20 @@ def _download_verified(source: dict, archive: Path, benchmark_id: str) -> str:
         finally:
             temporary.unlink(missing_ok=True)
 
+        if attempt < attempts:
+            # Zenodo occasionally returns transient 5xx/504 responses for large
+            # historical archives. Retry with capped exponential backoff; never
+            # accept unverified bytes or publish a partial manifest.
+            delay = min(5 * (2 ** (attempt - 1)), 60)
+            print(
+                f"{benchmark_id}: download attempt {attempt}/{attempts} failed "
+                f"({last_error}); retrying in {delay}s",
+                flush=True,
+            )
+            time.sleep(delay)
+
     raise RuntimeError(
-        f"{benchmark_id}: verified download failed after 2 attempts: {last_error}"
+        f"{benchmark_id}: verified download failed after {attempts} attempts: {last_error}"
     ) from last_error
 
 
