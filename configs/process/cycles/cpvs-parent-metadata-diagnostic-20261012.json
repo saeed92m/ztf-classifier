@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-parent-metadata-diagnostic-20261012",
+  "objective": "Make CPVS parent metadata parsing robust to official fixed-width rows and whitespace-delimited mirrors, then collect source-backed diagnostic evidence without changing scientific selection.",
+  "previous_knowledge_consumed": [
+    "Issue #170 remains UNRESOLVED: current published-membership comparison reports 741786 candidates, 730184 published objects, 11602 candidate-only objects, and zero published-only objects.",
+    "The source-backed run 38256372008 produced 100/1000 sample manifests, but full_vs_batch remained null and its heavy artifact was 3775719791 bytes.",
+    "The latest source-backed log reports a derivation cardinality mismatch (expected 730184, observed 741788) that must be reconciled against the later normalized membership report; its cause is not yet established.",
+    "The acquired Table2 source may be a whitespace-delimited text mirror, so fixed-width-only metadata offsets can yield unknown Ng/Nr and magnitude context.",
+    "Published CPVS membership is a reference comparison, not independent astrophysical ground truth."
+  ],
+  "baseline": {
+    "revision": "ci/heavy/cpvs-parent-metadata-diagnostic-20261012@447ab87cc8b2027492f9669485f9e187ccabb71f",
+    "status": "CPVS exact membership remains fail-closed and UNRESOLVED; immutable v0.2.0 and released v1.0.1 are unchanged."
+  },
+  "expected_improvement": [
+    "Parse parent metadata from documented fixed-width rows and whitespace-tokenized mirrors by locating the actual Seq field.",
+    "Emit diagnostic-only comparisons of Ng/Nr and parent mean g/r magnitude availability for candidate-only and published-intersection populations.",
+    "Run the source-backed heavy workflow on the current stacked PR head.",
+    "Verify the compact evidence artifact excludes raw Table2, Table4, StarEmbed payloads, photometry ZIPs, and normalized per-epoch files.",
+    "Record exact candidate/published/intersection counts and investigate any difference between derivation row count and normalized unique membership."
+  ],
+  "measurement": {
+    "metrics": {
+      "metadata_parse_coverage": { "status": "NOT_MEASURED" },
+      "candidate_only_explanation": { "status": "NOT_MEASURED" },
+      "exact_membership": { "status": "UNRESOLVED" },
+      "artifact_size": { "status": "NOT_MEASURED_ON_THIS_HEAD" },
+      "full_vs_batch_equivalence": { "status": "NOT_MEASURED" }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "PR #179 adds parser support for fixed-width Table2 and whitespace-tokenized mirrors and diagnostic-only metadata comparisons.",
+      "A new current-head CI/heavy run is required to verify the parser, evidence contract, compact artifact, and current exact-membership counts."
+    ],
+    "blocker": "No current-head source-backed output has yet verified the metadata parser or explained the residual membership mismatch."
+  },
+  "failure_analysis": {
+    "status": "OPEN",
+    "root_causes": [
+      "The 11602 candidate-only objects remain unexplained by source-backed evidence.",
+      "A derivation count of 741788 and normalized membership count of 741786 appear in the same prior run; reconcile from the actual selected.tsv and audit outputs rather than assuming duplicates or normalization as the cause.",
+      "Full-versus-batch object-level equivalence has not yet been executed."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Source parsers must explicitly support the acquired source representation; fixed-width offsets cannot be assumed for text mirrors.",
+      "Diagnostic parser improvements must not alter the frozen scientific predicate or force reference count equality.",
+      "Heavy evidence artifacts should retain compact manifests and diagnostic reports while excluding large raw source payloads."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Current-head CI and source-backed heavy validation must pass.",
+      "Review metadata parse coverage and the candidate-only diagnostic report.",
+      "Reconcile derivation row count and normalized unique membership count.",
+      "Execute the object-identity-keyed full-versus-batch experiment.",
+      "Keep exact reconstruction UNRESOLVED until evidence supports a different status."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not merge until current-head checks and source-backed diagnostics are reviewed.",
+    "Do not tune thresholds or hardcode SourceIDs to force cardinality equality.",
+    "Do not claim published membership is independent astrophysical truth.",
+    "Keep v0.2.0 and v1.0.1 immutable."
+  ]
+}
