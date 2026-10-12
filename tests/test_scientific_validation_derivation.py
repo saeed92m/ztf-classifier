@@ -301,3 +301,18 @@ def test_lightcurve_zip_accepts_whitespace_delimited_header(tmp_path: Path):
             "g_flag": "0",
         }
     ]
+
+
+def test_cpvs_table_uses_actual_seq_source_ids_when_present(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _source_ids
+
+    parent = tmp_path / "Table2.txt"
+    parent.write_text(
+        "Table 2. ZTF Variables Catalog\n"
+        "ZTFJ000000.13+620605.8 105 0.00056 62.10163 1.9449979 BYDra\n"
+        "ZTFJ000000.14+721413.7 309 0.00061 72.23716 0.2991500 EW\n"
+        "ZTFJ000000.19+320847.2 811 0.00080 32.14645 0.2870590 EW\n",
+        encoding="utf-8",
+    )
+
+    assert _source_ids(parent, None) == {"105", "309", "811"}
