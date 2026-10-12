@@ -67,12 +67,45 @@ Fetcher = Callable[[str, float], bytes]
 
 
 def _requests_fetch(url: str, timeout_seconds: float) -> bytes:
-    response = requests.get(url, timeout=timeout_seconds, allow_redirects=True)
-    response.raise_for_status()
-    content_type = response.headers.get("content-type", "")
-    if "text/html" in content_type.lower():
-        raise AcquisitionError(f"source returned HTML instead of a data artifact: {url}")
-    return response.content
+    """Fetch with bounded retries and a Zenodo API fallback for transient gateway failures."""
+    candidates = [url]
+    parsed = urlparse(url)
+    if parsed.netloc.lower() in {"zenodo.org", "www.zenodo.org"}:
+        marker = "/records/"
+        if marker in parsed.path and "/files/" in parsed.path:
+            record_id = parsed.path.split(marker, 1)[1].split("/", 1)[0]
+            filename = parsed.path.split("/files/", 1)[1]
+            filename = filename.removesuffix("?download=1")
+            candidates.append(
+                f"https://zenodo.org/api/records/{record_id}/files/{filename}/content"
+            )
+    errors: list[str] = []
+    for candidate in candidates:
+        for attempt in range(5):
+            try:
+                response = requests.get(
+                    candidate,
+                    timeout=timeout_seconds,
+                    allow_redirects=True,
+                    headers={"User-Agent": "ztf-classifier-scientific-validation/1.0"},
+                )
+                response.raise_for_status()
+                content_type = response.headers.get("content-type", "")
+                if "text/html" in content_type.lower():
+                    raise AcquisitionError(
+                        f"source returned HTML instead of a data artifact: {candidate}"
+                    )
+                return response.content
+            except (requests.RequestException, AcquisitionError) as exc:
+                errors.append(f"{candidate} (attempt {attempt + 1}/5): {exc}")
+                status = getattr(getattr(exc, "response", None), "status_code", None)
+                retryable = status is None or status == 429 or status >= 500
+                if not retryable:
+                    break
+                if attempt < 4:
+                    import time
+                    time.sleep(min(2 ** attempt, 16))
+    raise AcquisitionError("all source download attempts failed: " + " | ".join(errors))
 
 
 def _sha256_bytes(payload: bytes) -> str:
