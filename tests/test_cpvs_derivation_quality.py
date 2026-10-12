@@ -91,15 +91,15 @@ def test_read_vizier_accepts_commented_tsv_header_and_maps_parent_seq(tmp_path: 
 
     path = tmp_path / "table4.dat"
     path.write_text(
-        "# ZTF\\tID\\n"
-        "ZTFJ000000.13+620605.8\\t1\\n"
-        "ZTFJ000000.14+721413.7\\t730184\\n",
+        "# ZTF\tID\n"
+        "ZTFJ000000.13+620605.8\t1\n"
+        "ZTFJ000000.14+721413.7\t730184\n",
         encoding="utf-8",
     )
     parent = tmp_path / "Table2.txt"
     parent.write_text(
-        "ZTFJ000000.13+620605.8 105 0.00056 62.10163 1.9449979 BYDra\\n"
-        "ZTFJ000000.14+721413.7 309 0.00061 72.23716 0.2991500 EW\\n",
+        "ZTFJ000000.13+620605.8 105 0.00056 62.10163 1.9449979 BYDra\n"
+        "ZTFJ000000.14+721413.7 309 0.00061 72.23716 0.2991500 EW\n",
         encoding="utf-8",
     )
 
