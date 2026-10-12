@@ -19,55 +19,32 @@
   ],
   "measurement": {
     "metrics": {
-      "parent_rows": {
-        "value": 781602,
-        "status": "MEASURED"
+      "reproducibility": {
+        "status": "NOT_MEASURED"
       },
-      "derived_candidate_count": {
-        "value": 741788,
-        "status": "MEASURED"
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
       },
-      "published_count": {
-        "value": 730184,
-        "status": "MEASURED"
+      "coverage": {
+        "status": "NOT_MEASURED"
       },
-      "intersection_count": {
-        "value": 730184,
-        "status": "MEASURED"
+      "batch_efficiency": {
+        "status": "NOT_MEASURED"
       },
-      "candidate_only_count": {
-        "value": 11604,
-        "status": "MEASURED"
-      },
-      "published_only_count": {
-        "value": 0,
-        "status": "MEASURED"
-      },
-      "published_unmapped_names": {
-        "value": 0,
-        "status": "MEASURED"
-      },
-      "sample_100": {
-        "value": 100,
-        "status": "GENERATED"
-      },
-      "sample_1000": {
-        "value": 1000,
-        "status": "GENERATED"
-      },
-      "full_vs_batch": {
-        "status": "NOT_RUN"
+      "audit_time": {
+        "status": "NOT_MEASURED"
       }
     }
   },
   "validation": {
-    "status": "FAILED_SCIENTIFIC_GATE",
+    "status": "BLOCKED",
     "scientific_gate_affected": true,
     "evidence": [
       "Heavy Scientific Validation run 38229440264 completed the source-backed derivation, independent VizieR membership audit, deterministic sample generation, and artifact upload.",
       "The membership audit reports candidate_count=741788, published_count=730184, intersection_count=730184, candidate_only_count=11604, published_only_count=0, and published_unmapped_name_count=0.",
       "The derivation's own expected-count assertion expected 730184 but observed 741788; the selection predicate was g SNR >= 2.5 AND r SNR >= 3.0 AND finite non-zero g/r magnitudes.",
-      "CI run 38229440145 failed because this record initially omitted required lifecycle fields; this is a process-record validation failure, separate from the scientific mismatch."
+      "CI run 38229440145 failed because this record initially omitted required lifecycle fields; this is a process-record validation failure, separate from the scientific mismatch.",
+      "CI on commit 7489bf4722f62c1f5fe53d76147e4828836f5d80 still failed lifecycle validation: metric names must come from the approved metric registry and each metric must use before/after or status NOT_MEASURED; scientific blocker status must be BLOCKED or NOT_VERIFIED."
     ],
     "blocker": "The source-backed reconstruction does not reproduce the published 730184-object membership. The 11604 candidate-only objects remain unexplained, and full-versus-batch equivalence has not been run."
   },
@@ -90,12 +67,13 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "BLOCKED",
     "open_blockers": [
       "Correct the lifecycle record and rerun CI.",
       "Investigate the 11604 candidate-only IDs against the published selection semantics and source quality cuts.",
       "Implement and execute complete SourceID-keyed full-versus-batch equivalence comparison.",
-      "Keep scientific gate blocked until evidence supports exact membership reproduction or a documented scientific explanation."
+      "Keep scientific gate blocked until evidence supports exact membership reproduction or a documented scientific explanation.",
+      "Lifecycle record schema must satisfy the executable metric registry; a new CI run is required after correction."
     ]
   },
   "decision": "BLOCKED",
