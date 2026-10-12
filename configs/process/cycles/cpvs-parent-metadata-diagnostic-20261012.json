@@ -10,7 +10,7 @@
     "Published CPVS membership is a reference comparison, not independent astrophysical ground truth."
   ],
   "baseline": {
-    "revision": "ci/heavy/cpvs-parent-metadata-diagnostic-20261012@447ab87cc8b2027492f9669485f9e187ccabb71f",
+    "revision": "ci/heavy/cpvs-parent-metadata-diagnostic-20261012@826f7a1a17012c5d0bff349e6176fe33c89ba976",
     "status": "CPVS exact membership remains fail-closed and UNRESOLVED; immutable v0.2.0 and released v1.0.1 are unchanged."
   },
   "expected_improvement": [
@@ -22,11 +22,26 @@
   ],
   "measurement": {
     "metrics": {
-      "metadata_parse_coverage": { "status": "NOT_MEASURED" },
-      "candidate_only_explanation": { "status": "NOT_MEASURED" },
-      "exact_membership": { "status": "UNRESOLVED" },
-      "artifact_size": { "status": "NOT_MEASURED_ON_THIS_HEAD" },
-      "full_vs_batch_equivalence": { "status": "NOT_MEASURED" }
+      "coverage": {
+        "before": "Table2 metadata coverage was not reliably measured for the acquired text-mirror representation.",
+        "after": "NOT_MEASURED: inspect current-head Ng/Nr and magnitude parse coverage in source-backed diagnostics.",
+        "status": "NOT_MEASURED"
+      },
+      "scientific_validity": {
+        "before": "Exact membership and the explanation for 11602 candidate-only objects were unresolved.",
+        "after": "UNRESOLVED: current audit reports 741786 candidates, 730184 published objects, 11602 candidate-only objects, zero published-only objects, and no exact membership match.",
+        "status": "NOT_MEASURED"
+      },
+      "efficiency": {
+        "before": "The earlier heavy artifact was 3775719791 bytes.",
+        "after": "NOT_MEASURED_ON_THIS_HEAD: measure the current compact artifact and verify raw source payloads are excluded.",
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "before": "Full-versus-batch object-level equivalence was not executed; a derivation count of 741788 also disagreed with the normalized audit count of 741786.",
+        "after": "NOT_MEASURED: reconcile selected.tsv against normalized unique membership and run object-identity-keyed full-versus-batch equivalence.",
+        "status": "NOT_MEASURED"
+      }
     }
   },
   "validation": {
@@ -34,15 +49,15 @@
     "scientific_gate_affected": true,
     "evidence": [
       "PR #179 adds parser support for fixed-width Table2 and whitespace-tokenized mirrors and diagnostic-only metadata comparisons.",
-      "A new current-head CI/heavy run is required to verify the parser, evidence contract, compact artifact, and current exact-membership counts."
+      "The current-head source-backed run must verify parser coverage, compact artifact contents, and current exact-membership counts."
     ],
-    "blocker": "No current-head source-backed output has yet verified the metadata parser or explained the residual membership mismatch."
+    "blocker": "The 11602 candidate-only objects and the 741788 versus 741786 count discrepancy remain unexplained; full-versus-batch equivalence is also unmeasured."
   },
   "failure_analysis": {
     "status": "OPEN",
     "root_causes": [
       "The 11602 candidate-only objects remain unexplained by source-backed evidence.",
-      "A derivation count of 741788 and normalized membership count of 741786 appear in the same prior run; reconcile from the actual selected.tsv and audit outputs rather than assuming duplicates or normalization as the cause.",
+      "A derivation count of 741788 and normalized membership count of 741786 appear in the prior run; reconcile from the actual selected.tsv and audit outputs rather than assuming duplicates or normalization as the cause.",
       "Full-versus-batch object-level equivalence has not yet been executed."
     ]
   },
