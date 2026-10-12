@@ -63,6 +63,10 @@ def read_published_ztf_names(path: Path) -> list[str]:
             columns, delimiter = columns_for(line)
             if ztf_index < len(columns):
                 name = columns[ztf_index].strip()
+                if name.upper() == "ZTF":
+                    following = next((value for value in columns[ztf_index + 1:] if value.upper().startswith("J")), None)
+                    if following:
+                        name = f"{name} {following}"
                 if name.upper().startswith("ZTF"):
                     names.append("".join(name.upper().split()))
                     continue
@@ -90,7 +94,7 @@ def read_published_ztf_names(path: Path) -> list[str]:
             and fixed_name.upper().startswith("ZTF")
             and fixed_id.isdigit()
         ):
-            names.append(fixed_name.upper())
+            names.append("".join(fixed_name.upper().split()))
             continue
         tokens = stripped.split()
         ztf_tokens = [token.strip() for token in tokens if token.upper().startswith("ZTF")]
@@ -106,7 +110,7 @@ def read_published_ztf_names(path: Path) -> list[str]:
         # CDS fixed-width Table 4 stores the A22 ZTF name in bytes 1-22.
         name = line[:22].strip()
         if name.upper().startswith("ZTF"):
-            names.append(name.upper())
+            names.append("".join(name.upper().split()))
 
     if not names:
         sample = [line for line in lines if line.strip()][:5]
