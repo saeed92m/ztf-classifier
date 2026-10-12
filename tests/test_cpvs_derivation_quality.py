@@ -153,6 +153,8 @@ def test_parent_catalog_metadata_reports_type_and_published_detection_counts(
         row[0:22] = list(f"{name:<22}")
         row[23:29] = list(f"{source_id:6d}")
         row[30:39] = list(f"{123.45678:9.5f}")
+        row[89:95] = list(f"{17.5:6.2f}")
+        row[96:102] = list(f"{18.2:6.2f}")
         row[131:135] = list(f"{ng:4d}")
         row[136:140] = list(f"{nr:4d}")
         row[211:216] = list(f"{variable_type:<5}")
@@ -169,6 +171,6 @@ def test_parent_catalog_metadata_reports_type_and_published_detection_counts(
 
     metadata = parent_catalog_metadata(parent)
     assert metadata == {
-        100: {"type": "Mira", "ng": 25, "nr": 30},
-        102: {"type": "EW", "ng": 0, "nr": 12},
+        100: {"type": "Mira", "ng": 25, "nr": 30, "gmag": 17.5, "rmag": 18.2},
+        102: {"type": "EW", "ng": 0, "nr": 12, "gmag": 17.5, "rmag": 18.2},
     }
