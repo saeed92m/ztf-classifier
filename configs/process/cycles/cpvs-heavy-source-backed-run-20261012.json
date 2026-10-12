@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-source-backed-heavy-run-20261012",
+  "objective": "Execute the source-backed CPVS validation workflow on the PR #182 implementation without merging it or changing scientific selection policy.",
+  "baseline": {
+    "revision": "de2887118e00c733e143a8bc024f067808db7254",
+    "status": "PR #182 contract CI passed; source-backed membership artifacts and full-versus-batch equivalence remain unverified."
+  },
+  "requested_evidence": [
+    "Acquire and verify the 781602-row CPVS Table2 parent source.",
+    "Derive candidate membership and map published Table4 ZTF names to actual Table2 Seq/SourceID.",
+    "Generate deterministic 100- and 1000-object sample manifests with input and output SHA-256.",
+    "Record mapped/unmapped published names, candidate-only and published-only membership counts, and samples.",
+    "Preserve complete workflow logs and artifacts for review."
+  ],
+  "guardrails": [
+    "Do not alter scientific thresholds to force membership cardinality equality.",
+    "Published membership is a reference, not independent astrophysical ground truth.",
+    "Do not claim full-versus-batch equivalence unless complete SourceID-keyed outputs are actually generated and compared.",
+    "Do not merge PR #179 or #182 based only on this run.",
+    "Keep released v0.2.0 and v1.0.1 unchanged."
+  ],
+  "measurement": {
+    "source_backed_run": "REQUESTED",
+    "membership_discrepancy": "UNRESOLVED",
+    "full_vs_batch": "NOT_RUN",
+    "scientific_gate": "BLOCKED_PENDING_EVIDENCE"
+  },
+  "decision": "RUN_HEAVY_SOURCE_BACKED_VALIDATION"
+}
