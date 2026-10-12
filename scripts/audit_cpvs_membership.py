@@ -58,19 +58,19 @@ def read_published_ztf_names(path: Path) -> list[str]:
                 and fixed_name.upper().startswith("ZTF")
                 and fixed_id.isdigit()
             ):
-                names.append(fixed_name.upper())
+                names.append("".join(fixed_name.upper().split()))
                 continue
             columns, delimiter = columns_for(line)
             if ztf_index < len(columns):
                 name = columns[ztf_index].strip()
                 if name.upper().startswith("ZTF"):
-                    names.append(name.upper())
+                    names.append("".join(name.upper().split()))
                     continue
             # Some mirrors omit a consistent header delimiter; find the ZTF
             # token instead of silently producing an empty published set.
             for token in columns:
                 if token.upper().startswith("ZTF"):
-                    names.append(token.upper())
+                    names.append("".join(token.upper().split()))
                     break
         if names:
             return names
@@ -95,7 +95,13 @@ def read_published_ztf_names(path: Path) -> list[str]:
         tokens = stripped.split()
         ztf_tokens = [token.strip() for token in tokens if token.upper().startswith("ZTF")]
         if ztf_tokens:
-            names.append(ztf_tokens[0].upper())
+            token = ztf_tokens[0]
+            if token.upper() == "ZTF":
+                try:
+                    token = token + " " + next(value for value in tokens[tokens.index(token) + 1:] if value.upper().startswith("J"))
+                except (StopIteration, ValueError):
+                    pass
+            names.append("".join(token.upper().split()))
             continue
         # CDS fixed-width Table 4 stores the A22 ZTF name in bytes 1-22.
         name = line[:22].strip()
