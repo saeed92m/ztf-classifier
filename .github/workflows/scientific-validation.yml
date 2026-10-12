@@ -76,7 +76,17 @@ jobs:
       - name: Acquire 781k CPVS parent evidence
         run: |
           mkdir -p reports/scientific_validation/ztf_periodic_781k
-          python -m ztf_classifier.validation acquire             --benchmark-id ztf_periodic_781k             --output reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip             --code-version "${GITHUB_SHA}"
+          if ! python -m ztf_classifier.validation acquire \
+            --benchmark-id ztf_periodic_781k \
+            --output reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
+            --code-version "${GITHUB_SHA}"; then
+            report=reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip.acquisition.json
+            if [ -f "$report" ]; then
+              echo "Parent acquisition failure details:" >&2
+              cat "$report" >&2
+            fi
+            exit 2
+          fi
 
       - name: Acquire StarEmbed source package
         run: |
@@ -224,6 +234,7 @@ jobs:
         run: |
           set -euo pipefail
           root=reports/scientific_validation/ztf_periodic_730k
+          mkdir -p "$root"
           curl -L --fail --retry 3 --retry-all-errors \
             "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
             -o "$root/published_table4.dat"
