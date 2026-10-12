@@ -1,30 +1,108 @@
 {
   "schema_version": "1.1",
   "stage_id": "cpvs-source-backed-heavy-run-20261012",
-  "objective": "Execute the source-backed CPVS validation workflow on the PR #182 implementation without merging it or changing scientific selection policy.",
-  "baseline": {
-    "revision": "de2887118e00c733e143a8bc024f067808db7254",
-    "status": "PR #182 contract CI passed; source-backed membership artifacts and full-versus-batch equivalence remain unverified."
-  },
-  "requested_evidence": [
-    "Acquire and verify the 781602-row CPVS Table2 parent source.",
-    "Derive candidate membership and map published Table4 ZTF names to actual Table2 Seq/SourceID.",
-    "Generate deterministic 100- and 1000-object sample manifests with input and output SHA-256.",
-    "Record mapped/unmapped published names, candidate-only and published-only membership counts, and samples.",
-    "Preserve complete workflow logs and artifacts for review."
+  "objective": "Record the completed source-backed CPVS reconstruction evidence and preserve the scientific blocker without changing selection policy.",
+  "previous_knowledge_consumed": [
+    "The CPVS parent Table2 contains 781602 source rows and published Table4 contains 730184 objects.",
+    "Published Table4 ZTF names now map to actual Table2 Seq/SourceID; no published names were unmapped.",
+    "Earlier membership comparison showed 11602 candidate-only objects; this heavy run recomputed 11604 candidate-only objects."
   ],
-  "guardrails": [
-    "Do not alter scientific thresholds to force membership cardinality equality.",
-    "Published membership is a reference, not independent astrophysical ground truth.",
-    "Do not claim full-versus-batch equivalence unless complete SourceID-keyed outputs are actually generated and compared.",
-    "Do not merge PR #179 or #182 based only on this run.",
-    "Keep released v0.2.0 and v1.0.1 unchanged."
+  "baseline": {
+    "revision": "363c6ba0e41aab01ab39200e648de258719ffd27",
+    "status": "Heavy source-backed acquisition and audit completed; exact published membership was not reproduced."
+  },
+  "expected_improvement": [
+    "Acquire and verify the 781602-row CPVS parent and frozen publisher references.",
+    "Recompute candidate membership and compare against published Table4 using parent Seq/SourceID mapping.",
+    "Generate deterministic 100- and 1000-object sample manifests with hashes.",
+    "Retain artifacts and clearly classify the unresolved mismatch."
   ],
   "measurement": {
-    "source_backed_run": "REQUESTED",
-    "membership_discrepancy": "UNRESOLVED",
-    "full_vs_batch": "NOT_RUN",
-    "scientific_gate": "BLOCKED_PENDING_EVIDENCE"
+    "metrics": {
+      "parent_rows": {
+        "value": 781602,
+        "status": "MEASURED"
+      },
+      "derived_candidate_count": {
+        "value": 741788,
+        "status": "MEASURED"
+      },
+      "published_count": {
+        "value": 730184,
+        "status": "MEASURED"
+      },
+      "intersection_count": {
+        "value": 730184,
+        "status": "MEASURED"
+      },
+      "candidate_only_count": {
+        "value": 11604,
+        "status": "MEASURED"
+      },
+      "published_only_count": {
+        "value": 0,
+        "status": "MEASURED"
+      },
+      "published_unmapped_names": {
+        "value": 0,
+        "status": "MEASURED"
+      },
+      "sample_100": {
+        "value": 100,
+        "status": "GENERATED"
+      },
+      "sample_1000": {
+        "value": 1000,
+        "status": "GENERATED"
+      },
+      "full_vs_batch": {
+        "status": "NOT_RUN"
+      }
+    }
   },
-  "decision": "RUN_HEAVY_SOURCE_BACKED_VALIDATION"
+  "validation": {
+    "status": "FAILED_SCIENTIFIC_GATE",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Heavy Scientific Validation run 38229440264 completed the source-backed derivation, independent VizieR membership audit, deterministic sample generation, and artifact upload.",
+      "The membership audit reports candidate_count=741788, published_count=730184, intersection_count=730184, candidate_only_count=11604, published_only_count=0, and published_unmapped_name_count=0.",
+      "The derivation's own expected-count assertion expected 730184 but observed 741788; the selection predicate was g SNR >= 2.5 AND r SNR >= 3.0 AND finite non-zero g/r magnitudes.",
+      "CI run 38229440145 failed because this record initially omitted required lifecycle fields; this is a process-record validation failure, separate from the scientific mismatch."
+    ],
+    "blocker": "The source-backed reconstruction does not reproduce the published 730184-object membership. The 11604 candidate-only objects remain unexplained, and full-versus-batch equivalence has not been run."
+  },
+  "failure_analysis": {
+    "status": "OPEN",
+    "root_causes": [
+      "The implemented SNR plus finite non-zero magnitude predicate selects 741788 objects, 11604 more than the published membership.",
+      "All 730184 published objects map to parent Seq/SourceID, so unmapped published identifiers do not explain the mismatch.",
+      "The derivation assertion fails before a valid exact reproduction can be claimed.",
+      "The earlier 11602 discrepancy changed to 11604 in this run; investigate selection implementation/input version differences before drawing conclusions."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Use normalized published ZTF names mapped to actual parent Table2 Seq/SourceID; do not use Table4 ID as the join key.",
+      "Keep published membership as a reference comparison, not independent astrophysical truth.",
+      "Record exact counts from each run; do not carry forward stale mismatch counts.",
+      "A successful acquisition and audit workflow is not equivalent to successful scientific reproduction."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Correct the lifecycle record and rerun CI.",
+      "Investigate the 11604 candidate-only IDs against the published selection semantics and source quality cuts.",
+      "Implement and execute complete SourceID-keyed full-versus-batch equivalence comparison.",
+      "Keep scientific gate blocked until evidence supports exact membership reproduction or a documented scientific explanation."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not tune thresholds solely to force the published cardinality.",
+    "Do not merge PR #179 or #182 based only on acquisition/sample success.",
+    "Do not close issue #180 until source-backed mismatch and full-versus-batch evidence are reviewed.",
+    "Keep v0.2.0 and v1.0.1 unchanged."
+  ]
 }
