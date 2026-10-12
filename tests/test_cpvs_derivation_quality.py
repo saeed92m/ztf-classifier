@@ -161,9 +161,9 @@ def test_parent_catalog_metadata_reports_type_and_published_detection_counts(
     parent = tmp_path / "parent_table2.txt"
     parent.write_text(
         table2_row("ZTFJ000000.00+000000.0", 100, "Mira", 25, 30)
-        + "\\n"
+        + "\n"
         + table2_row("ZTFJ000001.00+000000.0", 102, "EW", 0, 12)
-        + "\\n",
+        + "\n",
         encoding="utf-8",
     )
 
