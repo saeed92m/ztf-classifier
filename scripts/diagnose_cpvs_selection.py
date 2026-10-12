@@ -13,10 +13,15 @@ from ztf_classifier.validation.derivation import _iter_rows, _source_ids
 
 def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
     metrics = {
-        oid: {"snr": False, "snr1": False, "mag206": False, "mag206_only": False}
+        oid: {
+            "snr": False, "snr1": False, "mag206": False, "mag206_only": False,
+            "flag_zero_snr": False, "flag_zero_snr_mag_valid": False,
+            "flag_lt32768_snr_mag_valid": False,
+        }
         for oid in parent
     }
     threshold = 2.5 if error_key == "e_gmag" else 3.0
+    flag_key = "g_flag" if error_key == "e_gmag" else "r_flag"
     for row in _iter_rows(path, required_columns=("SourceID", error_key, mag_key)):
         raw_oid = row.get("SourceID", "").strip()
         try:
@@ -38,6 +43,15 @@ def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
         metrics[oid]["snr1"] |= snr1 >= threshold
         metrics[oid]["mag206"] |= mag <= 20.6 and snr >= threshold
         metrics[oid]["mag206_only"] |= mag <= 20.6
+        try:
+            flag = int(float(row.get(flag_key, "")))
+        except (TypeError, ValueError):
+            flag = None
+        if snr >= threshold and flag == 0:
+            metrics[oid]["flag_zero_snr"] = True
+            metrics[oid]["flag_zero_snr_mag_valid"] |= math.isfinite(mag) and mag != 0
+        if snr >= threshold and flag is not None and 0 <= flag < 32768:
+            metrics[oid]["flag_lt32768_snr_mag_valid"] |= math.isfinite(mag) and mag != 0
     return metrics
 
 
@@ -63,6 +77,15 @@ def main() -> int:
         },
         "baseline_plus_rmag206": {
             o for o in parent if g[o]["snr"] and r[o]["snr"] and r[o]["mag206_only"]
+        },
+        "baseline_flag_zero": {
+            o for o in parent if g[o]["flag_zero_snr_mag_valid"] and r[o]["flag_zero_snr_mag_valid"]
+        },
+        "baseline_flag_lt32768": {
+            o for o in parent if g[o]["flag_lt32768_snr_mag_valid"] and r[o]["flag_lt32768_snr_mag_valid"]
+        },
+        "baseline_1p0_flag_zero": {
+            o for o in parent if g[o]["snr1"] and r[o]["snr1"] and g[o]["flag_zero_snr_mag_valid"] and r[o]["flag_zero_snr_mag_valid"]
         },
     }
     report = {}
