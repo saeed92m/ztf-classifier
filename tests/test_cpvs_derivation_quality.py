@@ -128,17 +128,21 @@ def test_band_diagnostics_keep_flag_policy_separate_from_snr(tmp_path: Path):
         "1\t0.1\t18.0\t1\n"
         "2\t0.1\t18.0\t1\n"
         "3\tnan\t18.0\t0\n"
-        "4\t0.0\t18.0\t0\n",
+        "4\t0.0\t18.0\t0\n"
+        "5\t0.4\t18.0\t0\n",
         encoding="utf-8",
     )
-    metrics = band_metrics(path, {1, 2, 3, 4}, "e_gmag", "gmag")
+    metrics = band_metrics(path, {1, 2, 3, 4, 5}, "e_gmag", "gmag")
     assert metrics[1]["snr"] is True
     assert metrics[1]["snr_flag0"] is True
     assert metrics[2]["snr"] is True
     assert metrics[2]["snr_flag0"] is False
     assert metrics[3]["snr"] is False
     assert metrics[4]["snr"] is False
-
+    # For a 0.4-mag uncertainty, the linear approximation exceeds 2.5σ,
+    # but the exact inverse magnitude-error transform does not.
+    assert metrics[5]["snr"] is True
+    assert metrics[5]["snr_exact"] is False
 
 
 def test_parent_catalog_metadata_reports_type_and_published_detection_counts(
