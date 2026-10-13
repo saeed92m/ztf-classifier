@@ -18,10 +18,9 @@
   ],
   "measurement": {
     "metrics": {
-      "audit_observability": {
+      "correctness": {
         "before": "The set-only audit could conceal duplicate row multiplicity.",
-        "after": "Audit report records row counts, unique counts, duplicate IDs/rows, parser mode, and SHA-256 digests.",
-        "status": "IMPLEMENTED_PENDING_CI"
+        "after": "Audit report records row counts, unique counts, duplicate IDs/rows, parser mode, and SHA-256 digests."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
@@ -30,18 +29,19 @@
     }
   },
   "validation": {
-    "status": "PENDING_CI",
+    "status": "NOT_VERIFIED",
     "scientific_gate_affected": true,
     "evidence": [
-      "Initial PR CI failed Cumulative Lifecycle Gate because the PR did not include a cycle record.",
-      "Format Check, Lint, CodeQL, and Scientific Validation contract workflow passed on the initial PR head.",
-      "Add this record, rerun PR CI, then execute heavy source-backed validation and inspect row-level artifacts."
+      "Initial PR CI failed because the required cycle record was missing.",
+      "After adding the record, CI exposed an unsupported metric name; the cycle record is being corrected to match the repository lifecycle schema.",
+      "Format Check, Lint, CodeQL, and Scientific Validation contract workflow passed on the latest observed run, but full CI did not pass."
     ]
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED",
     "root_causes": [
       "The initial PR omitted the mandatory cumulative cycle record.",
+      "The first cycle record used an unsupported metric name, audit_observability, which the lifecycle contract rejects.",
       "Previous set-only audit did not preserve duplicate row evidence."
     ]
   },
@@ -49,13 +49,14 @@
     "status": "SUPPORTED",
     "findings": [
       "Process-level cycle records are required for every meaningful PR.",
+      "Cycle metric names must match the allowlist in src/ztf_classifier/lifecycle.py.",
       "Membership equality and row-multiset equality are separate checks; neither proves the scientific predicate by itself."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "PR CI must pass after adding the cycle record.",
+      "PR CI must pass after correcting the cycle record.",
       "Rerun heavy source-backed CPVS reconstruction and inspect membership_audit and selection diagnostics.",
       "Exact membership and full-vs-batch equivalence remain release-blocking."
     ]
