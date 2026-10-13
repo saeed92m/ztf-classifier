@@ -154,3 +154,39 @@ def test_star_embed_revision_resolution_uses_supported_expand_parameters(monkeyp
     assert captured["params"] == [("expand", "sha"), ("expand", "siblings")]
     assert urls[0].endswith("/resolve/" + "a" * 40 + "/data/train-00000-of-00002.parquet")
     assert manifest["revision"] == "a" * 40
+
+def test_requests_fetch_retries_transient_gateway_timeout(monkeypatch):
+    from ztf_classifier.validation import acquisition
+
+    calls = []
+
+    class Response:
+        def __init__(self, status_code, content=b"artifact"):
+            self.status_code = status_code
+            self.content = content
+            self.headers = {"content-type": "application/octet-stream"}
+            self.closed = False
+
+        def close(self):
+            self.closed = True
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                import requests
+                raise requests.HTTPError(f"HTTP {self.status_code}")
+
+    responses = [Response(504) for _ in range(4)] + [Response(200)]
+
+    def fake_get(url, **kwargs):
+        calls.append((url, kwargs["timeout"]))
+        return responses.pop(0)
+
+    monkeypatch.setattr(acquisition.requests, "get", fake_get)
+    monkeypatch.setattr(acquisition.time, "sleep", lambda seconds: None)
+
+    payload = acquisition._requests_fetch("https://zenodo.example/table2.zip", 60)
+
+    assert payload == b"artifact"
+    assert len(calls) == 5
+    assert all(timeout == 60 for _, timeout in calls)
+

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -67,12 +68,32 @@ Fetcher = Callable[[str, float], bytes]
 
 
 def _requests_fetch(url: str, timeout_seconds: float) -> bytes:
-    response = requests.get(url, timeout=timeout_seconds, allow_redirects=True)
-    response.raise_for_status()
-    content_type = response.headers.get("content-type", "")
-    if "text/html" in content_type.lower():
-        raise AcquisitionError(f"source returned HTML instead of a data artifact: {url}")
-    return response.content
+    """Fetch a source artifact, retrying transient HTTP and transport failures."""
+    transient_statuses = {429, 500, 502, 503, 504}
+    max_attempts = 5
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = requests.get(url, timeout=timeout_seconds, allow_redirects=True)
+            if response.status_code in transient_statuses and attempt < max_attempts:
+                response.close()
+                delay = min(2 ** (attempt - 1), 8)
+                time.sleep(delay)
+                continue
+
+            response.raise_for_status()
+            content_type = response.headers.get("content-type", "")
+            if "text/html" in content_type.lower():
+                raise AcquisitionError(
+                    f"source returned HTML instead of a data artifact: {url}"
+                )
+            return response.content
+        except (requests.Timeout, requests.ConnectionError):
+            if attempt >= max_attempts:
+                raise
+            time.sleep(min(2 ** (attempt - 1), 8))
+
+    raise AcquisitionError(f"source fetch failed after {max_attempts} attempts: {url}")
 
 
 def _sha256_bytes(payload: bytes) -> str:
