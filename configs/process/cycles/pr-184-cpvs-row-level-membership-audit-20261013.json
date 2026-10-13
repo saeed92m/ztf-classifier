@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-184-cpvs-row-level-membership-audit-20261013",
+  "objective": "Preserve CPVS candidate and published-table row-level evidence so duplicate rows and parser behavior cannot be hidden by set-only membership comparison.",
+  "previous_knowledge_consumed": [
+    "CPVS reconstruction remains scientifically unresolved; prior heavy validation did not prove exact membership.",
+    "Set equality hides duplicate multiplicities and does not establish correctness of the scientific selection predicate.",
+    "The cumulative lifecycle CI requires a machine-readable cycle record for meaningful pull requests."
+  ],
+  "baseline": {
+    "revision": "2113c51dc3210b85b65d6defc52099c0d3b629fd",
+    "description": "PR #184 adds row-preserving candidate/VizieR readers, duplicate summaries, parser mode, and row/unique-ID digests; scientific CPVS selection logic is unchanged."
+  },
+  "expected_improvement": [
+    "Expose candidate and published row counts and duplicate diagnostics.",
+    "Distinguish unique membership equality from row-multiset equality.",
+    "Keep CPVS reconstruction status unresolved until source-backed exact-membership and full-vs-batch evidence passes."
+  ],
+  "measurement": {
+    "metrics": {
+      "audit_observability": {
+        "before": "The set-only audit could conceal duplicate row multiplicity.",
+        "after": "Audit report records row counts, unique counts, duplicate IDs/rows, parser mode, and SHA-256 digests.",
+        "status": "IMPLEMENTED_PENDING_CI"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "Diagnostics-only change; no new full CPVS source-backed run has established exact membership."
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Initial PR CI failed Cumulative Lifecycle Gate because the PR did not include a cycle record.",
+      "Format Check, Lint, CodeQL, and Scientific Validation contract workflow passed on the initial PR head.",
+      "Add this record, rerun PR CI, then execute heavy source-backed validation and inspect row-level artifacts."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The initial PR omitted the mandatory cumulative cycle record.",
+      "Previous set-only audit did not preserve duplicate row evidence."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Process-level cycle records are required for every meaningful PR.",
+      "Membership equality and row-multiset equality are separate checks; neither proves the scientific predicate by itself."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "PR CI must pass after adding the cycle record.",
+      "Rerun heavy source-backed CPVS reconstruction and inspect membership_audit and selection diagnostics.",
+      "Exact membership and full-vs-batch equivalence remain release-blocking."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not introduce an unverified magnitude-zero filter or hardcoded ID exclusions.",
+    "Keep issues #170 and #180 open until source-backed acceptance criteria pass.",
+    "The immutable v0.2.0 scientific baseline remains unchanged."
+  ]
+}
