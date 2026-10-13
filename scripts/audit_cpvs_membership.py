@@ -46,7 +46,7 @@ def read_vizier_rows(path: Path) -> tuple[list[int], str]:
         if not stripped:
             continue
         candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
-        columns = [item.strip().lower() for item in candidate.split("\\t")]
+        columns = [item.strip().lower() for item in candidate.split("\t")]
         if "id" in columns and ("ztf" in columns or "ztf identifier" in columns):
             header_index = index
             id_index = columns.index("id")
@@ -58,7 +58,7 @@ def read_vizier_rows(path: Path) -> tuple[list[int], str]:
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
                 continue
-            columns = [item.strip() for item in line.split("\\t")]
+            columns = [item.strip() for item in line.split("\t")]
             if id_index < len(columns):
                 raw = columns[id_index]
                 if raw.isdigit():
