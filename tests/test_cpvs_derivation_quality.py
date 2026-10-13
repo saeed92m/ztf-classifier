@@ -174,7 +174,16 @@ def test_parent_catalog_metadata_reports_type_and_published_detection_counts(
     )
 
     metadata = parent_catalog_metadata(parent)
-    assert metadata == {
+    assert set(metadata) == {100, 102}
+    assert {
+        source_id: {
+            key: metadata[source_id][key]
+            for key in ("type", "ng", "nr", "gmag", "rmag")
+        }
+        for source_id in metadata
+    } == {
         100: {"type": "Mira", "ng": 25, "nr": 30, "gmag": 17.5, "rmag": 18.2},
         102: {"type": "EW", "ng": 0, "nr": 12, "gmag": 17.5, "rmag": 18.2},
     }
+    # Extended diagnostic fields may be unavailable in minimal synthetic rows,
+    # but their absence must not erase the published metadata above.
