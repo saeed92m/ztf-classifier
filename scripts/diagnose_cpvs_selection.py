@@ -41,50 +41,58 @@ def parent_catalog_metadata(path: Path) -> dict[int, dict[str, Any]]:
         r2_g = r2_r = gamp = ramp = fap_g = fap_r = float("nan")
         variable_type = ""
 
-        # Official CDS Table2 byte positions (Python slices are zero-based).
-        try:
-            period = float(line[50:61].strip())
-            gmag = float(line[89:95].strip())
-            rmag = float(line[96:102].strip())
-            per_g = float(line[103:116].strip())
-            per_r = float(line[117:130].strip())
-            ng = int(line[131:135].strip())
-            nr = int(line[136:140].strip())
-            r2_g = float(line[167:173].strip())
-            r2_r = float(line[174:180].strip())
-            gamp = float(line[181:186].strip())
-            ramp = float(line[187:192].strip())
-            fap_g = float(line[193:201].strip())
-            fap_r = float(line[202:210].strip())
+        def parse_int(value: str, default: int) -> int:
+            try:
+                return int(value.strip())
+            except (TypeError, ValueError):
+                return default
+
+        def parse_float(value: str, default: float = float("nan")) -> float:
+            try:
+                return float(value.strip())
+            except (TypeError, ValueError):
+                return default
+
+        # Parse each fixed-width field independently. A blank optional field
+        # must not discard valid g/r magnitudes, Ng/Nr, or Type from the row.
+        if len(line) >= 216 and line[23:29].strip() == identity[1]:
+            period = parse_float(line[50:61])
+            gmag = parse_float(line[89:95])
+            rmag = parse_float(line[96:102])
+            per_g = parse_float(line[103:116])
+            per_r = parse_float(line[117:130])
+            ng = parse_int(line[131:135], -1)
+            nr = parse_int(line[136:140], -1)
+            r2_g = parse_float(line[167:173])
+            r2_r = parse_float(line[174:180])
+            gamp = parse_float(line[181:186])
+            ramp = parse_float(line[187:192])
+            fap_g = parse_float(line[193:201])
+            fap_r = parse_float(line[202:210])
             variable_type = line[211:216].strip()
-        except (ValueError, IndexError):
-            # Zenodo text mirrors can be whitespace-tokenized. The ZTF name
-            # may occupy one token or two ("ZTF", "J..."); locate Seq rather
-            # than assuming a fixed ordinal, then use Table2's documented
-            # field order relative to Seq.
+        else:
+            # Whitespace-tokenized mirror: locate Seq rather than relying on
+            # an absolute token index (the object name may be one or two tokens).
             fields = line.strip().split()
             try:
                 seq_index = next(i for i, value in enumerate(fields) if value == identity[1])
-                period = float(fields[seq_index + 3])
-                gmag = float(fields[seq_index + 7])
-                rmag = float(fields[seq_index + 8])
-                per_g = float(fields[seq_index + 9])
-                per_r = float(fields[seq_index + 10])
-                ng = int(fields[seq_index + 11])
-                nr = int(fields[seq_index + 12])
-                r2_g = float(fields[seq_index + 17])
-                r2_r = float(fields[seq_index + 18])
-                gamp = float(fields[seq_index + 19])
-                ramp = float(fields[seq_index + 20])
-                fap_g = float(fields[seq_index + 21])
-                fap_r = float(fields[seq_index + 22])
-                variable_type = fields[seq_index + 23]
-            except (StopIteration, IndexError, ValueError):
-                ng = nr = -1
-                gmag = rmag = float("nan")
-                period = per_g = per_r = float("nan")
-                r2_g = r2_r = gamp = ramp = fap_g = fap_r = float("nan")
-                variable_type = ""
+            except StopIteration:
+                seq_index = -1
+            if seq_index >= 0:
+                period = parse_float(fields[seq_index + 3]) if len(fields) > seq_index + 3 else period
+                gmag = parse_float(fields[seq_index + 7]) if len(fields) > seq_index + 7 else gmag
+                rmag = parse_float(fields[seq_index + 8]) if len(fields) > seq_index + 8 else rmag
+                per_g = parse_float(fields[seq_index + 9]) if len(fields) > seq_index + 9 else per_g
+                per_r = parse_float(fields[seq_index + 10]) if len(fields) > seq_index + 10 else per_r
+                ng = parse_int(fields[seq_index + 11], -1) if len(fields) > seq_index + 11 else ng
+                nr = parse_int(fields[seq_index + 12], -1) if len(fields) > seq_index + 12 else nr
+                r2_g = parse_float(fields[seq_index + 17]) if len(fields) > seq_index + 17 else r2_g
+                r2_r = parse_float(fields[seq_index + 18]) if len(fields) > seq_index + 18 else r2_r
+                gamp = parse_float(fields[seq_index + 19]) if len(fields) > seq_index + 19 else gamp
+                ramp = parse_float(fields[seq_index + 20]) if len(fields) > seq_index + 20 else ramp
+                fap_g = parse_float(fields[seq_index + 21]) if len(fields) > seq_index + 21 else fap_g
+                fap_r = parse_float(fields[seq_index + 22]) if len(fields) > seq_index + 22 else fap_r
+                variable_type = fields[seq_index + 23] if len(fields) > seq_index + 23 else variable_type
 
         metadata[source_id] = {
             "type": variable_type or "UNKNOWN",
