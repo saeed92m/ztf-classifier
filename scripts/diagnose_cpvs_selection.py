@@ -372,6 +372,48 @@ def main() -> int:
             for oid in sorted(candidate_only)[:100]
         ],
     }
+    # Enumerate the residual candidate-only objects after the strongest
+    # source-backed metadata hypothesis. This is evidence collection only: do
+    # not use this report to silently change the scientific selection policy.
+    nonzero_mean_mag_ids = {
+        oid for oid in candidate_only
+        if catalog_metadata[oid]["gmag"] != 0.0
+        and catalog_metadata[oid]["rmag"] != 0.0
+    }
+    report["candidate_only_residual_analysis"] = {
+        "candidate_only_count": len(candidate_only),
+        "both_parent_mean_magnitudes_nonzero_count": len(nonzero_mean_mag_ids),
+        "both_parent_mean_magnitudes_zero_or_one_zero_count": (
+            len(candidate_only) - len(nonzero_mean_mag_ids)
+        ),
+        "candidate_only_with_zero_ng_or_nr_count": sum(
+            catalog_metadata[oid]["ng"] == 0 or catalog_metadata[oid]["nr"] == 0
+            for oid in candidate_only
+        ),
+        "both_mean_magnitudes_nonzero_objects": [
+            {
+                "source_id": oid,
+                "gmag": catalog_metadata[oid]["gmag"],
+                "rmag": catalog_metadata[oid]["rmag"],
+                "ng": catalog_metadata[oid]["ng"],
+                "nr": catalog_metadata[oid]["nr"],
+                "type": catalog_metadata[oid]["type"],
+                "g_qualifying_detections": g[oid]["qualifying_detections"],
+                "r_qualifying_detections": r[oid]["qualifying_detections"],
+                "g_qualifying_flag_or": g[oid]["qualifying_flag_or"],
+                "r_qualifying_flag_or": r[oid]["qualifying_flag_or"],
+            }
+            for oid in sorted(nonzero_mean_mag_ids)
+        ],
+        "zero_mean_magnitude_source_id_sample": [
+            oid for oid in sorted(candidate_only - nonzero_mean_mag_ids)[:100]
+        ],
+        "warning": (
+            "Diagnostic only. Nonzero parent mean magnitudes are not an accepted "
+            "selection criterion unless supported by the source methodology."
+        ),
+    }
+
     for name, ids in predicates.items():
         report[name] = {
             "count": len(ids),
