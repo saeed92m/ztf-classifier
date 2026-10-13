@@ -37,14 +37,25 @@ def parent_catalog_metadata(path: Path) -> dict[int, dict[str, Any]]:
         source_id = int(identity[1])
         ng = nr = -1
         gmag = rmag = float("nan")
+        period = per_g = per_r = float("nan")
+        r2_g = r2_r = gamp = ramp = fap_g = fap_r = float("nan")
         variable_type = ""
 
         # Official CDS Table2 byte positions (Python slices are zero-based).
         try:
-            ng = int(line[131:135].strip())
-            nr = int(line[136:140].strip())
+            period = float(line[50:61].strip())
             gmag = float(line[89:95].strip())
             rmag = float(line[96:102].strip())
+            per_g = float(line[103:116].strip())
+            per_r = float(line[117:130].strip())
+            ng = int(line[131:135].strip())
+            nr = int(line[136:140].strip())
+            r2_g = float(line[167:173].strip())
+            r2_r = float(line[174:180].strip())
+            gamp = float(line[181:186].strip())
+            ramp = float(line[187:192].strip())
+            fap_g = float(line[193:201].strip())
+            fap_r = float(line[202:210].strip())
             variable_type = line[211:216].strip()
         except (ValueError, IndexError):
             # Zenodo text mirrors can be whitespace-tokenized. The ZTF name
@@ -54,14 +65,25 @@ def parent_catalog_metadata(path: Path) -> dict[int, dict[str, Any]]:
             fields = line.strip().split()
             try:
                 seq_index = next(i for i, value in enumerate(fields) if value == identity[1])
+                period = float(fields[seq_index + 3])
                 gmag = float(fields[seq_index + 7])
                 rmag = float(fields[seq_index + 8])
+                per_g = float(fields[seq_index + 9])
+                per_r = float(fields[seq_index + 10])
                 ng = int(fields[seq_index + 11])
                 nr = int(fields[seq_index + 12])
+                r2_g = float(fields[seq_index + 17])
+                r2_r = float(fields[seq_index + 18])
+                gamp = float(fields[seq_index + 19])
+                ramp = float(fields[seq_index + 20])
+                fap_g = float(fields[seq_index + 21])
+                fap_r = float(fields[seq_index + 22])
                 variable_type = fields[seq_index + 23]
             except (StopIteration, IndexError, ValueError):
                 ng = nr = -1
                 gmag = rmag = float("nan")
+                period = per_g = per_r = float("nan")
+                r2_g = r2_r = gamp = ramp = fap_g = fap_r = float("nan")
                 variable_type = ""
 
         metadata[source_id] = {
@@ -70,6 +92,15 @@ def parent_catalog_metadata(path: Path) -> dict[int, dict[str, Any]]:
             "nr": nr,
             "gmag": gmag,
             "rmag": rmag,
+            "period": period,
+            "per_g": per_g,
+            "per_r": per_r,
+            "r2_g": r2_g,
+            "r2_r": r2_r,
+            "gamp": gamp,
+            "ramp": ramp,
+            "fap_g": fap_g,
+            "fap_r": fap_r,
         }
     return metadata
 
@@ -395,6 +426,15 @@ def main() -> int:
                 "source_id": oid,
                 "gmag": catalog_metadata[oid]["gmag"],
                 "rmag": catalog_metadata[oid]["rmag"],
+                "period": catalog_metadata[oid]["period"],
+                "per_g": catalog_metadata[oid]["per_g"],
+                "per_r": catalog_metadata[oid]["per_r"],
+                "r2_g": catalog_metadata[oid]["r2_g"],
+                "r2_r": catalog_metadata[oid]["r2_r"],
+                "gamp": catalog_metadata[oid]["gamp"],
+                "ramp": catalog_metadata[oid]["ramp"],
+                "fap_g": catalog_metadata[oid]["fap_g"],
+                "fap_r": catalog_metadata[oid]["fap_r"],
                 "ng": catalog_metadata[oid]["ng"],
                 "nr": catalog_metadata[oid]["nr"],
                 "type": catalog_metadata[oid]["type"],
@@ -413,6 +453,29 @@ def main() -> int:
             "selection criterion unless supported by the source methodology."
         ),
     }
+
+    # Full ID-level evidence enables auditing every extra candidate, not only samples.
+    report["candidate_only_all_objects"] = [
+        {
+            "source_id": oid,
+            "parent": catalog_metadata[oid],
+            "g": {key: g[oid][key] for key in (
+                "qualifying_detections", "qualifying_flag_or",
+                "qualifying_flag_nonzero", "brightest_qualifying_mag",
+                "smallest_qualifying_error", "snr", "snr_exact", "snr1",
+            )},
+            "r": {key: r[oid][key] for key in (
+                "qualifying_detections", "qualifying_flag_or",
+                "qualifying_flag_nonzero", "brightest_qualifying_mag",
+                "smallest_qualifying_error", "snr", "snr_exact", "snr1",
+            )},
+            "parent_mean_magnitudes_nonzero": (
+                catalog_metadata[oid]["gmag"] != 0.0
+                and catalog_metadata[oid]["rmag"] != 0.0
+            ),
+        }
+        for oid in sorted(candidate_only)
+    ]
 
     for name, ids in predicates.items():
         report[name] = {
