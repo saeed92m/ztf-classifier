@@ -187,3 +187,27 @@ def test_parent_catalog_metadata_reports_type_and_published_detection_counts(
     }
     # Extended diagnostic fields may be unavailable in minimal synthetic rows,
     # but their absence must not erase the published metadata above.
+
+
+def test_parent_catalog_metadata_uses_named_column_vizier_tsv(tmp_path: Path):
+    from scripts.diagnose_cpvs_selection import parent_catalog_metadata
+
+    parent = tmp_path / "parent-mirror.txt"
+    parent.write_text("metadata supplied separately\\n", encoding="utf-8")
+    metadata_tsv = tmp_path / "parent-metadata.tsv"
+    metadata_tsv.write_text(
+        "#Seq\\tgmag\\trmag\\tNg\\tNr\\tType\\n"
+        "100\\t17.5\\t18.2\\t25\\t30\\tMira\\n"
+        "102\\t0\\t18.1\\t0\\t12\\tEW\\n",
+        encoding="utf-8",
+    )
+
+    metadata = parent_catalog_metadata(parent, metadata_tsv)
+    assert metadata[100]["gmag"] == 17.5
+    assert metadata[100]["rmag"] == 18.2
+    assert metadata[100]["ng"] == 25
+    assert metadata[100]["nr"] == 30
+    assert metadata[100]["type"] == "Mira"
+    assert metadata[102]["gmag"] == 0
+    assert metadata[102]["ng"] == 0
+    assert metadata[102]["type"] == "EW"
