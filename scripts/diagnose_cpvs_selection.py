@@ -24,11 +24,76 @@ from ztf_classifier.validation.derivation import (
 )
 
 
-def parent_catalog_metadata(path: Path) -> dict[int, dict[str, Any]]:
-    """Read Table 2 metadata from fixed-width CDS rows or whitespace mirrors.
+def parent_catalog_metadata(
+    path: Path, metadata_path: Path | None = None
+) -> dict[int, dict[str, Any]]:
+    """Read fixed-width Table 2 metadata or an authoritative named-column TSV.
 
-    Diagnostics only: these fields never alter the selection predicate.
+    The Zenodo text mirror can collapse blank fixed-width fields, so token offsets
+    are not reliable for optional columns. When metadata_path is supplied, use the
+    named-column VizieR export. These fields remain diagnostic-only.
     """
+    if metadata_path is not None:
+        lines = metadata_path.read_text(encoding="utf-8", errors="replace").splitlines()
+        header_index = None
+        header = []
+        for index, line in enumerate(lines):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
+            columns = [item.strip() for item in candidate.split("\t")]
+            normalized = {name.lower() for name in columns}
+            if {"seq", "gmag", "rmag", "ng", "nr", "type"}.issubset(normalized):
+                header_index = index
+                header = columns
+                break
+        if header_index is None:
+            raise ValueError(
+                f"metadata TSV lacks named Seq/gmag/rmag/Ng/Nr/Type columns: {metadata_path}"
+            )
+        indexes = {name.strip().lower(): index for index, name in enumerate(header)}
+
+        def value_at(values: list[str], name: str) -> str:
+            index = indexes[name]
+            return values[index].strip() if index < len(values) else ""
+
+        def to_float(value: str) -> float:
+            try:
+                result = float(value)
+                return result if math.isfinite(result) else float("nan")
+            except (TypeError, ValueError):
+                return float("nan")
+
+        def to_int(value: str) -> int:
+            try:
+                return int(float(value))
+            except (TypeError, ValueError):
+                return -1
+
+        metadata: dict[int, dict[str, Any]] = {}
+        for line in lines[header_index + 1:]:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            values = line.split("\t")
+            source_id = to_int(value_at(values, "seq"))
+            if source_id < 0:
+                continue
+            metadata[source_id] = {
+                "type": value_at(values, "type") or "UNKNOWN",
+                "ng": to_int(value_at(values, "ng")),
+                "nr": to_int(value_at(values, "nr")),
+                "gmag": to_float(value_at(values, "gmag")),
+                "rmag": to_float(value_at(values, "rmag")),
+                "period": float("nan"), "per_g": float("nan"), "per_r": float("nan"),
+                "r2_g": float("nan"), "r2_r": float("nan"), "gamp": float("nan"),
+                "ramp": float("nan"), "fap_g": float("nan"), "fap_r": float("nan"),
+            }
+        if not metadata:
+            raise ValueError(f"metadata TSV contained no valid Seq rows: {metadata_path}")
+        return metadata
+
     metadata: dict[int, dict[str, Any]] = {}
     for line in _iter_parent_lines(path):
         identity = _parse_cpvs_table2_identity(line)
@@ -261,6 +326,7 @@ def main() -> int:
     parser.add_argument("--g", type=Path, required=True)
     parser.add_argument("--r", type=Path, required=True)
     parser.add_argument("--published", type=Path, required=True)
+    parser.add_argument("--metadata", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -268,7 +334,7 @@ def main() -> int:
     parent = {int(source_id) for source_id in _source_ids(args.parent, None)}
     if len(parent) != 781_602:
         raise ValueError(f"expected 781602 parent SourceIDs, got {len(parent)}")
-    catalog_metadata = parent_catalog_metadata(args.parent)
+    catalog_metadata = parent_catalog_metadata(args.parent, args.metadata)
     if len(catalog_metadata) != len(parent):
         raise ValueError(
             "parent metadata/SourceID coverage mismatch: "
