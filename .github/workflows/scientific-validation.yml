@@ -243,7 +243,7 @@ jobs:
           mkdir -p "$root"
           curl --location --fail --show-error --retry 5 --retry-all-errors --retry-delay 3 \
             --connect-timeout 30 --max-time 180 \
-            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=Seq,gmag,rmag,Ng,Nr,Type&-out.max=1000000" \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=Seq,Per,gmag,rmag,Per-g,Per-r,Ng,Nr,R2-g,R2-r,gAmp,rAmp,log(FAP-g),log(FAP-r),Type&-out.max=1000000" \
             -o "$root/parent_metadata.tsv"
           test -s "$root/parent_metadata.tsv"
           echo "Named-column parent metadata downloaded."
