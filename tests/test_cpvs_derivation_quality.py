@@ -196,9 +196,9 @@ def test_parent_catalog_metadata_uses_named_column_vizier_tsv(tmp_path: Path):
     parent.write_text("metadata supplied separately\n", encoding="utf-8")
     metadata_tsv = tmp_path / "parent-metadata.tsv"
     metadata_tsv.write_text(
-        "#Seq\tgmag\trmag\tNg\tNr\tType\n"
-        "100\t17.5\t18.2\t25\t30\tMira\n"
-        "102\t0\t18.1\t0\t12\tEW\n",
+        "#Seq\tPer\tgmag\trmag\tPer-g\tPer-r\tNg\tNr\tR2-g\tR2-r\tgAmp\trAmp\tlog(FAP-g)\tlog(FAP-r)\tType\n"
+        "100\t2.5\t17.5\t18.2\t2.4\t2.6\t25\t30\t0.91\t0.92\t0.2\t0.3\t-8.1\t-7.2\tMira\n"
+        "102\t0\t0\t18.1\t0\t0\t0\t12\t0\t0\t0\t0\t0\t0\tEW\n",
         encoding="utf-8",
     )
 
@@ -208,6 +208,15 @@ def test_parent_catalog_metadata_uses_named_column_vizier_tsv(tmp_path: Path):
     assert metadata[100]["ng"] == 25
     assert metadata[100]["nr"] == 30
     assert metadata[100]["type"] == "Mira"
+    assert metadata[100]["period"] == 2.5
+    assert metadata[100]["per_g"] == 2.4
+    assert metadata[100]["per_r"] == 2.6
+    assert metadata[100]["r2_g"] == 0.91
+    assert metadata[100]["r2_r"] == 0.92
+    assert metadata[100]["gamp"] == 0.2
+    assert metadata[100]["ramp"] == 0.3
+    assert metadata[100]["fap_g"] == -8.1
+    assert metadata[100]["fap_r"] == -7.2
     assert metadata[102]["gmag"] == 0
     assert metadata[102]["ng"] == 0
     assert metadata[102]["type"] == "EW"
