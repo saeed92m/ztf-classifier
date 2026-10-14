@@ -211,3 +211,13 @@ def test_parent_catalog_metadata_uses_named_column_vizier_tsv(tmp_path: Path):
     assert metadata[102]["gmag"] == 0
     assert metadata[102]["ng"] == 0
     assert metadata[102]["type"] == "EW"
+
+def test_parent_mean_magnitude_diagnostic_rejects_nan_and_infinity():
+    from scripts.diagnose_cpvs_selection import has_finite_nonzero_mean_magnitudes
+
+    assert has_finite_nonzero_mean_magnitudes({"gmag": 17.5, "rmag": 18.2})
+    assert not has_finite_nonzero_mean_magnitudes({"gmag": float("nan"), "rmag": 18.2})
+    assert not has_finite_nonzero_mean_magnitudes({"gmag": 17.5, "rmag": float("nan")})
+    assert not has_finite_nonzero_mean_magnitudes({"gmag": float("inf"), "rmag": 18.2})
+    assert not has_finite_nonzero_mean_magnitudes({"gmag": 0.0, "rmag": 18.2})
+    assert not has_finite_nonzero_mean_magnitudes({"gmag": 17.5, "rmag": 0.0})
