@@ -71,6 +71,13 @@ def parent_catalog_metadata(
             except (TypeError, ValueError):
                 return -1
 
+        def named_value(values: list[str], *names: str) -> str:
+            for name in names:
+                index = indexes.get(name.lower())
+                if index is not None and index < len(values):
+                    return values[index].strip()
+            return ""
+
         metadata: dict[int, dict[str, Any]] = {}
         for line in lines[header_index + 1:]:
             stripped = line.strip()
@@ -86,9 +93,15 @@ def parent_catalog_metadata(
                 "nr": to_int(value_at(values, "nr")),
                 "gmag": to_float(value_at(values, "gmag")),
                 "rmag": to_float(value_at(values, "rmag")),
-                "period": float("nan"), "per_g": float("nan"), "per_r": float("nan"),
-                "r2_g": float("nan"), "r2_r": float("nan"), "gamp": float("nan"),
-                "ramp": float("nan"), "fap_g": float("nan"), "fap_r": float("nan"),
+                "period": to_float(named_value(values, "per")),
+                "per_g": to_float(named_value(values, "per-g", "per_g")),
+                "per_r": to_float(named_value(values, "per-r", "per_r")),
+                "r2_g": to_float(named_value(values, "r2-g", "r2_g")),
+                "r2_r": to_float(named_value(values, "r2-r", "r2_r")),
+                "gamp": to_float(named_value(values, "gamp")),
+                "ramp": to_float(named_value(values, "ramp")),
+                "fap_g": to_float(named_value(values, "log(fap-g)", "log_fap_g")),
+                "fap_r": to_float(named_value(values, "log(fap-r)", "log_fap_r")),
             }
         if not metadata:
             raise ValueError(f"metadata TSV contained no valid Seq rows: {metadata_path}")
