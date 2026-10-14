@@ -193,12 +193,12 @@ def test_parent_catalog_metadata_uses_named_column_vizier_tsv(tmp_path: Path):
     from scripts.diagnose_cpvs_selection import parent_catalog_metadata
 
     parent = tmp_path / "parent-mirror.txt"
-    parent.write_text("metadata supplied separately\\n", encoding="utf-8")
+    parent.write_text("metadata supplied separately\n", encoding="utf-8")
     metadata_tsv = tmp_path / "parent-metadata.tsv"
     metadata_tsv.write_text(
-        "#Seq\\tgmag\\trmag\\tNg\\tNr\\tType\\n"
-        "100\\t17.5\\t18.2\\t25\\t30\\tMira\\n"
-        "102\\t0\\t18.1\\t0\\t12\\tEW\\n",
+        "#Seq\tgmag\trmag\tNg\tNr\tType\n"
+        "100\t17.5\t18.2\t25\t30\tMira\n"
+        "102\t0\t18.1\t0\t12\tEW\n",
         encoding="utf-8",
     )
 
