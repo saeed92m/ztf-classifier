@@ -178,6 +178,23 @@ def parent_catalog_metadata(
     return metadata
 
 
+def has_finite_nonzero_mean_magnitudes(metadata: dict[str, Any]) -> bool:
+    """Return true only when both parent mean magnitudes are finite and nonzero.
+
+    NaN compares unequal to zero in Python, so a simple not-equal-to-zero test
+    incorrectly classifies missing magnitudes as present.
+    """
+    gmag = metadata.get("gmag", float("nan"))
+    rmag = metadata.get("rmag", float("nan"))
+    return (
+        isinstance(gmag, (int, float))
+        and isinstance(rmag, (int, float))
+        and math.isfinite(gmag)
+        and math.isfinite(rmag)
+        and gmag != 0.0
+        and rmag != 0.0
+    )
+
 def membership_by_type(
     ids: set[int], metadata: dict[int, dict[str, Any]]
 ) -> dict[str, int]:
@@ -352,18 +369,12 @@ def main() -> int:
         "baseline_plus_nonzero_parent_mean_magnitudes_diagnostic": {
             oid for oid in parent
             if g[oid]["snr"] and r[oid]["snr"]
-            and math.isfinite(catalog_metadata[oid]["gmag"])
-            and math.isfinite(catalog_metadata[oid]["rmag"])
-            and catalog_metadata[oid]["gmag"] != 0.0
-            and catalog_metadata[oid]["rmag"] != 0.0
+            and has_finite_nonzero_mean_magnitudes(catalog_metadata[oid])
         },
         "exact_snr_plus_nonzero_parent_mean_magnitudes_diagnostic": {
             oid for oid in parent
             if g[oid]["snr_exact"] and r[oid]["snr_exact"]
-            and math.isfinite(catalog_metadata[oid]["gmag"])
-            and math.isfinite(catalog_metadata[oid]["rmag"])
-            and catalog_metadata[oid]["gmag"] != 0.0
-            and catalog_metadata[oid]["rmag"] != 0.0
+            and has_finite_nonzero_mean_magnitudes(catalog_metadata[oid])
         },
         "baseline_plus_mag206": {
             oid for oid in parent if g[oid]["mag206"] and r[oid]["mag206"]
@@ -482,8 +493,7 @@ def main() -> int:
     # not use this report to silently change the scientific selection policy.
     nonzero_mean_mag_ids = {
         oid for oid in candidate_only
-        if catalog_metadata[oid]["gmag"] != 0.0
-        and catalog_metadata[oid]["rmag"] != 0.0
+        if has_finite_nonzero_mean_magnitudes(catalog_metadata[oid])
     }
     report["candidate_only_residual_analysis"] = {
         "candidate_only_count": len(candidate_only),
@@ -544,8 +554,7 @@ def main() -> int:
                 "smallest_qualifying_error", "snr", "snr_exact", "snr1",
             )},
             "parent_mean_magnitudes_nonzero": (
-                catalog_metadata[oid]["gmag"] != 0.0
-                and catalog_metadata[oid]["rmag"] != 0.0
+                has_finite_nonzero_mean_magnitudes(catalog_metadata[oid])
             ),
         }
         for oid in sorted(candidate_only)
