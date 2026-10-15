@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from scripts.compare_cpvs_full_batch import band_batch, band_full
+from scripts.compare_cpvs_full_batch import band_batch, band_full, _row_qualified
 
 
 def test_batch_merges_object_decisions_across_boundaries(tmp_path: Path):
@@ -24,3 +24,17 @@ def test_batch_merges_object_decisions_across_boundaries(tmp_path: Path):
     assert (full_rows, batch_rows) == (4, 4)
     assert (full_qualified, batch_qualified) == (4, 4)
     assert batches == 2
+
+
+
+def test_non_finite_or_invalid_snr_is_rejected_fail_closed():
+    parent = {"1"}
+
+    for error in (float("nan"), float("inf"), 0.0, -0.1):
+        assert _row_qualified(
+            "1", 18.0, error, parent=parent, sigma=2.5
+        ) == (None, False)
+
+    assert _row_qualified(
+        "1", 18.0, 0.1, parent=parent, sigma=2.5
+    ) == ("1", True)
