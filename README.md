@@ -356,9 +356,13 @@ A benchmark is evidence about this system; it is not the system's architecture.
 | Candidate-only | 11,602 |
 | Duplicate / unmapped published names | 0 / 0 |
 
-The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) has completed derivation and an independent membership audit. All 730,184 published names map to actual Table2 Seq/SourceID values; the candidate set contains all published objects but 11,602 additional objects, so exact reconstruction remains **UNRESOLVED**. Earlier metrics 725,101 / 16,686 / 5,083 were invalid because they mapped names to row ordinals. The official CPVS ReadMe defines Table2 `Seq` at bytes 24–29 as the internal source identifier used by the lightcurve attachments. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
+The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) established a consistent identifier-space comparison: all 730,184 published names map to actual Table2 Seq/SourceID values, while 11,602 candidates remain unexplained. The newer artifact audit in [Heavy Scientific Validation run #38789483790](https://github.com/saeed92m/ztf-classifier/actions/runs/38789483790) and [diagnostic PR #185](https://github.com/saeed92m/ztf-classifier/pull/185) found that requiring all four Table2 fields `gmag`, `rmag`, `Per-g`, and `Per-r` to be finite/non-zero yields the published cardinality on the audited artifacts. This is a diagnostic correlation, **not proof** that the published method requires those four fields: the paper describes per-band detection thresholds and a common period, and the exact publisher preprocessing rule remains unverified.
 
-No threshold or predicate is to be introduced solely to force the candidate cardinality to 730,184 without independent scientific evidence.
+The same artifact audit found a serialization defect in `ztf_periodic_730k/provenance/cpvs_candidate_only_provenance.tsv`: literal tab characters in the raw parent-record field can shift TSV columns. Treat that TSV as unreliable for column-based analysis until regenerated with correct quoting/escaping and covered by a regression test. The companion JSONL ledger was reported as valid. Artifact SHA-256: `28c704671e392fc0e983eee7e8df5ed0f5fd29bce80acd0c2c2cc0218d5da747`.
+
+The official CPVS ReadMe defines Table2 `Seq` at bytes 24–29 as the source identifier used by the lightcurve attachments. Earlier metrics 725,101 / 16,686 / 5,083 were invalid because they mapped names to physical row ordinals. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
+
+**Disposition: exact CPVS reconstruction remains UNRESOLVED.** Do not change the production selection predicate or tune thresholds/flags solely to force cardinality equality. The next technical steps are to locate and repair the provenance TSV writer with a tab-containing regression fixture, then trace the publisher's exact preprocessing/normalization semantics from source-backed evidence.
 
 ### Scientific gate architecture
 
