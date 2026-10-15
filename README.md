@@ -370,6 +370,8 @@ This is a strong, testable hypothesis—not root-cause closure. The next evidenc
 
 **Disposition: exact CPVS reconstruction remains UNRESOLVED.** Do not change the production selection predicate or tune thresholds/flags solely to force cardinality equality. The next technical step is to trace the publisher's exact preprocessing/normalization semantics from source-backed evidence and determine whether Table2 field validity is part of the historical selection pipeline.
 
+Detailed artifact hashes, the 11,585 mean-magnitude discriminator, the residual 17 IDs, and reproduction instructions are recorded in [the CPVS membership discrepancy evidence report](docs/scientific_validation/CPVS_MEMBERSHIP_DISCREPANCY_2026-10-16.md).
+
 ### Scientific gate architecture
 
 The repository separates:
