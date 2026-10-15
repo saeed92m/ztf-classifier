@@ -71,7 +71,10 @@ def _row_qualified(
     parent: set[str],
     sigma: float,
 ) -> tuple[str | None, bool]:
-    if oid not in parent or _snr_from_mag_error(str(error)) < sigma:
+    snr = _snr_from_mag_error(str(error))
+    # Match the production derivation's fail-closed handling: NaN < sigma is
+    # False in Python, so a negative-only comparison would admit invalid SNR.
+    if oid not in parent or not math.isfinite(snr) or snr < sigma:
         return None, False
     return oid, bool(math.isfinite(magnitude) and magnitude != 0.0)
 
