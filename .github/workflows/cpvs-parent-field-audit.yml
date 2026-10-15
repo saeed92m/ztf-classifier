@@ -1,0 +1,97 @@
+name: CPVS Parent-Field Membership Audit
+
+on:
+  push:
+    branches: [science/cpvs-samples-clean-20261012]
+    paths: [.github/workflows/cpvs-parent-field-audit.yml]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v4
+        with:
+          name: scientific-validation-heavy
+          path: prior-evidence
+          run-id: 38730455076
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Acquire and verify parent catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p parent
+          curl -fLsS --retry 5 --retry-all-errors --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/Table2.txt.zip?download=1" -o parent/Table2.txt.zip
+          echo "24dd4cf138a2687901d64b2d029cc624  parent/Table2.txt.zip" | md5sum -c -
+          unzip -q parent/Table2.txt.zip -d parent
+      - name: Compare four-field predicate to published membership
+        run: |
+          python - <<'PY'
+          import hashlib, json, math
+          from pathlib import Path
+          root = Path("prior-evidence/ztf_periodic_730k")
+          files = list(Path("parent").rglob("Table2.txt"))
+          if len(files) != 1: raise SystemExit(f"Expected one Table2.txt, got {len(files)}")
+          table = files[0]
+          def ids(path):
+              lines = path.read_text().splitlines()
+              return {int(x.strip()) for x in lines[1:] if x.strip()}
+          candidate = ids(root / "sample_validation/candidate_ids.txt")
+          published = ids(root / "sample_validation/published_ids.txt")
+          fields, malformed = {}, []
+          with table.open(encoding="utf-8", errors="replace") as f:
+              for n, line in enumerate(f, 1):
+                  t = line.split()
+                  if len(t) < 12 or not t[0].upper().startswith("ZTF"): continue
+                  try:
+                      sid = int(t[1])
+                      values = tuple(float(t[i]) for i in (8, 9, 10, 11))
+                  except (ValueError, IndexError):
+                      malformed.append(n); continue
+                  if sid in fields: raise SystemExit(f"Duplicate SourceID {sid} at line {n}")
+                  fields[sid] = values
+          parent = set(fields)
+          if len(parent) != 781602: raise SystemExit(f"Expected 781602 parent IDs; parsed {len(parent)}")
+          if malformed: raise SystemExit(f"Malformed object rows: {len(malformed)}")
+          if not candidate <= parent or not published <= parent: raise SystemExit("Unknown SourceID in candidate/reference")
+          def good(sid): return all(math.isfinite(v) and v != 0 for v in fields[sid])
+          filtered = {sid for sid in candidate if good(sid)}
+          fp, fn = sorted(filtered-published), sorted(published-filtered)
+          names = ("mean_g", "mean_r", "period_g", "period_r")
+          def summary(group):
+              return {"count": len(group), "zero_by_field": {names[i]: sum(fields[x][i] == 0 for x in group) for i in range(4)},
+                      "nonfinite_by_field": {names[i]: sum(not math.isfinite(fields[x][i]) for x in group) for i in range(4)},
+                      "all_four_finite_nonzero": sum(good(x) for x in group)}
+          def sha(path):
+              h=hashlib.sha256()
+              with path.open("rb") as f:
+                  for b in iter(lambda:f.read(1<<20),b""): h.update(b)
+              return h.hexdigest()
+          result = {
+              "schema_version": 1, "status": "DIAGNOSTIC_ONLY",
+              "interpretation": "Tests whether all four Table2 fields finite and nonzero reproduces published membership; this is not yet a claim about the paper's stated selection rule.",
+              "counts": {"parent":summary(parent), "candidate":summary(candidate), "published":summary(published),
+                         "candidate_only":summary(candidate-published), "published_only_before_filter":len(published-candidate),
+                         "filtered_candidate_count":len(filtered), "filtered_false_positive_count":len(fp),
+                         "filtered_false_negative_count":len(fn), "filtered_exact_membership_match":not fp and not fn,
+                         "filtered_false_positive_ids":fp, "filtered_false_negative_ids":fn},
+              "hashes":{"parent_zip_md5":"24dd4cf138a2687901d64b2d029cc624","parent_table_sha256":sha(table),
+                        "candidate_ids_sha256":sha(root/"sample_validation/candidate_ids.txt"),
+                        "published_ids_sha256":sha(root/"sample_validation/published_ids.txt")},
+              "inputs":{"parent_table":str(table),"prior_run_id":38730455076}
+          }
+          Path("cpvs-parent-field-membership-audit.json").write_text(json.dumps(result,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(result["counts"],indent=2,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-parent-field-membership-audit
+          path: cpvs-parent-field-membership-audit.json
+          if-no-files-found: error
