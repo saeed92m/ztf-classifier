@@ -312,7 +312,7 @@ jobs:
             --candidate "$root/selected.tsv" \
             --published "$root/published_table4.dat" \
             --output-dir "$root/provenance" \
-            --code-version "\${GITHUB_SHA}"
+            --code-version "${GITHUB_SHA}"
 
       - name: Classify CPVS reconstruction result
         if: always()
