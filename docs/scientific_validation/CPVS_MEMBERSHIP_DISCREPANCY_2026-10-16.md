@@ -54,7 +54,7 @@ Therefore, **11,585/11,602 (99.85%)** have a zero g- or r-band mean magnitude. T
 
 ### The residual 17 IDs
 
-The remaining 17 candidate-only IDs have nonzero `gmag` and `rmag`, but one independent per-band period is zero. Every one has a positive common `Per` and at least 50 SNR-qualified, finite/nonzero-magnitude observations in each band. Thus, a simple minimum-observation-count cutoff is not supported by these data.
+The remaining 17 candidate-only IDs have nonzero `gmag` and `rmag`, but one independent per-band period is zero. Every one has a positive common `Per` that exactly equals the nonzero independent per-band period, plus at least 50 SNR-qualified, finite/nonzero-magnitude observations in each band. Thus, the common period is present and matches the valid band's period; a simple minimum-observation-count cutoff is not supported by these data.
 
 | SourceID | Zero per-band period | g rows | r rows |
 |---:|---|---:|---:|
