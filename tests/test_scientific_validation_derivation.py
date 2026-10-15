@@ -316,3 +316,28 @@ def test_cpvs_table_uses_actual_seq_source_ids_when_present(tmp_path: Path):
     )
 
     assert _source_ids(parent, None) == {"105", "309", "811"}
+
+
+def test_nonfinite_snr_does_not_qualify_valid_magnitude(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _qualified_ids
+
+    lightcurve = tmp_path / "g.tsv"
+    lightcurve.write_text(
+        "SourceID gmag e_gmag g_flag\n"
+        "105 15.2 bad 0\n"
+        "309 15.8 nan 0\n"
+        "811 16.1 inf 0\n",
+        encoding="utf-8",
+    )
+
+    selected, valid_magnitude = _qualified_ids(
+        lightcurve,
+        sigma=2.5,
+        parent_ids={"105", "309", "811"},
+        member=None,
+        error_columns=("e_gmag",),
+        flag_columns=("g_flag",),
+    )
+
+    assert selected == set()
+    assert valid_magnitude == set()
