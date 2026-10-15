@@ -300,6 +300,20 @@ jobs:
             --full-decisions "$root/sample_validation/full_batch/full_decisions.csv" \
             --batch-decisions "$root/sample_validation/full_batch/batch_decisions.csv"
 
+      - name: Trace CPVS membership and invalid-SNR predicate drift
+        if: always()
+        run: |
+          set -euo pipefail
+          root=reports/scientific_validation/ztf_periodic_730k
+          python scripts/trace_cpvs_membership.py \
+            --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
+            --g "$root/g" \
+            --r "$root/r" \
+            --candidate "$root/selected.tsv" \
+            --published "$root/published_table4.dat" \
+            --output-dir "$root/provenance" \
+            --code-version "${GITHUB_SHA}"
+
       - name: Classify CPVS reconstruction result
         if: always()
         env:
@@ -417,6 +431,74 @@ jobs:
               encoding="utf-8",
           )
           PY
+      - name: Compact source-backed artifact after all audits
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          root = Path("reports/scientific_validation")
+          cpvs = root / "ztf_periodic_730k"
+          provenance = cpvs / "provenance" / "cpvs_provenance_report.json"
+          report = json.loads(provenance.read_text()) if provenance.exists() else {}
+          lightcurve_hashes = {}
+          for band in ("g_lightcurves", "r_lightcurves"):
+              for item in report.get("input_hashes", {}).get(band, []):
+                  lightcurve_hashes[item["path"]] = item
+
+          targets = [
+              root / "ztf_periodic_781k" / "Table2.txt.zip",
+              cpvs / "ztf2g.zip",
+              cpvs / "ztf2r.zip",
+              cpvs / "sample_validation" / "full_batch" / "full_decisions.csv",
+              cpvs / "sample_validation" / "full_batch" / "batch_decisions.csv",
+          ]
+          entries = []
+          for path in targets:
+              if not path.is_file():
+                  continue
+              digest = hashlib.sha256()
+              with path.open("rb") as stream:
+                  for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                      digest.update(chunk)
+              entries.append({"path": str(path), "size_bytes": path.stat().st_size, "sha256": digest.hexdigest()})
+          for band in ("g", "r"):
+              folder = cpvs / band
+              for path in sorted(folder.rglob("*")) if folder.exists() else []:
+                  if path.is_file():
+                      item = lightcurve_hashes.get(str(path))
+                      entries.append({
+                          "path": str(path),
+                          "size_bytes": path.stat().st_size,
+                          "sha256": item["sha256"] if item else None,
+                          "hash_source": "cpvs_provenance_report.json" if item else "not hashed by provenance tracer",
+                      })
+          (cpvs / "provenance").mkdir(parents=True, exist_ok=True)
+          manifest = {
+              "schema_version": 1,
+              "purpose": "Record hashes and sizes before removing large source payloads from the downloadable evidence artifact.",
+              "removed_or_externalized_payloads": entries,
+              "retained_provenance_report": str(provenance),
+          }
+          (cpvs / "provenance" / "artifact_compaction_manifest.json").write_text(
+              json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          PY
+          rm -f \
+            reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
+            "$PWD/reports/scientific_validation/ztf_periodic_730k/ztf2g.zip" \
+            "$PWD/reports/scientific_validation/ztf_periodic_730k/ztf2r.zip" \
+            "$PWD/reports/scientific_validation/ztf_periodic_730k/sample_validation/full_batch/full_decisions.csv" \
+            "$PWD/reports/scientific_validation/ztf_periodic_730k/sample_validation/full_batch/batch_decisions.csv"
+          rm -rf \
+            reports/scientific_validation/ztf_periodic_730k/g \
+            reports/scientific_validation/ztf_periodic_730k/r \
+            reports/scientific_validation/ztf_star_embed
+          echo "Removed raw source payloads only after compact provenance and hashes were recorded."
+
       - name: Upload heavy scientific evidence
         if: always()
         uses: actions/upload-artifact@v6
