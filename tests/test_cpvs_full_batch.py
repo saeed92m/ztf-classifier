@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from scripts.compare_cpvs_full_batch import band_batch, band_full, _row_qualified
+from scripts.compare_cpvs_full_batch import _row_qualified, band_batch, band_full
 
 
 def test_batch_merges_object_decisions_across_boundaries(tmp_path: Path):
