@@ -147,7 +147,7 @@ def trace_band(
                 item["snr_qualified_valid_magnitude_row_count"] += 1
             if production_pass and valid_mag:
                 item["production_qualifying_valid_magnitude_row_count"] += 1
-            if source_id in extras:
+            if source_id in extras or (not math.isfinite(snr) and valid_mag):
                 record = {
                     "source_id": source_id,
                     "band": band,
@@ -198,9 +198,8 @@ def main() -> int:
         g_metrics = trace_band(args.g, band="g", parent_ids=parent_ids, extras=candidate_only, output_jsonl=ledger)
         r_metrics = trace_band(args.r, band="r", parent_ids=parent_ids, extras=candidate_only, output_jsonl=ledger)
 
-    # The published implementation uses object-level intersection of SNR-qualified
-    # IDs and IDs with any finite non-zero magnitude. This alternate rowwise set is
-    # reported for diagnosis only; neither set is asserted to be scientifically correct.
+    # Reconstruct both the previous negative-only SNR guard and the fixed finite-SNR
+    # predicate. The previous guard incorrectly treats NaN as passing.
     g_production = {oid for oid, m in g_metrics.items() if m["production_qualifying_row_count"]}
     r_production = {oid for oid, m in r_metrics.items() if m["production_qualifying_row_count"]}
     g_production_valid = {oid for oid, m in g_metrics.items() if m["production_qualifying_valid_magnitude_row_count"]}
@@ -216,7 +215,7 @@ def main() -> int:
     summary_path = out / "cpvs_candidate_only_provenance.tsv"
     fields = [
         "SourceID", "ZTF_name", "parent_record_line", "parent_record_sha256",
-        "g_rows", "g_snr_rows", "g_valid_mag_rows", "g_same_row_qualified_rows",
+        "g_rows", "g_snr_rows", "g_production_rows", "g_production_valid_mag_rows", "g_valid_mag_rows", "g_same_row_qualified_rows",
         "g_first_snr_row", "g_best_snr_row",
         "r_rows", "r_snr_rows", "r_production_rows", "r_production_valid_mag_rows", "r_valid_mag_rows", "r_same_row_qualified_rows",
         "r_first_snr_row", "r_best_snr_row",
@@ -247,6 +246,28 @@ def main() -> int:
                 "r_production_valid_mag_rows": r.get("production_qualifying_valid_magnitude_row_count", 0),
                 "r_valid_mag_rows": r.get("valid_magnitude_row_count", 0),
                 "r_same_row_qualified_rows": r.get("same_row_snr_and_valid_magnitude_count", 0),
+                "r_first_snr_row": json.dumps(r.get("first_snr_qualified_row"), sort_keys=True),
+                "r_best_snr_row": json.dumps(r.get("best_snr_row"), sort_keys=True),
+            })
+
+    drift_path = out / "cpvs_predicate_drift.tsv"
+    with drift_path.open("w", encoding="utf-8", newline="") as handle:
+        drift_fields = ["SourceID", "ZTF_name", "parent_record_line", "parent_record_sha256", "legacy_g_invalid_snr_valid_mag_rows", "legacy_r_invalid_snr_valid_mag_rows", "g_first_snr_row", "g_best_snr_row", "r_first_snr_row", "r_best_snr_row"]
+        writer = csv.DictWriter(handle, fieldnames=drift_fields, delimiter="\\t")
+        writer.writeheader()
+        for oid in production_only:
+            g = g_metrics.get(oid, {})
+            r = r_metrics.get(oid, {})
+            p = parent_meta[oid]
+            writer.writerow({
+                "SourceID": oid,
+                "ZTF_name": name_by_id[oid],
+                "parent_record_line": p["parent_record_line"],
+                "parent_record_sha256": p["parent_record_sha256"],
+                "legacy_g_invalid_snr_valid_mag_rows": max(0, g.get("production_qualifying_valid_magnitude_row_count", 0) - g.get("snr_qualified_valid_magnitude_row_count", 0)),
+                "legacy_r_invalid_snr_valid_mag_rows": max(0, r.get("production_qualifying_valid_magnitude_row_count", 0) - r.get("snr_qualified_valid_magnitude_row_count", 0)),
+                "g_first_snr_row": json.dumps(g.get("first_snr_qualified_row"), sort_keys=True),
+                "g_best_snr_row": json.dumps(g.get("best_snr_row"), sort_keys=True),
                 "r_first_snr_row": json.dumps(r.get("first_snr_qualified_row"), sort_keys=True),
                 "r_best_snr_row": json.dumps(r.get("best_snr_row"), sort_keys=True),
             })
@@ -286,7 +307,7 @@ def main() -> int:
             "candidate_vs_recomputed_production_xor_source_ids": actual_vs_recomputed,
             "production_definition": "mimics current _qualified_ids: not (snr < threshold); this incorrectly treats NaN SNR as passing, then requires finite non-zero magnitude on that same row",
             "strict_rowwise_definition": "finite SNR >= threshold AND finite non-zero magnitude on the same row, independently in both bands",
-            "code_root_cause": "Python NaN comparison: NaN < threshold is False, so the current negative-only guard accepts non-finite SNR. Verify the exact real IDs in this ledger.",
+            "code_root_cause": "Python NaN comparison: NaN < threshold is False, so the prior negative-only guard accepted non-finite SNR. The production-only SourceIDs are listed explicitly; inspect their row-level records in the JSONL ledger.",
             "scientific_disposition": "This NaN guard is a code defect if the traced IDs confirm it; it does not explain the remaining candidate-only membership mismatch.",
         },
         "published_only_source_ids": sorted(published_only),
@@ -294,6 +315,7 @@ def main() -> int:
         "outputs": {
             summary_path.name: {"sha256": sha256(summary_path), "size_bytes": summary_path.stat().st_size},
             ledger_path.name: {"sha256": sha256(ledger_path), "size_bytes": ledger_path.stat().st_size},
+            drift_path.name: {"sha256": sha256(drift_path), "size_bytes": drift_path.stat().st_size},
         },
         "parent_record_note": "parent line and SHA-256 refer to the exact decoded Table2 source line; source file hash is in input_hashes.parent",
         "validation": {
