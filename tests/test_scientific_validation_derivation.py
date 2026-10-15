@@ -301,3 +301,70 @@ def test_lightcurve_zip_accepts_whitespace_delimited_header(tmp_path: Path):
             "g_flag": "0",
         }
     ]
+
+
+def test_cpvs_table_uses_actual_seq_source_ids_when_present(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _source_ids
+
+    parent = tmp_path / "Table2.txt"
+    parent.write_text(
+        "Table 2. ZTF Variables Catalog\n"
+        "ZTFJ000000.13+620605.8 105 0.00056 62.10163 1.9449979 BYDra\n"
+        "ZTFJ000000.14+721413.7 309 0.00061 72.23716 0.2991500 EW\n"
+        "ZTFJ000000.19+320847.2 811 0.00080 32.14645 0.2870590 EW\n",
+        encoding="utf-8",
+    )
+
+    assert _source_ids(parent, None) == {"105", "309", "811"}
+
+
+def test_nonfinite_snr_does_not_qualify_valid_magnitude(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _qualified_ids
+
+    lightcurve = tmp_path / "g.tsv"
+    lightcurve.write_text(
+        "SourceID gmag e_gmag g_flag\n"
+        "105 15.2 bad 0\n"
+        "309 15.8 nan 0\n"
+        "811 16.1 inf 0\n",
+        encoding="utf-8",
+    )
+
+    selected, valid_magnitude = _qualified_ids(
+        lightcurve,
+        sigma=2.5,
+        parent_ids={"105", "309", "811"},
+        member=None,
+        error_columns=("e_gmag",),
+        flag_columns=("g_flag",),
+    )
+
+    assert selected == set()
+    assert valid_magnitude == set()
+
+
+def test_cpvs_trace_exposes_legacy_nan_snr_acceptance(tmp_path: Path):
+    from scripts.trace_cpvs_membership import trace_band
+
+    band_dir = tmp_path / "g"
+    band_dir.mkdir()
+    (band_dir / "ztf2g.txt").write_text(
+        "SourceID RAdeg DEdeg HJD gmag e_gmag g_flag\n"
+        "105 10.0 20.0 2459000.0 15.2 bad 0\n",
+        encoding="utf-8",
+    )
+    ledger = tmp_path / "epochs.jsonl"
+    with ledger.open("w", encoding="utf-8") as handle:
+        metrics = trace_band(
+            band_dir,
+            band="g",
+            parent_ids={105},
+            extras={105},
+            output_jsonl=handle,
+        )
+
+    assert metrics[105]["production_qualifying_valid_magnitude_row_count"] == 1
+    assert metrics[105]["snr_qualified_valid_magnitude_row_count"] == 0
+    row = __import__("json").loads(ledger.read_text(encoding="utf-8").splitlines()[0])
+    assert row["production_snr_predicate_pass"] is True
+    assert row["snr_pass"] is False

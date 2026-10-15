@@ -86,15 +86,21 @@ def test_qualified_ids_empty_input_returns_two_sets(tmp_path: Path):
     assert quality == set()
 
 
-def test_read_vizier_accepts_commented_tsv_header(tmp_path: Path):
+def test_read_vizier_accepts_commented_tsv_header_and_maps_parent_seq(tmp_path: Path):
     from scripts.audit_cpvs_membership import read_vizier
 
     path = tmp_path / "table4.dat"
     path.write_text(
         "# ZTF\tID\n"
-        "ZTF1\t1\n"
-        "ZTF2\t730184\n",
+        "ZTFJ000000.13+620605.8\t1\n"
+        "ZTFJ000000.14+721413.7\t730184\n",
+        encoding="utf-8",
+    )
+    parent = tmp_path / "Table2.txt"
+    parent.write_text(
+        "ZTFJ000000.13+620605.8 105 0.00056 62.10163 1.9449979 BYDra\n"
+        "ZTFJ000000.14+721413.7 309 0.00061 72.23716 0.2991500 EW\n",
         encoding="utf-8",
     )
 
-    assert read_vizier(path) == {1, 730184}
+    assert read_vizier(path, parent) == {105, 309}

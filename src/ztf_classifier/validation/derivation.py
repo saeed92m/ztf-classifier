@@ -294,33 +294,73 @@ def _snr_from_mag_error(value: str) -> float:
     return 1.0857362047581296 / error
 
 
-def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Resolve CPVS SourceIDs from the published Table2 catalog row order.
+def _parse_cpvs_table2_identity(line: str) -> tuple[str, str] | None:
+    """Parse the publisher's ZTF name and actual Seq/SourceID when present."""
+    raw = line.rstrip("\r\n")
+    if len(raw) >= 39 and raw[22].isspace() and raw[29].isspace():
+        name = raw[:22].strip()
+        seq = raw[23:29].strip()
+        try:
+            float(raw[30:39].strip())
+            valid_ra = True
+        except ValueError:
+            valid_ra = False
+        if name.upper().startswith("ZTF") and seq.isdigit() and valid_ra:
+            return name.upper(), str(int(seq))
 
-    The published table uses ZTF object names as the row identifiers in its
-    catalog presentation; the benchmark SourceID is the one-based ordinal of
-    catalog rows. Metadata, page furniture, and repeated headers are ignored.
-    """
+    fields = _split_fields(raw)
+    if len(fields) >= 4 and fields[0].upper() == "ZTF" and fields[1].upper().startswith("J"):
+        name, seq_index = f"{fields[0]} {fields[1]}".upper(), 2
+    elif len(fields) >= 3 and fields[0].upper().startswith("ZTF"):
+        name, seq_index = fields[0].upper(), 1
+    else:
+        return None
+    if fields[seq_index].isdigit():
+        try:
+            float(fields[seq_index + 1])
+        except (IndexError, ValueError):
+            return None
+        return name, str(int(fields[seq_index]))
+    return None
+
+
+def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
+    """Resolve CPVS SourceIDs from Seq; use ordinal fallback only for legacy fixtures without Seq."""
     owner, raw = _open_text(parent_path, member)
     try:
-        source_ids: set[str] = set()
-        ordinal = 0
+        rows: list[tuple[str, str | None]] = []
         for encoded in raw:
-            line = encoded.decode("utf-8", errors="replace").strip()
-            if not line:
+            line = encoded.decode("utf-8", errors="replace").rstrip("\r\n")
+            if not line.strip():
                 continue
-            first_token = line.split()[0]
-            if not first_token.upper().startswith("ZTF"):
+            identity = _parse_cpvs_table2_identity(line)
+            if identity is not None:
+                rows.append((identity[0], identity[1]))
                 continue
-            fields = _split_fields(line)
-            if len(fields) < 2:
-                continue
-            # A valid catalog row starts with a ZTF identifier and has at
-            # least one following field. Do not interpret the next field as
-            # SourceID: in Table2 it is a numeric catalog attribute (e.g. RA).
-            ordinal += 1
-            source_ids.add(str(ordinal))
-        return source_ids
+            # Retain support for legacy/test mirrors that omit the Seq column.
+            stripped = line.strip()
+            if stripped.split()[0].upper().startswith("ZTF"):
+                fields = _split_fields(stripped)
+                if len(fields) >= 2:
+                    name = fields[0].upper()
+                    if name == "ZTF" and len(fields) >= 3 and fields[1].upper().startswith("J"):
+                        name = f"{fields[0]} {fields[1]}".upper()
+                    rows.append((name, None))
+        if not rows:
+            return set()
+        has_seq = any(source_id is not None for _, source_id in rows)
+        if has_seq:
+            missing = [name for name, source_id in rows if source_id is None]
+            if missing:
+                raise ValueError(
+                    "CPVS Table2 mixes rows with and without a parseable Seq/SourceID; "
+                    f"examples: {missing[:5]}"
+                )
+            ids = [source_id for _, source_id in rows]
+            if len(ids) != len(set(ids)):
+                raise ValueError("duplicate Seq/SourceID values in CPVS Table2")
+            return {str(source_id) for source_id in ids if source_id is not None}
+        return {str(index) for index in range(1, len(rows) + 1)}
     finally:
         raw.close()
         if owner is not None:
@@ -394,7 +434,10 @@ def _qualified_ids(
 
     for row in chain((first,), rows):
         oid = row.get(id_key, "").strip()
-        if oid not in parent_ids or _snr_from_mag_error(row.get(error_key, "")) < sigma:
+        snr = _snr_from_mag_error(row.get(error_key, ""))
+        # Fail closed on NaN/inf. A negative-only comparison would let NaN pass
+        # because (NaN < sigma) is False, incorrectly admitting invalid errors.
+        if oid not in parent_ids or not math.isfinite(snr) or snr < sigma:
             continue
         try:
             magnitude = float(row.get(mag_key, ""))
