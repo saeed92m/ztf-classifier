@@ -214,7 +214,7 @@ def main() -> int:
 
     summary_path = out / "cpvs_candidate_only_provenance.tsv"
     fields = [
-        "SourceID", "ZTF_name", "parent_record_line", "parent_record_sha256",
+        "SourceID", "ZTF_name", "parent_record_line", "parent_record_sha256", "parent_record_raw",
         "g_rows", "g_snr_rows", "g_production_rows", "g_production_valid_mag_rows", "g_valid_mag_rows", "g_same_row_qualified_rows",
         "g_first_snr_row", "g_best_snr_row",
         "r_rows", "r_snr_rows", "r_production_rows", "r_production_valid_mag_rows", "r_valid_mag_rows", "r_same_row_qualified_rows",
@@ -232,6 +232,7 @@ def main() -> int:
                 "ZTF_name": name_by_id[oid],
                 "parent_record_line": p["parent_record_line"],
                 "parent_record_sha256": p["parent_record_sha256"],
+                "parent_record_raw": p["parent_record_raw"],
                 "g_rows": g.get("row_count", 0),
                 "g_snr_rows": g.get("snr_qualified_row_count", 0),
                 "g_production_rows": g.get("production_qualifying_row_count", 0),
@@ -252,8 +253,8 @@ def main() -> int:
 
     drift_path = out / "cpvs_predicate_drift.tsv"
     with drift_path.open("w", encoding="utf-8", newline="") as handle:
-        drift_fields = ["SourceID", "ZTF_name", "parent_record_line", "parent_record_sha256", "legacy_g_invalid_snr_valid_mag_rows", "legacy_r_invalid_snr_valid_mag_rows", "g_first_snr_row", "g_best_snr_row", "r_first_snr_row", "r_best_snr_row"]
-        writer = csv.DictWriter(handle, fieldnames=drift_fields, delimiter="\\t")
+        drift_fields = ["SourceID", "ZTF_name", "parent_record_line", "parent_record_sha256", "parent_record_raw", "legacy_g_invalid_snr_valid_mag_rows", "legacy_r_invalid_snr_valid_mag_rows", "g_first_snr_row", "g_best_snr_row", "r_first_snr_row", "r_best_snr_row"]
+        writer = csv.DictWriter(handle, fieldnames=drift_fields, delimiter="\t")
         writer.writeheader()
         for oid in production_only:
             g = g_metrics.get(oid, {})
@@ -264,6 +265,7 @@ def main() -> int:
                 "ZTF_name": name_by_id[oid],
                 "parent_record_line": p["parent_record_line"],
                 "parent_record_sha256": p["parent_record_sha256"],
+                "parent_record_raw": p["parent_record_raw"],
                 "legacy_g_invalid_snr_valid_mag_rows": max(0, g.get("production_qualifying_valid_magnitude_row_count", 0) - g.get("snr_qualified_valid_magnitude_row_count", 0)),
                 "legacy_r_invalid_snr_valid_mag_rows": max(0, r.get("production_qualifying_valid_magnitude_row_count", 0) - r.get("snr_qualified_valid_magnitude_row_count", 0)),
                 "g_first_snr_row": json.dumps(g.get("first_snr_qualified_row"), sort_keys=True),
