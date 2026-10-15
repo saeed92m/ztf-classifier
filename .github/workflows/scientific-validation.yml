@@ -287,11 +287,18 @@ jobs:
               (output_dir / name).write_text("SourceID\n" + "".join(f"{oid}\n" for oid in ids), encoding="utf-8")
           print(f"parent={len(parent_ids)} candidate={len(candidate_ids)} published={len(published_ids)}")
           PY
+          python scripts/compare_cpvs_full_batch.py \
+            --parent-ids "$root/sample_validation/parent_ids.txt" \
+            --g-lightcurve reports/scientific_validation/ztf_periodic_730k/g \
+            --r-lightcurve reports/scientific_validation/ztf_periodic_730k/r \
+            --output-dir "$root/sample_validation/full_batch"
           python scripts/validate_cpvs_samples.py \
             --parent-ids "$root/sample_validation/parent_ids.txt" \
             --candidate-ids "$root/sample_validation/candidate_ids.txt" \
             --published-ids "$root/sample_validation/published_ids.txt" \
-            --output-dir "$root/sample_validation"
+            --output-dir "$root/sample_validation" \
+            --full-decisions "$root/sample_validation/full_batch/full_decisions.csv" \
+            --batch-decisions "$root/sample_validation/full_batch/batch_decisions.csv"
 
       - name: Classify CPVS reconstruction result
         if: always()
@@ -359,6 +366,10 @@ jobs:
             "reports/scientific_validation/ztf_periodic_730k/ztf2r.zip"
             "reports/scientific_validation/ztf_periodic_730k/selected.tsv"
             "reports/scientific_validation/ztf_periodic_730k/cpvs_reconstruction_status.json"
+            "reports/scientific_validation/ztf_periodic_730k/sample_validation/cpvs_sample_validation_report.json"
+            "reports/scientific_validation/ztf_periodic_730k/sample_validation/full_batch/full_batch_comparison.json"
+            "reports/scientific_validation/ztf_periodic_730k/sample_validation/full_batch/full_decisions.csv"
+            "reports/scientific_validation/ztf_periodic_730k/sample_validation/full_batch/batch_decisions.csv"
             "reports/scientific_validation/ztf_star_embed"
           )
           for path in "${required[@]}"; do
