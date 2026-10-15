@@ -314,6 +314,123 @@ jobs:
             --output-dir "$root/provenance" \
             --code-version "${GITHUB_SHA}"
 
+      - name: Audit parent catalog fields against published membership
+        if: always()
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, math
+          from pathlib import Path
+          from scripts.audit_cpvs_membership import _iter_parent_lines, read_vizier
+          from ztf_classifier.validation.derivation import _parse_cpvs_table2_identity
+
+          root = Path("reports/scientific_validation/ztf_periodic_730k")
+          parent = Path("reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip")
+          candidate_path = root / "selected.tsv"
+          published_path = root / "published_table4.dat"
+          out_path = root / "parent_field_membership_audit.json"
+
+          def sha256(path):
+              h = hashlib.sha256()
+              with path.open("rb") as f:
+                  for block in iter(lambda: f.read(1024 * 1024), b""):
+                      h.update(block)
+              return h.hexdigest()
+
+          candidate = {
+              line.strip() for line in candidate_path.read_text(encoding="utf-8").splitlines()[1:]
+              if line.strip()
+          }
+          published = read_vizier(published_path, parent)
+          fields_by_id = {}
+          malformed = 0
+          for line in _iter_parent_lines(parent):
+              identity = _parse_cpvs_table2_identity(line)
+              if identity is None:
+                  continue
+              _, raw_id = identity
+              tokens = line.split()
+              if len(tokens) < 14:
+                  malformed += 1
+                  continue
+              try:
+                  sid = str(int(raw_id))
+                  vals = {
+                      "gmag": float(tokens[8]),
+                      "rmag": float(tokens[9]),
+                      "period_g": float(tokens[10]),
+                      "period_r": float(tokens[11]),
+                  }
+              except (TypeError, ValueError, IndexError):
+                  malformed += 1
+                  continue
+              fields_by_id[sid] = vals
+
+          parent_ids = set(fields_by_id)
+          if len(parent_ids) != 781602 or malformed:
+              raise SystemExit(f"Parent field parse failed: IDs={len(parent_ids)}, malformed={malformed}")
+          if not candidate <= parent_ids or not published <= parent_ids:
+              raise SystemExit("Candidate/published membership contains IDs absent from parent catalog")
+          extras = candidate - published
+          missing = published - candidate
+          keys = ("gmag", "rmag", "period_g", "period_r")
+
+          def summarize(ids):
+              counts = {key: sum(fields_by_id[sid][key] == 0.0 for sid in ids) for key in keys}
+              all_nonzero = {
+                  sid for sid in ids
+                  if all(math.isfinite(fields_by_id[sid][key]) and fields_by_id[sid][key] != 0.0 for key in keys)
+              }
+              return {
+                  "count": len(ids),
+                  "zero_counts_by_field": counts,
+                  "all_four_fields_finite_nonzero_count": len(all_nonzero),
+                  "ids_failing_all_four_field_predicate_count": len(ids - all_nonzero),
+              }
+
+          filtered = {
+              sid for sid in candidate
+              if all(math.isfinite(fields_by_id[sid][key]) and fields_by_id[sid][key] != 0.0 for key in keys)
+          }
+          fp = sorted(filtered - published, key=int)
+          fn = sorted(published - filtered, key=int)
+          result = {
+              "schema_version": 1,
+              "status": "DIAGNOSTIC_ONLY",
+              "interpretation": "Tests whether nonzero finite parent g/r mean magnitudes and g/r band periods separate reconstructed candidates from the published reference. This is not a claim that the paper explicitly specifies these four fields as selection criteria.",
+              "source_schema": {
+                  "fields": {
+                      "gmag": "Table2 mean g-band magnitude",
+                      "rmag": "Table2 mean r-band magnitude",
+                      "period_g": "Table2 period determined in g band",
+                      "period_r": "Table2 period determined in r band"
+                  },
+                  "source": "VizieR J/ApJS/249/18 Table2 byte-by-byte schema"
+              },
+              "counts": {
+                  "parent": summarize(parent_ids),
+                  "candidate": summarize(candidate),
+                  "published_reference": summarize(published),
+                  "candidate_only": summarize(extras),
+                  "published_only": len(missing),
+                  "candidate_count": len(candidate),
+                  "published_count": len(published),
+                  "filtered_candidate_count": len(filtered),
+                  "filtered_candidate_false_positive_count": len(fp),
+                  "filtered_candidate_false_negative_count": len(fn),
+                  "filtered_candidate_exact_membership_match": not fp and not fn,
+                  "filtered_false_positive_ids_sample": fp[:100],
+                  "filtered_false_negative_ids_sample": fn[:100]
+              },
+              "input_hashes": {
+                  "parent_sha256": sha256(parent),
+                  "candidate_sha256": sha256(candidate_path),
+                  "published_sha256": sha256(published_path)
+              }
+          }
+          out_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(json.dumps(result["counts"], indent=2, sort_keys=True))
+          PY
       - name: Classify CPVS reconstruction result
         if: always()
         env:
@@ -380,6 +497,7 @@ jobs:
             "reports/scientific_validation/ztf_periodic_730k/ztf2r.zip"
             "reports/scientific_validation/ztf_periodic_730k/selected.tsv"
             "reports/scientific_validation/ztf_periodic_730k/cpvs_reconstruction_status.json"
+            "reports/scientific_validation/ztf_periodic_730k/parent_field_membership_audit.json"
             "reports/scientific_validation/ztf_periodic_730k/sample_validation/cpvs_sample_validation_report.json"
             "reports/scientific_validation/ztf_periodic_730k/sample_validation/full_batch/full_batch_comparison.json"
             "reports/scientific_validation/ztf_periodic_730k/sample_validation/full_batch/full_decisions.csv"
