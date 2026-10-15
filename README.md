@@ -362,6 +362,8 @@ A direct re-read of artifact `scientific-validation-heavy.zip` (SHA-256 `28c7046
 
 The official CPVS ReadMe defines Table2 `Seq` at bytes 24–29 as the source identifier used by the lightcurve attachments. Earlier metrics 725,101 / 16,686 / 5,083 were invalid because they mapped names to physical row ordinals. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
 
+**New field-pattern result from the 11,602 candidate-only rows:** 11,465 have both Table2 `gmag=0` and `Per-g=0`; 115 have `rmag=0` and `Per-r=0`; 10 have only `Per-g=0`; 7 have only `Per-r=0`; and 5 have only `gmag=0`. These mutually exclusive patterns sum to 11,602. This strongly localizes the discrepancy to missing/zero band-specific Table2 solutions (predominantly g), but does **not** prove that this was the authors' exclusion rule: the paper states a per-band detection threshold and a common folding period, not a requirement for nonzero per-band periods. The diagnostic must be reconciled with actual preprocessing code or author clarification before promoting this correlation to the historical selection rule.
+
 **Disposition: exact CPVS reconstruction remains UNRESOLVED.** Do not change the production selection predicate or tune thresholds/flags solely to force cardinality equality. The next technical step is to trace the publisher's exact preprocessing/normalization semantics from source-backed evidence and determine whether Table2 field validity is part of the historical selection pipeline.
 
 ### Scientific gate architecture
