@@ -341,3 +341,30 @@ def test_nonfinite_snr_does_not_qualify_valid_magnitude(tmp_path: Path):
 
     assert selected == set()
     assert valid_magnitude == set()
+
+
+def test_cpvs_trace_exposes_legacy_nan_snr_acceptance(tmp_path: Path):
+    from scripts.trace_cpvs_membership import trace_band
+
+    band_dir = tmp_path / "g"
+    band_dir.mkdir()
+    (band_dir / "ztf2g.txt").write_text(
+        "SourceID RAdeg DEdeg HJD gmag e_gmag g_flag\n"
+        "105 10.0 20.0 2459000.0 15.2 bad 0\n",
+        encoding="utf-8",
+    )
+    ledger = tmp_path / "epochs.jsonl"
+    with ledger.open("w", encoding="utf-8") as handle:
+        metrics = trace_band(
+            band_dir,
+            band="g",
+            parent_ids={105},
+            extras={105},
+            output_jsonl=handle,
+        )
+
+    assert metrics[105]["production_qualifying_valid_magnitude_row_count"] == 1
+    assert metrics[105]["snr_qualified_valid_magnitude_row_count"] == 0
+    row = __import__("json").loads(ledger.read_text(encoding="utf-8").splitlines()[0])
+    assert row["production_snr_predicate_pass"] is True
+    assert row["snr_pass"] is False
