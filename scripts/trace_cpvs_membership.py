@@ -14,12 +14,20 @@ import math
 from collections import Counter
 from pathlib import Path
 
-from audit_cpvs_membership import (
-    _iter_parent_lines,
-    read_parent_name_to_sourceid,
-    read_selected,
-    read_vizier,
-)
+try:
+    from audit_cpvs_membership import (
+        _iter_parent_lines,
+        read_parent_name_to_sourceid,
+        read_selected,
+        read_vizier,
+    )
+except ModuleNotFoundError:
+    from scripts.audit_cpvs_membership import (
+        _iter_parent_lines,
+        read_parent_name_to_sourceid,
+        read_selected,
+        read_vizier,
+    )
 from ztf_classifier.validation.derivation import (
     _iter_rows,
     _parse_cpvs_table2_identity,
