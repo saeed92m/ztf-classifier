@@ -338,7 +338,7 @@ jobs:
               return h.hexdigest()
 
           candidate = {
-              line.strip() for line in candidate_path.read_text(encoding="utf-8").splitlines()[1:]
+              int(line.strip()) for line in candidate_path.read_text(encoding="utf-8").splitlines()[1:]
               if line.strip()
           }
           published = read_vizier(published_path, parent)
@@ -354,7 +354,7 @@ jobs:
                   malformed += 1
                   continue
               try:
-                  sid = str(int(raw_id))
+                  sid = int(raw_id)
                   vals = {
                       "gmag": float(tokens[8]),
                       "rmag": float(tokens[9]),
