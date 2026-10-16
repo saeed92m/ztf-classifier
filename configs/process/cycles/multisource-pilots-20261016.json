@@ -73,23 +73,23 @@
         "unit": "bounded_Gaia_query_repeatability_demonstrated_for_one_query",
         "status": "MEASURED"
       },
-      "regression_protection_count": {
-        "before": 0,
-        "after": 7,
-        "unit": "MAST_request_contract_tests_added",
-        "status": "MEASURED"
-      },
-      "regression_protection_count": {
-        "before": 0,
-        "after": 11,
-        "unit": "focused TESS QUALITY bitmask unit-test cases including invalid-input cases",
-        "status": "IMPLEMENTED_CI_PENDING"
-      },
       "scientific_validity": {
         "before": "NOT_VERIFIED",
         "after": "NOT_VERIFIED",
         "status": "NOT_MEASURED",
         "reason": "Ingestion smoke tests are not model or cross-survey scientific validation."
+      },
+      "mast_request_contract_test_count": {
+        "before": 0,
+        "after": 7,
+        "unit": "MAST request-contract tests added",
+        "status": "IMPLEMENTED_CI_PENDING"
+      },
+      "tess_quality_mask_test_case_count": {
+        "before": 0,
+        "after": 11,
+        "unit": "focused TESS QUALITY bitmask unit-test cases including invalid-input cases",
+        "status": "IMPLEMENTED_CI_PENDING"
       }
     },
     "trade_off": "No scientific-gate relaxation; the CPVS discrepancy remains an independent blocker."
