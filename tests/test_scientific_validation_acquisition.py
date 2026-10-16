@@ -176,7 +176,10 @@ def test_acquisition_journals_success_with_artifact_hash_and_counts(tmp_path: Pa
     events = [json.loads(line) for line in journal.read_text(encoding="utf-8").splitlines()]
     assert [event["status"] for event in events] == ["STARTED", "PASS"]
     assert events[1]["counts_after"] == {"rows": 3}
-    assert events[1]["hashes"]["sha256"] == result.artifact.sha256
+    assert events[1]["hashes"]["source_sha256"] == result.artifact.sha256
+    assert events[1]["hashes"]["evidence_manifest_sha256"]
+    assert len(events[1]["output_artifacts"]) == 2
+    assert events[1]["output_artifacts"][1]["role"] == "evidence_manifest"
     serialized = journal.read_text(encoding="utf-8")
     assert "must-not-be-recorded" not in serialized
     assert "access_token" not in serialized
