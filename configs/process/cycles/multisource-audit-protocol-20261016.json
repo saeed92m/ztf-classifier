@@ -19,7 +19,7 @@
     "Reuse existing evidence/acquisition/source-subset infrastructure and add a complementary operation journal.",
     "Record hashes, counts, commands, configuration, environment, errors, hypotheses, remediation, regression tests, and reruns.",
     "Add a machine-readable run manifest template with explicit NOT_RUN/NOT_MEASURED states.",
-    "Test operation success/failure logging and secret redaction.",
+    "Test operation success/failure logging, output-summary failure persistence, and secret redaction.",
     "Keep Gaia DR3 and TESS pilots bounded and version-pinned, with ingestion integrity separate from model-performance claims.",
     "Record the multi-source work under Issue #188 without replacing or closing CPVS issues."
   ],
@@ -27,7 +27,7 @@
     "metrics": {
       "protocol_coverage": {
         "before": "No dedicated cross-source validation protocol and operation-journal contract identified in the inspected main-branch files.",
-        "after": "Protocol, JSON run-manifest template, operation-journal implementation, and four focused tests added on branch; CI results remain pending."
+        "after": "Protocol, JSON run-manifest template, operation-journal implementation, and five focused tests added on branch; CI results remain pending."
       },
       "scientific_validity": {
         "before": "CPVS exact-membership reconstruction unresolved.",
@@ -35,7 +35,7 @@
       },
       "traceability": {
         "before": "Existing artifact/source-subset manifests cover hashes and selected source metadata; stage-level event journaling and explicit multi-source error/remediation linkage were not identified.",
-        "after": "Append-only JSONL journal records UTC sequence, stage, operation, status, inputs, outputs, commands, parameters, counts, hashes, warnings and error/traceback fields; run wrapper records STARTED then PASS/FAIL and re-raises failures. Multi-process concurrency is explicitly unsupported by this first implementation."
+        "after": "Append-only JSONL journal records UTC sequence, stage, operation, status, inputs, outputs, commands, parameters, counts, hashes, warnings and error/traceback fields; run wrapper records STARTED then PASS/FAIL and re-raises failures, including output-summary failures. Multi-process concurrency is explicitly unsupported by this first implementation."
       }
     }
   },
@@ -47,9 +47,9 @@
       "Added docs/scientific_validation/MULTI_SOURCE_VALIDATION_PROTOCOL.md; it explicitly reuses existing evidence/acquisition/source-subset infrastructure.",
       "Added configs/experiments/multi_source_run_manifest.template.json.",
       "Added src/ztf_classifier/validation/operation_journal.py with redaction, append-only JSONL events, and success/failure wrapper.",
-      "Added tests/test_validation_operation_journal.py covering success/counts, exception persistence/re-raise, secret redaction, and invalid status/stage rejection.",
+      "Added tests/test_validation_operation_journal.py with five focused tests: success/count logging, operation failure persistence/re-raise, output-summary failure persistence, secret redaction, and invalid input rejection.",
       "Added lifecycle record and opened draft PR #189.",
-      "On the latest observed commit 16926956fad07fc33a845003a2357c820691b1a0, CodeQL run 38877909502, Scientific Validation run 38877909721, Product Scope Audit run 38877909477, and CI runs 38877909398/38877904742 were queued or pending. No passing result is claimed for that head.",
+      "GitHub Actions were in progress/queued on the previously observed commits; a fresh result for the latest head is required. No passing result is claimed for the latest commit.",
       "No external dataset was acquired or analyzed in this cycle.",
       "No scientific selection rule, model, dataset, v0.2.0 baseline artifact, or v1.0.1 release artifact was changed."
     ]
@@ -76,7 +76,7 @@
     "status": "BLOCKED",
     "open_blockers": [
       "Validate the JSON run-manifest template and journal implementation through latest-head CI and add any needed schema/contract tests.",
-      "Review CodeQL, lifecycle gate, Scientific Validation, and Product Scope checks before merging PR #189.",
+      "Review CodeQL, lifecycle gate, Scientific Validation, Product Scope, and CI checks before merging PR #189.",
       "Integrate journal events with existing EvidenceManifest and SourceSubsetManifest so each operation points to verified artifacts.",
       "Run a bounded, pinned external-source pilot only after its query and schema contract are documented.",
       "Verify source artifacts and outputs with SHA-256 and row/object accounting.",
