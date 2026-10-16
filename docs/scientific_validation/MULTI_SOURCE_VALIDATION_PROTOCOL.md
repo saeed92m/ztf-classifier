@@ -29,7 +29,18 @@ A successful lower layer does not prove a higher layer. In particular, a valid p
 - Do not put tokens, credentials, private identifiers, or secrets in logs.
 - Never replace missing evidence with PASS. Use explicit states: PASS, FAIL, BLOCKED, NOT_RUN, NOT_MEASURED, or NOT_VERIFIED.
 
-## 3. Source order
+## 3. Reuse existing provenance infrastructure
+
+Repository inspection found existing reusable components:
+- `ztf_classifier.validation.evidence.EvidenceManifest` / `EvidenceArtifact` for immutable evidence hashes and byte sizes;
+- `ztf_classifier.validation.acquisition` for source-backed acquisition and query-manifest hashing;
+- `ztf_classifier.reproducibility.source_manifest.SourceSubsetManifest` for deterministic object subsets and artifact verification;
+- `configs/benchmarks/*.json` and the benchmark registry for source/version contracts;
+- existing scientific validation reports and lifecycle records.
+
+**Do not build a parallel acquisition/hash framework.** Extend these contracts when required and add a small operation/event journal that links each stage to the existing manifests/artifacts. Any gap between the existing manifest fields and the richer per-run requirements below must be addressed explicitly and covered by tests. Existing acquisition helpers currently recognize a finite canonical source registry; adding Gaia or TESS must be a deliberate, tested source-contract change, not an untracked URL override.
+
+## 4. Source order
 
 ### Source A — ZTF / CPVS
 Continue the existing source-backed investigation under #170 and #180. Record the exact source archive, version/DOI, publisher checksum where available, local SHA-256, query/retrieval time, parser mode, complete source-ID mapping, and membership-difference outputs. The currently documented 11,602 candidate-only IDs remain unresolved; this protocol does not alter that result.
@@ -47,12 +58,12 @@ Official archive: https://archive.stsci.edu/missions-and-data/tess
 ### Source selection gate
 Before acquisition, each dataset must have: a specific scientific/engineering question; authoritative source and version; documented schema; legal/access review; bounded query or subset; deterministic acquisition method; expected record/object counts or a way to validate them; and a clear reference-label role. If these are absent, record BLOCKED and why rather than downloading an arbitrary dataset.
 
-## 4. Required per-run evidence
+## 5. Required per-run evidence
 
 Every run must create:
-- one JSON manifest based on `configs/experiments/multi_source_run_manifest.template.json`;
+- one run-level JSON manifest based on `configs/experiments/multi_source_run_manifest.template.json`, or a tested extension of the existing evidence/source-subset manifests that covers the same fields;
 - a human-readable Markdown report;
-- stage logs and validation summaries;
+- a machine-readable operation/event journal and stage logs;
 - compact source/ID manifests and discrepant-ID lists where appropriate;
 - hashes for source bytes and every retained input/output artifact;
 - exact code revision, commands, arguments, configuration, seeds, environment, and dependency versions;
@@ -77,7 +88,7 @@ Recommended run ID format: `<UTC timestamp>-<source>-<purpose>-<short commit>`. 
 ### Required event log fields
 Each operation records `sequence`, `timestamp_utc`, `stage`, `operation`, `input_artifacts`, `output_artifacts`, `command_or_api_query`, `parameters`, `counts_before`, `counts_after`, `hashes`, `status`, `warnings`, `error_type`, `error_message`, `stack_trace_artifact`, and `notes`. Redact secrets before persistence.
 
-## 5. Execution phases
+## 6. Execution phases
 
 1. **Plan:** define hypothesis/question, expected invariants, source, version, schema, sampling strategy, acceptance criteria, and failure conditions.
 2. **Acquire:** download only a bounded subset; record exact query, retrieval time, HTTP/API metadata if available, publisher checksum, local SHA-256, and file size. No silent fallback to a different source/version.
@@ -91,7 +102,7 @@ Each operation records `sequence`, `timestamp_utc`, `stage`, `operation`, `input
 10. **Root-cause and remediation:** every failure is preserved before fixing. Verify the cause with a targeted test; make the smallest justified correction; add regression coverage; rerun the same pinned inputs and compare before/after evidence.
 11. **Knowledge capture:** update the cumulative ledger with facts vs hypotheses, tests, decisions, residual risks, and next action.
 
-## 6. Error taxonomy
+## 7. Error taxonomy
 
 Use stable reason codes (extend deliberately, not ad hoc):
 - `ACQUIRE_NETWORK`, `ACQUIRE_HTTP`, `ACQUIRE_AUTH`, `ACQUIRE_VERSION_UNPINNED`
@@ -106,18 +117,18 @@ Use stable reason codes (extend deliberately, not ad hoc):
 
 A suspected cause must be labelled HYPOTHESIS until confirmed by a discriminating test. Record rejected hypotheses and the evidence that rejected them.
 
-## 7. Acceptance and stopping rules
+## 8. Acceptance and stopping rules
 
 A stage passes only if its declared assertions pass and all required evidence is present. A source may pass ingestion while failing reference reproduction; report those statuses separately. A failed acquisition is a recorded result, not a successful experiment. A skipped test is not a pass.
 
 Do not close #188 until:
-- a manifest/report contract is validated by tests;
+- the run manifest and operation-journal contract is validated by tests;
 - at least one pinned, bounded source run is completed end-to-end;
 - at least one injected/known malformed-input test demonstrates useful error localization;
 - repeated and full-vs-batch outputs are compared deterministically;
 - all findings and remediation status are recorded;
 - CPVS remains independently classified and is not silently marked fixed by success on Gaia/TESS.
 
-## 8. First implementation target
+## 9. First implementation target
 
-Implement the audit schema and report generator before broad data downloads. Then run a small, pinned Gaia DR3 ingestion-only pilot, followed by a bounded TESS product pilot. These pilots first test provenance, schema, identity, and deterministic processing—not model accuracy. Acquire data only after the relevant source contract and query are recorded.
+First reuse and test the existing evidence/acquisition/source-subset machinery, add a small operation journal and report renderer, and explicitly test that failures leave durable records. Then run a small, pinned Gaia DR3 ingestion-only pilot, followed by a bounded TESS product pilot. These pilots first test provenance, schema, identity, and deterministic processing—not model accuracy. Acquire data only after the relevant source contract and query are recorded.
