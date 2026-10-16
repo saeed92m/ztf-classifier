@@ -230,3 +230,55 @@ def test_parent_mean_magnitude_diagnostic_rejects_nan_and_infinity():
     assert not has_finite_nonzero_mean_magnitudes({"gmag": float("inf"), "rmag": 18.2})
     assert not has_finite_nonzero_mean_magnitudes({"gmag": 0.0, "rmag": 18.2})
     assert not has_finite_nonzero_mean_magnitudes({"gmag": 17.5, "rmag": 0.0})
+
+def test_parent_catalog_metadata_votable_preserves_empty_field_alignment(tmp_path: Path):
+    from scripts.diagnose_cpvs_selection import parent_catalog_metadata
+
+    parent = tmp_path / "parent-mirror.txt"
+    parent.write_text("metadata supplied separately\\n", encoding="utf-8")
+    metadata_votable = tmp_path / "parent-metadata.xml"
+    metadata_votable.write_text(
+        """<?xml version="1.0"?>
+<VOTABLE version="1.3">
+  <RESOURCE>
+    <TABLE>
+      <FIELD name="Seq" datatype="int"/>
+      <FIELD name="Per" datatype="double"/>
+      <FIELD name="gmag" datatype="float"/>
+      <FIELD name="rmag" datatype="float"/>
+      <FIELD name="Per-g" datatype="double"/>
+      <FIELD name="Per-r" datatype="double"/>
+      <FIELD name="Ng" datatype="short"/>
+      <FIELD name="Nr" datatype="short"/>
+      <FIELD name="R2-g" datatype="float"/>
+      <FIELD name="R2-r" datatype="float"/>
+      <FIELD name="gAmp" datatype="float"/>
+      <FIELD name="rAmp" datatype="float"/>
+      <FIELD name="log(FAP-g)" datatype="double"/>
+      <FIELD name="log(FAP-r)" datatype="double"/>
+      <FIELD name="Type" datatype="char" arraysize="5*"/>
+      <DATA><TABLEDATA>
+        <TR><TD>9877</TD><TD>0.4997498</TD><TD>16.127</TD><TD>15.856</TD>
+        <TD>0.4997498</TD><TD></TD><TD>62</TD><TD>63</TD><TD>0.974</TD>
+        <TD>0.959</TD><TD>0.749</TD><TD>0.622</TD><TD>-23.407</TD>
+        <TD>-23.842</TD><TD>RR</TD></TR>
+      </TABLEDATA></DATA>
+    </TABLE>
+  </RESOURCE>
+</VOTABLE>
+""",
+        encoding="utf-8",
+    )
+
+    metadata = parent_catalog_metadata(parent, metadata_votable)
+    assert metadata[9877]["per_r"] != metadata[9877]["per_r"]  # NaN: field is missing
+    assert metadata[9877]["ng"] == 62
+    assert metadata[9877]["nr"] == 63
+    assert metadata[9877]["r2_g"] == 0.974
+    assert metadata[9877]["r2_r"] == 0.959
+    assert metadata[9877]["gamp"] == 0.749
+    assert metadata[9877]["ramp"] == 0.622
+    assert metadata[9877]["fap_g"] == -23.407
+    assert metadata[9877]["fap_r"] == -23.842
+    assert metadata[9877]["type"] == "RR"
+
