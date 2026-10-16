@@ -1,0 +1,116 @@
+{
+  "run_id": "20261016T090914Z-tess-mast-top5-metadata-smoke",
+  "status": "PASS_METADATA_INGESTION_SMOKE_TEST_ONLY",
+  "created_at_utc": "2026-10-16T09:09:14.867968+00:00",
+  "purpose": "Exercise the official MAST API with a bounded TESS time-series metadata request and verify HTTP response, JSON parsing, schema, observation identifiers, and output hash. No light-curve product bytes were downloaded and no model or scientific classification was evaluated.",
+  "source": {
+    "survey": "TESS",
+    "archive": "Mikulski Archive for Space Telescopes (MAST)",
+    "service": "Mast.Caom.Filtered",
+    "documentation": "https://mast.stsci.edu/api/v0/",
+    "archive_landing": "https://archive.stsci.edu/missions-and-data/tess",
+    "request_endpoint": "https://mast.stsci.edu/api/v0/invoke",
+    "request_method": "POST",
+    "request_format": "JSON encoded as form parameter request",
+    "request": {
+      "service": "Mast.Caom.Filtered",
+      "format": "json",
+      "params": {
+        "columns": "obsid,obs_collection,obs_id,target_name,dataproduct_type,project,instrument_name,sequence_number,t_min,t_max,s_ra,s_dec",
+        "filters": [
+          {"paramName": "obs_collection", "values": ["TESS"]},
+          {"paramName": "dataproduct_type", "values": ["timeseries"]}
+        ]
+      },
+      "pagesize": 5,
+      "page": 1,
+      "removenullcolumns": false
+    },
+    "reference_semantics": "Observation/product metadata, not labels or independent astrophysical ground truth."
+  },
+  "execution": {
+    "method": "Python standard-library urllib POST; JSON parse",
+    "git_ref": "science/multisource-audit-20261016",
+    "git_commit": "4d7d9f538c23a86f8a3fab5298fc746b8f8b97f4",
+    "network_attempts": 1,
+    "timeout_seconds": 45,
+    "http_status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "retrieved_at_utc": "2026-10-16T09:09:14.867968+00:00"
+  },
+  "output_artifacts": [
+    {
+      "kind": "raw_http_response_json",
+      "byte_size": 2257,
+      "sha256": "9c7f145e96b53df393ad61274186bc3788ecd596ee4423b3d4f1daa19080b098",
+      "retained_in_repository": false,
+      "reason": "Raw response was not committed; compact metadata and hash are retained."
+    }
+  ],
+  "schema_validation": {
+    "status": "PASS",
+    "response_status": "COMPLETE",
+    "api_message": "",
+    "columns_requested": [
+      "obsid",
+      "obs_collection",
+      "obs_id",
+      "target_name",
+      "dataproduct_type",
+      "project",
+      "instrument_name",
+      "sequence_number",
+      "t_min",
+      "t_max",
+      "s_ra",
+      "s_dec"
+    ],
+    "rows_returned": 5,
+    "rows_filtered_reported_by_service": 1994189,
+    "unique_obsids_in_returned_page": 5,
+    "unique_obs_ids_in_returned_page": 5,
+    "null_or_blank_obsids": 0,
+    "null_or_blank_obs_ids": 0,
+    "rows": [
+      {"obsid": 61113566, "obs_id": "tess2018292075959-s0004-0000000300603467-0124-s", "target_name": "300603467", "sequence_number": 4, "t_min": 58410.39883002315, "t_max": 58436.339170659725},
+      {"obsid": 61065956, "obs_id": "tess2018292075959-s0004-0000000300604036-0124-s", "target_name": "300604036", "sequence_number": 4, "t_min": 58410.398841967595, "t_max": 58436.339219270834},
+      {"obsid": 61109466, "obs_id": "tess2018292075959-s0004-0000000300651835-0124-s", "target_name": "300651835", "sequence_number": 4, "t_min": 58410.39881892361, "t_max": 58436.33928814815},
+      {"obsid": 61069524, "obs_id": "tess2018292075959-s0004-0000000300653260-0124-s", "target_name": "300653260", "sequence_number": 4, "t_min": 58410.398811631945, "t_max": 58436.33920436342},
+      {"obsid": 61110330, "obs_id": "tess2018292075959-s0004-0000000300654454-0124-s", "target_name": "300654454", "sequence_number": 4, "t_min": 58410.39879480324, "t_max": 58436.33911768519}
+    ]
+  },
+  "incidents": [],
+  "comparison": {
+    "light_curve_product_download": "NOT_RUN",
+    "light_curve_schema_and_units": "NOT_RUN",
+    "quality_flag_audit": "NOT_RUN",
+    "full_vs_batch": "NOT_RUN",
+    "repeat_run_determinism": "NOT_RUN",
+    "model_evaluation": "NOT_RUN"
+  },
+  "interpretation": {
+    "facts": [
+      "MAST returned HTTP 200 and a COMPLETE JSON response for the bounded request.",
+      "The response was 2,257 bytes with SHA-256 9c7f145e96b53df393ad61274186bc3788ecd596ee4423b3d4f1daa19080b098.",
+      "Five rows were returned with five unique obsid values and five unique obs_id values.",
+      "The service reported 1,994,189 rows matching the filters; only the first page of five was requested."
+    ],
+    "unresolved": [
+      "This is metadata-only; no TESS time-series files were acquired.",
+      "The metadata response does not establish a deterministic order across repeated queries because no explicit server-side sort parameter was tested.",
+      "Product-specific time units, flux units, quality flags, processing level, checksums, and licensing still need to be recorded after selecting an exact product."
+    ],
+    "claims_not_supported": [
+      "TESS photometry parsing correctness",
+      "Scientific validity of any classifier",
+      "Direct comparability between TESS and ZTF light curves",
+      "Resolution of the CPVS membership discrepancy"
+    ]
+  },
+  "next_actions": [
+    "Choose an exact TESS product and bounded observation/target list; retrieve product metadata and product checksum before download.",
+    "Test the production MAST adapter and operation journal on a pinned product.",
+    "Use a known malformed response to verify failure evidence is persisted.",
+    "Keep model evaluation separate from metadata ingestion."
+  ]
+}
