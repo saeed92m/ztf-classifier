@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -24,30 +25,272 @@ from ztf_classifier.validation.derivation import (
 )
 
 
-def parent_catalog_metadata(path: Path) -> dict[int, dict[str, Any]]:
-    """Read class and published g/r epoch counts from fixed-width CPVS Table 2.
+def parent_catalog_metadata(
+    path: Path, metadata_path: Path | None = None
+) -> dict[int, dict[str, Any]]:
+    """Read fixed-width Table 2 metadata or an authoritative named-column TSV.
 
-    These fields are descriptive diagnostics only; they do not affect selection.
+    The Zenodo text mirror can collapse blank fixed-width fields, so token offsets
+    are not reliable for optional columns. When metadata_path is supplied, use the
+    named-column VizieR export. These fields remain diagnostic-only.
     """
+    if metadata_path is not None:
+        raw_metadata = metadata_path.read_text(encoding="utf-8", errors="replace")
+        if "<VOTABLE" in raw_metadata[:4096].upper():
+            root = ET.fromstring(raw_metadata)
+            table = next(
+                (element for element in root.iter() if element.tag.rsplit("}", 1)[-1] == "TABLE"),
+                None,
+            )
+            if table is None:
+                raise ValueError(f"metadata VOTable contains no TABLE: {metadata_path}")
+            fields = [
+                element.attrib.get("name", "").strip().lower()
+                for element in table.iter()
+                if element.tag.rsplit("}", 1)[-1] == "FIELD"
+            ]
+            required = {"seq", "gmag", "rmag", "ng", "nr", "type"}
+            if not required.issubset(fields):
+                raise ValueError(
+                    f"metadata VOTable lacks required fields {sorted(required - set(fields))}: {metadata_path}"
+                )
+            indexes = {name: index for index, name in enumerate(fields)}
+
+            def xml_value(cells: list[str], name: str) -> str:
+                index = indexes[name]
+                return cells[index].strip() if index < len(cells) else ""
+
+            def xml_float(value: str) -> float:
+                try:
+                    result = float(value)
+                    return result if math.isfinite(result) else float("nan")
+                except (TypeError, ValueError):
+                    return float("nan")
+
+            def xml_int(value: str) -> int:
+                try:
+                    return int(float(value))
+                except (TypeError, ValueError):
+                    return -1
+
+            def xml_named_value(cells: list[str], *names: str) -> str:
+                for name in names:
+                    index = indexes.get(name.lower())
+                    if index is not None and index < len(cells):
+                        return cells[index].strip()
+                return ""
+
+            metadata: dict[int, dict[str, Any]] = {}
+            for row in table.iter():
+                if row.tag.rsplit("}", 1)[-1] != "TR":
+                    continue
+                cells = [
+                    (cell.text or "").strip()
+                    for cell in row
+                    if cell.tag.rsplit("}", 1)[-1] == "TD"
+                ]
+                if len(cells) != len(fields):
+                    raise ValueError(
+                        f"VOTable row has {len(cells)} cells for {len(fields)} fields in {metadata_path}"
+                    )
+                source_id = xml_int(xml_value(cells, "seq"))
+                if source_id < 0:
+                    raise ValueError(f"invalid Seq value in {metadata_path}")
+                if source_id in metadata:
+                    raise ValueError(f"duplicate Seq {source_id} in {metadata_path}")
+                metadata[source_id] = {
+                    "type": xml_value(cells, "type") or "UNKNOWN",
+                    "ng": xml_int(xml_value(cells, "ng")),
+                    "nr": xml_int(xml_value(cells, "nr")),
+                    "gmag": xml_float(xml_value(cells, "gmag")),
+                    "rmag": xml_float(xml_value(cells, "rmag")),
+                    "period": xml_float(xml_named_value(cells, "per")),
+                    "per_g": xml_float(xml_named_value(cells, "per-g", "per_g")),
+                    "per_r": xml_float(xml_named_value(cells, "per-r", "per_r")),
+                    "r2_g": xml_float(xml_named_value(cells, "r2-g", "r2_g")),
+                    "r2_r": xml_float(xml_named_value(cells, "r2-r", "r2_r")),
+                    "gamp": xml_float(xml_named_value(cells, "gamp")),
+                    "ramp": xml_float(xml_named_value(cells, "ramp")),
+                    "fap_g": xml_float(xml_named_value(cells, "log(fap-g)", "log_fap_g")),
+                    "fap_r": xml_float(xml_named_value(cells, "log(fap-r)", "log_fap_r")),
+                }
+            if not metadata:
+                raise ValueError(f"metadata VOTable contained no valid Seq rows: {metadata_path}")
+            return metadata
+
+        lines = raw_metadata.splitlines()
+        header_index = None
+        header = []
+        for index, line in enumerate(lines):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
+            columns = [item.strip() for item in candidate.split("\t")]
+            normalized = {name.lower() for name in columns}
+            if {"seq", "gmag", "rmag", "ng", "nr", "type"}.issubset(normalized):
+                header_index = index
+                header = columns
+                break
+        if header_index is None:
+            raise ValueError(
+                f"metadata TSV lacks named Seq/gmag/rmag/Ng/Nr/Type columns: {metadata_path}"
+            )
+        indexes = {name.strip().lower(): index for index, name in enumerate(header)}
+
+        def value_at(values: list[str], name: str) -> str:
+            index = indexes[name]
+            return values[index].strip() if index < len(values) else ""
+
+        def to_float(value: str) -> float:
+            try:
+                result = float(value)
+                return result if math.isfinite(result) else float("nan")
+            except (TypeError, ValueError):
+                return float("nan")
+
+        def to_int(value: str) -> int:
+            try:
+                return int(float(value))
+            except (TypeError, ValueError):
+                return -1
+
+        def named_value(values: list[str], *names: str) -> str:
+            for name in names:
+                index = indexes.get(name.lower())
+                if index is not None and index < len(values):
+                    return values[index].strip()
+            return ""
+
+        metadata: dict[int, dict[str, Any]] = {}
+        for line in lines[header_index + 1:]:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            values = line.split("\t")
+            source_id = to_int(value_at(values, "seq"))
+            if source_id < 0:
+                continue
+            metadata[source_id] = {
+                "type": value_at(values, "type") or "UNKNOWN",
+                "ng": to_int(value_at(values, "ng")),
+                "nr": to_int(value_at(values, "nr")),
+                "gmag": to_float(value_at(values, "gmag")),
+                "rmag": to_float(value_at(values, "rmag")),
+                "period": to_float(named_value(values, "per")),
+                "per_g": to_float(named_value(values, "per-g", "per_g")),
+                "per_r": to_float(named_value(values, "per-r", "per_r")),
+                "r2_g": to_float(named_value(values, "r2-g", "r2_g")),
+                "r2_r": to_float(named_value(values, "r2-r", "r2_r")),
+                "gamp": to_float(named_value(values, "gamp")),
+                "ramp": to_float(named_value(values, "ramp")),
+                "fap_g": to_float(named_value(values, "log(fap-g)", "log_fap_g")),
+                "fap_r": to_float(named_value(values, "log(fap-r)", "log_fap_r")),
+            }
+        if not metadata:
+            raise ValueError(f"metadata TSV contained no valid Seq rows: {metadata_path}")
+        return metadata
+
     metadata: dict[int, dict[str, Any]] = {}
     for line in _iter_parent_lines(path):
         identity = _parse_cpvs_table2_identity(line)
         if identity is None:
             continue
         source_id = int(identity[1])
-        try:
-            ng = int(line[131:135].strip())
-            nr = int(line[136:140].strip())
-        except (ValueError, IndexError):
-            ng = nr = -1
-        variable_type = line[211:216].strip() if len(line) >= 216 else ""
+        ng = nr = -1
+        gmag = rmag = float("nan")
+        period = per_g = per_r = float("nan")
+        r2_g = r2_r = gamp = ramp = fap_g = fap_r = float("nan")
+        variable_type = ""
+
+        def parse_int(value: str, default: int) -> int:
+            try:
+                return int(value.strip())
+            except (TypeError, ValueError):
+                return default
+
+        def parse_float(value: str, default: float = float("nan")) -> float:
+            try:
+                return float(value.strip())
+            except (TypeError, ValueError):
+                return default
+
+        # Parse each fixed-width field independently. A blank optional field
+        # must not discard valid g/r magnitudes, Ng/Nr, or Type from the row.
+        if len(line) >= 216 and line[23:29].strip() == identity[1]:
+            period = parse_float(line[50:61])
+            gmag = parse_float(line[89:95])
+            rmag = parse_float(line[96:102])
+            per_g = parse_float(line[103:116])
+            per_r = parse_float(line[117:130])
+            ng = parse_int(line[131:135], -1)
+            nr = parse_int(line[136:140], -1)
+            r2_g = parse_float(line[167:173])
+            r2_r = parse_float(line[174:180])
+            gamp = parse_float(line[181:186])
+            ramp = parse_float(line[187:192])
+            fap_g = parse_float(line[193:201])
+            fap_r = parse_float(line[202:210])
+            variable_type = line[211:216].strip()
+        else:
+            # Whitespace-tokenized mirror: locate Seq rather than relying on
+            # an absolute token index (the object name may be one or two tokens).
+            fields = line.strip().split()
+            try:
+                seq_index = next(i for i, value in enumerate(fields) if value == identity[1])
+            except StopIteration:
+                seq_index = -1
+            if seq_index >= 0:
+                period = parse_float(fields[seq_index + 3]) if len(fields) > seq_index + 3 else period
+                gmag = parse_float(fields[seq_index + 7]) if len(fields) > seq_index + 7 else gmag
+                rmag = parse_float(fields[seq_index + 8]) if len(fields) > seq_index + 8 else rmag
+                per_g = parse_float(fields[seq_index + 9]) if len(fields) > seq_index + 9 else per_g
+                per_r = parse_float(fields[seq_index + 10]) if len(fields) > seq_index + 10 else per_r
+                ng = parse_int(fields[seq_index + 11], -1) if len(fields) > seq_index + 11 else ng
+                nr = parse_int(fields[seq_index + 12], -1) if len(fields) > seq_index + 12 else nr
+                r2_g = parse_float(fields[seq_index + 17]) if len(fields) > seq_index + 17 else r2_g
+                r2_r = parse_float(fields[seq_index + 18]) if len(fields) > seq_index + 18 else r2_r
+                gamp = parse_float(fields[seq_index + 19]) if len(fields) > seq_index + 19 else gamp
+                ramp = parse_float(fields[seq_index + 20]) if len(fields) > seq_index + 20 else ramp
+                fap_g = parse_float(fields[seq_index + 21]) if len(fields) > seq_index + 21 else fap_g
+                fap_r = parse_float(fields[seq_index + 22]) if len(fields) > seq_index + 22 else fap_r
+                variable_type = fields[seq_index + 23] if len(fields) > seq_index + 23 else variable_type
+
         metadata[source_id] = {
             "type": variable_type or "UNKNOWN",
             "ng": ng,
             "nr": nr,
+            "gmag": gmag,
+            "rmag": rmag,
+            "period": period,
+            "per_g": per_g,
+            "per_r": per_r,
+            "r2_g": r2_g,
+            "r2_r": r2_r,
+            "gamp": gamp,
+            "ramp": ramp,
+            "fap_g": fap_g,
+            "fap_r": fap_r,
         }
     return metadata
 
+
+def has_finite_nonzero_mean_magnitudes(metadata: dict[str, Any]) -> bool:
+    """Return true only when both parent mean magnitudes are finite and nonzero.
+
+    NaN compares unequal to zero in Python, so a simple not-equal-to-zero test
+    incorrectly classifies missing magnitudes as present.
+    """
+    gmag = metadata.get("gmag", float("nan"))
+    rmag = metadata.get("rmag", float("nan"))
+    return (
+        isinstance(gmag, (int, float))
+        and isinstance(rmag, (int, float))
+        and math.isfinite(gmag)
+        and math.isfinite(rmag)
+        and gmag != 0.0
+        and rmag != 0.0
+    )
 
 def membership_by_type(
     ids: set[int], metadata: dict[int, dict[str, Any]]
@@ -63,6 +306,7 @@ def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
     metrics = {
         oid: {
             "snr": False,
+            "snr_exact": False,
             "snr1": False,
             "mag206": False,
             "mag206_only": False,
@@ -99,9 +343,13 @@ def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
 
         item = metrics[oid]
         snr = 1.0857362047581296 / err
+        # Exact inverse of the magnitude-error transform, retained as a diagnostic
+        # until validated against the published selection semantics.
+        snr_exact = 1.0 / math.expm1(err * math.log(10.0) / 2.5)
         snr1 = 1.0 / err
         item["mag206_only"] |= mag <= 20.6
         item["snr1"] |= snr1 >= threshold
+        item["snr_exact"] |= snr_exact >= threshold
         if snr < threshold:
             continue
 
@@ -192,6 +440,7 @@ def main() -> int:
     parser.add_argument("--g", type=Path, required=True)
     parser.add_argument("--r", type=Path, required=True)
     parser.add_argument("--published", type=Path, required=True)
+    parser.add_argument("--metadata", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -199,7 +448,7 @@ def main() -> int:
     parent = {int(source_id) for source_id in _source_ids(args.parent, None)}
     if len(parent) != 781_602:
         raise ValueError(f"expected 781602 parent SourceIDs, got {len(parent)}")
-    catalog_metadata = parent_catalog_metadata(args.parent)
+    catalog_metadata = parent_catalog_metadata(args.parent, args.metadata)
     if len(catalog_metadata) != len(parent):
         raise ValueError(
             "parent metadata/SourceID coverage mismatch: "
@@ -211,6 +460,19 @@ def main() -> int:
     predicates = {
         "baseline_1p085": {oid for oid in parent if g[oid]["snr"] and r[oid]["snr"]},
         "baseline_1p0": {oid for oid in parent if g[oid]["snr1"] and r[oid]["snr1"]},
+        "exact_magnitude_error_snr_diagnostic": {
+            oid for oid in parent if g[oid]["snr_exact"] and r[oid]["snr_exact"]
+        },
+        "baseline_plus_nonzero_parent_mean_magnitudes_diagnostic": {
+            oid for oid in parent
+            if g[oid]["snr"] and r[oid]["snr"]
+            and has_finite_nonzero_mean_magnitudes(catalog_metadata[oid])
+        },
+        "exact_snr_plus_nonzero_parent_mean_magnitudes_diagnostic": {
+            oid for oid in parent
+            if g[oid]["snr_exact"] and r[oid]["snr_exact"]
+            and has_finite_nonzero_mean_magnitudes(catalog_metadata[oid])
+        },
         "baseline_plus_mag206": {
             oid for oid in parent if g[oid]["mag206"] and r[oid]["mag206"]
         },
@@ -287,6 +549,26 @@ def main() -> int:
                     ),
                 },
             },
+            "parent_mean_magnitude_quality": {
+                partition: {
+                    "gmag_zero": sum(catalog_metadata[oid]["gmag"] == 0.0 for oid in ids),
+                    "rmag_zero": sum(catalog_metadata[oid]["rmag"] == 0.0 for oid in ids),
+                    "gmag_or_rmag_zero": sum(
+                        catalog_metadata[oid]["gmag"] == 0.0
+                        or catalog_metadata[oid]["rmag"] == 0.0
+                        for oid in ids
+                    ),
+                    "gmag_or_rmag_unknown": sum(
+                        not math.isfinite(catalog_metadata[oid]["gmag"])
+                        or not math.isfinite(catalog_metadata[oid]["rmag"])
+                        for oid in ids
+                    ),
+                }
+                for partition, ids in (
+                    ("candidate_only", candidate_only),
+                    ("published_intersection", published_intersection),
+                )
+            },
         },
         "candidate_only_sample_by_source_id": [
             {
@@ -303,6 +585,78 @@ def main() -> int:
             for oid in sorted(candidate_only)[:100]
         ],
     }
+    # Enumerate the residual candidate-only objects after the strongest
+    # source-backed metadata hypothesis. This is evidence collection only: do
+    # not use this report to silently change the scientific selection policy.
+    nonzero_mean_mag_ids = {
+        oid for oid in candidate_only
+        if has_finite_nonzero_mean_magnitudes(catalog_metadata[oid])
+    }
+    report["candidate_only_residual_analysis"] = {
+        "candidate_only_count": len(candidate_only),
+        "both_parent_mean_magnitudes_nonzero_count": len(nonzero_mean_mag_ids),
+        "both_parent_mean_magnitudes_zero_or_one_zero_count": (
+            len(candidate_only) - len(nonzero_mean_mag_ids)
+        ),
+        "candidate_only_with_zero_ng_or_nr_count": sum(
+            catalog_metadata[oid]["ng"] == 0 or catalog_metadata[oid]["nr"] == 0
+            for oid in candidate_only
+        ),
+        "both_mean_magnitudes_nonzero_objects": [
+            {
+                "source_id": oid,
+                "gmag": catalog_metadata[oid]["gmag"],
+                "rmag": catalog_metadata[oid]["rmag"],
+                "period": catalog_metadata[oid]["period"],
+                "per_g": catalog_metadata[oid]["per_g"],
+                "per_r": catalog_metadata[oid]["per_r"],
+                "r2_g": catalog_metadata[oid]["r2_g"],
+                "r2_r": catalog_metadata[oid]["r2_r"],
+                "gamp": catalog_metadata[oid]["gamp"],
+                "ramp": catalog_metadata[oid]["ramp"],
+                "fap_g": catalog_metadata[oid]["fap_g"],
+                "fap_r": catalog_metadata[oid]["fap_r"],
+                "ng": catalog_metadata[oid]["ng"],
+                "nr": catalog_metadata[oid]["nr"],
+                "type": catalog_metadata[oid]["type"],
+                "g_qualifying_detections": g[oid]["qualifying_detections"],
+                "r_qualifying_detections": r[oid]["qualifying_detections"],
+                "g_qualifying_flag_or": g[oid]["qualifying_flag_or"],
+                "r_qualifying_flag_or": r[oid]["qualifying_flag_or"],
+            }
+            for oid in sorted(nonzero_mean_mag_ids)
+        ],
+        "zero_mean_magnitude_source_id_sample": [
+            oid for oid in sorted(candidate_only - nonzero_mean_mag_ids)[:100]
+        ],
+        "warning": (
+            "Diagnostic only. Nonzero parent mean magnitudes are not an accepted "
+            "selection criterion unless supported by the source methodology."
+        ),
+    }
+
+    # Full ID-level evidence enables auditing every extra candidate, not only samples.
+    report["candidate_only_all_objects"] = [
+        {
+            "source_id": oid,
+            "parent": catalog_metadata[oid],
+            "g": {key: g[oid][key] for key in (
+                "qualifying_detections", "qualifying_flag_or",
+                "qualifying_flag_nonzero", "brightest_qualifying_mag",
+                "smallest_qualifying_error", "snr", "snr_exact", "snr1",
+            )},
+            "r": {key: r[oid][key] for key in (
+                "qualifying_detections", "qualifying_flag_or",
+                "qualifying_flag_nonzero", "brightest_qualifying_mag",
+                "smallest_qualifying_error", "snr", "snr_exact", "snr1",
+            )},
+            "parent_mean_magnitudes_nonzero": (
+                has_finite_nonzero_mean_magnitudes(catalog_metadata[oid])
+            ),
+        }
+        for oid in sorted(candidate_only)
+    ]
+
     for name, ids in predicates.items():
         report[name] = {
             "count": len(ids),

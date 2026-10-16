@@ -128,17 +128,21 @@ def test_band_diagnostics_keep_flag_policy_separate_from_snr(tmp_path: Path):
         "1\t0.1\t18.0\t1\n"
         "2\t0.1\t18.0\t1\n"
         "3\tnan\t18.0\t0\n"
-        "4\t0.0\t18.0\t0\n",
+        "4\t0.0\t18.0\t0\n"
+        "5\t0.4\t18.0\t0\n",
         encoding="utf-8",
     )
-    metrics = band_metrics(path, {1, 2, 3, 4}, "e_gmag", "gmag")
+    metrics = band_metrics(path, {1, 2, 3, 4, 5}, "e_gmag", "gmag")
     assert metrics[1]["snr"] is True
     assert metrics[1]["snr_flag0"] is True
     assert metrics[2]["snr"] is True
     assert metrics[2]["snr_flag0"] is False
     assert metrics[3]["snr"] is False
     assert metrics[4]["snr"] is False
-
+    # For a 0.4-mag uncertainty, the linear approximation exceeds 2.5σ,
+    # but the exact inverse magnitude-error transform does not.
+    assert metrics[5]["snr"] is True
+    assert metrics[5]["snr_exact"] is False
 
 
 def test_parent_catalog_metadata_reports_type_and_published_detection_counts(
@@ -153,6 +157,8 @@ def test_parent_catalog_metadata_reports_type_and_published_detection_counts(
         row[0:22] = list(f"{name:<22}")
         row[23:29] = list(f"{source_id:6d}")
         row[30:39] = list(f"{123.45678:9.5f}")
+        row[89:95] = list(f"{17.5:6.2f}")
+        row[96:102] = list(f"{18.2:6.2f}")
         row[131:135] = list(f"{ng:4d}")
         row[136:140] = list(f"{nr:4d}")
         row[211:216] = list(f"{variable_type:<5}")
@@ -161,14 +167,118 @@ def test_parent_catalog_metadata_reports_type_and_published_detection_counts(
     parent = tmp_path / "parent_table2.txt"
     parent.write_text(
         table2_row("ZTFJ000000.00+000000.0", 100, "Mira", 25, 30)
-        + "\\n"
+        + "\n"
         + table2_row("ZTFJ000001.00+000000.0", 102, "EW", 0, 12)
-        + "\\n",
+        + "\n",
         encoding="utf-8",
     )
 
     metadata = parent_catalog_metadata(parent)
-    assert metadata == {
-        100: {"type": "Mira", "ng": 25, "nr": 30},
-        102: {"type": "EW", "ng": 0, "nr": 12},
+    assert set(metadata) == {100, 102}
+    assert {
+        source_id: {
+            key: metadata[source_id][key]
+            for key in ("type", "ng", "nr", "gmag", "rmag")
+        }
+        for source_id in metadata
+    } == {
+        100: {"type": "Mira", "ng": 25, "nr": 30, "gmag": 17.5, "rmag": 18.2},
+        102: {"type": "EW", "ng": 0, "nr": 12, "gmag": 17.5, "rmag": 18.2},
     }
+    # Extended diagnostic fields may be unavailable in minimal synthetic rows,
+    # but their absence must not erase the published metadata above.
+
+
+def test_parent_catalog_metadata_uses_named_column_vizier_tsv(tmp_path: Path):
+    from scripts.diagnose_cpvs_selection import parent_catalog_metadata
+
+    parent = tmp_path / "parent-mirror.txt"
+    parent.write_text("metadata supplied separately\n", encoding="utf-8")
+    metadata_tsv = tmp_path / "parent-metadata.tsv"
+    metadata_tsv.write_text(
+        "#Seq\tPer\tgmag\trmag\tPer-g\tPer-r\tNg\tNr\tR2-g\tR2-r\tgAmp\trAmp\tlog(FAP-g)\tlog(FAP-r)\tType\n"
+        "100\t2.5\t17.5\t18.2\t2.4\t2.6\t25\t30\t0.91\t0.92\t0.2\t0.3\t-8.1\t-7.2\tMira\n"
+        "102\t0\t0\t18.1\t0\t0\t0\t12\t0\t0\t0\t0\t0\t0\tEW\n",
+        encoding="utf-8",
+    )
+
+    metadata = parent_catalog_metadata(parent, metadata_tsv)
+    assert metadata[100]["gmag"] == 17.5
+    assert metadata[100]["rmag"] == 18.2
+    assert metadata[100]["ng"] == 25
+    assert metadata[100]["nr"] == 30
+    assert metadata[100]["type"] == "Mira"
+    assert metadata[100]["period"] == 2.5
+    assert metadata[100]["per_g"] == 2.4
+    assert metadata[100]["per_r"] == 2.6
+    assert metadata[100]["r2_g"] == 0.91
+    assert metadata[100]["r2_r"] == 0.92
+    assert metadata[100]["gamp"] == 0.2
+    assert metadata[100]["ramp"] == 0.3
+    assert metadata[100]["fap_g"] == -8.1
+    assert metadata[100]["fap_r"] == -7.2
+    assert metadata[102]["gmag"] == 0
+    assert metadata[102]["ng"] == 0
+    assert metadata[102]["type"] == "EW"
+
+def test_parent_mean_magnitude_diagnostic_rejects_nan_and_infinity():
+    from scripts.diagnose_cpvs_selection import has_finite_nonzero_mean_magnitudes
+
+    assert has_finite_nonzero_mean_magnitudes({"gmag": 17.5, "rmag": 18.2})
+    assert not has_finite_nonzero_mean_magnitudes({"gmag": float("nan"), "rmag": 18.2})
+    assert not has_finite_nonzero_mean_magnitudes({"gmag": 17.5, "rmag": float("nan")})
+    assert not has_finite_nonzero_mean_magnitudes({"gmag": float("inf"), "rmag": 18.2})
+    assert not has_finite_nonzero_mean_magnitudes({"gmag": 0.0, "rmag": 18.2})
+    assert not has_finite_nonzero_mean_magnitudes({"gmag": 17.5, "rmag": 0.0})
+
+def test_parent_catalog_metadata_votable_preserves_empty_field_alignment(tmp_path: Path):
+    from scripts.diagnose_cpvs_selection import parent_catalog_metadata
+
+    parent = tmp_path / "parent-mirror.txt"
+    parent.write_text("metadata supplied separately\\n", encoding="utf-8")
+    metadata_votable = tmp_path / "parent-metadata.xml"
+    metadata_votable.write_text(
+        """<?xml version="1.0"?>
+<VOTABLE version="1.3">
+  <RESOURCE>
+    <TABLE>
+      <FIELD name="Seq" datatype="int"/>
+      <FIELD name="Per" datatype="double"/>
+      <FIELD name="gmag" datatype="float"/>
+      <FIELD name="rmag" datatype="float"/>
+      <FIELD name="Per-g" datatype="double"/>
+      <FIELD name="Per-r" datatype="double"/>
+      <FIELD name="Ng" datatype="short"/>
+      <FIELD name="Nr" datatype="short"/>
+      <FIELD name="R2-g" datatype="float"/>
+      <FIELD name="R2-r" datatype="float"/>
+      <FIELD name="gAmp" datatype="float"/>
+      <FIELD name="rAmp" datatype="float"/>
+      <FIELD name="log(FAP-g)" datatype="double"/>
+      <FIELD name="log(FAP-r)" datatype="double"/>
+      <FIELD name="Type" datatype="char" arraysize="5*"/>
+      <DATA><TABLEDATA>
+        <TR><TD>9877</TD><TD>0.4997498</TD><TD>16.127</TD><TD>15.856</TD>
+        <TD>0.4997498</TD><TD></TD><TD>62</TD><TD>63</TD><TD>0.974</TD>
+        <TD>0.959</TD><TD>0.749</TD><TD>0.622</TD><TD>-23.407</TD>
+        <TD>-23.842</TD><TD>RR</TD></TR>
+      </TABLEDATA></DATA>
+    </TABLE>
+  </RESOURCE>
+</VOTABLE>
+""",
+        encoding="utf-8",
+    )
+
+    metadata = parent_catalog_metadata(parent, metadata_votable)
+    assert metadata[9877]["per_r"] != metadata[9877]["per_r"]  # NaN: field is missing
+    assert metadata[9877]["ng"] == 62
+    assert metadata[9877]["nr"] == 63
+    assert metadata[9877]["r2_g"] == 0.974
+    assert metadata[9877]["r2_r"] == 0.959
+    assert metadata[9877]["gamp"] == 0.749
+    assert metadata[9877]["ramp"] == 0.622
+    assert metadata[9877]["fap_g"] == -23.407
+    assert metadata[9877]["fap_r"] == -23.842
+    assert metadata[9877]["type"] == "RR"
+
