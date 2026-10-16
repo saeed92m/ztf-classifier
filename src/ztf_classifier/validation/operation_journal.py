@@ -138,8 +138,9 @@ def run_logged_operation(
 ) -> Any:
     """Run a callable and persist STARTED plus PASS/FAIL evidence.
 
-    Exceptions are logged (with a redacted traceback) and re-raised unchanged;
-    logging never converts a failed operation into success.
+    Exceptions during either the operation or output summarization are logged
+    (with a redacted traceback) and re-raised unchanged. Logging never converts
+    a failed operation into success.
     """
     append_operation_event(
         journal_path,
@@ -153,6 +154,7 @@ def run_logged_operation(
     )
     try:
         result = function()
+        summary = dict(output_summary(result)) if output_summary else {}
     except BaseException as exc:
         append_operation_event(
             journal_path,
@@ -172,7 +174,6 @@ def run_logged_operation(
         )
         raise
 
-    summary = dict(output_summary(result)) if output_summary else {}
     append_operation_event(
         journal_path,
         stage=stage,
