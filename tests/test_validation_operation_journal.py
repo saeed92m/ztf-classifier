@@ -75,7 +75,7 @@ def test_operation_journal_redacts_secret_fields_and_url_parameters(tmp_path):
     assert "abc.def.ghi" not in serialized
     assert event["parameters"]["api_key"] == "[REDACTED]"
     assert "access_token=%5BREDACTED%5D" in event["command_or_api_query"]
-    assert "Bearer [REDACTED]" in event["parameters"]["headers"]["Authorization"]
+    assert event["parameters"]["headers"]["Authorization"] == "[REDACTED]"
 
 
 def test_operation_journal_rejects_invalid_status_and_missing_stage(tmp_path):
