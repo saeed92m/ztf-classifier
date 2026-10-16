@@ -81,8 +81,8 @@
       },
       "regression_protection_count": {
         "before": 0,
-        "after": 22,
-        "unit": "focused pytest cases added: 11 MAST request/response contract cases and 11 TESS QUALITY assessment cases; execution status is tracked separately by CI",
+        "after": 24,
+        "unit": "focused pytest cases added: 11 MAST request/response contract cases, 11 TESS QUALITY cases, and 2 source-acquisition journal integration cases; execution status tracked separately by CI",
         "status": "MEASURED"
       }
     },
@@ -98,7 +98,9 @@
       "Initial MAST product lookup failure was retained; root cause was confirmed by a corrected request and successful product acquisition.",
       "Added source code for service-specific MAST product request construction and fail-closed response validation.",
       "Added unit tests for MAST request/response contracts; latest-head CI not yet verified. Added configurable TESS QUALITY mask assessment helper and focused tests; latest-head CI not yet verified.",
-      "No model evaluation, cross-survey feature mapping, full-vs-batch model comparison, or CPVS membership comparison was performed."
+      "No model evaluation, cross-survey feature mapping, full-vs-batch model comparison, or CPVS membership comparison was performed.",
+      "Added two source-acquisition journal integration tests: successful acquisition binds source artifact hash, row count, and evidence-manifest hash; expected-hash failure is recorded as BLOCKED rather than PASS.",
+      "The acquisition journal is optional; automatic event generation for the existing Gaia/TESS pilot orchestration remains open."
     ]
   },
   "failure_analysis": {
