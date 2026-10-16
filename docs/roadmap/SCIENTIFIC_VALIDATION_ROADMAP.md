@@ -209,3 +209,24 @@ The earlier **P0 exit status (2026-10-04): COMPLETE** describes the recovery mil
 - The published Table 4 ID ↔ ZTF name ↔ parent-catalog mapping (including IDs 781603 and 781604) is an investigation lead and must be verified against the pinned source tables; it is not yet a confirmed root cause.
 
 **Required next action:** run the heavy source-backed workflow on its intended ci/heavy/* ref after the merged correction, confirm required jobs execute rather than skip, inspect derivation/acquisition artifacts, and independently audit the membership and ID/name mapping. Keep exact reconstruction UNRESOLVED until evidence justifies a different disposition. Do not weaken the product gate or alter the frozen v0.2.0 baseline.
+
+
+## Ecosystem-derived update — 2026-10-16
+
+Canonical decision record: [docs/ECOSYSTEM_LESSONS_AND_ACTION_PLAN_2026-10-16.md](../ECOSYSTEM_LESSONS_AND_ACTION_PLAN_2026-10-16.md).
+
+### Corrected current CPVS evidence
+The latest verified status in open Issue #170 is 741,786 candidate IDs, 730,184 published IDs, 11,602 candidate-only and 0 published-only. Any older 741,788 / 11,604 statement in this roadmap is a documentation inconsistency and must not be presented as current. Preserve it only as historical text explicitly marked superseded if the exact prior run is independently identified. The Seq-based exact-reconstruction claim remains UNRESOLVED; do not change selection criteria to force the reference count.
+
+### Sampling and batch verification
+Issue #182 tracks deterministic 100-object and stratified 1,000-object manifests. The issue's latest recorded state says source-backed artifacts still require generation/review and the full-vs-batch comparator has not yet been executed/wired. Do not mark this complete until exact IDs, sampling seed/method, input hashes, reference-relative FP/FN, discrepant IDs and full-vs-batch results are available and reviewed.
+
+### Ecosystem-derived requirements
+- [ ] Complete object-ID-based split/overlap/leakage audit.
+- [ ] Audit held-out labels across training, meta-model, calibration, augmentation and model selection.
+- [ ] Track independent ground truth vs reference labels vs pseudo-labels in benchmark manifests.
+- [ ] Test full-vs-batch equivalence by complete SourceID and add regression coverage.
+- [ ] Surface data QC, provenance, uncertainty, OOD, anomaly and catalog evidence as separate fields.
+- [ ] Prototype external tools only against defined workloads; no default dependency addition for Gnuastro or mcp-stargazing.
+
+These items supplement, not relax, the permanent product-level Scientific Validation Gate.
