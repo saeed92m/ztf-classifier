@@ -1,10 +1,21 @@
 # Multi-source Scientific Validation and Audit Protocol
 
-**Status:** Protocol proposed; no Gaia DR3 or TESS data acquisition has yet been performed by this cycle.  
+**Status:** Protocol proposed; bounded Gaia DR3 and TESS/MAST ingestion-integrity smoke tests were performed on 2026-10-16 and recorded in the run evidence files below. These are not full scientific validation, cross-survey model evaluation, or CPVS resolution.  
 **Tracking issue:** [#188](https://github.com/saeed92m/ztf-classifier/issues/188)  
 **Related CPVS blockers:** [#170](https://github.com/saeed92m/ztf-classifier/issues/170), [#180](https://github.com/saeed92m/ztf-classifier/issues/180)
 
 ## 1. Purpose and scope
+
+### Verified bounded pilot evidence (2026-10-16)
+
+- Gaia DR3 bounded TOP-10 query: 10 records and 10 unique source IDs; a repeated identical query produced byte-identical response bytes and the same ordered IDs. Evidence: `runs/2026-10-16_gaia-dr3-top10-ingestion-smoke.json`.
+- TESS/MAST bounded metadata query: 5 records with 5 unique observation identifiers. Evidence: `runs/2026-10-16_tess-mast-top5-metadata-smoke.json`.
+- TESS Sector 4 SPOC light-curve product for observation ID `61113566`: 18,684 rows, 20 columns, 3 HDUs; downloaded bytes SHA-256 `0e9f3e5afc1b029000bbd948e4f1500970ffa091523f6330afb118a74b7ef80d`. Evidence: `runs/2026-10-16_tess-sector4-lightcurve-product-smoke.json`.
+- The initial MAST products query returned HTTP 200 but no rows because the observation ID was sent in the wrong request shape. The corrected service-specific `params.obsid` contract returned products; the failed attempt is preserved as evidence and regression tests cover the request/response contract.
+- The TESS quality-mask assessment is descriptive only. A starting bitmask documented by STScI was evaluated against this product, but was not applied to a model dataset and is not asserted to be universal. Non-finite values require separate handling. Evidence: `runs/2026-10-16_tess-quality-mask-assessment.json`.
+
+These are ingestion, repeatability, schema, and bounded quality-flag smoke tests. They do not establish scientific validity, cross-survey feature compatibility, model accuracy, or CPVS membership correctness. The operation journal helper exists with unit tests, but these pilot records are currently authored as evidence artifacts rather than generated end-to-end by the journal wrapper; automatic pipeline integration remains open work.
+
 
 Validate the platform's data handling and scientific interfaces against several independently published astronomical data sources. This is not a claim that one model can be applied to every survey. Each source has its own schema, cadence, units, quality flags, selection function, identifier namespace, and reference-label semantics.
 
