@@ -79,7 +79,7 @@
         "unit": "MAST_request_contract_tests_added",
         "status": "MEASURED"
       },
-      "quality_mask_test_cases": {
+      "regression_protection_count": {
         "before": 0,
         "after": 11,
         "unit": "focused TESS QUALITY bitmask unit-test cases including invalid-input cases",
