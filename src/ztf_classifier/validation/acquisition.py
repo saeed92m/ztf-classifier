@@ -359,20 +359,45 @@ def acquire_source(
 
     artifact = result.artifact
     manifest = result.evidence_manifest
+    evidence_path = (
+        request.destination / f"{request.destination.name}.evidence.json"
+        if len(request.urls) > 1 and request.artifact_names
+        else request.destination.with_name(
+            request.destination.name + ".evidence.json"
+        )
+    )
+    evidence_artifact = (
+        EvidenceArtifact.from_path(evidence_path, "evidence_manifest")
+        if manifest is not None
+        else None
+    )
+    output_artifacts = []
+    if artifact is not None:
+        output_artifacts.append(
+            {
+                "path": artifact.path,
+                "sha256": artifact.sha256,
+                "size_bytes": artifact.size_bytes,
+                "role": artifact.role,
+            }
+        )
+    if evidence_artifact is not None:
+        output_artifacts.append(evidence_artifact.to_dict())
+    output_hashes = {}
+    if artifact is not None:
+        output_hashes["source_sha256"] = artifact.sha256
+    if evidence_artifact is not None:
+        output_hashes["evidence_manifest_sha256"] = evidence_artifact.sha256
     append_operation_event(
         journal_path,
         status="PASS" if result.status == "ACQUIRED" else "BLOCKED",
-        output_artifacts=(
-            [{"path": artifact.path, "sha256": artifact.sha256, "size_bytes": artifact.size_bytes}]
-            if artifact
-            else []
-        ),
+        output_artifacts=output_artifacts,
         counts_after=(
             {"rows": manifest.row_count}
             if manifest and manifest.row_count is not None
             else {}
         ),
-        hashes={"sha256": artifact.sha256} if artifact else {},
+        hashes=output_hashes,
         error_type="AcquisitionError" if result.error else None,
         error_message=result.error,
         notes=[
