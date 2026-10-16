@@ -1,33 +1,33 @@
 {
   "schema_version": "1.1",
   "stage_id": "cpvs-object-identity-audit-20261017",
-  "objective": "Independently test whether CPVS numeric SourceID membership agrees with object identity by ZTF name, and verify the parent row-ordinal-to-catalog-ID mapping before interpreting membership discrepancies.",
+  "objective": "Correctly preserve CPVS internal source identifiers from Table2 Seq and independently verify ID-to-ZTF-name identity against the published reference.",
   "previous_knowledge_consumed": [
-    "The CPVS parent snapshot contains 781602 catalog rows and source-backed derivation currently yields 741786 candidate IDs.",
-    "VizieR J/ApJ/932/118 Table 4 reports 730184 objects and defines its ID column as a catalog internal identifier with range 1-781604.",
-    "Zenodo record 3886372 describes SourceID as the internal identifier joining single-exposure photometry to Table 2.",
-    "Earlier diagnostics compared numeric ID sets and reported 11602 candidate-only IDs; exact membership remains unresolved.",
-    "A diagnostic combination of finite non-zero g/r mean magnitudes and periods happened to match the reference count, but this is not accepted as the paper's selection rule."
+    "Official VizieR ReadMe J/ApJS/249/18 defines Table2 bytes 1-22 as the ZTF object name and bytes 24-29 as Seq, the internal source identifier; the photometry files use Seq.",
+    "The existing derivation parser ignored the Seq field and assigned one-based row ordinals as SourceIDs.",
+    "Official VizieR ReadMe J/ApJ/932/118 defines Table4 ID as a catalog internal identifier with range 1-781604.",
+    "The paper states its 730184-object subset contains at least one 2.5-sigma g-band and 3-sigma r-band detection.",
+    "The numeric CPVS reconstruction mismatch has been reported as 741786 candidates versus 730184 published IDs; exact reconstruction remains unresolved."
   ],
   "baseline": {
     "revision": "main@d331036dddbbdbe399f18a58c7a204b7ca039558",
-    "status": "Read-only diagnostic only. No production selection, thresholds, baseline artifacts, labels, or release assets are changed."
+    "status": "The parent ID parser uses row ordinals instead of the documented Table2 Seq/internal SourceID. This PR corrects identifier interpretation only; selection thresholds and frozen v0.2.0/v1.0.1 artifacts remain unchanged."
   },
   "expected_improvement": [
-    "Parse the ZTF object names and internal IDs from the independent published Table 4 source.",
-    "Compare published ID-to-name pairs against the parent catalog's provisional row-ordinal-to-name mapping.",
-    "Report numeric-ID membership and provisional name-based membership separately, and refuse to interpret name membership as authoritative when the mapping check fails.",
-    "Retain mismatch samples and explicit diagnostics in the heavy scientific-validation artifact."
+    "Read the explicit Seq/internal SourceID from Table2 rows when present, retaining row-ordinal fallback only for simplified legacy fixtures.",
+    "Add regression coverage for non-contiguous internal IDs so row order cannot silently replace SourceID.",
+    "Audit actual Table2 SourceID-to-ZTF-name mapping against published Table4 ID/name pairs.",
+    "Report numeric-ID and object-name membership separately in the heavy source-backed artifact."
   ],
   "measurement": {
     "metrics": {
       "correctness": {
-        "before": "Numeric ID set comparison does not independently verify ID-to-object mapping.",
-        "after": "Artifact reports exact ID-to-name alignment, out-of-range IDs, and name-based comparison only when mapping is validated."
+        "before": "Source IDs from catalog rows were replaced by sequential row ordinals.",
+        "after": "Official Table2 Seq identifiers are preserved and independently cross-checked against published Table4 IDs and ZTF names."
       },
       "reproducibility": {
-        "before": "No dedicated source-backed ID-to-name audit.",
-        "after": "Deterministic script and regression tests added to the heavy validation workflow."
+        "before": "No explicit regression for sparse/non-contiguous internal source identifiers.",
+        "after": "Regression tests cover explicit Seq parsing and identity cross-match diagnostics."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED"
@@ -38,39 +38,39 @@
     "status": "NOT_VERIFIED",
     "scientific_gate_affected": true,
     "evidence": [
-      "Official Zenodo and VizieR documentation establish that both sources use internal catalog identifiers; the exact mapping must be verified from actual source records.",
-      "A diagnostic script, unit tests, and a heavy-workflow invocation are added in this PR."
+      "Official source schema directly documents the Seq field and its internal identifier role.",
+      "Production parser, regression tests, name-based audit script, workflow invocation, and this lifecycle record are included in PR #194."
     ],
-    "blocker": "Run focused tests and full source-backed heavy validation; inspect resulting ID-to-name alignment and do not declare CPVS exact reconstruction resolved without a reproducible result."
+    "blocker": "Focused tests and full heavy source-backed validation must pass; the 11602 candidate-only discrepancy remains unresolved until the corrected mapping produces and independently verifies a reproducible result."
   },
   "failure_analysis": {
-    "status": "HYPOTHESIS",
+    "status": "ROOT_CAUSE_IDENTIFIED",
     "findings": [
-      "A mismatch between the parent row-ordinal mapping and published internal catalog IDs could invalidate numeric membership comparison or candidate-to-object provenance.",
-      "This hypothesis is not yet confirmed; the new source-backed audit is intended to test it."
+      "A concrete identifier-mapping defect exists: the production parser assigned row ordinals instead of reading the official Table2 Seq/internal SourceID field.",
+      "Whether this defect fully explains the previously reported 11602 candidate-only discrepancy is not yet established; the corrected full-data run and independent object-name audit must determine that."
     ]
   },
   "knowledge_extraction": {
     "status": "SUPPORTED",
     "findings": [
-      "Object-level scientific comparisons should use stable astronomical object identifiers/names as an independent check alongside numeric internal IDs.",
-      "Do not treat catalog row ordinals as equivalent to internal IDs unless source-backed ID-to-object mapping is verified.",
-      "Keep candidate counts, numeric membership, and name-based membership separate in diagnostic reports."
+      "Do not replace an explicit internal object identifier with row ordinal when the source schema provides an identifier column.",
+      "The CPVS paper's stated detection criterion must remain separate from catalog summary-field diagnostics.",
+      "Exact numeric membership is not accepted as proof of correct object identity until ID-to-name mapping is validated."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Run tests/test_cpvs_object_identity_audit.py and the complete CI suite.",
-      "Complete heavy source-backed validation and review generated object_identity_audit.json.",
-      "CPVS exact reconstruction remains unresolved until the 11602 candidate-only discrepancy is explained."
+      "Run the focused source-ID and object-identity tests plus full CI.",
+      "Complete the heavy source-backed workflow using the corrected Seq mapping.",
+      "Review the candidate/reference ID and ZTF-name membership counts; do not claim scientific resolution without exact, reproducible agreement or a documented remaining cause."
     ]
   },
   "decision": "REVISE",
   "knowledge_carried_forward": [
-    "Do not change selection thresholds or tune filters to force the target count.",
-    "Do not accept row-ordinal-to-internal-ID equivalence without source-backed validation.",
-    "Do not merge the diagnostic change until its tests pass.",
-    "Preserve v0.2.0 and v1.0.1 baselines and keep CPVS validation fail-closed."
+    "Preserve actual Table2 Seq/internal SourceID values.",
+    "Do not tune thresholds or add unrelated catalog summary-field filters to force 730184.",
+    "Keep CPVS exact reconstruction unresolved until corrected source-backed evidence is reviewed.",
+    "Do not change the frozen v0.2.0 baseline or v1.0.1 release artifacts."
   ]
 }

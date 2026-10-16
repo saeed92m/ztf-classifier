@@ -295,11 +295,11 @@ def _snr_from_mag_error(value: str) -> float:
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Resolve CPVS SourceIDs from the published Table2 catalog row order.
+    """Resolve actual CPVS internal SourceIDs from Table2's Seq column.
 
-    The published table uses ZTF object names as the row identifiers in its
-    catalog presentation; the benchmark SourceID is the one-based ordinal of
-    catalog rows. Metadata, page furniture, and repeated headers are ignored.
+    The official Table2 ReadMe defines bytes 1-22 as the ZTF object name and
+    bytes 24-29 as Seq, the internal source identifier used by the photometry
+    files. Some legacy fixtures omit Seq; those use a one-based row ordinal.
     """
     owner, raw = _open_text(parent_path, member)
     try:
@@ -315,11 +315,12 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
             fields = _split_fields(line)
             if len(fields) < 2:
                 continue
-            # A valid catalog row starts with a ZTF identifier and has at
-            # least one following field. Do not interpret the next field as
-            # SourceID: in Table2 it is a numeric catalog attribute (e.g. RA).
             ordinal += 1
-            source_ids.add(str(ordinal))
+            # In the official fixed-width Table2, the second whitespace-delimited
+            # field is Seq. Older simplified tables omit Seq and put RA here.
+            seq = fields[1].strip()
+            source_id = seq if seq.isdigit() and int(seq) > 0 else str(ordinal)
+            source_ids.add(source_id)
         return source_ids
     finally:
         raw.close()
@@ -343,8 +344,8 @@ def _source_ids(parent_path: Path, member: str | None) -> set[str]:
             owner.close()
 
     if saw_catalog_row:
-        # CPVS Table2 uses ZTF names as row identifiers; SourceID is the
-        # published ordinal. Metadata/header sections must not terminate scan.
+        # CPVS Table2 stores the internal source identifier in its Seq column.
+        # The parser falls back to row ordinal only for simplified legacy fixtures.
         return _source_ids_from_catalog(parent_path, member)
 
     rows = _iter_rows(parent_path, member, required_columns=("SourceID",))
