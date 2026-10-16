@@ -54,11 +54,11 @@
       "row_width_bytes": 100,
       "finite_time_values": 15973,
       "finite_pdcsap_flux_values": 14403,
-      "quality_flags": "Multiple nonzero quality flags observed; documented recommended mask still pending",
+      "quality_flags": "Multiple nonzero quality flags observed; official starting mask cross-checked; pure configurable assessment helper and tests added, not applied to model data",
       "run_record": "docs/scientific_validation/runs/2026-10-16_tess-sector4-lightcurve-product-smoke.json"
     },
     "mast_product_lookup_incident": {
-      "status": "ROOT_CAUSE_CONFIRMED_REMEDIATION_VERIFIED_TEST_PENDING",
+      "status": "ROOT_CAUSE_CONFIRMED_REMEDIATION_COMMITTED_CI_PENDING",
       "reason_code": "PRODUCT_LOOKUP_EMPTY_RESULT",
       "initial_failure": "Mast.Caom.Products returned HTTP 200 and zero rows when obsid was incorrectly passed through generic params.filters.",
       "root_cause": "This service requires the observation identifier directly in params.obsid.",
@@ -79,6 +79,12 @@
         "unit": "MAST_request_contract_tests_added",
         "status": "MEASURED"
       },
+      "quality_mask_test_cases": {
+        "before": 0,
+        "after": 11,
+        "unit": "focused TESS QUALITY bitmask unit-test cases including invalid-input cases",
+        "status": "IMPLEMENTED_CI_PENDING"
+      },
       "scientific_validity": {
         "before": "NOT_VERIFIED",
         "after": "NOT_VERIFIED",
@@ -97,7 +103,7 @@
       "One public TESS SPOC light-curve FITS file was downloaded transiently and inspected; raw product not committed.",
       "Initial MAST product lookup failure was retained; root cause was confirmed by a corrected request and successful product acquisition.",
       "Added source code for service-specific MAST product request construction and fail-closed response validation.",
-      "Added unit tests for MAST request/response contracts; latest-head CI not yet verified.",
+      "Added unit tests for MAST request/response contracts; latest-head CI not yet verified. Added configurable TESS QUALITY mask assessment helper and focused tests; latest-head CI not yet verified.",
       "No model evaluation, cross-survey feature mapping, full-vs-batch model comparison, or CPVS membership comparison was performed."
     ]
   },
@@ -125,7 +131,7 @@
     "open_blockers": [
       "Run latest-head CI and review all failures before merging PR #189.",
       "Verify MAST request-contract regression tests pass.",
-      "Cross-check TESS QUALITY bitmask semantics and official product column definitions before deriving features.",
+      "Official TESS QUALITY bitmask semantics were cross-checked and recorded; helper is tested in source but latest-head CI must pass before relying on it. FITS parser/column contract tests remain open.",
       "Integrate the MAST/Gaia adapters with EvidenceManifest and the operation journal; live pilot records were created manually and are not yet produced end-to-end by repository code.",
       "Add a FITS integrity/parser regression test using a small synthetic FITS fixture or approved test fixture.",
       "Run a separate source-compatible scientific validation with explicit labels and object-level splits.",
@@ -136,7 +142,7 @@
   "knowledge_carried_forward": [
     "PR #189 contains the current protocol, journal, and pilot evidence and remains a draft.",
     "Gaia DR3 bounded ingestion and two-call repeatability passed for the recorded query only.",
-    "TESS metadata and one public light-curve product were acquired and audited; quality-mask interpretation remains pending.",
+    "TESS metadata and one public light-curve product were acquired and audited; configurable row-aligned quality-mask helper added but its CI result is pending and it has not been applied to model data.",
     "The MAST product lookup root cause is confirmed; regression coverage was added but CI verification is pending.",
     "Raw Gaia/TESS data are not committed; hashes and compact provenance records are retained.",
     "No scientific model claims are supported by these smoke tests.",
