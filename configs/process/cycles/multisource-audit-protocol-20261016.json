@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "stage_id": "multisource-audit-protocol-20261016",
-  "objective": "Establish a traceable multi-source scientific validation protocol and machine-readable per-run evidence template without changing scientific selection rules or released artifacts.",
+  "objective": "Establish a traceable multi-source scientific validation protocol, per-run manifest template, and append-only operation journal without changing scientific selection rules or released artifacts.",
   "previous_knowledge_consumed": [
     "Issue #170: CPVS exact-membership remains unresolved at 741786 candidates, 730184 published reference IDs, 11602 candidate-only, and 0 published-only.",
     "Issue #180: deterministic CPVS samples and object-level full-vs-batch validation are required and remain separate from this multi-source track.",
@@ -16,9 +16,10 @@
   },
   "expected_improvement": [
     "Define distinct validation claims for acquisition, parsing, identity, transformations, determinism, reference agreement, and model validity.",
-    "Reuse existing evidence/acquisition/source-subset infrastructure and specify a complementary operation journal.",
-    "Specify complete provenance and operation logging including hashes, counts, commands, configuration, environment, errors, hypotheses, remediation, regression tests, and reruns.",
+    "Reuse existing evidence/acquisition/source-subset infrastructure and add a complementary operation journal.",
+    "Record hashes, counts, commands, configuration, environment, errors, hypotheses, remediation, regression tests, and reruns.",
     "Add a machine-readable run manifest template with explicit NOT_RUN/NOT_MEASURED states.",
+    "Test operation success/failure logging and secret redaction.",
     "Keep Gaia DR3 and TESS pilots bounded and version-pinned, with ingestion integrity separate from model-performance claims.",
     "Record the multi-source work under Issue #188 without replacing or closing CPVS issues."
   ],
@@ -26,15 +27,15 @@
     "metrics": {
       "protocol_coverage": {
         "before": "No dedicated cross-source validation protocol and operation-journal contract identified in the inspected main-branch files.",
-        "after": "Protocol and JSON run-manifest template added on branch; automated validation of the template/schema and actual data-run evidence remain NOT_MEASURED."
+        "after": "Protocol, JSON run-manifest template, operation-journal implementation, and four focused tests added on branch; CI results remain pending."
       },
       "scientific_validity": {
         "before": "CPVS exact-membership reconstruction unresolved.",
         "after": "No scientific selection, model, dataset, or release artifact changed; CPVS remains unresolved. Gaia/TESS execution NOT_RUN."
       },
       "traceability": {
-        "before": "Existing artifact/source-subset manifests cover hashes and selected source metadata; stage-level event journaling and explicit multi-source error/remediation linkage remain to be implemented and tested.",
-        "after": "The protocol requires a run-level manifest, event journal, row/object accounting, hashes, errors, root-cause evidence, remediation, regression tests, and rerun linkage. Automated enforcement is still pending."
+        "before": "Existing artifact/source-subset manifests cover hashes and selected source metadata; stage-level event journaling and explicit multi-source error/remediation linkage were not identified.",
+        "after": "Append-only JSONL journal records UTC sequence, stage, operation, status, inputs, outputs, commands, parameters, counts, hashes, warnings and error/traceback fields; run wrapper records STARTED then PASS/FAIL and re-raises failures. Multi-process concurrency is explicitly unsupported by this first implementation."
       }
     }
   },
@@ -43,18 +44,20 @@
     "scientific_gate_affected": false,
     "evidence": [
       "Created GitHub Issue #188 to track source sequence, phases, acceptance criteria, error taxonomy, and audit-trail requirements.",
-      "Added docs/scientific_validation/MULTI_SOURCE_VALIDATION_PROTOCOL.md on branch science/multisource-audit-20261016; it explicitly reuses existing evidence/acquisition/source-subset infrastructure.",
-      "Added configs/experiments/multi_source_run_manifest.template.json on branch science/multisource-audit-20261016.",
-      "Added this lifecycle record and opened draft PR #189.",
-      "GitHub Actions CodeQL run 38877639653 and Product Scope Audit run 38877638617 were IN_PROGRESS when inspected; no passing result is claimed.",
+      "Added docs/scientific_validation/MULTI_SOURCE_VALIDATION_PROTOCOL.md; it explicitly reuses existing evidence/acquisition/source-subset infrastructure.",
+      "Added configs/experiments/multi_source_run_manifest.template.json.",
+      "Added src/ztf_classifier/validation/operation_journal.py with redaction, append-only JSONL events, and success/failure wrapper.",
+      "Added tests/test_validation_operation_journal.py covering success/counts, exception persistence/re-raise, secret redaction, and invalid status/stage rejection.",
+      "Added lifecycle record and opened draft PR #189.",
+      "On the latest observed commit 16926956fad07fc33a845003a2357c820691b1a0, CodeQL run 38877909502, Scientific Validation run 38877909721, Product Scope Audit run 38877909477, and CI runs 38877909398/38877904742 were queued or pending. No passing result is claimed for that head.",
       "No external dataset was acquired or analyzed in this cycle.",
-      "No scientific code, model, dataset, v0.2.0 baseline artifact, or v1.0.1 release artifact was changed."
+      "No scientific selection rule, model, dataset, v0.2.0 baseline artifact, or v1.0.1 release artifact was changed."
     ]
   },
   "failure_analysis": {
     "status": "SUPPORTED",
     "root_causes": [
-      "Existing source/artifact manifests and acquisition helpers already cover part of provenance; the remaining gap is a cross-source operational contract and tested event journal linking each transformation and failure to immutable evidence, root-cause tests, remediation, and reruns."
+      "Existing source/artifact manifests and acquisition helpers cover part of provenance; the remaining gap is a tested cross-source operational contract and journal linking transformations and failures to immutable evidence, root-cause tests, remediation, and reruns."
     ]
   },
   "knowledge_extraction": {
@@ -65,26 +68,27 @@
       "Existing evidence and source-subset manifests should be extended and reused; duplicating acquisition/hash infrastructure risks inconsistent provenance.",
       "A failed or skipped stage must be recorded explicitly and cannot be treated as success.",
       "Suspected causes remain hypotheses until a discriminating test verifies them.",
-      "Successful Gaia/TESS ingestion cannot resolve the CPVS membership discrepancy."
+      "Successful Gaia/TESS ingestion cannot resolve the CPVS membership discrepancy.",
+      "The initial journal assumes one writer per file; parallel workers must use separate journals or a later tested concurrency mechanism."
     ]
   },
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Validate the JSON template and add tests/schema checks before treating it as an enforced contract.",
-      "Implement and test an operation journal/report writer integrated with existing evidence manifests; preserve failure records when an operation errors.",
+      "Validate the JSON run-manifest template and journal implementation through latest-head CI and add any needed schema/contract tests.",
+      "Review CodeQL, lifecycle gate, Scientific Validation, and Product Scope checks before merging PR #189.",
+      "Integrate journal events with existing EvidenceManifest and SourceSubsetManifest so each operation points to verified artifacts.",
       "Run a bounded, pinned external-source pilot only after its query and schema contract are documented.",
       "Verify source artifacts and outputs with SHA-256 and row/object accounting.",
-      "Review latest-head CI, lifecycle gate, CodeQL, and Product Scope checks before merging PR #189.",
       "Keep CPVS exact reconstruction UNRESOLVED until its own evidence supports a different disposition."
     ]
   },
   "decision": "REVISE",
   "knowledge_carried_forward": [
     "Issue #188 is the tracking record for multi-source validation.",
-    "PR #189 is a draft protocol/template change, not evidence of data acquisition or scientific validation.",
+    "PR #189 is a draft protocol/template/journal change, not evidence of data acquisition or scientific validation.",
     "No Gaia DR3 or TESS run has been completed in this cycle.",
-    "Existing EvidenceManifest, SourceSubsetManifest, and acquisition helpers are reusable; the operation journal remains to be implemented.",
+    "Existing EvidenceManifest, SourceSubsetManifest, and acquisition helpers are reusable; operation-journal integration remains pending.",
     "v0.2.0 and v1.0.1 remain unchanged.",
     "CPVS blocker #170 and deterministic sample/full-vs-batch work #180 remain independent and open."
   ]
