@@ -21,6 +21,7 @@ from ztf_classifier.validation.evidence import (
 )
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.sources import get_source
+from ztf_classifier.validation.operation_journal import append_operation_event
 
 
 class AcquisitionError(RuntimeError):
@@ -182,7 +183,7 @@ def _resolve_star_embed_urls(
     manifest["artifact_names"] = list(names)
     return resolved, manifest
 
-def acquire_source(
+def _acquire_source_unlogged(
     request: AcquisitionRequest,
     *,
     code_version: str,
@@ -304,13 +305,101 @@ def acquire_source(
         )
 
 
+def acquire_source(
+    request: AcquisitionRequest,
+    *,
+    code_version: str,
+    fetcher: Fetcher = _requests_fetch,
+    journal_path: str | Path | None = None,
+) -> AcquisitionResult:
+    """Acquire source evidence and optionally journal the operation and outcome."""
+    if journal_path is None:
+        return _acquire_source_unlogged(
+            request, code_version=code_version, fetcher=fetcher
+        )
+
+    safe_urls = [
+        urlparse(url)._replace(query="", fragment="").geturl()
+        for url in request.urls
+    ]
+    event_base = {
+        "stage": "source_acquisition",
+        "operation": "acquire_source",
+        "input_artifacts": [],
+        "command_or_api_query": json.dumps(safe_urls, separators=(",", ":")),
+        "parameters": {
+            "benchmark_id": request.benchmark_id,
+            "source_id": request.source_id,
+            "source_version": request.source_version,
+            "timeout_seconds": request.timeout_seconds,
+            "expected_hash_supplied": bool(
+                request.expected_sha256 or request.expected_sha256s
+            ),
+            "artifact_names": list(request.artifact_names),
+        },
+        "notes": ["Journal records acquisition outcome; source bytes remain external artifacts."],
+    }
+    append_operation_event(journal_path, status="STARTED", **event_base)
+    try:
+        result = _acquire_source_unlogged(
+            request, code_version=code_version, fetcher=fetcher
+        )
+    except Exception as exc:
+        append_operation_event(
+            journal_path,
+            status="FAIL",
+            error_type=type(exc).__name__,
+            error_message=str(exc),
+            stack_trace="".join(
+                traceback.format_exception(type(exc), exc, exc.__traceback__)
+            ),
+            **event_base,
+        )
+        raise
+
+    artifact = result.artifact
+    manifest = result.evidence_manifest
+    append_operation_event(
+        journal_path,
+        status="PASS" if result.status == "ACQUIRED" else "BLOCKED",
+        output_artifacts=(
+            [{"path": artifact.path, "sha256": artifact.sha256, "size_bytes": artifact.size_bytes}]
+            if artifact
+            else []
+        ),
+        counts_after=(
+            {"rows": manifest.row_count}
+            if manifest and manifest.row_count is not None
+            else {}
+        ),
+        hashes={"sha256": artifact.sha256} if artifact else {},
+        error_type="AcquisitionError" if result.error else None,
+        error_message=result.error,
+        notes=[
+            f"acquisition_status={result.status}",
+            "evidence_manifest_written" if manifest else "no_evidence_manifest",
+        ],
+        **event_base,
+    )
+    return result
+
+
 def acquire_all(
     requests: Iterable[AcquisitionRequest],
     *,
     code_version: str,
     fetcher: Fetcher = _requests_fetch,
+    journal_path: str | Path | None = None,
 ) -> tuple[AcquisitionResult, ...]:
-    return tuple(acquire_source(item, code_version=code_version, fetcher=fetcher) for item in requests)
+    return tuple(
+        acquire_source(
+            item,
+            code_version=code_version,
+            fetcher=fetcher,
+            journal_path=journal_path,
+        )
+        for item in requests
+    )
 
 
 def request_from_benchmark(
