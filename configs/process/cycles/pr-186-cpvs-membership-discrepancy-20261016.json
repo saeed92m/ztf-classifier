@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-186-cpvs-membership-discrepancy-20261016",
+  "objective": "Preserve reproducible evidence and unresolved hypotheses for the 11,602-object CPVS membership discrepancy without changing scientific selection criteria.",
+  "previous_knowledge_consumed": [
+    "configs/process/cycles/2026-10-03-heavy-scientific-validation.json",
+    "docs/scientific_validation/CPVS_MEMBERSHIP_DISCREPANCY_2026-10-16.md",
+    "GitHub PR #186",
+    "Chan et al. (2022), DOI 10.3847/1538-4357/ac69d4",
+    "Zenodo record 5764899 and original CPVS source record 3886372"
+  ],
+  "baseline": {
+    "revision": "e505264c736b4c0db1bdf150d55fd36150f40a9a",
+    "status": "Source-backed heavy artifact reports 781602 parent rows, 730184 published reference IDs, 741786 reconstructed candidates, 11602 candidate-only IDs, and zero published-only IDs. Exact historical membership reproduction remains unresolved."
+  },
+  "expected_improvement": [
+    "Retain exact artifact hashes, per-ID provenance, field-pattern counts, and reproducible comparisons.",
+    "Distinguish observed correlations from a proven original inclusion rule.",
+    "Record independent literature/source discovery and the exact remaining evidence gap.",
+    "Keep the historical CPVS membership gate fail-closed."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Candidate set differs from published reference by 11602 candidate-only IDs.",
+        "after": "All 11602 candidate-only TSV rows parse with 21 columns; full-vs-batch comparison has zero disagreements; diagnostic all-four-field predicate matches the published set only when intersected with the rowwise candidate set."
+      },
+      "reproducibility": {
+        "before": "Field-level discrepancy patterns were not consolidated in one evidence report.",
+        "after": "Archive SHA-256 28c704671e392fc0e983eee7e8df5ed0f5fd29bce80acd0c2c2cc0218d5da747; candidate-only TSV SHA-256 fc724b5ed77e703b16e272f33e241563dce5c7227ae75484ac8d943689361adc."
+      },
+      "scientific_validity": {
+        "before": "Original author preprocessing rule not established.",
+        "after": "UNRESOLVED; no production predicate, threshold, baseline artifact, or acceptance gate changed."
+      }
+    }
+  },
+  "validation": {
+    "status": "VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The pinned heavy artifact records 781602 parent rows, 730184 reference IDs, 741786 candidates, 11602 candidate-only IDs, and zero published-only IDs.",
+      "Candidate-only field patterns are 11465 with gmag=0 and Per-g=0; 115 with rmag=0 and Per-r=0; 10 with Per-g=0 only; 7 with Per-r=0 only; and 5 with gmag=0 only.",
+      "11585 of 11602 candidate-only IDs have gmag=0 or rmag=0, which prevents direct calculation of the published mean-color feature from these table values without a missing-value policy. This is a hypothesis about selection, not proof.",
+      "The residual 17 IDs have nonzero g/r mean magnitudes, a positive common period equal to the other band's nonzero independent period, and at least 50 SNR-qualified observations in each band.",
+      "Public paper and indexed repository searches have not identified the authors' original selection implementation; an English author email has been sent."
+    ]
+  },
+  "failure_analysis": {
+    "status": "UNRESOLVED",
+    "root_causes": [
+      "The original preprocessing or selection rule that excludes the 11602 candidate-only IDs is not available in the public evidence inspected so far.",
+      "A diagnostic predicate correlates exactly with the reference membership within the reconstructed candidates but does not establish the authors' intent or explain the full parent set on its own.",
+      "The PR-triggered CI workflow also failed because this meaningful PR lacked its required cumulative lifecycle record; this is a process-gate failure, not evidence about the scientific discrepancy."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Zero missing reference IDs does not resolve candidate-only false positives.",
+      "The mean-color feature provides a testable explanation for most candidate-only IDs but is not proven to be the historical inclusion criterion.",
+      "The remaining 17 cases are not explained by a simple minimum-observation threshold or a missing common period.",
+      "Never weaken scientific validation or infer the original selection rule solely from a matching count or correlated metadata fields."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Rerun and inspect PR-triggered CI after adding this cycle record.",
+      "Reproduce the 100-object diagnostic and fixed 1000-object sample with explicit membership stratification and retained provenance.",
+      "Obtain independent implementation evidence or establish a reproducible source-data explanation for all 11602 candidate-only IDs.",
+      "Keep the full CPVS exact-membership scientific gate blocked until the root cause is demonstrated."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep CPVS exact historical membership reconstruction unresolved and fail-closed.",
+    "Preserve the v0.2.0 baseline and do not change thresholds or scientific acceptance criteria to force a match.",
+    "Keep source data, artifact hashes, object-level provenance, and every residual ID traceable.",
+    "A green engineering workflow is not proof of scientific validity."
+  ]
+}
