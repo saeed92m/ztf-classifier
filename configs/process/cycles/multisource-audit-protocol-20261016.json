@@ -6,15 +6,17 @@
     "Issue #170: CPVS exact-membership remains unresolved at 741786 candidates, 730184 published reference IDs, 11602 candidate-only, and 0 published-only.",
     "Issue #180: deterministic CPVS samples and object-level full-vs-batch validation are required and remain separate from this multi-source track.",
     "Issue #188: multi-source validation requires complete input/output/operation/error/root-cause/remediation traceability.",
+    "Existing EvidenceManifest, SourceSubsetManifest, source-backed acquisition helpers, benchmark registry, and scientific reports should be reused rather than duplicated.",
     "The cumulative improvement ledger requires explicit facts/hypotheses and NOT_MEASURED rather than fabricated measurements.",
     "v0.2.0 baseline and v1.0.1 release artifacts must remain unchanged."
   ],
   "baseline": {
     "revision": "main at branch creation",
-    "status": "Repository already has a scientific validation roadmap and cumulative lifecycle controls; the roadmap does not yet provide a dedicated, comprehensive multi-source run manifest contract. No Gaia DR3 or TESS acquisition was performed in this cycle."
+    "status": "Existing source/artifact manifests, acquisition helpers, benchmark registry, scientific reports, and lifecycle records are present. A dedicated cross-source protocol and per-operation journal linking all stage inputs/outputs/errors/root-cause/remediation/reruns was not identified in inspected files. No Gaia DR3 or TESS acquisition was performed in this cycle."
   },
   "expected_improvement": [
     "Define distinct validation claims for acquisition, parsing, identity, transformations, determinism, reference agreement, and model validity.",
+    "Reuse existing evidence/acquisition/source-subset infrastructure and specify a complementary operation journal.",
     "Specify complete provenance and operation logging including hashes, counts, commands, configuration, environment, errors, hypotheses, remediation, regression tests, and reruns.",
     "Add a machine-readable run manifest template with explicit NOT_RUN/NOT_MEASURED states.",
     "Keep Gaia DR3 and TESS pilots bounded and version-pinned, with ingestion integrity separate from model-performance claims.",
@@ -23,16 +25,16 @@
   "measurement": {
     "metrics": {
       "protocol_coverage": {
-        "before": "Dedicated multi-source protocol and per-run manifest template not present in the inspected main-branch files.",
-        "after": "Protocol and JSON template added on branch; validation of the template/schema and any actual data run are NOT_MEASURED at this stage."
+        "before": "No dedicated cross-source validation protocol and operation-journal contract identified in the inspected main-branch files.",
+        "after": "Protocol and JSON run-manifest template added on branch; automated validation of the template/schema and actual data-run evidence remain NOT_MEASURED."
       },
       "scientific_validity": {
         "before": "CPVS exact-membership reconstruction unresolved.",
         "after": "No scientific selection, model, dataset, or release artifact changed; CPVS remains unresolved. Gaia/TESS execution NOT_RUN."
       },
       "traceability": {
-        "before": "Existing lifecycle records and evidence conventions available, but no dedicated multi-source per-run template found in the inspected files.",
-        "after": "Template captures source/version/queries/hashes, environment, stages, counts, errors, incidents, interpretation, and review fields; automated validation tests are still required."
+        "before": "Existing artifact/source-subset manifests cover hashes and selected source metadata; stage-level event journaling and explicit multi-source error/remediation linkage remain to be implemented and tested.",
+        "after": "The protocol requires a run-level manifest, event journal, row/object accounting, hashes, errors, root-cause evidence, remediation, regression tests, and rerun linkage. Automated enforcement is still pending."
       }
     }
   },
@@ -41,8 +43,10 @@
     "scientific_gate_affected": false,
     "evidence": [
       "Created GitHub Issue #188 to track source sequence, phases, acceptance criteria, error taxonomy, and audit-trail requirements.",
-      "Added docs/scientific_validation/MULTI_SOURCE_VALIDATION_PROTOCOL.md on branch science/multisource-audit-20261016.",
+      "Added docs/scientific_validation/MULTI_SOURCE_VALIDATION_PROTOCOL.md on branch science/multisource-audit-20261016; it explicitly reuses existing evidence/acquisition/source-subset infrastructure.",
       "Added configs/experiments/multi_source_run_manifest.template.json on branch science/multisource-audit-20261016.",
+      "Added this lifecycle record and opened draft PR #189.",
+      "GitHub Actions CodeQL run 38877639653 and Product Scope Audit run 38877638617 were IN_PROGRESS when inspected; no passing result is claimed.",
       "No external dataset was acquired or analyzed in this cycle.",
       "No scientific code, model, dataset, v0.2.0 baseline artifact, or v1.0.1 release artifact was changed."
     ]
@@ -50,7 +54,7 @@
   "failure_analysis": {
     "status": "SUPPORTED",
     "root_causes": [
-      "The project already had general scientific-validation and lifecycle documentation, but a dedicated multi-source run contract spelling out every input, transformation, output, error, root-cause hypothesis, remediation, and rerun had not been established in the inspected main-branch files."
+      "Existing source/artifact manifests and acquisition helpers already cover part of provenance; the remaining gap is a cross-source operational contract and tested event journal linking each transformation and failure to immutable evidence, root-cause tests, remediation, and reruns."
     ]
   },
   "knowledge_extraction": {
@@ -58,6 +62,7 @@
     "findings": [
       "Acquisition integrity, schema/identity correctness, reference agreement, and model validity are separate claims and require separate evidence.",
       "Different astronomical surveys must not be assumed to share feature semantics, cadence, units, selection functions, taxonomies, or label quality.",
+      "Existing evidence and source-subset manifests should be extended and reused; duplicating acquisition/hash infrastructure risks inconsistent provenance.",
       "A failed or skipped stage must be recorded explicitly and cannot be treated as success.",
       "Suspected causes remain hypotheses until a discriminating test verifies them.",
       "Successful Gaia/TESS ingestion cannot resolve the CPVS membership discrepancy."
@@ -67,17 +72,19 @@
     "status": "BLOCKED",
     "open_blockers": [
       "Validate the JSON template and add tests/schema checks before treating it as an enforced contract.",
-      "Add a report/manifest generator that logs each stage and preserves failure evidence.",
+      "Implement and test an operation journal/report writer integrated with existing evidence manifests; preserve failure records when an operation errors.",
       "Run a bounded, pinned external-source pilot only after its query and schema contract are documented.",
       "Verify source artifacts and outputs with SHA-256 and row/object accounting.",
+      "Review latest-head CI, lifecycle gate, CodeQL, and Product Scope checks before merging PR #189.",
       "Keep CPVS exact reconstruction UNRESOLVED until its own evidence supports a different disposition."
     ]
   },
   "decision": "REVISE",
   "knowledge_carried_forward": [
     "Issue #188 is the tracking record for multi-source validation.",
-    "The protocol is a plan, not evidence of data acquisition or scientific validation.",
+    "PR #189 is a draft protocol/template change, not evidence of data acquisition or scientific validation.",
     "No Gaia DR3 or TESS run has been completed in this cycle.",
+    "Existing EvidenceManifest, SourceSubsetManifest, and acquisition helpers are reusable; the operation journal remains to be implemented.",
     "v0.2.0 and v1.0.1 remain unchanged.",
     "CPVS blocker #170 and deterministic sample/full-vs-batch work #180 remain independent and open."
   ]
