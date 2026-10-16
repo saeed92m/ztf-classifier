@@ -14,7 +14,8 @@
   "expected_improvement": [
     "Parse the parent catalog's Type, Ng, and Nr using the same tokenization and ZTF-name/Seq interpretation that supports fixed-width and text-mirror rows.",
     "Add regression coverage for whitespace-delimited Table2 text rows and split ZTF J-name representations.",
-    "Ensure class breakdowns contain actual source type labels and detection counts are read from the documented Ng/Nr columns."
+    "Ensure class breakdowns contain actual source type labels and detection counts are read from the documented Ng/Nr columns.",
+    "Detect canonical fixed-width Table2 rows before using documented byte offsets; use token positions for text mirrors."
   ],
   "measurement": {
     "metrics": {
@@ -36,7 +37,8 @@
     "scientific_gate_affected": true,
     "evidence": [
       "The PR #177 heavy artifact's parent_catalog_context_diagnostic_only.class_counts contains keys like 0.00, which cannot be valid CPVS Type labels.",
-      "The previous metadata parser unconditionally read fixed byte offsets without confirming that the acquired parent rows used the canonical fixed-width layout."
+      "The previous metadata parser unconditionally read fixed byte offsets without confirming that the acquired parent rows used the canonical fixed-width layout.",
+      "The parser now validates fixed-width name/Seq/RA alignment before applying byte offsets, with a regression test containing a blank fixed-width field."
     ],
     "blocker": "Run focused tests, full CI, and a new source-backed heavy validation; verify real type keys and Ng/Nr counts before using these diagnostics to infer the remaining 11602 candidate-only objects."
   },
@@ -60,7 +62,8 @@
     "open_blockers": [
       "Run the new parent metadata parsing regression tests and complete CI.",
       "Run heavy source-backed validation and inspect refreshed class_counts and Ng/Nr summaries.",
-      "CPVS exact membership remains unresolved until the 11602 candidate-only IDs are explained."
+      "CPVS exact membership remains unresolved until the 11602 candidate-only IDs are explained.",
+      "Verify the fixed-width and text-mirror metadata tests both pass on the updated branch."
     ]
   },
   "decision": "REVISE",

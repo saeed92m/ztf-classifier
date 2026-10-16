@@ -164,3 +164,47 @@ def test_parent_catalog_metadata_parses_split_ztf_name_rows(tmp_path: Path):
     metadata = parent_catalog_metadata(parent)
 
     assert metadata[101] == {"type": "BYDra", "ng": 21, "nr": 22}
+
+
+
+def test_parent_catalog_metadata_uses_fixed_width_offsets_when_verified(tmp_path: Path):
+    parent = tmp_path / "Table2.txt"
+    row = [" "] * 228
+
+    def put(start: int, end: int, value: str, *, left: bool = False) -> None:
+        width = end - start
+        text = value.ljust(width) if left else value.rjust(width)
+        assert len(text) == width
+        row[start:end] = text
+
+    put(0, 22, "ZTFJ000000.15+721413.7", left=True)
+    put(23, 29, "102")
+    put(30, 39, "0.00061")
+    put(40, 49, "72.23716")
+    put(50, 61, "0.2991500")
+    # Leave phi21 blank to ensure token splitting cannot accidentally shift columns.
+    put(75, 88, "0.0000000")
+    put(89, 95, "15.000")
+    put(96, 102, "14.000")
+    put(103, 116, "1.0000000")
+    put(117, 130, "1.0000000")
+    put(131, 135, "21")
+    put(136, 140, "22")
+    put(141, 147, "0.500")
+    put(148, 154, "0.500")
+    put(155, 160, "0.100")
+    put(161, 166, "0.100")
+    put(167, 173, "0.900")
+    put(174, 180, "0.900")
+    put(181, 186, "0.100")
+    put(187, 192, "0.100")
+    put(193, 201, "-5.000")
+    put(202, 210, "-5.000")
+    put(211, 216, "BYDra", left=True)
+    put(217, 222, "0.000")
+    put(223, 228, "0.000")
+    parent.write_text("".join(row) + "\n", encoding="utf-8")
+
+    metadata = parent_catalog_metadata(parent)
+
+    assert metadata[102] == {"type": "BYDra", "ng": 21, "nr": 22}

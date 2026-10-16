@@ -33,18 +33,38 @@ def parent_catalog_metadata(path: Path) -> dict[int, dict[str, Any]]:
         if identity is None:
             continue
         source_id = int(identity[1])
-        fields = _split_fields(line)
-        offset = (
-            1
-            if len(fields) >= 3
-            and fields[0].upper() == "ZTF"
-            and fields[1].upper().startswith("J")
-            else 0
-        )
+        raw = line.rstrip("\r\n")
+        fields = _split_fields(raw)
+        fixed_layout = False
+        if (
+            len(raw) >= 228
+            and raw[22].isspace()
+            and raw[29].isspace()
+            and raw[:22].strip().upper() == identity[0]
+            and raw[23:29].strip() == identity[1]
+        ):
+            try:
+                float(raw[30:39].strip())
+                fixed_layout = True
+            except ValueError:
+                pass
+
         try:
-            ng = int(fields[offset + 12])
-            nr = int(fields[offset + 13])
-            variable_type = fields[offset + 24].strip()
+            if fixed_layout:
+                ng = int(raw[131:135].strip())
+                nr = int(raw[136:140].strip())
+                variable_type = raw[211:216].strip()
+            else:
+                offset = (
+                    1
+                    if len(fields) >= 3
+                    and fields[0].upper() == "ZTF"
+                    and fields[1].upper().startswith("J")
+                    else 0
+                )
+                ng = int(fields[offset + 12])
+                nr = int(fields[offset + 13])
+                variable_type = fields[offset + 24].strip()
         except (IndexError, ValueError):
             # Do not manufacture class/detection metadata when the source row
             # cannot be parsed against the documented Table2 column order.
