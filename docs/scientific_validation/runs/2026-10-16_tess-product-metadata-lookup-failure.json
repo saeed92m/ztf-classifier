@@ -1,0 +1,77 @@
+{
+  "run_id": "20261016T091035Z-tess-product-lookup-attempt",
+  "status": "FAIL_VALIDATION_NO_PRODUCT_ROWS",
+  "created_at_utc": "2026-10-16T09:10:35.652101+00:00",
+  "purpose": "Follow up the successful TESS observation-metadata query by attempting to enumerate downloadable products for one returned observation. This attempt returned no rows and is recorded as a failed lookup, not a successful product selection.",
+  "source": {
+    "archive": "MAST",
+    "service": "Mast.Caom.Products",
+    "endpoint": "https://mast.stsci.edu/api/v0/invoke",
+    "observation_id": 61113566,
+    "prior_observation_metadata_record": "docs/scientific_validation/runs/2026-10-16_tess-mast-top5-metadata-smoke.json"
+  },
+  "request": {
+    "method": "POST",
+    "content_type": "application/x-www-form-urlencoded",
+    "payload": {
+      "service": "Mast.Caom.Products",
+      "format": "json",
+      "params": {
+        "columns": "*",
+        "filters": [
+          {"paramName": "obsid", "values": ["61113566"]}
+        ]
+      },
+      "pagesize": 5,
+      "page": 1,
+      "removenullcolumns": false
+    },
+    "retrieved_at_utc": "2026-10-16T09:10:35.652101+00:00",
+    "http_status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "response_bytes": 933,
+    "response_sha256": "89d2ad272cec006f37fa61a5fc5bc3d2518d5e85bb330e8228569d469a926243",
+    "service_status": "COMPLETE",
+    "service_message": "",
+    "rows_returned": 0,
+    "rows_filtered": 0,
+    "rows_total": 0
+  },
+  "validation": {
+    "expected": "At least one product record for the selected TESS observation, or an explicit documented explanation why none exists.",
+    "observed": "The service returned HTTP 200 but zero product rows and no service error message.",
+    "result": "FAIL",
+    "reason_code": "PRODUCT_LOOKUP_EMPTY_RESULT"
+  },
+  "incident": {
+    "incident_id": "TESS-PRODUCT-LOOKUP-001",
+    "observed_symptom": "MAST product lookup returned zero rows for obsid 61113566.",
+    "cause_status": "HYPOTHESIS",
+    "suspected_causes": [
+      "The Mast.Caom.Products request schema or parameter placement may differ from the generic filtered-catalog service.",
+      "The observation identifier may need a different parameter name or endpoint-specific request contract."
+    ],
+    "confirmed_root_cause": null,
+    "root_cause_test": "Consult official MAST service contract and retry with the documented parameter schema; retain the exact request and compare response.",
+    "root_cause_test_status": "NOT_RUN",
+    "remediation": "Do not retry by silently changing filters or claiming a product was selected. Resolve the API contract, add a request-schema regression test, then rerun.",
+    "regression_test": "Pending",
+    "rerun_id": null,
+    "residual_risk": "No TESS light-curve product has been selected or downloaded."
+  },
+  "interpretation": {
+    "facts": [
+      "The request reached the MAST service and returned HTTP 200.",
+      "The service response contained zero rows; this is not evidence that the observation has no downloadable products because the request contract has not been verified."
+    ],
+    "hypotheses": [
+      "The request shape may be invalid for Mast.Caom.Products despite being valid JSON."
+    ],
+    "not_claimed": [
+      "No claim that MAST has no products for this observation.",
+      "No claim that TESS data ingestion is complete.",
+      "No scientific or model-validation result."
+    ]
+  },
+  "next_action": "Verify the official MAST products-service request schema, then rerun and record the corrected request before selecting a product."
+}
