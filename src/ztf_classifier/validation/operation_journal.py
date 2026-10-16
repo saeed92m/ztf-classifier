@@ -21,6 +21,9 @@ _SECRET_KEY = re.compile(
     re.IGNORECASE,
 )
 _BEARER = re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._~+/-]+=*")
+_INLINE_SECRET = re.compile(
+    r"(?i)(\b(?:token|secret|password|passwd|api[_-]?key|authorization|cookie|private[_-]?key)\b\s*[=:]\s*)([^\s,;&]+)"
+)
 _ALLOWED_STATUSES = {
     "STARTED",
     "PASS",
@@ -43,6 +46,7 @@ def redact_sensitive(value: Any, *, key: str = "") -> Any:
         return value
 
     text = _BEARER.sub(r"\1[REDACTED]", value)
+    text = _INLINE_SECRET.sub(r"\1[REDACTED]", text)
     try:
         parts = urlsplit(text)
         if parts.scheme and parts.netloc and parts.query:
