@@ -252,6 +252,17 @@ jobs:
             --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
             --output reports/scientific_validation/ztf_periodic_730k/membership_audit.json
 
+      - name: Audit CPVS object identity by ZTF name
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          python scripts/audit_cpvs_object_identity.py \
+            --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
+            --candidate reports/scientific_validation/ztf_periodic_730k/selected.tsv \
+            --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
+            --output reports/scientific_validation/ztf_periodic_730k/object_identity_audit.json
+
       - name: Classify CPVS reconstruction result
         if: always()
         env:
