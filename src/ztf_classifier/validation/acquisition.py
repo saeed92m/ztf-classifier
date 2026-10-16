@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import traceback
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -337,7 +338,6 @@ def acquire_source(
             ),
             "artifact_names": list(request.artifact_names),
         },
-        "notes": ["Journal records acquisition outcome; source bytes remain external artifacts."],
     }
     append_operation_event(journal_path, status="STARTED", **event_base)
     try:
