@@ -56,6 +56,27 @@ def test_operation_journal_preserves_failure_and_reraises(tmp_path):
     assert "bad schema" in events[1]["stack_trace"]
 
 
+def test_operation_journal_records_output_summary_failure(tmp_path):
+    journal = tmp_path / "events.jsonl"
+
+    def bad_summary(_result):
+        raise RuntimeError("cannot summarize output")
+
+    with pytest.raises(RuntimeError, match="cannot summarize output"):
+        run_logged_operation(
+            journal,
+            stage="report",
+            operation="summarize",
+            function=lambda: {"rows": 1},
+            output_summary=bad_summary,
+        )
+
+    events = _events(journal)
+    assert [event["status"] for event in events] == ["STARTED", "FAIL"]
+    assert events[1]["error_type"] == "RuntimeError"
+    assert "cannot summarize output" in events[1]["error_message"]
+
+
 def test_operation_journal_redacts_secret_fields_and_url_parameters(tmp_path):
     journal = tmp_path / "events.jsonl"
     event = append_operation_event(
