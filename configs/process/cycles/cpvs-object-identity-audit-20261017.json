@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-object-identity-audit-20261017",
+  "objective": "Independently test whether CPVS numeric SourceID membership agrees with object identity by ZTF name, and verify the parent row-ordinal-to-catalog-ID mapping before interpreting membership discrepancies.",
+  "previous_knowledge_consumed": [
+    "The CPVS parent snapshot contains 781602 catalog rows and source-backed derivation currently yields 741786 candidate IDs.",
+    "VizieR J/ApJ/932/118 Table 4 reports 730184 objects and defines its ID column as a catalog internal identifier with range 1-781604.",
+    "Zenodo record 3886372 describes SourceID as the internal identifier joining single-exposure photometry to Table 2.",
+    "Earlier diagnostics compared numeric ID sets and reported 11602 candidate-only IDs; exact membership remains unresolved.",
+    "A diagnostic combination of finite non-zero g/r mean magnitudes and periods happened to match the reference count, but this is not accepted as the paper's selection rule."
+  ],
+  "baseline": {
+    "revision": "main@d331036dddbbdbe399f18a58c7a204b7ca039558",
+    "status": "Read-only diagnostic only. No production selection, thresholds, baseline artifacts, labels, or release assets are changed."
+  },
+  "expected_improvement": [
+    "Parse the ZTF object names and internal IDs from the independent published Table 4 source.",
+    "Compare published ID-to-name pairs against the parent catalog's provisional row-ordinal-to-name mapping.",
+    "Report numeric-ID membership and provisional name-based membership separately, and refuse to interpret name membership as authoritative when the mapping check fails.",
+    "Retain mismatch samples and explicit diagnostics in the heavy scientific-validation artifact."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Numeric ID set comparison does not independently verify ID-to-object mapping.",
+        "after": "Artifact reports exact ID-to-name alignment, out-of-range IDs, and name-based comparison only when mapping is validated."
+      },
+      "reproducibility": {
+        "before": "No dedicated source-backed ID-to-name audit.",
+        "after": "Deterministic script and regression tests added to the heavy validation workflow."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Official Zenodo and VizieR documentation establish that both sources use internal catalog identifiers; the exact mapping must be verified from actual source records.",
+      "A diagnostic script, unit tests, and a heavy-workflow invocation are added in this PR."
+    ],
+    "blocker": "Run focused tests and full source-backed heavy validation; inspect resulting ID-to-name alignment and do not declare CPVS exact reconstruction resolved without a reproducible result."
+  },
+  "failure_analysis": {
+    "status": "HYPOTHESIS",
+    "findings": [
+      "A mismatch between the parent row-ordinal mapping and published internal catalog IDs could invalidate numeric membership comparison or candidate-to-object provenance.",
+      "This hypothesis is not yet confirmed; the new source-backed audit is intended to test it."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Object-level scientific comparisons should use stable astronomical object identifiers/names as an independent check alongside numeric internal IDs.",
+      "Do not treat catalog row ordinals as equivalent to internal IDs unless source-backed ID-to-object mapping is verified.",
+      "Keep candidate counts, numeric membership, and name-based membership separate in diagnostic reports."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run tests/test_cpvs_object_identity_audit.py and the complete CI suite.",
+      "Complete heavy source-backed validation and review generated object_identity_audit.json.",
+      "CPVS exact reconstruction remains unresolved until the 11602 candidate-only discrepancy is explained."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not change selection thresholds or tune filters to force the target count.",
+    "Do not accept row-ordinal-to-internal-ID equivalence without source-backed validation.",
+    "Do not merge the diagnostic change until its tests pass.",
+    "Preserve v0.2.0 and v1.0.1 baselines and keep CPVS validation fail-closed."
+  ]
+}
