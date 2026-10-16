@@ -20,9 +20,9 @@ from ztf_classifier.validation.evidence import (
     EvidenceManifest,
     write_evidence_manifest,
 )
+from ztf_classifier.validation.operation_journal import append_operation_event
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.sources import get_source
-from ztf_classifier.validation.operation_journal import append_operation_event
 
 
 class AcquisitionError(RuntimeError):
