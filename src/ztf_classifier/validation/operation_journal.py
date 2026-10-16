@@ -17,7 +17,7 @@ from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 _SECRET_KEY = re.compile(
-    r"(?:token|secret|password|passwd|api[_-]?key|authorization|cookie|private[_-]?key)",
+    r"(?:token|secret|password|passwd|api[_-]?key|authorization|cookie|private[_-]?key|signature|credential|x-amz)",
     re.IGNORECASE,
 )
 _BEARER = re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._~+/-]+=*")
