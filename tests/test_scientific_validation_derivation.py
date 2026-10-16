@@ -303,14 +303,13 @@ def test_lightcurve_zip_accepts_whitespace_delimited_header(tmp_path: Path):
     ]
 
 
-
 def test_cpvs_table_uses_explicit_seq_internal_source_ids(tmp_path: Path):
     from ztf_classifier.validation.derivation import _source_ids
 
     parent = tmp_path / "Table2.txt"
     parent.write_text(
-        f"{'ZTFJ000000.13+620605.8':<22s} {10:6d} {0.00056:9.5f} 62.10163 1.9449979 BYDra\\n"
-        f"{'ZTFJ000000.14+721413.7':<22s} {12:6d} {0.00061:9.5f} 72.23716 0.2991500 EW\\n",
+        f"{'ZTFJ000000.13+620605.8':<22s} {10:6d} {0.00056:9.5f} 62.10163 1.9449979 BYDra\n"
+        f"{'ZTFJ000000.14+721413.7':<22s} {12:6d} {0.00061:9.5f} 72.23716 0.2991500 EW\n",
         encoding="utf-8",
     )
 

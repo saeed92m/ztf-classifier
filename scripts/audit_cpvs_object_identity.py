@@ -64,10 +64,14 @@ def read_published_rows(path: Path) -> list[dict[str, object]]:
         if not stripped:
             continue
         candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
-        columns = [part.strip().lower() for part in candidate.split("\\t")]
+        columns = [part.strip().lower() for part in candidate.split("\t")]
         if "id" in columns and ("ztf" in columns or "ztf identifier" in columns):
             header_index = index
-            ztf_index = columns.index("ztf") if "ztf" in columns else columns.index("ztf identifier")
+            ztf_index = (
+                columns.index("ztf")
+                if "ztf" in columns
+                else columns.index("ztf identifier")
+            )
             id_index = columns.index("id")
             break
 
@@ -77,7 +81,7 @@ def read_published_rows(path: Path) -> list[dict[str, object]]:
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
                 continue
-            columns = [part.strip() for part in line.split("\\t")]
+            columns = [part.strip() for part in line.split("\t")]
             if max(ztf_index, id_index) >= len(columns):
                 continue
             name = columns[ztf_index]
@@ -152,7 +156,11 @@ def audit(parent_path: Path, candidate_path: Path, published_path: Path) -> dict
         ordinal_name = parent_names_by_ordinal.get(catalog_id)
         if ordinal_name is not None and ordinal_name != ztf_name:
             row_ordinal_mismatches.append(
-                {"id": catalog_id, "published_ztf": ztf_name, "row_ordinal_ztf": ordinal_name}
+                {
+                    "id": catalog_id,
+                    "published_ztf": ztf_name,
+                    "row_ordinal_ztf": ordinal_name,
+                }
             )
 
     mapping_methods = Counter(str(row["mapping_method"]) for row in parent_rows)
@@ -175,7 +183,11 @@ def audit(parent_path: Path, candidate_path: Path, published_path: Path) -> dict
     candidate_ids_outside_parent = sorted(candidate_ids - parent_ids)
     return {
         "schema_version": "1.1",
-        "status": "ID_TO_NAME_MAPPING_VALIDATED" if mapping_validated else "ID_TO_NAME_MAPPING_NOT_VALIDATED",
+        "status": (
+            "ID_TO_NAME_MAPPING_VALIDATED"
+            if mapping_validated
+            else "ID_TO_NAME_MAPPING_NOT_VALIDATED"
+        ),
         "identity_basis": "ZTF object name with explicit Table2 Seq/internal SourceID mapping",
         "parent": {
             "row_count": len(parent_rows),
@@ -188,7 +200,10 @@ def audit(parent_path: Path, candidate_path: Path, published_path: Path) -> dict
             "row_ordinal_vs_source_id_mismatch_count": sum(
                 int(row["source_id"]) != int(row["row_ordinal"]) for row in parent_rows
             ),
-            "source_id_interpretation": "Table2 Seq column when present; row ordinal fallback only for simplified legacy tables",
+            "source_id_interpretation": (
+                "Table2 Seq column when present; row ordinal fallback only for "
+                "simplified legacy tables"
+            ),
         },
         "candidate_numeric_ids": {
             "count": len(candidate_ids),
@@ -246,7 +261,7 @@ def main() -> int:
     report = audit(args.parent, args.candidate, args.published)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\\n", encoding="utf-8"
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0
