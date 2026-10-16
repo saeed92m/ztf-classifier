@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-parent-metadata-token-parser-20261017",
+  "objective": "Correct the CPVS parent metadata diagnostic so Type, Ng, and Nr are parsed according to the actual Table2 row representation rather than assumed byte offsets.",
+  "previous_knowledge_consumed": [
+    "PR #176 already parses Table2 Seq/SourceID and maps published Table4 ZTF names to parent SourceIDs; exact membership remains unresolved.",
+    "PR #177 heavy artifact reports class_counts keys such as 0.00, which are not valid CPVS variable-type labels and indicate the diagnostic's fixed-byte Type extraction is incompatible with the acquired Table2 text mirror.",
+    "Official VizieR Table2 schema documents fixed-width byte offsets for the canonical CDS table, while the acquired Zenodo Table2.txt.zip may be a text mirror whose token positions differ."
+  ],
+  "baseline": {
+    "revision": "PR #177 head c6588531a08d3f2648ffd155d058d02d4bd3234f",
+    "status": "Parent metadata diagnostics currently slice fixed-width offsets unconditionally; prior class-count output is not scientifically interpretable until the input layout is detected and parsed correctly."
+  },
+  "expected_improvement": [
+    "Parse the parent catalog's Type, Ng, and Nr using the same tokenization and ZTF-name/Seq interpretation that supports fixed-width and text-mirror rows.",
+    "Add regression coverage for whitespace-delimited Table2 text rows and split ZTF J-name representations.",
+    "Ensure class breakdowns contain actual source type labels and detection counts are read from the documented Ng/Nr columns."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Fixed byte offsets produced numeric strings such as 0.00 as class labels on the acquired text mirror.",
+        "after": "Metadata extraction uses validated token positions after handling the row's name representation; expected class labels and Ng/Nr values are tested."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      },
+      "regression_protection_count": {
+        "before": "No regression test checked parent metadata fields from the acquired text representation.",
+        "after": "Two new tests assert Type, Ng, and Nr for tokenized and split-name rows."
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "The PR #177 heavy artifact's parent_catalog_context_diagnostic_only.class_counts contains keys like 0.00, which cannot be valid CPVS Type labels.",
+      "The previous metadata parser unconditionally read fixed byte offsets without confirming that the acquired parent rows used the canonical fixed-width layout."
+    ],
+    "blocker": "Run focused tests, full CI, and a new source-backed heavy validation; verify real type keys and Ng/Nr counts before using these diagnostics to infer the remaining 11602 candidate-only objects."
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "findings": [
+      "The diagnostic metadata parser assumed canonical CDS byte positions for every parent source representation. The acquired text mirror does not preserve those offsets, so class/Ng/Nr breakdowns were misparsed.",
+      "This defect affects diagnostic interpretation, not the existing CPVS candidate membership result or selection predicate."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Validate the physical representation before using byte offsets; fixed-width schema offsets cannot be applied blindly to whitespace-delimited text mirrors.",
+      "Do not interpret diagnostic summaries until parsed labels and field values pass schema-level assertions.",
+      "Keep diagnostics separate from selection policy and do not infer a root cause from mislabeled class/metadata counts."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the new parent metadata parsing regression tests and complete CI.",
+      "Run heavy source-backed validation and inspect refreshed class_counts and Ng/Nr summaries.",
+      "CPVS exact membership remains unresolved until the 11602 candidate-only IDs are explained."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not change the scientific selection predicate or frozen baseline to match a target count.",
+    "Only use candidate-only by-type/Ng/Nr analysis after confirming correct parsing of the acquired Table2 representation.",
+    "Keep PR #176/#177 unmerged until current-head CI and scientific evidence are reviewed."
+  ]
+}

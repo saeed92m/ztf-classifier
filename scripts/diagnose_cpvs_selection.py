@@ -21,33 +21,41 @@ from ztf_classifier.validation.derivation import (
     _iter_rows,
     _parse_cpvs_table2_identity,
     _source_ids,
+    _split_fields,
 )
 
 
 def parent_catalog_metadata(path: Path) -> dict[int, dict[str, Any]]:
-    """Read class and published g/r epoch counts from fixed-width CPVS Table 2.
-
-    These fields are descriptive diagnostics only; they do not affect selection.
-    """
+    """Read CPVS Type/Ng/Nr from fixed-width or tokenized Table2 rows."""
     metadata: dict[int, dict[str, Any]] = {}
     for line in _iter_parent_lines(path):
         identity = _parse_cpvs_table2_identity(line)
         if identity is None:
             continue
         source_id = int(identity[1])
+        fields = _split_fields(line)
+        offset = (
+            1
+            if len(fields) >= 3
+            and fields[0].upper() == "ZTF"
+            and fields[1].upper().startswith("J")
+            else 0
+        )
         try:
-            ng = int(line[131:135].strip())
-            nr = int(line[136:140].strip())
-        except (ValueError, IndexError):
+            ng = int(fields[offset + 12])
+            nr = int(fields[offset + 13])
+            variable_type = fields[offset + 24].strip()
+        except (IndexError, ValueError):
+            # Do not manufacture class/detection metadata when the source row
+            # cannot be parsed against the documented Table2 column order.
             ng = nr = -1
-        variable_type = line[211:216].strip() if len(line) >= 216 else ""
+            variable_type = "UNKNOWN"
         metadata[source_id] = {
             "type": variable_type or "UNKNOWN",
             "ng": ng,
             "nr": nr,
         }
     return metadata
-
 
 def membership_by_type(
     ids: set[int], metadata: dict[int, dict[str, Any]]

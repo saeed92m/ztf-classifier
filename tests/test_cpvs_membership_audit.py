@@ -6,6 +6,7 @@ from scripts.audit_cpvs_membership import (
     read_selected,
     read_vizier,
 )
+from scripts.diagnose_cpvs_selection import membership_by_type, parent_catalog_metadata
 
 
 def test_read_selected_uses_sourceid_values(tmp_path: Path):
@@ -84,3 +85,82 @@ def test_read_published_names_from_whitespace_vizier_output(tmp_path: Path):
         "ZTFJ000000.00+000000.0",
         "ZTFJ000001.00+000000.0",
     ]
+
+
+
+def test_parent_catalog_metadata_parses_tokenized_table2_columns(tmp_path: Path):
+    parent = tmp_path / "Table2.txt"
+    fields = [
+        "ZTFJ000000.13+620605.8",
+        "100",
+        "0.00056",
+        "62.10163",
+        "1.9449979",
+        "0.500",
+        "3.140",
+        "0.0000000",
+        "15.000",
+        "14.000",
+        "1.0000000",
+        "1.0000000",
+        "11",
+        "12",
+        "0.500",
+        "0.500",
+        "0.100",
+        "0.100",
+        "0.900",
+        "0.900",
+        "0.100",
+        "0.100",
+        "-5.000",
+        "-5.000",
+        "EW",
+        "0.000",
+        "0.000",
+    ]
+    parent.write_text(" ".join(fields) + "\n", encoding="utf-8")
+
+    metadata = parent_catalog_metadata(parent)
+
+    assert metadata[100] == {"type": "EW", "ng": 11, "nr": 12}
+    assert membership_by_type({100}, metadata) == {"EW": 1}
+
+
+def test_parent_catalog_metadata_parses_split_ztf_name_rows(tmp_path: Path):
+    parent = tmp_path / "Table2.txt"
+    fields = [
+        "ZTF",
+        "J000000.14+721413.7",
+        "101",
+        "0.00061",
+        "72.23716",
+        "0.2991500",
+        "0.500",
+        "3.140",
+        "0.0000000",
+        "15.000",
+        "14.000",
+        "1.0000000",
+        "1.0000000",
+        "21",
+        "22",
+        "0.500",
+        "0.500",
+        "0.100",
+        "0.100",
+        "0.900",
+        "0.900",
+        "0.100",
+        "0.100",
+        "-5.000",
+        "-5.000",
+        "BYDra",
+        "0.000",
+        "0.000",
+    ]
+    parent.write_text(" ".join(fields) + "\n", encoding="utf-8")
+
+    metadata = parent_catalog_metadata(parent)
+
+    assert metadata[101] == {"type": "BYDra", "ng": 21, "nr": 22}
