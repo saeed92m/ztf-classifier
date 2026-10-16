@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-nonfinite-snr-guard-20261017",
+  "objective": "Reject non-finite signal-to-noise values in CPVS row-level qualification without changing scientific thresholds or the published selection definition.",
+  "previous_knowledge_consumed": [
+    "PR #193 source inspection found _snr_from_mag_error returns NaN for malformed, non-finite, or non-positive errors.",
+    "Python comparisons such as NaN < threshold evaluate false, so the previous negative-only threshold guard could admit invalid SNR rows.",
+    "CPVS exact membership remains unresolved at 741786 candidates versus 730184 published reference IDs; this local defect is not established as the cause of the 11602-ID excess.",
+    "The published paper describes at least one 2.5-sigma detection in g and 3-sigma detection in r; finite non-zero catalog summary fields are not accepted as a substitute for that stated criterion."
+  ],
+  "baseline": {
+    "revision": "main@d331036dddbbdbe399f18a58c7a204b7ca039558",
+    "status": "v0.2.0 scientific baseline, thresholds, model artifacts, and release artifacts remain unchanged; only malformed/non-finite row-level SNR acceptance is targeted."
+  },
+  "expected_improvement": [
+    "Reject NaN and infinite SNR explicitly before applying the configured threshold.",
+    "Add regression coverage for NaN, infinity, and malformed magnitude-error inputs.",
+    "Preserve the CPVS membership mismatch as a fail-closed scientific blocker until independently explained."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Negative-only threshold comparison could accept NaN SNR rows.",
+        "after": "Non-finite SNR values are explicitly rejected before threshold comparison."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      },
+      "regression_protection_count": {
+        "before": "No explicit regression for non-finite SNR in _qualified_ids.",
+        "after": "One focused regression test covers NaN, infinity, and malformed error inputs."
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Source change and regression test are present in PR #193.",
+      "CodeQL, Product Scope Audit, and Scientific Validation contract workflow passed on commit 08d50d391fcca57b71eb68fbeab48bc1a6eaa214.",
+      "CI failed because the meaningful PR lacked the required machine-readable cumulative cycle record; the test suite was consequently skipped. A lifecycle record is being added to satisfy the existing gate, not to bypass it."
+    ],
+    "blocker": "Full CI/test-suite result and independent review of the regression behavior remain pending; CPVS exact membership remains unresolved."
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "findings": [
+      "The failure in the first CI attempt was process-contract enforcement requiring a cycle record, not a Ruff format or lint failure.",
+      "The scientific CPVS membership discrepancy is separate and is not fixed by this row-level guard."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Reject non-finite numeric values explicitly; negative-only threshold comparisons are not safe for NaN.",
+      "A passing contract workflow does not replace the full test suite, and process gates must be satisfied with truthful lifecycle evidence.",
+      "The published CPVS membership criterion must be grounded in the paper/source semantics rather than selecting unrelated fields solely to match a target count."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Re-run CI after adding this cycle record and inspect the actual test-suite result.",
+      "Verify the regression test passes against the PR branch.",
+      "CPVS exact membership remains unresolved; do not merge any selection-method change that forces cardinality."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not merge until CI and focused regression tests pass.",
+    "Do not change CPVS thresholds, frozen v0.2.0 baseline, or release artifacts.",
+    "Do not treat finite/non-zero gmag, rmag, period_g, and period_r as the CPVS membership rule without source-backed justification.",
+    "Keep exact CPVS reconstruction explicitly unresolved until the 11602 candidate-only IDs are explained with reproducible provenance."
+  ]
+}
