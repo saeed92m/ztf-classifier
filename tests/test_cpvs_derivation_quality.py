@@ -98,3 +98,27 @@ def test_read_vizier_accepts_commented_tsv_header(tmp_path: Path):
     )
 
     assert read_vizier(path) == {1, 730184}
+
+
+def test_qualified_ids_rejects_nonfinite_or_invalid_snr(tmp_path: Path):
+    path = tmp_path / "g.tsv"
+    path.write_text(
+        "SourceID\\tgmag\\te_gmag\\tg_flag\\n"
+        "1\\t18.0\\t0.1\\t0\\n"
+        "2\\t18.0\\tNaN\\t0\\n"
+        "3\\t18.0\\tinf\\t0\\n"
+        "4\\t18.0\\tbad\\t0\\n",
+        encoding="utf-8",
+    )
+
+    selected, quality = _qualified_ids(
+        path,
+        sigma=2.5,
+        parent_ids={"1", "2", "3", "4"},
+        member=None,
+        error_columns=("e_gmag",),
+        flag_columns=("g_flag", "catflags", "flag"),
+    )
+
+    assert selected == {"1"}
+    assert quality == {"1"}
