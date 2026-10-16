@@ -81,8 +81,8 @@
       },
       "regression_protection_count": {
         "before": 0,
-        "after": 24,
-        "unit": "focused regression test cases added: 13 MAST request/response contract cases and 11 TESS QUALITY assessment cases; test execution status tracked separately by CI",
+        "after": 22,
+        "unit": "focused pytest cases added: 11 MAST request/response contract cases and 11 TESS QUALITY assessment cases; execution status is tracked separately by CI",
         "status": "MEASURED"
       }
     },
