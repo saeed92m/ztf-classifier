@@ -1,7 +1,5 @@
 """Pure TESS QUALITY bitmask assessment; never silently drops source rows."""
 
-from __future__ import annotations
-
 from collections.abc import Iterable
 from dataclasses import dataclass
 from numbers import Integral
