@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "multisource-audit-protocol-20261016",
+  "objective": "Establish a traceable multi-source scientific validation protocol, per-run manifest template, and append-only operation journal without changing scientific selection rules or released artifacts.",
+  "previous_knowledge_consumed": [
+    "Issue #170: CPVS exact-membership remains unresolved at 741786 candidates, 730184 published reference IDs, 11602 candidate-only, and 0 published-only.",
+    "Issue #180: deterministic CPVS samples and object-level full-vs-batch validation are required and remain separate from this multi-source track.",
+    "Issue #188: multi-source validation requires complete input/output/operation/error/root-cause/remediation traceability.",
+    "Existing EvidenceManifest, SourceSubsetManifest, source-backed acquisition helpers, benchmark registry, and scientific reports should be reused rather than duplicated.",
+    "The cumulative improvement ledger requires explicit facts/hypotheses and NOT_MEASURED rather than fabricated measurements.",
+    "v0.2.0 baseline and v1.0.1 release artifacts must remain unchanged."
+  ],
+  "baseline": {
+    "revision": "main at branch creation",
+    "status": "Existing source/artifact manifests, acquisition helpers, benchmark registry, scientific reports, and lifecycle records are present. A dedicated cross-source protocol and per-operation journal linking all stage inputs/outputs/errors/root-cause/remediation/reruns was not identified in inspected files. No Gaia DR3 or TESS acquisition was performed in this cycle."
+  },
+  "expected_improvement": [
+    "Define distinct validation claims for acquisition, parsing, identity, transformations, determinism, reference agreement, and model validity.",
+    "Reuse existing evidence/acquisition/source-subset infrastructure and add a complementary operation journal.",
+    "Record hashes, counts, commands, configuration, environment, errors, hypotheses, remediation, regression tests, and reruns.",
+    "Add a machine-readable run manifest template with explicit NOT_RUN/NOT_MEASURED states.",
+    "Test operation success/failure logging, output-summary failure persistence, and secret redaction.",
+    "Keep Gaia DR3 and TESS pilots bounded and version-pinned, with ingestion integrity separate from model-performance claims.",
+    "Record the multi-source work under Issue #188 without replacing or closing CPVS issues."
+  ],
+  "measurement": {
+    "metrics": {
+      "lifecycle_contract_coverage": {
+        "before": 0,
+        "after": 1,
+        "unit": "protocol_and_journal_contract_added",
+        "status": "MEASURED"
+      },
+      "regression_protection_count": {
+        "before": 0,
+        "after": 8,
+        "unit": "six operation-journal tests plus two source-acquisition integration tests covering success, blocked outcome, source hash, evidence-manifest hash, and credential redaction",
+        "status": "MEASURED"
+      },
+      "scientific_validity": {
+        "before": "NOT_VERIFIED",
+        "after": "NOT_VERIFIED",
+        "status": "NOT_MEASURED",
+        "reason": "This protocol-only stage does not provide external scientific benchmark evidence."
+      }
+    },
+    "trade_off": "No scientific-gate relaxation; external benchmark completion remains release-blocking."
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Created GitHub Issue #188 to track source sequence, phases, acceptance criteria, error taxonomy, and audit-trail requirements.",
+      "Added docs/scientific_validation/MULTI_SOURCE_VALIDATION_PROTOCOL.md; it explicitly reuses existing evidence/acquisition/source-subset infrastructure.",
+      "Added configs/experiments/multi_source_run_manifest.template.json.",
+      "Added src/ztf_classifier/validation/operation_journal.py with redaction, append-only JSONL events, and success/failure wrapper.",
+      "Added lifecycle record and opened draft PR #189.",
+      "GitHub Actions were in progress/queued on the previously observed commits; a fresh result for the latest head is required. No passing result is claimed for the latest commit.",
+      "No external dataset was acquired or analyzed in this cycle.",
+      "No scientific selection rule, model, dataset, v0.2.0 baseline artifact, or v1.0.1 release artifact was changed.",
+      "Extended acquire_source/acquire_all with optional append-only journal output: STARTED followed by PASS/BLOCKED/FAIL, sanitized source URL paths, parameters, artifact SHA-256/size, row count when available, and the evidence-manifest SHA-256; default behavior remains unchanged when journal_path is omitted.",
+      "Added acquisition integration tests for successful journaled acquisition and hash-mismatch BLOCKED outcome; latest-head CI must verify these tests before the integration is considered validated.",
+      "Journal remains optional and the Gaia/TESS pilot evidence records are still manually authored; live pilot orchestration has not yet been wired to this optional journal."
+    ]
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "root_causes": [
+      "Existing source/artifact manifests and acquisition helpers cover part of provenance; the remaining gap is a tested cross-source operational contract and journal linking transformations and failures to immutable evidence, root-cause tests, remediation, and reruns."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Acquisition integrity, schema/identity correctness, reference agreement, and model validity are separate claims and require separate evidence.",
+      "Different astronomical surveys must not be assumed to share feature semantics, cadence, units, selection functions, taxonomies, or label quality.",
+      "Existing evidence and source-subset manifests should be extended and reused; duplicating acquisition/hash infrastructure risks inconsistent provenance.",
+      "A failed or skipped stage must be recorded explicitly and cannot be treated as success.",
+      "Suspected causes remain hypotheses until a discriminating test verifies them.",
+      "Successful Gaia/TESS ingestion cannot resolve the CPVS membership discrepancy.",
+      "The initial journal assumes one writer per file; parallel workers must use separate journals or a later tested concurrency mechanism.",
+      "Secret redaction must also cover inline credential-like values in exception messages and tracebacks, not only structured fields and URL query parameters.",
+      "Journal integration at the acquisition API boundary can bind source artifact hashes and evidence-manifest hashes, but it does not automatically cover later transformations unless those operations also emit events."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Validate the latest-head inline-secret redaction regression test and all required checks before merging PR #189.",
+      "Review CodeQL, lifecycle gate, Scientific Validation, Product Scope, and CI checks before merging PR #189.",
+      "Wire optional acquisition journaling into the live Gaia/TESS pilot orchestration and record all downstream transformation/parse operations; current pilot evidence files remain manually authored.",
+      "Run a bounded, pinned external-source pilot only after its query and schema contract are documented.",
+      "Verify source artifacts and outputs with SHA-256 and row/object accounting.",
+      "Keep CPVS exact reconstruction UNRESOLVED until its own evidence supports a different disposition."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Issue #188 is the tracking record for multi-source validation.",
+    "PR #189 is a draft protocol/template/journal change, not evidence of data acquisition or scientific validation.",
+    "No Gaia DR3 or TESS run has been completed in this cycle.",
+    "Existing EvidenceManifest, SourceSubsetManifest, and acquisition helpers are reusable; operation-journal integration remains pending.",
+    "v0.2.0 and v1.0.1 remain unchanged.",
+    "CPVS blocker #170 and deterministic sample/full-vs-batch work #180 remain independent and open.",
+    "Operation journal now redacts credential-like assignments embedded in error text and tracebacks; a focused regression test was added and latest-head CI is pending."
+  ]
+}

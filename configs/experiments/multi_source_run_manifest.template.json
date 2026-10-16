@@ -1,0 +1,184 @@
+{
+  "manifest_schema_version": "1.0",
+  "run_id": "REPLACE_WITH_UNIQUE_UTC_SOURCE_PURPOSE_COMMIT",
+  "status": "NOT_RUN",
+  "created_at_utc": null,
+  "started_at_utc": null,
+  "ended_at_utc": null,
+  "tracking_issue": "https://github.com/saeed92m/ztf-classifier/issues/188",
+  "purpose": {
+    "question": null,
+    "hypothesis": null,
+    "scope": "ingestion_integrity",
+    "acceptance_criteria": [],
+    "known_limitations": []
+  },
+  "execution": {
+    "repository": "https://github.com/saeed92m/ztf-classifier",
+    "git_ref": null,
+    "git_commit": null,
+    "working_tree_dirty": null,
+    "command": null,
+    "arguments": [],
+    "configuration_artifact": null,
+    "random_seeds": {},
+    "operator_or_workflow": null,
+    "host_os": null,
+    "python_version": null,
+    "dependency_lock_or_inventory_artifact": null
+  },
+  "source": {
+    "survey": null,
+    "catalogue_or_product": null,
+    "release_version": null,
+    "doi_or_stable_url": null,
+    "endpoint": null,
+    "query_or_request": null,
+    "filters": [],
+    "retrieved_at_utc": null,
+    "access_method": null,
+    "publisher_checksum": null,
+    "files": [
+      {
+        "path_or_artifact_name": null,
+        "media_type": null,
+        "byte_size": null,
+        "sha256": null,
+        "archive_integrity": "NOT_VERIFIED"
+      }
+    ],
+    "schema_reference": null,
+    "identifier_fields": {
+      "survey_object_id": null,
+      "observation_or_measurement_id": null,
+      "row_id_policy": null,
+      "crossmatch_policy": null
+    },
+    "reference_semantics": {
+      "role": "UNRESOLVED",
+      "definition": null,
+      "is_independent_astrophysical_ground_truth": false,
+      "limitations": []
+    }
+  },
+  "environment": {
+    "runtime_versions": {},
+    "dependency_versions": {},
+    "platform_details": {},
+    "resource_measurements": {
+      "wall_time_seconds": "NOT_MEASURED",
+      "peak_memory_bytes": "NOT_MEASURED",
+      "cpu_details": "NOT_MEASURED",
+      "gpu_details": "NOT_MEASURED",
+      "io_bytes": "NOT_MEASURED"
+    }
+  },
+  "stages": [
+    {
+      "sequence": 1,
+      "stage_id": null,
+      "operation": null,
+      "started_at_utc": null,
+      "ended_at_utc": null,
+      "status": "NOT_RUN",
+      "input_artifacts": [],
+      "output_artifacts": [],
+      "command_or_api_query": null,
+      "parameters": {},
+      "counts_before": {},
+      "counts_after": {},
+      "hashes": {},
+      "warnings": [],
+      "error": {
+        "reason_code": null,
+        "type": null,
+        "message": null,
+        "stack_trace_artifact": null,
+        "cause_status": "NOT_INVESTIGATED",
+        "cause_evidence": [],
+        "remediation_commit": null,
+        "regression_test": null,
+        "rerun_id": null
+      },
+      "notes": []
+    }
+  ],
+  "population_accounting": {
+    "raw_rows": "NOT_MEASURED",
+    "parsed_rows": "NOT_MEASURED",
+    "unique_objects": "NOT_MEASURED",
+    "unique_observations": "NOT_MEASURED",
+    "null_or_blank_ids": "NOT_MEASURED",
+    "malformed_rows": "NOT_MEASURED",
+    "duplicate_rows": "NOT_MEASURED",
+    "duplicate_object_ids": "NOT_MEASURED",
+    "rejected_rows_by_reason": {},
+    "objects_after_each_stage": [],
+    "unmapped_ids": "NOT_MEASURED"
+  },
+  "comparison": {
+    "comparison_type": "NOT_RUN",
+    "reference_definition": null,
+    "candidate_objects": "NOT_MEASURED",
+    "reference_objects": "NOT_MEASURED",
+    "intersection": "NOT_MEASURED",
+    "candidate_only": "NOT_MEASURED",
+    "reference_only": "NOT_MEASURED",
+    "false_positives_relative_to_reference": "NOT_MEASURED",
+    "false_negatives_relative_to_reference": "NOT_MEASURED",
+    "denominator_definitions": {},
+    "disagreement_ids_artifact": null,
+    "full_vs_batch": "NOT_RUN",
+    "repeat_run_determinism": "NOT_RUN"
+  },
+  "outputs": [
+    {
+      "artifact_name": null,
+      "purpose": null,
+      "path_or_workflow_artifact": null,
+      "media_type": null,
+      "byte_size": null,
+      "sha256": null,
+      "row_count": "NOT_MEASURED",
+      "object_count": "NOT_MEASURED"
+    }
+  ],
+  "incidents": [
+    {
+      "incident_id": null,
+      "reason_code": null,
+      "severity": null,
+      "observed_symptom": null,
+      "evidence_artifacts": [],
+      "suspected_cause": null,
+      "cause_status": "HYPOTHESIS",
+      "root_cause_test": null,
+      "root_cause_result": "NOT_RUN",
+      "remediation": null,
+      "regression_test": null,
+      "before_run_id": null,
+      "after_run_id": null,
+      "residual_risk": null
+    }
+  ],
+  "scientific_interpretation": {
+    "facts": [],
+    "supported_findings": [],
+    "hypotheses": [],
+    "rejected_hypotheses": [],
+    "unresolved_questions": [],
+    "claims_not_supported_by_this_run": []
+  },
+  "security": {
+    "secret_scan_status": "NOT_RUN",
+    "sensitive_values_redacted": "NOT_VERIFIED",
+    "raw_dataset_committed_to_git": false
+  },
+  "review": {
+    "review_status": "NOT_REVIEWED",
+    "reviewer": null,
+    "reviewed_at_utc": null,
+    "decision": "UNRESOLVED",
+    "next_action": null
+  }
+}

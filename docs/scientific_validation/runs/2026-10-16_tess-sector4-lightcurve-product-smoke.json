@@ -1,0 +1,159 @@
+{
+  "run_id": "20261016T091101Z-tess-sector4-lightcurve-product-smoke",
+  "status": "PASS_PRODUCT_ACQUISITION_AND_BASIC_FITS_AUDIT",
+  "created_at_utc": "2026-10-16T09:11:01.680092+00:00",
+  "purpose": "Acquire one public TESS SPOC light-curve FITS product selected through MAST metadata and audit file integrity, FITS HDU structure, schema, units, missing/non-finite measurements, and quality-flag distribution. This is a single-product data-integrity pilot, not model validation.",
+  "source": {
+    "survey": "TESS",
+    "archive": "MAST",
+    "observation_id": 61113566,
+    "observation_id_namespace": "MAST obsid",
+    "observation_product_id": "tess2018292075959-s0004-0000000300603467-0124-s",
+    "target_name": "300603467",
+    "sector": 4,
+    "instrument": "Photometer",
+    "project": "SPOC",
+    "product_type": "SCIENCE",
+    "product_subgroup": "LC",
+    "calibration_level": 3,
+    "data_rights": "PUBLIC",
+    "product_filename": "tess2018292075959-s0004-0000000300603467-0124-s_lc.fits",
+    "product_data_uri": "mast:TESS/product/tess2018292075959-s0004-0000000300603467-0124-s_lc.fits",
+    "product_version": "spoc-5.0.20-20201120",
+    "archive_documentation": "https://archive.stsci.edu/missions-and-data/tess",
+    "mast_api_documentation": "https://mast.stsci.edu/api/v0/"
+  },
+  "execution": {
+    "download_endpoint": "https://mast.stsci.edu/api/v0.1/Download/file",
+    "request_parameter": "uri=mast:TESS/product/tess2018292075959-s0004-0000000300603467-0124-s_lc.fits",
+    "retrieved_at_utc": "2026-10-16T09:11:01.680092+00:00",
+    "http_status": 200,
+    "content_type": "application/fits",
+    "redirected_to_public_archive_object": true,
+    "runtime": "Python standard library urllib; manual FITS header and binary-table inspection",
+    "code_revision_used_for_protocol": "science/multisource-audit-20261016"
+  },
+  "output_artifact": {
+    "kind": "TESS light-curve FITS",
+    "size_bytes": 1897920,
+    "sha256": "0e9f3e5afc1b029000bbd948e4f1500970ffa091523f6330afb118a74b7ef80d",
+    "retained_in_repository": false,
+    "reason": "Raw external science product is not committed; provenance, hash, schema and aggregate diagnostics are retained. Reacquire using the exact MAST data URI."
+  },
+  "integrity_validation": {
+    "status": "PASS",
+    "starts_with_fits_SIMPLE_card": true,
+    "file_size_multiple_of_2880_bytes": true,
+    "fits_block_size_bytes": 2880,
+    "fits_blocks": 659,
+    "http_bytes_match_recorded_size": true,
+    "sha256_recorded": true,
+    "hdu_count": 3,
+    "hdus": [
+      {"index": 0, "extname": "PRIMARY", "header_bytes": 5760, "data_bytes": 0, "naxis": 0},
+      {"index": 1, "extname": "LIGHTCURVE", "xtension": "BINTABLE", "header_bytes": 14400, "data_bytes": 1868400, "naxis1_row_bytes": 100, "naxis2_rows": 18684, "tfields": 20},
+      {"index": 2, "extname": "APERTURE", "xtension": "IMAGE", "header_bytes": 5760, "data_bytes": 484, "naxis1": 11, "naxis2": 11}
+    ],
+    "binary_table_column_width_sum": 100,
+    "binary_table_row_width_from_header": 100,
+    "binary_table_row_width_consistent": true
+  },
+  "lightcurve_schema": {
+    "extension": "LIGHTCURVE",
+    "row_count": 18684,
+    "column_count": 20,
+    "columns": [
+      {"name": "TIME", "format": "D", "unit": "BJD - 2457000, days"},
+      {"name": "TIMECORR", "format": "E", "unit": "d"},
+      {"name": "CADENCENO", "format": "J", "unit": null},
+      {"name": "SAP_FLUX", "format": "E", "unit": "e-/s"},
+      {"name": "SAP_FLUX_ERR", "format": "E", "unit": "e-/s"},
+      {"name": "SAP_BKG", "format": "E", "unit": "e-/s"},
+      {"name": "SAP_BKG_ERR", "format": "E", "unit": "e-/s"},
+      {"name": "PDCSAP_FLUX", "format": "E", "unit": "e-/s"},
+      {"name": "PDCSAP_FLUX_ERR", "format": "E", "unit": "e-/s"},
+      {"name": "QUALITY", "format": "J", "unit": null},
+      {"name": "PSF_CENTR1", "format": "D", "unit": "pixel"},
+      {"name": "PSF_CENTR1_ERR", "format": "E", "unit": "pixel"},
+      {"name": "PSF_CENTR2", "format": "D", "unit": "pixel"},
+      {"name": "PSF_CENTR2_ERR", "format": "E", "unit": "pixel"},
+      {"name": "MOM_CENTR1", "format": "D", "unit": "pixel"},
+      {"name": "MOM_CENTR1_ERR", "format": "E", "unit": "pixel"},
+      {"name": "MOM_CENTR2", "format": "D", "unit": "pixel"},
+      {"name": "MOM_CENTR2_ERR", "format": "E", "unit": "pixel"},
+      {"name": "POS_CORR1", "format": "E", "unit": "pixels"},
+      {"name": "POS_CORR2", "format": "E", "unit": "pixels"}
+    ],
+    "column_width_validation": "All 20 column widths sum to the FITS NAXIS1 value of 100 bytes."
+  },
+  "population_accounting": {
+    "raw_lightcurve_rows": 18684,
+    "finite_time_values": 15973,
+    "nonfinite_or_missing_time_values": 2711,
+    "finite_pdcsap_flux_values": 14403,
+    "nonfinite_or_missing_pdcsap_flux_values": 4281,
+    "finite_pdcsap_flux_error_values": 14403,
+    "nonfinite_or_missing_pdcsap_flux_error_values": 4281,
+    "time_min_bjd_minus_2457000_days": 1410.9003250922658,
+    "time_max_bjd_minus_2457000_days": 1436.8489993026842,
+    "quality_flag_counts": {
+      "0": 16365,
+      "1": 1,
+      "8": 749,
+      "16": 29,
+      "32": 24,
+      "128": 216,
+      "136": 1,
+      "148": 1,
+      "160": 8,
+      "164": 21,
+      "4096": 1269
+    },
+    "first_five_rows": [
+      {"cadenceno": 132081, "time": 1410.9003250922658, "pdcsap_flux": "NaN", "pdcsap_flux_err": "NaN", "quality": 8},
+      {"cadenceno": 132082, "time": 1410.901713978143, "pdcsap_flux": 8752.4296875, "pdcsap_flux_err": 12.852522850036621, "quality": 0},
+      {"cadenceno": 132083, "time": 1410.9031028640209, "pdcsap_flux": 8756.0732421875, "pdcsap_flux_err": 12.852095603942871, "quality": 0},
+      {"cadenceno": 132084, "time": 1410.9044917498986, "pdcsap_flux": 8750.4912109375, "pdcsap_flux_err": 12.846586227416992, "quality": 0},
+      {"cadenceno": 132085, "time": 1410.905880635834, "pdcsap_flux": 8733.9609375, "pdcsap_flux_err": 12.859556198608398, "quality": 0}
+    ]
+  },
+  "incident_followup": {
+    "prior_incident": "TESS-PRODUCT-LOOKUP-001",
+    "initial_failure": "Mast.Caom.Products called with params.filters=[{paramName: obsid, values:[...]}] returned HTTP 200 and zero rows.",
+    "root_cause_status": "CONFIRMED",
+    "confirmed_root_cause": "Mast.Caom.Products expects the observation identifier directly in params.obsid for this request; the generic filters structure silently returned an empty result.",
+    "corrected_request": {"service": "Mast.Caom.Products", "params": {"obsid": 61113566}},
+    "corrected_result": "HTTP 200, COMPLETE, 2 products returned (LC and TP); selected public LC product, 1,897,920 bytes.",
+    "regression_test_required": "Add a request-contract test asserting obsid is passed directly for Mast.Caom.Products and that a zero-row result is treated as a validation failure rather than silently accepted.",
+    "incident_closure": "Root cause confirmed by corrected request and successful product enumeration; regression test still pending."
+  },
+  "scientific_interpretation": {
+    "facts": [
+      "A public TESS SPOC light-curve product was downloaded and its byte-level SHA-256 recorded.",
+      "The FITS primary header, LIGHTCURVE binary table, and APERTURE image extension were identified.",
+      "The LIGHTCURVE table contains 18,684 cadence rows and 20 columns; the 100-byte row width matches the sum of column formats.",
+      "TIME is in BJD minus 2457000 days; SAP_FLUX and PDCSAP_FLUX are in electrons per second; QUALITY is an integer bitmask.",
+      "The data contain non-finite time/flux values and multiple nonzero quality flags. These must not be silently dropped or treated as good measurements."
+    ],
+    "hypotheses": [],
+    "unresolved": [
+      "Quality-bit interpretation and the source-documented recommended quality mask have not yet been applied.",
+      "The exact official FITS data model/column semantics still need to be cross-checked against the product documentation before feature extraction.",
+      "The raw product is not retained in Git; only provenance and aggregate evidence are retained.",
+      "No ZTF/TESS cross-match or cross-survey feature equivalence was attempted.",
+      "No model accuracy or classification claims are supported by this one product."
+    ],
+    "claims_not_supported": [
+      "General scientific validity of the platform",
+      "Classifier accuracy or generalization",
+      "Resolution of the CPVS 11,602 membership discrepancy"
+    ]
+  },
+  "next_actions": [
+    "Update the failed lookup incident with this confirmed root cause and link this successful rerun.",
+    "Add automated MAST product request-contract and FITS-header/row-width regression tests.",
+    "Cross-check QUALITY flag semantics and document explicit filter choices before deriving features.",
+    "Implement the Gaia/TESS adapter using existing evidence manifests and the operation journal.",
+    "Retain CPVS as an independent unresolved scientific blocker."
+  ]
+}

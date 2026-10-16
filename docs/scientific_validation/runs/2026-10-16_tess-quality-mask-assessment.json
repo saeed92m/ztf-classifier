@@ -1,0 +1,51 @@
+{
+  "run_id": "20261016T091200Z-tess-quality-mask-documentation-check",
+  "status": "PASS_DOCUMENTATION_CROSSCHECK_NOT_MODEL_FILTER",
+  "created_at_utc": "2026-10-16T09:12:00Z",
+  "source_product": {
+    "run_record": "docs/scientific_validation/runs/2026-10-16_tess-sector4-lightcurve-product-smoke.json",
+    "product_filename": "tess2018292075959-s0004-0000000300603467-0124-s_lc.fits",
+    "sha256": "0e9f3e5afc1b029000bbd948e4f1500970ffa091523f6330afb118a74b7ef80d"
+  },
+  "official_reference": {
+    "title": "2.0 - Data Product Overview - TESS Archive Documentation - MAST",
+    "url": "https://outerspace.stsci.edu/spaces/TESS/pages/14563420/2.0%2B-%2BData+Product+Overview",
+    "cross_check": "The official documentation describes cadence QUALITY flags as bitmasks, notes that not every nonzero flag means data are unusable, and gives 0101001010111111 as a starting bitwise mask for cadences likely to be lower quality."
+  },
+  "observed_quality_flags": {
+    "row_count": 18684,
+    "counts": {
+      "0": 16365,
+      "1": 1,
+      "8": 749,
+      "16": 29,
+      "32": 24,
+      "128": 216,
+      "136": 1,
+      "148": 1,
+      "160": 8,
+      "164": 21,
+      "4096": 1269
+    },
+    "observed_nonzero_quality_rows": 2319
+  },
+  "documented_starting_mask": {
+    "binary": "0101001010111111",
+    "integer": 21183,
+    "operation": "quality_value & mask == 0",
+    "rows_passing_mask_in_this_file": 16365,
+    "rows_failing_mask_in_this_file": 2319,
+    "status": "DERIVED_FROM_RECORDED_QUALITY_COUNTS; NOT_APPLIED_TO_MODEL_INPUT"
+  },
+  "important_limits": [
+    "The mask is a documented starting point, not a universal scientific acceptance rule; the intended science case must determine the filter.",
+    "No rows have been filtered from a model dataset because this pilot did not build one.",
+    "Non-finite TIME and PDCSAP_FLUX values require separate checks even when QUALITY is zero.",
+    "A quality mask should be configurable, versioned, recorded in the run manifest, and tested; do not silently discard data."
+  ],
+  "next_actions": [
+    "Implement a pure, tested quality-mask function that preserves original rows and records counts before/after and exclusion reasons.",
+    "Test bitmask semantics with known examples and include the selected mask in each run manifest.",
+    "Keep this mask separate from the CPVS candidate-selection rule and do not use it to force catalog membership counts."
+  ]
+}

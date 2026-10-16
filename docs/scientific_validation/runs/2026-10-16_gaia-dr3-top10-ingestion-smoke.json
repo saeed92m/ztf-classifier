@@ -1,0 +1,136 @@
+{
+  "run_id": "20261016T090745Z-gaia-dr3-vari-classifier-top10-smoke",
+  "status": "PASS_INGESTION_SMOKE_TEST_ONLY",
+  "created_at_utc": "2026-10-16T09:07:45.566162+00:00",
+  "purpose": "Exercise a real, bounded, source-backed query against Gaia DR3 and verify response format, required columns, row parsing, unique object identifiers, and byte-level response fingerprint. This is not a model validation or representative scientific benchmark.",
+  "source": {
+    "survey": "Gaia",
+    "release": "Gaia DR3",
+    "table": "gaiadr3.vari_classifier_result",
+    "official_schema": "https://gea.esac.esa.int/archive/documentation/GDR3/Gaia_archive/chap_datamodel/sec_dm_variability_tables/ssec_dm_vari_classifier_result.html",
+    "release_documentation": "https://gea.esac.esa.int/archive/documentation/GDR3/",
+    "doi": "10.17876/gaia/dr.3/80",
+    "service_endpoint": "https://gea.esac.esa.int/tap-server/tap/sync",
+    "query_language": "ADQL",
+    "request": {
+      "REQUEST": "doQuery",
+      "LANG": "ADQL",
+      "FORMAT": "csv",
+      "QUERY": "SELECT TOP 10 source_id, classifier_name, best_class_name, best_class_score FROM gaiadr3.vari_classifier_result WHERE best_class_name IS NOT NULL ORDER BY source_id"
+    },
+    "query_utf8_bytes": 164,
+    "query_sha256": "6be84e95c7e6e9549b2a024a7e01c9f08da68a572aa060dfa2bbab1cc6318578",
+    "reference_semantics": "Published Gaia DR3 classifier output; candidate classification labels, not independent astrophysical ground truth.",
+    "license_note": "Gaia@AIP metadata reports CC BY-NC 3.0 IGO for this table. Do not redistribute raw response data or use it commercially without confirming applicable terms and permissions."
+  },
+  "execution": {
+    "method": "Bounded live HTTP GET to official Gaia TAP synchronous endpoint using Python standard-library urllib; response parsed with csv.DictReader.",
+    "git_ref": "science/multisource-audit-20261016",
+    "git_commit": "59e62e7115bf1efbf7c0df785e7d5505b1e3d02b",
+    "network_attempts": 1,
+    "timeout_seconds": 45,
+    "http_status": 200,
+    "final_url": "https://gea.esac.esa.int/tap-server/tap/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=csv&QUERY=SELECT+TOP+10+source_id%2C+classifier_name%2C+best_class_name%2C+best_class_score+FROM+gaiadr3.vari_classifier_result+WHERE+best_class_name+IS+NOT+NULL+ORDER+BY+source_id",
+    "content_type": "text/csv",
+    "retrieved_at_utc": "2026-10-16T09:07:45.566162+00:00"
+  },
+  "input_artifacts": [
+    {
+      "kind": "query",
+      "sha256": "6be84e95c7e6e9549b2a024a7e01c9f08da68a572aa060dfa2bbab1cc6318578",
+      "retained": true,
+      "location": "source.request.QUERY"
+    }
+  ],
+  "output_artifacts": [
+    {
+      "kind": "raw_http_response_csv",
+      "byte_size": 522,
+      "sha256": "ef5697b01d38b7fb170026d6495b77ce75866d9531ae201e881818e02a73100a",
+      "retained_in_repository": false,
+      "reason": "Avoid redistributing a raw external catalogue sample while the source's non-commercial license implications are unresolved. It can be reacquired using the exact pinned-release query above; response hash allows byte-level comparison.",
+      "retained_summary": true
+    }
+  ],
+  "schema_validation": {
+    "status": "PASS",
+    "columns_in_order": [
+      "source_id",
+      "classifier_name",
+      "best_class_name",
+      "best_class_score"
+    ],
+    "required_columns_present": true,
+    "parsed_rows": 10,
+    "unique_source_ids": 10,
+    "duplicate_source_ids": 0,
+    "null_or_blank_source_ids": 0,
+    "malformed_rows": 0,
+    "unexpected_columns": 0
+  },
+  "transformations": [
+    {
+      "sequence": 1,
+      "operation": "HTTP GET Gaia TAP sync",
+      "status": "PASS",
+      "counts_before": {
+        "query_bytes": 164
+      },
+      "counts_after": {
+        "response_bytes": 522
+      },
+      "output_sha256": "ef5697b01d38b7fb170026d6495b77ce75866d9531ae201e881818e02a73100a"
+    },
+    {
+      "sequence": 2,
+      "operation": "Decode UTF-8 with optional BOM handling and parse CSV header/rows",
+      "status": "PASS",
+      "counts_before": {
+        "response_bytes": 522
+      },
+      "counts_after": {
+        "rows": 10,
+        "unique_source_ids": 10,
+        "duplicate_source_ids": 0,
+        "null_or_blank_source_ids": 0
+      }
+    }
+  ],
+  "incidents": [],
+  "comparison": {
+    "reference_agreement": "NOT_RUN",
+    "false_positives": "NOT_APPLICABLE",
+    "false_negatives": "NOT_APPLICABLE",
+    "full_vs_batch": "NOT_RUN",
+    "repeat_run_determinism": "NOT_RUN",
+    "model_evaluation": "NOT_RUN",
+    "reason": "This was an ingestion smoke test only; no candidate-selection algorithm or model was evaluated."
+  },
+  "interpretation": {
+    "facts": [
+      "The official Gaia DR3 TAP endpoint returned HTTP 200 and content-type text/csv for the bounded query.",
+      "The raw response was 522 bytes with SHA-256 ef5697b01d38b7fb170026d6495b77ce75866d9531ae201e881818e02a73100a.",
+      "The CSV parser read 10 rows with the four requested columns and 10 unique nonblank source_id values.",
+      "The query is ordered by source_id and limited to 10 rows, so this is deterministic in query intent but byte-for-byte repeatability has not yet been tested."
+    ],
+    "hypotheses": [],
+    "unresolved": [
+      "Raw response file was not retained because license/redistribution implications have not been resolved; hash and summary are retained.",
+      "This one smoke test does not prove the repository acquisition pipeline can perform or journal the same request.",
+      "No comparison against ZTF or TESS was performed.",
+      "Gaia classification scores and labels are not independent truth and must not be compared directly to ALeRCE classes without a justified taxonomy mapping."
+    ],
+    "claims_not_supported": [
+      "General scientific validity of the platform",
+      "Model accuracy or cross-survey generalization",
+      "Resolution of the CPVS 11,602 membership discrepancy"
+    ]
+  },
+  "next_actions": [
+    "Implement a tested Gaia TAP adapter that writes a run manifest and operation journal within the repository's existing evidence infrastructure.",
+    "Repeat the same bounded query and compare response/schema/IDs while treating response hash differences separately from semantic row-set differences.",
+    "Perform an injected malformed-schema test and verify the journal preserves the error and root-cause evidence.",
+    "Plan a separate TESS/MAST photometry product pilot with product-specific identifiers, units, quality flags, and license review.",
+    "Keep CPVS validation independently blocked until its own discrepancy is explained."
+  ]
+}
