@@ -106,3 +106,26 @@ def test_operation_journal_rejects_invalid_status_and_missing_stage(tmp_path):
     with pytest.raises(ValueError, match="unsupported operation status"):
         append_operation_event(journal, stage="parse", operation="parse", status="SUCCESS")
     assert not journal.exists()
+
+
+def test_operation_journal_redacts_inline_secrets_in_error_text_and_traceback(tmp_path):
+    journal = tmp_path / "events.jsonl"
+
+    def fail():
+        raise RuntimeError("request failed api_key=inline-secret token:another-secret")
+
+    with pytest.raises(RuntimeError):
+        run_logged_operation(
+            journal,
+            stage="acquire",
+            operation="request",
+            function=fail,
+        )
+
+    serialized = journal.read_text(encoding="utf-8")
+    assert "inline-secret" not in serialized
+    assert "another-secret" not in serialized
+    events = _events(journal)
+    assert events[1]["status"] == "FAIL"
+    assert "[REDACTED]" in events[1]["error_message"]
+    assert "[REDACTED]" in events[1]["stack_trace"]
