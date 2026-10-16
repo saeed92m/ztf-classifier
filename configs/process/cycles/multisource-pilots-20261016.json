@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "multisource-pilots-20261016",
+  "objective": "Run bounded real-data ingestion pilots against Gaia DR3 and TESS/MAST, preserve reproducible input/output provenance and errors, and add regression coverage for a confirmed MAST API request-contract bug.",
+  "previous_knowledge_consumed": [
+    "Issue #188 tracks multi-source validation and complete run provenance.",
+    "PR #189 adds the multi-source validation protocol, JSON run-manifest template, and append-only operation journal.",
+    "Existing source-backed acquisition and evidence-manifest infrastructure should be reused, not duplicated.",
+    "The CPVS membership mismatch remains an independent unresolved scientific blocker under #170.",
+    "The v0.2.0 scientific baseline and v1.0.1 release artifacts must remain unchanged."
+  ],
+  "baseline": {
+    "revision": "science/multisource-audit-20261016 at pilot start",
+    "status": "Protocol, manifest template, and initial operation journal exist. Production adapters are not yet wired end-to-end. No Gaia/TESS run artifacts were previously recorded."
+  },
+  "expected_improvement": [
+    "Verify real access to official Gaia DR3 and TESS/MAST sources with bounded requests.",
+    "Record exact queries, timestamps, response hashes, schemas, counts, and limitations.",
+    "Repeat the Gaia request to test byte-level response reproducibility for a bounded sample.",
+    "Acquire one exact public TESS light-curve product and audit FITS structure, column widths/units, non-finite values, and quality flags.",
+    "Reproduce and root-cause a failed TESS product lookup, preserve the failed attempt, and add regression coverage.",
+    "Keep ingestion correctness separate from model validation and CPVS reference agreement."
+  ],
+  "measurement": {
+    "gaia_dr3": {
+      "status": "PASS_BOUNDED_INGESTION_SMOKE_ONLY",
+      "query_sha256": "6be84e95c7e6e9549b2a024a7e01c9f08da68a572aa060dfa2bbab1cc6318578",
+      "rows": 10,
+      "unique_source_ids": 10,
+      "response_bytes": 522,
+      "response_sha256": "ef5697b01d38b7fb170026d6495b77ce75866d9531ae201e881818e02a73100a",
+      "repeat_test": "PASS: second identical request returned the same bytes/hash and same ordered source IDs",
+      "run_record": "docs/scientific_validation/runs/2026-10-16_gaia-dr3-top10-ingestion-smoke.json"
+    },
+    "tess_metadata": {
+      "status": "PASS_BOUNDED_METADATA_SMOKE_ONLY",
+      "rows": 5,
+      "unique_obsid": 5,
+      "unique_obs_id": 5,
+      "service_rows_filtered": 1994189,
+      "response_bytes": 2257,
+      "response_sha256": "9c7f145e96b53df393ad61274186bc3788ecd596ee4423b3d4f1daa19080b098",
+      "run_record": "docs/scientific_validation/runs/2026-10-16_tess-mast-top5-metadata-smoke.json"
+    },
+    "tess_lightcurve": {
+      "status": "PASS_PRODUCT_ACQUISITION_AND_BASIC_FITS_AUDIT",
+      "obsid": 61113566,
+      "product": "tess2018292075959-s0004-0000000300603467-0124-s_lc.fits",
+      "bytes": 1897920,
+      "sha256": "0e9f3e5afc1b029000bbd948e4f1500970ffa091523f6330afb118a74b7ef80d",
+      "hdu_count": 3,
+      "lightcurve_rows": 18684,
+      "columns": 20,
+      "row_width_bytes": 100,
+      "finite_time_values": 15973,
+      "finite_pdcsap_flux_values": 14403,
+      "quality_flags": "Multiple nonzero quality flags observed; documented recommended mask still pending",
+      "run_record": "docs/scientific_validation/runs/2026-10-16_tess-sector4-lightcurve-product-smoke.json"
+    },
+    "mast_product_lookup_incident": {
+      "status": "ROOT_CAUSE_CONFIRMED_REMEDIATION_VERIFIED_TEST_PENDING",
+      "reason_code": "PRODUCT_LOOKUP_EMPTY_RESULT",
+      "initial_failure": "Mast.Caom.Products returned HTTP 200 and zero rows when obsid was incorrectly passed through generic params.filters.",
+      "root_cause": "This service requires the observation identifier directly in params.obsid.",
+      "corrected_result": "The corrected request returned two products, LC and TP.",
+      "record": "docs/scientific_validation/runs/2026-10-16_tess-product-metadata-lookup-failure.json",
+      "regression_test": "Added tests/test_validation_mast.py; current-head CI result pending."
+    }
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Two live Gaia DR3 requests were byte-identical for a fixed TOP 10 query.",
+      "A bounded TESS MAST metadata query returned five unique observation identifiers.",
+      "One public TESS SPOC light-curve FITS file was downloaded transiently and inspected; raw product not committed.",
+      "Initial MAST product lookup failure was retained; root cause was confirmed by a corrected request and successful product acquisition.",
+      "Added source code for service-specific MAST product request construction and fail-closed response validation.",
+      "Added unit tests for MAST request/response contracts; latest-head CI not yet verified.",
+      "No model evaluation, cross-survey feature mapping, full-vs-batch model comparison, or CPVS membership comparison was performed."
+    ]
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "root_causes": [
+      "The initial MAST product lookup passed obsid via the generic filters parameter; the service expects params.obsid directly. The corrected request returned products, confirming the cause."
+    ],
+    "other_incidents": [
+      "A successful HTTP response is not sufficient: an empty result can indicate an incorrect service contract and must be treated as a validation failure when products are expected."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "For a fixed bounded Gaia DR3 query, the two observed responses were byte-identical; this is limited to those two calls.",
+      "TESS metadata ingestion and FITS product ingestion are separate stages and need separate evidence.",
+      "TESS light curves contain non-finite values and multiple QUALITY bitmask values; quality semantics must be documented before applying filters.",
+      "A generic HTTP 200 status must not be interpreted as successful product selection when zero rows violate the declared expectation.",
+      "The initial MAST API-contract failure should be kept in the incident ledger even after remediation."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Run latest-head CI and review all failures before merging PR #189.",
+      "Verify MAST request-contract regression tests pass.",
+      "Cross-check TESS QUALITY bitmask semantics and official product column definitions before deriving features.",
+      "Integrate the MAST/Gaia adapters with EvidenceManifest and the operation journal; live pilot records were created manually and are not yet produced end-to-end by repository code.",
+      "Add a FITS integrity/parser regression test using a small synthetic FITS fixture or approved test fixture.",
+      "Run a separate source-compatible scientific validation with explicit labels and object-level splits.",
+      "Keep CPVS membership mismatch unresolved until its own root cause is supported by evidence."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "PR #189 contains the current protocol, journal, and pilot evidence and remains a draft.",
+    "Gaia DR3 bounded ingestion and two-call repeatability passed for the recorded query only.",
+    "TESS metadata and one public light-curve product were acquired and audited; quality-mask interpretation remains pending.",
+    "The MAST product lookup root cause is confirmed; regression coverage was added but CI verification is pending.",
+    "Raw Gaia/TESS data are not committed; hashes and compact provenance records are retained.",
+    "No scientific model claims are supported by these smoke tests.",
+    "CPVS blocker #170 and baseline v0.2.0 remain unchanged."
+  ]
+}
