@@ -65,7 +65,28 @@
       "corrected_result": "The corrected request returned two products, LC and TP.",
       "record": "docs/scientific_validation/runs/2026-10-16_tess-product-metadata-lookup-failure.json",
       "regression_test": "Added tests/test_validation_mast.py; current-head CI result pending."
-    }
+    },
+    "metrics": {
+      "reproducibility": {
+        "before": 0,
+        "after": 1,
+        "unit": "bounded_Gaia_query_repeatability_demonstrated_for_one_query",
+        "status": "MEASURED"
+      },
+      "regression_protection_count": {
+        "before": 0,
+        "after": 7,
+        "unit": "MAST_request_contract_tests_added",
+        "status": "MEASURED"
+      },
+      "scientific_validity": {
+        "before": "NOT_VERIFIED",
+        "after": "NOT_VERIFIED",
+        "status": "NOT_MEASURED",
+        "reason": "Ingestion smoke tests are not model or cross-survey scientific validation."
+      }
+    },
+    "trade_off": "No scientific-gate relaxation; the CPVS discrepancy remains an independent blocker."
   },
   "validation": {
     "status": "IN_PROGRESS",
