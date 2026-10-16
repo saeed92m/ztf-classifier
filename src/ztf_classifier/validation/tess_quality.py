@@ -4,7 +4,6 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from numbers import Integral
 
-
 DEFAULT_TESS_QUALITY_MASK = 21183
 
 
