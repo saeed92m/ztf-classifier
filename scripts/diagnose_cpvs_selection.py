@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -34,7 +35,90 @@ def parent_catalog_metadata(
     named-column VizieR export. These fields remain diagnostic-only.
     """
     if metadata_path is not None:
-        lines = metadata_path.read_text(encoding="utf-8", errors="replace").splitlines()
+        raw_metadata = metadata_path.read_text(encoding="utf-8", errors="replace")
+        if "<VOTABLE" in raw_metadata[:4096].upper():
+            root = ET.fromstring(raw_metadata)
+            table = next(
+                (element for element in root.iter() if element.tag.rsplit("}", 1)[-1] == "TABLE"),
+                None,
+            )
+            if table is None:
+                raise ValueError(f"metadata VOTable contains no TABLE: {metadata_path}")
+            fields = [
+                element.attrib.get("name", "").strip().lower()
+                for element in table.iter()
+                if element.tag.rsplit("}", 1)[-1] == "FIELD"
+            ]
+            required = {"seq", "gmag", "rmag", "ng", "nr", "type"}
+            if not required.issubset(fields):
+                raise ValueError(
+                    f"metadata VOTable lacks required fields {sorted(required - set(fields))}: {metadata_path}"
+                )
+            indexes = {name: index for index, name in enumerate(fields)}
+
+            def xml_value(cells: list[str], name: str) -> str:
+                index = indexes[name]
+                return cells[index].strip() if index < len(cells) else ""
+
+            def xml_float(value: str) -> float:
+                try:
+                    result = float(value)
+                    return result if math.isfinite(result) else float("nan")
+                except (TypeError, ValueError):
+                    return float("nan")
+
+            def xml_int(value: str) -> int:
+                try:
+                    return int(float(value))
+                except (TypeError, ValueError):
+                    return -1
+
+            def xml_named_value(cells: list[str], *names: str) -> str:
+                for name in names:
+                    index = indexes.get(name.lower())
+                    if index is not None and index < len(cells):
+                        return cells[index].strip()
+                return ""
+
+            metadata: dict[int, dict[str, Any]] = {}
+            for row in table.iter():
+                if row.tag.rsplit("}", 1)[-1] != "TR":
+                    continue
+                cells = [
+                    (cell.text or "").strip()
+                    for cell in row
+                    if cell.tag.rsplit("}", 1)[-1] == "TD"
+                ]
+                if len(cells) != len(fields):
+                    raise ValueError(
+                        f"VOTable row has {len(cells)} cells for {len(fields)} fields in {metadata_path}"
+                    )
+                source_id = xml_int(xml_value(cells, "seq"))
+                if source_id < 0:
+                    raise ValueError(f"invalid Seq value in {metadata_path}")
+                if source_id in metadata:
+                    raise ValueError(f"duplicate Seq {source_id} in {metadata_path}")
+                metadata[source_id] = {
+                    "type": xml_value(cells, "type") or "UNKNOWN",
+                    "ng": xml_int(xml_value(cells, "ng")),
+                    "nr": xml_int(xml_value(cells, "nr")),
+                    "gmag": xml_float(xml_value(cells, "gmag")),
+                    "rmag": xml_float(xml_value(cells, "rmag")),
+                    "period": xml_float(xml_named_value(cells, "per")),
+                    "per_g": xml_float(xml_named_value(cells, "per-g", "per_g")),
+                    "per_r": xml_float(xml_named_value(cells, "per-r", "per_r")),
+                    "r2_g": xml_float(xml_named_value(cells, "r2-g", "r2_g")),
+                    "r2_r": xml_float(xml_named_value(cells, "r2-r", "r2_r")),
+                    "gamp": xml_float(xml_named_value(cells, "gamp")),
+                    "ramp": xml_float(xml_named_value(cells, "ramp")),
+                    "fap_g": xml_float(xml_named_value(cells, "log(fap-g)", "log_fap_g")),
+                    "fap_r": xml_float(xml_named_value(cells, "log(fap-r)", "log_fap_r")),
+                }
+            if not metadata:
+                raise ValueError(f"metadata VOTable contained no valid Seq rows: {metadata_path}")
+            return metadata
+
+        lines = raw_metadata.splitlines()
         header_index = None
         header = []
         for index, line in enumerate(lines):
