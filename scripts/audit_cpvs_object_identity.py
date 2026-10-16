@@ -48,9 +48,9 @@ def read_published_rows(path: Path) -> list[dict[str, object]]:
             continue
         candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
         columns = [part.strip().lower() for part in candidate.split("\t")]
-        if "id" in columns and "ztf" in columns:
+        if "id" in columns and ("ztf" in columns or "ztf identifier" in columns):
             header_index = index
-            ztf_index = columns.index("ztf")
+            ztf_index = columns.index("ztf") if "ztf" in columns else columns.index("ztf identifier")
             id_index = columns.index("id")
             break
 
@@ -101,8 +101,10 @@ def audit(parent_path: Path, candidate_path: Path, published_path: Path) -> dict
     parent_names = read_parent_names(parent_path)
     candidate_ids = read_candidate_ids(candidate_path)
     published_rows = read_published_rows(published_path)
-    published_ids = {int(row["id"]) for row in published_rows}
-    published_names = {str(row["ztf"]) for row in published_rows}
+    published_id_counts = Counter(int(row["id"]) for row in published_rows)
+    published_name_counts = Counter(str(row["ztf"]) for row in published_rows)
+    published_ids = set(published_id_counts)
+    published_names = set(published_name_counts)
 
     id_name_matches = []
     id_name_mismatches = []
@@ -126,7 +128,13 @@ def audit(parent_path: Path, candidate_path: Path, published_path: Path) -> dict
     candidate_names_provisional = {
         parent_names[oid] for oid in candidate_ids if oid in parent_names
     }
-    name_mapping_validated = not out_of_range and not id_name_mismatches
+    name_mapping_validated = (
+        not out_of_range
+        and not id_name_mismatches
+        and not any(count > 1 for count in published_id_counts.values())
+        and not any(count > 1 for count in published_name_counts.values())
+        and not any(count > 1 for count in parent_name_counts.values())
+    )
 
     return {
         "schema_version": "1.0",
@@ -146,6 +154,7 @@ def audit(parent_path: Path, candidate_path: Path, published_path: Path) -> dict
         "published_reference": {
             "row_count": len(published_rows),
             "unique_id_count": len(published_ids),
+            "duplicate_id_count": sum(count > 1 for count in published_id_counts.values()),
             "unique_ztf_name_count": len(published_names),
             "duplicate_ztf_name_count": sum(count > 1 for count in published_name_counts.values()),
         },
