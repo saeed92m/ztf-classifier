@@ -21,7 +21,12 @@ def test_default_mask_matches_documented_bitwise_semantics():
 def test_custom_mask_is_configurable_and_keeps_row_alignment():
     result = assess_tess_quality_flags([0, 1, 2, 3], bitmask=1)
     assert result.accepted == (True, False, True, False)
-    assert result.reasons == (None, "quality_mask_nonzero", None, "quality_mask_nonzero")
+    assert result.reasons == (
+        None,
+        "quality_mask_nonzero",
+        None,
+        "quality_mask_nonzero",
+    )
     assert result.to_dict() == {
         "bitmask": 1,
         "row_count": 4,
