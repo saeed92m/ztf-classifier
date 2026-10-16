@@ -154,3 +154,51 @@ def test_star_embed_revision_resolution_uses_supported_expand_parameters(monkeyp
     assert captured["params"] == [("expand", "sha"), ("expand", "siblings")]
     assert urls[0].endswith("/resolve/" + "a" * 40 + "/data/train-00000-of-00002.parquet")
     assert manifest["revision"] == "a" * 40
+
+
+def test_acquisition_journals_success_with_artifact_hash_and_counts(tmp_path: Path):
+    payload = _cpvs_payload("1", "2", "3")
+    journal = tmp_path / "events.jsonl"
+    result = acquire_source(
+        AcquisitionRequest(
+            benchmark_id="ztf_periodic_781k",
+            source_id="ztf_periodic_781k",
+            destination=tmp_path / "snapshot.zip",
+            urls=("https://example.test/snapshot?access_token=must-not-be-recorded",),
+            timeout_seconds=5,
+        ),
+        code_version="test",
+        fetcher=lambda url, timeout: payload,
+        journal_path=journal,
+    )
+
+    assert result.status == "ACQUIRED"
+    events = [json.loads(line) for line in journal.read_text(encoding="utf-8").splitlines()]
+    assert [event["status"] for event in events] == ["STARTED", "PASS"]
+    assert events[1]["counts_after"] == {"rows": 3}
+    assert events[1]["hashes"]["sha256"] == result.artifact.sha256
+    serialized = journal.read_text(encoding="utf-8")
+    assert "must-not-be-recorded" not in serialized
+    assert "access_token" not in serialized
+
+
+def test_acquisition_journals_blocked_outcome_without_promoting_to_pass(tmp_path: Path):
+    journal = tmp_path / "events.jsonl"
+    result = acquire_source(
+        AcquisitionRequest(
+            benchmark_id="star_embed_ztf_40k",
+            source_id="star_embed_ztf_40k",
+            destination=tmp_path / "snapshot.bin",
+            urls=("https://example.test/snapshot",),
+            expected_sha256="0" * 64,
+        ),
+        code_version="test",
+        fetcher=lambda url, timeout: b"actual",
+        journal_path=journal,
+    )
+
+    assert result.status == "BLOCKED_EXTERNAL"
+    events = [json.loads(line) for line in journal.read_text(encoding="utf-8").splitlines()]
+    assert [event["status"] for event in events] == ["STARTED", "BLOCKED"]
+    assert events[1]["error_type"] == "AcquisitionError"
+    assert "SHA-256 mismatch" in events[1]["error_message"]
