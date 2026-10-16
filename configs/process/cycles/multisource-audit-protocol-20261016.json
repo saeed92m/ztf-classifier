@@ -33,8 +33,8 @@
       },
       "regression_protection_count": {
         "before": 0,
-        "after": 5,
-        "unit": "focused_operation_journal_tests_added",
+        "after": 6,
+        "unit": "focused operation-journal tests covering success, failure persistence, summary failure, structured/inline secret redaction, and invalid input",
         "status": "MEASURED"
       },
       "scientific_validity": {
@@ -54,7 +54,7 @@
       "Added docs/scientific_validation/MULTI_SOURCE_VALIDATION_PROTOCOL.md; it explicitly reuses existing evidence/acquisition/source-subset infrastructure.",
       "Added configs/experiments/multi_source_run_manifest.template.json.",
       "Added src/ztf_classifier/validation/operation_journal.py with redaction, append-only JSONL events, and success/failure wrapper.",
-      "Added tests/test_validation_operation_journal.py with five focused tests: success/count logging, operation failure persistence/re-raise, output-summary failure persistence, secret redaction, and invalid input rejection.",
+      "Added tests/test_validation_operation_journal.py with six focused tests: success/count logging, operation failure persistence/re-raise, output-summary failure persistence, structured and inline secret redaction, and invalid input rejection.",
       "Added lifecycle record and opened draft PR #189.",
       "GitHub Actions were in progress/queued on the previously observed commits; a fresh result for the latest head is required. No passing result is claimed for the latest commit.",
       "No external dataset was acquired or analyzed in this cycle.",
@@ -76,13 +76,14 @@
       "A failed or skipped stage must be recorded explicitly and cannot be treated as success.",
       "Suspected causes remain hypotheses until a discriminating test verifies them.",
       "Successful Gaia/TESS ingestion cannot resolve the CPVS membership discrepancy.",
-      "The initial journal assumes one writer per file; parallel workers must use separate journals or a later tested concurrency mechanism."
+      "The initial journal assumes one writer per file; parallel workers must use separate journals or a later tested concurrency mechanism.",
+      "Secret redaction must also cover inline credential-like values in exception messages and tracebacks, not only structured fields and URL query parameters."
     ]
   },
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Validate the JSON run-manifest template and journal implementation through latest-head CI and add any needed schema/contract tests.",
+      "Validate the latest-head inline-secret redaction regression test and all required checks before merging PR #189.",
       "Review CodeQL, lifecycle gate, Scientific Validation, Product Scope, and CI checks before merging PR #189.",
       "Integrate journal events with existing EvidenceManifest and SourceSubsetManifest so each operation points to verified artifacts.",
       "Run a bounded, pinned external-source pilot only after its query and schema contract are documented.",
@@ -97,6 +98,7 @@
     "No Gaia DR3 or TESS run has been completed in this cycle.",
     "Existing EvidenceManifest, SourceSubsetManifest, and acquisition helpers are reusable; operation-journal integration remains pending.",
     "v0.2.0 and v1.0.1 remain unchanged.",
-    "CPVS blocker #170 and deterministic sample/full-vs-batch work #180 remain independent and open."
+    "CPVS blocker #170 and deterministic sample/full-vs-batch work #180 remain independent and open.",
+    "Operation journal now redacts credential-like assignments embedded in error text and tracebacks; a focused regression test was added and latest-head CI is pending."
   ]
 }
