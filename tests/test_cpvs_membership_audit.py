@@ -123,7 +123,12 @@ def test_parent_catalog_metadata_parses_tokenized_table2_columns(tmp_path: Path)
 
     metadata = parent_catalog_metadata(parent)
 
-    assert metadata[100] == {"type": "EW", "ng": 11, "nr": 12}
+    assert metadata[100] == {
+        "ztf_name": "ZTFJ000000.13+620605.8",
+        "type": "EW",
+        "ng": 11,
+        "nr": 12,
+    }
     assert membership_by_type({100}, metadata) == {"EW": 1}
 
 
@@ -163,7 +168,12 @@ def test_parent_catalog_metadata_parses_split_ztf_name_rows(tmp_path: Path):
 
     metadata = parent_catalog_metadata(parent)
 
-    assert metadata[101] == {"type": "BYDra", "ng": 21, "nr": 22}
+    assert metadata[101] == {
+        "ztf_name": "ZTFJ000000.14+721413.7",
+        "type": "BYDra",
+        "ng": 21,
+        "nr": 22,
+    }
 
 
 
@@ -207,4 +217,27 @@ def test_parent_catalog_metadata_uses_fixed_width_offsets_when_verified(tmp_path
 
     metadata = parent_catalog_metadata(parent)
 
-    assert metadata[102] == {"type": "BYDra", "ng": 21, "nr": 22}
+    assert metadata[102] == {
+        "ztf_name": "ZTFJ000000.15+721413.7",
+        "type": "BYDra",
+        "ng": 21,
+        "nr": 22,
+    }
+
+
+def test_fixed_stratified_samples_are_reproducible_and_balanced():
+    from scripts.diagnose_cpvs_selection import fixed_stratified_samples
+
+    parent = set(range(2000))
+    published = set(range(1000))
+    first = fixed_stratified_samples(parent, published)
+    second = fixed_stratified_samples(parent, published)
+
+    assert first == second
+    assert len(first["sample_100"]) == 100
+    assert len(first["sample_1000"]) == 1000
+    assert set(first["sample_100"]).issubset(first["sample_1000"])
+    assert sum(oid in published for oid in first["sample_100"]) == 50
+    assert sum(oid not in published for oid in first["sample_100"]) == 50
+    assert sum(oid in published for oid in first["sample_1000"]) == 500
+    assert sum(oid not in published for oid in first["sample_1000"]) == 500
