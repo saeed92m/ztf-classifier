@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import random
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -71,11 +72,83 @@ def parent_catalog_metadata(path: Path) -> dict[int, dict[str, Any]]:
             ng = nr = -1
             variable_type = "UNKNOWN"
         metadata[source_id] = {
+            "ztf_name": identity[0],
             "type": variable_type or "UNKNOWN",
             "ng": ng,
             "nr": nr,
         }
     return metadata
+
+
+def fixed_stratified_samples(
+    parent: set[int], published: set[int], *, seed: int = 20261017
+) -> dict[str, list[int]]:
+    """Return stable 100- and 1,000-object samples stratified by reference membership.
+
+    The 100-object quick sample is a nested subset of the fixed 1,000-object
+    sample. Each sample is balanced between published members and non-members,
+    selected from the full parent SourceID universe with a fixed seed.
+    """
+    members = sorted(parent & published)
+    nonmembers = sorted(parent - published)
+    if len(members) < 500 or len(nonmembers) < 500:
+        raise ValueError("fixed 1,000-object sample requires at least 500 objects per stratum")
+    rng = random.Random(seed)
+    member_sample = sorted(rng.sample(members, 500))
+    nonmember_sample = sorted(rng.sample(nonmembers, 500))
+    return {
+        "sample_100": sorted(member_sample[:50] + nonmember_sample[:50]),
+        "sample_1000": sorted(member_sample + nonmember_sample),
+    }
+
+
+def sample_object_evidence(
+    ids: list[int],
+    *,
+    published: set[int],
+    candidates: set[int],
+    metadata: dict[int, dict[str, Any]],
+    g: dict[int, dict[str, Any]],
+    r: dict[int, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Preserve object identity, reference membership, and per-band evidence."""
+    result = []
+    for oid in ids:
+        partition = (
+            "published_member"
+            if oid in published
+            else "candidate_only"
+            if oid in candidates
+            else "neither_published_nor_candidate"
+        )
+        result.append({
+            "source_id": oid,
+            "ztf_name": metadata[oid]["ztf_name"],
+            "published_member": oid in published,
+            "reconstructed_candidate": oid in candidates,
+            "partition": partition,
+            "parent_catalog": {
+                "type": metadata[oid]["type"],
+                "ng": metadata[oid]["ng"],
+                "nr": metadata[oid]["nr"],
+            },
+            "g": {
+                "snr_qualified": g[oid]["snr"],
+                "qualifying_detections": g[oid]["qualifying_detections"],
+                "qualifying_flag_or": g[oid]["qualifying_flag_or"],
+                "brightest_qualifying_mag": g[oid]["brightest_qualifying_mag"],
+                "smallest_qualifying_error": g[oid]["smallest_qualifying_error"],
+            },
+            "r": {
+                "snr_qualified": r[oid]["snr"],
+                "qualifying_detections": r[oid]["qualifying_detections"],
+                "qualifying_flag_or": r[oid]["qualifying_flag_or"],
+                "brightest_qualifying_mag": r[oid]["brightest_qualifying_mag"],
+                "smallest_qualifying_error": r[oid]["smallest_qualifying_error"],
+            },
+        })
+    return result
+
 
 def membership_by_type(
     ids: set[int], metadata: dict[int, dict[str, Any]]
@@ -276,6 +349,30 @@ def main() -> int:
             "candidate_only": summarize_group(candidate_only, g, r),
             "published_and_candidate": summarize_group(published_intersection, g, r),
             "published_only": summarize_group(published_only, g, r),
+        },
+        "fixed_parent_samples": {
+            "method": (
+                "Deterministic stratified random samples from the full 781602-object "
+                "parent SourceID universe; seed=20261017; sample_100 contains 50 "
+                "published members and 50 non-members; sample_1000 contains 500 "
+                "published members and 500 non-members; sample_100 is nested in sample_1000."
+            ),
+            "sample_100": sample_object_evidence(
+                fixed_stratified_samples(parent, published)["sample_100"],
+                published=published,
+                candidates=baseline,
+                metadata=catalog_metadata,
+                g=g,
+                r=r,
+            ),
+            "sample_1000": sample_object_evidence(
+                fixed_stratified_samples(parent, published)["sample_1000"],
+                published=published,
+                candidates=baseline,
+                metadata=catalog_metadata,
+                g=g,
+                r=r,
+            ),
         },
         "parent_catalog_context_diagnostic_only": {
             "class_counts": {
