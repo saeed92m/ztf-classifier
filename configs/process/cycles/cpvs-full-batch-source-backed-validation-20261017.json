@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-full-batch-source-backed-validation-20261017",
+  "objective": "Run the PR #182 full-source CPVS object-level full-versus-batch comparator on a qualifying heavy-validation branch and preserve the exact scientific gate outcome.",
+  "previous_knowledge_consumed": [
+    "PR #182 adds scripts/compare_cpvs_full_batch.py and wires the comparator into the source-backed Scientific Validation workflow.",
+    "Issue #180 remains open until actual full-versus-batch outputs, per-object disagreements, and hashes are reviewed.",
+    "Issue #170 remains UNRESOLVED: the latest source-backed result is 741786 candidates, 730184 published members, 11602 candidate-only, and zero published-only."
+  ],
+  "baseline": {
+    "revision": "PR-182-head@a0a78103c4b04cb548b75311095331f865629782",
+    "status": "Validation-only branch. No membership predicate, threshold, released artifact, or v0.2.0/v1.0.1 baseline changes."
+  },
+  "expected_improvement": [
+    "Execute the full-versus-batch comparator on the full acquired CPVS light-curve inputs, grouping by complete SourceID.",
+    "Produce compact full/batch decisions, mismatch report, sample manifest, and SHA-256 provenance.",
+    "Retain fail-closed scientific status unless exact published membership is independently explained."
+  ],
+  "measurement": {
+    "metrics": {
+      "reproducibility": {
+        "status": "NOT_MEASURED"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      },
+      "coverage": {
+        "status": "NOT_MEASURED"
+      },
+      "batch_equivalence": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_SOURCE_BACKED_RUN",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Validation branch created from PR #182 head to execute the existing source-backed workflow; results must be taken from the resulting GitHub Actions artifact and logs."
+    ],
+    "blocker": "Do not claim batch equivalence or exact CPVS reproduction until the qualifying heavy run completes and the emitted artifacts are inspected."
+  },
+  "failure_analysis": {
+    "status": "OPEN",
+    "root_causes": [
+      "The 11602 candidate-only CPVS objects remain unexplained.",
+      "The full-versus-batch source-backed comparison has not yet been verified."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A comparator being present in code is not evidence that it ran against source-backed inputs.",
+      "Object-level decisions must be keyed by complete SourceID and disagreements must be listed explicitly."
+    ]
+  },
+  "regression": {
+    "status": "PENDING",
+    "open_blockers": [
+      "Qualifying heavy workflow must execute on this exact validation branch.",
+      "Inspect full-vs-batch counts, per-object disagreements, hashes, and source provenance.",
+      "Keep exact-membership gate fail-closed until root cause is established."
+    ]
+  },
+  "decision": "PENDING_EVIDENCE",
+  "knowledge_carried_forward": [
+    "Do not merge this validation branch merely because the workflow concludes successfully.",
+    "Do not close Issue #170 or #180 without evidence review.",
+    "Do not change released v0.2.0 or v1.0.1."
+  ]
+}
