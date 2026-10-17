@@ -385,6 +385,22 @@ def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
     return metrics
 
 
+def _json_safe(value: Any) -> Any:
+    """Convert non-finite numeric metadata to JSON null without altering finite values.
+
+    Missing parent-catalog fields are represented internally as NaN for analysis.
+    JSON has no NaN/Infinity literals, so normalize those values at the serialization
+    boundary and require strict JSON encoding.
+    """
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    return value
+
+
 def percentile(values: list[float], q: float) -> float | None:
     if not values:
         return None
@@ -666,11 +682,11 @@ def main() -> int:
         }
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    print(json.dumps(report, indent=2, sort_keys=True))
+    report_json = json.dumps(
+        _json_safe(report), indent=2, sort_keys=True, allow_nan=False
+    ) + "\n"
+    args.output.write_text(report_json, encoding="utf-8")
+    print(report_json, end="")
     return 0
 
 
