@@ -94,11 +94,13 @@ def fixed_stratified_samples(
     if len(members) < 500 or len(nonmembers) < 500:
         raise ValueError("fixed 1,000-object sample requires at least 500 objects per stratum")
     rng = random.Random(seed)
-    member_sample = sorted(rng.sample(members, 500))
-    nonmember_sample = sorted(rng.sample(nonmembers, 500))
+    member_draw = rng.sample(members, 500)
+    nonmember_draw = rng.sample(nonmembers, 500)
     return {
-        "sample_100": sorted(member_sample[:50] + nonmember_sample[:50]),
-        "sample_1000": sorted(member_sample + nonmember_sample),
+        # Choose the quick sample before sorting so it is a genuine random
+        # nested subset, not the 50 lowest IDs among the 500 sampled objects.
+        "sample_100": sorted(member_draw[:50] + nonmember_draw[:50]),
+        "sample_1000": sorted(member_draw + nonmember_draw),
     }
 
 
