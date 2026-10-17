@@ -15,14 +15,28 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from audit_cpvs_membership import _iter_parent_lines, read_vizier
+    from audit_cpvs_membership import (
+        _iter_parent_lines,
+        read_parent_name_to_sourceid,
+        read_vizier,
+    )
 except ModuleNotFoundError:  # pytest imports this file as scripts.diagnose_cpvs_selection
-    from scripts.audit_cpvs_membership import _iter_parent_lines, read_vizier
+    from scripts.audit_cpvs_membership import (
+        _iter_parent_lines,
+        read_parent_name_to_sourceid,
+        read_vizier,
+    )
 from ztf_classifier.validation.derivation import (
     _iter_rows,
     _parse_cpvs_table2_identity,
     _source_ids,
 )
+
+
+def source_id_to_ztf_name_map(parent_path: Path) -> dict[int, str]:
+    """Map each actual CPVS SourceID to its ZTF name for traceable follow-up."""
+    name_to_source_id = read_parent_name_to_sourceid(parent_path)
+    return {int(source_id): name for name, source_id in name_to_source_id.items()}
 
 
 def parent_catalog_metadata(
@@ -464,6 +478,12 @@ def main() -> int:
     parent = {int(source_id) for source_id in _source_ids(args.parent, None)}
     if len(parent) != 781_602:
         raise ValueError(f"expected 781602 parent SourceIDs, got {len(parent)}")
+    source_names_by_id = source_id_to_ztf_name_map(args.parent)
+    if set(source_names_by_id) != parent:
+        raise ValueError(
+            "parent ZTF-name/SourceID mapping coverage mismatch: "
+            f"{len(source_names_by_id)} mapped names for {len(parent)} SourceIDs"
+        )
     catalog_metadata = parent_catalog_metadata(args.parent, args.metadata)
     if len(catalog_metadata) != len(parent):
         raise ValueError(
@@ -589,6 +609,7 @@ def main() -> int:
         "candidate_only_sample_by_source_id": [
             {
                 "source_id": oid,
+                "ztf_name": source_names_by_id[oid],
                 "g": {key: g[oid][key] for key in (
                     "qualifying_detections", "qualifying_flag_or",
                     "brightest_qualifying_mag", "smallest_qualifying_error",
@@ -621,6 +642,7 @@ def main() -> int:
         "both_mean_magnitudes_nonzero_objects": [
             {
                 "source_id": oid,
+                "ztf_name": source_names_by_id[oid],
                 "gmag": catalog_metadata[oid]["gmag"],
                 "rmag": catalog_metadata[oid]["rmag"],
                 "period": catalog_metadata[oid]["period"],
@@ -655,6 +677,7 @@ def main() -> int:
     report["candidate_only_all_objects"] = [
         {
             "source_id": oid,
+            "ztf_name": source_names_by_id[oid],
             "parent": catalog_metadata[oid],
             "g": {key: g[oid][key] for key in (
                 "qualifying_detections", "qualifying_flag_or",
