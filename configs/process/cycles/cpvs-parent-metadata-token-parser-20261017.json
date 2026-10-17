@@ -8,8 +8,8 @@
     "Official VizieR Table2 schema documents fixed-width byte offsets for the canonical CDS table, while the acquired Zenodo Table2.txt.zip may be a text mirror whose token positions differ."
   ],
   "baseline": {
-    "revision": "PR #177 head c6588531a08d3f2648ffd155d058d02d4bd3234f",
-    "status": "Parent metadata diagnostics currently slice fixed-width offsets unconditionally; prior class-count output is not scientifically interpretable until the input layout is detected and parsed correctly."
+    "revision": "4f5365e3e1dc959a4e207ef66b3ece413b65832b",
+    "status": "Parent metadata parser fix has been exercised by source-backed heavy run #38984160777. The refreshed artifact now reports valid CPVS Type labels and known Ng/Nr values; the 11,602 membership extras remain unresolved."
   },
   "expected_improvement": [
     "Parse the parent catalog's Type, Ng, and Nr using the same tokenization and ZTF-name/Seq interpretation that supports fixed-width and text-mirror rows.",
@@ -24,7 +24,7 @@
         "after": "Metadata extraction uses validated token positions after handling the row's name representation; expected class labels and Ng/Nr values are tested."
       },
       "scientific_validity": {
-        "status": "NOT_MEASURED"
+        "status": "NOT_RESOLVED"
       },
       "regression_protection_count": {
         "before": "No regression test checked parent metadata fields from the acquired text representation.",
@@ -33,15 +33,20 @@
     }
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "PARTIALLY_VERIFIED",
     "scientific_gate_affected": true,
     "evidence": [
       "The PR #177 heavy artifact's parent_catalog_context_diagnostic_only.class_counts contains keys like 0.00, which cannot be valid CPVS Type labels.",
       "The previous metadata parser unconditionally read fixed byte offsets without confirming that the acquired parent rows used the canonical fixed-width layout.",
       "The parser now validates fixed-width name/Seq/RA alignment before applying byte offsets, with a regression test containing a blank fixed-width field.",
-      "The previous CI failure on the parent metadata test was caused by a fixture encoding literal backslash-n instead of separate lines; the fixture is corrected in this commit."
+      "The previous CI failure on the parent metadata test was caused by a fixture encoding literal backslash-n instead of separate lines; the fixture is corrected in this commit.",
+      "Latest source-backed heavy run #38984160777 on commit 410391f38e7325ecd1af652793cbfd142c034553 completed all jobs and uploaded a 1,576,726-byte scientific-validation-heavy artifact.",
+      "Refreshed parent type counts are valid: candidate-only objects are EW=6482, SR=3841, Mira=532, EA=322, BYDra=93, RR=132, DSCT=58, RRc=40, CEP=29, CEPII=2, RSCVN=71; totals 11602.",
+      "The metadata parser reports 0 unknown Ng/Nr records among candidate-only objects; 13 have Ng=0 and 1 has Nr=0. This does not explain the mismatch.",
+      "Exact membership remains 741786 candidates, 730184 published, intersection 730184, 11602 candidate-only, and 0 published-only.",
+      "A fixed seed (20261017) stratified 100-object and 1000-object diagnostic sample with object name, SourceID, reference membership, candidate status, Type/Ng/Nr, and per-band SNR evidence has been added to the diagnostic script; tests and a fresh heavy artifact are pending."
     ],
-    "blocker": "Run focused tests, full CI, and a new source-backed heavy validation; verify real type keys and Ng/Nr counts before using these diagnostics to infer the remaining 11602 candidate-only objects."
+    "blocker": "The 11,602 candidate-only IDs remain unexplained. The fixed 100/1000 samples and source-level metadata have not yet been validated on a new heavy run; no selection policy change is justified."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED",
@@ -60,19 +65,20 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "PARTIALLY_VERIFIED",
     "open_blockers": [
-      "Run the new parent metadata parsing regression tests and complete CI.",
-      "Run heavy source-backed validation and inspect refreshed class_counts and Ng/Nr summaries.",
-      "CPVS exact membership remains unresolved until the 11602 candidate-only IDs are explained.",
-      "Verify the fixed-width and text-mirror metadata tests both pass on the updated branch.",
-      "Confirm the corrected parent metadata fixture passes in the next CI run."
+      "Verify the updated source-name assertions and fixed-sample determinism/balance tests in current-head CI.",
+      "Inspect a fresh source-backed heavy artifact for sample sizes, membership balance, stable IDs, and source-level evidence.",
+      "Use the refreshed by-type and Ng/Nr diagnostics to investigate the 11602 extras without altering selection criteria.",
+      "CPVS exact membership remains unresolved until the extras are explained or a source-supported limitation is documented."
     ]
   },
   "decision": "REVISE",
   "knowledge_carried_forward": [
     "Do not change the scientific selection predicate or frozen baseline to match a target count.",
-    "Only use candidate-only by-type/Ng/Nr analysis after confirming correct parsing of the acquired Table2 representation.",
+    "Validate the physical representation before using byte offsets; fixed-width schema offsets cannot be applied blindly to whitespace-delimited text mirrors.",
+    "Candidate-only objects are concentrated in EW (6482) and SR (3841), but this is diagnostic association, not a proven causal explanation.",
+    "Use fixed-seed, stratified object-level samples with source IDs and ZTF names for reproducible diagnosis.",
     "Keep PR #176/#177 unmerged until current-head CI and scientific evidence are reviewed."
   ]
 }
