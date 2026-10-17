@@ -169,6 +169,16 @@ def test_parent_catalog_metadata_reports_type_and_published_detection_counts(
 
     metadata = parent_catalog_metadata(parent)
     assert metadata == {
-        100: {"type": "Mira", "ng": 25, "nr": 30},
-        102: {"type": "EW", "ng": 0, "nr": 12},
+        100: {
+            "ztf_name": "ZTFJ000000.00+000000.0",
+            "type": "Mira",
+            "ng": 25,
+            "nr": 30,
+        },
+        102: {
+            "ztf_name": "ZTFJ000001.00+000000.0",
+            "type": "EW",
+            "ng": 0,
+            "nr": 12,
+        },
     }
