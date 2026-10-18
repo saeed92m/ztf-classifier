@@ -65,7 +65,7 @@
     ]
   },
   "knowledge_extraction": {
-    "status": "PARTIAL",
+    "status": "UNRESOLVED",
     "findings": [
       "Candidate count matching is not sufficient to establish the published CPVS membership rule.",
       "The raw-row audit must preserve provenance before temporary source files are discarded.",
@@ -73,7 +73,7 @@
     ]
   },
   "regression": {
-    "status": "PENDING",
+    "status": "BLOCKED",
     "open_blockers": [
       "CPVS 11,602-object membership discrepancy; row-level source-backed audit pending."
     ]
