@@ -51,7 +51,7 @@ class DerivationResult:
             "selection": {
                 "g_sigma": self.config.g_sigma,
                 "r_sigma": self.config.r_sigma,
-                "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma, with finite non-zero magnitudes",
+                "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma; finite non-zero per-epoch magnitudes and finite non-zero parent Table2 mean g/r magnitudes",
                 "snr_from_magnitude_error": "1.0857362047581296 / mag_error",
             },
         }
@@ -294,38 +294,80 @@ def _snr_from_mag_error(value: str) -> float:
     return 1.0857362047581296 / error
 
 
-def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Resolve CPVS SourceIDs from the published Table2 catalog row order.
+def _parse_cpvs_table2_identity(line: str) -> tuple[str, str] | None:
+    """Parse (ZTF name, Seq) from official CDS fixed-width Table2 or a text mirror.
 
-    The published table uses ZTF object names as the row identifiers in its
-    catalog presentation; the benchmark SourceID is the one-based ordinal of
-    catalog rows. Metadata, page furniture, and repeated headers are ignored.
+    Canonical Table2 uses ID bytes 1–22, Seq bytes 24–29, and RA bytes 31–39.
+    A row ordinal is never a substitute for Seq.
     """
+    raw = line.rstrip("\r\n")
+    stripped = raw.strip()
+    if not stripped:
+        return None
+
+    # Prefer the publisher's byte-defined columns when the row has the expected
+    # fixed-width separators and a parseable RA field.
+    if len(raw) >= 39 and raw[22].isspace() and raw[29].isspace():
+        fixed_name = raw[:22].strip()
+        fixed_seq = raw[23:29].strip()
+        try:
+            float(raw[30:39].strip())
+            valid_ra = True
+        except ValueError:
+            valid_ra = False
+        if (
+            fixed_name.upper().startswith("ZTF")
+            and fixed_seq.isdigit()
+            and valid_ra
+        ):
+            return fixed_name.upper(), str(int(fixed_seq))
+
+    # Text mirrors may tokenize a display-form name as "ZTF J..." rather
+    # than preserving the 22-byte catalog identifier field.
+    fields = _split_fields(stripped)
+    if (
+        len(fields) >= 3
+        and fields[0].upper() == "ZTF"
+        and fields[1].upper().startswith("J")
+        and fields[2].isdigit()
+    ):
+        return f"{fields[0]} {fields[1]}".upper(), str(int(fields[2]))
+    if (
+        len(fields) >= 2
+        and fields[0].upper().startswith("ZTF")
+        and fields[1].isdigit()
+    ):
+        return fields[0].upper(), str(int(fields[1]))
+    return None
+
+
+def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
+    """Resolve CPVS SourceIDs from the published Table2 Seq column."""
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
-        ordinal = 0
+        seen_ids: set[str] = set()
+        seen_names: set[str] = set()
         for encoded in raw:
-            line = encoded.decode("utf-8", errors="replace").strip()
-            if not line:
+            line = encoded.decode("utf-8", errors="replace")
+            identity = _parse_cpvs_table2_identity(line)
+            if identity is None:
                 continue
-            first_token = line.split()[0]
-            if not first_token.upper().startswith("ZTF"):
-                continue
-            fields = _split_fields(line)
-            if len(fields) < 2:
-                continue
-            # A valid catalog row starts with a ZTF identifier and has at
-            # least one following field. Do not interpret the next field as
-            # SourceID: in Table2 it is a numeric catalog attribute (e.g. RA).
-            ordinal += 1
-            source_ids.add(str(ordinal))
+            name, source_id = identity
+            if name in seen_names:
+                raise ValueError(f"duplicate ZTF name in parent catalog: {name}")
+            if source_id in seen_ids:
+                raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
+            seen_names.add(name)
+            seen_ids.add(source_id)
+            source_ids.add(source_id)
+        if not source_ids:
+            raise ValueError(f"no ZTF rows with numeric Seq/SourceID found in {parent_path}")
         return source_ids
     finally:
         raw.close()
         if owner is not None:
             owner.close()
-
 
 def _source_ids(parent_path: Path, member: str | None) -> set[str]:
     """Resolve IDs for either published CPVS Table2 or generic test/artifact tables."""
@@ -343,8 +385,8 @@ def _source_ids(parent_path: Path, member: str | None) -> set[str]:
             owner.close()
 
     if saw_catalog_row:
-        # CPVS Table2 uses ZTF names as row identifiers; SourceID is the
-        # published ordinal. Metadata/header sections must not terminate scan.
+        # CPVS Table2's documented Seq field is the light-curve SourceID.
+        # Never substitute a physical row ordinal for this identifier.
         return _source_ids_from_catalog(parent_path, member)
 
     rows = _iter_rows(parent_path, member, required_columns=("SourceID",))
@@ -356,6 +398,78 @@ def _source_ids(parent_path: Path, member: str | None) -> set[str]:
         row[key].strip()
         for row in chain((first,), rows)
         if row.get(key, "").strip()
+    }
+
+
+def _parent_catalog_mean_magnitude_ids(
+    parent_path: Path,
+    member: str | None,
+    parent_ids: set[str],
+) -> tuple[set[str], dict[str, object]]:
+    """Return CPVS Table2 IDs with finite, non-zero catalog mean g/r magnitudes.
+
+    The Chan et al. anomaly pipeline appends the mean g-r magnitude difference.
+    Objects with a zero/missing catalog mean in either band cannot supply that
+    feature even when individual source rows pass the SNR threshold. Generic
+    SourceID-only fixtures are left unchanged; the pinned CPVS Table2 is parsed
+    strictly and must cover exactly the parent ID set.
+    """
+    owner, raw = _open_text(parent_path, member)
+    records: dict[str, tuple[float, float]] = {}
+    try:
+        for encoded in raw:
+            line = encoded.decode("utf-8", errors="replace")
+            identity = _parse_cpvs_table2_identity(line)
+            if identity is None:
+                continue
+            _, source_id = identity
+            if source_id in records:
+                raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
+            fields = _split_fields(line.strip())
+            if len(fields) < 10:
+                raise ValueError(
+                    f"malformed CPVS Table2 row for SourceID {source_id}: "
+                    f"expected at least 10 fields, got {len(fields)}"
+                )
+            try:
+                gmag, rmag = float(fields[8]), float(fields[9])
+            except (TypeError, ValueError):
+                gmag, rmag = float("nan"), float("nan")
+            records[source_id] = (gmag, rmag)
+    finally:
+        raw.close()
+        if owner is not None:
+            owner.close()
+
+    if not records:
+        return parent_ids, {
+            "status": "not_applicable_generic_fixture",
+            "catalog_rows": 0,
+            "valid_mean_g_r_count": len(parent_ids),
+            "excluded_count": 0,
+        }
+    if set(records) != parent_ids:
+        raise ValueError(
+            "CPVS Table2 mean-magnitude audit does not cover the parent ID set: "
+            f"catalog_rows={len(records)}, parent_ids={len(parent_ids)}, "
+            f"missing={len(parent_ids - set(records))}, "
+            f"unexpected={len(set(records) - parent_ids)}"
+        )
+
+    valid = {
+        source_id
+        for source_id, (gmag, rmag) in records.items()
+        if math.isfinite(gmag)
+        and math.isfinite(rmag)
+        and gmag != 0.0
+        and rmag != 0.0
+    }
+    return valid, {
+        "status": "applied",
+        "catalog_rows": len(records),
+        "valid_mean_g_r_count": len(valid),
+        "excluded_count": len(records) - len(valid),
+        "predicate": "finite non-zero Table2 gmag AND finite non-zero Table2 rmag",
     }
 
 
@@ -394,7 +508,9 @@ def _qualified_ids(
 
     for row in chain((first,), rows):
         oid = row.get(id_key, "").strip()
-        if oid not in parent_ids or _snr_from_mag_error(row.get(error_key, "")) < sigma:
+        snr = _snr_from_mag_error(row.get(error_key, ""))
+        # NaN compares False to both < and >=; explicitly reject invalid SNR.
+        if oid not in parent_ids or not math.isfinite(snr) or snr < sigma:
             continue
         try:
             magnitude = float(row.get(mag_key, ""))
@@ -477,12 +593,23 @@ def derive_730k(
     )
     snr_selected = g_ids & r_ids
     both_bands_valid_magnitude = g_valid_magnitude & r_valid_magnitude
-    selected_ids = snr_selected & both_bands_valid_magnitude
+    pre_catalog_selection = snr_selected & both_bands_valid_magnitude
+    parent_mean_magnitude_ids, parent_mean_magnitude_diagnostics = (
+        _parent_catalog_mean_magnitude_ids(parent_path, parent_member, parent_ids)
+    )
+    selected_ids = pre_catalog_selection & parent_mean_magnitude_ids
+    diagnostics["parent_catalog_mean_magnitude_quality"] = parent_mean_magnitude_diagnostics
     diagnostics["intersection"] = {
         "snr_only_count": len(snr_selected),
-        "both_bands_valid_magnitude_count": len(selected_ids),
-        "snr_candidates_removed_by_magnitude_quality": len(snr_selected - selected_ids),
-        "selection_predicate": "g SNR >= 2.5 AND r SNR >= 3.0 AND finite non-zero g/r magnitudes",
+        "both_bands_valid_per_epoch_magnitude_count": len(both_bands_valid_magnitude),
+        "pre_catalog_quality_intersection_count": len(pre_catalog_selection),
+        "parent_catalog_mean_magnitude_intersection_count": len(selected_ids),
+        "snr_candidates_removed_by_per_epoch_magnitude_quality": len(snr_selected - pre_catalog_selection),
+        "candidates_removed_by_parent_mean_magnitude_quality": len(pre_catalog_selection - selected_ids),
+        "selection_predicate": (
+            "g SNR >= 2.5 AND r SNR >= 3.0 AND finite non-zero per-epoch magnitudes "
+            "AND finite non-zero Table2 mean g/r magnitudes"
+        ),
     }
     selected = sorted(selected_ids)
 
