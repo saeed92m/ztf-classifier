@@ -21,14 +21,14 @@ def read_vizier(path: Path) -> set[int]:
         if not stripped:
             continue
         candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
-        columns = [item.strip().lower() for item in candidate.split("\\t")]
+        columns = [item.strip().lower() for item in candidate.split("\t")]
         if "id" in columns and ("ztf" in columns or "ztf identifier" in columns):
             id_index = columns.index("id")
             for data_line in lines[index + 1:]:
                 value_line = data_line.strip()
                 if not value_line or value_line.startswith("#"):
                     continue
-                values = [item.strip() for item in data_line.split("\\t")]
+                values = [item.strip() for item in data_line.split("\t")]
                 if id_index < len(values) and values[id_index].isdigit():
                     ids.add(int(values[id_index]))
             return ids
