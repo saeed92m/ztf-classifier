@@ -1,24 +1,44 @@
 """Diagnostic-only raw-epoch provenance for CPVS membership residuals."""
 from __future__ import annotations
-import argparse, csv, hashlib, json, math
+import argparse, csv, json, math
 from pathlib import Path
-from audit_cpvs_membership import read_vizier
 from ztf_classifier.validation.derivation import _iter_rows, _path_member_matches_header
 
 FACTOR = 1.0857362047581296
 SPECS = {"g": ("e_gmag", "gmag", "g_flag", 2.5), "r": ("e_rmag", "rmag", "r_flag", 3.0)}
 SUFFIXES = {".csv", ".txt", ".dat", ".json", ".gz", ""}
 
-def digest(path):
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024*1024), b""): h.update(chunk)
-    return h.hexdigest()
-
 def files(root, required):
     if not root.is_dir(): return [root]
     return sorted(p for p in root.rglob("*") if p.is_file()
         and p.suffix.lower() in SUFFIXES and _path_member_matches_header(p, required))
+
+def read_vizier(path: Path) -> set[int]:
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    ids: set[int] = set()
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
+        columns = [item.strip().lower() for item in candidate.split("\\t")]
+        if "id" in columns and ("ztf" in columns or "ztf identifier" in columns):
+            id_index = columns.index("id")
+            for data_line in lines[index + 1:]:
+                value_line = data_line.strip()
+                if not value_line or value_line.startswith("#"):
+                    continue
+                values = [item.strip() for item in data_line.split("\\t")]
+                if id_index < len(values) and values[id_index].isdigit():
+                    ids.add(int(values[id_index]))
+            return ids
+    for line in lines:
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        raw = line[23:29].strip()
+        if raw.isdigit():
+            ids.add(int(raw))
+    return ids
 
 def metrics(row, band):
     err_key, mag_key, flag_key, threshold = SPECS[band]
