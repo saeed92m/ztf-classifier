@@ -253,6 +253,8 @@ jobs:
             --g "$root/g" \
             --r "$root/r" \
             --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
+            --g-archive "$root/ztf2g.zip" \
+            --r-archive "$root/ztf2r.zip" \
             --published "$root/published_table4.dat" \
             --output "$root/residual_epoch_audit.json" \
             --code-version "${GITHUB_SHA}"
