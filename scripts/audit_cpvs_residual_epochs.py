@@ -145,7 +145,7 @@ def main():
             if parent_row is None:
                 raise ValueError(f"Discrepant SourceID {oid} missing from Table2 catalog")
             for key, value in parent_row.items():
-                rec[f"parent_{key}" if key != "catalog_row_ordinal" and key != "catalog_object_name" else key] = value
+                rec[f"parent_{key}"] = value
             for band in ("g", "r"):
                 es = epochs[oid][band]
                 rec[f"{band}_epoch_count"] = len(es)
