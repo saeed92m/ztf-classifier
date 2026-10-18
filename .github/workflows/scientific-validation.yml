@@ -252,6 +252,7 @@ jobs:
           python scripts/audit_cpvs_residual_epochs.py \
             --g "$root/g" \
             --r "$root/r" \
+            --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
             --published "$root/published_table4.dat" \
             --output "$root/residual_epoch_audit.json" \
             --code-version "${GITHUB_SHA}"
