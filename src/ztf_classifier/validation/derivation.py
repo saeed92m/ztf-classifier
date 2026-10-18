@@ -51,7 +51,7 @@ class DerivationResult:
             "selection": {
                 "g_sigma": self.config.g_sigma,
                 "r_sigma": self.config.r_sigma,
-                "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma, with finite non-zero magnitudes",
+                "predicate": "at least one g-band detection >= g_sigma AND at least one r-band detection >= r_sigma; finite non-zero per-epoch magnitudes and finite non-zero parent Table2 mean g/r magnitudes",
                 "snr_from_magnitude_error": "1.0857362047581296 / mag_error",
             },
         }
@@ -401,6 +401,78 @@ def _source_ids(parent_path: Path, member: str | None) -> set[str]:
     }
 
 
+def _parent_catalog_mean_magnitude_ids(
+    parent_path: Path,
+    member: str | None,
+    parent_ids: set[str],
+) -> tuple[set[str], dict[str, object]]:
+    """Return CPVS Table2 IDs with finite, non-zero catalog mean g/r magnitudes.
+
+    The Chan et al. anomaly pipeline appends the mean g-r magnitude difference.
+    Objects with a zero/missing catalog mean in either band cannot supply that
+    feature even when individual source rows pass the SNR threshold. Generic
+    SourceID-only fixtures are left unchanged; the pinned CPVS Table2 is parsed
+    strictly and must cover exactly the parent ID set.
+    """
+    owner, raw = _open_text(parent_path, member)
+    records: dict[str, tuple[float, float]] = {}
+    try:
+        for encoded in raw:
+            line = encoded.decode("utf-8", errors="replace")
+            identity = _parse_cpvs_table2_identity(line)
+            if identity is None:
+                continue
+            _, source_id = identity
+            if source_id in records:
+                raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
+            fields = _split_fields(line.strip())
+            if len(fields) < 10:
+                raise ValueError(
+                    f"malformed CPVS Table2 row for SourceID {source_id}: "
+                    f"expected at least 10 fields, got {len(fields)}"
+                )
+            try:
+                gmag, rmag = float(fields[8]), float(fields[9])
+            except (TypeError, ValueError):
+                gmag, rmag = float("nan"), float("nan")
+            records[source_id] = (gmag, rmag)
+    finally:
+        raw.close()
+        if owner is not None:
+            owner.close()
+
+    if not records:
+        return parent_ids, {
+            "status": "not_applicable_generic_fixture",
+            "catalog_rows": 0,
+            "valid_mean_g_r_count": len(parent_ids),
+            "excluded_count": 0,
+        }
+    if set(records) != parent_ids:
+        raise ValueError(
+            "CPVS Table2 mean-magnitude audit does not cover the parent ID set: "
+            f"catalog_rows={len(records)}, parent_ids={len(parent_ids)}, "
+            f"missing={len(parent_ids - set(records))}, "
+            f"unexpected={len(set(records) - parent_ids)}"
+        )
+
+    valid = {
+        source_id
+        for source_id, (gmag, rmag) in records.items()
+        if math.isfinite(gmag)
+        and math.isfinite(rmag)
+        and gmag != 0.0
+        and rmag != 0.0
+    }
+    return valid, {
+        "status": "applied",
+        "catalog_rows": len(records),
+        "valid_mean_g_r_count": len(valid),
+        "excluded_count": len(records) - len(valid),
+        "predicate": "finite non-zero Table2 gmag AND finite non-zero Table2 rmag",
+    }
+
+
 def _qualified_ids(
     path: Path,
     *,
@@ -521,12 +593,23 @@ def derive_730k(
     )
     snr_selected = g_ids & r_ids
     both_bands_valid_magnitude = g_valid_magnitude & r_valid_magnitude
-    selected_ids = snr_selected & both_bands_valid_magnitude
+    pre_catalog_selection = snr_selected & both_bands_valid_magnitude
+    parent_mean_magnitude_ids, parent_mean_magnitude_diagnostics = (
+        _parent_catalog_mean_magnitude_ids(parent_path, parent_member, parent_ids)
+    )
+    selected_ids = pre_catalog_selection & parent_mean_magnitude_ids
+    diagnostics["parent_catalog_mean_magnitude_quality"] = parent_mean_magnitude_diagnostics
     diagnostics["intersection"] = {
         "snr_only_count": len(snr_selected),
-        "both_bands_valid_magnitude_count": len(selected_ids),
-        "snr_candidates_removed_by_magnitude_quality": len(snr_selected - selected_ids),
-        "selection_predicate": "g SNR >= 2.5 AND r SNR >= 3.0 AND finite non-zero g/r magnitudes",
+        "both_bands_valid_per_epoch_magnitude_count": len(both_bands_valid_magnitude),
+        "pre_catalog_quality_intersection_count": len(pre_catalog_selection),
+        "parent_catalog_mean_magnitude_intersection_count": len(selected_ids),
+        "snr_candidates_removed_by_per_epoch_magnitude_quality": len(snr_selected - pre_catalog_selection),
+        "candidates_removed_by_parent_mean_magnitude_quality": len(pre_catalog_selection - selected_ids),
+        "selection_predicate": (
+            "g SNR >= 2.5 AND r SNR >= 3.0 AND finite non-zero per-epoch magnitudes "
+            "AND finite non-zero Table2 mean g/r magnitudes"
+        ),
     }
     selected = sorted(selected_ids)
 
