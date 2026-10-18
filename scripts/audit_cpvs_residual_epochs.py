@@ -8,6 +8,13 @@ FACTOR = 1.0857362047581296
 SPECS = {"g": ("e_gmag", "gmag", "g_flag", 2.5), "r": ("e_rmag", "rmag", "r_flag", 3.0)}
 SUFFIXES = {".csv", ".txt", ".dat", ".json", ".gz", ""}
 
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
 def files(root, required):
     if not root.is_dir(): return [root]
     return sorted(p for p in root.rglob("*") if p.is_file()
@@ -95,6 +102,8 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--g", type=Path, required=True); p.add_argument("--r", type=Path, required=True)
     p.add_argument("--parent", type=Path, required=True)
+    p.add_argument("--g-archive", type=Path, required=True)
+    p.add_argument("--r-archive", type=Path, required=True)
     p.add_argument("--published", type=Path, required=True); p.add_argument("--output", type=Path, required=True)
     p.add_argument("--code-version", default="unknown")
     a = p.parse_args()
@@ -158,7 +167,8 @@ def main():
         "source_urls":{"g":"https://zenodo.org/records/3886372/files/ztf2g.zip?download=1",
           "r":"https://zenodo.org/records/3886372/files/ztf2r.zip?download=1",
           "published":"https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"},
-        "parent_table2":{"path":str(a.parent),"row_count":len(parent_catalog),"source_id_mapping":"explicit SourceID column in Table2 catalog row"},
+        "parent_table2":{"path":str(a.parent),"row_count":len(parent_catalog),"sha256":sha256_file(a.parent),"source_id_mapping":"explicit SourceID column in Table2 catalog row"},
+        "source_archive_sha256":{"g":sha256_file(a.g_archive),"r":sha256_file(a.r_archive)},
         "verified_archive_md5":{"g":"850fcef561dd7407fbe8e19e99100d7a","r":"daa7bc45c67579253eebe6b1c09dfbd9"},
         "snr_formula":"1.0857362047581296 / magnitude_error","thresholds":{"g":2.5,"r":3.0},
         "counts":{"published":len(published),"snr_candidates_both_bands":len(candidate),
