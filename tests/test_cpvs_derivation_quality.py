@@ -161,25 +161,25 @@ def test_derivation_excludes_candidates_without_parent_mean_band_magnitudes(tmp_
                 f"{gmag:>6.3f} {rmag:>6.3f} {perg:>13.7f} {perr:>13.7f} "
                 f"{20:>4d} {20:>4d} {0.5:>6.3f} {0.5:>6.3f} "
                 f"{6.0:>6.3f} {6.0:>6.3f} {0.8:>6.3f} {0.8:>6.3f} "
-                f"{0.1:>5.3f} {0.1:>5.3f} EW 0.0 0.0\\n"
+                f"{0.1:>5.3f} {0.1:>5.3f} EW 0.0 0.0\n"
             )
 
     g = tmp_path / "g.tsv"
     g.write_text(
-        "SourceID\\tgmag\\te_gmag\\tg_flag\\n"
-        "101\\t18.0\\t0.1\\t0\\n"
-        "205\\t18.0\\t0.1\\t0\\n"
-        "309\\t18.0\\t0.1\\t0\\n"
-        "412\\t18.0\\t0.1\\t0\\n",
+        "SourceID\tgmag\te_gmag\tg_flag\n"
+        "101\t18.0\t0.1\t0\n"
+        "205\t18.0\t0.1\t0\n"
+        "309\t18.0\t0.1\t0\n"
+        "412\t18.0\t0.1\t0\n",
         encoding="utf-8",
     )
     r = tmp_path / "r.tsv"
     r.write_text(
-        "SourceID\\trmag\\te_rmag\\tr_flag\\n"
-        "101\\t17.0\\t0.1\\t0\\n"
-        "205\\t17.0\\t0.1\\t0\\n"
-        "309\\t17.0\\t0.1\\t0\\n"
-        "412\\t17.0\\t0.1\\t0\\n",
+        "SourceID\trmag\te_rmag\tr_flag\n"
+        "101\t17.0\t0.1\t0\n"
+        "205\t17.0\t0.1\t0\n"
+        "309\t17.0\t0.1\t0\n"
+        "412\t17.0\t0.1\t0\n",
         encoding="utf-8",
     )
 
