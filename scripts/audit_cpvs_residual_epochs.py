@@ -1,6 +1,6 @@
 """Diagnostic-only raw-epoch provenance for CPVS membership residuals."""
 from __future__ import annotations
-import argparse, csv, json, math
+import argparse, csv, hashlib, json, math
 from pathlib import Path
 from ztf_classifier.validation.derivation import _iter_rows, _path_member_matches_header
 
@@ -40,11 +40,15 @@ def read_vizier(path: Path) -> set[int]:
             ids.add(int(raw))
     return ids
 
+def field(row, name):
+    normalized = {key.strip().lower(): value for key, value in row.items()}
+    return normalized.get(name.lower(), "")
+
 def metrics(row, band):
     err_key, mag_key, flag_key, threshold = SPECS[band]
-    try: oid = int(row.get("SourceID", "").strip())
+    try: oid = int(field(row, "SourceID").strip())
     except (TypeError, ValueError): return None, None, None, False
-    try: mag, err = float(row.get(mag_key, "")), float(row.get(err_key, ""))
+    try: mag, err = float(field(row, mag_key)), float(field(row, err_key))
     except (TypeError, ValueError): return oid, None, None, False
     valid = math.isfinite(mag) and mag != 0 and math.isfinite(err) and err > 0
     snr = FACTOR / err if valid else None
@@ -85,8 +89,8 @@ def main():
                 oid, mag, snr, q = metrics(row, band)
                 if oid not in targets: continue
                 epochs[oid][band].append({"source_file": rel, "parsed_data_row_ordinal": ordinal,
-                    "magnitude": mag, "magnitude_error": row.get(ek), "snr": snr,
-                    "snr_threshold": threshold, "qualifies": q, "flag": row.get(fk)})
+                    "magnitude": mag, "magnitude_error": field(row, ek), "snr": snr,
+                    "snr_threshold": threshold, "qualifies": q, "flag": field(row, fk)})
     a.output.parent.mkdir(parents=True, exist_ok=True)
     tsv = a.output.with_suffix(".tsv")
     cols = ["SourceID","published_member","snr_candidate","membership_relation",
