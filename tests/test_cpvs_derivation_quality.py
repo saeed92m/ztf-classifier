@@ -98,3 +98,29 @@ def test_read_vizier_accepts_commented_tsv_header(tmp_path: Path):
     )
 
     assert read_vizier(path) == {1, 730184}
+
+
+def test_qualified_ids_rejects_nonfinite_and_nonpositive_magnitude_errors(tmp_path: Path):
+    path = tmp_path / "g_invalid_errors.tsv"
+    path.write_text(
+        "SourceID\\tgmag\\te_gmag\\tg_flag\\n"
+        "1\\t18.0\\t0.1\\t0\\n"
+        "2\\t18.0\\tnan\\t0\\n"
+        "3\\t18.0\\t0.0\\t0\\n"
+        "4\\t18.0\\t-0.1\\t0\\n"
+        "5\\t18.0\\tinf\\t0\\n",
+        encoding="utf-8",
+    )
+
+    selected, quality = _qualified_ids(
+        path,
+        sigma=2.5,
+        parent_ids={"1", "2", "3", "4", "5"},
+        member=None,
+        error_columns=("e_gmag",),
+        flag_columns=("g_flag", "catflags", "flag"),
+    )
+
+    # Only the finite positive error on row 1 yields a finite SNR above threshold.
+    assert selected == {"1"}
+    assert quality == {"1"}
