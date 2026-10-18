@@ -138,3 +138,64 @@ def test_band_diagnostics_keep_flag_policy_separate_from_snr(tmp_path: Path):
     assert metrics[2]["snr_flag0"] is False
     assert metrics[3]["snr"] is False
     assert metrics[4]["snr"] is False
+
+
+def test_derivation_excludes_candidates_without_parent_mean_band_magnitudes(tmp_path: Path):
+    from ztf_classifier.validation.derivation import derive_730k
+
+    parent = tmp_path / "Table2.txt"
+    rows = [
+        ("ZTFJ000000.01+000000.1", 101, 18.0, 17.0, 0.2, 0.2),
+        ("ZTFJ000001.01+000000.1", 205, 0.0, 17.0, 0.2, 0.2),
+        ("ZTFJ000002.01+000000.1", 309, 18.0, 0.0, 0.2, 0.2),
+        # Per-g is absent, but the common Per and both mean magnitudes exist.
+        # The paper says to fold both bands with the common Per, so keep this
+        # object in the interim set pending explanation of the 17-object residual.
+        ("ZTFJ000003.01+000000.1", 412, 18.0, 17.0, 0.0, 0.2),
+    ]
+    with parent.open("w", encoding="utf-8") as handle:
+        for name, sid, gmag, rmag, perg, perr in rows:
+            handle.write(
+                f"{name:<22} {sid:>6} {0.1:>9.5f} {0.2:>9.5f} {0.3:>11.7f} "
+                f"{0.5:>6.3f} {6.0:>5.3f} {58000.0:>13.7f} "
+                f"{gmag:>6.3f} {rmag:>6.3f} {perg:>13.7f} {perr:>13.7f} "
+                f"{20:>4d} {20:>4d} {0.5:>6.3f} {0.5:>6.3f} "
+                f"{6.0:>6.3f} {6.0:>6.3f} {0.8:>6.3f} {0.8:>6.3f} "
+                f"{0.1:>5.3f} {0.1:>5.3f} EW 0.0 0.0\\n"
+            )
+
+    g = tmp_path / "g.tsv"
+    g.write_text(
+        "SourceID\\tgmag\\te_gmag\\tg_flag\\n"
+        "101\\t18.0\\t0.1\\t0\\n"
+        "205\\t18.0\\t0.1\\t0\\n"
+        "309\\t18.0\\t0.1\\t0\\n"
+        "412\\t18.0\\t0.1\\t0\\n",
+        encoding="utf-8",
+    )
+    r = tmp_path / "r.tsv"
+    r.write_text(
+        "SourceID\\trmag\\te_rmag\\tr_flag\\n"
+        "101\\t17.0\\t0.1\\t0\\n"
+        "205\\t17.0\\t0.1\\t0\\n"
+        "309\\t17.0\\t0.1\\t0\\n"
+        "412\\t17.0\\t0.1\\t0\\n",
+        encoding="utf-8",
+    )
+
+    result = derive_730k(
+        parent,
+        g,
+        r,
+        tmp_path / "selected.tsv",
+        expected_parent_rows=4,
+        expected_selected_rows=2,
+        parent_evidence_sha256="0" * 64,
+    )
+
+    assert result.selected_rows == 2
+    assert (tmp_path / "selected.tsv").read_text(encoding="utf-8").splitlines() == [
+        "SourceID",
+        "101",
+        "412",
+    ]
