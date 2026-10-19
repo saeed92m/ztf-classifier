@@ -119,9 +119,7 @@ def test_save_refuses_existing_path(tmp_path) -> None:
 
 def test_load_requires_existing_file(tmp_path) -> None:
     with pytest.raises(FileNotFoundError):
-        OODProductionModel.load(
-            tmp_path / "missing.joblib"
-        )
+        OODProductionModel.load(tmp_path / "missing.joblib")
 
 
 def test_unfitted_model_rejects_inference() -> None:

@@ -19,18 +19,10 @@ class CalibrationArtifact:
 
     def __post_init__(self) -> None:
         if self.method != "temperature_scaling":
-            raise ValueError(
-                "Unsupported calibration method: "
-                f"{self.method!r}"
-            )
+            raise ValueError(f"Unsupported calibration method: {self.method!r}")
 
-        if (
-            not isinstance(self.temperature, float)
-            or not self.temperature > 0.0
-        ):
-            raise ValueError(
-                "Calibration temperature must be a positive float."
-            )
+        if not isinstance(self.temperature, float) or not self.temperature > 0.0:
+            raise ValueError("Calibration temperature must be a positive float.")
 
     def to_dict(self) -> dict[str, Any]:
         """Return the stable serialized representation."""
@@ -49,33 +41,19 @@ class CalibrationArtifact:
         """Reconstruct a calibration artifact from serialized data."""
 
         if not isinstance(payload, dict):
-            raise TypeError(
-                "Calibration artifact payload must be a dictionary."
-            )
+            raise TypeError("Calibration artifact payload must be a dictionary.")
 
-        if (
-            payload.get("schema_version")
-            != CALIBRATION_ARTIFACT_SCHEMA_VERSION
-        ):
-            raise ValueError(
-                "Unsupported calibration artifact schema version."
-            )
+        if payload.get("schema_version") != CALIBRATION_ARTIFACT_SCHEMA_VERSION:
+            raise ValueError("Unsupported calibration artifact schema version.")
 
         method = payload.get("method")
         temperature = payload.get("temperature")
 
         if not isinstance(method, str) or not method:
-            raise ValueError(
-                "Calibration method must be a non-empty string."
-            )
+            raise ValueError("Calibration method must be a non-empty string.")
 
-        if (
-            isinstance(temperature, bool)
-            or not isinstance(temperature, (int, float))
-        ):
-            raise TypeError(
-                "Calibration temperature must be numeric."
-            )
+        if isinstance(temperature, bool) or not isinstance(temperature, (int, float)):
+            raise TypeError("Calibration temperature must be numeric.")
 
         return cls(
             method=method,
@@ -88,9 +66,7 @@ class CalibrationArtifact:
         path = Path(path)
 
         if path.exists():
-            raise FileExistsError(
-                f"Calibration artifact already exists: {path}"
-            )
+            raise FileExistsError(f"Calibration artifact already exists: {path}")
 
         path.write_text(
             json.dumps(
@@ -111,12 +87,8 @@ class CalibrationArtifact:
         path = Path(path)
 
         if not path.is_file():
-            raise FileNotFoundError(
-                f"Calibration artifact does not exist: {path}"
-            )
+            raise FileNotFoundError(f"Calibration artifact does not exist: {path}")
 
-        payload = json.loads(
-            path.read_text(encoding="utf-8")
-        )
+        payload = json.loads(path.read_text(encoding="utf-8"))
 
         return cls.from_dict(payload)

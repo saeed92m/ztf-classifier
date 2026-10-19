@@ -59,9 +59,7 @@ class ObservationService:
                 mag=float(row.mag),
                 magerr=float(row.magerr),
                 mag_raw=None if pd.isna(row.mag_raw) else float(row.mag_raw),
-                magerr_raw=(
-                    None if pd.isna(row.magerr_raw) else float(row.magerr_raw)
-                ),
+                magerr_raw=(None if pd.isna(row.magerr_raw) else float(row.magerr_raw)),
                 mag_corr=None if pd.isna(row.mag_corr) else float(row.mag_corr),
                 magerr_corr=(
                     None if pd.isna(row.magerr_corr) else float(row.magerr_corr)

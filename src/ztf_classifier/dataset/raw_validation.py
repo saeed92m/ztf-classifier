@@ -103,12 +103,8 @@ class RawDatasetValidationResult:
             "ordering": self.ordering,
             "detection_row_statistics": self.detection_row_statistics,
             "non_detection_row_statistics": self.non_detection_row_statistics,
-            "low_observation_objects_lt10": list(
-                self.low_observation_objects_lt10
-            ),
-            "low_observation_objects_lt30": list(
-                self.low_observation_objects_lt30
-            ),
+            "low_observation_objects_lt10": list(self.low_observation_objects_lt10),
+            "low_observation_objects_lt30": list(self.low_observation_objects_lt30),
             "corrected_statistics": self.corrected_statistics,
             "errors": list(self.errors),
         }
@@ -130,21 +126,13 @@ class RawDatasetValidator:
         """Validate the complete raw cache contract."""
 
         cache_detection_oids = self._discover_oids("_detections.parquet")
-        cache_non_detection_oids = self._discover_oids(
-            "_non_detections.parquet"
-        )
+        cache_non_detection_oids = self._discover_oids("_non_detections.parquet")
         cache_oids = cache_detection_oids | cache_non_detection_oids
 
-        missing = tuple(
-            sorted(self._canonical_oids - cache_oids)
-        )
-        extra = tuple(
-            sorted(cache_oids - self._canonical_oids)
-        )
+        missing = tuple(sorted(self._canonical_oids - cache_oids))
+        extra = tuple(sorted(cache_oids - self._canonical_oids))
 
-        incomplete = tuple(
-            sorted(cache_detection_oids ^ cache_non_detection_oids)
-        )
+        incomplete = tuple(sorted(cache_detection_oids ^ cache_non_detection_oids))
 
         schema_mismatches: list[str] = []
         invalid_required_values: list[str] = []
@@ -159,20 +147,14 @@ class RawDatasetValidator:
         corrected_total = 0
         raw_fallback_total = 0
 
-        canonical_existing = sorted(
-            self._canonical_oids & cache_oids
-        )
+        canonical_existing = sorted(self._canonical_oids & cache_oids)
 
         detection_schema: tuple[str, ...] = ()
         non_detection_schema: tuple[str, ...] = ()
 
         for oid in canonical_existing:
-            detection_path = (
-                self._cache_dir / f"{oid}_detections.parquet"
-            )
-            non_detection_path = (
-                self._cache_dir / f"{oid}_non_detections.parquet"
-            )
+            detection_path = self._cache_dir / f"{oid}_detections.parquet"
+            non_detection_path = self._cache_dir / f"{oid}_non_detections.parquet"
 
             if not detection_path.exists() or not non_detection_path.exists():
                 continue
@@ -181,42 +163,27 @@ class RawDatasetValidator:
                 detections = pd.read_parquet(detection_path)
                 non_detections = pd.read_parquet(non_detection_path)
             except (OSError, ValueError) as exc:
-                schema_mismatches.append(
-                    f"{oid}: unreadable parquet: {exc}"
-                )
+                schema_mismatches.append(f"{oid}: unreadable parquet: {exc}")
                 continue
 
             if not detection_schema:
                 detection_schema = tuple(detections.columns)
 
             if not non_detection_schema:
-                non_detection_schema = tuple(
-                    non_detections.columns
-                )
+                non_detection_schema = tuple(non_detections.columns)
 
             if tuple(detections.columns) != EXPECTED_DETECTION_SCHEMA:
-                schema_mismatches.append(
-                    f"{oid}: detection schema mismatch"
-                )
+                schema_mismatches.append(f"{oid}: detection schema mismatch")
 
-            if (
-                tuple(non_detections.columns)
-                != EXPECTED_NON_DETECTION_SCHEMA
-            ):
-                schema_mismatches.append(
-                    f"{oid}: non-detection schema mismatch"
-                )
+            if tuple(non_detections.columns) != EXPECTED_NON_DETECTION_SCHEMA:
+                schema_mismatches.append(f"{oid}: non-detection schema mismatch")
 
-            if not DETECTION_REQUIRED_COLUMNS.issubset(
-                detections.columns
-            ):
+            if not DETECTION_REQUIRED_COLUMNS.issubset(detections.columns):
                 invalid_required_values.append(
                     f"{oid}: missing detection required columns"
                 )
 
-            if not NON_DETECTION_REQUIRED_COLUMNS.issubset(
-                non_detections.columns
-            ):
+            if not NON_DETECTION_REQUIRED_COLUMNS.issubset(non_detections.columns):
                 invalid_required_values.append(
                     f"{oid}: missing non-detection required columns"
                 )
@@ -239,14 +206,10 @@ class RawDatasetValidator:
             )
 
             if invalid_mjd.any():
-                invalid_required_values.append(
-                    f"{oid}: invalid detection mjd"
-                )
+                invalid_required_values.append(f"{oid}: invalid detection mjd")
 
             if invalid_fid.any():
-                invalid_required_values.append(
-                    f"{oid}: invalid detection fid"
-                )
+                invalid_required_values.append(f"{oid}: invalid detection fid")
 
             if (
                 not invalid_mjd.any()
@@ -276,14 +239,10 @@ class RawDatasetValidator:
                 )
 
                 if invalid_nd_mjd.any():
-                    invalid_required_values.append(
-                        f"{oid}: invalid non-detection mjd"
-                    )
+                    invalid_required_values.append(f"{oid}: invalid non-detection mjd")
 
                 if invalid_nd_fid.any():
-                    invalid_required_values.append(
-                        f"{oid}: invalid non-detection fid"
-                    )
+                    invalid_required_values.append(f"{oid}: invalid non-detection fid")
 
                 if (
                     not invalid_nd_mjd.any()
@@ -304,19 +263,13 @@ class RawDatasetValidator:
             if detection_count < 30:
                 low_lt30.append(oid)
 
-            for value in sorted(
-                fid.dropna().unique().tolist()
-            ):
+            for value in sorted(fid.dropna().unique().tolist()):
                 key = str(int(value)) if float(value).is_integer() else str(value)
-                fid_distribution[key] = (
-                    fid_distribution.get(key, 0) + 1
-                )
+                fid_distribution[key] = fid_distribution.get(key, 0) + 1
 
             fid_values = sorted(
                 {
-                    int(value)
-                    if float(value).is_integer()
-                    else float(value)
+                    int(value) if float(value).is_integer() else float(value)
                     for value in fid.dropna().unique().tolist()
                 }
             )
@@ -330,9 +283,7 @@ class RawDatasetValidator:
             if "corrected" in detections.columns:
                 corrected = detections["corrected"].astype("boolean")
                 corrected_total += int(corrected.fillna(False).sum())
-                raw_fallback_total += int(
-                    corrected.fillna(False).eq(False).sum()
-                )
+                raw_fallback_total += int(corrected.fillna(False).eq(False).sum())
 
         errors = tuple(
             list(missing)
@@ -351,18 +302,14 @@ class RawDatasetValidator:
             extra_oids=extra,
             incomplete_pairs=incomplete,
             schema_mismatches=tuple(schema_mismatches),
-            invalid_required_values=tuple(
-                invalid_required_values
-            ),
+            invalid_required_values=tuple(invalid_required_values),
             detection_schema=detection_schema,
             non_detection_schema=non_detection_schema,
             fid_distribution=dict(sorted(fid_distribution.items())),
             fid_set_distribution=dict(
                 sorted(
                     fid_set_distribution.items(),
-                    key=lambda item: tuple(
-                        int(value) for value in item[0].split(",")
-                    ),
+                    key=lambda item: tuple(int(value) for value in item[0].split(",")),
                 )
             ),
             ordering={
@@ -376,9 +323,7 @@ class RawDatasetValidator:
                 ),
             },
             detection_row_statistics=self._statistics(detection_rows),
-            non_detection_row_statistics=self._statistics(
-                non_detection_rows
-            ),
+            non_detection_row_statistics=self._statistics(non_detection_rows),
             low_observation_objects_lt10=tuple(low_lt10),
             low_observation_objects_lt30=tuple(low_lt30),
             corrected_statistics={
@@ -402,9 +347,8 @@ class RawDatasetValidator:
             name = path.name
 
             if suffix == "_detections.parquet":
-                if (
-                    not name.endswith(suffix)
-                    or name.endswith("_non_detections.parquet")
+                if not name.endswith(suffix) or name.endswith(
+                    "_non_detections.parquet"
                 ):
                     continue
             elif not name.endswith(suffix):

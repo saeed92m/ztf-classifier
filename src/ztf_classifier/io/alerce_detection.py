@@ -45,12 +45,8 @@ class AlerceDetectionBackend(DetectionAcquisitionBackend):
             survey=request.survey,
         )
 
-        detections = pd.DataFrame(
-            response.iloc[0]["detections"]
-        )
-        non_detections = pd.DataFrame(
-            response.iloc[0]["non_detections"]
-        )
+        detections = pd.DataFrame(response.iloc[0]["detections"])
+        non_detections = pd.DataFrame(response.iloc[0]["non_detections"])
 
         self._store.save(
             request.oid,

@@ -76,9 +76,7 @@ class OODProductionModel:
             or self.model is None
             or self.reference_anomaly_scores is None
         ):
-            raise RuntimeError(
-                "OOD production model has not been fitted."
-            )
+            raise RuntimeError("OOD production model has not been fitted.")
 
     def _transform(
         self,
@@ -89,9 +87,7 @@ class OODProductionModel:
         self._require_fitted()
         X = self._validate_features(X)
 
-        return self.scaler.transform(
-            self.imputer.transform(X)
-        )
+        return self.scaler.transform(self.imputer.transform(X))
 
     def anomaly_scores(
         self,
@@ -101,9 +97,7 @@ class OODProductionModel:
 
         self._require_fitted()
 
-        return -self.model.score_samples(
-            self._transform(X)
-        )
+        return -self.model.score_samples(self._transform(X))
 
     def normality_scores(
         self,
@@ -113,9 +107,7 @@ class OODProductionModel:
 
         self._require_fitted()
 
-        return self.model.score_samples(
-            self._transform(X)
-        )
+        return self.model.score_samples(self._transform(X))
 
     def labels(
         self,
@@ -125,9 +117,7 @@ class OODProductionModel:
 
         self._require_fitted()
 
-        return self.model.predict(
-            self._transform(X)
-        )
+        return self.model.predict(self._transform(X))
 
     def save(
         self,
@@ -140,9 +130,7 @@ class OODProductionModel:
         path = Path(path)
 
         if path.exists():
-            raise FileExistsError(
-                f"OOD production model already exists: {path}"
-            )
+            raise FileExistsError(f"OOD production model already exists: {path}")
 
         payload = {
             "state_version": OOD_PRODUCTION_STATE_VERSION,
@@ -174,24 +162,15 @@ class OODProductionModel:
         path = Path(path)
 
         if not path.is_file():
-            raise FileNotFoundError(
-                f"OOD production model does not exist: {path}"
-            )
+            raise FileNotFoundError(f"OOD production model does not exist: {path}")
 
         payload = joblib.load(path)
 
         if not isinstance(payload, dict):
-            raise TypeError(
-                "OOD production model state must be a dictionary."
-            )
+            raise TypeError("OOD production model state must be a dictionary.")
 
-        if (
-            payload.get("state_version")
-            != OOD_PRODUCTION_STATE_VERSION
-        ):
-            raise ValueError(
-                "Unsupported OOD production model state version."
-            )
+        if payload.get("state_version") != OOD_PRODUCTION_STATE_VERSION:
+            raise ValueError("Unsupported OOD production model state version.")
 
         required = {
             "config",
@@ -205,35 +184,26 @@ class OODProductionModel:
 
         if missing:
             raise ValueError(
-                "OOD production model state is missing: "
-                + ", ".join(sorted(missing))
+                "OOD production model state is missing: " + ", ".join(sorted(missing))
             )
 
         config = payload["config"]
 
         if not isinstance(config, OODConfig):
-            raise TypeError(
-                "Persisted OOD configuration has an invalid type."
-            )
+            raise TypeError("Persisted OOD configuration has an invalid type.")
 
         imputer = payload["imputer"]
         scaler = payload["scaler"]
         model = payload["model"]
 
         if not isinstance(imputer, SimpleImputer):
-            raise TypeError(
-                "Persisted OOD imputer has an invalid type."
-            )
+            raise TypeError("Persisted OOD imputer has an invalid type.")
 
         if not isinstance(scaler, RobustScaler):
-            raise TypeError(
-                "Persisted OOD scaler has an invalid type."
-            )
+            raise TypeError("Persisted OOD scaler has an invalid type.")
 
         if not isinstance(model, IsolationForest):
-            raise TypeError(
-                "Persisted OOD model has an invalid type."
-            )
+            raise TypeError("Persisted OOD model has an invalid type.")
 
         reference = np.asarray(
             payload["reference_anomaly_scores"],
@@ -241,19 +211,13 @@ class OODProductionModel:
         )
 
         if reference.ndim != 1:
-            raise ValueError(
-                "Reference anomaly scores must be one-dimensional."
-            )
+            raise ValueError("Reference anomaly scores must be one-dimensional.")
 
         if len(reference) == 0:
-            raise ValueError(
-                "Reference anomaly scores must not be empty."
-            )
+            raise ValueError("Reference anomaly scores must not be empty.")
 
         if not np.isfinite(reference).all():
-            raise ValueError(
-                "Reference anomaly scores must be finite."
-            )
+            raise ValueError("Reference anomaly scores must be finite.")
 
         instance = cls(config)
         instance.imputer = imputer
@@ -281,25 +245,16 @@ class OODProductionModel:
         )
 
         if X.ndim != 2:
-            raise ValueError(
-                "Feature matrix must be two-dimensional."
-            )
+            raise ValueError("Feature matrix must be two-dimensional.")
 
         if X.shape[1] != OOD_FEATURE_COUNT:
-            raise ValueError(
-                "Production OOD detection requires exactly "
-                "42 features."
-            )
+            raise ValueError("Production OOD detection requires exactly 42 features.")
 
         if len(X) == 0:
-            raise ValueError(
-                "Production OOD detection requires at least one sample."
-            )
+            raise ValueError("Production OOD detection requires at least one sample.")
 
         if not np.isfinite(X).any():
-            raise ValueError(
-                "Feature matrix contains no finite values."
-            )
+            raise ValueError("Feature matrix contains no finite values.")
 
         return X
 

@@ -81,7 +81,9 @@ def test_multi_artifact_acquisition_binds_all_artifacts(tmp_path):
         urls=tuple(payloads),
         artifact_names=("a.zip", "b.bin"),
     )
-    result = acquire_source(request, code_version="test", fetcher=lambda url, _timeout: payloads[url])
+    result = acquire_source(
+        request, code_version="test", fetcher=lambda url, _timeout: payloads[url]
+    )
     assert result.status == "ACQUIRED"
     assert result.evidence_manifest is not None
     assert len(result.evidence_manifest.artifacts) == 2
@@ -122,4 +124,6 @@ def test_star_embed_resolution_records_resolved_revision(monkeypatch):
         10.0,
     )
     assert manifest["revision"] == "0123456789abcdef0123456789abcdef01234567"
-    assert all("/resolve/0123456789abcdef0123456789abcdef01234567/" in url for url in resolved)
+    assert all(
+        "/resolve/0123456789abcdef0123456789abcdef01234567/" in url for url in resolved
+    )

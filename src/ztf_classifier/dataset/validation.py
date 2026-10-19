@@ -53,19 +53,13 @@ def validate_against_historical_objects(
 
     missing = required - set(historical.columns)
     if missing:
-        raise ValueError(
-            f"Historical artifact is missing columns: {sorted(missing)}"
-        )
+        raise ValueError(f"Historical artifact is missing columns: {sorted(missing)}")
 
     if len(manifest.objects) != len(historical):
-        raise ValueError(
-            "Manifest row count does not match historical artifact"
-        )
+        raise ValueError("Manifest row count does not match historical artifact")
 
     if manifest.objects["oid"].nunique() != historical["oid"].nunique():
-        raise ValueError(
-            "Manifest unique OID count does not match historical artifact"
-        )
+        raise ValueError("Manifest unique OID count does not match historical artifact")
 
     manifest_index = manifest.objects.set_index("oid").sort_index()
     historical_index = historical.set_index("oid").sort_index()
@@ -122,25 +116,16 @@ class DatasetArtifactValidator:
         input_manifest_path: Path | None = None,
     ) -> DatasetArtifactValidationResult:
         if not artifact_path.is_file():
-            raise ValueError(
-                f"Dataset artifact does not exist: {artifact_path}"
-            )
+            raise ValueError(f"Dataset artifact does not exist: {artifact_path}")
 
         if not manifest_path.is_file():
-            raise ValueError(
-                f"Dataset manifest does not exist: {manifest_path}"
-            )
+            raise ValueError(f"Dataset manifest does not exist: {manifest_path}")
 
-        manifest = json.loads(
-            manifest_path.read_text(encoding="utf-8")
-        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
         data = pd.read_parquet(artifact_path)
 
-        expected_columns = (
-            FEATURE_DATASET_METADATA_COLUMNS
-            + V0_2_FEATURES
-        )
+        expected_columns = FEATURE_DATASET_METADATA_COLUMNS + V0_2_FEATURES
 
         if tuple(data.columns) != expected_columns:
             raise ValueError(
@@ -148,25 +133,13 @@ class DatasetArtifactValidator:
             )
 
         if data["oid"].duplicated().any():
-            raise ValueError(
-                "Dataset artifact contains duplicate OIDs."
-            )
+            raise ValueError("Dataset artifact contains duplicate OIDs.")
 
         if data["oid"].isna().any():
-            raise ValueError(
-                "Dataset artifact contains null OIDs."
-            )
+            raise ValueError("Dataset artifact contains null OIDs.")
 
-        if (
-            data["oid"]
-            .astype("string")
-            .str.strip()
-            .eq("")
-            .any()
-        ):
-            raise ValueError(
-                "Dataset artifact contains empty OIDs."
-            )
+        if data["oid"].astype("string").str.strip().eq("").any():
+            raise ValueError("Dataset artifact contains empty OIDs.")
 
         for column in NON_EMPTY_METADATA_COLUMNS:
             if data[column].isna().any():
@@ -174,13 +147,7 @@ class DatasetArtifactValidator:
                     f"Dataset artifact contains null metadata values: {column}"
                 )
 
-            if (
-                data[column]
-                .astype("string")
-                .str.strip()
-                .eq("")
-                .any()
-            ):
+            if data[column].astype("string").str.strip().eq("").any():
                 raise ValueError(
                     f"Dataset artifact contains empty metadata values: {column}"
                 )
@@ -226,14 +193,10 @@ class DatasetArtifactValidator:
         non_finite_mask = ~finite_mask & ~np.isnan(feature_values)
 
         if non_finite_mask.any():
-            raise ValueError(
-                "Dataset artifact contains non-finite feature values."
-            )
+            raise ValueError("Dataset artifact contains non-finite feature values.")
 
         if manifest["object_count"] != len(data):
-            raise ValueError(
-                "Manifest object_count does not match artifact."
-            )
+            raise ValueError("Manifest object_count does not match artifact.")
 
         if manifest["feature_count"] != len(V0_2_FEATURES):
             raise ValueError(
@@ -241,43 +204,27 @@ class DatasetArtifactValidator:
             )
 
         if manifest["class_count"] != data["class"].nunique():
-            raise ValueError(
-                "Manifest class_count does not match artifact."
-            )
+            raise ValueError("Manifest class_count does not match artifact.")
 
         expected_class_counts = {
             str(key): int(value)
-            for key, value in (
-                data["class"].value_counts().sort_index().items()
-            )
+            for key, value in (data["class"].value_counts().sort_index().items())
         }
 
         if manifest["class_counts"] != expected_class_counts:
-            raise ValueError(
-                "Manifest class_counts do not match artifact."
-            )
+            raise ValueError("Manifest class_counts do not match artifact.")
 
         if manifest["columns"] != list(data.columns):
-            raise ValueError(
-                "Manifest columns do not match artifact."
-            )
+            raise ValueError("Manifest columns do not match artifact.")
 
-        if manifest["metadata_columns"] != list(
-            FEATURE_DATASET_METADATA_COLUMNS
-        ):
-            raise ValueError(
-                "Manifest metadata_columns do not match canonical schema."
-            )
+        if manifest["metadata_columns"] != list(FEATURE_DATASET_METADATA_COLUMNS):
+            raise ValueError("Manifest metadata_columns do not match canonical schema.")
 
         if manifest["feature_columns"] != list(V0_2_FEATURES):
-            raise ValueError(
-                "Manifest feature_columns do not match canonical schema."
-            )
+            raise ValueError("Manifest feature_columns do not match canonical schema.")
 
         if manifest["deterministic_order"] != "oid_ascending":
-            raise ValueError(
-                "Unsupported deterministic ordering."
-            )
+            raise ValueError("Unsupported deterministic ordering.")
 
         ordered_oids = data["oid"].astype(str).tolist()
 
@@ -304,16 +251,12 @@ class DatasetArtifactValidator:
             )
 
         if manifest.get("feature_schema_version") != "v0.2":
-            raise ValueError(
-                "Unsupported feature schema version."
-            )
+            raise ValueError("Unsupported feature schema version.")
 
         actual_hash = sha256_file(artifact_path)
 
         if actual_hash != manifest["artifact_sha256"]:
-            raise ValueError(
-                "Artifact SHA-256 does not match manifest."
-            )
+            raise ValueError("Artifact SHA-256 does not match manifest.")
 
         if input_manifest_path is not None:
             if not input_manifest_path.is_file():
@@ -330,9 +273,7 @@ class DatasetArtifactValidator:
 
             object_manifest = pd.read_parquet(input_manifest_path)
 
-            required_metadata = list(
-                FEATURE_DATASET_METADATA_COLUMNS
-            )
+            required_metadata = list(FEATURE_DATASET_METADATA_COLUMNS)
 
             if tuple(object_manifest.columns) != tuple(required_metadata):
                 raise ValueError(
@@ -340,9 +281,7 @@ class DatasetArtifactValidator:
                 )
 
             artifact_identity = (
-                data[required_metadata]
-                .sort_values("oid")
-                .reset_index(drop=True)
+                data[required_metadata].sort_values("oid").reset_index(drop=True)
             )
 
             manifest_identity = (

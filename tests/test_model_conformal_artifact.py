@@ -34,9 +34,7 @@ def test_conformal_artifact_preserves_frozen_state():
 def test_conformal_artifact_round_trip_dict():
     artifact = _artifact()
 
-    restored = ConformalArtifact.from_dict(
-        artifact.to_dict()
-    )
+    restored = ConformalArtifact.from_dict(artifact.to_dict())
 
     assert restored == artifact
 

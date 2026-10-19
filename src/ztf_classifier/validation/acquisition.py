@@ -1,4 +1,3 @@
-
 """Source-backed acquisition contracts for scientific-validation evidence."""
 
 from __future__ import annotations
@@ -58,7 +57,9 @@ class AcquisitionResult:
             "source_id": self.source_id,
             "status": self.status,
             "artifact": self.artifact.to_dict() if self.artifact else None,
-            "evidence_manifest": self.evidence_manifest.to_dict() if self.evidence_manifest else None,
+            "evidence_manifest": self.evidence_manifest.to_dict()
+            if self.evidence_manifest
+            else None,
             "error": self.error,
         }
 
@@ -71,7 +72,9 @@ def _requests_fetch(url: str, timeout_seconds: float) -> bytes:
     response.raise_for_status()
     content_type = response.headers.get("content-type", "")
     if "text/html" in content_type.lower():
-        raise AcquisitionError(f"source returned HTML instead of a data artifact: {url}")
+        raise AcquisitionError(
+            f"source returned HTML instead of a data artifact: {url}"
+        )
     return response.content
 
 
@@ -105,7 +108,9 @@ def _derive_row_count(request: AcquisitionRequest, artifact: Path) -> int | None
 def _query_manifest_hash(payload: dict[str, object] | None) -> str | None:
     if payload is None:
         return None
-    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    )
     return _sha256_bytes(canonical)
 
 
@@ -118,7 +123,9 @@ def _validate_url(url: str) -> None:
 def _artifact_names(request: AcquisitionRequest) -> tuple[str, ...]:
     if request.artifact_names:
         if len(request.artifact_names) != len(request.urls):
-            raise AcquisitionError("artifact_names must align one-to-one with acquisition URLs")
+            raise AcquisitionError(
+                "artifact_names must align one-to-one with acquisition URLs"
+            )
         names = request.artifact_names
     elif len(request.urls) == 1:
         names = (request.destination.name,)
@@ -132,13 +139,13 @@ def _artifact_names(request: AcquisitionRequest) -> tuple[str, ...]:
 def _expected_hashes(request: AcquisitionRequest) -> tuple[str | None, ...]:
     if request.expected_sha256s:
         if len(request.expected_sha256s) != len(request.urls):
-            raise AcquisitionError("expected_sha256s must align one-to-one with acquisition URLs")
+            raise AcquisitionError(
+                "expected_sha256s must align one-to-one with acquisition URLs"
+            )
         return tuple(request.expected_sha256s)
     if len(request.urls) == 1:
         return (request.expected_sha256,)
     return tuple(request.expected_sha256 for _ in request.urls)
-
-
 
 
 def _resolve_star_embed_urls(
@@ -171,7 +178,10 @@ def _resolve_star_embed_urls(
     }
     missing = [name for name in names if name not in available]
     if missing:
-        raise AcquisitionError("StarEmbed source artifacts missing from resolved revision: " + ", ".join(missing))
+        raise AcquisitionError(
+            "StarEmbed source artifacts missing from resolved revision: "
+            + ", ".join(missing)
+        )
     resolved = tuple(
         f"https://huggingface.co/datasets/StarEmbed/ZTF_40k/resolve/{revision}/data/{name}"
         for name in names
@@ -181,6 +191,7 @@ def _resolve_star_embed_urls(
     manifest["resolution"] = "Hugging Face dataset_info API"
     manifest["artifact_names"] = list(names)
     return resolved, manifest
+
 
 def acquire_source(
     request: AcquisitionRequest,
@@ -203,11 +214,23 @@ def acquire_source(
             None,
             "canonical adapter is derived and requires a dedicated derivation runner",
         )
-    resolved_urls, resolved_query_manifest = (_resolve_star_embed_urls(request.urls, request.query_manifest, request.timeout_seconds) if request.source_id == "star_embed_ztf_40k" else (request.urls, request.query_manifest))
+    resolved_urls, resolved_query_manifest = (
+        _resolve_star_embed_urls(
+            request.urls, request.query_manifest, request.timeout_seconds
+        )
+        if request.source_id == "star_embed_ztf_40k"
+        else (request.urls, request.query_manifest)
+    )
     for url in resolved_urls:
         _validate_url(url)
 
-    request = AcquisitionRequest(**{**request.__dict__, "urls": resolved_urls, "query_manifest": resolved_query_manifest})
+    request = AcquisitionRequest(
+        **{
+            **request.__dict__,
+            "urls": resolved_urls,
+            "query_manifest": resolved_query_manifest,
+        }
+    )
     names = _artifact_names(request)
     expected_hashes = _expected_hashes(request)
     root = request.destination
@@ -221,12 +244,15 @@ def acquire_source(
 
     temporary: list[Path] = []
     try:
+
         def fetch_payload(url: str, expected: str | None) -> bytes:
             payload = fetcher(url, request.timeout_seconds)
             if not payload:
                 raise AcquisitionError(f"empty response from {url}")
             if _looks_like_html(payload):
-                raise AcquisitionError(f"source returned HTML instead of a data artifact: {url}")
+                raise AcquisitionError(
+                    f"source returned HTML instead of a data artifact: {url}"
+                )
             digest = _sha256_bytes(payload)
             if expected and digest != expected:
                 raise AcquisitionError(
@@ -247,7 +273,12 @@ def acquire_source(
                 try:
                     payload = fetch_payload(url, expected)
                     break
-                except (AcquisitionError, OSError, ValueError, requests.RequestException) as exc:
+                except (
+                    AcquisitionError,
+                    OSError,
+                    ValueError,
+                    requests.RequestException,
+                ) as exc:
                     last_error = exc
             if payload is None:
                 raise AcquisitionError(f"all acquisition URLs failed: {last_error}")
@@ -270,16 +301,28 @@ def acquire_source(
             part.replace(destination)
 
         if request.query_manifest is not None:
-            query_path = (root / (root.name + ".evidence.query.json") if multi else root.with_name(root.name + ".evidence.query.json"))
-            query_path.write_text(json.dumps(request.query_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            query_path = (
+                root / (root.name + ".evidence.query.json")
+                if multi
+                else root.with_name(root.name + ".evidence.query.json")
+            )
+            query_path.write_text(
+                json.dumps(request.query_manifest, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
 
         manifest = write_evidence_manifest(
-            root / (root.name + ".evidence.json") if multi else root.with_name(root.name + ".evidence.json"),
+            root / (root.name + ".evidence.json")
+            if multi
+            else root.with_name(root.name + ".evidence.json"),
             benchmark_id=request.benchmark_id,
             source_id=source.source_id,
             acquisition_timestamp=datetime.now(UTC).isoformat(),
             code_version=code_version,
-            artifacts=tuple(EvidenceArtifact.from_path(path, request.artifact_role) for path in destinations),
+            artifacts=tuple(
+                EvidenceArtifact.from_path(path, request.artifact_role)
+                for path in destinations
+            ),
             parent_evidence_sha256=request.parent_evidence_sha256,
             query_manifest_sha256=_query_manifest_hash(request.query_manifest),
             row_count=_derive_row_count(request, destinations[0]),
@@ -310,7 +353,10 @@ def acquire_all(
     code_version: str,
     fetcher: Fetcher = _requests_fetch,
 ) -> tuple[AcquisitionResult, ...]:
-    return tuple(acquire_source(item, code_version=code_version, fetcher=fetcher) for item in requests)
+    return tuple(
+        acquire_source(item, code_version=code_version, fetcher=fetcher)
+        for item in requests
+    )
 
 
 def request_from_benchmark(
@@ -339,7 +385,9 @@ def request_from_benchmark(
 
     selected_urls = urls or plan.urls
     if urls and len(urls) != len(plan.urls):
-        raise AcquisitionError("explicit URL override must preserve the canonical artifact count")
+        raise AcquisitionError(
+            "explicit URL override must preserve the canonical artifact count"
+        )
 
     return AcquisitionRequest(
         benchmark_id=manifest.benchmark_id,
@@ -350,6 +398,8 @@ def request_from_benchmark(
         expected_sha256=expected_sha256,
         expected_sha256s=plan.expected_sha256 if not urls else (),
         parent_evidence_sha256=parent_evidence_sha256,
-        query_manifest=query_manifest if query_manifest is not None else plan.query_manifest,
+        query_manifest=query_manifest
+        if query_manifest is not None
+        else plan.query_manifest,
         artifact_names=plan.artifact_names,
     )

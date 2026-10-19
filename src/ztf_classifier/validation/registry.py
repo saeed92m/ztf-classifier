@@ -16,7 +16,9 @@ class BenchmarkRegistry:
     def list(self) -> tuple[str, ...]:
         if not self.root.exists():
             return ()
-        return tuple(sorted(path.stem for path in self.root.glob("*.json") if path.is_file()))
+        return tuple(
+            sorted(path.stem for path in self.root.glob("*.json") if path.is_file())
+        )
 
     def load(self, benchmark_id: str) -> BenchmarkManifest:
         path = self.root / f"{benchmark_id}.json"

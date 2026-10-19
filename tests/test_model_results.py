@@ -36,10 +36,7 @@ def _indices(probabilities: np.ndarray) -> np.ndarray:
 
 def _labels(indices: np.ndarray) -> tuple[str, ...]:
     """Convert class indices to frozen labels."""
-    return tuple(
-        MODEL_CLASSES[index]
-        for index in indices
-    )
+    return tuple(MODEL_CLASSES[index] for index in indices)
 
 
 def _result(rows: int = 3) -> PredictionResult:

@@ -145,9 +145,7 @@ def test_dataset_artifact_validator_rejects_missing_manifest(
 def test_dataset_artifact_validator_rejects_hash_mismatch(
     tmp_path: Path,
 ) -> None:
-    manifest = json.loads(
-        MANIFEST.read_text(encoding="utf-8")
-    )
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     manifest["artifact_sha256"] = "0" * 64
 
     manifest_copy = tmp_path / "dataset_manifest.json"
@@ -197,9 +195,7 @@ def test_dataset_artifact_validator_rejects_duplicate_oid(
 def test_dataset_artifact_validator_rejects_manifest_count_mismatch(
     tmp_path: Path,
 ) -> None:
-    manifest = json.loads(
-        MANIFEST.read_text(encoding="utf-8")
-    )
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     manifest["object_count"] = 149
 
     manifest_copy = tmp_path / "dataset_manifest.json"
@@ -246,9 +242,7 @@ def test_dataset_artifact_validator_rejects_schema_mismatch(
 def test_dataset_artifact_validator_rejects_class_count_mismatch(
     tmp_path: Path,
 ) -> None:
-    manifest = json.loads(
-        MANIFEST.read_text(encoding="utf-8")
-    )
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     manifest["class_counts"]["AGN"] = 9
 
     manifest_copy = tmp_path / "dataset_manifest.json"
@@ -410,9 +404,7 @@ def test_dataset_artifact_validator_rejects_input_manifest_hash_mismatch(
 ) -> None:
     input_manifest = tmp_path / "object_manifest.parquet"
 
-    pd.read_parquet(ARTIFACT)[
-        list(FEATURE_DATASET_METADATA_COLUMNS)
-    ].to_parquet(
+    pd.read_parquet(ARTIFACT)[list(FEATURE_DATASET_METADATA_COLUMNS)].to_parquet(
         input_manifest,
         index=False,
     )
@@ -444,9 +436,7 @@ def test_dataset_artifact_validator_rejects_input_manifest_identity_mismatch(
         index=False,
     )
 
-    manifest = json.loads(
-        MANIFEST.read_text(encoding="utf-8")
-    )
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
 
     from ztf_classifier.dataset.artifact import sha256_file
 

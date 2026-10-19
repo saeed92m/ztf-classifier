@@ -53,10 +53,12 @@ class BenchmarkRunResult:
             "benchmark_id": self.benchmark_id,
             "evaluation_role": self.evaluation_role,
             "status": self.status,
-            "metrics": self.metrics, "leakage": self.leakage,
+            "metrics": self.metrics,
+            "leakage": self.leakage,
             "checks": self.checks,
             "provenance_complete": self.provenance_complete,
-            "input_sha256": self.input_sha256, "row_count": self.row_count,
+            "input_sha256": self.input_sha256,
+            "row_count": self.row_count,
             "output_path": self.output_path,
         }
 
@@ -117,7 +119,9 @@ def run_table_benchmark(
     required = {manifest.object_id_column, manifest.label_column, prediction_column}
     missing = sorted(required - set(frame.columns))
     if missing:
-        raise ValueError("Benchmark input is missing required columns: " + ", ".join(missing))
+        raise ValueError(
+            "Benchmark input is missing required columns: " + ", ".join(missing)
+        )
 
     y_true = frame[manifest.label_column].astype(str)
     y_pred = frame[prediction_column].astype(str)
@@ -134,17 +138,43 @@ def run_table_benchmark(
     metrics: dict[str, Any] = {
         "accuracy": float(accuracy_score(y_true, y_pred)),
         "balanced_accuracy": float(balanced_accuracy_score(y_true, y_pred)),
-        "macro_precision": float(precision_score(y_true, y_pred, labels=labels, average="macro", zero_division=0)),
-        "macro_recall": float(recall_score(y_true, y_pred, labels=labels, average="macro", zero_division=0)),
-        "macro_f1": float(f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0)),
-        "weighted_precision": float(precision_score(y_true, y_pred, labels=labels, average="weighted", zero_division=0)),
-        "weighted_recall": float(recall_score(y_true, y_pred, labels=labels, average="weighted", zero_division=0)),
-        "weighted_f1": float(f1_score(y_true, y_pred, labels=labels, average="weighted", zero_division=0)),
+        "macro_precision": float(
+            precision_score(
+                y_true, y_pred, labels=labels, average="macro", zero_division=0
+            )
+        ),
+        "macro_recall": float(
+            recall_score(
+                y_true, y_pred, labels=labels, average="macro", zero_division=0
+            )
+        ),
+        "macro_f1": float(
+            f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0)
+        ),
+        "weighted_precision": float(
+            precision_score(
+                y_true, y_pred, labels=labels, average="weighted", zero_division=0
+            )
+        ),
+        "weighted_recall": float(
+            recall_score(
+                y_true, y_pred, labels=labels, average="weighted", zero_division=0
+            )
+        ),
+        "weighted_f1": float(
+            f1_score(y_true, y_pred, labels=labels, average="weighted", zero_division=0)
+        ),
         "per_class": {
             "labels": labels,
-            "precision": precision_score(y_true, y_pred, labels=labels, average=None, zero_division=0).tolist(),
-            "recall": recall_score(y_true, y_pred, labels=labels, average=None, zero_division=0).tolist(),
-            "f1": f1_score(y_true, y_pred, labels=labels, average=None, zero_division=0).tolist(),
+            "precision": precision_score(
+                y_true, y_pred, labels=labels, average=None, zero_division=0
+            ).tolist(),
+            "recall": recall_score(
+                y_true, y_pred, labels=labels, average=None, zero_division=0
+            ).tolist(),
+            "f1": f1_score(
+                y_true, y_pred, labels=labels, average=None, zero_division=0
+            ).tolist(),
         },
         "confusion_matrix": confusion_matrix(y_true, y_pred, labels=labels).tolist(),
     }
@@ -153,20 +183,37 @@ def run_table_benchmark(
     if probability_columns:
         missing_probabilities = sorted(set(probability_columns) - set(frame.columns))
         if missing_probabilities:
-            raise ValueError("Benchmark input is missing probability columns: " + ", ".join(missing_probabilities))
+            raise ValueError(
+                "Benchmark input is missing probability columns: "
+                + ", ".join(missing_probabilities)
+            )
         probabilities = frame[probability_columns].to_numpy(dtype=float)
-        if probabilities.shape[1] != len(labels) or not np.isfinite(probabilities).all():
-            raise ValueError("Probability columns must be finite and match the class count")
-        if (probabilities < 0).any() or not np.allclose(probabilities.sum(axis=1), 1.0, atol=1e-6):
+        if (
+            probabilities.shape[1] != len(labels)
+            or not np.isfinite(probabilities).all()
+        ):
+            raise ValueError(
+                "Probability columns must be finite and match the class count"
+            )
+        if (probabilities < 0).any() or not np.allclose(
+            probabilities.sum(axis=1), 1.0, atol=1e-6
+        ):
             raise ValueError("Probability rows must be non-negative and sum to 1")
         truth_indices = np.asarray([labels.index(label) for label in y_true])
-        metrics["log_loss"] = float(log_loss(truth_indices, probabilities, labels=np.arange(len(labels))))
+        metrics["log_loss"] = float(
+            log_loss(truth_indices, probabilities, labels=np.arange(len(labels)))
+        )
         one_hot = np.eye(len(labels))[truth_indices]
-        metrics["brier_multiclass"] = float(np.mean(np.sum((probabilities - one_hot) ** 2, axis=1)))
+        metrics["brier_multiclass"] = float(
+            np.mean(np.sum((probabilities - one_hot) ** 2, axis=1))
+        )
         metrics["expected_calibration_error"] = _ece(truth_indices, probabilities)
 
     if manifest.ood_label_column and manifest.ood_score_column:
-        if manifest.ood_label_column not in frame or manifest.ood_score_column not in frame:
+        if (
+            manifest.ood_label_column not in frame
+            or manifest.ood_score_column not in frame
+        ):
             raise ValueError("OOD columns declared by manifest are missing")
         ood_labels = frame[manifest.ood_label_column].astype(int).to_numpy()
         ood_scores = frame[manifest.ood_score_column].to_numpy(dtype=float)
@@ -181,14 +228,24 @@ def run_table_benchmark(
         }
         if len(np.unique(ood_labels)) == 2:
             ood["auroc"] = float(roc_auc_score(ood_labels, ood_scores))
-            ood["average_precision"] = float(average_precision_score(ood_labels, ood_scores))
+            ood["average_precision"] = float(
+                average_precision_score(ood_labels, ood_scores)
+            )
         else:
             ood["auroc"] = None
             ood["average_precision"] = None
         if manifest.accepted_column:
             accepted = frame[manifest.accepted_column].astype(bool).to_numpy()
-            ood["false_accept_rate"] = float(np.mean(accepted[ood_labels == 1])) if np.any(ood_labels == 1) else None
-            ood["false_reject_rate"] = float(np.mean(~accepted[ood_labels == 0])) if np.any(ood_labels == 0) else None
+            ood["false_accept_rate"] = (
+                float(np.mean(accepted[ood_labels == 1]))
+                if np.any(ood_labels == 1)
+                else None
+            )
+            ood["false_reject_rate"] = (
+                float(np.mean(~accepted[ood_labels == 0]))
+                if np.any(ood_labels == 0)
+                else None
+            )
         metrics["ood"] = ood
 
     if manifest.accepted_column:
@@ -201,20 +258,28 @@ def run_table_benchmark(
     leakage = {name: result.status for name, result in check_results.items()}
 
     provenance_result = check_results.get("provenance")
-    provenance_complete = all((
-        manifest.source, manifest.version, manifest.retrieval_date,
-        manifest.label_taxonomy, manifest.benchmark_code_version,
-    ))
+    provenance_complete = all(
+        (
+            manifest.source,
+            manifest.version,
+            manifest.retrieval_date,
+            manifest.label_taxonomy,
+            manifest.benchmark_code_version,
+        )
+    )
     if manifest.evaluation_role == "ground_truth":
-        provenance_complete = provenance_complete and bool(manifest.ground_truth_provenance)
+        provenance_complete = provenance_complete and bool(
+            manifest.ground_truth_provenance
+        )
     else:
-        provenance_complete = provenance_complete and bool(manifest.reference_system_provenance)
+        provenance_complete = provenance_complete and bool(
+            manifest.reference_system_provenance
+        )
     if provenance_result is not None:
         provenance_complete = provenance_complete and provenance_result.status == "PASS"
 
     blockers = [
-        name for name in manifest.required_leakage_checks
-        if leakage.get(name) != "PASS"
+        name for name in manifest.required_leakage_checks if leakage.get(name) != "PASS"
     ]
     if (provenance_result is not None and provenance_result.status != "PASS") or (
         provenance_result is None and not provenance_complete
@@ -225,42 +290,61 @@ def run_table_benchmark(
     peak_rss_mb = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) / 1024.0
     if sys.platform == "darwin":
         peak_rss_mb /= 1024.0
-    metrics["performance"] = {"runtime_seconds": float(elapsed), "peak_rss_mb": peak_rss_mb}
+    metrics["performance"] = {
+        "runtime_seconds": float(elapsed),
+        "peak_rss_mb": peak_rss_mb,
+    }
 
     result = BenchmarkRunResult(
         benchmark_id=manifest.benchmark_id,
         evaluation_role=manifest.evaluation_role,
         status=status,
         metrics=metrics,
-        leakage=leakage, checks=checks, provenance_complete=provenance_complete,
-        input_sha256=_sha256(input_path), row_count=len(frame),
+        leakage=leakage,
+        checks=checks,
+        provenance_complete=provenance_complete,
+        input_sha256=_sha256(input_path),
+        row_count=len(frame),
         output_path=str(output_dir / "benchmark_result.json"),
     )
     (output_dir / "benchmark_result.json").write_text(
         json.dumps(result.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    (output_dir / "benchmark_result.md").write_text(_render_markdown(result), encoding="utf-8")
+    (output_dir / "benchmark_result.md").write_text(
+        _render_markdown(result), encoding="utf-8"
+    )
     return result
 
 
 def _render_markdown(result: BenchmarkRunResult) -> str:
     lines = [
-        f"# Scientific Benchmark Report — {result.benchmark_id}", "",
-        f"- Status: **{result.status}**", f"- Population rows: {result.row_count}",
+        f"# Scientific Benchmark Report — {result.benchmark_id}",
+        "",
+        f"- Status: **{result.status}**",
+        f"- Population rows: {result.row_count}",
         f"- Input SHA-256: {result.input_sha256}",
-        f"- Provenance complete: {result.provenance_complete}", "",
-        "## Metrics", "",
+        f"- Provenance complete: {result.provenance_complete}",
+        "",
+        "## Metrics",
+        "",
     ]
-    lines.extend(f"- **{key}**: {json.dumps(value, sort_keys=True)}" for key, value in result.metrics.items())
+    lines.extend(
+        f"- **{key}**: {json.dumps(value, sort_keys=True)}"
+        for key, value in result.metrics.items()
+    )
     lines.extend(["", "## Leakage", ""])
     lines.extend(f"- **{key}**: {value}" for key, value in result.leakage.items())
-    lines.extend([
-        "", "## Interpretation boundary", "",
-        (
-            "Benchmark success is not proof of universal correctness; it is quantitative, "
-            "reproducible evidence for the defined population, labels, source versions, "
-            "and evaluation conditions."
-        ),
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Interpretation boundary",
+            "",
+            (
+                "Benchmark success is not proof of universal correctness; it is quantitative, "
+                "reproducible evidence for the defined population, labels, source versions, "
+                "and evaluation conditions."
+            ),
+            "",
+        ]
+    )
     return "\n".join(lines)

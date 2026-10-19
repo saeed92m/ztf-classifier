@@ -120,9 +120,7 @@ class ModelProvenance:
                 "platform": self.platform,
                 "machine": self.machine,
             },
-            "dependencies": dict(
-                sorted(self.dependencies.items())
-            ),
+            "dependencies": dict(sorted(self.dependencies.items())),
             "software": {
                 "version": self.software_version,
             },
@@ -171,20 +169,12 @@ class ModelProvenanceBuilder:
     ) -> ModelProvenance:
         """Build an immutable provenance snapshot."""
 
-        project_root = Path(
-            self.project_root
-        ).resolve()
+        project_root = Path(self.project_root).resolve()
 
         dataset_path = Path(dataset_path).resolve()
-        feature_schema_path = (
-            Path(feature_schema_path).resolve()
-        )
-        model_config_path = (
-            Path(model_config_path).resolve()
-        )
-        calibration_source_path = (
-            Path(calibration_source_path).resolve()
-        )
+        feature_schema_path = Path(feature_schema_path).resolve()
+        model_config_path = Path(model_config_path).resolve()
+        calibration_source_path = Path(calibration_source_path).resolve()
 
         for path in (
             dataset_path,
@@ -193,9 +183,7 @@ class ModelProvenanceBuilder:
             calibration_source_path,
         ):
             if not path.is_file():
-                raise FileNotFoundError(
-                    f"Provenance source does not exist: {path}"
-                )
+                raise FileNotFoundError(f"Provenance source does not exist: {path}")
 
         package_names = (
             "ztf-classifier",
@@ -211,9 +199,7 @@ class ModelProvenanceBuilder:
 
         for name in package_names:
             try:
-                dependencies[name] = (
-                    importlib.metadata.version(name)
-                )
+                dependencies[name] = importlib.metadata.version(name)
             except importlib.metadata.PackageNotFoundError:
                 dependencies[name] = "NOT_INSTALLED"
 
@@ -242,39 +228,19 @@ class ModelProvenanceBuilder:
             model_version=model_version,
             model_family=model_family,
             dataset_version=dataset_version,
-            dataset_path=str(
-                dataset_path.relative_to(project_root)
-            ),
+            dataset_path=str(dataset_path.relative_to(project_root)),
             dataset_sha256=_sha256(dataset_path),
             feature_schema_version=feature_schema_version,
-            feature_schema_path=str(
-                feature_schema_path.relative_to(
-                    project_root
-                )
-            ),
-            feature_schema_sha256=_sha256(
-                feature_schema_path
-            ),
-            model_config_path=str(
-                model_config_path.relative_to(
-                    project_root
-                )
-            ),
-            model_config_sha256=_sha256(
-                model_config_path
-            ),
+            feature_schema_path=str(feature_schema_path.relative_to(project_root)),
+            feature_schema_sha256=_sha256(feature_schema_path),
+            model_config_path=str(model_config_path.relative_to(project_root)),
+            model_config_sha256=_sha256(model_config_path),
             calibration_method=calibration_method,
-            calibration_temperature=float(
-                calibration_temperature
-            ),
+            calibration_temperature=float(calibration_temperature),
             calibration_source_path=str(
-                calibration_source_path.relative_to(
-                    project_root
-                )
+                calibration_source_path.relative_to(project_root)
             ),
-            calibration_source_sha256=_sha256(
-                calibration_source_path
-            ),
+            calibration_source_sha256=_sha256(calibration_source_path),
             git_commit=git_commit,
             git_dirty=git_dirty,
             python_version=sys.version,

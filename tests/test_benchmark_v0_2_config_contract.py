@@ -67,9 +67,7 @@ class ContractBackend(ObjectAcquisitionBackend):
 
 
 def load_config() -> DatasetConfig:
-    payload = json.loads(
-        CONFIG_PATH.read_text(encoding="utf-8")
-    )
+    payload = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     return DatasetConfig.from_dict(payload)
 
 
@@ -80,9 +78,7 @@ def test_benchmark_v0_2_config_matches_frozen_contract() -> None:
     assert config.survey == "ztf"
     assert config.source == "ALeRCE"
     assert config.classifier == "lc_classifier"
-    assert config.classifier_version == (
-        "hierarchical_random_forest_1.0.0"
-    )
+    assert config.classifier_version == ("hierarchical_random_forest_1.0.0")
 
     assert config.classes == EXPECTED_CLASSES
     assert config.samples_per_class == 10
@@ -91,9 +87,7 @@ def test_benchmark_v0_2_config_matches_frozen_contract() -> None:
     assert config.page_size == 10
     assert config.effective_page_size == 10
 
-    assert config.selection_strategy == (
-        "historical_full_requery"
-    )
+    assert config.selection_strategy == ("historical_full_requery")
 
     assert config.requested_object_count == 150
 
@@ -111,46 +105,22 @@ def test_benchmark_v0_2_selection_policy_executes_two_pass_contract() -> None:
     first_pass = backend.requests[:15]
     second_pass = backend.requests[15:]
 
-    assert [request.class_name for request in first_pass] == list(
-        EXPECTED_CLASSES
-    )
-    assert [request.class_name for request in second_pass] == list(
-        EXPECTED_CLASSES
-    )
+    assert [request.class_name for request in first_pass] == list(EXPECTED_CLASSES)
+    assert [request.class_name for request in second_pass] == list(EXPECTED_CLASSES)
 
-    assert all(
-        request.probability == 0.90
-        for request in first_pass
-    )
-    assert all(
-        request.probability == 0.50
-        for request in second_pass
-    )
+    assert all(request.probability == 0.90 for request in first_pass)
+    assert all(request.probability == 0.50 for request in second_pass)
 
-    assert all(
-        request.survey == "ztf"
-        for request in backend.requests
-    )
-    assert all(
-        request.classifier == "lc_classifier"
-        for request in backend.requests
-    )
-    assert all(
-        request.page_size == 10
-        for request in backend.requests
-    )
+    assert all(request.survey == "ztf" for request in backend.requests)
+    assert all(request.classifier == "lc_classifier" for request in backend.requests)
+    assert all(request.page_size == 10 for request in backend.requests)
 
     assert len(result) == 150
 
     counts = result["class"].value_counts().to_dict()
 
-    assert counts == {
-        class_name: 10
-        for class_name in EXPECTED_CLASSES
-    }
+    assert counts == {class_name: 10 for class_name in EXPECTED_CLASSES}
 
     assert result["class"].tolist() == [
-        class_name
-        for class_name in EXPECTED_CLASSES
-        for _ in range(10)
+        class_name for class_name in EXPECTED_CLASSES for _ in range(10)
     ]

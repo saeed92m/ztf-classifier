@@ -42,13 +42,9 @@ class ReproducibilityValidator:
             )
 
         try:
-            manifest = json.loads(
-                manifest_path.read_text(encoding="utf-8")
-            )
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
-            raise ValueError(
-                "Reproducibility manifest is not valid JSON."
-            ) from exc
+            raise ValueError("Reproducibility manifest is not valid JSON.") from exc
 
         if not isinstance(manifest, dict):
             raise TypeError("Reproducibility manifest must be a JSON object.")
@@ -68,14 +64,10 @@ class ReproducibilityValidator:
 
         missing = required_top_level - set(manifest)
         if missing:
-            raise ValueError(
-                f"Manifest is missing required fields: {sorted(missing)}"
-            )
+            raise ValueError(f"Manifest is missing required fields: {sorted(missing)}")
 
         if manifest["schema_version"] != REPRODUCIBILITY_SCHEMA_VERSION:
-            raise ValueError(
-                "Unsupported reproducibility manifest schema version."
-            )
+            raise ValueError("Unsupported reproducibility manifest schema version.")
 
         if not isinstance(manifest["project"], str) or not manifest["project"]:
             raise ValueError("Manifest project must be a non-empty string.")
@@ -89,16 +81,12 @@ class ReproducibilityValidator:
             "reproducibility",
         ):
             if not isinstance(manifest[section], dict):
-                raise TypeError(
-                    f"Manifest section must be an object: {section}"
-                )
+                raise TypeError(f"Manifest section must be an object: {section}")
 
         run = manifest["run"]
         for field in ("run_id", "created_utc", "purpose"):
             if not run.get(field):
-                raise ValueError(
-                    f"Manifest run.{field} is missing."
-                )
+                raise ValueError(f"Manifest run.{field} is missing.")
 
         source = manifest["source"]
 
@@ -121,24 +109,18 @@ class ReproducibilityValidator:
             "executable",
         ):
             if not runtime.get(field):
-                raise ValueError(
-                    f"Manifest runtime.{field} is missing."
-                )
+                raise ValueError(f"Manifest runtime.{field} is missing.")
 
         dependencies = manifest["dependencies"]
 
         if not isinstance(dependencies, dict):
-            raise TypeError(
-                "Manifest dependencies must be an object."
-            )
+            raise TypeError("Manifest dependencies must be an object.")
 
         if any(
             not isinstance(name, str) or not isinstance(version, str)
             for name, version in dependencies.items()
         ):
-            raise TypeError(
-                "Manifest dependency names and versions must be strings."
-            )
+            raise TypeError("Manifest dependency names and versions must be strings.")
 
         dataset = manifest["dataset"]
         feature_schema = manifest["feature_schema"]
@@ -149,19 +131,13 @@ class ReproducibilityValidator:
         ):
             for field in ("path", "sha256"):
                 if not section.get(field):
-                    raise ValueError(
-                        f"Manifest {section_name}.{field} is missing."
-                    )
+                    raise ValueError(f"Manifest {section_name}.{field} is missing.")
 
             if not isinstance(section["path"], str):
-                raise TypeError(
-                    f"Manifest {section_name}.path must be a string."
-                )
+                raise TypeError(f"Manifest {section_name}.path must be a string.")
 
             if not isinstance(section["sha256"], str):
-                raise TypeError(
-                    f"Manifest {section_name}.sha256 must be a string."
-                )
+                raise TypeError(f"Manifest {section_name}.sha256 must be a string.")
 
             if not _SHA256_PATTERN.fullmatch(section["sha256"]):
                 raise ValueError(
@@ -177,9 +153,7 @@ class ReproducibilityValidator:
 
         for field in ("deterministic_order", "dataset_mutation"):
             if not isinstance(reproducibility.get(field), bool):
-                raise TypeError(
-                    f"Manifest reproducibility.{field} must be a boolean."
-                )
+                raise TypeError(f"Manifest reproducibility.{field} must be a boolean.")
 
         if project_root is None:
             project_root = manifest_path.parent
@@ -200,14 +174,11 @@ class ReproducibilityValidator:
 
         if verify_files:
             if not dataset_path.is_file():
-                raise ValueError(
-                    f"Manifest dataset does not exist: {dataset_path}"
-                )
+                raise ValueError(f"Manifest dataset does not exist: {dataset_path}")
 
             if not feature_schema_path.is_file():
                 raise ValueError(
-                    "Manifest feature schema does not exist: "
-                    f"{feature_schema_path}"
+                    f"Manifest feature schema does not exist: {feature_schema_path}"
                 )
 
             actual_dataset_hash = sha256_file(dataset_path)
@@ -221,8 +192,7 @@ class ReproducibilityValidator:
 
             if actual_schema_hash != feature_schema["sha256"]:
                 raise ValueError(
-                    "Feature schema SHA-256 does not match "
-                    "reproducibility manifest."
+                    "Feature schema SHA-256 does not match reproducibility manifest."
                 )
         else:
             actual_dataset_hash = dataset["sha256"]

@@ -8,10 +8,7 @@ from ztf_classifier.reproducibility.validation import (
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 MANIFEST_PATH = (
-    PROJECT_ROOT
-    / "reports"
-    / "reproducibility"
-    / "benchmark_v0.2-reproduction.json"
+    PROJECT_ROOT / "reports" / "reproducibility" / "benchmark_v0.2-reproduction.json"
 )
 
 
@@ -32,17 +29,13 @@ def test_benchmark_v0_2_reproduction_manifest() -> None:
         "fed07fc291070ecbdc7bbc597fad5aac6a3f4a1746feb12a9f4c2407108af329"
     )
 
-    manifest = json.loads(
-        MANIFEST_PATH.read_text(encoding="utf-8")
-    )
+    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
 
     assert manifest["schema_version"] == "1.0"
 
     assert manifest["project"] == "ZTF Classifier"
 
-    assert manifest["run"]["purpose"] == (
-        "offline_v0_2_reproduction"
-    )
+    assert manifest["run"]["purpose"] == ("offline_v0_2_reproduction")
 
     assert manifest["source"]["git_commit"] == (
         "866c868a7292294014c81b58ad5880310073a5ec"
@@ -53,9 +46,7 @@ def test_benchmark_v0_2_reproduction_manifest() -> None:
 
     assert manifest["dataset"]["object_count"] == 150
     assert manifest["dataset"]["feature_count"] == 42
-    assert manifest["dataset"]["dataset_version"] == (
-        "benchmark_v0.2-reproduction"
-    )
+    assert manifest["dataset"]["dataset_version"] == ("benchmark_v0.2-reproduction")
 
     assert manifest["feature_schema"]["version"] == "v0.2"
 
@@ -68,7 +59,4 @@ def test_benchmark_v0_2_reproduction_manifest() -> None:
 
     assert configuration["parity"]["metadata"] == "exact"
     assert configuration["parity"]["features"] == "exact"
-    assert (
-        configuration["parity"]["artifact_sha256_matches_frozen_v0_2"]
-        is True
-    )
+    assert configuration["parity"]["artifact_sha256_matches_frozen_v0_2"] is True

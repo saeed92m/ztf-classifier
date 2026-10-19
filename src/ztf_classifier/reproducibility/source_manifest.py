@@ -30,7 +30,9 @@ class SourceArtifact:
         _require_nonempty(self.path, "artifact path")
         digest = _require_nonempty(self.sha256, "artifact sha256").lower()
         if len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
-            raise ValueError("artifact sha256 must be a 64-character hexadecimal digest.")
+            raise ValueError(
+                "artifact sha256 must be a 64-character hexadecimal digest."
+            )
 
     def to_dict(self) -> dict[str, str]:
         return {"path": self.path, "sha256": self.sha256.lower()}
@@ -106,9 +108,13 @@ class SourceSubsetManifest:
             try:
                 path.relative_to(root)
             except ValueError as exc:
-                raise ValueError(f"Artifact escapes manifest root: {artifact.path}") from exc
+                raise ValueError(
+                    f"Artifact escapes manifest root: {artifact.path}"
+                ) from exc
             if not path.is_file():
-                raise ValueError(f"Declared source artifact is missing: {artifact.path}")
+                raise ValueError(
+                    f"Declared source artifact is missing: {artifact.path}"
+                )
             actual = sha256_file(path)
             if actual.lower() != artifact.sha256.lower():
                 raise ValueError(

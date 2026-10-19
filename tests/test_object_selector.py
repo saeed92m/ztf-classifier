@@ -62,10 +62,7 @@ def test_selector_builds_alerce_query_contract(benchmark_config):
 def test_all_requests_share_selection_policy(benchmark_config):
     requests = ObjectSelector(benchmark_config).requests()
 
-    assert {
-        (r.survey, r.classifier, r.probability, r.page_size)
-        for r in requests
-    } == {
+    assert {(r.survey, r.classifier, r.probability, r.page_size) for r in requests} == {
         ("ZTF", "lc_classifier", 0.50, 10)
     }
 

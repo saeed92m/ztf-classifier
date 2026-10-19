@@ -152,5 +152,7 @@ def test_star_embed_revision_resolution_uses_supported_expand_parameters(monkeyp
     )
 
     assert captured["params"] == [("expand", "sha"), ("expand", "siblings")]
-    assert urls[0].endswith("/resolve/" + "a" * 40 + "/data/train-00000-of-00002.parquet")
+    assert urls[0].endswith(
+        "/resolve/" + "a" * 40 + "/data/train-00000-of-00002.parquet"
+    )
     assert manifest["revision"] == "a" * 40

@@ -32,9 +32,7 @@ class ModelContract:
         self.config = config or ModelConfig()
 
         if self.config.xgboost.num_class != NUM_CLASSES:
-            raise ValueError(
-                "Model class count does not match XGBoost config."
-            )
+            raise ValueError("Model class count does not match XGBoost config.")
 
     @property
     def classes(self) -> tuple[str, ...]:
@@ -55,22 +53,12 @@ class ModelContract:
             "classes": list(self.classes),
             "class_to_index": self.class_to_index,
             "xgboost": asdict(self.config.xgboost),
-            "cross_validation": asdict(
-                self.config.cross_validation
-            ),
-            "calibration": asdict(
-                self.config.calibration
-            ),
-            "conformal": asdict(
-                self.config.conformal
-            ),
+            "cross_validation": asdict(self.config.cross_validation),
+            "calibration": asdict(self.config.calibration),
+            "conformal": asdict(self.config.conformal),
             "ood": asdict(self.config.ood),
-            "missing_value_strategy": (
-                self.config.missing_value_strategy
-            ),
-            "hyperparameter_tuning": (
-                self.config.hyperparameter_tuning
-            ),
+            "missing_value_strategy": (self.config.missing_value_strategy),
+            "hyperparameter_tuning": (self.config.hyperparameter_tuning),
         }
 
     @classmethod
@@ -81,9 +69,7 @@ class ModelContract:
         """Deserialize a complete model contract."""
 
         if not isinstance(payload, dict):
-            raise TypeError(
-                "Model contract payload must be a dictionary."
-            )
+            raise TypeError("Model contract payload must be a dictionary.")
 
         required = {
             "model_version",
@@ -99,49 +85,33 @@ class ModelContract:
             "hyperparameter_tuning",
         }
 
-        missing = sorted(
-            required - set(payload)
-        )
+        missing = sorted(required - set(payload))
 
         if missing:
-            raise ValueError(
-                f"Model contract is missing fields: {missing}"
-            )
+            raise ValueError(f"Model contract is missing fields: {missing}")
 
-        classes = tuple(
-            str(value)
-            for value in payload["classes"]
-        )
+        classes = tuple(str(value) for value in payload["classes"])
 
         if classes != MODEL_CLASSES:
             raise ValueError(
-                "Model contract classes do not match "
-                "the frozen class order."
+                "Model contract classes do not match the frozen class order."
             )
 
         class_to_index = {
-            str(key): int(value)
-            for key, value in payload["class_to_index"].items()
+            str(key): int(value) for key, value in payload["class_to_index"].items()
         }
 
         if class_to_index != CLASS_TO_INDEX:
             raise ValueError(
-                "Model contract class mapping does not match "
-                "the frozen class mapping."
+                "Model contract class mapping does not match the frozen class mapping."
             )
 
         config = ModelConfig(
             version=str(payload["model_version"]),
             family=str(payload["model_family"]),
-            xgboost=XGBoostConfig(
-                **payload["xgboost"]
-            ),
-            cross_validation=CrossValidationConfig(
-                **payload["cross_validation"]
-            ),
-            calibration=CalibrationConfig(
-                **payload["calibration"]
-            ),
+            xgboost=XGBoostConfig(**payload["xgboost"]),
+            cross_validation=CrossValidationConfig(**payload["cross_validation"]),
+            calibration=CalibrationConfig(**payload["calibration"]),
             conformal=ConformalConfig(
                 **{
                     **payload["conformal"],
@@ -151,17 +121,11 @@ class ModelContract:
             ood=OODConfig(
                 **{
                     **payload["ood"],
-                    "anomaly_thresholds": tuple(
-                        payload["ood"]["anomaly_thresholds"]
-                    ),
+                    "anomaly_thresholds": tuple(payload["ood"]["anomaly_thresholds"]),
                 }
             ),
-            missing_value_strategy=str(
-                payload["missing_value_strategy"]
-            ),
-            hyperparameter_tuning=bool(
-                payload["hyperparameter_tuning"]
-            ),
+            missing_value_strategy=str(payload["missing_value_strategy"]),
+            hyperparameter_tuning=bool(payload["hyperparameter_tuning"]),
         )
 
         return cls(config=config)

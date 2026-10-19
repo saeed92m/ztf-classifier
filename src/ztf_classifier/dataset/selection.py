@@ -47,10 +47,7 @@ class ObjectSelectionPolicy:
                 backend=backend,
             )
 
-        raise ValueError(
-            "unsupported selection_strategy: "
-            + strategy
-        )
+        raise ValueError("unsupported selection_strategy: " + strategy)
 
     def acquire_all(
         self,
@@ -87,11 +84,12 @@ class ObjectSelectionPolicy:
                 combined.loc[
                     combined["oid"].duplicated(keep=False),
                     "oid",
-                ].astype(str).unique()
+                ]
+                .astype(str)
+                .unique()
             )
             raise ValueError(
-                "Object selection produced duplicate OIDs: "
-                + ", ".join(duplicates)
+                "Object selection produced duplicate OIDs: " + ", ".join(duplicates)
             )
 
         return combined.reset_index(drop=True)
@@ -185,8 +183,7 @@ class ObjectSelectionPolicy:
 
         if not isinstance(payload, pd.DataFrame):
             raise TypeError(
-                "Object-acquisition backend payload must be a pandas "
-                "DataFrame."
+                "Object-acquisition backend payload must be a pandas DataFrame."
             )
 
         return payload
@@ -194,6 +191,4 @@ class ObjectSelectionPolicy:
     def _limit_samples(self, frame: pd.DataFrame) -> pd.DataFrame:
         """Limit a result to the configured samples per class."""
 
-        return frame.head(self._config.samples_per_class).reset_index(
-            drop=True
-        )
+        return frame.head(self._config.samples_per_class).reset_index(drop=True)

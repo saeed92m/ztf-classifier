@@ -33,9 +33,7 @@ class ImportRequest:
         path = Path(self.path).expanduser()
         object.__setattr__(self, "path", path)
         if self.format is not None and self.format not in _SUPPORTED_FORMATS:
-            raise ApplicationInputError(
-                f"Unsupported import format: {self.format!r}."
-            )
+            raise ApplicationInputError(f"Unsupported import format: {self.format!r}.")
         if not isinstance(self.max_bytes, int) or isinstance(self.max_bytes, bool):
             raise ApplicationInputError("max_bytes must be a positive integer.")
         if self.max_bytes <= 0:

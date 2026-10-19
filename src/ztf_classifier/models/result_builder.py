@@ -23,9 +23,7 @@ class PredictionResultBuilder:
         inference: InferenceResult,
         *,
         calibrated_probabilities: np.ndarray | None = None,
-        conformal: (
-        ConformalResult | ProductionConformalDiagnostics | None
-    ) = None,
+        conformal: (ConformalResult | ProductionConformalDiagnostics | None) = None,
         ood: OODResult | None = None,
         scientific_anomaly: ScientificAnomalyResult | None = None,
         calibration_status: str = "unavailable",
@@ -56,15 +54,12 @@ class PredictionResultBuilder:
             ).astype(np.int64)
 
             calibrated_labels = tuple(
-                MODEL_CLASSES[index]
-                for index in calibrated_indices
+                MODEL_CLASSES[index] for index in calibrated_indices
             )
 
         return PredictionResult(
             raw_probabilities=inference.probabilities,
-            raw_predicted_class_indices=(
-                inference.predicted_class_indices
-            ),
+            raw_predicted_class_indices=(inference.predicted_class_indices),
             raw_predicted_labels=inference.predicted_labels,
             calibrated_probabilities=calibrated_probabilities,
             calibrated_predicted_class_indices=calibrated_indices,

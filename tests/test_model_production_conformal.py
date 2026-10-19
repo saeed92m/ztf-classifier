@@ -60,15 +60,10 @@ def test_predict_uses_persisted_thresholds() -> None:
     )
 
     assert diagnostics.sample_count == 3
-    assert tuple(
-        result.alpha
-        for result in diagnostics.results
-    ) == (0.05, 0.10, 0.20)
+    assert tuple(result.alpha for result in diagnostics.results) == (0.05, 0.10, 0.20)
 
     for result in diagnostics.results:
-        assert result.threshold == artifact.threshold_for(
-            result.alpha
-        )
+        assert result.threshold == artifact.threshold_for(result.alpha)
 
 
 def test_prediction_sets_have_frozen_class_dimension() -> None:
@@ -94,10 +89,7 @@ def test_prediction_set_labels_match_boolean_sets() -> None:
         result.prediction_sets,
         result.prediction_set_labels,
     ):
-        expected = "|".join(
-            MODEL_CLASSES[index]
-            for index in np.flatnonzero(row)
-        )
+        expected = "|".join(MODEL_CLASSES[index] for index in np.flatnonzero(row))
         assert labels == expected
 
 

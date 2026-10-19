@@ -38,9 +38,7 @@ def make_objects() -> pd.DataFrame:
 
 
 def test_builder_returns_canonical_manifest() -> None:
-    manifest = ObjectManifestBuilder(make_config()).build(
-        make_objects()
-    )
+    manifest = ObjectManifestBuilder(make_config()).build(make_objects())
 
     assert manifest.object_count == 2
     assert manifest.objects.columns.tolist() == [
@@ -57,9 +55,7 @@ def test_builder_returns_canonical_manifest() -> None:
 
 
 def test_builder_sorts_by_oid() -> None:
-    manifest = ObjectManifestBuilder(make_config()).build(
-        make_objects()
-    )
+    manifest = ObjectManifestBuilder(make_config()).build(make_objects())
 
     assert manifest.objects["oid"].tolist() == [
         "ZTF_1",
@@ -68,9 +64,7 @@ def test_builder_sorts_by_oid() -> None:
 
 
 def test_builder_preserves_probability() -> None:
-    manifest = ObjectManifestBuilder(make_config()).build(
-        make_objects()
-    )
+    manifest = ObjectManifestBuilder(make_config()).build(make_objects())
 
     assert manifest.objects["probability"].tolist() == [
         0.500001,

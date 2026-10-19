@@ -38,9 +38,13 @@ def test_derivation_emits_immutable_evidence_manifest(tmp_path: Path):
     parent = tmp_path / "parent.tsv"
     parent.write_text("SourceID\nA\nB\n", encoding="utf-8")
     g = tmp_path / "g.tsv"
-    g.write_text("SourceID\tgmag\te_gmag\nA\t15.0\t0.1\nB\t16.0\t0.8\n", encoding="utf-8")
+    g.write_text(
+        "SourceID\tgmag\te_gmag\nA\t15.0\t0.1\nB\t16.0\t0.8\n", encoding="utf-8"
+    )
     r = tmp_path / "r.tsv"
-    r.write_text("SourceID\trmag\te_rmag\nA\t15.0\t0.1\nB\t16.0\t0.8\n", encoding="utf-8")
+    r.write_text(
+        "SourceID\trmag\te_rmag\nA\t15.0\t0.1\nB\t16.0\t0.8\n", encoding="utf-8"
+    )
     result = derive_730k(
         parent,
         g,
@@ -132,8 +136,7 @@ def test_lightcurve_directory_auto_selects_data_file(tmp_path: Path):
     (root / "README.txt").write_text("CPVS g-band documentation\n", encoding="utf-8")
     (root / "nested").mkdir()
     (root / "nested" / "ztf2g.txt").write_text(
-        "SourceID RAdeg DEdeg HJD gmag e_gmag g_flag\n"
-        "1 1 2 3 15.0 0.1 0\n",
+        "SourceID RAdeg DEdeg HJD gmag e_gmag g_flag\n1 1 2 3 15.0 0.1 0\n",
         encoding="utf-8",
     )
 
@@ -156,8 +159,7 @@ def test_lightcurve_directory_accepts_headerless_cpvs_file(tmp_path: Path):
     root = tmp_path / "g"
     root.mkdir()
     (root / "ztf2g").write_text(
-        "1 1.0 2.0 3.0 15.0 0.1 0\n"
-        "2 1.1 2.1 4.0 16.0 0.2 1\n",
+        "1 1.0 2.0 3.0 15.0 0.1 0\n2 1.1 2.1 4.0 16.0 0.2 1\n",
         encoding="utf-8",
     )
 
@@ -233,10 +235,7 @@ def test_lightcurve_gzip_accepts_headerless_cpvs_file(tmp_path: Path):
 
     path = tmp_path / "ztf2g.gz"
     with gzip.open(path, "wt", encoding="utf-8") as handle:
-        handle.write(
-            "1 1.0 2.0 3.0 15.0 0.1 0\n"
-            "2 1.1 2.1 4.0 16.0 0.2 1\n"
-        )
+        handle.write("1 1.0 2.0 3.0 15.0 0.1 0\n2 1.1 2.1 4.0 16.0 0.2 1\n")
 
     assert list(_iter_rows(path, required_columns=("SourceID", "e_gmag"))) == [
         {
@@ -281,8 +280,7 @@ def test_lightcurve_zip_accepts_whitespace_delimited_header(tmp_path: Path):
         zf.writestr("README.txt", "CPVS g-band documentation\n")
         zf.writestr(
             "ztf2g",
-            "# SourceID RAdeg DEdeg HJD gmag e_gmag g_flag\n"
-            "1 1 2 3 15.0 0.1 0\n",
+            "# SourceID RAdeg DEdeg HJD gmag e_gmag g_flag\n1 1 2 3 15.0 0.1 0\n",
         )
 
     assert list(

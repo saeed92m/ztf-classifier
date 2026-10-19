@@ -27,12 +27,19 @@ class CatalogMatch:
         if not self.catalog or not self.catalog_version:
             raise ValueError("catalog and catalog_version are required.")
         if not self.source_id or not self.matching_method or not self.matching_policy:
-            raise ValueError("source_id, matching_method and matching_policy are required.")
+            raise ValueError(
+                "source_id, matching_method and matching_policy are required."
+            )
         if self.evaluation_role not in {"context", "reference", "validation"}:
-            raise ValueError("evaluation_role must be context, reference or validation.")
+            raise ValueError(
+                "evaluation_role must be context, reference or validation."
+            )
         if self.match_radius_arcsec is not None and self.match_radius_arcsec <= 0:
             raise ValueError("match_radius_arcsec must be positive.")
-        if self.match_probability is not None and not 0.0 <= self.match_probability <= 1.0:
+        if (
+            self.match_probability is not None
+            and not 0.0 <= self.match_probability <= 1.0
+        ):
             raise ValueError("match_probability must be between 0 and 1.")
 
 

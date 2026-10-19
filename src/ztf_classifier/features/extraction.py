@@ -15,13 +15,9 @@ from ztf_classifier.preprocessing.lightcurve import prepare_band_lightcurve
 def extract_features_for_object(oid, raw_lc_dir):
     detection_path = Path(raw_lc_dir) / f"{oid}_detections.parquet"
     if not detection_path.exists():
-        raise FileNotFoundError(
-            f"Detection cache not found: {detection_path}"
-        )
+        raise FileNotFoundError(f"Detection cache not found: {detection_path}")
 
-    internal = alerce_to_internal_lc_robust(
-        pd.read_parquet(detection_path)
-    )
+    internal = alerce_to_internal_lc_robust(pd.read_parquet(detection_path))
     g = prepare_band_lightcurve(internal, 1)
     r = prepare_band_lightcurve(internal, 2)
 

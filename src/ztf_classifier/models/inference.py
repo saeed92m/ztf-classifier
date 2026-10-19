@@ -73,9 +73,7 @@ class XGBoostInferenceEngine:
         feature_schema_path: Path,
     ) -> None:
         if model is None:
-            raise ValueError(
-                "XGBoostInferenceEngine requires a fitted model."
-            )
+            raise ValueError("XGBoostInferenceEngine requires a fitted model.")
 
         self._model = model
         self._feature_schema_path = Path(feature_schema_path)
@@ -103,10 +101,7 @@ class XGBoostInferenceEngine:
             axis=1,
         ).astype(int)
 
-        predicted_labels = tuple(
-            MODEL_CLASSES[index]
-            for index in predicted_indices
-        )
+        predicted_labels = tuple(MODEL_CLASSES[index] for index in predicted_indices)
 
         return InferenceResult(
             probabilities=probabilities,
@@ -127,14 +122,10 @@ class XGBoostInferenceEngine:
         X = X.replace([np.inf, -np.inf], np.nan)
 
         if X.shape[1] != 42:
-            raise ValueError(
-                "Frozen v0.2 model requires exactly 42 features."
-            )
+            raise ValueError("Frozen v0.2 model requires exactly 42 features.")
 
         if X.isnull().all(axis=1).any():
-            raise ValueError(
-                "Dataset contains rows with all model features missing."
-            )
+            raise ValueError("Dataset contains rows with all model features missing.")
 
         return X
 
@@ -146,25 +137,19 @@ class XGBoostInferenceEngine:
 
         if not self._feature_schema_path.exists():
             raise FileNotFoundError(
-                "Feature schema does not exist: "
-                f"{self._feature_schema_path}"
+                f"Feature schema does not exist: {self._feature_schema_path}"
             )
 
-        schema = pd.read_parquet(
-            self._feature_schema_path
-        )
+        schema = pd.read_parquet(self._feature_schema_path)
 
         required = {"feature_order", "feature"}
 
         if not required.issubset(schema.columns):
             raise ValueError(
-                "Feature schema must contain "
-                "feature_order and feature columns."
+                "Feature schema must contain feature_order and feature columns."
             )
 
-        ordered = schema.sort_values(
-            "feature_order"
-        ).copy()
+        ordered = schema.sort_values("feature_order").copy()
 
         if ordered["feature_order"].duplicated().any():
             raise ValueError(
@@ -175,33 +160,23 @@ class XGBoostInferenceEngine:
         actual_order = ordered["feature_order"].tolist()
         if actual_order != expected_order:
             raise ValueError(
-                "Frozen feature schema must use feature_order values "
-                "1 through 42."
+                "Frozen feature schema must use feature_order values 1 through 42."
             )
 
         feature_names = ordered["feature"].astype(str).tolist()
 
         if len(feature_names) != 42:
             raise ValueError(
-                "Frozen v0.2 feature schema must contain "
-                "exactly 42 features."
+                "Frozen v0.2 feature schema must contain exactly 42 features."
             )
 
         if len(set(feature_names)) != 42:
-            raise ValueError(
-                "Frozen feature schema contains duplicates."
-            )
+            raise ValueError("Frozen feature schema contains duplicates.")
 
-        missing = [
-            name
-            for name in feature_names
-            if name not in dataset.columns
-        ]
+        missing = [name for name in feature_names if name not in dataset.columns]
 
         if missing:
-            raise ValueError(
-                f"Dataset is missing model features: {missing}"
-            )
+            raise ValueError(f"Dataset is missing model features: {missing}")
 
         return feature_names
 
@@ -217,19 +192,14 @@ class XGBoostInferenceEngine:
             NUM_CLASSES,
         ):
             raise ValueError(
-                "Probability matrix has invalid shape: "
-                f"{probabilities.shape}"
+                f"Probability matrix has invalid shape: {probabilities.shape}"
             )
 
         if not np.isfinite(probabilities).all():
-            raise ValueError(
-                "XGBoost probabilities contain non-finite values."
-            )
+            raise ValueError("XGBoost probabilities contain non-finite values.")
 
         if (probabilities < 0.0).any():
-            raise ValueError(
-                "XGBoost probabilities contain negative values."
-            )
+            raise ValueError("XGBoost probabilities contain negative values.")
 
         row_sums = probabilities.sum(axis=1)
 
@@ -239,6 +209,4 @@ class XGBoostInferenceEngine:
             rtol=0.0,
             atol=1e-6,
         ):
-            raise ValueError(
-                "XGBoost probabilities do not sum to one."
-            )
+            raise ValueError("XGBoost probabilities do not sum to one.")

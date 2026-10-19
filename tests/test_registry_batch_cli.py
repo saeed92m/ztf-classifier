@@ -97,5 +97,7 @@ def test_cli_batch_requires_complete_model_selection(
     captured = capsys.readouterr()
 
     assert exit_code == 2
-    assert "Provide --artifact or both --registry-dir and --model-version." in captured.err
+    assert (
+        "Provide --artifact or both --registry-dir and --model-version." in captured.err
+    )
     assert not output_path.exists()

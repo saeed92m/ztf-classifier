@@ -91,9 +91,7 @@ def test_read_vizier_accepts_commented_tsv_header(tmp_path: Path):
 
     path = tmp_path / "table4.dat"
     path.write_text(
-        "# ZTF\tID\n"
-        "ZTF1\t1\n"
-        "ZTF2\t730184\n",
+        "# ZTF\tID\nZTF1\t1\nZTF2\t730184\n",
         encoding="utf-8",
     )
 

@@ -182,10 +182,7 @@ def test_schema_mismatch_fails(tmp_path):
     ).validate()
 
     assert result.status == "FAIL"
-    assert any(
-        "detection schema mismatch" in item
-        for item in result.schema_mismatches
-    )
+    assert any("detection schema mismatch" in item for item in result.schema_mismatches)
 
 
 def test_invalid_mjd_fails(tmp_path):
@@ -205,8 +202,7 @@ def test_invalid_mjd_fails(tmp_path):
 
     assert result.status == "FAIL"
     assert any(
-        "invalid detection mjd" in item
-        for item in result.invalid_required_values
+        "invalid detection mjd" in item for item in result.invalid_required_values
     )
 
 

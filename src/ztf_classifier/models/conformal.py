@@ -82,9 +82,7 @@ class EmpiricalConformalPredictor:
             alpha,
         )
 
-        prediction_sets = (
-            probabilities >= (1.0 - threshold)
-        )
+        prediction_sets = probabilities >= (1.0 - threshold)
 
         covered = prediction_sets[
             np.arange(len(y_true)),
@@ -98,25 +96,15 @@ class EmpiricalConformalPredictor:
 
         sample_count = len(y_true)
 
-        coverage = float(
-            covered.mean()
-        )
+        coverage = float(covered.mean())
 
-        mean_set_size = float(
-            set_sizes.mean()
-        )
+        mean_set_size = float(set_sizes.mean())
 
-        singleton_rate = float(
-            (set_sizes == 1).mean()
-        )
+        singleton_rate = float((set_sizes == 1).mean())
 
-        empty_rate = float(
-            (set_sizes == 0).mean()
-        )
+        empty_rate = float((set_sizes == 0).mean())
 
-        multi_class_rate = float(
-            (set_sizes > 1).mean()
-        )
+        multi_class_rate = float((set_sizes > 1).mean())
 
         summary = ConformalSummary(
             alpha=float(alpha),
@@ -170,20 +158,13 @@ class EmpiricalConformalPredictor:
         )
 
         if prediction_sets.ndim != 2:
-            raise ValueError(
-                "Prediction sets must be two-dimensional."
-            )
+            raise ValueError("Prediction sets must be two-dimensional.")
 
         if prediction_sets.shape[1] != NUM_CLASSES:
-            raise ValueError(
-                "Prediction sets must contain 15 classes."
-            )
+            raise ValueError("Prediction sets must contain 15 classes.")
 
         return tuple(
-            "|".join(
-                MODEL_CLASSES[index]
-                for index in np.flatnonzero(row)
-            )
+            "|".join(MODEL_CLASSES[index] for index in np.flatnonzero(row))
             for row in prediction_sets
         )
 
@@ -200,23 +181,14 @@ class EmpiricalConformalPredictor:
         )
 
         if scores.ndim != 1:
-            raise ValueError(
-                "Conformal scores must be one-dimensional."
-            )
+            raise ValueError("Conformal scores must be one-dimensional.")
 
         n_samples = len(scores)
 
         if n_samples == 0:
-            raise ValueError(
-                "Conformal calibration requires at least one sample."
-            )
+            raise ValueError("Conformal calibration requires at least one sample.")
 
-        k = int(
-            np.ceil(
-                (n_samples + 1)
-                * (1.0 - alpha)
-            )
-        )
+        k = int(np.ceil((n_samples + 1) * (1.0 - alpha)))
 
         k = min(
             max(k, 1),
@@ -225,9 +197,7 @@ class EmpiricalConformalPredictor:
 
         sorted_scores = np.sort(scores)
 
-        return float(
-            sorted_scores[k - 1]
-        )
+        return float(sorted_scores[k - 1])
 
     @staticmethod
     def _normalize_probabilities(
@@ -241,44 +211,28 @@ class EmpiricalConformalPredictor:
         )
 
         if probabilities.ndim != 2:
-            raise ValueError(
-                "Probability matrix must be two-dimensional."
-            )
+            raise ValueError("Probability matrix must be two-dimensional.")
 
         if probabilities.shape[1] != NUM_CLASSES:
-            raise ValueError(
-                "Frozen v0.2 conformal prediction requires "
-                "15 classes."
-            )
+            raise ValueError("Frozen v0.2 conformal prediction requires 15 classes.")
 
         if not np.isfinite(probabilities).all():
-            raise ValueError(
-                "Probability matrix contains non-finite values."
-            )
+            raise ValueError("Probability matrix contains non-finite values.")
 
         if (probabilities < 0.0).any():
-            raise ValueError(
-                "Probability matrix contains negative values."
-            )
+            raise ValueError("Probability matrix contains negative values.")
 
         row_sums = probabilities.sum(axis=1)
 
         if (row_sums <= 0.0).any():
-            raise ValueError(
-                "Probability rows must have positive sums."
-            )
+            raise ValueError("Probability rows must have positive sums.")
 
         normalized = probabilities / row_sums[:, None]
 
-        normalized[:, -1] = (
-            1.0
-            - normalized[:, :-1].sum(axis=1)
-        )
+        normalized[:, -1] = 1.0 - normalized[:, :-1].sum(axis=1)
 
         if (normalized < 0.0).any():
-            raise ValueError(
-                "Normalized probabilities contain negative values."
-            )
+            raise ValueError("Normalized probabilities contain negative values.")
 
         if not np.allclose(
             normalized.sum(axis=1),
@@ -286,9 +240,7 @@ class EmpiricalConformalPredictor:
             rtol=0.0,
             atol=1e-12,
         ):
-            raise ValueError(
-                "Normalized probabilities do not sum to one."
-            )
+            raise ValueError("Normalized probabilities do not sum to one.")
 
         return normalized
 
@@ -300,33 +252,23 @@ class EmpiricalConformalPredictor:
         """Validate frozen multiclass target indices."""
 
         if y_true.ndim != 1:
-            raise ValueError(
-                "Target array must be one-dimensional."
-            )
+            raise ValueError("Target array must be one-dimensional.")
 
         if len(y_true) != expected_rows:
-            raise ValueError(
-                "Target length does not match probability rows."
-            )
+            raise ValueError("Target length does not match probability rows.")
 
         if not np.isin(
             y_true,
             np.arange(NUM_CLASSES),
         ).all():
-            raise ValueError(
-                "Target indices must be in the range 0..14."
-            )
+            raise ValueError("Target indices must be in the range 0..14.")
 
     @classmethod
     def _validate_alpha(cls, alpha: float) -> None:
         """Validate a supported conformal miscoverage level."""
 
         if not np.isfinite(alpha):
-            raise ValueError(
-                "Alpha must be finite."
-            )
+            raise ValueError("Alpha must be finite.")
 
         if alpha <= 0.0 or alpha >= 1.0:
-            raise ValueError(
-                "Alpha must be between 0 and 1."
-            )
+            raise ValueError("Alpha must be between 0 and 1.")

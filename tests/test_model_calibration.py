@@ -5,9 +5,7 @@ import pandas as pd
 
 from ztf_classifier.models.calibration import TemperatureScaler
 
-OOF_PATH = Path(
-    "reports/tables/xgboost_baseline_v0.2_oof_predictions.parquet"
-)
+OOF_PATH = Path("reports/tables/xgboost_baseline_v0.2_oof_predictions.parquet")
 
 CLASS_NAMES = (
     "AGN",
@@ -31,16 +29,11 @@ CLASS_NAMES = (
 def _load_oof() -> tuple[np.ndarray, np.ndarray]:
     oof = pd.read_parquet(OOF_PATH)
 
-    probabilities = oof[
-        [
-            f"proba_{name}"
-            for name in CLASS_NAMES
-        ]
-    ].to_numpy(dtype=np.float64)
+    probabilities = oof[[f"proba_{name}" for name in CLASS_NAMES]].to_numpy(
+        dtype=np.float64
+    )
 
-    y_true = oof[
-        "true_class_index"
-    ].to_numpy(dtype=np.int64)
+    y_true = oof["true_class_index"].to_numpy(dtype=np.int64)
 
     return probabilities, y_true
 
@@ -55,17 +48,11 @@ def test_temperature_scaler_matches_frozen_v0_2() -> None:
 
     assert result.sample_count == 150
 
-    assert abs(
-        result.temperature - 1.02685019
-    ) < 1e-6
+    assert abs(result.temperature - 1.02685019) < 1e-6
 
-    assert abs(
-        result.raw_log_loss - 1.320906597
-    ) < 1e-8
+    assert abs(result.raw_log_loss - 1.320906597) < 1e-8
 
-    assert abs(
-        result.calibrated_log_loss - 1.320350124
-    ) < 1e-8
+    assert abs(result.calibrated_log_loss - 1.320350124) < 1e-8
 
 
 def test_temperature_scaler_probability_simplex() -> None:
@@ -151,13 +138,9 @@ def test_temperature_scaler_rejects_invalid_class_count() -> None:
             y_true,
         )
     except ValueError as exc:
-        assert str(exc) == (
-            "Frozen v0.2 calibration requires 15 classes."
-        )
+        assert str(exc) == ("Frozen v0.2 calibration requires 15 classes.")
     else:
-        raise AssertionError(
-            "Calibration must reject non-15-class input."
-        )
+        raise AssertionError("Calibration must reject non-15-class input.")
 
 
 def test_temperature_scaler_rejects_invalid_temperature() -> None:
@@ -175,10 +158,6 @@ def test_temperature_scaler_rejects_invalid_temperature() -> None:
                 temperature,
             )
         except ValueError as exc:
-            assert str(exc) == (
-                "Temperature must be finite and positive."
-            )
+            assert str(exc) == ("Temperature must be finite and positive.")
         else:
-            raise AssertionError(
-                "Invalid temperature must be rejected."
-            )
+            raise AssertionError("Invalid temperature must be rejected.")

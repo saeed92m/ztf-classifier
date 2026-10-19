@@ -32,9 +32,7 @@ def collect_git_state(project_root) -> dict[str, object]:
         )
         status = _run_git(project_root, "status", "--porcelain")
     except (OSError, subprocess.CalledProcessError) as exc:
-        raise RuntimeError(
-            f"Unable to inspect Git repository: {project_root}"
-        ) from exc
+        raise RuntimeError(f"Unable to inspect Git repository: {project_root}") from exc
 
     return {
         "git_commit": commit,

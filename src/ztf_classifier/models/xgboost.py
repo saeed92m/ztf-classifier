@@ -36,27 +36,20 @@ class OOFTrainingResult:
     def probabilities(self) -> np.ndarray:
         """Return probabilities in frozen class order."""
 
-        columns = [
-            f"proba_{name}"
-            for name in MODEL_CLASSES
-        ]
+        columns = [f"proba_{name}" for name in MODEL_CLASSES]
         return self.predictions[columns].to_numpy(dtype=float)
 
     @property
     def true_indices(self) -> np.ndarray:
         """Return true class indices."""
 
-        return self.predictions[
-            "true_class_index"
-        ].to_numpy(dtype=int)
+        return self.predictions["true_class_index"].to_numpy(dtype=int)
 
     @property
     def predicted_indices(self) -> np.ndarray:
         """Return predicted class indices."""
 
-        return self.predictions[
-            "predicted_class_index"
-        ].to_numpy(dtype=int)
+        return self.predictions["predicted_class_index"].to_numpy(dtype=int)
 
 
 class XGBoostTrainingEngine:
@@ -84,9 +77,7 @@ class XGBoostTrainingEngine:
         X = X.replace([np.inf, -np.inf], np.nan)
 
         if X.shape[1] != 42:
-            raise ValueError(
-                "Frozen v0.2 model requires exactly 42 features."
-            )
+            raise ValueError("Frozen v0.2 model requires exactly 42 features.")
 
         return X
 
@@ -97,26 +88,18 @@ class XGBoostTrainingEngine:
         """Encode target labels using the frozen class mapping."""
 
         if "class" not in dataset.columns:
-            raise ValueError(
-                "Dataset must contain a class column."
-            )
+            raise ValueError("Dataset must contain a class column.")
 
         labels = dataset["class"].astype(str)
 
-        unknown = sorted(
-            set(labels.unique()) - set(MODEL_CLASSES)
-        )
+        unknown = sorted(set(labels.unique()) - set(MODEL_CLASSES))
         if unknown:
-            raise ValueError(
-                f"Unknown model classes: {unknown}"
-            )
+            raise ValueError(f"Unknown model classes: {unknown}")
 
         encoded = labels.map(CLASS_TO_INDEX)
 
         if encoded.isna().any():
-            raise ValueError(
-                "Target encoding produced missing values."
-            )
+            raise ValueError("Target encoding produced missing values.")
 
         return encoded.to_numpy(dtype=int), MODEL_CLASSES
 
@@ -132,9 +115,7 @@ class XGBoostTrainingEngine:
         y, class_names = self.prepare_target(dataset)
 
         if len(X) != len(y):
-            raise ValueError(
-                "Feature and target row counts do not match."
-            )
+            raise ValueError("Feature and target row counts do not match.")
 
         if fold_assignments is None:
             fold_ids = self._generate_fold_assignments(y)
@@ -163,9 +144,7 @@ class XGBoostTrainingEngine:
                 y[train_idx],
             )
 
-            valid_proba = model.predict_proba(
-                X.iloc[valid_idx]
-            )
+            valid_proba = model.predict_proba(X.iloc[valid_idx])
 
             valid_pred = np.argmax(
                 valid_proba,
@@ -195,16 +174,12 @@ class XGBoostTrainingEngine:
                     "row_index": int(sample_idx),
                     "true_label": class_names[true_index],
                     "true_class_index": true_index,
-                    "predicted_label": (
-                        class_names[predicted_index]
-                    ),
+                    "predicted_label": (class_names[predicted_index]),
                     "predicted_class_index": predicted_index,
                     "fold": int(fold),
                 }
 
-                for class_index, class_name in enumerate(
-                    class_names
-                ):
+                for class_index, class_name in enumerate(class_names):
                     record[f"proba_{class_name}"] = float(
                         valid_proba[position, class_index]
                     )
@@ -239,9 +214,7 @@ class XGBoostTrainingEngine:
         y, _ = self.prepare_target(dataset)
 
         if len(X) != len(y):
-            raise ValueError(
-                "Feature and target row counts do not match."
-            )
+            raise ValueError("Feature and target row counts do not match.")
 
         model = self._build_model()
 
@@ -266,13 +239,10 @@ class XGBoostTrainingEngine:
         required = {"feature_order", "feature"}
         if not required.issubset(schema.columns):
             raise ValueError(
-                "Feature schema must contain "
-                "'feature_order' and 'feature'."
+                "Feature schema must contain 'feature_order' and 'feature'."
             )
 
-        schema = schema.sort_values(
-            "feature_order"
-        ).reset_index(drop=True)
+        schema = schema.sort_values("feature_order").reset_index(drop=True)
 
         feature_names = schema["feature"].astype(str).tolist()
 
@@ -282,20 +252,12 @@ class XGBoostTrainingEngine:
             )
 
         if len(set(feature_names)) != 42:
-            raise ValueError(
-                "Frozen feature schema contains duplicates."
-            )
+            raise ValueError("Frozen feature schema contains duplicates.")
 
-        missing = [
-            name
-            for name in feature_names
-            if name not in dataset.columns
-        ]
+        missing = [name for name in feature_names if name not in dataset.columns]
 
         if missing:
-            raise ValueError(
-                f"Dataset is missing frozen features: {missing}"
-            )
+            raise ValueError(f"Dataset is missing frozen features: {missing}")
 
         return feature_names
 
@@ -340,36 +302,26 @@ class XGBoostTrainingEngine:
         """Validate one fold assignment for every row."""
 
         if len(fold_ids) != expected_rows:
-            raise ValueError(
-                "Fold-assignment length does not match dataset."
-            )
+            raise ValueError("Fold-assignment length does not match dataset.")
 
         if np.any(fold_ids < 1):
-            raise ValueError(
-                "Fold assignments must start at 1."
-            )
+            raise ValueError("Fold assignments must start at 1.")
 
         unique_folds = np.unique(fold_ids)
 
         if len(unique_folds) != 5:
-            raise ValueError(
-                "Frozen v0.2 CV requires exactly five folds."
-            )
+            raise ValueError("Frozen v0.2 CV requires exactly five folds.")
 
         if not np.array_equal(
             unique_folds,
             np.arange(1, 6),
         ):
-            raise ValueError(
-                "Fold assignments must be exactly 1, 2, 3, 4, 5."
-            )
+            raise ValueError("Fold assignments must be exactly 1, 2, 3, 4, 5.")
 
         counts = np.bincount(fold_ids)
 
         if np.any(counts[1:] == 0):
-            raise ValueError(
-                "Every fold must contain at least one row."
-            )
+            raise ValueError("Every fold must contain at least one row.")
 
     def _build_model(self) -> XGBClassifier:
         """Build XGBoost using the frozen v0.2 configuration."""
@@ -404,19 +356,13 @@ class XGBoostTrainingEngine:
             expected_rows,
             NUM_CLASSES,
         ):
-            raise ValueError(
-                "Unexpected XGBoost probability matrix shape."
-            )
+            raise ValueError("Unexpected XGBoost probability matrix shape.")
 
         if not np.isfinite(probabilities).all():
-            raise ValueError(
-                "XGBoost produced non-finite probabilities."
-            )
+            raise ValueError("XGBoost produced non-finite probabilities.")
 
         if np.any(probabilities < 0.0):
-            raise ValueError(
-                "XGBoost produced negative probabilities."
-            )
+            raise ValueError("XGBoost produced negative probabilities.")
 
         row_sums = probabilities.sum(axis=1)
 
@@ -426,9 +372,7 @@ class XGBoostTrainingEngine:
             rtol=0.0,
             atol=1e-6,
         ):
-            raise ValueError(
-                "XGBoost probabilities do not sum to one."
-            )
+            raise ValueError("XGBoost probabilities do not sum to one.")
 
     @staticmethod
     def _fold_metrics(
@@ -447,9 +391,7 @@ class XGBoostTrainingEngine:
             "fold": int(fold),
             "train_n": int(train_n),
             "validation_n": len(y_true),
-            "accuracy": float(
-                accuracy_score(y_true, y_pred)
-            ),
+            "accuracy": float(accuracy_score(y_true, y_pred)),
             "balanced_accuracy": float(
                 balanced_accuracy_score(
                     y_true,
@@ -488,10 +430,7 @@ class XGBoostTrainingEngine:
     ) -> None:
         """Validate the canonical OOF prediction table."""
 
-        probability_columns = [
-            f"proba_{name}"
-            for name in MODEL_CLASSES
-        ]
+        probability_columns = [f"proba_{name}" for name in MODEL_CLASSES]
 
         required_columns = [
             "row_index",
@@ -505,82 +444,58 @@ class XGBoostTrainingEngine:
 
         if list(predictions.columns) != required_columns:
             raise ValueError(
-                "OOF prediction schema does not match "
-                "the frozen v0.2 contract."
+                "OOF prediction schema does not match the frozen v0.2 contract."
             )
 
         if len(predictions) != expected_rows:
-            raise ValueError(
-                "OOF prediction row count does not match dataset."
-            )
+            raise ValueError("OOF prediction row count does not match dataset.")
 
         if predictions["row_index"].duplicated().any():
-            raise ValueError(
-                "OOF predictions contain duplicate row indices."
-            )
+            raise ValueError("OOF predictions contain duplicate row indices.")
 
         expected_indices = np.arange(
             expected_rows,
             dtype=int,
         )
 
-        actual_indices = predictions[
-            "row_index"
-        ].to_numpy(dtype=int)
+        actual_indices = predictions["row_index"].to_numpy(dtype=int)
 
         if not np.array_equal(
             actual_indices,
             expected_indices,
         ):
-            raise ValueError(
-                "OOF row indices are not a complete ordered range."
-            )
+            raise ValueError("OOF row indices are not a complete ordered range.")
 
         if not np.array_equal(
             predictions["true_class_index"].to_numpy(dtype=int),
-            predictions["true_label"].map(CLASS_TO_INDEX).to_numpy(
-                dtype=int
-            ),
+            predictions["true_label"].map(CLASS_TO_INDEX).to_numpy(dtype=int),
         ):
-            raise ValueError(
-                "OOF true labels do not match frozen class indices."
-            )
+            raise ValueError("OOF true labels do not match frozen class indices.")
 
         if not np.array_equal(
             predictions["predicted_class_index"].to_numpy(dtype=int),
-            predictions["predicted_label"].map(
-                CLASS_TO_INDEX
-            ).to_numpy(dtype=int),
+            predictions["predicted_label"].map(CLASS_TO_INDEX).to_numpy(dtype=int),
         ):
-            raise ValueError(
-                "OOF predicted labels do not match class indices."
-            )
+            raise ValueError("OOF predicted labels do not match class indices.")
 
         XGBoostTrainingEngine._validate_probability_matrix(
-            predictions[probability_columns].to_numpy(
-                dtype=float
-            ),
+            predictions[probability_columns].to_numpy(dtype=float),
             expected_rows,
         )
 
         expected_predictions = np.argmax(
-            predictions[probability_columns].to_numpy(
-                dtype=float
-            ),
+            predictions[probability_columns].to_numpy(dtype=float),
             axis=1,
         )
 
-        actual_predictions = predictions[
-            "predicted_class_index"
-        ].to_numpy(dtype=int)
+        actual_predictions = predictions["predicted_class_index"].to_numpy(dtype=int)
 
         if not np.array_equal(
             expected_predictions,
             actual_predictions,
         ):
             raise ValueError(
-                "OOF predicted classes do not match "
-                "maximum-probability classes."
+                "OOF predicted classes do not match maximum-probability classes."
             )
 
         fold_ids = predictions["fold"].to_numpy(dtype=int)

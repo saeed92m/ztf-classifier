@@ -4,10 +4,7 @@ import json
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-REPORT = (
-    PROJECT_ROOT
-    / "reports/validation/raw_dataset_benchmark_v0.2.json"
-)
+REPORT = PROJECT_ROOT / "reports/validation/raw_dataset_benchmark_v0.2.json"
 
 EXPECTED_DATASET_SHA256 = (
     "53bbe20bf18bbf955d80563200b06dcc20f9aab94edc5553259a54e1ff7e00f5"
@@ -21,9 +18,7 @@ EXPECTED_FEATURE_SCHEMA_SHA256 = (
     "fed07fc291070ecbdc7bbc597fad5aac6a3f4a1746feb12a9f4c2407108af329"
 )
 
-EXPECTED_COMMIT = (
-    "c98bb371bedfc73fc6796d16adb659597d05b188"
-)
+EXPECTED_COMMIT = "c98bb371bedfc73fc6796d16adb659597d05b188"
 
 
 def test_benchmark_v0_2_raw_validation_report() -> None:
@@ -49,16 +44,10 @@ def test_benchmark_v0_2_raw_validation_report() -> None:
     assert source["canonical_dataset_manifest"] == (
         "data/processed/benchmark_v0.2/dataset_manifest.json"
     )
-    assert source["canonical_dataset_manifest_sha256"] == (
-        EXPECTED_MANIFEST_SHA256
-    )
+    assert source["canonical_dataset_manifest_sha256"] == (EXPECTED_MANIFEST_SHA256)
 
-    assert source["feature_schema"] == (
-        "reports/tables/final_feature_set_v0.2.parquet"
-    )
-    assert source["feature_schema_sha256"] == (
-        EXPECTED_FEATURE_SCHEMA_SHA256
-    )
+    assert source["feature_schema"] == ("reports/tables/final_feature_set_v0.2.parquet")
+    assert source["feature_schema_sha256"] == (EXPECTED_FEATURE_SCHEMA_SHA256)
 
     assert source["raw_cache"] == "data/raw/alerce"
 

@@ -38,9 +38,7 @@ def _manifest_without_calibration() -> dict[str, object]:
 
 
 def test_artifact_manifest_allows_calibration_to_be_absent() -> None:
-    ModelArtifactLoader._validate_manifest(
-        _manifest_without_calibration()
-    )
+    ModelArtifactLoader._validate_manifest(_manifest_without_calibration())
 
 
 def test_provenance_omits_calibration_section_when_unavailable() -> None:

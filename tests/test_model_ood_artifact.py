@@ -41,9 +41,7 @@ def test_ood_artifact_preserves_frozen_state():
 def test_ood_artifact_round_trip_dict():
     artifact = _artifact()
 
-    restored = OODArtifact.from_dict(
-        artifact.to_dict()
-    )
+    restored = OODArtifact.from_dict(artifact.to_dict())
 
     assert restored == artifact
 
@@ -56,9 +54,7 @@ def test_ood_artifact_computes_reference_percentiles():
         dtype=np.float64,
     )
 
-    percentiles = artifact.anomaly_percentile(
-        scores
-    )
+    percentiles = artifact.anomaly_percentile(scores)
 
     np.testing.assert_allclose(
         percentiles,
@@ -90,9 +86,7 @@ def test_ood_artifact_computes_threshold_flags():
         dtype=np.float64,
     )
 
-    flags = artifact.anomaly_flags(
-        percentiles
-    )
+    flags = artifact.anomaly_flags(percentiles)
 
     np.testing.assert_array_equal(
         flags[90.0],

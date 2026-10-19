@@ -25,11 +25,7 @@ def _load_inputs():
 
     X = features[feature_columns].to_numpy(dtype=np.float64)
 
-    folds = (
-        historical
-        .sort_values("row_index")["fold"]
-        .to_numpy(dtype=np.int64)
-    )
+    folds = historical.sort_values("row_index")["fold"].to_numpy(dtype=np.int64)
 
     return X, folds, historical.sort_values("row_index").reset_index(drop=True)
 
@@ -168,21 +164,15 @@ def test_ood_frozen_v02_summary_parity():
     assert config.contamination == summary["contamination"]
     assert config.random_state == int(summary["random_state"])
 
-    assert int(
-        np.sum(result.isolation_forest_label == -1)
-    ) == int(summary["iforest_anomaly_count"])
+    assert int(np.sum(result.isolation_forest_label == -1)) == int(
+        summary["iforest_anomaly_count"]
+    )
 
-    assert int(
-        np.sum(result.is_top_1pct_anomaly)
-    ) == int(summary["top_1pct_count"])
+    assert int(np.sum(result.is_top_1pct_anomaly)) == int(summary["top_1pct_count"])
 
-    assert int(
-        np.sum(result.is_top_5pct_anomaly)
-    ) == int(summary["top_5pct_count"])
+    assert int(np.sum(result.is_top_5pct_anomaly)) == int(summary["top_5pct_count"])
 
-    assert int(
-        np.sum(result.is_top_10pct_anomaly)
-    ) == int(summary["top_10pct_count"])
+    assert int(np.sum(result.is_top_10pct_anomaly)) == int(summary["top_10pct_count"])
 
     np.testing.assert_allclose(
         result.anomaly_score.mean(),

@@ -34,9 +34,7 @@ class AlerceObjectBackend(ObjectAcquisitionBackend):
         )
 
         if not isinstance(result, pd.DataFrame):
-            raise TypeError(
-                "ALeRCE object query must return a pandas DataFrame."
-            )
+            raise TypeError("ALeRCE object query must return a pandas DataFrame.")
 
         objects = result.copy()
 
@@ -44,9 +42,7 @@ class AlerceObjectBackend(ObjectAcquisitionBackend):
             "oid",
             "probability",
         }
-        missing = sorted(
-            required_api_columns - set(objects.columns)
-        )
+        missing = sorted(required_api_columns - set(objects.columns))
         if missing:
             raise ValueError(
                 "ALeRCE object response is missing required columns: "
@@ -69,9 +65,7 @@ class AlerceObjectBackend(ObjectAcquisitionBackend):
         )
 
         if objects["probability"].isna().any():
-            raise ValueError(
-                "ALeRCE object response contains invalid probabilities."
-            )
+            raise ValueError("ALeRCE object response contains invalid probabilities.")
 
         if objects["oid"].eq("").any():
             raise ValueError(
@@ -84,14 +78,11 @@ class AlerceObjectBackend(ObjectAcquisitionBackend):
         objects["classifier_version"] = request.classifier_version
         objects["survey"] = request.survey
 
-        missing_canonical = sorted(
-            set(REQUIRED_OBJECT_COLUMNS) - set(objects.columns)
-        )
+        missing_canonical = sorted(set(REQUIRED_OBJECT_COLUMNS) - set(objects.columns))
         if missing_canonical:
             raise ValueError(
                 "ALeRCE object normalization failed; missing canonical "
-                "columns: "
-                + ", ".join(missing_canonical)
+                "columns: " + ", ".join(missing_canonical)
             )
 
         objects = (

@@ -33,7 +33,9 @@ def normalize_source_subset(frame: pd.DataFrame) -> pd.DataFrame:
     normalized = frame.copy()
     normalized.columns = [str(column).strip().lower() for column in normalized.columns]
 
-    missing = [column for column in REQUIRED_OBJECT_COLUMNS if column not in normalized.columns]
+    missing = [
+        column for column in REQUIRED_OBJECT_COLUMNS if column not in normalized.columns
+    ]
     if missing:
         raise SourceSubsetValidationError(
             "source subset missing required columns: " + ", ".join(missing)
@@ -49,7 +51,9 @@ def normalize_source_subset(frame: pd.DataFrame) -> pd.DataFrame:
         normalized[column] = pd.to_numeric(normalized[column], errors="coerce")
 
     if normalized[list(REQUIRED_OBJECT_COLUMNS)].isna().any().any():
-        raise SourceSubsetValidationError("required source columns contain null/non-numeric values")
+        raise SourceSubsetValidationError(
+            "required source columns contain null/non-numeric values"
+        )
     if not normalized["ra"].between(0.0, 360.0, inclusive="both").all():
         raise SourceSubsetValidationError("ra is outside [0, 360]")
     if not normalized["dec"].between(-90.0, 90.0, inclusive="both").all():
@@ -90,7 +94,9 @@ def apply_temporal_cutoff(
 def qc_source_subset(before: pd.DataFrame, after: pd.DataFrame) -> SourceSubsetQC:
     """Return measured QC counts without silently dropping invalid source rows."""
     if len(after) > len(before):
-        raise SourceSubsetValidationError("QC output cannot contain more rows than input")
+        raise SourceSubsetValidationError(
+            "QC output cannot contain more rows than input"
+        )
     return SourceSubsetQC(
         input_rows=len(before),
         output_rows=len(after),

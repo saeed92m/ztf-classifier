@@ -8,12 +8,8 @@ from ztf_classifier.models.xgboost import XGBoostTrainingEngine
 
 DATASET = Path("data/processed/features_v0.2.parquet")
 SCHEMA = Path("reports/tables/final_feature_set_v0.2.parquet")
-FOLDS = Path(
-    "reports/tables/stratified_cv_fold_assignments_v0.1.parquet"
-)
-FROZEN_OOF = Path(
-    "reports/tables/xgboost_baseline_v0.2_oof_predictions.parquet"
-)
+FOLDS = Path("reports/tables/stratified_cv_fold_assignments_v0.1.parquet")
+FROZEN_OOF = Path("reports/tables/xgboost_baseline_v0.2_oof_predictions.parquet")
 
 
 def _load_engine() -> XGBoostTrainingEngine:
@@ -28,10 +24,7 @@ def _load_dataset() -> pd.DataFrame:
 
 def _load_historical_folds() -> np.ndarray:
     frame = pd.read_parquet(FOLDS)
-    return (
-        frame.sort_values("row_index")["fold"]
-        .to_numpy(dtype=int)
-    )
+    return frame.sort_values("row_index")["fold"].to_numpy(dtype=int)
 
 
 def test_prepare_features_matches_frozen_schema() -> None:
@@ -102,17 +95,11 @@ def test_oof_predictions_match_frozen_structure_and_values() -> None:
         assert result[column].equals(frozen[column])
 
     probability_columns = [
-        column
-        for column in frozen.columns
-        if column.startswith("proba_")
+        column for column in frozen.columns if column.startswith("proba_")
     ]
 
-    production = result[probability_columns].to_numpy(
-        dtype=float
-    )
-    reference = frozen[probability_columns].to_numpy(
-        dtype=float
-    )
+    production = result[probability_columns].to_numpy(dtype=float)
+    reference = frozen[probability_columns].to_numpy(dtype=float)
 
     assert np.allclose(
         production,

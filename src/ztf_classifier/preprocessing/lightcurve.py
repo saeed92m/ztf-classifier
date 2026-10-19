@@ -16,9 +16,7 @@ def prepare_band_lightcurve(
     non-positive magerr, are removed.
     """
 
-    band = internal_lc[
-        internal_lc["fid"] == fid
-    ].copy()
+    band = internal_lc[internal_lc["fid"] == fid].copy()
 
     if len(band) == 0:
         return band
@@ -30,8 +28,4 @@ def prepare_band_lightcurve(
         & (band["magerr"].to_numpy(dtype=float) > 0)
     )
 
-    return (
-        band.loc[valid]
-        .sort_values("mjd")
-        .reset_index(drop=True)
-    )
+    return band.loc[valid].sort_values("mjd").reset_index(drop=True)

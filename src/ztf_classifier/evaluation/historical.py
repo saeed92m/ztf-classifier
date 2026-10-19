@@ -39,18 +39,10 @@ class HistoricalBacktestConfig:
     historical_cutoff_mjd: float = 59447.224132
     cohort_rule: str = "firstmjd <= cutoff"
     observation_rule: str = "mjd <= cutoff"
-    feature_schema_path: Path = Path(
-        "reports/tables/final_feature_set_v0.2.parquet"
-    )
-    object_path: Path = Path(
-        "data/processed/alerc_objects_v0.1.parquet"
-    )
-    feature_label_path: Path = Path(
-        "data/processed/features_v0.2.parquet"
-    )
-    fold_path: Path = Path(
-        "reports/tables/stratified_cv_fold_assignments_v0.1.parquet"
-    )
+    feature_schema_path: Path = Path("reports/tables/final_feature_set_v0.2.parquet")
+    object_path: Path = Path("data/processed/alerc_objects_v0.1.parquet")
+    feature_label_path: Path = Path("data/processed/features_v0.2.parquet")
+    fold_path: Path = Path("reports/tables/stratified_cv_fold_assignments_v0.1.parquet")
 
     def __post_init__(self) -> None:
         if not np.isfinite(self.historical_cutoff_mjd):
@@ -78,15 +70,11 @@ class HistoricalBacktestResult:
 
     @property
     def evaluated_folds(self) -> int:
-        return int(
-            (self.fold_metrics["status"] == "evaluated").sum()
-        )
+        return int((self.fold_metrics["status"] == "evaluated").sum())
 
     @property
     def skipped_folds(self) -> int:
-        return int(
-            (self.fold_metrics["status"] == "skipped").sum()
-        )
+        return int((self.fold_metrics["status"] == "skipped").sum())
 
 
 class HistoricalBacktestEvaluator:
@@ -129,11 +117,9 @@ class HistoricalBacktestEvaluator:
             folds,
         )
 
-        historical_dataset, extraction_errors = (
-            self._extract_historical_features(
-                historical_objects,
-                labels,
-            )
+        historical_dataset, extraction_errors = self._extract_historical_features(
+            historical_objects,
+            labels,
         )
 
         if extraction_errors:
@@ -142,9 +128,7 @@ class HistoricalBacktestEvaluator:
                 columns=["oid", "error"],
             )
         else:
-            extraction_error_df = pd.DataFrame(
-                columns=["oid", "error"]
-            )
+            extraction_error_df = pd.DataFrame(columns=["oid", "error"])
 
         predictions, fold_metrics = self._evaluate_folds(
             historical_dataset,
@@ -159,12 +143,8 @@ class HistoricalBacktestEvaluator:
             "historical_cohort_objects": len(historical_objects),
             "historical_feature_rows": len(historical_dataset),
             "evaluated_objects": len(predictions),
-            "evaluated_folds": int(
-                (fold_metrics["status"] == "evaluated").sum()
-            ),
-            "skipped_folds": int(
-                (fold_metrics["status"] == "skipped").sum()
-            ),
+            "evaluated_folds": int((fold_metrics["status"] == "evaluated").sum()),
+            "skipped_folds": int((fold_metrics["status"] == "skipped").sum()),
             "feature_count": len(V0_2_FEATURES),
             "class_count": NUM_CLASSES,
             "model_version": self._model_config.version,
@@ -181,9 +161,7 @@ class HistoricalBacktestEvaluator:
     def _load_objects(self) -> pd.DataFrame:
         path = self._config.object_path
         if not path.exists():
-            raise FileNotFoundError(
-                f"Historical object artifact not found: {path}"
-            )
+            raise FileNotFoundError(f"Historical object artifact not found: {path}")
 
         objects = pd.read_parquet(path)
 
@@ -191,9 +169,7 @@ class HistoricalBacktestEvaluator:
         missing = required - set(objects.columns)
 
         if missing:
-            raise ValueError(
-                f"Object artifact missing columns: {sorted(missing)}"
-            )
+            raise ValueError(f"Object artifact missing columns: {sorted(missing)}")
 
         objects = objects.copy()
         objects["oid"] = objects["oid"].astype(str)
@@ -206,9 +182,7 @@ class HistoricalBacktestEvaluator:
     def _load_frozen_features(self) -> pd.DataFrame:
         path = self._config.feature_label_path
         if not path.exists():
-            raise FileNotFoundError(
-                f"Frozen feature artifact not found: {path}"
-            )
+            raise FileNotFoundError(f"Frozen feature artifact not found: {path}")
 
         features = pd.read_parquet(path)
 
@@ -221,14 +195,10 @@ class HistoricalBacktestEvaluator:
             )
 
         if len(features) != 150:
-            raise ValueError(
-                "Frozen v0.2 feature artifact must contain 150 objects."
-            )
+            raise ValueError("Frozen v0.2 feature artifact must contain 150 objects.")
 
         if features["oid"].astype(str).duplicated().any():
-            raise ValueError(
-                "Frozen feature artifact contains duplicate OIDs."
-            )
+            raise ValueError("Frozen feature artifact contains duplicate OIDs.")
 
         features = features.copy()
         features["oid"] = features["oid"].astype(str)
@@ -238,9 +208,7 @@ class HistoricalBacktestEvaluator:
     def _load_folds(self) -> pd.DataFrame:
         path = self._config.fold_path
         if not path.exists():
-            raise FileNotFoundError(
-                f"Frozen fold artifact not found: {path}"
-            )
+            raise FileNotFoundError(f"Frozen fold artifact not found: {path}")
 
         folds = pd.read_parquet(path)
 
@@ -248,14 +216,10 @@ class HistoricalBacktestEvaluator:
         missing = required - set(folds.columns)
 
         if missing:
-            raise ValueError(
-                f"Fold artifact missing columns: {sorted(missing)}"
-            )
+            raise ValueError(f"Fold artifact missing columns: {sorted(missing)}")
 
         if len(folds) != 150:
-            raise ValueError(
-                "Frozen fold artifact must contain 150 rows."
-            )
+            raise ValueError("Frozen fold artifact must contain 150 rows.")
 
         if folds["row_index"].duplicated().any():
             raise ValueError(
@@ -285,9 +249,7 @@ class HistoricalBacktestEvaluator:
             errors="coerce",
         )
 
-        selected = objects.loc[
-            firstmjd <= self._config.historical_cutoff_mjd
-        ].copy()
+        selected = objects.loc[firstmjd <= self._config.historical_cutoff_mjd].copy()
 
         selected = selected.sort_values("oid").reset_index(drop=True)
 
@@ -310,13 +272,9 @@ class HistoricalBacktestEvaluator:
         frozen_features: pd.DataFrame,
         folds: pd.DataFrame,
     ) -> dict[str, int]:
-        indexed = frozen_features.reset_index(
-            names="row_index"
-        )
+        indexed = frozen_features.reset_index(names="row_index")
 
-        merged = indexed[
-            ["row_index", "oid", "class"]
-        ].merge(
+        merged = indexed[["row_index", "oid", "class"]].merge(
             folds,
             on="row_index",
             how="inner",
@@ -325,19 +283,14 @@ class HistoricalBacktestEvaluator:
         )
 
         if len(merged) != len(frozen_features):
-            raise ValueError(
-                "Frozen fold mapping does not cover every feature row."
-            )
+            raise ValueError("Frozen fold mapping does not cover every feature row.")
 
-        class_mismatch = (
-            merged["class_feature"].astype(str)
-            != merged["class_fold"].astype(str)
-        )
+        class_mismatch = merged["class_feature"].astype(str) != merged[
+            "class_fold"
+        ].astype(str)
 
         if class_mismatch.any():
-            raise ValueError(
-                "Frozen fold mapping contains class mismatches."
-            )
+            raise ValueError("Frozen fold mapping contains class mismatches.")
 
         return dict(
             zip(
@@ -367,9 +320,7 @@ class HistoricalBacktestEvaluator:
 
                 result = self._backend.acquire(request)
 
-                internal = alerce_to_internal_lc_robust(
-                    result.detections
-                )
+                internal = alerce_to_internal_lc_robust(result.detections)
 
                 features = extract_v0_2_features(
                     internal,
@@ -381,9 +332,7 @@ class HistoricalBacktestEvaluator:
                 frozen_label = labels.get(oid)
 
                 if frozen_label is None:
-                    raise ValueError(
-                        f"OID {oid} is missing from frozen labels."
-                    )
+                    raise ValueError(f"OID {oid} is missing from frozen labels.")
 
                 row: dict[str, object] = {
                     "oid": oid,
@@ -405,9 +354,7 @@ class HistoricalBacktestEvaluator:
         dataset = pd.DataFrame(rows, columns=columns)
 
         if dataset["oid"].duplicated().any():
-            raise ValueError(
-                "Historical feature dataset contains duplicate OIDs."
-            )
+            raise ValueError("Historical feature dataset contains duplicate OIDs.")
 
         return dataset, errors
 
@@ -419,22 +366,17 @@ class HistoricalBacktestEvaluator:
         if dataset.empty:
             raise ValueError("Historical feature dataset is empty.")
 
-        missing_fold = sorted(
-            set(dataset["oid"].astype(str)) - set(fold_map)
-        )
+        missing_fold = sorted(set(dataset["oid"].astype(str)) - set(fold_map))
 
         if missing_fold:
             raise ValueError(
-                f"Historical OIDs missing frozen fold assignments: "
-                f"{missing_fold}"
+                f"Historical OIDs missing frozen fold assignments: {missing_fold}"
             )
 
         fold_ids = dataset["oid"].astype(str).map(fold_map)
 
         if fold_ids.isna().any():
-            raise ValueError(
-                "Historical fold mapping produced missing assignments."
-            )
+            raise ValueError("Historical fold mapping produced missing assignments.")
 
         fold_ids = fold_ids.to_numpy(dtype=int)
 
@@ -468,14 +410,11 @@ class HistoricalBacktestEvaluator:
             train_classes = set(y[train_idx].tolist())
             test_classes = set(y[test_idx].tolist())
 
-            missing_from_train = sorted(
-                test_classes - train_classes
-            )
+            missing_from_train = sorted(test_classes - train_classes)
 
             if missing_from_train:
                 test_only_names = ",".join(
-                    class_names[index]
-                    for index in missing_from_train
+                    class_names[index] for index in missing_from_train
                 )
 
                 metric_records.append(
@@ -501,9 +440,7 @@ class HistoricalBacktestEvaluator:
                 y[train_idx],
             )
 
-            probabilities = model.predict_proba(
-                X.iloc[test_idx]
-            )
+            probabilities = model.predict_proba(X.iloc[test_idx])
 
             self._engine._validate_probability_matrix(
                 probabilities,
@@ -523,9 +460,7 @@ class HistoricalBacktestEvaluator:
                     "status": "evaluated",
                     "n_train": len(train_idx),
                     "n_test": len(test_idx),
-                    "accuracy": float(
-                        accuracy_score(y_test, predicted)
-                    ),
+                    "accuracy": float(accuracy_score(y_test, predicted)),
                     "balanced_accuracy": float(
                         balanced_accuracy_score(
                             y_test,
@@ -584,17 +519,14 @@ class HistoricalBacktestEvaluator:
                 "oid",
                 "true_class",
                 "predicted_class",
-                *[
-                    f"prob_{name}"
-                    for name in MODEL_CLASSES
-                ],
+                *[f"prob_{name}" for name in MODEL_CLASSES],
             ],
         )
 
         if not predictions.empty:
-            predictions = predictions.sort_values(
-                ["fold", "oid"]
-            ).reset_index(drop=True)
+            predictions = predictions.sort_values(["fold", "oid"]).reset_index(
+                drop=True
+            )
 
         fold_metrics = pd.DataFrame(
             metric_records,

@@ -22,9 +22,7 @@ if not (
 
 
 def test_benchmark_v0_2_raw_dataset_validation() -> None:
-    canonical_oids = set(
-        pd.read_parquet(SOURCE)["oid"].astype(str)
-    )
+    canonical_oids = set(pd.read_parquet(SOURCE)["oid"].astype(str))
 
     result = RawDatasetValidator(
         canonical_oids=canonical_oids,

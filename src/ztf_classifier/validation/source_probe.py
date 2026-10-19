@@ -25,7 +25,9 @@ PROBES = {
 
 
 def fetch(url: str, timeout: int = 30) -> tuple[int, bytes, str]:
-    request = Request(url, headers={"User-Agent": "ztf-classifier-scientific-validation/1"})
+    request = Request(
+        url, headers={"User-Agent": "ztf-classifier-scientific-validation/1"}
+    )
     with urlopen(request, timeout=timeout) as response:
         payload = response.read()
         content_type = response.headers.get("Content-Type", "")
@@ -63,7 +65,12 @@ def run(output: str | Path, fetcher=fetch) -> dict[str, object]:
                     "version": source.version,
                 }
             )
-        except (OSError, URLError, ValueError, RuntimeError) as exc:  # pragma: no cover - network-dependent
+        except (
+            OSError,
+            URLError,
+            ValueError,
+            RuntimeError,
+        ) as exc:  # pragma: no cover - network-dependent
             results.append(
                 {
                     "source_id": source.source_id,
@@ -84,12 +91,18 @@ def run(output: str | Path, fetcher=fetch) -> dict[str, object]:
     }
     path = Path(output)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return report
 
 
 if __name__ == "__main__":
-    target = sys.argv[1] if len(sys.argv) > 1 else "reports/scientific_validation/source_probe.json"
+    target = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else "reports/scientific_validation/source_probe.json"
+    )
     result = run(target)
     print(f"source_probe={target}")
     print(f"sources={len(result['sources'])}")

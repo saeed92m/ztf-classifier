@@ -34,21 +34,14 @@ def lomb_scargle_features(
     y = lc["mag"].to_numpy(dtype=float)
     dy = lc["magerr"].to_numpy(dtype=float)
 
-    valid = (
-        np.isfinite(t)
-        & np.isfinite(y)
-        & np.isfinite(dy)
-        & (dy > 0)
-    )
+    valid = np.isfinite(t) & np.isfinite(y) & np.isfinite(dy) & (dy > 0)
 
     t = t[valid]
     y = y[valid]
     dy = dy[valid]
 
     if len(t) < 10:
-        raise ValueError(
-            f"Not enough observations for Lomb–Scargle: {band}"
-        )
+        raise ValueError(f"Not enough observations for Lomb–Scargle: {band}")
 
     baseline = np.max(t) - np.min(t)
     max_period = baseline / 2.0

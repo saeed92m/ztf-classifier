@@ -74,21 +74,12 @@ class DatasetArtifactWriter:
         artifact_path = output_dir / "features.parquet"
         manifest_path = output_dir / "dataset_manifest.json"
 
-        data = (
-            dataset.data
-            .sort_values("oid")
-            .reset_index(drop=True)
-        )
+        data = dataset.data.sort_values("oid").reset_index(drop=True)
 
-        expected_columns = (
-            FEATURE_DATASET_METADATA_COLUMNS
-            + V0_2_FEATURES
-        )
+        expected_columns = FEATURE_DATASET_METADATA_COLUMNS + V0_2_FEATURES
 
         if tuple(data.columns) != expected_columns:
-            raise ValueError(
-                "Dataset columns do not match the canonical schema."
-            )
+            raise ValueError("Dataset columns do not match the canonical schema.")
 
         data.to_parquet(
             artifact_path,
@@ -105,9 +96,7 @@ class DatasetArtifactWriter:
             "class_count": int(data["class"].nunique()),
             "class_counts": {
                 str(key): int(value)
-                for key, value in (
-                    data["class"].value_counts().sort_index().items()
-                )
+                for key, value in (data["class"].value_counts().sort_index().items())
             },
             "columns": list(data.columns),
             "metadata_columns": list(FEATURE_DATASET_METADATA_COLUMNS),

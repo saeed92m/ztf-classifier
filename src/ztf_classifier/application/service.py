@@ -32,28 +32,20 @@ class ApplicationService:
             artifact_dir = request.artifact_dir
 
             if request.registry_dir is not None:
-                registry = FilesystemModelRegistry(
-                    request.registry_dir
-                )
-                entry = registry.get(
-                    request.model_version
-                )
+                registry = FilesystemModelRegistry(request.registry_dir)
+                entry = registry.get(request.model_version)
                 artifact_dir = entry.artifact_dir
 
             assert artifact_dir is not None
 
-            service = ProductionInferenceService(
-                Path(artifact_dir)
-            )
+            service = ProductionInferenceService(Path(artifact_dir))
 
             result = service.predict(request.dataset)
             model_artifact = service.loaded_artifact.model_artifact
             provenance = service.loaded_artifact.provenance
 
         except Exception as exc:
-            raise ApplicationInferenceError(
-                "Production prediction failed."
-            ) from exc
+            raise ApplicationInferenceError("Production prediction failed.") from exc
 
         return PredictionResponse(
             result=result,

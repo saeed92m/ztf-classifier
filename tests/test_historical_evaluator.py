@@ -176,7 +176,9 @@ class FakeEngine:
         assert probabilities.shape == (expected_rows, 15)
 
 
-def test_evaluate_folds_keeps_train_and_test_disjoint_and_skips_test_only_class() -> None:
+def test_evaluate_folds_keeps_train_and_test_disjoint_and_skips_test_only_class() -> (
+    None
+):
     evaluator = make_evaluator()
     engine = FakeEngine()
     evaluator._engine = engine
@@ -204,9 +206,7 @@ def test_evaluate_folds_keeps_train_and_test_disjoint_and_skips_test_only_class(
     assert len(engine.model_calls) == 2
 
     for call in engine.model_calls:
-        assert set(call["train_index"]).isdisjoint(
-            call["test_index"]
-        )
+        assert set(call["train_index"]).isdisjoint(call["test_index"])
 
     assert engine.model_calls[0]["train_index"] == [1, 2]
     assert engine.model_calls[0]["test_index"] == [0]
@@ -282,10 +282,7 @@ def test_evaluate_folds_preserves_prediction_oid_fold_and_label_alignment() -> N
         assert row["fold"] == fold_map[oid]
         assert row["true_class"] == expected_labels[oid]
 
-        probabilities = [
-            row[f"prob_{class_name}"]
-            for class_name in engine.class_names
-        ]
+        probabilities = [row[f"prob_{class_name}"] for class_name in engine.class_names]
 
         assert all(np.isfinite(probabilities))
         assert np.isclose(sum(probabilities), 1.0)

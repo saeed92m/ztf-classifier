@@ -49,9 +49,7 @@ def make_manifest() -> ObjectManifest:
             "label_source": ["ALeRCE"],
             "label_type": ["benchmark"],
             "label_probability": [0.501],
-            "classifier_version": [
-                "hierarchical_random_forest_1.0.0"
-            ],
+            "classifier_version": ["hierarchical_random_forest_1.0.0"],
             "survey": ["ZTF"],
         }
     )
@@ -99,8 +97,7 @@ def test_feature_dataset_has_canonical_schema() -> None:
     assert dataset.feature_count == 42
 
     assert tuple(dataset.data.columns) == (
-        FEATURE_DATASET_METADATA_COLUMNS
-        + V0_2_FEATURES
+        FEATURE_DATASET_METADATA_COLUMNS + V0_2_FEATURES
     )
 
 

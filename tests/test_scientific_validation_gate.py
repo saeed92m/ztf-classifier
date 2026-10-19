@@ -10,11 +10,15 @@ from ztf_classifier.validation.manifest import BenchmarkManifest
 
 
 def test_release_gate_fails_closed_when_evidence_is_missing(tmp_path):
-    result = evaluate_release_gate(registry_dir="configs/benchmarks", evidence_dir=tmp_path)
+    result = evaluate_release_gate(
+        registry_dir="configs/benchmarks", evidence_dir=tmp_path
+    )
     assert result["status"] == "NOT_VERIFIED"
     assert result["release_blocking"] is True
     assert result["blockers"]
-    assert any("benchmark evidence report is missing" in item for item in result["blockers"])
+    assert any(
+        "benchmark evidence report is missing" in item for item in result["blockers"]
+    )
 
 
 def test_release_gate_requires_full_scientific_check_contract(tmp_path):
@@ -26,10 +30,19 @@ def test_release_gate_requires_full_scientific_check_contract(tmp_path):
         json.dumps({"status": "PASS", "provenance_complete": True, "checks": checks}),
         encoding="utf-8",
     )
-    result = evaluate_release_gate(registry_dir="configs/benchmarks", evidence_dir=tmp_path)
-    alerce = next(item for item in result["benchmarks"] if item["benchmark_id"] == "alerce_reference")
+    result = evaluate_release_gate(
+        registry_dir="configs/benchmarks", evidence_dir=tmp_path
+    )
+    alerce = next(
+        item
+        for item in result["benchmarks"]
+        if item["benchmark_id"] == "alerce_reference"
+    )
     assert alerce["status"] == "BLOCKED"
-    assert any("scientific check failure_code_correctness is NOT_EXECUTED" in item for item in alerce["blockers"])
+    assert any(
+        "scientific check failure_code_correctness is NOT_EXECUTED" in item
+        for item in alerce["blockers"]
+    )
 
 
 def test_manifest_rejects_unknown_scientific_checks():
@@ -64,7 +77,9 @@ def test_external_reproduction_does_not_block_product_gate(tmp_path):
         json.dumps({"status": "PASS", "provenance_complete": True, "checks": checks}),
         encoding="utf-8",
     )
-    result = evaluate_release_gate(registry_dir="configs/benchmarks", evidence_dir=tmp_path)
+    result = evaluate_release_gate(
+        registry_dir="configs/benchmarks", evidence_dir=tmp_path
+    )
     assert result["release_blocking"] is True
     assert result["product_gate"]["release_blocking"] is True
     assert result["external_reproduction"]["release_blocking"] is False

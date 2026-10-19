@@ -43,27 +43,17 @@ class BatchPredictionResult:
         """Validate the batch result."""
 
         if not isinstance(self.predictions, pd.DataFrame):
-            raise TypeError(
-                "predictions must be a pandas DataFrame."
-            )
+            raise TypeError("predictions must be a pandas DataFrame.")
         if self.predictions.empty:
-            raise ValueError(
-                "predictions must not be empty."
-            )
+            raise ValueError("predictions must not be empty.")
 
         if not self.model_version:
-            raise ValueError(
-                "model_version must not be empty."
-            )
+            raise ValueError("model_version must not be empty.")
 
         if not self.model_family:
-            raise ValueError(
-                "model_family must not be empty."
-            )
+            raise ValueError("model_family must not be empty.")
         if self.schema_version != BATCH_SCHEMA_VERSION:
-            raise ValueError(
-                f"Unsupported batch schema version: {self.schema_version}"
-            )
+            raise ValueError(f"Unsupported batch schema version: {self.schema_version}")
 
         for name in (
             "has_calibration",
@@ -97,9 +87,7 @@ class BatchInferenceService:
         """Run batch inference from a direct artifact directory."""
 
         if not isinstance(dataset, pd.DataFrame):
-            raise TypeError(
-                "dataset must be a pandas DataFrame."
-            )
+            raise TypeError("dataset must be a pandas DataFrame.")
 
         response = self._application_service.predict_dataframe(
             dataset=dataset,
@@ -120,9 +108,7 @@ class BatchInferenceService:
         """Run batch inference from an explicitly selected registry model."""
 
         if not isinstance(dataset, pd.DataFrame):
-            raise TypeError(
-                "dataset must be a pandas DataFrame."
-            )
+            raise TypeError("dataset must be a pandas DataFrame.")
 
         response = self._application_service.predict_registered_dataframe(
             dataset=dataset,
@@ -164,25 +150,17 @@ class BatchInferenceService:
         if "oid" in dataset.columns:
             output["oid"] = dataset["oid"].astype(str).to_numpy()
 
-        output["predicted_class"] = list(
-            result.top1_labels
-        )
-        output["predicted_class_index"] = (
-            result.top1_class_indices
-        )
+        output["predicted_class"] = list(result.top1_labels)
+        output["predicted_class_index"] = result.top1_class_indices
 
         for index, class_name in enumerate(MODEL_CLASSES):
-            output[f"probability_{class_name}"] = (
-                probabilities[:, index]
-            )
+            output[f"probability_{class_name}"] = probabilities[:, index]
 
         if result.conformal is not None:
             for diagnostic in result.conformal.results:
                 alpha = f"{diagnostic.alpha:.6f}".rstrip("0").rstrip(".")
                 alpha = alpha.replace(".", "p")
-                output[f"conformal_{alpha}_threshold"] = (
-                    diagnostic.threshold
-                )
+                output[f"conformal_{alpha}_threshold"] = diagnostic.threshold
                 output[f"conformal_{alpha}_prediction_set"] = (
                     diagnostic.prediction_set_labels
                 )
@@ -193,22 +171,12 @@ class BatchInferenceService:
         if result.ood is not None:
             output["ood_anomaly_score"] = result.ood.anomaly_score
             output["ood_normality_score"] = result.ood.normality_score
-            output["ood_anomaly_percentile"] = (
-                result.ood.anomaly_percentile
-            )
-            output["ood_isolation_forest_label"] = (
-                result.ood.isolation_forest_label
-            )
+            output["ood_anomaly_percentile"] = result.ood.anomaly_percentile
+            output["ood_isolation_forest_label"] = result.ood.isolation_forest_label
             output["ood_anomaly_rank"] = result.ood.anomaly_rank
-            output["ood_is_top_1pct_anomaly"] = (
-                result.ood.is_top_1pct_anomaly
-            )
-            output["ood_is_top_5pct_anomaly"] = (
-                result.ood.is_top_5pct_anomaly
-            )
-            output["ood_is_top_10pct_anomaly"] = (
-                result.ood.is_top_10pct_anomaly
-            )
+            output["ood_is_top_1pct_anomaly"] = result.ood.is_top_1pct_anomaly
+            output["ood_is_top_5pct_anomaly"] = result.ood.is_top_5pct_anomaly
+            output["ood_is_top_10pct_anomaly"] = result.ood.is_top_10pct_anomaly
 
         output["model_version"] = response.model_version
         output["model_family"] = response.model_family

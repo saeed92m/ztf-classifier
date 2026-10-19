@@ -32,10 +32,7 @@ def _inference() -> InferenceResult:
         axis=1,
     ).astype(np.int64)
 
-    labels = tuple(
-        MODEL_CLASSES[index]
-        for index in indices
-    )
+    labels = tuple(MODEL_CLASSES[index] for index in indices)
 
     return InferenceResult(
         probabilities=probabilities,
@@ -89,10 +86,7 @@ def test_builder_derives_calibrated_top1() -> None:
         axis=1,
     ).astype(np.int64)
 
-    expected_labels = tuple(
-        MODEL_CLASSES[index]
-        for index in expected_indices
-    )
+    expected_labels = tuple(MODEL_CLASSES[index] for index in expected_indices)
 
     np.testing.assert_array_equal(
         result.calibrated_probabilities,

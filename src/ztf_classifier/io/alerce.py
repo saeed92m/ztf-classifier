@@ -57,8 +57,7 @@ def _coerce_bool_series(
     if unknown.any():
         bad_values = values[unknown].dropna().unique()[:10]
         raise ValueError(
-            f"Column '{column_name}' contains non-boolean values: "
-            f"{bad_values.tolist()}"
+            f"Column '{column_name}' contains non-boolean values: {bad_values.tolist()}"
         )
 
     return pd.Series(
@@ -85,8 +84,7 @@ def alerce_to_internal_lc_robust(
     missing = _REQUIRED_COLUMNS - set(detections.columns)
     if missing:
         raise ValueError(
-            "ALeRCE detections are missing required columns: "
-            f"{sorted(missing)}"
+            f"ALeRCE detections are missing required columns: {sorted(missing)}"
         )
 
     lc = detections.copy()
@@ -114,11 +112,7 @@ def alerce_to_internal_lc_robust(
         errors="coerce",
     )
 
-    use_corrected = (
-        mag_corr.notna()
-        & magerr_corr.notna()
-        & (magerr_corr > 0)
-    )
+    use_corrected = mag_corr.notna() & magerr_corr.notna() & (magerr_corr > 0)
 
     mag = mag_corr.where(use_corrected, mag_raw)
     magerr = magerr_corr.where(use_corrected, magerr_raw)
@@ -178,13 +172,7 @@ def alerce_to_internal_lc_robust(
         & (dec <= 90.0)
     )
 
-    valid_rows = (
-        valid_mjd
-        & valid_fid
-        & valid_mag
-        & valid_magerr
-        & valid_coordinates
-    )
+    valid_rows = valid_mjd & valid_fid & valid_mag & valid_magerr & valid_coordinates
 
     invalid_counts = {
         "invalid_mjd": int((~valid_mjd).sum()),
@@ -209,11 +197,7 @@ def alerce_to_internal_lc_robust(
         **invalid_counts,
     )
 
-    filtered = (
-        filtered
-        .sort_values(["fid", "mjd"])
-        .reset_index(drop=True)
-    )
+    filtered = filtered.sort_values(["fid", "mjd"]).reset_index(drop=True)
 
     if return_diagnostics:
         return filtered, diagnostics

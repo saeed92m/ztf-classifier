@@ -31,9 +31,7 @@ class ObjectManifest:
     def __post_init__(self) -> None:
         missing = set(REQUIRED_OBJECT_COLUMNS) - set(self.objects.columns)
         if missing:
-            raise ValueError(
-                f"Object manifest is missing columns: {sorted(missing)}"
-            )
+            raise ValueError(f"Object manifest is missing columns: {sorted(missing)}")
 
         if self.objects["oid"].duplicated().any():
             raise ValueError("Object manifest contains duplicate OIDs")

@@ -96,10 +96,7 @@ class IsolationForestOOD:
                 anomaly_score[index] = score
                 normality_score[index] = -score
 
-                anomaly_percentile[index] = (
-                    100.0
-                    * np.mean(train_anomaly <= score)
-                )
+                anomaly_percentile[index] = 100.0 * np.mean(train_anomaly <= score)
 
                 isolation_forest_label[index] = test_labels[position]
 
@@ -145,36 +142,22 @@ class IsolationForestOOD:
         """Validate the frozen OOD input contract."""
 
         if X.ndim != 2:
-            raise ValueError(
-                "Feature matrix must be two-dimensional."
-            )
+            raise ValueError("Feature matrix must be two-dimensional.")
 
         if X.shape[1] != 42:
-            raise ValueError(
-                "Frozen v0.2 OOD detection requires 42 features."
-            )
+            raise ValueError("Frozen v0.2 OOD detection requires 42 features.")
 
         if len(X) == 0:
-            raise ValueError(
-                "OOD detection requires at least one sample."
-            )
+            raise ValueError("OOD detection requires at least one sample.")
 
         if folds.ndim != 1:
-            raise ValueError(
-                "Fold assignments must be one-dimensional."
-            )
+            raise ValueError("Fold assignments must be one-dimensional.")
 
         if len(folds) != len(X):
-            raise ValueError(
-                "Fold assignments must match feature rows."
-            )
+            raise ValueError("Fold assignments must match feature rows.")
 
         if not np.isfinite(folds).all():
-            raise ValueError(
-                "Fold assignments must be finite."
-            )
+            raise ValueError("Fold assignments must be finite.")
 
         if not np.isfinite(X).any():
-            raise ValueError(
-                "Feature matrix contains no finite values."
-            )
+            raise ValueError("Feature matrix contains no finite values.")

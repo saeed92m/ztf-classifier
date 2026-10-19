@@ -37,10 +37,7 @@ class FeatureDataset:
     feature_schema_version: str
 
     def __post_init__(self) -> None:
-        expected = (
-            FEATURE_DATASET_METADATA_COLUMNS
-            + V0_2_FEATURES
-        )
+        expected = FEATURE_DATASET_METADATA_COLUMNS + V0_2_FEATURES
 
         if tuple(self.data.columns) != expected:
             raise ValueError(
@@ -48,9 +45,7 @@ class FeatureDataset:
             )
 
         if self.data["oid"].duplicated().any():
-            raise ValueError(
-                "Feature dataset contains duplicate OIDs."
-            )
+            raise ValueError("Feature dataset contains duplicate OIDs.")
 
     @property
     def object_count(self) -> int:
@@ -86,14 +81,9 @@ class FeatureDatasetBuilder:
         ``mjd <= cutoff_mjd`` are used for feature extraction.
         """
 
-
         rows: list[dict[str, object]] = []
 
-        manifest = (
-            self._manifest.objects
-            .sort_values("oid")
-            .reset_index(drop=True)
-        )
+        manifest = self._manifest.objects.sort_values("oid").reset_index(drop=True)
 
         for record in manifest.to_dict(orient="records"):
             request = DetectionAcquisitionRequest(
@@ -103,23 +93,18 @@ class FeatureDatasetBuilder:
 
             result = self._acquisition_backend.acquire(request)
 
-            internal = alerce_to_internal_lc_robust(
-                result.detections
-            )
+            internal = alerce_to_internal_lc_robust(result.detections)
 
             features = self._feature_engine.compute(
                 internal,
                 backend="native",
                 parameters=(
-                    {"cutoff_mjd": cutoff_mjd}
-                    if cutoff_mjd is not None
-                    else {}
+                    {"cutoff_mjd": cutoff_mjd} if cutoff_mjd is not None else {}
                 ),
             ).values
 
             row = {
-                column: record[column]
-                for column in FEATURE_DATASET_METADATA_COLUMNS
+                column: record[column] for column in FEATURE_DATASET_METADATA_COLUMNS
             }
             row.update(features)
 
@@ -127,10 +112,7 @@ class FeatureDatasetBuilder:
 
         data = pd.DataFrame(
             rows,
-            columns=(
-                FEATURE_DATASET_METADATA_COLUMNS
-                + V0_2_FEATURES
-            ),
+            columns=(FEATURE_DATASET_METADATA_COLUMNS + V0_2_FEATURES),
         )
 
         return FeatureDataset(
