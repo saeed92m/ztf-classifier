@@ -281,23 +281,21 @@ jobs:
           Path("/tmp/build-require-discovery.log").write_text(
               stdout.getvalue() + stderr.getvalue()
           )
-          print("\\n".join(sorted(requirements)))
+          print("\n".join(sorted(requirements)))
           PY
           echo "=== Build-backend discovery diagnostics (if any) ==="
           cat /tmp/build-require-discovery.log
           mapfile -t REQS < /tmp/build-requires.txt
-          printf 'REQS: %s\\n' "${REQS[*]}"
+          printf 'REQS: %s\n' "${REQS[*]}"
           test "${#REQS[@]}" -gt 0
-          echo "REQS: $REQS"
-          test -n "$REQS"
           echo "=== Canonical resolve (direct+transitive) ==="
-          python -m pip install --dry-run --report /tmp/pip-report-build.json --ignore-installed $REQS
+          python -m pip install --dry-run --report /tmp/pip-report-build.json --ignore-installed "${REQS[@]}"
           python -c "import json, pathlib; p=pathlib.Path('/tmp/pip-report-build.json'); assert p.exists(), 'missing report is error'; d=json.loads(p.read_text()); assert d.get('install'), 'empty report is error, not healthy'; print(f\"pip {d['pip_version']} resolves {len(d['install'])}:\"); [print(f\"  {i['metadata']['name']}=={i['metadata']['version']} requested={i['requested']}\") for i in d['install']]"
           cat /tmp/pip-report-build.json | python -m json.tool > /tmp/pip-report-build.pretty.json
           echo "=== Rebuild isolated env (stable venv+pip) ==="
           rm -rf /tmp/isolated-build-audit
           python -m venv --without-pip /tmp/isolated-build-audit
-          python -m pip --python /tmp/isolated-build-audit/bin/python install $REQS
+          python -m pip --python /tmp/isolated-build-audit/bin/python install "${REQS[@]}"
           PURELIB=$(python -c "import sysconfig; v=sysconfig.get_config_vars().copy(); v['base']='/tmp/isolated-build-audit'; print(sysconfig.get_paths(vars=v)['purelib'])")
           echo "purelib: $PURELIB"
           python -c "import importlib.metadata, sysconfig; v=sysconfig.get_config_vars().copy(); v['base']='/tmp/isolated-build-audit'; p=sysconfig.get_paths(vars=v)['purelib']; dists=list(importlib.metadata.distributions(path=[p])); assert dists, 'empty purelib is error'; [print(f\"  {d.name}=={d.version}\") for d in dists]"
