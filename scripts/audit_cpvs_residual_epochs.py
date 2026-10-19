@@ -142,7 +142,7 @@ def main():
     a.output.parent.mkdir(parents=True, exist_ok=True)
     tsv = a.output.with_suffix(".tsv")
     cols = ["SourceID","published_member","snr_candidate","membership_relation",
-        "parent_catalog_row_ordinal","parent_catalog_object_name","parent_Per","parent_gmag","parent_rmag","parent_Per_g","parent_Per_r",
+        "parent_catalog_present","parent_catalog_row_ordinal","parent_catalog_object_name","parent_Per","parent_gmag","parent_rmag","parent_Per_g","parent_Per_r",
         "g_epoch_count","g_qualifying_epoch_count","g_max_snr","g_epochs_json",
         "r_epoch_count","r_qualifying_epoch_count","r_max_snr","r_epochs_json"]
     with tsv.open("w", encoding="utf-8", newline="") as f:
@@ -151,10 +151,15 @@ def main():
             rec = {"SourceID": oid, "published_member": oid in published, "snr_candidate": oid in candidate,
                 "membership_relation": "candidate_only" if oid in cand_only else "published_only"}
             parent_row = parent_catalog.get(oid)
-            if parent_row is None:
-                raise ValueError(f"Discrepant SourceID {oid} missing from Table2 catalog")
-            for key, value in parent_row.items():
-                rec[f"parent_{key}"] = value
+            # Preserve discrepant light-curve IDs absent from Table2's explicit
+            # SourceID column. Missing catalog mapping is itself evidence.
+            rec["parent_catalog_present"] = parent_row is not None
+            if parent_row is not None:
+                for key, value in parent_row.items():
+                    rec[f"parent_{key}"] = value
+            else:
+                for key in ("catalog_row_ordinal", "catalog_object_name", "Per", "gmag", "rmag", "Per_g", "Per_r"):
+                    rec[f"parent_{key}"] = ""
             for band in ("g", "r"):
                 es = epochs[oid][band]
                 rec[f"{band}_epoch_count"] = len(es)
