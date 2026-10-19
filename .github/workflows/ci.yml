@@ -290,7 +290,7 @@ jobs:
               | builder.get_requires_for_build("sdist")
           )
           Path("/tmp/build-require-discovery.log").write_text("".join(diagnostics))
-          print("\\n".join(sorted(requirements)))
+          print("\n".join(sorted(requirements)))
           PY
           echo "=== Build-backend discovery diagnostics (if any) ==="
           cat /tmp/build-require-discovery.log
