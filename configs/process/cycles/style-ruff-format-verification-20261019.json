@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "style-ruff-format-verification-20261019",
+  "objective": "Verify ruff format failure on d331036 and apply only whitespace formatting to src/tests without touching scientific baseline, models, features, class order, or validation gate",
+  "previous_knowledge_consumed": [
+    "v0.2.0 baseline remains immutable (42 features, 15 classes, baseline_v0.2)",
+    "PR #203 draft: 125 files need reformat, 102 unchanged — CI Format Check failed",
+    "Issue #170 CPVS 11,602 extra remains UNRESOLVED — product gate vs external reproduction gate are separate (V1_PRODUCT_ARCHITECTURE)",
+    "Handbook v2.8 and validation/gate.py: CPVS mismatch must not be claimed resolved to green CI"
+  ],
+  "baseline": {
+    "revision": "d331036",
+    "description": "main HEAD d331036: ruff check PASS, ruff format --check FAIL (125 files reformatted, 102 unchanged), build PASS with license deprecation warning, pytest 586 passed 4 skipped"
+  },
+  "expected_improvement": [
+    "ruff format --check PASS",
+    "CI Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Build, Audit pass without scientific change"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "ruff format --check FAIL: 125 files need reformat",
+        "after": "ruff format --check PASS: 227 files already formatted",
+        "evidence": "local ruff 0.16.9 + CI Format Check success on ad176f5"
+      },
+      "reproducibility": {
+        "before": "build warns: project.license as TOML table deprecated (4 warnings) but still builds",
+        "after": "build still PASS with same warning — license NOT changed to avoid breaking SPDX validation (Proprietary is not SPDX)",
+        "evidence": "python -m build on d331036 vs ad176f5, both succeed; string license breaks with ValueError"
+      },
+      "test_execution_efficiency": {
+        "before": "586 passed, 4 skipped (on d331036)",
+        "after": "586 passed, 4 skipped (on ad176f5, after format only)",
+        "evidence": "local pytest -q 80s, CI Test Suite expected"
+      }
+    }
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Local: ruff check PASS, ruff format --check PASS after format",
+      "Local: python -m build PASS, pip check PASS, pytest 586 passed 4 skipped",
+      "Diff review: 125 files, 2114+/3252- — only whitespace/line-wrap, no change to baseline_v0.2, MODEL_CLASSES, 42 features, 15 classes, thresholds, or validation gate",
+      "No file from ci/heavy/cpvs-row-evidence-20261019 touched",
+      "Scientific Validation workflow remains separate and still reports CPVS mismatch as BLOCKED/NOT_VERIFIED — not claimed resolved"
+    ]
+  },
+  "failure_analysis": {
+    "status": "no-new-failure",
+    "root_causes": [
+      "Formatting drift after prior PRs (125 src/tests files) — no scientific logic change"
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Engineering formatting changes must be isolated from scientific changes and verified with ruff check, ruff format --check, build, and full pytest — all on the same commit",
+      "License table deprecation for Proprietary cannot be fixed by naive SPDX string — Proprietary is not SPDX valid and breaks build; needs LICENSE + license-files decision",
+      "CI Cumulative Lifecycle Gate correctly blocks meaningful PRs without a cycle record — this record satisfies that contract without weakening the gate"
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "Formatting is now aligned to ruff 0.16.9 on d331036 baseline",
+    "License deprecation remains known limitation until LICENSE decision",
+    "CPVS 11,602 extra remains unresolved and must not be forced to PASS for CI green"
+  ]
+}
