@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-residual-epoch-heavy-rerun-20261019",
+  "objective": "Execute the diagnostic-only CPVS raw-epoch provenance audit against the pinned public light-curve archives; preserve row-level evidence for the 11,602 candidate-only IDs and published-only IDs without changing selection rules.",
+  "previous_knowledge_consumed": [
+    "Issue #170: exact CPVS membership remains unresolved",
+    "Issue #180: deterministic samples and SourceID-keyed full-vs-batch comparison",
+    "PR #201: source-row provenance audit added to the heavy scientific-validation workflow",
+    "Run 38635891449 artifact hashes and prior verified Zenodo archive MD5 values"
+  ],
+  "baseline": {
+    "revision": "aca743da4f609dcb39d68a38ecfd94e4e3694a73",
+    "description": "Diagnostic PR #201 head; previous source-backed counts were 781602 parent SourceIDs, 741786 SNR candidates, 730184 published members, 11602 candidate-only, and zero published-only. The membership-rule semantics remain unresolved."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reproducibility",
+    "traceability",
+    "scientific_validity"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "before": "UNRESOLVED",
+        "after": "NOT_MEASURED",
+        "reason": "Must be determined from the new raw-epoch audit; no root cause is assumed."
+      },
+      "reliability": {
+        "status": "PARTIAL",
+        "before": "PARTIAL",
+        "after": "NOT_MEASURED",
+        "reason": "The audit has been wired into the heavy workflow; execution result pending."
+      },
+      "reproducibility": {
+        "status": "PARTIAL",
+        "before": "PARTIAL",
+        "after": "NOT_MEASURED",
+        "reason": "Expected output records archive hashes, source-file and parsed-row provenance, SourceID mapping, and per-condition decisions."
+      },
+      "scientific_validity": {
+        "status": "BLOCKED",
+        "before": "BLOCKED",
+        "after": "BLOCKED",
+        "reason": "Keep fail-closed until raw-row evidence is reviewed and the published membership rule is supported."
+      }
+    },
+    "trade_off": "Diagnostic execution only. Do not modify membership thresholds, production code, v0.2.0 baseline, v1.0.1 release artifacts, or scientific acceptance criteria."
+  },
+  "validation": {
+    "status": "PENDING_EXECUTION",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Dedicated ci/heavy branch created from PR #201 head to run the existing source-backed workflow.",
+      "Workflow should verify Zenodo archive MD5s, compute raw-row provenance, and upload compact audit evidence."
+    ],
+    "blocker": "Review the resulting artifact and reconcile SNR-only candidates, published membership, and per-object row provenance before any scientific resolution claim."
+  },
+  "failure_analysis": {
+    "status": "KNOWN_EVIDENCE_GAP",
+    "root_causes": [
+      "Prior compact artifacts excluded the raw per-epoch records needed for independent SNR re-computation.",
+      "The 11,602 candidate-only objects are not explained by count equality or catalog-level metadata correlation alone."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "PENDING",
+    "findings": [
+      "Keep membership reproduction distinct from downstream feature eligibility.",
+      "Retain both explicit Table2 SourceID and catalog row ordinal because they diverge after missing IDs 615171 and 615172.",
+      "Published Table4 is a reference-membership set, not independent astrophysical ground truth."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Raw-epoch CPVS audit not yet reviewed; exact published membership remains unresolved."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Issue #170",
+    "Issue #180",
+    "PR #201",
+    "scientific-validation-blockers-20260928"
+  ]
+}
