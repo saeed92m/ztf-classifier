@@ -9,7 +9,7 @@
     "Run 38635891449 artifact hashes and prior verified archive checksums"
   ],
   "baseline": {
-    "revision": "aca743da4f609dcb39d68a38ecfd94e4e3694a73",
+    "revision": "128af1377e5051e467278ea68ac206bab838a9e0",
     "description": "Diagnostic PR #201 head; prior counts: 781602 parent SourceIDs, 741786 SNR candidates, 730184 published members, 11602 candidate-only, zero published-only. Membership-rule semantics remain unresolved."
   },
   "expected_improvement": [
@@ -30,13 +30,13 @@
         "status": "NOT_MEASURED",
         "before": "PARTIAL",
         "after": "NOT_MEASURED",
-        "reason": "Audit wired into heavy workflow; source-backed execution pending."
+        "reason": "Diagnostic audit is wired into the heavy workflow; prior run failed on an absent parent-catalog mapping, and a code fix is committed but not yet source-backed verified."
       },
       "reproducibility": {
         "status": "NOT_MEASURED",
         "before": "PARTIAL",
         "after": "NOT_MEASURED",
-        "reason": "Expected output records archive hashes, parsed-row provenance, SourceID mapping, and per-condition decisions."
+        "reason": "Next source-backed output should record archive hashes, parsed-row provenance, explicit SourceID-to-catalog mapping presence, and per-condition decisions."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
@@ -53,16 +53,19 @@
     "evidence": [
       "Branch ci/heavy/cpvs-row-evidence-20261019 created from PR #201 head.",
       "Run 39212332671 and duplicate run 39212313892 started source-backed Scientific Validation.",
-      "CI run 39212332533 failed the cumulative lifecycle contract because this record used invalid knowledge_extraction.status and validation status."
+      "CI run 39212332533 failed the cumulative lifecycle contract because this record used invalid knowledge_extraction.status and validation status.",
+      "Run 39217219155 completed acquisition, derivation, and reference membership audit but failed the diagnostic raw-row step because SourceID 615172 has no explicit Table2 mapping.",
+      "Diagnostic-only fix commit 128af1377e5051e467278ea68ac206bab838a9e0 now retains discrepant light-curve IDs absent from Table2, records parent_catalog_present=false, and leaves catalog fields blank rather than aborting.",
+      "A fresh source-backed run is required to verify the fix and inspect residual epoch provenance; no membership rule or production artifact is changed."
     ],
-    "blocker": "Correct lifecycle record, rerun contract CI, then review raw-source artifact and reconcile SNR-only candidates with published membership."
+    "blocker": "Rerun source-backed raw-epoch audit on the fix commit; inspect every discrepant SourceID and source row provenance; reconcile candidate/reference sets without assuming absent Table2 IDs should be dropped."
   },
   "failure_analysis": {
     "status": "KNOWN_EVIDENCE_GAP",
     "root_causes": [
       "Prior compact artifacts excluded raw per-epoch records needed for independent SNR recomputation.",
       "The 11,602 candidate-only objects are not explained by count equality or metadata correlation alone.",
-      "Initial CI failed because this cycle record used lifecycle status values outside the repository contract."
+      "The prior raw-row audit aborted on SourceID 615172 because it had no explicit Table2 mapping; the diagnostic fix now preserves such IDs and requires a new source-backed execution."
     ]
   },
   "knowledge_extraction": {
