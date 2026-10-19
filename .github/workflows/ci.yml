@@ -262,7 +262,32 @@ jobs:
         run: |
           set -euo pipefail
           echo "=== Extract combined build requires (public API) ==="
-          REQS=$(python -c "from build import ProjectBuilder; b=ProjectBuilder('.'); print(' '.join(b.build_system_requires | b.get_requires_for_build('wheel') | b.get_requires_for_build('sdist')))")
+          # Build backend hooks may print diagnostics to stdout; keep them out of the requirements list.
+          python << 'PY' > /tmp/build-requires.txt
+          import contextlib
+          import io
+          from pathlib import Path
+          from build import ProjectBuilder
+
+          stdout = io.StringIO()
+          stderr = io.StringIO()
+          with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+              builder = ProjectBuilder(".")
+              requirements = (
+                  builder.build_system_requires
+                  | builder.get_requires_for_build("wheel")
+                  | builder.get_requires_for_build("sdist")
+              )
+          Path("/tmp/build-require-discovery.log").write_text(
+              stdout.getvalue() + stderr.getvalue()
+          )
+          print("\\n".join(sorted(requirements)))
+          PY
+          echo "=== Build-backend discovery diagnostics (if any) ==="
+          cat /tmp/build-require-discovery.log
+          mapfile -t REQS < /tmp/build-requires.txt
+          printf 'REQS: %s\\n' "${REQS[*]}"
+          test "${#REQS[@]}" -gt 0
           echo "REQS: $REQS"
           test -n "$REQS"
           echo "=== Canonical resolve (direct+transitive) ==="
