@@ -25,7 +25,10 @@ import numpy as np
 import pandas as pd
 
 BASE = "https://zenodo.org/records/14979711/files"
-DR15_BASE = "https://irsa.ipac.caltech.edu/data/ZTF/lc/lc_dr15"
+DR15_BASES = (
+    "https://irsa.ipac.caltech.edu/data/ZTF/lc/lc_dr15",
+    "https://irsa.ipac.caltech.edu/data/ZTF/lc_dr15",
+)
 FILES = {
     "df_zr.csv": "0589a1bda6abd960145ad6116275851d",
     "df_zg.csv": "3cb5b49b1064a2bac0bc7ab9201fa0e0",
@@ -114,8 +117,15 @@ def parse_oid(oid: str) -> dict[str, int]:
     return parts
 
 
-def field_directory(fieldid: int, prefix: int) -> str:
-    return f"{DR15_BASE}/{prefix}/field{fieldid:04d}/"
+def field_directory(
+    base: str,
+    fieldid: int,
+    prefix: int,
+    width: int = 4,
+    trailing_slash: bool = True,
+) -> str:
+    path = f"{base}/{prefix}/field{fieldid:0{width}d}"
+    return path + ("/" if trailing_slash else "")
 
 
 def find_parquet_url(
@@ -130,30 +140,61 @@ def find_parquet_url(
         )
     fieldid = parts["fieldid"]
     if fieldid not in directory_cache:
-        prefixes = sorted({fieldid // 1000, int(f"{fieldid:06d}"[0])})
         tried: list[str] = []
-        for prefix in prefixes:
-            directory_url = field_directory(fieldid, prefix)
-            tried.append(directory_url)
-            try:
-                payload, _ = request_bytes(directory_url, timeout=30)
-            except urllib.error.HTTPError as exc:
-                if exc.code == 404:
-                    continue
-                raise
-            parser = HrefParser()
-            parser.feed(payload.decode("utf-8", errors="replace"))
-            links = [
-                urllib.parse.urljoin(directory_url, href)
-                for href in parser.hrefs
-                if urllib.parse.urlparse(href).path.lower().endswith(".parquet")
-            ]
-            if links:
-                directory_cache[fieldid] = links
+        for base in DR15_BASES:
+            for prefix in sorted({fieldid // 1000, int(f"{fieldid:06d}"[0])}):
+                for width in (4, 6):
+                    for trailing_slash in (True, False):
+                        directory_url = field_directory(
+                            base, fieldid, prefix, width=width, trailing_slash=trailing_slash
+                        )
+                        tried.append(directory_url)
+                        try:
+                            payload, _ = request_bytes(directory_url, timeout=20)
+                        except urllib.error.HTTPError as exc:
+                            if exc.code in (403, 404):
+                                continue
+                            raise
+                        parser = HrefParser()
+                        parser.feed(payload.decode("utf-8", errors="replace"))
+                        links = [
+                            urllib.parse.urljoin(directory_url, href)
+                            for href in parser.hrefs
+                            if urllib.parse.urlparse(href).path.lower().endswith(".parquet")
+                        ]
+                        if links:
+                            directory_cache[fieldid] = links
+                            break
+                    if fieldid in directory_cache:
+                        break
+                if fieldid in directory_cache:
+                    break
+            if fieldid in directory_cache:
                 break
         if fieldid not in directory_cache:
+            known_field_probe: list[dict[str, object]] = []
+            for base in DR15_BASES:
+                for trailing_slash in (True, False):
+                    known_url = field_directory(
+                        base, 697, 0, width=4, trailing_slash=trailing_slash
+                    )
+                    try:
+                        payload, _ = request_bytes(known_url, timeout=20)
+                    except urllib.error.HTTPError as exc:
+                        known_field_probe.append({"url": known_url, "http_status": exc.code})
+                        continue
+                    parser = HrefParser()
+                    parser.feed(payload.decode("utf-8", errors="replace"))
+                    known_links = [
+                        href for href in parser.hrefs
+                        if urllib.parse.urlparse(href).path.lower().endswith(".parquet")
+                    ]
+                    known_field_probe.append(
+                        {"url": known_url, "parquet_link_count": len(known_links)}
+                    )
             raise RuntimeError(
-                f"Could not locate DR15 Parquet directory for OID {oid}; tried {tried}"
+                f"Could not locate DR15 Parquet directory for OID {oid}; "
+                f"tried={tried}; known_field_0697_probe={known_field_probe}"
             )
     code = FILTER_CODE[parts["filterid"]]
     pattern = re.compile(
@@ -272,7 +313,7 @@ def main() -> None:
         "dataset": "ZTF IC 10 variable catalog",
         "doi": "10.5281/zenodo.14979711",
         "test": "published per-OID mean/std/min/max versus archived ZTF DR15 Parquet light curves",
-        "archive_base": DR15_BASE,
+        "archive_bases_tried": list(DR15_BASES),
         "sample_per_band": SAMPLE_PER_BAND,
         "sample_seed": SAMPLE_SEED,
         "tolerance_magnitude": TOLERANCE_MAG,
