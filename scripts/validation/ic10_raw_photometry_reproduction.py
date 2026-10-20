@@ -8,9 +8,11 @@ validation and does not claim to reproduce every paper filtering decision.
 from __future__ import annotations
 
 import hashlib
+import http.client
 import io
 import json
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -60,8 +62,18 @@ def fetch_raw(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
         f"?ID={oid}&COLLECTION={COLLECTION}&FORMAT=VOTABLE"
     )
     request = urllib.request.Request(url, headers={"User-Agent": "ztf-classifier-independent-validation/1.0"})
-    with urllib.request.urlopen(request, timeout=60) as response:
-        payload = response.read()
+    payload = b""
+    attempts = 0
+    for attempt in range(4):
+        attempts = attempt + 1
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                payload = response.read()
+            break
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError):
+            if attempt == 3:
+                raise
+            time.sleep(2**attempt)
     table = Table.read(io.BytesIO(payload))
     frame = table.to_pandas()
     needed = {"mjd", "mag", "catflags"}
@@ -74,6 +86,7 @@ def fetch_raw(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
     return frame, {
         "url": url,
         "collection": COLLECTION,
+        "attempts": attempts,
         "bytes": len(payload),
         "sha256": hashlib.sha256(payload).hexdigest(),
         "raw_rows": int(len(frame)),
@@ -173,7 +186,20 @@ def main() -> None:
                 if (band, oid) in raw_cache:
                     raw, raw_meta = raw_cache[(band, oid)]
                 else:
-                    raw, raw_meta = fetch_raw(oid)
+                    try:
+                        raw, raw_meta = fetch_raw(oid)
+                    except Exception as exc:
+                        report["raw_fetch_failure"] = {
+                            "band": band,
+                            "SourceID": str(row["SourceID"]),
+                            "OID": oid,
+                            "collection": COLLECTION,
+                            "error": f"{type(exc).__name__}: {exc}",
+                            "completed_comparisons_before_failure": len(comparisons),
+                        }
+                        report["result"] = "BLOCKED"
+                        print(json.dumps(report, indent=2, sort_keys=True))
+                        raise SystemExit(2) from exc
                     raw_cache[(band, oid)] = (raw, raw_meta)
                 by_profile = profiles(raw, band)
                 entry: dict[str, object] = {
@@ -211,7 +237,7 @@ def main() -> None:
                 entry["best_profile_max_abs_delta_mag"] = best_delta
                 entry["best_profile_within_tolerance"] = best_delta <= TOLERANCE_MAG
                 comparisons.append(entry)
-                time.sleep(0.15)
+                time.sleep(0.5)
         global_profiles: dict[str, object] = {}
         for profile_name in ("raw_finite", "catflags_zero_before_cutoff", "paper_plot_filters"):
             passing_oids = sum(
