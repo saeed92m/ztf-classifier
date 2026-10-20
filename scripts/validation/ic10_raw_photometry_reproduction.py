@@ -12,6 +12,7 @@ import hashlib
 import http.client
 import io
 import json
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -23,7 +24,7 @@ from astropy.table import Table
 
 ZENODO_BASE = "https://zenodo.org/records/14979711/files"
 IRSA_BASE = "https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves"
-DR15_KNOWN_FIELD_URL = "https://irsa.ipac.caltech.edu/data/ZTF/lc/lc_dr15/0/field0697/"
+DR15_BULK_BASE = "https://irsa.ipac.caltech.edu/data/ZTF/lc/lc_dr15"
 FILES = {
     "df_zr.csv": "0589a1bda6abd960145ad6116275851d",
     "df_zg.csv": "3cb5b49b1064a2bac0bc7ab9201fa0e0",
@@ -90,7 +91,7 @@ def fetch_raw(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
         raise RuntimeError(f"OID {oid}: raw IRSA response missing columns {sorted(required - set(frame.columns))}")
     for column in required:
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
-    return frame, {
+    metadata: dict[str, object] = {
         "url": url,
         "collection_parameter": None,
         "release_pinning": "none; live default API",
@@ -98,8 +99,22 @@ def fetch_raw(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
         "attempts": attempts,
         "sha256": hashlib.sha256(payload).hexdigest(),
         "raw_rows": int(len(frame)),
+        "columns": list(frame.columns),
         "max_mjd": float(frame["mjd"].max()) if frame["mjd"].notna().any() else None,
     }
+    for source_column, target_key in (
+        ("fieldid", "field_ids"),
+        ("field", "field_ids"),
+        ("rcid", "rcids"),
+        ("filterid", "filter_ids"),
+        ("fid", "filter_ids"),
+    ):
+        if source_column in frame.columns:
+            metadata[target_key] = sorted(
+                int(value)
+                for value in pd.to_numeric(frame[source_column], errors="coerce").dropna().unique()
+            )
+    return frame, metadata
 
 
 def stats(frame: pd.DataFrame) -> dict[str, float | int]:
@@ -155,25 +170,6 @@ def main() -> None:
     try:
         for name, band in (("df_zr.csv", "r"), ("df_zg.csv", "g")):
             catalogs[band], report["catalogs"][band] = download_catalog(name)
-        try:
-            archive_payload, archive_attempts = request_bytes(DR15_KNOWN_FIELD_URL, timeout=20)
-            report["dr15_bulk_archive_probe"] = {
-                "url": DR15_KNOWN_FIELD_URL,
-                "status": "AVAILABLE",
-                "attempts": archive_attempts,
-                "bytes": len(archive_payload),
-                "sha256": hashlib.sha256(archive_payload).hexdigest(),
-                "response_prefix": archive_payload[:160].decode("utf-8", errors="replace"),
-                "contains_parquet_listing": b".parquet" in archive_payload.lower(),
-                "contains_checksum_listing": b"md5" in archive_payload.lower(),
-            }
-        except Exception as exc:
-            report["dr15_bulk_archive_probe"] = {
-                "url": DR15_KNOWN_FIELD_URL,
-                "status": "UNAVAILABLE",
-                "error": f"{type(exc).__name__}: {exc}",
-            }
-
         comparisons = report["comparisons"]
         for band in ("r", "g"):
             frame = catalogs[band]
@@ -239,6 +235,43 @@ def main() -> None:
             "all_oids_within_tolerance": passing_oids == len(comparisons),
         }
     primary = global_profiles["catflags_zero_before_cutoff"]
+    fields = sorted({
+        int(field_id)
+        for entry in comparisons
+        for field_id in entry.get("raw", {}).get("field_ids", [])
+    })
+    bulk_probes = []
+    for field_id in fields[:12]:
+        url = f"{DR15_BULK_BASE}/{field_id // 1000}/field{field_id:04d}/"
+        try:
+            payload, attempts = request_bytes(url, timeout=20)
+            html = payload.decode("utf-8", errors="replace")
+            links = sorted(set(re.findall(r'href=["\\']([^"\\']+\\.parquet)["\\']', html, flags=re.IGNORECASE)))
+            bulk_probes.append({
+                "field_id": field_id,
+                "url": url,
+                "status": "AVAILABLE",
+                "attempts": attempts,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+                "parquet_link_count": len(links),
+                "parquet_links_sample": links[:5],
+                "listing_prefix": html[:120],
+            })
+        except Exception as exc:
+            bulk_probes.append({
+                "field_id": field_id,
+                "url": url,
+                "status": "UNAVAILABLE",
+                "error": f"{type(exc).__name__}: {exc}",
+            })
+    report["dr15_bulk_archive_probes"] = {
+        "base_url": DR15_BULK_BASE,
+        "field_ids_discovered_from_live_api_metadata": fields,
+        "probes": bulk_probes,
+        "note": "Only directory listings were requested; no bulk Parquet photometry files were downloaded in this probe.",
+    }
+
     report["summary"] = {
         "sampled_oids": len(comparisons),
         "global_profile_results": global_profiles,
