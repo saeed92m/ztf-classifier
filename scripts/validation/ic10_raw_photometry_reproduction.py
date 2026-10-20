@@ -79,22 +79,37 @@ def download_catalog(name: str) -> tuple[pd.DataFrame, dict[str, object]]:
     }
 
 
-def fetch_raw(oid: str, collection: str | None = None) -> tuple[pd.DataFrame, dict[str, object]]:
-    # The default call matches the paper's public code. Pinned collections are
-    # diagnostic comparisons against release snapshots available through IRSA.
-    query = {"ID": oid}
+def fetch_raw_batch(
+    oids: list[str], collection: str | None = None
+) -> tuple[dict[str, pd.DataFrame], dict[str, object]]:
+    # The public API accepts repeated ID parameters, allowing a reproducible
+    # batch request without issuing one HTTP request per light curve.
+    query = [("ID", oid) for oid in oids]
     if collection is not None:
-        query["COLLECTION"] = collection
+        query.append(("COLLECTION", collection))
     params = urllib.parse.urlencode(query)
     url = f"{IRSA_BASE}?{params}"
-    payload, attempts = request_bytes(url, timeout=45)
+    payload, attempts = request_bytes(url, timeout=90)
     table = Table.read(io.BytesIO(payload), format="votable")
     frame = table.to_pandas()
-    required = {"mjd", "mag", "magerr", "catflags"}
+    required = {"oid", "mjd", "mag", "magerr", "catflags"}
     if not required.issubset(frame.columns):
-        raise RuntimeError(f"OID {oid}: raw IRSA response missing columns {sorted(required - set(frame.columns))}")
-    for column in required:
+        raise RuntimeError(f"Raw IRSA response missing columns {sorted(required - set(frame.columns))}")
+    for column in ("mjd", "mag", "magerr", "catflags"):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
+
+    def normalize_oid(value: object) -> str:
+        try:
+            return str(int(float(value)))
+        except (TypeError, ValueError, OverflowError):
+            return str(value)
+
+    frame["_requested_oid"] = frame["oid"].map(normalize_oid)
+    by_oid = {
+        oid: group.drop(columns=["_requested_oid"]).reset_index(drop=True)
+        for oid, group in frame.groupby("_requested_oid", sort=False)
+    }
+    found = sorted(by_oid)
     metadata: dict[str, object] = {
         "url": url,
         "collection_parameter": collection,
@@ -102,9 +117,23 @@ def fetch_raw(oid: str, collection: str | None = None) -> tuple[pd.DataFrame, di
         "bytes": len(payload),
         "attempts": attempts,
         "sha256": hashlib.sha256(payload).hexdigest(),
-        "raw_rows": int(len(frame)),
-        "columns": list(frame.columns),
-        "max_mjd": float(frame["mjd"].max()) if frame["mjd"].notna().any() else None,
+        "batch_rows": int(len(frame)),
+        "requested_oids": list(oids),
+        "found_oids": found,
+        "missing_oids": sorted(set(oids) - set(found)),
+        "columns": [column for column in frame.columns if column != "_requested_oid"],
+    }
+    return by_oid, metadata
+
+
+def raw_oid_metadata(
+    raw: pd.DataFrame, batch_metadata: dict[str, object], oid: str
+) -> dict[str, object]:
+    metadata: dict[str, object] = {
+        **batch_metadata,
+        "oid": oid,
+        "raw_rows": int(len(raw)),
+        "max_mjd": float(raw["mjd"].max()) if raw["mjd"].notna().any() else None,
     }
     for source_column, target_key in (
         ("fieldid", "field_ids"),
@@ -113,12 +142,12 @@ def fetch_raw(oid: str, collection: str | None = None) -> tuple[pd.DataFrame, di
         ("filterid", "filter_ids"),
         ("fid", "filter_ids"),
     ):
-        if source_column in frame.columns:
+        if source_column in raw.columns:
             metadata[target_key] = sorted(
                 int(value)
-                for value in pd.to_numeric(frame[source_column], errors="coerce").dropna().unique()
+                for value in pd.to_numeric(raw[source_column], errors="coerce").dropna().unique()
             )
-    return frame, metadata
+    return metadata
 
 
 def stats(frame: pd.DataFrame) -> dict[str, float | int]:
@@ -173,6 +202,7 @@ def main() -> None:
         },
         "catalogs": {},
         "comparisons": [],
+        "batch_fetches": [],
     }
     catalogs: dict[str, pd.DataFrame] = {}
     try:
@@ -185,22 +215,53 @@ def main() -> None:
                 n=min(SAMPLE_PER_BAND, len(frame)),
                 random_state=SAMPLE_SEED,
             ).sort_values(["SourceID", "OID"])
-            for row in sample.to_dict(orient="records"):
+            sample_rows = sample.to_dict(orient="records")
+            oids = [str(row["OID"]) for row in sample_rows]
+            try:
+                current_data, current_batch_meta = fetch_raw_batch(oids)
+            except Exception as exc:
+                report["raw_fetch_failure"] = {
+                    "band": band,
+                    "oids": oids,
+                    "collection": None,
+                    "error": f"{type(exc).__name__}: {exc}",
+                    "completed_comparisons_before_failure": len(comparisons),
+                }
+                report["result"] = "BLOCKED"
+                print(json.dumps(report, indent=2, sort_keys=True))
+                raise SystemExit(2) from exc
+            report["batch_fetches"].append({"band": band, "release": "default", **current_batch_meta})
+            try:
+                dr23_data, dr23_batch_meta = fetch_raw_batch(oids, collection="ztf_dr23")
+                report["batch_fetches"].append({"band": band, "release": "ztf_dr23", **dr23_batch_meta})
+                dr23_batch_error = None
+            except Exception as exc:
+                dr23_data = {}
+                dr23_batch_meta = {}
+                dr23_batch_error = f"{type(exc).__name__}: {exc}"
+                report["batch_fetches"].append({
+                    "band": band,
+                    "release": "ztf_dr23",
+                    "requested_oids": oids,
+                    "error": dr23_batch_error,
+                })
+
+            for row in sample_rows:
                 oid = str(row["OID"])
-                try:
-                    raw, raw_meta = fetch_raw(oid)
-                    by_profile = profiles(raw, band)
-                except Exception as exc:
+                raw = current_data.get(oid)
+                if raw is None:
                     report["raw_fetch_failure"] = {
                         "band": band,
                         "SourceID": str(row["SourceID"]),
                         "OID": oid,
-                        "error": f"{type(exc).__name__}: {exc}",
+                        "error": "OID absent from batched default-collection response",
                         "completed_comparisons_before_failure": len(comparisons),
                     }
                     report["result"] = "BLOCKED"
                     print(json.dumps(report, indent=2, sort_keys=True))
-                    raise SystemExit(2) from exc
+                    raise SystemExit(2)
+                raw_meta = raw_oid_metadata(raw, current_batch_meta, oid)
+                by_profile = profiles(raw, band)
                 published = {key: float(row[key]) for key in ("mean", "std", "min", "max")}
                 entry: dict[str, object] = {
                     "band": band,
@@ -222,8 +283,9 @@ def main() -> None:
                         "absolute_deltas": deltas,
                         "within_tolerance": max(deltas.values()) <= TOLERANCE_MAG,
                     }
-                try:
-                    raw23, raw23_meta = fetch_raw(oid, collection="ztf_dr23")
+                raw23 = dr23_data.get(oid)
+                if raw23 is not None:
+                    raw23_meta = raw_oid_metadata(raw23, dr23_batch_meta, oid)
                     entry["pinned_release_comparisons"]["ztf_dr23"] = {
                         "raw": raw23_meta,
                         "profiles": {},
@@ -238,12 +300,12 @@ def main() -> None:
                             "absolute_deltas": deltas,
                             "within_tolerance": max(deltas.values()) <= TOLERANCE_MAG,
                         }
-                except Exception as exc:
+                else:
                     entry["pinned_release_comparisons"]["ztf_dr23"] = {
-                        "error": f"{type(exc).__name__}: {exc}"
+                        "error": dr23_batch_error or "OID absent from pinned DR23 response"
                     }
                 comparisons.append(entry)
-                time.sleep(0.5)
+            time.sleep(0.5)
     except SystemExit:
         raise
     except Exception as exc:
