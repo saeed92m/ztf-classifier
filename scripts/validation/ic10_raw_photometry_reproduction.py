@@ -147,10 +147,15 @@ def raw_oid_metadata(
         ("filtercode", "filter_codes"),
     ):
         if source_column in raw.columns:
-            metadata[target_key] = sorted(
-                int(value)
-                for value in pd.to_numeric(raw[source_column], errors="coerce").dropna().unique()
-            )
+            if target_key == "filter_codes":
+                metadata[target_key] = sorted(
+                    str(value) for value in raw[source_column].dropna().unique()
+                )
+            else:
+                metadata[target_key] = sorted(
+                    int(value)
+                    for value in pd.to_numeric(raw[source_column], errors="coerce").dropna().unique()
+                )
     return metadata
 
 
@@ -360,7 +365,7 @@ def main() -> None:
             f"{base_url}/1/",
         ]
         directory_urls.extend(
-            f"{base_url}/{field_id // 1000}/field{field_id:04d}/"
+            f"{base_url}/{field_id // 1000}/field{field_id:06d}/"
             for field_id in fields[:12]
         )
         for url in directory_urls:
