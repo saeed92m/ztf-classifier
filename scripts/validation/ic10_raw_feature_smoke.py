@@ -173,6 +173,11 @@ def main() -> None:
         raise RuntimeError(f"SourceID {source_id}: no valid observations remain after filtering")
     features = extract_v0_2_features(internal, cutoff_mjd=HISTORICAL_CUTOFF_MJD)
     validate_v0_2_feature_vector(features)
+    if len(features) != 42:
+        raise RuntimeError(f"Expected 42 frozen v0.2 features, got {len(features)}")
+    for feature_name in ("g_mean_mag", "r_mean_mag", "mean_color_gr"):
+        if not np.isfinite(features[feature_name]):
+            raise RuntimeError(f"Expected finite basic feature {feature_name}")
     historical = internal[internal["mjd"] <= HISTORICAL_CUTOFF_MJD].copy()
     expected_g = len(prepare_band_lightcurve(historical, fid=1))
     expected_r = len(prepare_band_lightcurve(historical, fid=2))
