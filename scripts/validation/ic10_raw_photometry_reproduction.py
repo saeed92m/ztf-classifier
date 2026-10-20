@@ -80,7 +80,7 @@ def download_catalog(name: str) -> tuple[pd.DataFrame, dict[str, object]]:
 
 def fetch_raw(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
     # Deliberately do not specify COLLECTION: this matches the paper's public code.
-    params = urllib.parse.urlencode({"ID": oid, "TIME": f"58194.0 {CUTOFF_MJD}"})
+    params = urllib.parse.urlencode({"ID": oid})
     url = f"{IRSA_BASE}?{params}"
     payload, attempts = request_bytes(url, timeout=45)
     table = Table.read(io.BytesIO(payload), format="votable")
