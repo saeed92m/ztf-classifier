@@ -9,6 +9,7 @@ on:
       - "scripts/validation/ic10_catalog_numeric_consistency.py"
       - "scripts/validation/ic10_catalog_join_diagnostics.py"
       - "scripts/validation/ic10_raw_photometry_reproduction.py"
+      - "scripts/validation/ic10_bulk_parquet_reproduction.py"
       - "scripts/validation/ic10_raw_feature_smoke.py"
       - "scripts/validation/bts_raw_lightcurve_smoke.py"
       - ".github/workflows/ic10-independent-validation.yml"
