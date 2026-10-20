@@ -28,6 +28,7 @@ SAMPLE_PER_BAND = 10
 SAMPLE_SEED = 20261020
 TOLERANCE_MAG = 1e-3
 CUTOFF_MJD = 59892.0
+COLLECTION = "ztf_dr15"
 
 
 def download_catalog(name: str, root: Path) -> tuple[pd.DataFrame, dict[str, object]]:
@@ -54,7 +55,10 @@ def download_catalog(name: str, root: Path) -> tuple[pd.DataFrame, dict[str, obj
 
 
 def fetch_raw(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
-    url = f"https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves?ID={oid}"
+    url = (
+        "https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves"
+        f"?ID={oid}&COLLECTION={COLLECTION}&FORMAT=VOTABLE"
+    )
     request = urllib.request.Request(url, headers={"User-Agent": "ztf-classifier-independent-validation/1.0"})
     with urllib.request.urlopen(request, timeout=60) as response:
         payload = response.read()
@@ -69,6 +73,7 @@ def fetch_raw(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
         raise RuntimeError(f"OID {oid}: empty raw light curve")
     return frame, {
         "url": url,
+        "collection": COLLECTION,
         "bytes": len(payload),
         "sha256": hashlib.sha256(payload).hexdigest(),
         "raw_rows": int(len(frame)),
@@ -109,7 +114,8 @@ def main() -> None:
     report: dict[str, object] = {
         "dataset": "ZTF IC 10 variable catalog",
         "doi": "10.5281/zenodo.14979711",
-        "test": "published per-OID mean/std/min/max versus independently fetched raw IRSA light curves",
+        "test": "published per-OID mean/std/min/max versus raw IRSA light curves from the paper's frozen DR15 collection",
+        "requested_collection": COLLECTION,
         "sample_per_band": SAMPLE_PER_BAND,
         "sample_seed": SAMPLE_SEED,
         "cutoff_mjd": CUTOFF_MJD,
@@ -121,8 +127,8 @@ def main() -> None:
         },
         "limitations": [
             "Only a deterministic 10-OID sample per band is recomputed.",
-            "Public IRSA light curves may reflect processing revisions relative to the frozen paper catalog.",
             "This does not evaluate classifier accuracy or reproduce all variability/period filters.",
+            "If IRSA no longer serves the DR15 collection through the API, the report records a blocked historical-source probe rather than silently using current data.",
         ],
         "catalogs": {},
         "comparisons": [],
@@ -137,10 +143,38 @@ def main() -> None:
             samples[band] = sample
             report["catalogs"][band] = {**meta, "unique_source_ids": int(frame["SourceID"].nunique())}
         comparisons = report["comparisons"]
+        probe_oid = str(samples["r"].iloc[0]["OID"])
+        try:
+            probe_raw, probe_meta = fetch_raw(probe_oid)
+        except Exception as exc:
+            report["historical_collection_probe"] = {
+                "collection": COLLECTION,
+                "probe_oid": probe_oid,
+                "status": "UNAVAILABLE",
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+            report["result"] = "BLOCKED"
+            print(json.dumps(report, indent=2, sort_keys=True))
+            raise SystemExit(2) from exc
+        report["historical_collection_probe"] = {
+            "collection": COLLECTION,
+            "probe_oid": probe_oid,
+            "status": "AVAILABLE",
+            "raw_rows": int(len(probe_raw)),
+            "payload_sha256": probe_meta["sha256"],
+            "url": probe_meta["url"],
+        }
+        raw_cache: dict[tuple[str, str], tuple[pd.DataFrame, dict[str, object]]] = {
+            ("r", probe_oid): (probe_raw, probe_meta)
+        }
         for band in ("r", "g"):
             for row in samples[band].to_dict(orient="records"):
                 oid = str(row["OID"])
-                raw, raw_meta = fetch_raw(oid)
+                if (band, oid) in raw_cache:
+                    raw, raw_meta = raw_cache[(band, oid)]
+                else:
+                    raw, raw_meta = fetch_raw(oid)
+                    raw_cache[(band, oid)] = (raw, raw_meta)
                 by_profile = profiles(raw, band)
                 entry: dict[str, object] = {
                     "band": band,
@@ -189,14 +223,12 @@ def main() -> None:
                 "sampled_oids": len(comparisons),
                 "all_oids_within_tolerance": passing_oids == len(comparisons),
             }
+        clean_profile = global_profiles["catflags_zero_before_cutoff"]
         report["summary"] = {
             "sampled_oids": len(comparisons),
             "global_profile_results": global_profiles,
-            "pass": any(
-                profile["all_oids_within_tolerance"]
-                for profile in global_profiles.values()
-            ),
-            "pass_rule": "At least one single, consistently applied filter profile must reproduce every sampled OID within tolerance; per-OID best-fit profiles do not determine pass/fail.",
+            "pass": clean_profile["all_oids_within_tolerance"],
+            "pass_rule": "Only the documented clean-observation profile (catflags == 0 within DR15 MJD coverage) determines pass/fail. Plot-only date exclusions are diagnostic and cannot rescue a mismatch.",
         }
     report["result"] = "PASS" if report["summary"]["pass"] else "FAIL"
     print(json.dumps(report, indent=2, sort_keys=True))
