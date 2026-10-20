@@ -241,14 +241,22 @@ def main() -> None:
         for field_id in entry.get("raw", {}).get("field_ids", [])
     })
     bulk_probes = []
-    for field_id in fields[:12]:
-        url = f"{DR15_BULK_BASE}/{field_id // 1000}/field{field_id:04d}/"
+    directory_urls = [
+        f"{DR15_BULK_BASE}/",
+        f"{DR15_BULK_BASE}/0/",
+        f"{DR15_BULK_BASE}/1/",
+    ]
+    directory_urls.extend(
+        f"{DR15_BULK_BASE}/{field_id // 1000}/field{field_id:04d}/"
+        for field_id in fields[:12]
+    )
+    for url in directory_urls:
         try:
             payload, attempts = request_bytes(url, timeout=20)
             html = payload.decode("utf-8", errors="replace")
             links = sorted(set(re.findall(r"""href=["']([^"']+\.parquet)["']""", html, flags=re.IGNORECASE)))
+            field_links = sorted(set(re.findall(r"""href=["'](field\d+/?)["']""", html, flags=re.IGNORECASE)))
             bulk_probes.append({
-                "field_id": field_id,
                 "url": url,
                 "status": "AVAILABLE",
                 "attempts": attempts,
@@ -256,11 +264,11 @@ def main() -> None:
                 "sha256": hashlib.sha256(payload).hexdigest(),
                 "parquet_link_count": len(links),
                 "parquet_links_sample": links[:5],
-                "listing_prefix": html[:120],
+                "field_directory_links_sample": field_links[:10],
+                "listing_prefix": html[:160],
             })
         except Exception as exc:
             bulk_probes.append({
-                "field_id": field_id,
                 "url": url,
                 "status": "UNAVAILABLE",
                 "error": f"{type(exc).__name__}: {exc}",
