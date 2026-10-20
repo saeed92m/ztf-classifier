@@ -92,7 +92,7 @@ def best_oid_per_source(frame: pd.DataFrame) -> pd.DataFrame:
 
 def fetch_raw_lightcurve(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
     # Match the paper's public code: the live API is not pinned to a release.
-    params = urllib.parse.urlencode({"ID": oid, "TIME": f"58194.0 {PAPER_CUTOFF_MJD}"})
+    params = urllib.parse.urlencode({"ID": oid})
     url = f"https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves?{params}"
     payload, attempts = fetch_bytes(url, timeout=45)
     table = Table.read(io.BytesIO(payload), format="votable")
