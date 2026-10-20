@@ -114,8 +114,8 @@ def parse_oid(oid: str) -> dict[str, int]:
     return parts
 
 
-def field_directory(fieldid: int) -> str:
-    return f"{DR15_BASE}/{fieldid // 1000}/field{fieldid:04d}/"
+def field_directory(fieldid: int, prefix: int) -> str:
+    return f"{DR15_BASE}/{prefix}/field{fieldid:04d}/"
 
 
 def find_parquet_url(
@@ -129,16 +129,32 @@ def find_parquet_url(
             f"OID {oid} encodes filterid={parts['filterid']}, but catalog band is {band}"
         )
     fieldid = parts["fieldid"]
-    directory_url = field_directory(fieldid)
     if fieldid not in directory_cache:
-        payload, _ = request_bytes(directory_url, timeout=60)
-        parser = HrefParser()
-        parser.feed(payload.decode("utf-8", errors="replace"))
-        directory_cache[fieldid] = [
-            urllib.parse.urljoin(directory_url, href)
-            for href in parser.hrefs
-            if urllib.parse.urlparse(href).path.lower().endswith(".parquet")
-        ]
+        prefixes = sorted({fieldid // 1000, int(f"{fieldid:06d}"[0])})
+        tried: list[str] = []
+        for prefix in prefixes:
+            directory_url = field_directory(fieldid, prefix)
+            tried.append(directory_url)
+            try:
+                payload, _ = request_bytes(directory_url, timeout=30)
+            except urllib.error.HTTPError as exc:
+                if exc.code == 404:
+                    continue
+                raise
+            parser = HrefParser()
+            parser.feed(payload.decode("utf-8", errors="replace"))
+            links = [
+                urllib.parse.urljoin(directory_url, href)
+                for href in parser.hrefs
+                if urllib.parse.urlparse(href).path.lower().endswith(".parquet")
+            ]
+            if links:
+                directory_cache[fieldid] = links
+                break
+        if fieldid not in directory_cache:
+            raise RuntimeError(
+                f"Could not locate DR15 Parquet directory for OID {oid}; tried {tried}"
+            )
     code = FILTER_CODE[parts["filterid"]]
     pattern = re.compile(
         rf"_{code}_c{parts['ccdid']:02d}_q{parts['qid']}(?:_|\.)",
