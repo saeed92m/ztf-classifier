@@ -139,7 +139,10 @@ def main() -> None:
         "sample_per_band": SAMPLE_PER_BAND,
         "sample_seed": SAMPLE_SEED,
         "tolerance_magnitude": TOLERANCE_MAG,
-        "release_note": "The paper's public code uses the default API without COLLECTION; this is a live source, not a frozen data snapshot.",
+        "paper_data_release": "ZTF DR15 (MJD 58194-59892; as specified in Jin & Gelfand 2025)",
+        "api_default_release_at_validation": "ZTF DR24 (IRSA states this is the latest public release as of 2026-01-22)",
+        "api_collection_limitation": "IRSA documents COLLECTION support for only the latest five releases; DR15 is outside that window as of this validation.",
+        "release_note": "The paper's public code uses the default API without COLLECTION. The present API defaults to DR24, whereas the paper catalog is based on DR15. This is not a like-for-like raw-data reproduction; observed differences must not be attributed to the classifier until a frozen DR15 photometry source is obtained.",
         "filter_profiles": {
             "raw_finite": "finite MJD and magnitude",
             "catflags_zero_before_cutoff": "catflags == 0 and MJD < 59892; primary scientific comparison",
