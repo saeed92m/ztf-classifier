@@ -144,7 +144,7 @@ def main() -> None:
         "test": "frozen v0.2 feature extraction on a paired raw g/r source from the independent paper",
         "historical_cutoff_mjd": HISTORICAL_CUTOFF_MJD,
         "paper_mjd_cutoff": PAPER_CUTOFF_MJD,
-        "source_selection": "intersection of color-table SourceIDs and the highest-numobs OID per band; maximize the minimum published g/r numobs, deterministic tie-break",
+        "source_selection": "intersection of color-table SourceIDs and the highest-numobs OID per band; require >=30 published observations in each band, then minimize the sum of absolute differences from 100 observations per band, with deterministic SourceID tie-break",
         "raw_api_note": "The paper's public code does not pin COLLECTION; raw API results are therefore live and may not reproduce the paper's historical snapshot.",
         "files": {},
     }
