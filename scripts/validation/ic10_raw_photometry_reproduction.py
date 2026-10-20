@@ -79,9 +79,13 @@ def download_catalog(name: str) -> tuple[pd.DataFrame, dict[str, object]]:
     }
 
 
-def fetch_raw(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
-    # Deliberately do not specify COLLECTION: this matches the paper's public code.
-    params = urllib.parse.urlencode({"ID": oid})
+def fetch_raw(oid: str, collection: str | None = None) -> tuple[pd.DataFrame, dict[str, object]]:
+    # The default call matches the paper's public code. Pinned collections are
+    # diagnostic comparisons against release snapshots available through IRSA.
+    query = {"ID": oid}
+    if collection is not None:
+        query["COLLECTION"] = collection
+    params = urllib.parse.urlencode(query)
     url = f"{IRSA_BASE}?{params}"
     payload, attempts = request_bytes(url, timeout=45)
     table = Table.read(io.BytesIO(payload), format="votable")
@@ -93,8 +97,8 @@ def fetch_raw(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
     metadata: dict[str, object] = {
         "url": url,
-        "collection_parameter": None,
-        "release_pinning": "none; live default API",
+        "collection_parameter": collection,
+        "release_pinning": collection or "none; live default API",
         "bytes": len(payload),
         "attempts": attempts,
         "sha256": hashlib.sha256(payload).hexdigest(),
@@ -150,14 +154,18 @@ def main() -> None:
     report: dict[str, object] = {
         "dataset": "ZTF IC 10 variable catalog",
         "doi": "10.5281/zenodo.14979711",
-        "test": "published per-OID mean/std/min/max versus current default IRSA light curves",
+        "test": "published per-OID mean/std/min/max versus current default and pinned historical IRSA light curves",
         "sample_per_band": SAMPLE_PER_BAND,
         "sample_seed": SAMPLE_SEED,
         "tolerance_magnitude": TOLERANCE_MAG,
-        "paper_data_release": "ZTF DR15 (MJD 58194-59892; as specified in Jin & Gelfand 2025)",
-        "api_default_release_at_validation": "ZTF DR24 (IRSA states this is the latest public release as of 2026-01-22)",
-        "api_collection_limitation": "IRSA documents COLLECTION support for only the latest five releases; DR15 is outside that window as of this validation.",
-        "release_note": "The paper's public code uses the default API without COLLECTION. The present API defaults to DR24, whereas the paper catalog is based on DR15. This is not a like-for-like raw-data reproduction; observed differences must not be attributed to the classifier until a frozen DR15 photometry source is obtained.",
+        "paper_release_claim": "The paper describes using ZTF DR15 and the public code applies an MJD cutoff at 59892.",
+        "public_code_collection_parameter": "The public code calls the light-curve API without COLLECTION, so its actual source release is not pinned by the code.",
+        "zenodo_snapshot_filename_evidence": ["t_zr_20250225.ecsv", "t_zg_20250225.ecsv"],
+        "latest_public_release_on_2025_02_25": "DR23 (released 2025-01-15)",
+        "candidate_source_release_hypothesis": "DR23 is the likely default API collection when the 2025-02-25 catalog snapshot was produced, but this is not proven from the filenames alone.",
+        "api_default_release_at_validation": "ZTF DR24 (IRSA lists DR24 as the latest public release from 2026-01-22).",
+        "api_collection_limitation": "IRSA documents COLLECTION support for the latest five releases; this permits a direct DR23-vs-DR24 comparison without downloading the full bulk archive.",
+        "release_note": "The paper text says DR15, but the public code does not pin COLLECTION and the catalog filenames are dated 2025-02-25, after DR23 was released. The script therefore compares current default data with explicitly pinned DR23; neither result alone establishes the exact collection used to produce the published tables.",
         "filter_profiles": {
             "raw_finite": "finite MJD and magnitude",
             "catflags_zero_before_cutoff": "catflags == 0 and MJD < 59892; primary scientific comparison",
@@ -193,24 +201,46 @@ def main() -> None:
                     report["result"] = "BLOCKED"
                     print(json.dumps(report, indent=2, sort_keys=True))
                     raise SystemExit(2) from exc
+                published = {key: float(row[key]) for key in ("mean", "std", "min", "max")}
                 entry: dict[str, object] = {
                     "band": band,
                     "SourceID": str(row["SourceID"]),
                     "OID": oid,
                     "catalog_numobs": int(row["numobs"]),
                     "raw": raw_meta,
-                    "published": {key: float(row[key]) for key in ("mean", "std", "min", "max")},
+                    "published": published,
                     "profiles": {},
+                    "pinned_release_comparisons": {},
                 }
                 for profile_name, observed in by_profile.items():
                     deltas = {
-                        key: abs(float(observed[key]) - float(row[key]))
+                        key: abs(float(observed[key]) - published[key])
                         for key in ("mean", "std", "min", "max")
                     }
                     entry["profiles"][profile_name] = {
                         "observed": observed,
                         "absolute_deltas": deltas,
                         "within_tolerance": max(deltas.values()) <= TOLERANCE_MAG,
+                    }
+                try:
+                    raw23, raw23_meta = fetch_raw(oid, collection="ztf_dr23")
+                    entry["pinned_release_comparisons"]["ztf_dr23"] = {
+                        "raw": raw23_meta,
+                        "profiles": {},
+                    }
+                    for profile_name, observed in profiles(raw23, band).items():
+                        deltas = {
+                            key: abs(float(observed[key]) - published[key])
+                            for key in ("mean", "std", "min", "max")
+                        }
+                        entry["pinned_release_comparisons"]["ztf_dr23"]["profiles"][profile_name] = {
+                            "observed": observed,
+                            "absolute_deltas": deltas,
+                            "within_tolerance": max(deltas.values()) <= TOLERANCE_MAG,
+                        }
+                except Exception as exc:
+                    entry["pinned_release_comparisons"]["ztf_dr23"] = {
+                        "error": f"{type(exc).__name__}: {exc}"
                     }
                 comparisons.append(entry)
                 time.sleep(0.5)
@@ -235,6 +265,24 @@ def main() -> None:
             "all_oids_within_tolerance": passing_oids == len(comparisons),
         }
     primary = global_profiles["catflags_zero_before_cutoff"]
+    pinned_release_profiles: dict[str, object] = {}
+    for profile_name in ("raw_finite", "catflags_zero_before_cutoff", "paper_plot_filters"):
+        passing = sum(
+            1
+            for entry in comparisons
+            if entry.get("pinned_release_comparisons", {}).get("ztf_dr23", {})
+                .get("profiles", {}).get(profile_name, {}).get("within_tolerance", False)
+        )
+        available = sum(
+            1 for entry in comparisons
+            if "profiles" in entry.get("pinned_release_comparisons", {}).get("ztf_dr23", {})
+        )
+        pinned_release_profiles[profile_name] = {
+            "oids_within_tolerance": passing,
+            "oids_with_pinned_release_data": available,
+            "sampled_oids": len(comparisons),
+            "all_available_oids_within_tolerance": available > 0 and passing == available,
+        }
     fields = sorted({
         int(field_id)
         for entry in comparisons
@@ -283,8 +331,9 @@ def main() -> None:
     report["summary"] = {
         "sampled_oids": len(comparisons),
         "global_profile_results": global_profiles,
+        "pinned_ztf_dr23_profile_results": pinned_release_profiles,
         "pass": primary["all_oids_within_tolerance"],
-        "pass_rule": "Every sampled OID must reproduce published mean/std/min/max within 0.001 mag using catflags == 0 and MJD < 59892. Alternative profiles are diagnostic only.",
+        "pass_rule": "Every sampled OID must reproduce published mean/std/min/max within 0.001 mag using catflags == 0 and MJD < 59892. Alternative profiles and the pinned DR23 comparison are diagnostic until the original source collection is established.",
     }
     report["result"] = "PASS" if report["summary"]["pass"] else "FAIL"
     print(json.dumps(report, indent=2, sort_keys=True))
