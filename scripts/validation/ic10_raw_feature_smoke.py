@@ -209,6 +209,10 @@ def main() -> None:
             "g_filter_counts": counts_g,
             "r_filter_counts": counts_r,
             "feature_count": len(features),
+            "feature_order": list(features.keys()),
+            "feature_vector": {
+                name: finite_or_none(value) for name, value in features.items()
+            },
             "feature_order_matches_frozen_v0_2": tuple(features) == V0_2_FEATURES,
             "historical_g_observations": expected_g,
             "historical_r_observations": expected_r,
