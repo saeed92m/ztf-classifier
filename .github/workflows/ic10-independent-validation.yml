@@ -6,6 +6,7 @@ on:
       - validation/ic10-independent-catalog-20261020
     paths:
       - "scripts/validation/ic10_independent_catalog_smoke.py"
+      - "scripts/validation/ic10_catalog_numeric_consistency.py"
       - "scripts/validation/bts_raw_lightcurve_smoke.py"
       - ".github/workflows/ic10-independent-validation.yml"
   workflow_dispatch:
@@ -42,6 +43,11 @@ jobs:
           set -o pipefail
           python scripts/validation/ic10_independent_catalog_smoke.py | tee ic10-validation-report.json
 
+      - name: Compare published IC 10 color and single-OID band photometry
+        run: |
+          set -o pipefail
+          python scripts/validation/ic10_catalog_numeric_consistency.py | tee ic10-numeric-consistency-report.json
+
       - name: Verify raw ZTF BTS light curve through frozen v0.2 feature engine
         run: |
           set -o pipefail
@@ -54,6 +60,7 @@ jobs:
           name: independent-ztf-validation-reports
           path: |
             ic10-validation-report.json
+            ic10-numeric-consistency-report.json
             bts-lightcurve-validation-report.json
           if-no-files-found: ignore
           retention-days: 14
