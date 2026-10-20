@@ -39,7 +39,7 @@ jobs:
         id: install_deps
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install numpy pandas scipy astropy
+          python -m pip install numpy pandas scipy astropy pyarrow
           python -m pip install -e . --no-deps
 
       - name: Verify independent IC 10 published catalog
@@ -61,6 +61,12 @@ jobs:
         run: |
           set -o pipefail
           python scripts/validation/ic10_raw_photometry_reproduction.py | tee ic10-raw-photometry-report.json
+
+      - name: Reproduce IC 10 statistics from pinned DR15/DR23 bulk Parquet
+        if: always() && steps.install_deps.outcome == 'success'
+        run: |
+          set -o pipefail
+          python scripts/validation/ic10_bulk_parquet_reproduction.py | tee ic10-bulk-parquet-reproduction-report.json
 
       - name: Run frozen v0.2 features on paired IC 10 raw light curves
         if: always() && steps.install_deps.outcome == 'success'
@@ -84,6 +90,7 @@ jobs:
             ic10-numeric-consistency-report.json
             ic10-join-diagnostics-report.json
             ic10-raw-photometry-report.json
+            ic10-bulk-parquet-reproduction-report.json
             ic10-raw-feature-smoke-report.json
             bts-lightcurve-validation-report.json
           if-no-files-found: ignore
