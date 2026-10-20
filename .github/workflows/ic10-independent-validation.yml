@@ -9,6 +9,7 @@ on:
       - "scripts/validation/ic10_catalog_numeric_consistency.py"
       - "scripts/validation/ic10_catalog_join_diagnostics.py"
       - "scripts/validation/ic10_raw_photometry_reproduction.py"
+      - "scripts/validation/ic10_raw_feature_smoke.py"
       - "scripts/validation/bts_raw_lightcurve_smoke.py"
       - ".github/workflows/ic10-independent-validation.yml"
   workflow_dispatch:
@@ -61,6 +62,12 @@ jobs:
           set -o pipefail
           python scripts/validation/ic10_raw_photometry_reproduction.py | tee ic10-raw-photometry-report.json
 
+      - name: Run frozen v0.2 features on paired IC 10 raw light curves
+        if: always() && steps.install_deps.outcome == 'success'
+        run: |
+          set -o pipefail
+          python scripts/validation/ic10_raw_feature_smoke.py | tee ic10-raw-feature-smoke-report.json
+
       - name: Verify raw ZTF BTS light curve through frozen v0.2 feature engine
         if: always() && steps.install_deps.outcome == 'success'
         run: |
@@ -77,6 +84,7 @@ jobs:
             ic10-numeric-consistency-report.json
             ic10-join-diagnostics-report.json
             ic10-raw-photometry-report.json
+            ic10-raw-feature-smoke-report.json
             bts-lightcurve-validation-report.json
           if-no-files-found: ignore
           retention-days: 14
