@@ -1,4 +1,4 @@
-name: Independent ZTF IC 10 Catalog Validation
+name: Independent ZTF Catalog and Light-Curve Validation
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - validation/ic10-independent-catalog-20261020
     paths:
       - "scripts/validation/ic10_independent_catalog_smoke.py"
+      - "scripts/validation/bts_raw_lightcurve_smoke.py"
       - ".github/workflows/ic10-independent-validation.yml"
   workflow_dispatch:
 
@@ -13,12 +14,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: ic10-independent-catalog-validation
+  group: independent-ztf-validation
   cancel-in-progress: false
 
 jobs:
   validate:
-    name: Verify independent published catalog
+    name: Verify independent catalogs and raw light curve
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -30,22 +31,29 @@ jobs:
         with:
           python-version: "3.11.16"
 
-      - name: Install minimal ingestion dependencies
+      - name: Install minimal scientific dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install pandas
+          python -m pip install numpy pandas scipy
           python -m pip install -e . --no-deps
 
-      - name: Download, checksum, ingest, and cross-match the independent catalog
+      - name: Verify independent IC 10 published catalog
         run: |
           set -o pipefail
           python scripts/validation/ic10_independent_catalog_smoke.py | tee ic10-validation-report.json
 
-      - name: Upload reproducible validation report
+      - name: Verify raw ZTF BTS light curve through frozen v0.2 feature engine
+        run: |
+          set -o pipefail
+          python scripts/validation/bts_raw_lightcurve_smoke.py | tee bts-lightcurve-validation-report.json
+
+      - name: Upload reproducible validation reports
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ic10-independent-catalog-validation
-          path: ic10-validation-report.json
+          name: independent-ztf-validation-reports
+          path: |
+            ic10-validation-report.json
+            bts-lightcurve-validation-report.json
           if-no-files-found: ignore
           retention-days: 14
