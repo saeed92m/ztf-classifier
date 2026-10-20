@@ -231,21 +231,6 @@ def main() -> None:
                 print(json.dumps(report, indent=2, sort_keys=True))
                 raise SystemExit(2) from exc
             report["batch_fetches"].append({"band": band, "release": "default", **current_batch_meta})
-            try:
-                dr23_data, dr23_batch_meta = fetch_raw_batch(oids, collection="ztf_dr23")
-                report["batch_fetches"].append({"band": band, "release": "ztf_dr23", **dr23_batch_meta})
-                dr23_batch_error = None
-            except Exception as exc:
-                dr23_data = {}
-                dr23_batch_meta = {}
-                dr23_batch_error = f"{type(exc).__name__}: {exc}"
-                report["batch_fetches"].append({
-                    "band": band,
-                    "release": "ztf_dr23",
-                    "requested_oids": oids,
-                    "error": dr23_batch_error,
-                })
-
             for row in sample_rows:
                 oid = str(row["OID"])
                 raw = current_data.get(oid)
@@ -283,9 +268,19 @@ def main() -> None:
                         "absolute_deltas": deltas,
                         "within_tolerance": max(deltas.values()) <= TOLERANCE_MAG,
                     }
-                raw23 = dr23_data.get(oid)
-                if raw23 is not None:
-                    raw23_meta = raw_oid_metadata(raw23, dr23_batch_meta, oid)
+                try:
+                    # IRSA accepts the pinned collection for single-OID queries;
+                    # the multi-ID + COLLECTION form returned HTTP 404 in CI.
+                    raw23_data, raw23_batch_meta = fetch_raw_batch([oid], collection="ztf_dr23")
+                    report["batch_fetches"].append({
+                        "band": band,
+                        "release": "ztf_dr23",
+                        **raw23_batch_meta,
+                    })
+                    raw23 = raw23_data.get(oid)
+                    if raw23 is None:
+                        raise RuntimeError("OID absent from pinned DR23 response")
+                    raw23_meta = raw_oid_metadata(raw23, raw23_batch_meta, oid)
                     entry["pinned_release_comparisons"]["ztf_dr23"] = {
                         "raw": raw23_meta,
                         "profiles": {},
@@ -300,9 +295,9 @@ def main() -> None:
                             "absolute_deltas": deltas,
                             "within_tolerance": max(deltas.values()) <= TOLERANCE_MAG,
                         }
-                else:
+                except Exception as exc:
                     entry["pinned_release_comparisons"]["ztf_dr23"] = {
-                        "error": dr23_batch_error or "OID absent from pinned DR23 response"
+                        "error": f"{type(exc).__name__}: {exc}"
                     }
                 comparisons.append(entry)
             time.sleep(0.5)
