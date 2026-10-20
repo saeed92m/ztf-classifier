@@ -9,6 +9,7 @@ sample, and records file hashes and object-level provenance.
 from __future__ import annotations
 
 import hashlib
+import http.client
 import io
 import json
 import re
@@ -56,12 +57,18 @@ def request_bytes(url: str, timeout: int = 90) -> tuple[bytes, int]:
         url,
         headers={"User-Agent": "ztf-classifier-independent-validation/1.0"},
     )
-    for attempt in range(4):
+    for attempt in range(3):
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
                 return response.read(), attempt + 1
-        except (urllib.error.URLError, TimeoutError, OSError):
-            if attempt == 3:
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (408, 429) and exc.code < 500:
+                raise
+            if attempt == 2:
+                raise
+            time.sleep(2**attempt)
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError):
+            if attempt == 2:
                 raise
             time.sleep(2**attempt)
     raise RuntimeError(f"Could not retrieve {url}")
