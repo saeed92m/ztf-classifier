@@ -13,6 +13,7 @@ import io
 import json
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -56,18 +57,23 @@ def download_catalog(name: str, root: Path) -> tuple[pd.DataFrame, dict[str, obj
     }
 
 
-def fetch_raw(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
-    url = (
-        "https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves"
-        f"?ID={oid}&COLLECTION={COLLECTION}&FORMAT=VOTABLE"
+def fetch_raw_batch(oids: list[str]) -> tuple[dict[str, pd.DataFrame], dict[str, object]]:
+    params = [("ID", oid) for oid in sorted(set(oids))]
+    params.extend(
+        [
+            ("COLLECTION", COLLECTION),
+            ("TIME", f"58194.0 {CUTOFF_MJD}"),
+            ("FORMAT", "VOTABLE"),
+        ]
     )
+    url = "https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves?" + urllib.parse.urlencode(params)
     request = urllib.request.Request(url, headers={"User-Agent": "ztf-classifier-independent-validation/1.0"})
     payload = b""
     attempts = 0
     for attempt in range(4):
         attempts = attempt + 1
         try:
-            with urllib.request.urlopen(request, timeout=60) as response:
+            with urllib.request.urlopen(request, timeout=90) as response:
                 payload = response.read()
             break
         except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError):
@@ -76,20 +82,28 @@ def fetch_raw(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
             time.sleep(2**attempt)
     table = Table.read(io.BytesIO(payload))
     frame = table.to_pandas()
-    needed = {"mjd", "mag", "catflags"}
-    if not needed.issubset(frame.columns):
-        raise RuntimeError(f"OID {oid}: raw IRSA response missing columns {sorted(needed - set(frame.columns))}")
-    for column in needed:
+    oid_column = next((column for column in frame.columns if column.lower() in {"oid", "objectid"}), None)
+    if oid_column is None:
+        raise RuntimeError(f"IRSA batch response lacks an OID column; columns={list(frame.columns)}")
+    frame[oid_column] = frame[oid_column].astype("string")
+    required = {"mjd", "mag", "catflags"}
+    if not required.issubset(frame.columns):
+        raise RuntimeError(f"IRSA batch response missing columns {sorted(required - set(frame.columns))}")
+    for column in required:
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
-    if frame.empty:
-        raise RuntimeError(f"OID {oid}: empty raw light curve")
-    return frame, {
+    by_oid = {
+        str(oid): group.drop(columns=[oid_column]).reset_index(drop=True)
+        for oid, group in frame.groupby(oid_column, sort=False)
+    }
+    return by_oid, {
         "url": url,
         "collection": COLLECTION,
         "attempts": attempts,
         "bytes": len(payload),
         "sha256": hashlib.sha256(payload).hexdigest(),
-        "raw_rows": int(len(frame)),
+        "total_rows": int(len(frame)),
+        "returned_oids": sorted(by_oid),
+        "raw_rows_by_oid": {oid: int(len(group)) for oid, group in by_oid.items()},
     }
 
 
@@ -156,51 +170,40 @@ def main() -> None:
             samples[band] = sample
             report["catalogs"][band] = {**meta, "unique_source_ids": int(frame["SourceID"].nunique())}
         comparisons = report["comparisons"]
-        probe_oid = str(samples["r"].iloc[0]["OID"])
+        sample_rows = {
+            band: samples[band].to_dict(orient="records")
+            for band in ("r", "g")
+        }
+        requested_oids = sorted(
+            {str(row["OID"]) for rows in sample_rows.values() for row in rows}
+        )
         try:
-            probe_raw, probe_meta = fetch_raw(probe_oid)
+            raw_by_oid, batch_meta = fetch_raw_batch(requested_oids)
         except Exception as exc:
-            report["historical_collection_probe"] = {
+            report["raw_batch_failure"] = {
                 "collection": COLLECTION,
-                "probe_oid": probe_oid,
-                "status": "UNAVAILABLE",
+                "requested_oids": requested_oids,
                 "error": f"{type(exc).__name__}: {exc}",
             }
             report["result"] = "BLOCKED"
             print(json.dumps(report, indent=2, sort_keys=True))
             raise SystemExit(2) from exc
-        report["historical_collection_probe"] = {
-            "collection": COLLECTION,
-            "probe_oid": probe_oid,
-            "status": "AVAILABLE",
-            "raw_rows": int(len(probe_raw)),
-            "payload_sha256": probe_meta["sha256"],
-            "url": probe_meta["url"],
-        }
-        raw_cache: dict[tuple[str, str], tuple[pd.DataFrame, dict[str, object]]] = {
-            ("r", probe_oid): (probe_raw, probe_meta)
-        }
+        report["raw_batch"] = batch_meta
+        missing_oids = [oid for oid in requested_oids if oid not in raw_by_oid]
+        if missing_oids:
+            report["missing_raw_oids"] = missing_oids
+            report["result"] = "BLOCKED"
+            print(json.dumps(report, indent=2, sort_keys=True))
+            raise SystemExit(2)
         for band in ("r", "g"):
-            for row in samples[band].to_dict(orient="records"):
+            for row in sample_rows[band]:
                 oid = str(row["OID"])
-                if (band, oid) in raw_cache:
-                    raw, raw_meta = raw_cache[(band, oid)]
-                else:
-                    try:
-                        raw, raw_meta = fetch_raw(oid)
-                    except Exception as exc:
-                        report["raw_fetch_failure"] = {
-                            "band": band,
-                            "SourceID": str(row["SourceID"]),
-                            "OID": oid,
-                            "collection": COLLECTION,
-                            "error": f"{type(exc).__name__}: {exc}",
-                            "completed_comparisons_before_failure": len(comparisons),
-                        }
-                        report["result"] = "BLOCKED"
-                        print(json.dumps(report, indent=2, sort_keys=True))
-                        raise SystemExit(2) from exc
-                    raw_cache[(band, oid)] = (raw, raw_meta)
+                raw = raw_by_oid[oid]
+                raw_meta = {
+                    "collection": COLLECTION,
+                    "batch_payload_sha256": batch_meta["sha256"],
+                    "raw_rows": int(len(raw)),
+                }
                 by_profile = profiles(raw, band)
                 entry: dict[str, object] = {
                     "band": band,
