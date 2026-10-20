@@ -25,10 +25,7 @@ import numpy as np
 import pandas as pd
 
 BASE = "https://zenodo.org/records/14979711/files"
-DR15_BASES = (
-    "https://irsa.ipac.caltech.edu/data/ZTF/lc/lc_dr15",
-    "https://irsa.ipac.caltech.edu/data/ZTF/lc_dr15",
-)
+DR15_BASE = "https://irsa.ipac.caltech.edu/data/ZTF/lc/lc_dr15"
 FILES = {
     "df_zr.csv": "0589a1bda6abd960145ad6116275851d",
     "df_zg.csv": "3cb5b49b1064a2bac0bc7ab9201fa0e0",
@@ -117,15 +114,19 @@ def parse_oid(oid: str) -> dict[str, int]:
     return parts
 
 
-def field_directory(
-    base: str,
-    fieldid: int,
-    prefix: int,
-    width: int = 4,
-    trailing_slash: bool = True,
-) -> str:
-    path = f"{base}/{prefix}/field{fieldid:0{width}d}"
-    return path + ("/" if trailing_slash else "")
+def field_directory(fieldid: int) -> str:
+    return f"{DR15_BASE}/{fieldid // 1000}/field{fieldid:04d}"
+
+
+def list_parquet_links(directory_url: str) -> list[str]:
+    payload, _ = request_bytes(directory_url, timeout=20)
+    parser = HrefParser()
+    parser.feed(payload.decode("utf-8", errors="replace"))
+    return [
+        urllib.parse.urljoin(directory_url + "/", href)
+        for href in parser.hrefs
+        if urllib.parse.urlparse(href).path.lower().endswith(".parquet")
+    ]
 
 
 def find_parquet_url(
@@ -140,62 +141,18 @@ def find_parquet_url(
         )
     fieldid = parts["fieldid"]
     if fieldid not in directory_cache:
-        tried: list[str] = []
-        for base in DR15_BASES:
-            for prefix in sorted({fieldid // 1000, int(f"{fieldid:06d}"[0])}):
-                for width in (4, 6):
-                    for trailing_slash in (True, False):
-                        directory_url = field_directory(
-                            base, fieldid, prefix, width=width, trailing_slash=trailing_slash
-                        )
-                        tried.append(directory_url)
-                        try:
-                            payload, _ = request_bytes(directory_url, timeout=20)
-                        except urllib.error.HTTPError as exc:
-                            if exc.code in (403, 404):
-                                continue
-                            raise
-                        parser = HrefParser()
-                        parser.feed(payload.decode("utf-8", errors="replace"))
-                        links = [
-                            urllib.parse.urljoin(directory_url, href)
-                            for href in parser.hrefs
-                            if urllib.parse.urlparse(href).path.lower().endswith(".parquet")
-                        ]
-                        if links:
-                            directory_cache[fieldid] = links
-                            break
-                    if fieldid in directory_cache:
-                        break
-                if fieldid in directory_cache:
-                    break
-            if fieldid in directory_cache:
-                break
-        if fieldid not in directory_cache:
-            known_field_probe: list[dict[str, object]] = []
-            for base in DR15_BASES:
-                for trailing_slash in (True, False):
-                    known_url = field_directory(
-                        base, 697, 0, width=4, trailing_slash=trailing_slash
-                    )
-                    try:
-                        payload, _ = request_bytes(known_url, timeout=20)
-                    except urllib.error.HTTPError as exc:
-                        known_field_probe.append({"url": known_url, "http_status": exc.code})
-                        continue
-                    parser = HrefParser()
-                    parser.feed(payload.decode("utf-8", errors="replace"))
-                    known_links = [
-                        href for href in parser.hrefs
-                        if urllib.parse.urlparse(href).path.lower().endswith(".parquet")
-                    ]
-                    known_field_probe.append(
-                        {"url": known_url, "parquet_link_count": len(known_links)}
-                    )
+        directory_url = field_directory(fieldid)
+        try:
+            links = list_parquet_links(directory_url)
+        except urllib.error.HTTPError as exc:
             raise RuntimeError(
-                f"Could not locate DR15 Parquet directory for OID {oid}; "
-                f"tried={tried}; known_field_0697_probe={known_field_probe}"
+                f"Could not access DR15 field directory {directory_url} for OID {oid}: HTTP {exc.code}"
+            ) from exc
+        if not links:
+            raise RuntimeError(
+                f"DR15 field directory {directory_url} is accessible but contains no Parquet links"
             )
+        directory_cache[fieldid] = links
     code = FILTER_CODE[parts["filterid"]]
     pattern = re.compile(
         rf"_{code}_c{parts['ccdid']:02d}_q{parts['qid']}(?:_|\.)",
@@ -313,7 +270,7 @@ def main() -> None:
         "dataset": "ZTF IC 10 variable catalog",
         "doi": "10.5281/zenodo.14979711",
         "test": "published per-OID mean/std/min/max versus archived ZTF DR15 Parquet light curves",
-        "archive_bases_tried": list(DR15_BASES),
+        "archive_base": DR15_BASE,
         "sample_per_band": SAMPLE_PER_BAND,
         "sample_seed": SAMPLE_SEED,
         "tolerance_magnitude": TOLERANCE_MAG,
@@ -346,6 +303,30 @@ def main() -> None:
                 ).sort_values(["SourceID", "OID"])
                 samples[band] = sample
                 report["catalogs"][band] = meta
+
+            known_field_url = f"{DR15_BASE}/0/field0697"
+            try:
+                known_links = list_parquet_links(known_field_url)
+            except Exception as exc:
+                report["archive_root_probe"] = {
+                    "url": known_field_url,
+                    "status": "UNAVAILABLE",
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+                report["result"] = "BLOCKED"
+                print(json.dumps(report, indent=2, sort_keys=True))
+                raise SystemExit(2) from exc
+            report["archive_root_probe"] = {
+                "url": known_field_url,
+                "status": "AVAILABLE",
+                "parquet_link_count": len(known_links),
+            }
+            if not known_links:
+                report["archive_root_probe"]["status"] = "NO_PARQUET_LINKS"
+                report["result"] = "BLOCKED"
+                print(json.dumps(report, indent=2, sort_keys=True))
+                raise SystemExit(2)
+            directory_cache[697] = known_links
 
             comparisons = report["comparisons"]
             for band in ("r", "g"):
