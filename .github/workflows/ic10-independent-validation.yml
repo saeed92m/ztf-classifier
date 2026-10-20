@@ -39,7 +39,7 @@ jobs:
         id: install_deps
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install numpy pandas scipy astropy pyarrow
+          python -m pip install numpy pandas scipy astropy
           python -m pip install -e . --no-deps
 
       - name: Verify independent IC 10 published catalog
