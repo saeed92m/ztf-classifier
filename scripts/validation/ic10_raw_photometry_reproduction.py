@@ -80,7 +80,7 @@ def download_catalog(name: str) -> tuple[pd.DataFrame, dict[str, object]]:
 
 
 def fetch_raw_batch(
-    oids: list[str], collection: str | None = None
+    oids: list[str], collection: str | None = None, timeout: int = 45
 ) -> tuple[dict[str, pd.DataFrame], dict[str, object]]:
     # The public API accepts repeated ID parameters, allowing a reproducible
     # batch request without issuing one HTTP request per light curve.
@@ -89,7 +89,7 @@ def fetch_raw_batch(
         query.append(("COLLECTION", collection))
     params = urllib.parse.urlencode(query)
     url = f"{IRSA_BASE}?{params}"
-    payload, attempts = request_bytes(url, timeout=90)
+    payload, attempts = request_bytes(url, timeout=timeout)
     table = Table.read(io.BytesIO(payload), format="votable")
     frame = table.to_pandas()
     required = {"oid", "mjd", "mag", "magerr", "catflags"}
@@ -218,7 +218,7 @@ def main() -> None:
             sample_rows = sample.to_dict(orient="records")
             oids = [str(row["OID"]) for row in sample_rows]
             try:
-                current_data, current_batch_meta = fetch_raw_batch(oids)
+                current_data, current_batch_meta = fetch_raw_batch(oids, timeout=90)
             except Exception as exc:
                 report["raw_fetch_failure"] = {
                     "band": band,
@@ -271,7 +271,7 @@ def main() -> None:
                 try:
                     # IRSA accepts the pinned collection for single-OID queries;
                     # the multi-ID + COLLECTION form returned HTTP 404 in CI.
-                    raw23_data, raw23_batch_meta = fetch_raw_batch([oid], collection="ztf_dr23")
+                    raw23_data, raw23_batch_meta = fetch_raw_batch([oid], collection="ztf_dr23", timeout=30)
                     report["batch_fetches"].append({
                         "band": band,
                         "release": "ztf_dr23",
@@ -299,6 +299,9 @@ def main() -> None:
                     entry["pinned_release_comparisons"]["ztf_dr23"] = {
                         "error": f"{type(exc).__name__}: {exc}"
                     }
+                finally:
+                    # Respect the public IRSA service when checking many OIDs.
+                    time.sleep(0.5)
                 comparisons.append(entry)
             time.sleep(0.5)
     except SystemExit:
