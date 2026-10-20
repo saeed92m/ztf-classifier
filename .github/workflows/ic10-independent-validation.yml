@@ -1,0 +1,51 @@
+name: Independent ZTF IC 10 Catalog Validation
+
+on:
+  push:
+    branches:
+      - validation/ic10-independent-catalog-20261020
+    paths:
+      - "scripts/validation/ic10_independent_catalog_smoke.py"
+      - ".github/workflows/ic10-independent-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ic10-independent-catalog-validation
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Verify independent published catalog
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+
+      - name: Install minimal ingestion dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install pandas
+          python -m pip install -e . --no-deps
+
+      - name: Download, checksum, ingest, and cross-match the independent catalog
+        run: |
+          set -o pipefail
+          python scripts/validation/ic10_independent_catalog_smoke.py | tee ic10-validation-report.json
+
+      - name: Upload reproducible validation report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ic10-independent-catalog-validation
+          path: ic10-validation-report.json
+          if-no-files-found: ignore
+          retention-days: 14
