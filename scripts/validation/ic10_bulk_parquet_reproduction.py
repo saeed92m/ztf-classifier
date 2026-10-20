@@ -143,12 +143,15 @@ def read_parquet_subset(
     frame = pd.read_parquet(io.BytesIO(payload), engine="pyarrow")
     lower_columns = {str(column).lower(): column for column in frame.columns}
     oid_column = lower_columns.get("oid") or lower_columns.get("objectid")
-    mjd_column = lower_columns.get("mjd")
+    # ZTF bulk light-curve Parquet schema uses heliocentric MJD (hmjd),
+    # while the IRSA CGI VOTable exposes mjd. Preserve the actual source column
+    # in metadata; do not silently describe hmjd as ordinary MJD.
+    time_column = lower_columns.get("mjd") or lower_columns.get("hmjd")
     mag_column = lower_columns.get("mag")
     catflags_column = lower_columns.get("catflags")
     required = {
         "oid": oid_column,
-        "mjd": mjd_column,
+        "mjd_or_hmjd": time_column,
         "mag": mag_column,
         "catflags": catflags_column,
     }
@@ -160,7 +163,7 @@ def read_parquet_subset(
         )
     frame = frame.rename(columns={
         oid_column: "oid",
-        mjd_column: "mjd",
+        time_column: "mjd",
         mag_column: "mag",
         catflags_column: "catflags",
     })
@@ -179,6 +182,15 @@ def read_parquet_subset(
         "requested_oids": sorted(requested_oids),
         "found_oids": sorted(set(frame["_oid_key"])),
         "selected_rows": int(len(frame)),
+        "source_time_column": str(time_column),
+        "normalized_time_column": "mjd",
+        "time_scale_note": (
+            "Input Parquet time column is hmjd (heliocentric MJD); normalized to the "
+            "internal date-filter field 'mjd'. This is not identical to ordinary MJD, "
+            "so cutoff-boundary cases must be reviewed before claiming exact reproduction."
+            if str(time_column).lower() == "hmjd"
+            else "Input Parquet time column is MJD."
+        ),
         "columns": [str(column) for column in frame.columns if column != "_oid_key"],
     }
     return frame.drop(columns=["_oid_key"]), metadata
