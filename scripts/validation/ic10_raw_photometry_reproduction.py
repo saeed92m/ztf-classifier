@@ -152,12 +152,39 @@ def fetch_raw_oids_resilient(
                     combined[oid] = found[oid]
                     metadata_by_oid[oid] = meta
                 else:
-                    request_log.append({
+                    missing_record = {
                         "request_mode": "batch_missing_oid",
                         "requested_oids": [oid],
                         "parent_batch_sha256": meta.get("sha256"),
                         "error": "OID absent from successful batch response",
-                    })
+                        "fallback": "single_oid_request",
+                    }
+                    request_log.append(missing_record)
+                    try:
+                        single_found, single_meta = fetch_raw_batch([oid], timeout=timeout)
+                        single_meta = {
+                            **single_meta,
+                            "request_mode": "single_oid_missing_batch_fallback",
+                            "parent_batch_sha256": meta.get("sha256"),
+                        }
+                        request_log.append(single_meta)
+                        if oid in single_found:
+                            combined[oid] = single_found[oid]
+                            metadata_by_oid[oid] = single_meta
+                        else:
+                            request_log.append({
+                                "request_mode": "single_oid_missing",
+                                "requested_oids": [oid],
+                                "error": "OID absent from single-OID response",
+                            })
+                    except Exception as single_exc:
+                        request_log.append({
+                            "request_mode": "single_oid_failed",
+                            "requested_oids": [oid],
+                            "error": f"{type(single_exc).__name__}: {single_exc}",
+                        })
+                    finally:
+                        time.sleep(0.5)
         except Exception as batch_exc:
             request_log.append({
                 "request_mode": "batch_failed",
