@@ -268,6 +268,7 @@ jobs:
           python scripts/audit_cpvs_membership.py \
             --candidate reports/scientific_validation/ztf_periodic_730k/selected.tsv \
             --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
+            --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
             --output reports/scientific_validation/ztf_periodic_730k/membership_audit.json
 
       - name: Classify CPVS reconstruction result
