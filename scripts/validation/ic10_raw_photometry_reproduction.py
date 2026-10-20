@@ -25,6 +25,7 @@ from astropy.table import Table
 ZENODO_BASE = "https://zenodo.org/records/14979711/files"
 IRSA_BASE = "https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves"
 DR15_BULK_BASE = "https://irsa.ipac.caltech.edu/data/ZTF/lc/lc_dr15"
+DR23_BULK_BASE = "https://irsa.ipac.caltech.edu/data/ZTF/lc/lc_dr23"
 FILES = {
     "df_zr.csv": "0589a1bda6abd960145ad6116275851d",
     "df_zg.csv": "3cb5b49b1064a2bac0bc7ab9201fa0e0",
@@ -141,6 +142,9 @@ def raw_oid_metadata(
         ("rcid", "rcids"),
         ("filterid", "filter_ids"),
         ("fid", "filter_ids"),
+        ("ccdid", "ccd_ids"),
+        ("qid", "quadrant_ids"),
+        ("filtercode", "filter_codes"),
     ):
         if source_column in raw.columns:
             metadata[target_key] = sorted(
@@ -349,40 +353,43 @@ def main() -> None:
         for field_id in entry.get("raw", {}).get("field_ids", [])
     })
     bulk_probes = []
-    directory_urls = [
-        f"{DR15_BULK_BASE}/",
-        f"{DR15_BULK_BASE}/0/",
-        f"{DR15_BULK_BASE}/1/",
-    ]
-    directory_urls.extend(
-        f"{DR15_BULK_BASE}/{field_id // 1000}/field{field_id:04d}/"
-        for field_id in fields[:12]
-    )
-    for url in directory_urls:
-        try:
-            payload, attempts = request_bytes(url, timeout=20)
-            html = payload.decode("utf-8", errors="replace")
-            links = sorted(set(re.findall(r"""href=["']([^"']+\.parquet)["']""", html, flags=re.IGNORECASE)))
-            field_links = sorted(set(re.findall(r"""href=["'](field\d+/?)["']""", html, flags=re.IGNORECASE)))
-            bulk_probes.append({
-                "url": url,
-                "status": "AVAILABLE",
-                "attempts": attempts,
-                "bytes": len(payload),
-                "sha256": hashlib.sha256(payload).hexdigest(),
-                "parquet_link_count": len(links),
-                "parquet_links_sample": links[:5],
-                "field_directory_links_sample": field_links[:10],
-                "listing_prefix": html[:160],
-            })
-        except Exception as exc:
-            bulk_probes.append({
-                "url": url,
-                "status": "UNAVAILABLE",
-                "error": f"{type(exc).__name__}: {exc}",
-            })
-    report["dr15_bulk_archive_probes"] = {
-        "base_url": DR15_BULK_BASE,
+    for release, base_url in (("dr15", DR15_BULK_BASE), ("dr23", DR23_BULK_BASE)):
+        directory_urls = [
+            f"{base_url}/",
+            f"{base_url}/0/",
+            f"{base_url}/1/",
+        ]
+        directory_urls.extend(
+            f"{base_url}/{field_id // 1000}/field{field_id:04d}/"
+            for field_id in fields[:12]
+        )
+        for url in directory_urls:
+            try:
+                payload, attempts = request_bytes(url, timeout=20)
+                html = payload.decode("utf-8", errors="replace")
+                links = sorted(set(re.findall(r"""href=["']([^"']+\\.parquet)["']""", html, flags=re.IGNORECASE)))
+                field_links = sorted(set(re.findall(r"""href=["'](field\\d+/?)["']""", html, flags=re.IGNORECASE)))
+                bulk_probes.append({
+                    "release": release,
+                    "url": url,
+                    "status": "AVAILABLE",
+                    "attempts": attempts,
+                    "bytes": len(payload),
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                    "parquet_link_count": len(links),
+                    "parquet_links_sample": links[:5],
+                    "field_directory_links_sample": field_links[:10],
+                    "listing_prefix": html[:160],
+                })
+            except Exception as exc:
+                bulk_probes.append({
+                    "release": release,
+                    "url": url,
+                    "status": "UNAVAILABLE",
+                    "error": f"{type(exc).__name__}: {exc}",
+                })
+    report["bulk_archive_probes"] = {
+        "base_urls": {"dr15": DR15_BULK_BASE, "dr23": DR23_BULK_BASE},
         "field_ids_discovered_from_live_api_metadata": fields,
         "probes": bulk_probes,
         "note": "Only directory listings were requested; no bulk Parquet photometry files were downloaded in this probe.",
