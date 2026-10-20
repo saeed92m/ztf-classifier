@@ -136,7 +136,6 @@ def main() -> None:
             sample = frame.sample(n=min(SAMPLE_PER_BAND, len(frame)), random_state=SAMPLE_SEED).sort_values(["SourceID", "OID"])
             samples[band] = sample
             report["catalogs"][band] = {**meta, "unique_source_ids": int(frame["SourceID"].nunique())}
-        mismatches = 0
         comparisons = report["comparisons"]
         for band in ("r", "g"):
             for row in samples[band].to_dict(orient="records"):
@@ -177,15 +176,27 @@ def main() -> None:
                 entry["best_matching_profile"] = best_profile
                 entry["best_profile_max_abs_delta_mag"] = best_delta
                 entry["best_profile_within_tolerance"] = best_delta <= TOLERANCE_MAG
-                if best_delta > TOLERANCE_MAG:
-                    mismatches += 1
                 comparisons.append(entry)
                 time.sleep(0.15)
+        global_profiles: dict[str, object] = {}
+        for profile_name in ("raw_finite", "catflags_zero_before_cutoff", "paper_plot_filters"):
+            passing_oids = sum(
+                1 for entry in comparisons
+                if entry["profiles"][profile_name]["within_tolerance"]
+            )
+            global_profiles[profile_name] = {
+                "oids_within_tolerance": passing_oids,
+                "sampled_oids": len(comparisons),
+                "all_oids_within_tolerance": passing_oids == len(comparisons),
+            }
         report["summary"] = {
             "sampled_oids": len(comparisons),
-            "oids_with_best_profile_within_tolerance": len(comparisons) - mismatches,
-            "oids_without_any_profile_within_tolerance": mismatches,
-            "pass": mismatches == 0,
+            "global_profile_results": global_profiles,
+            "pass": any(
+                profile["all_oids_within_tolerance"]
+                for profile in global_profiles.values()
+            ),
+            "pass_rule": "At least one single, consistently applied filter profile must reproduce every sampled OID within tolerance; per-OID best-fit profiles do not determine pass/fail.",
         }
     report["result"] = "PASS" if report["summary"]["pass"] else "FAIL"
     print(json.dumps(report, indent=2, sort_keys=True))
