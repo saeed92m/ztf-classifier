@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scripts.audit_cpvs_residual_epochs import metrics, read_vizier
+from scripts.audit_cpvs_residual_epochs import candidate_membership_sets, metrics, read_vizier
 
 
 def test_metrics_applies_band_specific_snr_thresholds() -> None:
@@ -50,3 +50,20 @@ def test_read_vizier_reads_tsv_ids(tmp_path) -> None:
     )
 
     assert read_vizier(source) == {12345, 45678}
+
+
+
+def test_membership_count_is_scoped_to_parent_but_outside_ids_remain_traceable() -> None:
+    qualified = {"g": {1, 2, 99}, "r": {1, 2, 99}}
+    parent_ids = {1, 2}
+    published = {1}
+
+    raw, candidate, candidate_only, published_only, outside_parent = (
+        candidate_membership_sets(qualified, parent_ids, published)
+    )
+
+    assert raw == {1, 2, 99}
+    assert candidate == {1, 2}
+    assert candidate_only == {2}
+    assert published_only == set()
+    assert outside_parent == {99}
