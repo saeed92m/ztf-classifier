@@ -61,7 +61,7 @@ packaging==26.3
 pandas==3.0.6
 parso==0.8.7
 pexpect==4.9.0
-pillow==12.3.0
+pillow==13.0.0
 pip_api==0.0.35
 pip_audit==2.10.1
 pip-requirements-parser==32.0.1
