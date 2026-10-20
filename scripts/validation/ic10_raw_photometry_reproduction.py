@@ -23,7 +23,7 @@ from astropy.table import Table
 
 ZENODO_BASE = "https://zenodo.org/records/14979711/files"
 IRSA_BASE = "https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves"
-DR15_KNOWN_FIELD_URL = "https://irsa.ipac.caltech.edu/data/ZTF/lc/lc_dr15/0/field0697"
+DR15_KNOWN_FIELD_URL = "https://irsa.ipac.caltech.edu/data/ZTF/lc/lc_dr15/0/field0697/"
 FILES = {
     "df_zr.csv": "0589a1bda6abd960145ad6116275851d",
     "df_zg.csv": "3cb5b49b1064a2bac0bc7ab9201fa0e0",
@@ -163,6 +163,9 @@ def main() -> None:
                 "attempts": archive_attempts,
                 "bytes": len(archive_payload),
                 "sha256": hashlib.sha256(archive_payload).hexdigest(),
+                "response_prefix": archive_payload[:160].decode("utf-8", errors="replace"),
+                "contains_parquet_listing": b".parquet" in archive_payload.lower(),
+                "contains_checksum_listing": b"md5" in archive_payload.lower(),
             }
         except Exception as exc:
             report["dr15_bulk_archive_probe"] = {
