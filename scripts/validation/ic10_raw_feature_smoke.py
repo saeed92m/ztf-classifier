@@ -231,4 +231,20 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as exc:
+        print(
+            json.dumps(
+                {
+                    "result": "FAIL",
+                    "dataset": "ZTF IC 10 variable catalog",
+                    "test": "frozen v0.2 feature smoke on paired raw g/r light curves",
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        raise SystemExit(1) from None
