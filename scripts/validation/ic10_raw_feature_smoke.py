@@ -13,6 +13,7 @@ import io
 import json
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 import numpy as np
@@ -91,8 +92,9 @@ def best_oid_per_source(frame: pd.DataFrame) -> pd.DataFrame:
 
 def fetch_raw_lightcurve(oid: str) -> tuple[pd.DataFrame, dict[str, object]]:
     # Match the paper's public code: the live API is not pinned to a release.
-    url = f"https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves?ID={oid}"
-    payload, attempts = fetch_bytes(url)
+    params = urllib.parse.urlencode({"ID": oid, "TIME": f"58194.0 {PAPER_CUTOFF_MJD}"})
+    url = f"https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves?{params}"
+    payload, attempts = fetch_bytes(url, timeout=45)
     table = Table.read(io.BytesIO(payload), format="votable")
     frame = table.to_pandas()
     required = {"mjd", "mag", "magerr", "catflags"}
@@ -157,9 +159,15 @@ def main() -> None:
     if paired.empty:
         raise RuntimeError("No common SourceID remains across g, r, and color tables")
     paired["min_numobs"] = np.minimum(paired["numobs_r"], paired["numobs_g"])
-    chosen = paired.sort_values(
-        ["min_numobs", "numobs_r", "numobs_g", "SourceID"],
-        ascending=[False, False, False, True],
+    eligible = paired[(paired["numobs_r"] >= 30) & (paired["numobs_g"] >= 30)].copy()
+    if eligible.empty:
+        raise RuntimeError("No paired IC 10 SourceID has at least 30 published observations in both bands")
+    eligible["distance_from_100_per_band"] = (
+        (eligible["numobs_r"] - 100).abs() + (eligible["numobs_g"] - 100).abs()
+    )
+    chosen = eligible.sort_values(
+        ["distance_from_100_per_band", "SourceID"],
+        ascending=[True, True],
     ).iloc[0]
     source_id = str(chosen["SourceID"])
     oid_r, oid_g = str(chosen["OID_r"]), str(chosen["OID_g"])
