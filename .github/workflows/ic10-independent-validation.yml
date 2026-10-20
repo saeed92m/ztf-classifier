@@ -18,7 +18,7 @@ permissions:
 
 concurrency:
   group: independent-ztf-validation
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   validate:
