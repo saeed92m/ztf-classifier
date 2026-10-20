@@ -246,7 +246,7 @@ def main() -> None:
         try:
             payload, attempts = request_bytes(url, timeout=20)
             html = payload.decode("utf-8", errors="replace")
-            links = sorted(set(re.findall(r'href=["\\']([^"\\']+\\.parquet)["\\']', html, flags=re.IGNORECASE)))
+            links = sorted(set(re.findall(r"""href=["']([^"']+\.parquet)["']""", html, flags=re.IGNORECASE)))
             bulk_probes.append({
                 "field_id": field_id,
                 "url": url,
