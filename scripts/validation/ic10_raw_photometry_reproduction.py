@@ -127,6 +127,78 @@ def fetch_raw_batch(
     return by_oid, metadata
 
 
+
+def fetch_raw_oids_resilient(
+    oids: list[str], timeout: int = 90, batch_size: int = 2
+) -> tuple[dict[str, pd.DataFrame], dict[str, dict[str, object]], list[dict[str, object]]]:
+    """Fetch small batches first, then fall back to single OIDs on batch errors.
+
+    Every request and fallback is represented in metadata. A failed request is
+    never treated as an empty light curve or a scientific pass.
+    """
+    if batch_size < 1:
+        raise ValueError("batch_size must be positive")
+    combined: dict[str, pd.DataFrame] = {}
+    metadata_by_oid: dict[str, dict[str, object]] = {}
+    request_log: list[dict[str, object]] = []
+    for start in range(0, len(oids), batch_size):
+        chunk = oids[start : start + batch_size]
+        try:
+            found, meta = fetch_raw_batch(chunk, timeout=timeout)
+            meta = {**meta, "request_mode": "batch", "batch_size": len(chunk)}
+            request_log.append(meta)
+            for oid in chunk:
+                if oid in found:
+                    combined[oid] = found[oid]
+                    metadata_by_oid[oid] = meta
+                else:
+                    request_log.append({
+                        "request_mode": "batch_missing_oid",
+                        "requested_oids": [oid],
+                        "parent_batch_sha256": meta.get("sha256"),
+                        "error": "OID absent from successful batch response",
+                    })
+        except Exception as batch_exc:
+            request_log.append({
+                "request_mode": "batch_failed",
+                "requested_oids": chunk,
+                "error": f"{type(batch_exc).__name__}: {batch_exc}",
+                "fallback": "single_oid_requests",
+            })
+            for oid in chunk:
+                try:
+                    found, meta = fetch_raw_batch([oid], timeout=timeout)
+                    meta = {
+                        **meta,
+                        "request_mode": "single_oid_fallback",
+                        "fallback_from_batch": chunk,
+                        "batch_error": f"{type(batch_exc).__name__}: {batch_exc}",
+                    }
+                    request_log.append(meta)
+                    if oid not in found:
+                        request_log.append({
+                            "request_mode": "single_oid_missing",
+                            "requested_oids": [oid],
+                            "error": "OID absent from single-OID response",
+                        })
+                        continue
+                    combined[oid] = found[oid]
+                    metadata_by_oid[oid] = meta
+                except Exception as single_exc:
+                    request_log.append({
+                        "request_mode": "single_oid_failed",
+                        "requested_oids": [oid],
+                        "fallback_from_batch": chunk,
+                        "batch_error": f"{type(batch_exc).__name__}: {batch_exc}",
+                        "error": f"{type(single_exc).__name__}: {single_exc}",
+                    })
+                finally:
+                    time.sleep(0.5)
+        finally:
+            time.sleep(0.5)
+    return combined, metadata_by_oid, request_log
+
+
 def raw_oid_metadata(
     raw: pd.DataFrame, batch_metadata: dict[str, object], oid: str
 ) -> dict[str, object]:
@@ -226,20 +298,25 @@ def main() -> None:
             ).sort_values(["SourceID", "OID"])
             sample_rows = sample.to_dict(orient="records")
             oids = [str(row["OID"]) for row in sample_rows]
-            try:
-                current_data, current_batch_meta = fetch_raw_batch(oids, timeout=90)
-            except Exception as exc:
+            current_data, current_meta_by_oid, current_request_log = fetch_raw_oids_resilient(
+                oids, timeout=90, batch_size=2
+            )
+            report["batch_fetches"].extend(
+                {"band": band, **meta} for meta in current_request_log
+            )
+            missing_current = sorted(set(oids) - set(current_data))
+            if missing_current:
                 report["raw_fetch_failure"] = {
                     "band": band,
-                    "oids": oids,
+                    "oids": missing_current,
                     "collection": None,
-                    "error": f"{type(exc).__name__}: {exc}",
+                    "error": "One or more OIDs could not be retrieved after small-batch and single-OID fallback attempts",
                     "completed_comparisons_before_failure": len(comparisons),
+                    "request_log_entries": len(current_request_log),
                 }
                 report["result"] = "BLOCKED"
                 print(json.dumps(report, indent=2, sort_keys=True))
-                raise SystemExit(2) from exc
-            report["batch_fetches"].append({"band": band, "release": "default", **current_batch_meta})
+                raise SystemExit(2)
             for row in sample_rows:
                 oid = str(row["OID"])
                 raw = current_data.get(oid)
@@ -254,7 +331,7 @@ def main() -> None:
                     report["result"] = "BLOCKED"
                     print(json.dumps(report, indent=2, sort_keys=True))
                     raise SystemExit(2)
-                raw_meta = raw_oid_metadata(raw, current_batch_meta, oid)
+                raw_meta = raw_oid_metadata(raw, current_meta_by_oid[oid], oid)
                 by_profile = profiles(raw, band)
                 published = {key: float(row[key]) for key in ("mean", "std", "min", "max")}
                 entry: dict[str, object] = {
