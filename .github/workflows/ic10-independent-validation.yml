@@ -7,6 +7,7 @@ on:
     paths:
       - "scripts/validation/ic10_independent_catalog_smoke.py"
       - "scripts/validation/ic10_catalog_numeric_consistency.py"
+      - "scripts/validation/ic10_catalog_join_diagnostics.py"
       - "scripts/validation/bts_raw_lightcurve_smoke.py"
       - ".github/workflows/ic10-independent-validation.yml"
   workflow_dispatch:
@@ -48,6 +49,11 @@ jobs:
           set -o pipefail
           python scripts/validation/ic10_catalog_numeric_consistency.py | tee ic10-numeric-consistency-report.json
 
+      - name: Diagnose IC 10 SourceID/OID multiplicity and eligible comparison set
+        run: |
+          set -o pipefail
+          python scripts/validation/ic10_catalog_join_diagnostics.py | tee ic10-join-diagnostics-report.json
+
       - name: Verify raw ZTF BTS light curve through frozen v0.2 feature engine
         run: |
           set -o pipefail
@@ -61,6 +67,7 @@ jobs:
           path: |
             ic10-validation-report.json
             ic10-numeric-consistency-report.json
+            ic10-join-diagnostics-report.json
             bts-lightcurve-validation-report.json
           if-no-files-found: ignore
           retention-days: 14
