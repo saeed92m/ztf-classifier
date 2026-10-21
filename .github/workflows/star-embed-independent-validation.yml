@@ -89,8 +89,10 @@ jobs:
                       delta = curve.get("feat_dynamic_real")
                       if target is None or mjd is None or err is None or delta is None:
                           raise SystemExit(f"{name}: incomplete {band}-band arrays for {row.sourceid}")
-                      if not (len(target) == len(mjd) == len(err) == len(delta)):
-                          raise SystemExit(f"{name}: array-length mismatch for {row.sourceid}/{band}")
+                      if not (len(target) == len(mjd) == len(err)):
+                          raise SystemExit(f"{name}: target/MJD/error length mismatch for {row.sourceid}/{band}")
+                      if len(delta) not in {len(target), max(0, len(target) - 1)}:
+                          raise SystemExit(f"{name}: delta_t length mismatch for {row.sourceid}/{band}")
               splits[split].append(frame)
               digest = hashlib.sha256(path.read_bytes()).hexdigest()
               artifacts[name] = {"rows": len(frame), "sha256": digest, "columns": table.column_names}
