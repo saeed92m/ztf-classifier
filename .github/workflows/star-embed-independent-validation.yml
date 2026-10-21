@@ -1,0 +1,138 @@
+name: Independent StarEmbed ZTF 40k Validation
+
+on:
+  push:
+    branches:
+      - "validation/star-embed-independent-20261021"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/star-embed-independent-validation.yml"
+      - "configs/benchmarks/star_embed_ztf_40k.json"
+      - "src/ztf_classifier/validation/**"
+      - "scripts/validation/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-dataset:
+    name: Acquire and verify independent StarEmbed benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: pip
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+      - name: Acquire pinned StarEmbed dataset and provenance
+        run: |
+          mkdir -p reports/scientific_validation/star_embed_ztf_40k
+          python -m ztf_classifier.validation acquire \
+            --benchmark-id star_embed_ztf_40k \
+            --output reports/scientific_validation/star_embed_ztf_40k/data \
+            --code-version "${GITHUB_SHA}"
+      - name: Validate all splits, object identity, labels, and light-curve arrays
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          import pyarrow.parquet as pq
+
+          root = Path("reports/scientific_validation/star_embed_ztf_40k/data")
+          expected = {
+              "train-00000-of-00002.parquet",
+              "train-00001-of-00002.parquet",
+              "validation-00000-of-00001.parquet",
+              "test-00000-of-00001.parquet",
+              "anom-00000-of-00001.parquet",
+          }
+          files = {p.name: p for p in root.glob("*.parquet")}
+          if set(files) != expected:
+              raise SystemExit(f"Artifact set mismatch: expected={sorted(expected)}, got={sorted(files)}")
+          splits = {"train": [], "validation": [], "test": [], "anom": []}
+          artifacts = {}
+          for name, path in sorted(files.items()):
+              table = pq.read_table(path)
+              required = {"sourceid", "bands_data", "period", "class_str", "ra", "dec"}
+              missing = required - set(table.column_names)
+              if missing:
+                  raise SystemExit(f"{name}: missing columns {sorted(missing)}")
+              frame = table.to_pandas()
+              split = name.split("-")[0]
+              if frame.empty:
+                  raise SystemExit(f"{name}: empty artifact")
+              if frame["sourceid"].isna().any() or frame["sourceid"].duplicated().any():
+                  raise SystemExit(f"{name}: missing/duplicate sourceid")
+              if frame["class_str"].isna().any():
+                  raise SystemExit(f"{name}: missing class_str")
+              if not frame["ra"].between(0, 360).all() or not frame["dec"].between(-90, 90).all():
+                  raise SystemExit(f"{name}: invalid coordinates")
+              for row in frame.itertuples(index=False):
+                  bands = row.bands_data
+                  if not isinstance(bands, dict):
+                      raise SystemExit(f"{name}: bands_data is not a struct/dict")
+                  for band, curve in bands.items():
+                      if curve is None:
+                          continue
+                      target = curve.get("target")
+                      err = curve.get("past_feat_dynamic_real")
+                      mjd = curve.get("mjd")
+                      delta = curve.get("feat_dynamic_real")
+                      if target is None or mjd is None or err is None or delta is None:
+                          raise SystemExit(f"{name}: incomplete {band}-band arrays for {row.sourceid}")
+                      if not (len(target) == len(mjd) == len(err) == len(delta)):
+                          raise SystemExit(f"{name}: array-length mismatch for {row.sourceid}/{band}")
+              splits[split].append(frame)
+              digest = hashlib.sha256(path.read_bytes()).hexdigest()
+              artifacts[name] = {"rows": len(frame), "sha256": digest, "columns": table.column_names}
+          ids = {}
+          for split, frames in splits.items():
+              import pandas as pd
+              merged = pd.concat(frames, ignore_index=True)
+              ids[split] = set(merged["sourceid"].astype(str))
+              classes = sorted(merged["class_str"].astype(str).unique().tolist())
+              print(f"{split}: rows={len(merged)} unique_ids={len(ids[split])} classes={classes}")
+              if len(ids[split]) != len(merged):
+                  raise SystemExit(f"{split}: duplicate source IDs across artifacts")
+          for a, b in [("train","validation"),("train","test"),("validation","test")]:
+              overlap = ids[a] & ids[b]
+              if overlap:
+                  raise SystemExit(f"ID leakage {a}/{b}: {len(overlap)} overlapping objects")
+          in_distribution = set().union(*(set(pd.concat(splits[s], ignore_index=True)["class_str"].astype(str)) for s in ("train","validation","test")))
+          ood_classes = set(pd.concat(splits["anom"], ignore_index=True)["class_str"].astype(str))
+          if in_distribution & ood_classes:
+              raise SystemExit(f"OOD taxonomy overlaps ID taxonomy: {sorted(in_distribution & ood_classes)}")
+          report = {
+              "benchmark_id": "star_embed_ztf_40k",
+              "paper_doi": "10.48550/arXiv.2510.06200",
+              "source": "https://huggingface.co/datasets/StarEmbed/ZTF_40k",
+              "status": "PASS_DATA_INTEGRITY" if artifacts else "FAIL",
+              "artifacts": artifacts,
+              "split_counts": {k: len(v) for k,v in ids.items()},
+              "id_class_count": len(in_distribution),
+              "ood_class_count": len(ood_classes),
+              "cross_split_overlap": False,
+              "ood_class_disjoint": True,
+              "array_alignment_checked": True,
+          }
+          out = Path("reports/scientific_validation/star_embed_ztf_40k/independent_dataset_report.json")
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\\n")
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+      - name: Upload independent benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: star-embed-independent-validation
+          path: reports/scientific_validation/star_embed_ztf_40k/**
+          if-no-files-found: error
