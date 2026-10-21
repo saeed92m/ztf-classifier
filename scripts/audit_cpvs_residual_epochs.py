@@ -108,9 +108,13 @@ def candidate_membership_sets(qualified, parent_ids, published):
     return raw_candidate, candidate, candidate_only, published_only, outside_parent
 
 
-def membership_relation(oid, parent_ids, candidate_only, published_only):
-    """Label residual provenance without treating out-of-parent IDs as members."""
-    if oid not in parent_ids:
+def membership_relation(
+    oid, parent_ids, candidate_only, published_only, raw_candidate, published
+):
+    """Label parent membership and out-of-parent provenance without conflating them."""
+    if oid not in parent_ids and oid in raw_candidate:
+        if oid in published:
+            return "outside_parent_candidate_and_published_member"
         return "outside_parent_candidate"
     if oid in candidate_only:
         return "candidate_only"
@@ -175,7 +179,9 @@ def main():
         w = csv.DictWriter(f, fieldnames=cols, delimiter="\t", lineterminator="\n"); w.writeheader()
         for oid in sorted(targets):
             rec = {"SourceID": oid, "published_member": oid in published, "snr_candidate": oid in candidate,
-                "membership_relation": membership_relation(oid, parent_ids, cand_only, pub_only)}
+                "membership_relation": membership_relation(
+                    oid, parent_ids, cand_only, pub_only, raw_candidate, published
+                )}
             parent_row = parent_catalog.get(oid)
             # Out-of-parent candidates remain in the provenance report, with
             # empty parent metadata; they must not abort TSV serialization.
