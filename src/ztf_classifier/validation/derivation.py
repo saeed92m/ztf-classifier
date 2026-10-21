@@ -98,7 +98,9 @@ def _headerless_lightcurve_schema(required_columns: Iterable[str]) -> list[str] 
     return None
 
 
-def _looks_like_headerless_lightcurve(path: Path, required_columns: Iterable[str]) -> bool:
+def _looks_like_headerless_lightcurve(
+    path: Path, required_columns: Iterable[str]
+) -> bool:
     schema = _headerless_lightcurve_schema(required_columns)
     if schema is None:
         return False
@@ -353,9 +355,7 @@ def _source_ids(parent_path: Path, member: str | None) -> set[str]:
         return set()
     key = _find_key(first, ("SourceID", "sourceid", "oid", "ztf_id"))
     return {
-        row[key].strip()
-        for row in chain((first,), rows)
-        if row.get(key, "").strip()
+        row[key].strip() for row in chain((first,), rows) if row.get(key, "").strip()
     }
 
 
@@ -372,7 +372,11 @@ def _qualified_ids(
     rows = _iter_rows(
         path,
         member,
-        required_columns=("SourceID", *error_columns, "gmag" if "e_gmag" in error_columns else "rmag"),
+        required_columns=(
+            "SourceID",
+            *error_columns,
+            "gmag" if "e_gmag" in error_columns else "rmag",
+        ),
     )
     first = next(rows, None)
     if first is None:
@@ -526,7 +530,9 @@ def derive_730k(
         config,
     )
     if parent_evidence_sha256 is None:
-        raise ValueError("parent_evidence_sha256 is required to emit scientific 730k evidence")
+        raise ValueError(
+            "parent_evidence_sha256 is required to emit scientific 730k evidence"
+        )
     selection_manifest = json.dumps(
         result.to_dict()["selection"],
         sort_keys=True,

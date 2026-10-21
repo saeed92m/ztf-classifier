@@ -33,7 +33,7 @@ jobs:
 
       - name: Install locked dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip==26.2 setuptools==84.0.0 wheel==0.48.0
           python -m pip install -r requirements.lock
           python -m pip install -e . --no-deps
 
@@ -58,7 +58,7 @@ jobs:
 
       - name: Install locked dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip==26.2 setuptools==84.0.0 wheel==0.48.0
           python -m pip install -r requirements.lock
 
       - name: Run Ruff format check
@@ -92,7 +92,7 @@ jobs:
 
       - name: Install locked dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip==26.2 setuptools==84.0.0 wheel==0.48.0
           python -m pip install -r requirements.lock
           python -m pip install -e . --no-deps
 
@@ -151,7 +151,7 @@ jobs:
 
       - name: Install locked dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip==26.2 setuptools==84.0.0 wheel==0.48.0
           python -m pip install -r requirements.lock
           python -m pip install -e . --no-deps
 
@@ -192,7 +192,7 @@ jobs:
 
       - name: Install locked dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip==26.2 setuptools==84.0.0 wheel==0.48.0
           python -m pip install -r requirements.lock
           python -m pip install -e . --no-deps
 
@@ -224,7 +224,7 @@ jobs:
 
       - name: Install locked dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip==26.2 setuptools==84.0.0 wheel==0.48.0
           python -m pip install -r requirements.lock
 
       - name: Build package
@@ -254,8 +254,97 @@ jobs:
 
       - name: Install locked dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip==26.2 setuptools==84.0.0 wheel==0.48.0
           python -m pip install -r requirements.lock
+
+      # Build-system isolation audit (Python build deps only, not OS)
+      - name: Audit build-system isolation
+        run: |
+          set -euo pipefail
+          echo "=== Extract combined build requires (public API) ==="
+          # Backend hooks execute in child processes, so redirecting Python-level stdout is insufficient.
+          python << 'PY' > /tmp/build-requires.txt
+          import os
+          import subprocess
+          import sys
+          from pathlib import Path
+          from build import ProjectBuilder
+
+          diagnostics = []
+          def quiet_runner(command, cwd=None, extra_environ=None):
+              env = os.environ.copy()
+              env.update(extra_environ or {})
+              result = subprocess.run(
+                  command, cwd=cwd, env=env, stdout=subprocess.PIPE,
+                  stderr=subprocess.STDOUT, text=True, check=False
+              )
+              diagnostics.append(result.stdout or "")
+              if result.returncode:
+                  sys.stderr.write(result.stdout or "")
+                  raise subprocess.CalledProcessError(result.returncode, command)
+
+          builder = ProjectBuilder(".", runner=quiet_runner)
+          requirements = (
+              builder.build_system_requires
+              | builder.get_requires_for_build("wheel")
+              | builder.get_requires_for_build("sdist")
+          )
+          Path("/tmp/build-require-discovery.log").write_text("".join(diagnostics))
+          print("\n".join(sorted(requirements)))
+          PY
+          echo "=== Build-backend discovery diagnostics (if any) ==="
+          cat /tmp/build-require-discovery.log
+          mapfile -t REQS < /tmp/build-requires.txt
+          printf 'REQS: %s\n' "${REQS[*]}"
+          test "${#REQS[@]}" -gt 0
+          echo "=== Canonical resolve (direct+transitive) ==="
+          python -m pip install --dry-run --report /tmp/pip-report-build.json --ignore-installed "${REQS[@]}"
+          python -c "import json, pathlib; p=pathlib.Path('/tmp/pip-report-build.json'); assert p.exists(), 'missing report is error'; d=json.loads(p.read_text()); assert d.get('install'), 'empty report is error, not healthy'; print(f\"pip {d['pip_version']} resolves {len(d['install'])}:\"); [print(f\"  {i['metadata']['name']}=={i['metadata']['version']} requested={i['requested']}\") for i in d['install']]"
+          cat /tmp/pip-report-build.json | python -m json.tool > /tmp/pip-report-build.pretty.json
+          echo "=== Rebuild isolated env (stable venv+pip) ==="
+          rm -rf /tmp/isolated-build-audit
+          python -m venv --without-pip /tmp/isolated-build-audit
+          python -m pip --python /tmp/isolated-build-audit/bin/python install "${REQS[@]}"
+          PURELIB=$(python -c "import sysconfig; v=sysconfig.get_config_vars().copy(); v['base']='/tmp/isolated-build-audit'; print(sysconfig.get_paths(vars=v)['purelib'])")
+          echo "purelib: $PURELIB"
+          python -c "import importlib.metadata, sysconfig; v=sysconfig.get_config_vars().copy(); v['base']='/tmp/isolated-build-audit'; p=sysconfig.get_paths(vars=v)['purelib']; dists=list(importlib.metadata.distributions(path=[p])); assert dists, 'empty purelib is error'; [print(f\"  {d.name}=={d.version}\") for d in dists]"
+          echo "=== Compare resolved vs installed (normalized) ==="
+          python << 'PY'
+          import json, sysconfig, importlib.metadata
+          from packaging.utils import canonicalize_name
+          report=json.load(open('/tmp/pip-report-build.json'))
+          resolved={(canonicalize_name(i['metadata']['name']), i['metadata']['version']) for i in report['install']}
+          v=sysconfig.get_config_vars().copy(); v['base']='/tmp/isolated-build-audit'; p=sysconfig.get_paths(vars=v)['purelib']
+          installed={(canonicalize_name(d.name), d.version) for d in importlib.metadata.distributions(path=[p])}
+          print(f"resolved {sorted(resolved)}")
+          print(f"installed {sorted(installed)}")
+          assert resolved, "empty resolved is error"
+          assert installed, "empty installed is error"
+          if resolved != installed:
+              raise SystemExit(f"mismatch missing={resolved-installed} extra={installed-resolved}")
+          print("PASS resolved==installed (normalized direct+transitive)")
+          PY
+          echo "=== Audit must not confuse error with healthy ==="
+          python -m pip_audit --path "$PURELIB" --format=json --output /tmp/audit-build.json
+          cat /tmp/audit-build.json | python -m json.tool
+          python << 'PY'
+          import json, pathlib, sysconfig, importlib.metadata, sys
+          from packaging.utils import canonicalize_name
+          p="/tmp/audit-build.json"
+          assert pathlib.Path(p).exists(), "missing audit JSON is error, not healthy"
+          data=json.loads(pathlib.Path(p).read_text())
+          assert "dependencies" in data, f"missing key {data.keys()} is error"
+          assert data["dependencies"], "empty dependencies for non-empty purelib is error"
+          v=sysconfig.get_config_vars().copy(); v['base']='/tmp/isolated-build-audit'; pure=sysconfig.get_paths(vars=v)['purelib']
+          installed={(canonicalize_name(d.name), d.version) for d in importlib.metadata.distributions(path=[pure])}
+          audited={(canonicalize_name(x['name']), x['version']) for x in data['dependencies']}
+          print(f"audited {sorted(audited)}")
+          if installed != audited:
+              raise SystemExit(f"audit does not cover all installed: missing={installed-audited}")
+          vulns=sum(len(x['vulns']) for x in data["dependencies"])
+          print(f"Audited {len(data['dependencies'])} deps, {vulns} vulns")
+          sys.exit(1 if vulns>0 else 0)
+          PY
 
       - name: Audit dependencies
         run: |

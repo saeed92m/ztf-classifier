@@ -59,21 +59,15 @@ def _validate_sha256(value: Any, field_name: str) -> str:
     """Validate and return a SHA-256 hexadecimal digest."""
 
     if not isinstance(value, str):
-        raise TypeError(
-            f"{field_name} must be a string."
-        )
+        raise TypeError(f"{field_name} must be a string.")
 
     if len(value) != 64:
-        raise ValueError(
-            f"{field_name} must contain a 64-character SHA-256 digest."
-        )
+        raise ValueError(f"{field_name} must contain a 64-character SHA-256 digest.")
 
     try:
         int(value, 16)
     except ValueError as exc:
-        raise ValueError(
-            f"{field_name} must be hexadecimal."
-        ) from exc
+        raise ValueError(f"{field_name} must be hexadecimal.") from exc
 
     return value
 
@@ -115,9 +109,7 @@ class ModelArtifactWriter:
         feature_schema_path = Path(feature_schema_path)
 
         if output_dir.exists():
-            raise FileExistsError(
-                f"Artifact directory already exists: {output_dir}"
-            )
+            raise FileExistsError(f"Artifact directory already exists: {output_dir}")
 
         if not feature_schema_path.is_file():
             raise FileNotFoundError(
@@ -132,22 +124,14 @@ class ModelArtifactWriter:
             )
 
         if artifact.model_version != provenance.model_version:
-            raise ValueError(
-                "Model artifact model_version does not match provenance."
-            )
+            raise ValueError("Model artifact model_version does not match provenance.")
 
         if artifact.model_family != provenance.model_family:
-            raise ValueError(
-                "Model artifact model_family does not match provenance."
-            )
+            raise ValueError("Model artifact model_family does not match provenance.")
 
-        if (
-            artifact.feature_schema_version
-            != provenance.feature_schema_version
-        ):
+        if artifact.feature_schema_version != provenance.feature_schema_version:
             raise ValueError(
-                "Model artifact feature_schema_version "
-                "does not match provenance."
+                "Model artifact feature_schema_version does not match provenance."
             )
 
         if artifact.dataset_sha256 != provenance.dataset_sha256:
@@ -155,13 +139,9 @@ class ModelArtifactWriter:
                 "Model artifact dataset SHA-256 does not match provenance."
             )
 
-        if (
-            artifact.feature_schema_sha256
-            != provenance.feature_schema_sha256
-        ):
+        if artifact.feature_schema_sha256 != provenance.feature_schema_sha256:
             raise ValueError(
-                "Model artifact feature schema SHA-256 "
-                "does not match provenance."
+                "Model artifact feature schema SHA-256 does not match provenance."
             )
 
         if calibration is None:
@@ -179,50 +159,29 @@ class ModelArtifactWriter:
                 )
         else:
             if provenance.calibration_method != calibration.method:
-                raise ValueError(
-                    "Calibration method does not match provenance."
-                )
+                raise ValueError("Calibration method does not match provenance.")
             if provenance.calibration_temperature != calibration.temperature:
-                raise ValueError(
-                    "Calibration temperature does not match provenance."
-                )
+                raise ValueError("Calibration temperature does not match provenance.")
 
-        diagnostics = (
-            conformal is not None
-            or ood is not None
-            or ood_model is not None
-        )
+        diagnostics = conformal is not None or ood is not None or ood_model is not None
 
         if (ood is None) != (ood_model is None):
             raise ValueError(
-                "OOD artifact and OOD production model must be provided "
-                "together."
+                "OOD artifact and OOD production model must be provided together."
             )
 
-        if (
-            ood is not None
-            and ood_model is not None
-        ):
-            if (
-                ood.feature_count
-                != len(artifact.feature_names)
-            ):
+        if ood is not None and ood_model is not None:
+            if ood.feature_count != len(artifact.feature_names):
                 raise ValueError(
-                    "OOD artifact feature count does not match "
-                    "the model feature count."
+                    "OOD artifact feature count does not match the model feature count."
                 )
 
             if (
-                ood_model.config.method
-                != ood.method
-                or ood_model.config.n_estimators
-                != ood.n_estimators
-                or ood_model.config.contamination
-                != ood.contamination
-                or ood_model.config.random_state
-                != ood.random_state
-                or ood_model.config.n_jobs
-                != ood.n_jobs
+                ood_model.config.method != ood.method
+                or ood_model.config.n_estimators != ood.n_estimators
+                or ood_model.config.contamination != ood.contamination
+                or ood_model.config.random_state != ood.random_state
+                or ood_model.config.n_jobs != ood.n_jobs
             ):
                 raise ValueError(
                     "OOD production model configuration does not "
@@ -264,9 +223,7 @@ class ModelArtifactWriter:
 
         artifact.model.save_model(model_path)
 
-        contract_payload = ModelContract(
-            artifact.configuration
-        ).to_dict()
+        contract_payload = ModelContract(artifact.configuration).to_dict()
 
         contract_path.write_text(
             json.dumps(
@@ -418,9 +375,7 @@ class ModelArtifactLoader:
                 f"Artifact manifest does not exist: {manifest_path}"
             )
 
-        manifest = json.loads(
-            manifest_path.read_text(encoding="utf-8")
-        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
         self._validate_manifest(manifest)
 
@@ -441,22 +396,17 @@ class ModelArtifactLoader:
             relative_path = metadata["path"]
             expected_hash = metadata.get("sha256")
 
-            candidate = (
-                artifact_dir / relative_path
-            ).resolve()
+            candidate = (artifact_dir / relative_path).resolve()
 
             try:
                 candidate.relative_to(artifact_dir)
             except ValueError as exc:
                 raise ValueError(
-                    f"Artifact path escapes artifact directory: "
-                    f"{relative_path}"
+                    f"Artifact path escapes artifact directory: {relative_path}"
                 ) from exc
 
             if not candidate.is_file():
-                raise FileNotFoundError(
-                    f"Artifact file does not exist: {candidate}"
-                )
+                raise FileNotFoundError(f"Artifact file does not exist: {candidate}")
 
             actual_hash = _sha256(candidate)
 
@@ -468,30 +418,22 @@ class ModelArtifactLoader:
                 integrity_warnings.append(message)
                 warnings.warn(message, UserWarning, stacklevel=2)
             elif actual_hash != expected_hash:
-                raise ValueError(
-                    f"Artifact integrity check failed for '{key}'."
-                )
+                raise ValueError(f"Artifact integrity check failed for '{key}'.")
 
             paths[key] = candidate
 
         contract_payload = json.loads(
-            paths["model_contract"].read_text(
-                encoding="utf-8"
-            )
+            paths["model_contract"].read_text(encoding="utf-8")
         )
 
-        configuration = ModelContract.from_dict(
-            contract_payload
-        ).config
+        configuration = ModelContract.from_dict(contract_payload).config
 
         self._validate_contract(
             contract_payload,
             manifest,
         )
 
-        schema = pd.read_parquet(
-            paths["feature_schema"]
-        )
+        schema = pd.read_parquet(paths["feature_schema"])
 
         feature_names = self._validate_feature_schema(
             schema,
@@ -522,54 +464,24 @@ class ModelArtifactLoader:
                 integrity_warnings.append(message)
                 warnings.warn(message, UserWarning, stacklevel=2)
             elif actual_hash != expected_hash:
-                raise ValueError(
-                    "Artifact integrity check failed for 'calibration'."
-                )
+                raise ValueError("Artifact integrity check failed for 'calibration'.")
             calibration = CalibrationArtifact.read(calibration_path)
 
-        provenance_data = json.loads(
-            paths["provenance"].read_text(
-                encoding="utf-8"
-            )
-        )
+        provenance_data = json.loads(paths["provenance"].read_text(encoding="utf-8"))
 
         provenance = ModelProvenance(
-            schema_version=str(
-                provenance_data["provenance_schema_version"]
-            ),
-            artifact_version=str(
-                provenance_data["artifact_version"]
-            ),
-            model_version=str(
-                provenance_data["model"]["version"]
-            ),
-            model_family=str(
-                provenance_data["model"]["family"]
-            ),
-            dataset_version=str(
-                provenance_data["dataset"]["version"]
-            ),
-            dataset_path=str(
-                provenance_data["dataset"]["path"]
-            ),
-            dataset_sha256=str(
-                provenance_data["dataset"]["sha256"]
-            ),
-            feature_schema_version=str(
-                provenance_data["feature_schema"]["version"]
-            ),
-            feature_schema_path=str(
-                provenance_data["feature_schema"]["path"]
-            ),
-            feature_schema_sha256=str(
-                provenance_data["feature_schema"]["sha256"]
-            ),
-            model_config_path=str(
-                provenance_data["model_configuration"]["path"]
-            ),
-            model_config_sha256=str(
-                provenance_data["model_configuration"]["sha256"]
-            ),
+            schema_version=str(provenance_data["provenance_schema_version"]),
+            artifact_version=str(provenance_data["artifact_version"]),
+            model_version=str(provenance_data["model"]["version"]),
+            model_family=str(provenance_data["model"]["family"]),
+            dataset_version=str(provenance_data["dataset"]["version"]),
+            dataset_path=str(provenance_data["dataset"]["path"]),
+            dataset_sha256=str(provenance_data["dataset"]["sha256"]),
+            feature_schema_version=str(provenance_data["feature_schema"]["version"]),
+            feature_schema_path=str(provenance_data["feature_schema"]["path"]),
+            feature_schema_sha256=str(provenance_data["feature_schema"]["sha256"]),
+            model_config_path=str(provenance_data["model_configuration"]["path"]),
+            model_config_sha256=str(provenance_data["model_configuration"]["sha256"]),
             calibration_method=(
                 str(provenance_data["calibration"]["method"])
                 if provenance_data.get("calibration") is not None
@@ -590,24 +502,12 @@ class ModelArtifactLoader:
                 if provenance_data.get("calibration") is not None
                 else None
             ),
-            git_commit=str(
-                provenance_data["source_control"]["git_commit"]
-            ),
-            git_dirty=bool(
-                provenance_data["source_control"]["git_dirty"]
-            ),
-            python_version=str(
-                provenance_data["runtime"]["python_version"]
-            ),
-            platform=str(
-                provenance_data["runtime"]["platform"]
-            ),
-            machine=str(
-                provenance_data["runtime"]["machine"]
-            ),
-            dependencies=dict(
-                provenance_data["dependencies"]
-            ),
+            git_commit=str(provenance_data["source_control"]["git_commit"]),
+            git_dirty=bool(provenance_data["source_control"]["git_dirty"]),
+            python_version=str(provenance_data["runtime"]["python_version"]),
+            platform=str(provenance_data["runtime"]["platform"]),
+            machine=str(provenance_data["runtime"]["machine"]),
+            dependencies=dict(provenance_data["dependencies"]),
             software_version=str(
                 provenance_data.get("software", {}).get(
                     "version",
@@ -650,9 +550,7 @@ class ModelArtifactLoader:
                     integrity_warnings.append(message)
                     warnings.warn(message, UserWarning, stacklevel=2)
                 elif actual_hash != expected_hash:
-                    raise ValueError(
-                        "Artifact integrity check failed for 'conformal'."
-                    )
+                    raise ValueError("Artifact integrity check failed for 'conformal'.")
                 conformal = ConformalArtifact.from_dict(
                     json.loads(candidate.read_text(encoding="utf-8"))
                 )
@@ -667,9 +565,7 @@ class ModelArtifactLoader:
                 ood_metadata = files["ood"]
                 ood_model_metadata = files["ood_model"]
                 ood_path = (artifact_dir / ood_metadata["path"]).resolve()
-                ood_model_path = (
-                    artifact_dir / ood_model_metadata["path"]
-                ).resolve()
+                ood_model_path = (artifact_dir / ood_model_metadata["path"]).resolve()
                 for candidate, label in (
                     (ood_path, "ood"),
                     (ood_model_path, "ood_model"),
@@ -715,8 +611,7 @@ class ModelArtifactLoader:
                     or ood_model.config.n_jobs != ood.n_jobs
                 ):
                     raise ValueError(
-                        "Persisted OOD model configuration does not "
-                        "match OOD artifact."
+                        "Persisted OOD model configuration does not match OOD artifact."
                     )
 
                 if ood_model.reference_anomaly_scores is None:
@@ -748,26 +643,14 @@ class ModelArtifactLoader:
 
         artifact = ModelArtifact(
             model=model,
-            model_version=str(
-                manifest["model_version"]
-            ),
-            model_family=str(
-                manifest["model_family"]
-            ),
-            classes=tuple(
-                manifest["classes"]
-            ),
-            feature_schema_version=str(
-                manifest["feature_schema_version"]
-            ),
+            model_version=str(manifest["model_version"]),
+            model_family=str(manifest["model_family"]),
+            classes=tuple(manifest["classes"]),
+            feature_schema_version=str(manifest["feature_schema_version"]),
             feature_names=feature_names,
             configuration=configuration,
-            dataset_sha256=str(
-                manifest["dataset_sha256"]
-            ),
-            feature_schema_sha256=str(
-                manifest["feature_schema_source_sha256"]
-            ),
+            dataset_sha256=str(manifest["dataset_sha256"]),
+            feature_schema_sha256=str(manifest["feature_schema_source_sha256"]),
         )
 
         return LoadedModelArtifact(
@@ -792,36 +675,22 @@ class ModelArtifactLoader:
         """Validate semantic consistency across artifact metadata."""
 
         if provenance.model_version != manifest["model_version"]:
-            raise ValueError(
-                "Provenance model_version does not match artifact."
-            )
+            raise ValueError("Provenance model_version does not match artifact.")
 
         if provenance.model_family != manifest["model_family"]:
-            raise ValueError(
-                "Provenance model_family does not match artifact."
-            )
+            raise ValueError("Provenance model_family does not match artifact.")
 
-        if (
-            provenance.feature_schema_version
-            != manifest["feature_schema_version"]
-        ):
+        if provenance.feature_schema_version != manifest["feature_schema_version"]:
             raise ValueError(
-                "Provenance feature_schema_version "
-                "does not match artifact."
+                "Provenance feature_schema_version does not match artifact."
             )
 
         if provenance.dataset_sha256 != manifest["dataset_sha256"]:
-            raise ValueError(
-                "Provenance dataset SHA-256 does not match artifact."
-            )
+            raise ValueError("Provenance dataset SHA-256 does not match artifact.")
 
-        if (
-            provenance.feature_schema_sha256
-            != manifest["feature_schema_source_sha256"]
-        ):
+        if provenance.feature_schema_sha256 != manifest["feature_schema_source_sha256"]:
             raise ValueError(
-                "Provenance feature schema SHA-256 "
-                "does not match artifact."
+                "Provenance feature schema SHA-256 does not match artifact."
             )
 
         if calibration is None:
@@ -842,14 +711,10 @@ class ModelArtifactLoader:
 
         if provenance.calibration_method != calibration.method:
             raise ValueError(
-                "Provenance calibration method does not match "
-                "calibration artifact."
+                "Provenance calibration method does not match calibration artifact."
             )
 
-        if (
-            provenance.calibration_temperature
-            != calibration.temperature
-        ):
+        if provenance.calibration_temperature != calibration.temperature:
             raise ValueError(
                 "Provenance calibration temperature does not match "
                 "calibration artifact."
@@ -862,21 +727,15 @@ class ModelArtifactLoader:
         """Validate top-level artifact manifest metadata."""
 
         if not isinstance(manifest, dict):
-            raise TypeError(
-                "Artifact manifest must be a dictionary."
-            )
+            raise TypeError("Artifact manifest must be a dictionary.")
 
-        schema_version = manifest.get(
-            "artifact_schema_version"
-        )
+        schema_version = manifest.get("artifact_schema_version")
 
         if schema_version not in (
             LEGACY_ARTIFACT_SCHEMA_VERSION,
             ARTIFACT_SCHEMA_VERSION,
         ):
-            raise ValueError(
-                "Unsupported model artifact schema version."
-            )
+            raise ValueError("Unsupported model artifact schema version.")
 
         for field in (
             "model_version",
@@ -886,24 +745,19 @@ class ModelArtifactLoader:
             value = manifest.get(field)
 
             if not isinstance(value, str) or not value:
-                raise ValueError(
-                    f"Artifact manifest field '{field}' is invalid."
-                )
+                raise ValueError(f"Artifact manifest field '{field}' is invalid.")
 
         classes = manifest.get("classes")
 
         if classes != list(MODEL_CLASSES):
             raise ValueError(
-                "Artifact manifest classes do not match "
-                "the frozen class order."
+                "Artifact manifest classes do not match the frozen class order."
             )
 
         feature_count = manifest.get("feature_count")
 
         if feature_count != 42:
-            raise ValueError(
-                "Artifact manifest must contain exactly 42 features."
-            )
+            raise ValueError("Artifact manifest must contain exactly 42 features.")
 
         feature_names = manifest.get("feature_names")
 
@@ -912,9 +766,7 @@ class ModelArtifactLoader:
             or len(feature_names) != 42
             or len(set(feature_names)) != 42
         ):
-            raise ValueError(
-                "Artifact manifest contains an invalid feature schema."
-            )
+            raise ValueError("Artifact manifest contains an invalid feature schema.")
 
         _validate_sha256(
             manifest.get("dataset_sha256"),
@@ -922,18 +774,14 @@ class ModelArtifactLoader:
         )
 
         _validate_sha256(
-            manifest.get(
-                "feature_schema_source_sha256"
-            ),
+            manifest.get("feature_schema_source_sha256"),
             "feature_schema_source_sha256",
         )
 
         files = manifest.get("files")
 
         if not isinstance(files, dict):
-            raise TypeError(
-                "Artifact manifest contains invalid file metadata."
-            )
+            raise TypeError("Artifact manifest contains invalid file metadata.")
 
         required_files = (
             REQUIRED_FILES_V1_1
@@ -945,27 +793,18 @@ class ModelArtifactLoader:
             metadata = files.get(key)
 
             if not isinstance(metadata, dict):
-                raise TypeError(
-                    f"Artifact manifest is missing '{key}' metadata."
-                )
+                raise TypeError(f"Artifact manifest is missing '{key}' metadata.")
 
             relative_path = metadata.get("path")
 
             if not isinstance(relative_path, str):
-                raise TypeError(
-                    f"Invalid path metadata for '{key}'."
-                )
+                raise TypeError(f"Invalid path metadata for '{key}'.")
 
             if not relative_path:
-                raise ValueError(
-                    f"Empty path metadata for '{key}'."
-                )
+                raise ValueError(f"Empty path metadata for '{key}'.")
 
             checksum = metadata.get("sha256")
-            if (
-                checksum is None
-                and schema_version == LEGACY_ARTIFACT_SCHEMA_VERSION
-            ):
+            if checksum is None and schema_version == LEGACY_ARTIFACT_SCHEMA_VERSION:
                 continue
             _validate_sha256(
                 checksum,
@@ -1001,37 +840,21 @@ class ModelArtifactLoader:
         """Validate the serialized model contract."""
 
         if not isinstance(contract, dict):
-            raise TypeError(
-                "Model contract must be a dictionary."
-            )
+            raise TypeError("Model contract must be a dictionary.")
 
-        if contract.get(
-            "model_version"
-        ) != manifest.get("model_version"):
-            raise ValueError(
-                "Model contract version does not match artifact."
-            )
+        if contract.get("model_version") != manifest.get("model_version"):
+            raise ValueError("Model contract version does not match artifact.")
 
-        if contract.get(
-            "model_family"
-        ) != manifest.get("model_family"):
-            raise ValueError(
-                "Model contract family does not match artifact."
-            )
+        if contract.get("model_family") != manifest.get("model_family"):
+            raise ValueError("Model contract family does not match artifact.")
 
-        if contract.get(
-            "classes"
-        ) != list(MODEL_CLASSES):
-            raise ValueError(
-                "Model contract classes do not match frozen classes."
-            )
+        if contract.get("classes") != list(MODEL_CLASSES):
+            raise ValueError("Model contract classes do not match frozen classes.")
 
         class_mapping = contract.get("class_to_index")
 
         if not isinstance(class_mapping, dict):
-            raise TypeError(
-                "Model contract class mapping must be a dictionary."
-            )
+            raise TypeError("Model contract class mapping must be a dictionary.")
 
     @staticmethod
     def _validate_feature_schema(
@@ -1046,38 +869,22 @@ class ModelArtifactLoader:
         }
 
         if not required.issubset(schema.columns):
-            raise ValueError(
-                "Feature schema is missing required columns."
-            )
+            raise ValueError("Feature schema is missing required columns.")
 
-        ordered = (
-            schema
-            .sort_values("feature_order")
-            .reset_index(drop=True)
-        )
+        ordered = schema.sort_values("feature_order").reset_index(drop=True)
 
-        names = tuple(
-            ordered["feature"].astype(str).tolist()
-        )
+        names = tuple(ordered["feature"].astype(str).tolist())
 
-        expected = tuple(
-            manifest["feature_names"]
-        )
+        expected = tuple(manifest["feature_names"])
 
         if names != expected:
-            raise ValueError(
-                "Artifact feature schema does not match manifest."
-            )
+            raise ValueError("Artifact feature schema does not match manifest.")
 
         if len(names) != 42:
-            raise ValueError(
-                "Artifact feature schema must contain 42 features."
-            )
+            raise ValueError("Artifact feature schema must contain 42 features.")
 
         if len(set(names)) != 42:
-            raise ValueError(
-                "Artifact feature schema contains duplicates."
-            )
+            raise ValueError("Artifact feature schema contains duplicates.")
 
         return names
 

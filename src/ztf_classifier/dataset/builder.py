@@ -46,14 +46,10 @@ class ObjectManifestBuilder:
             manifest_objects["probability"],
             errors="raise",
         )
-        manifest_objects["classifier_version"] = (
-            self._config.classifier_version
-        )
+        manifest_objects["classifier_version"] = self._config.classifier_version
         manifest_objects["survey"] = self._config.survey
 
-        manifest_objects = manifest_objects.loc[
-            :, list(REQUIRED_OBJECT_COLUMNS)
-        ].copy()
+        manifest_objects = manifest_objects.loc[:, list(REQUIRED_OBJECT_COLUMNS)].copy()
 
         manifest_objects["oid"] = manifest_objects["oid"].astype(str)
         if manifest_objects["oid"].eq("").any():
@@ -67,24 +63,20 @@ class ObjectManifestBuilder:
                 ].unique()
             )
             raise ValueError(
-                "Object manifest contains duplicate OIDs: "
-                + ", ".join(duplicates)
+                "Object manifest contains duplicate OIDs: " + ", ".join(duplicates)
             )
 
         unexpected_classes = sorted(
-            set(manifest_objects["class"].astype(str))
-            - set(self._config.classes)
+            set(manifest_objects["class"].astype(str)) - set(self._config.classes)
         )
         if unexpected_classes:
             raise ValueError(
                 "Object manifest contains classes not present in the "
-                "dataset configuration: "
-                + ", ".join(unexpected_classes)
+                "dataset configuration: " + ", ".join(unexpected_classes)
             )
 
         missing_classes = sorted(
-            set(self._config.classes)
-            - set(manifest_objects["class"].astype(str))
+            set(self._config.classes) - set(manifest_objects["class"].astype(str))
         )
         if missing_classes:
             raise ValueError(
@@ -102,14 +94,10 @@ class ObjectManifestBuilder:
         )
 
         if probabilities.isna().any() or label_probabilities.isna().any():
-            raise ValueError(
-                "Object manifest contains invalid probability values."
-            )
+            raise ValueError("Object manifest contains invalid probability values.")
 
         if not probabilities.between(0.0, 1.0).all():
-            raise ValueError(
-                "Object manifest contains probabilities outside [0, 1]."
-            )
+            raise ValueError("Object manifest contains probabilities outside [0, 1].")
 
         if not label_probabilities.between(0.0, 1.0).all():
             raise ValueError(
@@ -117,37 +105,32 @@ class ObjectManifestBuilder:
             )
 
         if not (
-            probabilities.reset_index(drop=True)
-            .equals(label_probabilities.reset_index(drop=True))
+            probabilities.reset_index(drop=True).equals(
+                label_probabilities.reset_index(drop=True)
+            )
         ):
             raise ValueError(
                 "Object manifest probability and label_probability differ."
             )
 
-        if manifest_objects["classifier"].astype(str).ne(
-            self._config.classifier
-        ).any():
-            raise ValueError(
-                "Object manifest contains an unexpected classifier."
-            )
+        if manifest_objects["classifier"].astype(str).ne(self._config.classifier).any():
+            raise ValueError("Object manifest contains an unexpected classifier.")
 
-        if manifest_objects["survey"].astype(str).ne(
-            self._config.survey
-        ).any():
-            raise ValueError(
-                "Object manifest contains an unexpected survey."
-            )
+        if manifest_objects["survey"].astype(str).ne(self._config.survey).any():
+            raise ValueError("Object manifest contains an unexpected survey.")
 
-        if self._config.classifier_version != "unknown" and manifest_objects[
-            "classifier_version"
-        ].astype(str).ne(self._config.classifier_version).any():
+        if (
+            self._config.classifier_version != "unknown"
+            and manifest_objects["classifier_version"]
+            .astype(str)
+            .ne(self._config.classifier_version)
+            .any()
+        ):
             raise ValueError(
                 "Object manifest contains an unexpected classifier version."
             )
 
-        manifest_objects = manifest_objects.sort_values(
-            "oid"
-        ).reset_index(drop=True)
+        manifest_objects = manifest_objects.sort_values("oid").reset_index(drop=True)
 
         return ObjectManifest(
             objects=manifest_objects,

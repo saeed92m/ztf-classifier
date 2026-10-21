@@ -39,7 +39,12 @@ class EvidenceArtifact:
         return cls(str(p), sha256_file(p), p.stat().st_size, role)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"path": self.path, "sha256": self.sha256, "size_bytes": self.size_bytes, "role": self.role}
+        return {
+            "path": self.path,
+            "sha256": self.sha256,
+            "size_bytes": self.size_bytes,
+            "role": self.role,
+        }
 
 
 @dataclass(frozen=True)
@@ -57,29 +62,53 @@ class EvidenceManifest:
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> EvidenceManifest:
-        required = ("benchmark_id","source_id","source_version","acquisition_timestamp","code_version","artifacts")
+        required = (
+            "benchmark_id",
+            "source_id",
+            "source_version",
+            "acquisition_timestamp",
+            "code_version",
+            "artifacts",
+        )
         missing = [key for key in required if key not in payload]
         if missing:
-            raise ValueError("Evidence manifest missing required fields: " + ", ".join(missing))
+            raise ValueError(
+                "Evidence manifest missing required fields: " + ", ".join(missing)
+            )
         source = get_source(str(payload["source_id"]))
         row_count = payload.get("row_count")
         if row_count is not None and (
-            isinstance(row_count, bool) or not isinstance(row_count, int) or row_count < 0
+            isinstance(row_count, bool)
+            or not isinstance(row_count, int)
+            or row_count < 0
         ):
-            raise ValueError("Evidence manifest row_count must be a non-negative integer")
+            raise ValueError(
+                "Evidence manifest row_count must be a non-negative integer"
+            )
         if payload["source_version"] != source.version:
             raise ValueError(
                 f"source version mismatch for {source.source_id}: expected {source.version!r}, got {payload['source_version']!r}"
             )
-        artifacts = tuple(EvidenceArtifact(str(item["path"]), str(item["sha256"]), int(item["size_bytes"]), str(item["role"])) for item in payload["artifacts"])
+        artifacts = tuple(
+            EvidenceArtifact(
+                str(item["path"]),
+                str(item["sha256"]),
+                int(item["size_bytes"]),
+                str(item["role"]),
+            )
+            for item in payload["artifacts"]
+        )
         if not artifacts:
             raise ValueError("Evidence manifest must contain at least one artifact")
         if payload.get("immutable", True) is not True:
             raise ValueError("Scientific benchmark evidence must be immutable")
         return cls(
-            benchmark_id=str(payload["benchmark_id"]), source_id=source.source_id,
-            source_version=source.version, acquisition_timestamp=str(payload["acquisition_timestamp"]),
-            code_version=str(payload["code_version"]), artifacts=artifacts,
+            benchmark_id=str(payload["benchmark_id"]),
+            source_id=source.source_id,
+            source_version=source.version,
+            acquisition_timestamp=str(payload["acquisition_timestamp"]),
+            code_version=str(payload["code_version"]),
+            artifacts=artifacts,
             parent_evidence_sha256=payload.get("parent_evidence_sha256"),
             query_manifest_sha256=payload.get("query_manifest_sha256"),
             row_count=payload.get("row_count"),
@@ -89,9 +118,12 @@ class EvidenceManifest:
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema_version": "scientific-evidence-manifest-v1",
-            "benchmark_id": self.benchmark_id, "source_id": self.source_id,
-            "source_version": self.source_version, "acquisition_timestamp": self.acquisition_timestamp,
-            "code_version": self.code_version, "immutable": self.immutable,
+            "benchmark_id": self.benchmark_id,
+            "source_id": self.source_id,
+            "source_version": self.source_version,
+            "acquisition_timestamp": self.acquisition_timestamp,
+            "code_version": self.code_version,
+            "immutable": self.immutable,
             "parent_evidence_sha256": self.parent_evidence_sha256,
             "query_manifest_sha256": self.query_manifest_sha256,
             "row_count": self.row_count,
@@ -110,9 +142,13 @@ class EvidenceManifest:
                 errors.append(f"artifact missing: {artifact.path}")
                 continue
             if path.stat().st_size != artifact.size_bytes:
-                errors.append(f"artifact size mismatch: {artifact.path} expected={artifact.size_bytes} actual={path.stat().st_size}")
+                errors.append(
+                    f"artifact size mismatch: {artifact.path} expected={artifact.size_bytes} actual={path.stat().st_size}"
+                )
             if sha256_file(path) != artifact.sha256:
-                errors.append(f"artifact hash mismatch: {artifact.path} expected={artifact.sha256}")
+                errors.append(
+                    f"artifact hash mismatch: {artifact.path} expected={artifact.sha256}"
+                )
         return errors
 
 
@@ -130,14 +166,22 @@ def write_evidence_manifest(
 ) -> EvidenceManifest:
     source = get_source(source_id)
     manifest = EvidenceManifest(
-        benchmark_id=benchmark_id, source_id=source.source_id, source_version=source.version,
-        acquisition_timestamp=acquisition_timestamp, code_version=code_version,
-        artifacts=tuple(artifacts), parent_evidence_sha256=parent_evidence_sha256,
-        query_manifest_sha256=query_manifest_sha256, row_count=row_count,
+        benchmark_id=benchmark_id,
+        source_id=source.source_id,
+        source_version=source.version,
+        acquisition_timestamp=acquisition_timestamp,
+        code_version=code_version,
+        artifacts=tuple(artifacts),
+        parent_evidence_sha256=parent_evidence_sha256,
+        query_manifest_sha256=query_manifest_sha256,
+        row_count=row_count,
     )
     if not manifest.artifacts:
         raise ValueError("Evidence manifest requires at least one artifact")
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(manifest.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(manifest.to_dict(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     return manifest

@@ -29,9 +29,7 @@ def _relative_path(path: Path, project_root: Path) -> str:
     try:
         return path.resolve().relative_to(project_root.resolve()).as_posix()
     except ValueError as exc:
-        raise ValueError(
-            f"Path must be inside project root: {path}"
-        ) from exc
+        raise ValueError(f"Path must be inside project root: {path}") from exc
 
 
 def _json_safe(value: Any) -> Any:
@@ -54,9 +52,7 @@ def _json_safe(value: Any) -> Any:
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
 
-    raise TypeError(
-        f"Unsupported configuration value type: {type(value).__name__}"
-    )
+    raise TypeError(f"Unsupported configuration value type: {type(value).__name__}")
 
 
 @dataclass(frozen=True)
@@ -119,9 +115,7 @@ class ReproducibilityManifestBuilder:
             raise ValueError(f"Dataset does not exist: {dataset_path}")
 
         if not feature_schema_path.is_file():
-            raise ValueError(
-                f"Feature schema does not exist: {feature_schema_path}"
-            )
+            raise ValueError(f"Feature schema does not exist: {feature_schema_path}")
 
         if object_count is not None and object_count < 0:
             raise ValueError("object_count must be non-negative.")

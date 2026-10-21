@@ -36,9 +36,7 @@ def test_alerce_boolean_strings_are_parsed_safely() -> None:
 
 def test_alerce_rejects_unknown_boolean_values() -> None:
     with pytest.raises(ValueError, match="non-boolean values"):
-        alerce_to_internal_lc_robust(
-            _detections(dubious=["not-a-bool", "False"])
-        )
+        alerce_to_internal_lc_robust(_detections(dubious=["not-a-bool", "False"]))
 
 
 def test_alerce_rejects_missing_required_columns() -> None:
@@ -49,9 +47,7 @@ def test_alerce_rejects_missing_required_columns() -> None:
 
 
 def test_alerce_preserves_nan_boolean_as_false() -> None:
-    result = alerce_to_internal_lc_robust(
-        _detections(dubious=[np.nan, "0"])
-    )
+    result = alerce_to_internal_lc_robust(_detections(dubious=[np.nan, "0"]))
 
     assert result["dubious"].tolist() == [False, False]
 
@@ -78,12 +74,7 @@ def _inference_engine(tmp_path):
 
 def test_inference_rejects_rows_with_all_features_missing(tmp_path) -> None:
     engine = _inference_engine(tmp_path)
-    dataset = pd.DataFrame(
-        {
-            f"feature_{index}": [np.nan]
-            for index in range(1, 43)
-        }
-    )
+    dataset = pd.DataFrame({f"feature_{index}": [np.nan] for index in range(1, 43)})
 
     with pytest.raises(
         ValueError,
@@ -107,10 +98,7 @@ def test_inference_rejects_duplicate_feature_order(tmp_path) -> None:
     )
 
     dataset = pd.DataFrame(
-        {
-            f"feature_{index}": [float(index)]
-            for index in range(1, 43)
-        }
+        {f"feature_{index}": [float(index)] for index in range(1, 43)}
     )
 
     with pytest.raises(
@@ -135,10 +123,7 @@ def test_inference_rejects_non_contract_feature_order(tmp_path) -> None:
     )
 
     dataset = pd.DataFrame(
-        {
-            f"feature_{index}": [float(index)]
-            for index in range(1, 43)
-        }
+        {f"feature_{index}": [float(index)] for index in range(1, 43)}
     )
 
     with pytest.raises(

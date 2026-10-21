@@ -22,5 +22,8 @@ def test_read_vizier_reads_fixed_width_id_column(tmp_path: Path):
 
 def test_read_vizier_reads_tsv_export(tmp_path: Path):
     path = tmp_path / "table4.tsv"
-    path.write_text("# VizieR export\nZTF\tID\nZTFJ000000.00+000000.0\t7\nZTFJ000001.00+000000.0\t9\n", encoding="utf-8")
+    path.write_text(
+        "# VizieR export\nZTF\tID\nZTFJ000000.00+000000.0\t7\nZTFJ000001.00+000000.0\t9\n",
+        encoding="utf-8",
+    )
     assert read_vizier(path) == {7, 9}

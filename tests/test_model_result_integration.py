@@ -32,10 +32,7 @@ def _inference(probabilities: np.ndarray) -> InferenceResult:
         axis=1,
     ).astype(np.int64)
 
-    labels = tuple(
-        MODEL_CLASSES[index]
-        for index in indices
-    )
+    labels = tuple(MODEL_CLASSES[index] for index in indices)
 
     return InferenceResult(
         probabilities=probabilities,
@@ -102,13 +99,9 @@ def test_calibration_preserves_probability_simplex() -> None:
         calibrated_probabilities=calibrated,
     )
 
-    assert np.isfinite(
-        result.calibrated_probabilities
-    ).all()
+    assert np.isfinite(result.calibrated_probabilities).all()
 
-    assert (
-        result.calibrated_probabilities >= 0.0
-    ).all()
+    assert (result.calibrated_probabilities >= 0.0).all()
 
     np.testing.assert_allclose(
         result.calibrated_probabilities.sum(axis=1),
@@ -138,7 +131,4 @@ def test_calibration_does_not_change_raw_prediction() -> None:
         inference.predicted_class_indices,
     )
 
-    assert (
-        result.raw_predicted_labels
-        == inference.predicted_labels
-    )
+    assert result.raw_predicted_labels == inference.predicted_labels

@@ -14,9 +14,7 @@ from ztf_classifier.application.ingestion import (
 
 def test_import_csv_returns_table_and_content_provenance(tmp_path):
     path = tmp_path / "detections.csv"
-    path.write_text(
-        "oid,mjd,mag\nZTF1,60000.1,18.2\nZTF1,60001.1,18.4\n"
-    )
+    path.write_text("oid,mjd,mag\nZTF1,60000.1,18.2\nZTF1,60001.1,18.4\n")
 
     result = DataIngestionService().import_file(
         ImportRequest(path=path, required_columns=("oid", "mjd"))
@@ -40,9 +38,7 @@ def test_import_csv_returns_table_and_content_provenance(tmp_path):
         ("oid,mjd\nZTF1,60000\n", "missing required columns"),
     ],
 )
-def test_import_rejects_empty_data_or_missing_columns(
-    tmp_path, contents, message
-):
+def test_import_rejects_empty_data_or_missing_columns(tmp_path, contents, message):
     path = tmp_path / "input.csv"
     path.write_text(contents)
     required = ("oid", "mag") if "ZTF1" in contents else ()
@@ -62,9 +58,7 @@ def test_import_rejects_unsupported_formats_and_oversized_files(tmp_path):
     csv_path = tmp_path / "input.csv"
     csv_path.write_text("oid\nZTF1\n")
     with pytest.raises(ApplicationInputError, match="exceeds max_bytes"):
-        DataIngestionService().import_file(
-            ImportRequest(path=csv_path, max_bytes=1)
-        )
+        DataIngestionService().import_file(ImportRequest(path=csv_path, max_bytes=1))
 
 
 def test_import_does_not_mutate_source_file(tmp_path):

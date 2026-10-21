@@ -30,7 +30,9 @@ def main(argv: list[str] | None = None) -> int:
     validate.add_argument("--input", required=True, type=Path)
     validate.add_argument("--output-dir", required=True, type=Path)
 
-    acquire = subparsers.add_parser("acquire", help="Acquire one canonical source-backed evidence package")
+    acquire = subparsers.add_parser(
+        "acquire", help="Acquire one canonical source-backed evidence package"
+    )
     acquire.add_argument("--benchmark-id", required=True)
     acquire.add_argument("--output", required=True, type=Path)
     acquire.add_argument("--url", action="append", dest="urls", default=())
@@ -39,7 +41,10 @@ def main(argv: list[str] | None = None) -> int:
     acquire.add_argument("--query-manifest", type=Path)
     acquire.add_argument("--parent-evidence-sha256")
 
-    derive = subparsers.add_parser("derive-730k", help="Derive the published 730,184-object CPVS subset from pinned source artifacts")
+    derive = subparsers.add_parser(
+        "derive-730k",
+        help="Derive the published 730,184-object CPVS subset from pinned source artifacts",
+    )
     derive.add_argument("--parent", required=True, type=Path)
     derive.add_argument("--g-lightcurve", required=True, type=Path)
     derive.add_argument("--r-lightcurve", required=True, type=Path)
@@ -50,11 +55,21 @@ def main(argv: list[str] | None = None) -> int:
     derive.add_argument("--parent-evidence-sha256", required=True)
     derive.add_argument("--code-version", default="working-tree")
 
-    gate = subparsers.add_parser("gate", help="Evaluate the fail-closed product release gate")
-    gate.add_argument("--evidence-dir", type=Path, default=Path("reports/scientific_validation"))
-    gate.add_argument("--output", type=Path, default=Path("reports/scientific_validation/release_gate.json"))
+    gate = subparsers.add_parser(
+        "gate", help="Evaluate the fail-closed product release gate"
+    )
+    gate.add_argument(
+        "--evidence-dir", type=Path, default=Path("reports/scientific_validation")
+    )
+    gate.add_argument(
+        "--output",
+        type=Path,
+        default=Path("reports/scientific_validation/release_gate.json"),
+    )
 
-    report = subparsers.add_parser("report", help="Render a scientific validation report")
+    report = subparsers.add_parser(
+        "report", help="Render a scientific validation report"
+    )
     report.add_argument("--gate", type=Path, required=True)
     report.add_argument("--output", type=Path, required=True)
 
@@ -75,7 +90,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "acquire":
             query_manifest = None
             if args.query_manifest:
-                query_manifest = json.loads(args.query_manifest.read_text(encoding="utf-8"))
+                query_manifest = json.loads(
+                    args.query_manifest.read_text(encoding="utf-8")
+                )
             request = request_from_benchmark(
                 args.registry_dir,
                 args.benchmark_id,
@@ -87,7 +104,10 @@ def main(argv: list[str] | None = None) -> int:
             )
             result = acquire_source(request, code_version=args.code_version)
             report = args.output.with_name(args.output.name + ".acquisition.json")
-            report.write_text(json.dumps(result.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            report.write_text(
+                json.dumps(result.to_dict(), indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
             print(f"acquisition={result.status}")
             print(f"report={report}")
             return 0 if result.status == "ACQUIRED" else 2
@@ -120,7 +140,9 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if result["status"] == "PASS" else 2
 
         manifest = registry.load(args.benchmark_id)
-        result = run_table_benchmark(manifest=manifest, input_path=args.input, output_dir=args.output_dir)
+        result = run_table_benchmark(
+            manifest=manifest, input_path=args.input, output_dir=args.output_dir
+        )
         print(f"benchmark={result.benchmark_id}")
         print(f"status={result.status}")
         print(f"report={result.output_path}")

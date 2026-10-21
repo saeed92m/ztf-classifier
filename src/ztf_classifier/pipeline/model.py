@@ -69,15 +69,9 @@ class ModelPipeline:
     ) -> None:
         self._project_root = Path(project_root).resolve()
         self._dataset_path = Path(dataset_path).resolve()
-        self._fold_assignments_path = (
-            Path(fold_assignments_path).resolve()
-        )
-        self._feature_schema_path = Path(
-            feature_schema_path
-        ).resolve()
-        self._model_config_path = Path(
-            model_config_path
-        ).resolve()
+        self._fold_assignments_path = Path(fold_assignments_path).resolve()
+        self._feature_schema_path = Path(feature_schema_path).resolve()
+        self._model_config_path = Path(model_config_path).resolve()
         self._output_dir = Path(output_dir).resolve()
         self._dataset_version = dataset_version
         self._artifact_version = artifact_version
@@ -90,9 +84,7 @@ class ModelPipeline:
         self._validate_model_config()
 
         dataset = pd.read_parquet(self._dataset_path)
-        fold_assignments = pd.read_parquet(
-            self._fold_assignments_path
-        )
+        fold_assignments = pd.read_parquet(self._fold_assignments_path)
 
         self._validate_training_dataset(dataset)
         self._validate_feature_schema(dataset)
@@ -118,9 +110,7 @@ class ModelPipeline:
 
         oof_path = self._output_dir / "oof_predictions.parquet"
         if oof_path.exists():
-            raise FileExistsError(
-                f"Run OOF output already exists: {oof_path}"
-            )
+            raise FileExistsError(f"Run OOF output already exists: {oof_path}")
 
         oof_result.predictions.to_parquet(
             oof_path,
@@ -134,9 +124,7 @@ class ModelPipeline:
 
         calibration = CalibrationArtifact(
             method="temperature_scaling",
-            temperature=float(
-                calibration_result.temperature
-            ),
+            temperature=float(calibration_result.temperature),
         )
 
         conformal_results = EmpiricalConformalPredictor().fit_all(
@@ -162,8 +150,7 @@ class ModelPipeline:
 
         if ood_model.reference_anomaly_scores is None:
             raise RuntimeError(
-                "Fitted OOD production model has no reference "
-                "anomaly scores."
+                "Fitted OOD production model has no reference anomaly scores."
             )
 
         ood = OODArtifact.from_config(
@@ -172,9 +159,7 @@ class ModelPipeline:
         )
 
         dataset_sha256 = self._sha256(self._dataset_path)
-        feature_schema_sha256 = self._sha256(
-            self._feature_schema_path
-        )
+        feature_schema_sha256 = self._sha256(self._feature_schema_path)
 
         model_artifact = ModelArtifact(
             model=model,
@@ -188,9 +173,7 @@ class ModelPipeline:
             feature_schema_sha256=feature_schema_sha256,
         )
 
-        provenance = ModelProvenanceBuilder(
-            project_root=self._project_root
-        ).build(
+        provenance = ModelProvenanceBuilder(project_root=self._project_root).build(
             artifact_version=self._artifact_version,
             model_version=self._config.version,
             model_family=self._config.family,
@@ -217,9 +200,7 @@ class ModelPipeline:
             ood_model=ood_model,
         )
 
-        loaded_artifact = ModelArtifactLoader().load(
-            artifact_dir
-        )
+        loaded_artifact = ModelArtifactLoader().load(artifact_dir)
 
         self._verify_loaded_model(
             dataset=dataset,
@@ -258,29 +239,20 @@ class ModelPipeline:
             self._model_config_path,
         ):
             if not path.is_file():
-                raise FileNotFoundError(
-                    f"Model pipeline input does not exist: {path}"
-                )
+                raise FileNotFoundError(f"Model pipeline input does not exist: {path}")
 
         if self._output_dir.exists():
             raise FileExistsError(
-                f"Model pipeline output already exists: "
-                f"{self._output_dir}"
+                f"Model pipeline output already exists: {self._output_dir}"
             )
 
     def _validate_model_config(self) -> None:
         """Validate the frozen historical model configuration."""
 
-        payload = json.loads(
-            self._model_config_path.read_text(
-                encoding="utf-8"
-            )
-        )
+        payload = json.loads(self._model_config_path.read_text(encoding="utf-8"))
 
         if not isinstance(payload, dict):
-            raise TypeError(
-                "Frozen model configuration must be a JSON object."
-            )
+            raise TypeError("Frozen model configuration must be a JSON object.")
 
         expected = {
             "model_version": self._config.version,
@@ -299,18 +271,13 @@ class ModelPipeline:
             "tree_method": self._config.xgboost.tree_method,
             "random_state": self._config.xgboost.random_state,
             "n_jobs": self._config.xgboost.n_jobs,
-            "missing_value_strategy": (
-                self._config.missing_value_strategy
-            ),
-            "hyperparameter_tuning": (
-                self._config.hyperparameter_tuning
-            ),
+            "missing_value_strategy": (self._config.missing_value_strategy),
+            "hyperparameter_tuning": (self._config.hyperparameter_tuning),
         }
 
         if payload != expected:
             raise ValueError(
-                "Frozen model configuration does not match "
-                "the runtime ModelConfig."
+                "Frozen model configuration does not match the runtime ModelConfig."
             )
 
     @staticmethod
@@ -320,40 +287,26 @@ class ModelPipeline:
         """Validate the frozen model-training dataset identity."""
 
         if dataset.shape != (150, 56):
-            raise ValueError(
-                "Frozen training dataset must have shape "
-                "(150, 56)."
-            )
+            raise ValueError("Frozen training dataset must have shape (150, 56).")
 
         if "oid" not in dataset.columns:
-            raise ValueError(
-                "Frozen training dataset must contain 'oid'."
-            )
+            raise ValueError("Frozen training dataset must contain 'oid'.")
 
         if "class" not in dataset.columns:
-            raise ValueError(
-                "Frozen training dataset must contain 'class'."
-            )
+            raise ValueError("Frozen training dataset must contain 'class'.")
 
         if dataset["oid"].isna().any():
-            raise ValueError(
-                "Frozen training dataset contains null OIDs."
-            )
+            raise ValueError("Frozen training dataset contains null OIDs.")
 
         if not dataset["oid"].is_unique:
-            raise ValueError(
-                "Frozen training dataset contains duplicate OIDs."
-            )
+            raise ValueError("Frozen training dataset contains duplicate OIDs.")
 
         if dataset["class"].isna().any():
-            raise ValueError(
-                "Frozen training dataset contains null classes."
-            )
+            raise ValueError("Frozen training dataset contains null classes.")
 
         if set(dataset["class"]) != set(MODEL_CLASSES):
             raise ValueError(
-                "Frozen training dataset classes do not match "
-                "the frozen model classes."
+                "Frozen training dataset classes do not match the frozen model classes."
             )
 
         counts = dataset["class"].value_counts()
@@ -362,12 +315,9 @@ class ModelPipeline:
             index=list(MODEL_CLASSES),
         )
 
-        if not counts.sort_index().equals(
-            expected.sort_index()
-        ):
+        if not counts.sort_index().equals(expected.sort_index()):
             raise ValueError(
-                "Frozen training dataset must contain exactly "
-                "10 samples per class."
+                "Frozen training dataset must contain exactly 10 samples per class."
             )
 
     def _validate_feature_schema(
@@ -393,15 +343,9 @@ class ModelPipeline:
             )
 
         if schema.shape != (42, 4):
-            raise ValueError(
-                "Frozen feature schema must have shape (42, 4)."
-            )
+            raise ValueError("Frozen feature schema must have shape (42, 4).")
 
-        ordered = (
-            schema
-            .sort_values("feature_order")
-            .reset_index(drop=True)
-        )
+        ordered = schema.sort_values("feature_order").reset_index(drop=True)
 
         expected_order = np.arange(1, 43)
 
@@ -409,45 +353,28 @@ class ModelPipeline:
             ordered["feature_order"].to_numpy(dtype=int),
             expected_order,
         ):
-            raise ValueError(
-                "Feature schema order must contain exactly "
-                "1 through 42."
-            )
+            raise ValueError("Feature schema order must contain exactly 1 through 42.")
 
         feature_names = ordered["feature"].astype(str).tolist()
 
         if len(set(feature_names)) != 42:
-            raise ValueError(
-                "Frozen feature schema contains duplicate features."
-            )
+            raise ValueError("Frozen feature schema contains duplicate features.")
 
         if not all(feature_names):
-            raise ValueError(
-                "Frozen feature schema contains empty feature names."
-            )
+            raise ValueError("Frozen feature schema contains empty feature names.")
 
         if set(ordered["feature_set"]) != {"v0.2_frozen"}:
             raise ValueError(
-                "Frozen feature schema must use feature_set "
-                "'v0.2_frozen'."
+                "Frozen feature schema must use feature_set 'v0.2_frozen'."
             )
 
         if ordered["scientific_group"].isna().any():
-            raise ValueError(
-                "Frozen feature schema contains null scientific groups."
-            )
+            raise ValueError("Frozen feature schema contains null scientific groups.")
 
-        missing = [
-            name
-            for name in feature_names
-            if name not in dataset.columns
-        ]
+        missing = [name for name in feature_names if name not in dataset.columns]
 
         if missing:
-            raise ValueError(
-                "Training dataset is missing schema features: "
-                f"{missing}"
-            )
+            raise ValueError(f"Training dataset is missing schema features: {missing}")
 
     @staticmethod
     def _validate_fold_assignments(
@@ -466,15 +393,10 @@ class ModelPipeline:
 
         if fold_assignments.shape[0] != len(dataset):
             raise ValueError(
-                "Fold assignments must contain exactly one "
-                "row per training sample."
+                "Fold assignments must contain exactly one row per training sample."
             )
 
-        rows = (
-            fold_assignments
-            .sort_values("row_index")
-            .reset_index(drop=True)
-        )
+        rows = fold_assignments.sort_values("row_index").reset_index(drop=True)
 
         expected_indices = np.arange(len(dataset))
 
@@ -483,37 +405,30 @@ class ModelPipeline:
             expected_indices,
         ):
             raise ValueError(
-                "Fold row_index must contain the complete "
-                "range 0..149 exactly once."
+                "Fold row_index must contain the complete range 0..149 exactly once."
             )
 
         folds = rows["fold"].to_numpy(dtype=int)
 
         if set(folds) != {1, 2, 3, 4, 5}:
-            raise ValueError(
-                "Fold assignments must contain folds 1 through 5."
-            )
+            raise ValueError("Fold assignments must contain folds 1 through 5.")
 
         if not np.array_equal(
             rows["class"].to_numpy(dtype=str),
             dataset["class"].to_numpy(dtype=str),
         ):
             raise ValueError(
-                "Fold assignment classes do not match the "
-                "training dataset row-by-row."
+                "Fold assignment classes do not match the training dataset row-by-row."
             )
 
         counts = pd.Series(folds).value_counts()
 
         if set(counts.index) != {1, 2, 3, 4, 5}:
-            raise ValueError(
-                "Fold assignments must contain all five folds."
-            )
+            raise ValueError("Fold assignments must contain all five folds.")
 
         if not (counts == 30).all():
             raise ValueError(
-                "Frozen fold assignments must contain exactly "
-                "30 samples per fold."
+                "Frozen fold assignments must contain exactly 30 samples per fold."
             )
 
         return folds
@@ -534,20 +449,12 @@ class ModelPipeline:
 
         features = engine.prepare_features(dataset)
 
-        expected = model_artifact.model.predict_proba(
-            features
-        )
+        expected = model_artifact.model.predict_proba(features)
 
-        actual = (
-            loaded_artifact.model_artifact.model.predict_proba(
-                features
-            )
-        )
+        actual = loaded_artifact.model_artifact.model.predict_proba(features)
 
         if expected.shape != (150, len(MODEL_CLASSES)):
-            raise ValueError(
-                "Fitted model returned an unexpected probability shape."
-            )
+            raise ValueError("Fitted model returned an unexpected probability shape.")
 
         if not np.allclose(
             expected,
@@ -556,50 +463,31 @@ class ModelPipeline:
             atol=1e-12,
         ):
             raise ValueError(
-                "Reloaded model predictions do not match "
-                "the in-memory model."
+                "Reloaded model predictions do not match the in-memory model."
             )
 
-        if (
-            loaded_artifact.calibration.method
-            != "temperature_scaling"
-        ):
+        if loaded_artifact.calibration.method != "temperature_scaling":
+            raise ValueError("Reloaded calibration method is invalid.")
+
+        if loaded_artifact.calibration.method != calibration.method:
             raise ValueError(
-                "Reloaded calibration method is invalid."
+                "Reloaded calibration method does not match the in-memory calibration."
             )
 
-        if (
-            loaded_artifact.calibration.method
-            != calibration.method
-        ):
-            raise ValueError(
-                "Reloaded calibration method does not match "
-                "the in-memory calibration."
-            )
-
-        if (
-            loaded_artifact.calibration.temperature
-            != calibration.temperature
-        ):
+        if loaded_artifact.calibration.temperature != calibration.temperature:
             raise ValueError(
                 "Reloaded calibration temperature does not match "
                 "the in-memory calibration."
             )
 
         if loaded_artifact.conformal is None:
-            raise ValueError(
-                "Reloaded conformal artifact is missing."
-            )
+            raise ValueError("Reloaded conformal artifact is missing.")
 
         if loaded_artifact.ood is None:
-            raise ValueError(
-                "Reloaded OOD artifact is missing."
-            )
+            raise ValueError("Reloaded OOD artifact is missing.")
 
         if loaded_artifact.ood_model is None:
-            raise ValueError(
-                "Reloaded OOD production model is missing."
-            )
+            raise ValueError("Reloaded OOD production model is missing.")
 
         if loaded_artifact.conformal != conformal:
             raise ValueError(
@@ -609,17 +497,14 @@ class ModelPipeline:
 
         if loaded_artifact.ood != ood:
             raise ValueError(
-                "Reloaded OOD artifact does not match "
-                "the in-memory OOD artifact."
+                "Reloaded OOD artifact does not match the in-memory OOD artifact."
             )
 
         if (
             loaded_artifact.ood_model.reference_anomaly_scores is None
             or ood_model.reference_anomaly_scores is None
         ):
-            raise ValueError(
-                "Reloaded OOD model has no reference anomaly scores."
-            )
+            raise ValueError("Reloaded OOD model has no reference anomaly scores.")
 
         np.testing.assert_allclose(
             loaded_artifact.ood_model.reference_anomaly_scores,

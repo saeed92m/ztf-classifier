@@ -11,18 +11,10 @@ import pytest
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.pipeline.model import ModelPipeline
 
-DATASET_PATH = Path(
-    "data/processed/features_v0.2.parquet"
-)
-FOLDS_PATH = Path(
-    "reports/tables/stratified_cv_fold_assignments_v0.1.parquet"
-)
-SCHEMA_PATH = Path(
-    "reports/tables/final_feature_set_v0.2.parquet"
-)
-MODEL_CONFIG_PATH = Path(
-    "reports/tables/final_model_config_v0.2.json"
-)
+DATASET_PATH = Path("data/processed/features_v0.2.parquet")
+FOLDS_PATH = Path("reports/tables/stratified_cv_fold_assignments_v0.1.parquet")
+SCHEMA_PATH = Path("reports/tables/final_feature_set_v0.2.parquet")
+MODEL_CONFIG_PATH = Path("reports/tables/final_model_config_v0.2.json")
 
 
 @pytest.fixture()
@@ -173,9 +165,7 @@ def test_validate_model_config_rejects_modified_config(
 ) -> None:
     import json
 
-    payload = json.loads(
-        MODEL_CONFIG_PATH.read_text(encoding="utf-8")
-    )
+    payload = json.loads(MODEL_CONFIG_PATH.read_text(encoding="utf-8"))
     payload["n_estimators"] = 301
 
     config_path = tmp_path / "modified_model_config.json"
@@ -212,9 +202,7 @@ def test_validate_feature_schema_rejects_wrong_columns(
     pipeline: ModelPipeline,
 ) -> None:
     dataset = _valid_dataset()
-    schema = pd.read_parquet(SCHEMA_PATH).drop(
-        columns=["feature_set"]
-    )
+    schema = pd.read_parquet(SCHEMA_PATH).drop(columns=["feature_set"])
 
     schema_path = SCHEMA_PATH.parent / "tmp_invalid_schema.parquet"
     schema.to_parquet(schema_path, index=False)

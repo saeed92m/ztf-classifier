@@ -161,9 +161,7 @@ def test_prediction_payload_uses_calibrated_predictions() -> None:
     assert first["predicted_class_index"] == 0
     assert list(first["probabilities"]) == list(MODEL_CLASSES)
 
-    assert first["probabilities"][MODEL_CLASSES[0]] == pytest.approx(
-        0.5
-    )
+    assert first["probabilities"][MODEL_CLASSES[0]] == pytest.approx(0.5)
 
 
 def test_prediction_payload_falls_back_to_raw_predictions() -> None:
@@ -179,9 +177,7 @@ def test_prediction_payload_falls_back_to_raw_predictions() -> None:
 
     payload = _prediction_payload(dataset, response)
 
-    assert payload["predictions"][0]["predicted_class"] == (
-        MODEL_CLASSES[0]
-    )
+    assert payload["predictions"][0]["predicted_class"] == (MODEL_CLASSES[0])
 
     assert payload["predictions"][1]["predicted_class_index"] == 2
 
@@ -346,9 +342,7 @@ def test_main_writes_prediction_json(
     assert exit_code == 0
     assert output_path.is_file()
 
-    payload = json.loads(
-        output_path.read_text(encoding="utf-8")
-    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
 
     assert payload["schema_version"] == CLI_SCHEMA_VERSION
     assert payload["model_version"] == "baseline_v0.2"
@@ -373,12 +367,8 @@ def e2e_diagnostic_artifact(
             fold_assignments_path=Path(
                 "reports/tables/stratified_cv_fold_assignments_v0.1.parquet"
             ),
-            feature_schema_path=Path(
-                "reports/tables/final_feature_set_v0.2.parquet"
-            ),
-            model_config_path=Path(
-                "reports/tables/final_model_config_v0.2.json"
-            ),
+            feature_schema_path=Path("reports/tables/final_feature_set_v0.2.parquet"),
+            model_config_path=Path("reports/tables/final_model_config_v0.2.json"),
             output_dir=output_dir,
         ).run()
 
@@ -508,26 +498,18 @@ def test_cli_batch_e2e_parquet_contract(
     assert required_columns.issubset(table.column_names)
 
     conformal_columns = [
-        name
-        for name in table.column_names
-        if name.startswith("conformal_")
+        name for name in table.column_names if name.startswith("conformal_")
     ]
 
     assert conformal_columns
 
-    conformal_prefixes = {
-        name.split("_")[1]
-        for name in conformal_columns
-    }
+    conformal_prefixes = {name.split("_")[1] for name in conformal_columns}
 
     assert conformal_prefixes
 
     for alpha_key in conformal_prefixes:
         assert alpha_key
-        assert all(
-            character.isdigit() or character == "p"
-            for character in alpha_key
-        )
+        assert all(character.isdigit() or character == "p" for character in alpha_key)
 
         expected_columns = {
             f"conformal_{alpha_key}_threshold",
@@ -642,10 +624,7 @@ def test_cli_batch_e2e_with_diagnostics(
     assert "predicted_class" in frame.columns
     assert "predicted_class_index" in frame.columns
 
-    assert any(
-        column.startswith("conformal_")
-        for column in frame.columns
-    )
+    assert any(column.startswith("conformal_") for column in frame.columns)
 
     assert {
         "ood_anomaly_score",

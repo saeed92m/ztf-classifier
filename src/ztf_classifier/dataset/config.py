@@ -47,26 +47,18 @@ class DatasetConfig:
             raise ValueError("duplicate classes are not allowed")
 
         if self.samples_per_class <= 0:
-            raise ValueError(
-                "samples_per_class must be greater than zero"
-            )
+            raise ValueError("samples_per_class must be greater than zero")
 
         if not 0.0 <= self.probability_min <= 1.0:
-            raise ValueError(
-                "probability_min must be between 0.0 and 1.0"
-            )
+            raise ValueError("probability_min must be between 0.0 and 1.0")
 
         if self.fallback_probability is not None and not (
             0.0 <= self.fallback_probability <= 1.0
         ):
-            raise ValueError(
-                "fallback_probability must be between 0.0 and 1.0"
-            )
+            raise ValueError("fallback_probability must be between 0.0 and 1.0")
 
         if self.page_size is not None and self.page_size <= 0:
-            raise ValueError(
-                "page_size must be greater than zero"
-            )
+            raise ValueError("page_size must be greater than zero")
 
         allowed_strategies = {
             "strict_primary",
@@ -76,8 +68,7 @@ class DatasetConfig:
 
         if self.selection_strategy not in allowed_strategies:
             raise ValueError(
-                "unsupported selection_strategy: "
-                + self.selection_strategy
+                "unsupported selection_strategy: " + self.selection_strategy
             )
 
     @classmethod
@@ -101,8 +92,7 @@ class DatasetConfig:
 
         if missing:
             raise ValueError(
-                "missing required configuration fields: "
-                + ", ".join(missing)
+                "missing required configuration fields: " + ", ".join(missing)
             )
 
         classes = data["classes"]
@@ -139,21 +129,15 @@ class DatasetConfig:
         path = Path(path)
 
         if not path.exists():
-            raise FileNotFoundError(
-                f"configuration file does not exist: {path}"
-            )
+            raise FileNotFoundError(f"configuration file does not exist: {path}")
 
         if not path.is_file():
-            raise ValueError(
-                f"configuration path is not a file: {path}"
-            )
+            raise ValueError(f"configuration path is not a file: {path}")
 
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
-            raise ValueError(
-                f"invalid JSON configuration: {path}"
-            ) from exc
+            raise ValueError(f"invalid JSON configuration: {path}") from exc
 
         return cls.from_dict(data)
 
@@ -167,11 +151,7 @@ class DatasetConfig:
     def effective_page_size(self) -> int:
         """Return the configured API page size."""
 
-        return (
-            self.samples_per_class
-            if self.page_size is None
-            else self.page_size
-        )
+        return self.samples_per_class if self.page_size is None else self.page_size
 
     def selection_policy(self) -> dict[str, Any]:
         """Return the object-selection policy."""

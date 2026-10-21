@@ -25,7 +25,9 @@ def _response(sample_count: int = 2) -> PredictionResponse:
         raw_predicted_labels=tuple(MODEL_CLASSES[0] for _ in range(sample_count)),
         calibrated_probabilities=probabilities.copy(),
         calibrated_predicted_class_indices=np.zeros(sample_count, dtype=np.int64),
-        calibrated_predicted_labels=tuple(MODEL_CLASSES[0] for _ in range(sample_count)),
+        calibrated_predicted_labels=tuple(
+            MODEL_CLASSES[0] for _ in range(sample_count)
+        ),
     )
     provenance = ModelProvenance(
         schema_version="1.0",
@@ -67,7 +69,9 @@ class StubApplicationService:
         self.dataset: pd.DataFrame | None = None
         self.artifact_dir: Path | None = None
 
-    def predict_dataframe(self, dataset: pd.DataFrame, artifact_dir: Path) -> PredictionResponse:
+    def predict_dataframe(
+        self, dataset: pd.DataFrame, artifact_dir: Path
+    ) -> PredictionResponse:
         """Return the configured response."""
         self.dataset = dataset
         self.artifact_dir = artifact_dir
@@ -99,7 +103,9 @@ def test_batch_preserves_oid_and_row_count(tmp_path: Path) -> None:
 
 def test_batch_contains_all_probability_columns(tmp_path: Path) -> None:
     stub = StubApplicationService(_response(2))
-    result = BatchInferenceService(stub).predict(pd.DataFrame({"oid": ["ZTF001", "ZTF002"]}), tmp_path)
+    result = BatchInferenceService(stub).predict(
+        pd.DataFrame({"oid": ["ZTF001", "ZTF002"]}), tmp_path
+    )
     for class_name in MODEL_CLASSES:
         assert f"probability_{class_name}" in result.predictions.columns
     probability_columns = [f"probability_{name}" for name in MODEL_CLASSES]
@@ -138,16 +144,24 @@ def test_batch_prediction_class_matches_index(tmp_path: Path) -> None:
 
 def test_batch_result_rejects_invalid_schema_and_flags() -> None:
     from ztf_classifier.application.batch import BatchPredictionResult
+
     with pytest.raises(ValueError, match="Unsupported batch schema"):
         BatchPredictionResult(
-            predictions=pd.DataFrame({"x": [1]}), model_version="v1",
-            model_family="XGBoost", has_calibration=True, has_conformal=True,
-            has_ood=True, schema_version="9.9",
+            predictions=pd.DataFrame({"x": [1]}),
+            model_version="v1",
+            model_family="XGBoost",
+            has_calibration=True,
+            has_conformal=True,
+            has_ood=True,
+            schema_version="9.9",
         )
     with pytest.raises(TypeError, match="has_ood must be a bool"):
         BatchPredictionResult(
-            predictions=pd.DataFrame({"x": [1]}), model_version="v1",
-            model_family="XGBoost", has_calibration=True, has_conformal=True,
+            predictions=pd.DataFrame({"x": [1]}),
+            model_version="v1",
+            model_family="XGBoost",
+            has_calibration=True,
+            has_conformal=True,
             has_ood="true",
         )
 

@@ -62,8 +62,7 @@ class ModelRegistryEntry:
 
         if self.artifact_schema_version not in SUPPORTED_ARTIFACT_SCHEMAS:
             raise ValueError(
-                "Unsupported artifact schema version: "
-                f"{self.artifact_schema_version}"
+                f"Unsupported artifact schema version: {self.artifact_schema_version}"
             )
 
         if not self.feature_schema_version:
@@ -82,9 +81,7 @@ class ModelRegistryEntry:
             ("feature_schema_sha256", self.feature_schema_sha256),
         ):
             if len(value) != 64:
-                raise ValueError(
-                    f"{name} must be a SHA-256 hexadecimal digest."
-                )
+                raise ValueError(f"{name} must be a SHA-256 hexadecimal digest.")
             try:
                 int(value, 16)
             except ValueError as exc:
@@ -92,9 +89,7 @@ class ModelRegistryEntry:
 
         artifact_dir = Path(self.artifact_dir).resolve()
         if not artifact_dir.is_dir():
-            raise ValueError(
-                f"Artifact directory does not exist: {artifact_dir}"
-            )
+            raise ValueError(f"Artifact directory does not exist: {artifact_dir}")
 
         object.__setattr__(self, "artifact_dir", artifact_dir)
 
@@ -110,14 +105,10 @@ class FilesystemModelRegistry:
         root = Path(self.root_dir).resolve()
 
         if not root.exists():
-            raise FileNotFoundError(
-                f"Model registry directory does not exist: {root}"
-            )
+            raise FileNotFoundError(f"Model registry directory does not exist: {root}")
 
         if not root.is_dir():
-            raise ValueError(
-                f"Model registry path is not a directory: {root}"
-            )
+            raise ValueError(f"Model registry path is not a directory: {root}")
 
         object.__setattr__(self, "root_dir", root)
 
@@ -157,9 +148,7 @@ class FilesystemModelRegistry:
             if entry.model_version == model_version:
                 return entry
 
-        raise ModelNotFoundError(
-            f"Model version is not registered: {model_version}"
-        )
+        raise ModelNotFoundError(f"Model version is not registered: {model_version}")
 
     def load(self, model_version: str) -> LoadedModelArtifact:
         """Load the explicitly selected model through the canonical loader."""
@@ -174,9 +163,7 @@ class FilesystemModelRegistry:
     ) -> ModelRegistryEntry:
         """Read and validate registry metadata from an artifact manifest."""
         try:
-            manifest = json.loads(
-                manifest_path.read_text(encoding="utf-8")
-            )
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise ModelRegistryError(
                 f"Unable to read artifact manifest: {manifest_path}"
@@ -206,9 +193,7 @@ class FilesystemModelRegistry:
         )
         missing = [field for field in required if field not in manifest]
         if missing:
-            raise ModelRegistryError(
-                f"Artifact manifest is missing fields: {missing}"
-            )
+            raise ModelRegistryError(f"Artifact manifest is missing fields: {missing}")
 
         if manifest["classes"] != list(MODEL_CLASSES):
             raise ModelRegistryError(
@@ -255,9 +240,7 @@ class FilesystemModelRegistry:
             feature_count=int(manifest["feature_count"]),
             classes=tuple(manifest["classes"]),
             dataset_sha256=str(manifest["dataset_sha256"]),
-            feature_schema_sha256=str(
-                manifest["feature_schema_source_sha256"]
-            ),
+            feature_schema_sha256=str(manifest["feature_schema_source_sha256"]),
             artifact_dir=artifact_dir,
         )
 

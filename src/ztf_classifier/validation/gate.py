@@ -74,7 +74,9 @@ def evaluate_release_gate(
 
         if report is not None:
             if report.get("status") != "PASS":
-                manifest_blockers.append(f"benchmark status is {report.get('status', 'UNKNOWN')}")
+                manifest_blockers.append(
+                    f"benchmark status is {report.get('status', 'UNKNOWN')}"
+                )
             checks = report.get("checks", {})
             if not isinstance(checks, dict):
                 manifest_blockers.append("scientific checks are missing or invalid")
@@ -95,17 +97,19 @@ def evaluate_release_gate(
             else:
                 external_blockers.extend(items)
 
-        benchmarks.append({
-            "benchmark_id": benchmark_id,
-            "evaluation_role": manifest.evaluation_role,
-            "validation_scope": (
-                "product"
-                if benchmark_id in PRODUCT_BENCHMARKS
-                else "external_reproduction"
-            ),
-            "status": "PASS" if not manifest_blockers else "BLOCKED",
-            "blockers": manifest_blockers,
-        })
+        benchmarks.append(
+            {
+                "benchmark_id": benchmark_id,
+                "evaluation_role": manifest.evaluation_role,
+                "validation_scope": (
+                    "product"
+                    if benchmark_id in PRODUCT_BENCHMARKS
+                    else "external_reproduction"
+                ),
+                "status": "PASS" if not manifest_blockers else "BLOCKED",
+                "blockers": manifest_blockers,
+            }
+        )
 
     # Product execution is the release-blocking scientific scope. Historical
     # external reconstruction is retained as claim-specific evidence and may
@@ -149,9 +153,15 @@ def _manifest_blockers(manifest: BenchmarkManifest) -> list[str]:
         build_adapter_plan(manifest)
     except (AdapterContractError, KeyError, ValueError) as exc:
         blockers.append(f"canonical adapter contract is not executable: {exc}")
-    if manifest.evaluation_role == "ground_truth" and not manifest.ground_truth_provenance:
+    if (
+        manifest.evaluation_role == "ground_truth"
+        and not manifest.ground_truth_provenance
+    ):
         blockers.append("ground-truth provenance is missing")
-    if manifest.evaluation_role == "reference_system" and not manifest.reference_system_provenance:
+    if (
+        manifest.evaluation_role == "reference_system"
+        and not manifest.reference_system_provenance
+    ):
         blockers.append("reference-system provenance is missing")
     return blockers
 
@@ -202,5 +212,7 @@ def write_release_gate_report(
     result = evaluate_release_gate(registry_dir, evidence_dir)
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return result

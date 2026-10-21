@@ -44,11 +44,15 @@ def test_catalog_probability_is_bounded() -> None:
 
 def test_feedback_cannot_enter_training_without_dataset_version() -> None:
     with pytest.raises(ValueError, match="dataset_version"):
-        LearningFeedback("f1", "c1", "v1", "r1", "now", intended_role="training_candidate")
+        LearningFeedback(
+            "f1", "c1", "v1", "r1", "now", intended_role="training_candidate"
+        )
 
 
 def test_review_and_candidate_are_versioned() -> None:
-    candidate = DiscoveryCandidate("c1", "v1", "ZTF1", "transient", "baseline_v0.2", "rule-v1")
+    candidate = DiscoveryCandidate(
+        "c1", "v1", "ZTF1", "transient", "baseline_v0.2", "rule-v1"
+    )
     review = HumanReview("c1", "v1", "reviewer-1", "now", "defer")
     assert candidate.candidate_version == review.candidate_version
 
@@ -58,7 +62,10 @@ def test_explainability_and_modalities_are_explicit() -> None:
     mode = AnalysisModeContract(
         "transient-v1",
         "classification",
-        (ModalityDeclaration("light_curve"), ModalityDeclaration("catalog", required=False)),
+        (
+            ModalityDeclaration("light_curve"),
+            ModalityDeclaration("catalog", required=False),
+        ),
         ("feature-contribution-v1",),
     )
     assert evidence.method in mode.explainability_methods

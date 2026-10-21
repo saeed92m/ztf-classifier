@@ -100,11 +100,9 @@ def _build_parser() -> argparse.ArgumentParser:
         "--feature-schema",
         type=Path,
         default=Path(
-            "runs/model_baseline_v0.2_production/artifact/"
-            "feature_schema.parquet"
+            "runs/model_baseline_v0.2_production/artifact/feature_schema.parquet"
         ),
     )
-
 
     return parser
 
@@ -164,27 +162,15 @@ def _prediction_payload(
 
         if result.ood is not None:
             item["ood"] = {
-                "anomaly_score": float(
-                    result.ood.anomaly_score[row_index]
-                ),
-                "normality_score": float(
-                    result.ood.normality_score[row_index]
-                ),
-                "anomaly_percentile": float(
-                    result.ood.anomaly_percentile[row_index]
-                ),
+                "anomaly_score": float(result.ood.anomaly_score[row_index]),
+                "normality_score": float(result.ood.normality_score[row_index]),
+                "anomaly_percentile": float(result.ood.anomaly_percentile[row_index]),
                 "isolation_forest_label": int(
                     result.ood.isolation_forest_label[row_index]
                 ),
-                "anomaly_rank": int(
-                    result.ood.anomaly_rank[row_index]
-                ),
-                "is_top_1pct_anomaly": bool(
-                    result.ood.is_top_1pct_anomaly[row_index]
-                ),
-                "is_top_5pct_anomaly": bool(
-                    result.ood.is_top_5pct_anomaly[row_index]
-                ),
+                "anomaly_rank": int(result.ood.anomaly_rank[row_index]),
+                "is_top_1pct_anomaly": bool(result.ood.is_top_1pct_anomaly[row_index]),
+                "is_top_5pct_anomaly": bool(result.ood.is_top_5pct_anomaly[row_index]),
                 "is_top_10pct_anomaly": bool(
                     result.ood.is_top_10pct_anomaly[row_index]
                 ),
@@ -201,9 +187,7 @@ def _prediction_payload(
             "feature_schema_version": response.provenance.feature_schema_version,
             "dataset_version": response.provenance.dataset_version,
             "dataset_sha256": response.provenance.dataset_sha256,
-            "feature_schema_sha256": (
-                response.provenance.feature_schema_sha256
-            ),
+            "feature_schema_sha256": (response.provenance.feature_schema_sha256),
             "git_commit": response.provenance.git_commit,
             "git_dirty": response.provenance.git_dirty,
         },
@@ -227,9 +211,7 @@ def _run_predict(args: argparse.Namespace) -> int:
     """Run the predict command."""
 
     if not args.input.is_file():
-        raise FileNotFoundError(
-            f"Input dataset does not exist: {args.input}"
-        )
+        raise FileNotFoundError(f"Input dataset does not exist: {args.input}")
 
     dataset = pd.read_parquet(args.input)
 
@@ -250,8 +232,7 @@ def _run_predict(args: argparse.Namespace) -> int:
     else:
         if args.registry_dir is None or args.model_version is None:
             raise ValueError(
-                "Provide --artifact or both --registry-dir and "
-                "--model-version."
+                "Provide --artifact or both --registry-dir and --model-version."
             )
         response = service.predict_registered_dataframe(
             dataset=dataset,
@@ -281,14 +262,10 @@ def _run_batch(args: argparse.Namespace) -> int:
     """Run the batch command."""
 
     if not args.input.is_file():
-        raise FileNotFoundError(
-            f"Input dataset does not exist: {args.input}"
-        )
+        raise FileNotFoundError(f"Input dataset does not exist: {args.input}")
 
     if args.output.exists():
-        raise FileExistsError(
-            f"Output file already exists: {args.output}"
-        )
+        raise FileExistsError(f"Output file already exists: {args.output}")
 
     dataset = pd.read_parquet(args.input)
 
@@ -310,8 +287,7 @@ def _run_batch(args: argparse.Namespace) -> int:
     else:
         if args.registry_dir is None or args.model_version is None:
             raise ValueError(
-                "Provide --artifact or both --registry-dir and "
-                "--model-version."
+                "Provide --artifact or both --registry-dir and --model-version."
             )
         result = service.predict_registered(
             dataset=dataset,
@@ -329,30 +305,28 @@ def _run_batch(args: argparse.Namespace) -> int:
     metadata = dict(table.schema.metadata or {})
     metadata.update(
         {
-            b"ztf_classifier.schema_version": (
-                result.schema_version.encode("utf-8")
-            ),
-            b"ztf_classifier.model_version": (
-                result.model_version.encode("utf-8")
-            ),
-            b"ztf_classifier.model_family": (
-                result.model_family.encode("utf-8")
-            ),
+            b"ztf_classifier.schema_version": (result.schema_version.encode("utf-8")),
+            b"ztf_classifier.model_version": (result.model_version.encode("utf-8")),
+            b"ztf_classifier.model_family": (result.model_family.encode("utf-8")),
             b"ztf_classifier.has_calibration": (
                 str(result.has_calibration).lower().encode("utf-8")
             ),
             b"ztf_classifier.has_conformal": (
                 str(result.has_conformal).lower().encode("utf-8")
             ),
-            b"ztf_classifier.has_ood": (
-                str(result.has_ood).lower().encode("utf-8")
+            b"ztf_classifier.has_ood": (str(result.has_ood).lower().encode("utf-8")),
+            b"ztf_classifier.calibration_status": result.calibration_status.encode(
+                "utf-8"
             ),
-            b"ztf_classifier.calibration_status": result.calibration_status.encode("utf-8"),
             b"ztf_classifier.conformal_status": result.conformal_status.encode("utf-8"),
             b"ztf_classifier.ood_status": result.ood_status.encode("utf-8"),
-            b"ztf_classifier.artifact_schema_version": result.artifact_schema_version.encode("utf-8"),
+            b"ztf_classifier.artifact_schema_version": result.artifact_schema_version.encode(
+                "utf-8"
+            ),
             b"ztf_classifier.artifact_hash": result.artifact_hash.encode("utf-8"),
-            b"ztf_classifier.feature_schema_hash": result.feature_schema_hash.encode("utf-8"),
+            b"ztf_classifier.feature_schema_hash": result.feature_schema_hash.encode(
+                "utf-8"
+            ),
             b"ztf_classifier.software_version": result.software_version.encode("utf-8"),
         }
     )
@@ -369,9 +343,7 @@ def _run_dataset_build(args: argparse.Namespace) -> int:
     """Build and validate a canonical dataset."""
 
     if not args.config.is_file():
-        raise FileNotFoundError(
-            f"Dataset configuration does not exist: {args.config}"
-        )
+        raise FileNotFoundError(f"Dataset configuration does not exist: {args.config}")
 
     config = DatasetConfig.from_json(args.config)
 
@@ -379,9 +351,7 @@ def _run_dataset_build(args: argparse.Namespace) -> int:
     output_dir = args.output.resolve()
 
     if not args.feature_schema.is_file():
-        raise FileNotFoundError(
-            f"Feature schema does not exist: {args.feature_schema}"
-        )
+        raise FileNotFoundError(f"Feature schema does not exist: {args.feature_schema}")
 
     feature_schema_path = args.feature_schema.resolve()
 
@@ -389,9 +359,7 @@ def _run_dataset_build(args: argparse.Namespace) -> int:
 
     object_backend = AlerceObjectBackend(client)
 
-    detection_store = ParquetDetectionStore(
-        args.cache_dir.resolve()
-    )
+    detection_store = ParquetDetectionStore(args.cache_dir.resolve())
 
     detection_backend = AlerceDetectionBackend(
         client=client,
@@ -399,9 +367,7 @@ def _run_dataset_build(args: argparse.Namespace) -> int:
     )
 
     command = (
-        "ztf-classifier dataset build "
-        f"--config {args.config} "
-        f"--output {args.output}"
+        f"ztf-classifier dataset build --config {args.config} --output {args.output}"
     )
 
     result = DatasetPipeline(
@@ -420,25 +386,12 @@ def _run_dataset_build(args: argparse.Namespace) -> int:
         },
     )
 
-    print(
-        f"dataset_version={result.dataset.dataset_version}"
-    )
-    print(
-        f"object_count={result.dataset.object_count}"
-    )
-    print(
-        f"feature_count={result.dataset.feature_count}"
-    )
-    print(
-        f"artifact={result.artifact.artifact_path}"
-    )
-    print(
-        f"manifest={result.artifact.manifest_path}"
-    )
-    print(
-        "reproducibility_manifest="
-        f"{output_dir / 'reproducibility_manifest.json'}"
-    )
+    print(f"dataset_version={result.dataset.dataset_version}")
+    print(f"object_count={result.dataset.object_count}")
+    print(f"feature_count={result.dataset.feature_count}")
+    print(f"artifact={result.artifact.artifact_path}")
+    print(f"manifest={result.artifact.manifest_path}")
+    print(f"reproducibility_manifest={output_dir / 'reproducibility_manifest.json'}")
 
     return 0
 
@@ -456,10 +409,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "batch":
             return _run_batch(args)
 
-        if (
-            args.command == "dataset"
-            and args.dataset_command == "build"
-        ):
+        if args.command == "dataset" and args.dataset_command == "build":
             return _run_dataset_build(args)
 
         parser.error(f"Unsupported command: {args.command}")

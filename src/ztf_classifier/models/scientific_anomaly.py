@@ -28,9 +28,7 @@ class ScientificAnomalyResult:
         import numpy as np
 
         if self.status not in VALID_SCIENTIFIC_ANOMALY_STATUSES:
-            raise ValueError(
-                f"Invalid scientific anomaly status: {self.status}"
-            )
+            raise ValueError(f"Invalid scientific anomaly status: {self.status}")
 
         if self.status == "available":
             if self.score is None or self.flags is None:
@@ -44,9 +42,7 @@ class ScientificAnomalyResult:
                     "Scientific anomaly score and flags must be aligned one-dimensional arrays."
                 )
             if not np.isfinite(score).all():
-                raise ValueError(
-                    "Scientific anomaly scores must be finite."
-                )
+                raise ValueError("Scientific anomaly scores must be finite.")
             score.setflags(write=False)
             flags.setflags(write=False)
             object.__setattr__(self, "score", score)

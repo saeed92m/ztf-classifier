@@ -55,9 +55,7 @@ def test_primary_result_is_used_without_fallback() -> None:
 
     backend = FakeBackend(
         responses={
-            ("SNIa", 0.90): make_frame(
-                *[f"PRIMARY_{i:02d}" for i in range(10)]
-            ),
+            ("SNIa", 0.90): make_frame(*[f"PRIMARY_{i:02d}" for i in range(10)]),
         },
         calls=[],
     )
@@ -80,9 +78,7 @@ def test_empty_primary_result_triggers_fallback() -> None:
     backend = FakeBackend(
         responses={
             ("SNIa", 0.90): pd.DataFrame(),
-            ("SNIa", 0.50): make_frame(
-                *[f"FALLBACK_{i:02d}" for i in range(10)]
-            ),
+            ("SNIa", 0.50): make_frame(*[f"FALLBACK_{i:02d}" for i in range(10)]),
         },
         calls=[],
     )
@@ -95,9 +91,7 @@ def test_empty_primary_result_triggers_fallback() -> None:
     )
 
     assert len(result) == 10
-    assert tuple(result["oid"]) == tuple(
-        f"FALLBACK_{i:02d}" for i in range(10)
-    )
+    assert tuple(result["oid"]) == tuple(f"FALLBACK_{i:02d}" for i in range(10))
 
     assert len(backend.calls) == 2
     assert backend.calls[0].probability == 0.90
@@ -144,9 +138,7 @@ def test_fallback_result_is_capped_to_requested_sample_count() -> None:
     backend = FakeBackend(
         responses={
             ("SNIa", 0.90): pd.DataFrame(),
-            ("SNIa", 0.50): make_frame(
-                *[f"OID_{i:02d}" for i in range(20)]
-            ),
+            ("SNIa", 0.50): make_frame(*[f"OID_{i:02d}" for i in range(20)]),
         },
         calls=[],
     )
@@ -159,9 +151,7 @@ def test_fallback_result_is_capped_to_requested_sample_count() -> None:
     )
 
     assert len(result) == 10
-    assert tuple(result["oid"]) == tuple(
-        f"OID_{i:02d}" for i in range(10)
-    )
+    assert tuple(result["oid"]) == tuple(f"OID_{i:02d}" for i in range(10))
 
 
 def test_fallback_policy_preserves_request_contract() -> None:
@@ -170,9 +160,7 @@ def test_fallback_policy_preserves_request_contract() -> None:
     backend = FakeBackend(
         responses={
             ("SNIa", 0.90): pd.DataFrame(),
-            ("SNIa", 0.50): make_frame(
-                *[f"OID_{i:02d}" for i in range(10)]
-            ),
+            ("SNIa", 0.50): make_frame(*[f"OID_{i:02d}" for i in range(10)]),
         },
         calls=[],
     )

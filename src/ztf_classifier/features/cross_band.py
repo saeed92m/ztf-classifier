@@ -26,14 +26,10 @@ def basic_cross_band_features(
     missing_r = required - set(r_lc.columns)
 
     if missing_g:
-        raise ValueError(
-            f"Missing required columns in g_lc: {sorted(missing_g)}"
-        )
+        raise ValueError(f"Missing required columns in g_lc: {sorted(missing_g)}")
 
     if missing_r:
-        raise ValueError(
-            f"Missing required columns in r_lc: {sorted(missing_r)}"
-        )
+        raise ValueError(f"Missing required columns in r_lc: {sorted(missing_r)}")
 
     g = g_lc["mag"].to_numpy(dtype=float)
     r = r_lc["mag"].to_numpy(dtype=float)

@@ -32,9 +32,7 @@ def test_benchmark_json_loads() -> None:
     assert config.survey == "ztf"
     assert config.source == "ALeRCE"
     assert config.classifier == "lc_classifier"
-    assert config.classifier_version == (
-        "hierarchical_random_forest_1.0.0"
-    )
+    assert config.classifier_version == ("hierarchical_random_forest_1.0.0")
 
     assert config.classes == EXPECTED_CLASSES
     assert config.samples_per_class == 10

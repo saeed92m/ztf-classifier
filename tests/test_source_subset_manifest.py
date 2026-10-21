@@ -29,7 +29,9 @@ def test_source_subset_manifest_round_trips_and_verifies(tmp_path: Path) -> None
     manifest = _manifest(tmp_path, artifact)
     path = manifest.write(tmp_path / "manifest.json")
 
-    restored = SourceSubsetManifest.from_dict(__import__("json").loads(path.read_text()))
+    restored = SourceSubsetManifest.from_dict(
+        __import__("json").loads(path.read_text())
+    )
     restored.verify_artifacts(tmp_path)
     assert restored.to_dict() == manifest.to_dict()
 
@@ -44,7 +46,9 @@ def test_source_subset_manifest_fails_closed_on_artifact_drift(tmp_path: Path) -
         manifest.verify_artifacts(tmp_path)
 
 
-def test_source_subset_manifest_rejects_unsorted_or_duplicate_ids(tmp_path: Path) -> None:
+def test_source_subset_manifest_rejects_unsorted_or_duplicate_ids(
+    tmp_path: Path,
+) -> None:
     artifact = tmp_path / "subset.txt"
     artifact.write_text("x\n", encoding="utf-8")
     digest = sha256_file(artifact)

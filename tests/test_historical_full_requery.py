@@ -97,9 +97,7 @@ class EmptyPrimaryBackend(ObjectAcquisitionBackend):
         self.calls.append(request)
 
         if request.probability == 0.90:
-            frame = pd.DataFrame(
-                columns=["oid", "class", "probability"]
-            )
+            frame = pd.DataFrame(columns=["oid", "class", "probability"])
         else:
             frame = make_frame(
                 request.class_name,
@@ -141,9 +139,7 @@ def test_historical_full_requery_matches_two_pass_contract() -> None:
     }
 
     assert result["class"].tolist() == [
-        class_name
-        for class_name in CLASSES
-        for _ in range(10)
+        class_name for class_name in CLASSES for _ in range(10)
     ]
 
 

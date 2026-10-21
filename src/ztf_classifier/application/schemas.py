@@ -27,32 +27,22 @@ class PredictionRequest:
             raise TypeError("dataset must be a pandas DataFrame.")
 
         if self.artifact_dir is None and self.registry_dir is None:
-            raise ValueError(
-                "Either artifact_dir or registry_dir must be provided."
-            )
+            raise ValueError("Either artifact_dir or registry_dir must be provided.")
 
         if self.artifact_dir is not None and (
             self.registry_dir is not None or self.model_version is not None
         ):
-            raise ValueError(
-                "artifact_dir cannot be combined with registry selection."
-            )
+            raise ValueError("artifact_dir cannot be combined with registry selection.")
 
         if self.registry_dir is not None and not self.model_version:
-            raise ValueError(
-                "model_version is required when registry_dir is provided."
-            )
+            raise ValueError("model_version is required when registry_dir is provided.")
 
         if self.artifact_dir is not None:
             artifact_dir = Path(self.artifact_dir)
             if not artifact_dir.exists():
-                raise ValueError(
-                    f"Artifact directory does not exist: {artifact_dir}"
-                )
+                raise ValueError(f"Artifact directory does not exist: {artifact_dir}")
             if not artifact_dir.is_dir():
-                raise ValueError(
-                    f"Artifact path is not a directory: {artifact_dir}"
-                )
+                raise ValueError(f"Artifact path is not a directory: {artifact_dir}")
             object.__setattr__(
                 self,
                 "artifact_dir",
@@ -95,14 +85,10 @@ class PredictionResponse:
             raise ValueError("model_family must not be empty.")
 
         if self.provenance.model_version != self.model_version:
-            raise ValueError(
-                "Provenance model_version does not match response."
-            )
+            raise ValueError("Provenance model_version does not match response.")
 
         if self.provenance.model_family != self.model_family:
-            raise ValueError(
-                "Provenance model_family does not match response."
-            )
+            raise ValueError("Provenance model_family does not match response.")
 
     @property
     def sample_count(self) -> int:

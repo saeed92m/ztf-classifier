@@ -87,9 +87,7 @@ class DatasetPipeline:
             feature_schema_version="v0.2",
         ).build()
 
-        input_manifest_sha256 = self._write_object_manifest(
-            object_manifest
-        )
+        input_manifest_sha256 = self._write_object_manifest(object_manifest)
 
         artifact = DatasetArtifactWriter().write(
             dataset=dataset,
@@ -154,9 +152,7 @@ class DatasetPipeline:
     def _build_object_manifest(self) -> Any:
         """Acquire objects using the configured selection policy."""
 
-        objects = ObjectSelectionPolicy(
-            self._config
-        ).acquire_all(
+        objects = ObjectSelectionPolicy(self._config).acquire_all(
             backend=self._object_acquisition_backend,
         )
 
@@ -171,11 +167,7 @@ class DatasetPipeline:
         path = self._output_dir / "object_manifest.parquet"
         self._output_dir.mkdir(parents=True, exist_ok=True)
 
-        data = (
-            manifest.objects
-            .sort_values("oid")
-            .reset_index(drop=True)
-        )
+        data = manifest.objects.sort_values("oid").reset_index(drop=True)
 
         data.to_parquet(path, index=False)
 

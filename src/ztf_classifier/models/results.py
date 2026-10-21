@@ -83,16 +83,11 @@ class PredictionResult:
             "raw",
         )
 
-        if (
-            self.calibrated_probabilities is None
-            and (
-                self.calibrated_predicted_class_indices is not None
-                or self.calibrated_predicted_labels is not None
-            )
+        if self.calibrated_probabilities is None and (
+            self.calibrated_predicted_class_indices is not None
+            or self.calibrated_predicted_labels is not None
         ):
-            raise ValueError(
-                "Calibrated predictions require calibrated probabilities."
-            )
+            raise ValueError("Calibrated predictions require calibrated probabilities.")
 
         if self.calibrated_probabilities is not None:
             calibrated = np.array(
@@ -118,8 +113,7 @@ class PredictionResult:
                 or self.calibrated_predicted_labels is None
             ):
                 raise ValueError(
-                    "Calibrated probabilities require calibrated "
-                    "predictions."
+                    "Calibrated probabilities require calibrated predictions."
                 )
 
             calibrated_indices = np.array(
@@ -201,8 +195,7 @@ class PredictionResult:
 
         if probabilities.shape[1] != NUM_CLASSES:
             raise ValueError(
-                f"{name.capitalize()} probabilities must contain "
-                f"{NUM_CLASSES} classes."
+                f"{name.capitalize()} probabilities must contain {NUM_CLASSES} classes."
             )
 
         if not np.isfinite(probabilities).all():
@@ -221,9 +214,7 @@ class PredictionResult:
             rtol=0.0,
             atol=1e-6,
         ):
-            raise ValueError(
-                f"{name.capitalize()} probabilities do not sum to one."
-            )
+            raise ValueError(f"{name.capitalize()} probabilities do not sum to one.")
 
     @staticmethod
     def _validate_predictions(
@@ -240,32 +231,21 @@ class PredictionResult:
             )
 
         if len(indices) != expected_rows:
-            raise ValueError(
-                f"{name.capitalize()} class indices have invalid length."
-            )
+            raise ValueError(f"{name.capitalize()} class indices have invalid length.")
 
         if len(labels) != expected_rows:
-            raise ValueError(
-                f"{name.capitalize()} labels have invalid length."
-            )
+            raise ValueError(f"{name.capitalize()} labels have invalid length.")
 
         if not np.isin(
             indices,
             np.arange(NUM_CLASSES),
         ).all():
-            raise ValueError(
-                f"{name.capitalize()} class indices are out of range."
-            )
+            raise ValueError(f"{name.capitalize()} class indices are out of range.")
 
-        expected_labels = tuple(
-            MODEL_CLASSES[index]
-            for index in indices
-        )
+        expected_labels = tuple(MODEL_CLASSES[index] for index in indices)
 
         if labels != expected_labels:
-            raise ValueError(
-                f"{name.capitalize()} labels do not match class indices."
-            )
+            raise ValueError(f"{name.capitalize()} labels do not match class indices.")
 
     def _validate_status_metadata(self) -> None:
         """Validate additive production diagnostic status metadata."""
@@ -277,7 +257,11 @@ class PredictionResult:
         ):
             if value not in valid:
                 raise ValueError(f"{name} has an invalid status: {value}")
-        if self.scientific_anomaly_status not in {"available", "unavailable", "not_evaluated"}:
+        if self.scientific_anomaly_status not in {
+            "available",
+            "unavailable",
+            "not_evaluated",
+        }:
             raise ValueError(
                 "scientific_anomaly_status has an invalid status: "
                 f"{self.scientific_anomaly_status}"
@@ -295,17 +279,12 @@ class PredictionResult:
             and self.conformal.sample_count != self.sample_count
         ):
             raise ValueError(
-                "Conformal result sample count does not match "
-                "prediction result."
+                "Conformal result sample count does not match prediction result."
             )
 
-        if (
-            self.ood is not None
-            and self.ood.sample_count != self.sample_count
-        ):
+        if self.ood is not None and self.ood.sample_count != self.sample_count:
             raise ValueError(
-                "OOD result sample count does not match "
-                "prediction result."
+                "OOD result sample count does not match prediction result."
             )
 
         if (

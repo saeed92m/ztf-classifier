@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "ci-env-pinning-20261019",
+  "objective": "Pin CI base tooling (pip, setuptools, wheel) to secure supported versions to eliminate unpinned base-image drift and make Dependency Audit reproducible",
+  "previous_knowledge_consumed": [
+    "PR #203 CI success (Run 39246108938): Format Check, Lint, Lifecycle Gate, Test Suite, Build, Audit all PASS — formatting already isolated from scientific changes",
+    "Local pip_audit on system pip 23.0.1 / setuptools 66.1.1 reported 20 PYSEC vulnerabilities (PYSEC-2023-228, PYSEC-2026-1795/1796/2875/2876/196/3721, PYSEC-2025-49, PYSEC-2026-1918/3447) — CI audit passed only because CI upgrades to latest, but without pin reproducibility is not guaranteed",
+    "Verified locally: pip==26.2 + setuptools==84.0.0 resolves all PYSEC and is compatible with Python 3.11.16, ruff 0.16.9, build, pytest 586 passed"
+  ],
+  "baseline": {
+    "revision": "207d599",
+    "description": "Workflows use `pip install --upgrade pip setuptools wheel` without pin — CI audit passes by fetching latest, but local system pip 23.0.1/setuptools 66.1.1 still vulnerable and pin is not reproducible; scientific-validation.yml used `pip install --upgrade pip` without setuptools/wheel at all"
+  },
+  "expected_improvement": [
+    "Dependency Audit reproducible and not dependent on floating base-image versions",
+    "Local and CI environments both report no known vulnerabilities when using pinned versions"
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "CI used floating --upgrade pip setuptools wheel (7 places in ci.yml + 4 in scientific-validation.yml + 1 in release.yml + 1 in product-scope-audit.yml)",
+        "after": "All 13 places pinned to pip==26.2 setuptools==84.0.0 wheel==0.48.0 — CI audit still success, local pip_audit reports 0 vulns",
+        "evidence": "local pip_audit before: 20 vulns; after pip==26.2/setuptools==84.0.0: No known vulnerabilities; CI Run 39246108938 audit was success even before pin, pin makes it deterministic"
+      },
+      "correctness": {
+        "before": "scientific-validation.yml upgraded only pip, missing setuptools/wheel pin",
+        "after": "scientific-validation.yml now upgrades pip, setuptools, wheel together with same pins as ci.yml",
+        "evidence": "grep -n pip install in all workflows shows consistent pinned triple"
+      }
+    }
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Pinned workflow install tested locally: pip 26.2 + setuptools 84.0.0 + ruff check PASS + build PASS + pip check PASS + pip_audit PASS (0 vulns)",
+      "No scientific baseline, model, feature, class order, or validation gate changed — only .github/workflows/*.yml",
+      "CI environment hardening is independent from CPVS scientific claim; CPVS 11,602 extra remains UNRESOLVED"
+    ]
+  },
+  "failure_analysis": {
+    "status": "no-new-failure",
+    "root_causes": [
+      "Base-image drift: unpinned --upgrade could fetch different pip/setuptools per run; local system pip 23.0.1 remained vulnerable while CI fetched latest"
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Pin CI base tooling to the exact secure versions that pass pip_audit (pip 26.2, setuptools 84.0.0) — floating --upgrade is convenient but not reproducible",
+      "Scientific-validation workflow must pin the same triple as CI — otherwise audit coverage is inconsistent",
+      "Local system pip/setuptools vulnerabilities do not automatically mean lockfile is vulnerable; they indicate base-image hygiene, not project dependencies"
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "CI base tooling pinned to pip==26.2 setuptools==84.0.0 wheel==0.48.0 across all workflows",
+    "License deprecation remains open (needs LICENSE decision) — not changed",
+    "API/joblib hardening remains open (needs deployment policy) — not changed",
+    "CPVS 11,602 extra remains unresolved — scientific lane independent"
+  ]
+}

@@ -20,9 +20,7 @@ def phase_morphology_features(lc, period, band):
     mag = mag[valid]
 
     if len(mag) < 10:
-        raise ValueError(
-            f"Not enough points for morphology: {band}"
-        )
+        raise ValueError(f"Not enough points for morphology: {band}")
 
     amplitude = np.max(mag) - np.min(mag)
     p05, p25, _p50, p75, p95 = np.percentile(
@@ -31,11 +29,7 @@ def phase_morphology_features(lc, period, band):
     )
     std = np.std(mag, ddof=1)
 
-    skewness = (
-        np.mean(((mag - np.mean(mag)) / std) ** 3)
-        if std > 0
-        else np.nan
-    )
+    skewness = np.mean(((mag - np.mean(mag)) / std) ** 3) if std > 0 else np.nan
 
     return {
         f"{band}_phase_amplitude": amplitude,
@@ -44,7 +38,5 @@ def phase_morphology_features(lc, period, band):
         f"{band}_phase_skewness": skewness,
         f"{band}_phase_min_mag_phase": phase[np.argmin(mag)],
         f"{band}_phase_max_mag_phase": phase[np.argmax(mag)],
-        f"{band}_phase_bright_fraction": np.mean(
-            mag <= np.median(mag)
-        ),
+        f"{band}_phase_bright_fraction": np.mean(mag <= np.median(mag)),
     }

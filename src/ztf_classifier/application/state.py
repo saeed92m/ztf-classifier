@@ -45,17 +45,27 @@ class ApplicationSettings:
                 raise ApplicationInputError(
                     "workspace_directory must be non-empty when provided."
                 )
-        for field_name, value in (("day_start", self.day_start), ("night_start", self.night_start)):
-            if not isinstance(value, str) or len(value) != 5 or value[2] != ":" or not value[:2].isdigit() or not value[3:].isdigit() or not (0 <= int(value[:2]) <= 23 and 0 <= int(value[3:]) <= 59):
-                raise ApplicationInputError(f"{field_name} must use HH:MM in 24-hour time.")
+        for field_name, value in (
+            ("day_start", self.day_start),
+            ("night_start", self.night_start),
+        ):
+            if (
+                not isinstance(value, str)
+                or len(value) != 5
+                or value[2] != ":"
+                or not value[:2].isdigit()
+                or not value[3:].isdigit()
+                or not (0 <= int(value[:2]) <= 23 and 0 <= int(value[3:]) <= 59)
+            ):
+                raise ApplicationInputError(
+                    f"{field_name} must use HH:MM in 24-hour time."
+                )
         if (
             not isinstance(self.max_import_bytes, int)
             or isinstance(self.max_import_bytes, bool)
             or self.max_import_bytes <= 0
         ):
-            raise ApplicationInputError(
-                "max_import_bytes must be a positive integer."
-            )
+            raise ApplicationInputError("max_import_bytes must be a positive integer.")
 
 
 class ApplicationStateStore:
@@ -98,9 +108,7 @@ class ApplicationStateStore:
             )
         allowed_keys = set(ApplicationSettings.__dataclass_fields__)
         if set(settings) - allowed_keys:
-            raise ApplicationInputError(
-                "Application state contains unknown settings."
-            )
+            raise ApplicationInputError("Application state contains unknown settings.")
         try:
             return ApplicationSettings(**settings)
         except (TypeError, ApplicationInputError) as exc:
@@ -118,9 +126,9 @@ class ApplicationStateStore:
             "schema_version": _STATE_SCHEMA_VERSION,
             "settings": asdict(settings),
         }
-        encoded = json.dumps(
-            payload, ensure_ascii=False, indent=2, sort_keys=True
-        ) + "\n"
+        encoded = (
+            json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+        )
 
         parent = self.path.parent
         try:

@@ -32,15 +32,27 @@ class AdapterPlan:
 
     def validate(self) -> None:
         if not self.urls and self.parent_benchmark_id is None:
-            raise AdapterContractError("adapter plan must contain at least one source URL")
-        if any(not isinstance(url, str) or not url.startswith(("http://", "https://")) for url in self.urls):
+            raise AdapterContractError(
+                "adapter plan must contain at least one source URL"
+            )
+        if any(
+            not isinstance(url, str) or not url.startswith(("http://", "https://"))
+            for url in self.urls
+        ):
             raise AdapterContractError("adapter plan contains an invalid source URL")
-        if not self.destination_name or Path(self.destination_name).name != self.destination_name:
+        if (
+            not self.destination_name
+            or Path(self.destination_name).name != self.destination_name
+        ):
             raise AdapterContractError("destination_name must be a plain file name")
         if self.artifact_names and len(self.artifact_names) != len(self.urls):
-            raise AdapterContractError("artifact_names must align one-to-one with source URLs")
+            raise AdapterContractError(
+                "artifact_names must align one-to-one with source URLs"
+            )
         if self.expected_sha256 and len(self.expected_sha256) != len(self.urls):
-            raise AdapterContractError("expected_sha256 must align one-to-one with source URLs")
+            raise AdapterContractError(
+                "expected_sha256 must align one-to-one with source URLs"
+            )
 
 
 AdapterBuilder = Callable[[BenchmarkManifest], AdapterPlan]
@@ -68,11 +80,12 @@ def _source_plan(manifest: BenchmarkManifest, source: ValidationSource) -> Adapt
     return plan
 
 
-
 def _star_embed_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     source = get_source("star_embed_ztf_40k")
     if manifest.input_contract.get("adapter") != source.source_id:
-        raise AdapterContractError("StarEmbed manifest is not bound to the canonical adapter")
+        raise AdapterContractError(
+            "StarEmbed manifest is not bound to the canonical adapter"
+        )
     if manifest.version != source.version:
         raise AdapterContractError(
             f"benchmark/source version drift: benchmark={manifest.version!r}, source={source.version!r}"
@@ -80,7 +93,11 @@ def _star_embed_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     revision = manifest.input_contract.get("revision")
     if revision == "resolve_at_acquisition":
         resolved_revision = "resolve_at_acquisition"
-    elif isinstance(revision, str) and len(revision) == 40 and all(ch in "0123456789abcdef" for ch in revision.lower()):
+    elif (
+        isinstance(revision, str)
+        and len(revision) == 40
+        and all(ch in "0123456789abcdef" for ch in revision.lower())
+    ):
         resolved_revision = revision
     else:
         raise AdapterContractError(
@@ -112,13 +129,19 @@ def _star_embed_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     )
     plan.validate()
     return plan
+
+
 def _derived_730k_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     source = get_source("ztf_periodic_730k")
     if manifest.input_contract.get("adapter") != source.source_id:
-        raise AdapterContractError("730k manifest is not bound to the canonical 730k adapter")
+        raise AdapterContractError(
+            "730k manifest is not bound to the canonical 730k adapter"
+        )
     parent = manifest.ground_truth_provenance.get("parent_benchmark")
     if parent != "ztf_periodic_781k":
-        raise AdapterContractError("730k adapter requires parent_benchmark=ztf_periodic_781k")
+        raise AdapterContractError(
+            "730k adapter requires parent_benchmark=ztf_periodic_781k"
+        )
     plan = AdapterPlan(
         benchmark_id=manifest.benchmark_id,
         source_id=source.source_id,
@@ -145,8 +168,15 @@ def _dr24_plan(manifest: BenchmarkManifest) -> AdapterPlan:
             "DR24 adapter requires input_contract.query for a pinned source subset"
         )
     required = {
-        "provider", "release", "release_date", "bucket", "objects_prefix",
-        "object_id_column", "selection", "observation_cutoff", "expected_columns",
+        "provider",
+        "release",
+        "release_date",
+        "bucket",
+        "objects_prefix",
+        "object_id_column",
+        "selection",
+        "observation_cutoff",
+        "expected_columns",
     }
     missing = sorted(required - set(query))
     if missing:
@@ -161,10 +191,15 @@ def _dr24_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     if selection.get("order_by") != ["oid"]:
         raise AdapterContractError("DR24 selection must order by oid")
     if selection.get("limit") != 150:
-        raise AdapterContractError("DR24 benchmark subset must contain exactly 150 requested objects")
+        raise AdapterContractError(
+            "DR24 benchmark subset must contain exactly 150 requested objects"
+        )
     if query["object_id_column"] != "oid":
         raise AdapterContractError("DR24 object_id_column must be oid")
-    if not isinstance(query["expected_columns"], list) or "oid" not in query["expected_columns"]:
+    if (
+        not isinstance(query["expected_columns"], list)
+        or "oid" not in query["expected_columns"]
+    ):
         raise AdapterContractError("DR24 expected_columns must include oid")
     return AdapterPlan(**{**plan.__dict__, "query_manifest": dict(query)})
 
@@ -176,10 +211,20 @@ def _alerce_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     if not isinstance(query, str) or not query.strip():
         raise AdapterContractError("ALeRCE adapter requires a non-empty TAP query")
     if not isinstance(query_manifest, dict) or not query_manifest:
-        raise AdapterContractError("ALeRCE adapter requires a structured query_manifest")
+        raise AdapterContractError(
+            "ALeRCE adapter requires a structured query_manifest"
+        )
     required = {
-        "provider", "endpoint", "schema", "object_table", "probability_table",
-        "survey", "selection", "max_rows", "expected_columns", "reference_only",
+        "provider",
+        "endpoint",
+        "schema",
+        "object_table",
+        "probability_table",
+        "survey",
+        "selection",
+        "max_rows",
+        "expected_columns",
+        "reference_only",
     }
     missing = sorted(required - set(query_manifest))
     if missing:
@@ -194,9 +239,14 @@ def _alerce_plan(manifest: BenchmarkManifest) -> AdapterPlan:
         raise AdapterContractError("ALeRCE reference subset must cap at 150 rows")
     if query_manifest["reference_only"] is not True:
         raise AdapterContractError("ALeRCE output must remain reference-only")
-    if not isinstance(query_manifest["expected_columns"], list) or "oid" not in query_manifest["expected_columns"]:
+    if (
+        not isinstance(query_manifest["expected_columns"], list)
+        or "oid" not in query_manifest["expected_columns"]
+    ):
         raise AdapterContractError("ALeRCE expected_columns must include oid")
-    return AdapterPlan(**{**plan.__dict__, "query_manifest": {"tap_query": query, **query_manifest}})
+    return AdapterPlan(
+        **{**plan.__dict__, "query_manifest": {"tap_query": query, **query_manifest}}
+    )
 
 
 def build_adapter_plan(manifest: BenchmarkManifest) -> AdapterPlan:
@@ -211,5 +261,7 @@ def build_adapter_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     try:
         builder = builders[manifest.benchmark_id]
     except KeyError as exc:
-        raise AdapterContractError(f"no canonical adapter for {manifest.benchmark_id!r}") from exc
+        raise AdapterContractError(
+            f"no canonical adapter for {manifest.benchmark_id!r}"
+        ) from exc
     return builder(manifest)

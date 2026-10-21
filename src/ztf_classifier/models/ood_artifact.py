@@ -28,59 +28,33 @@ class OODArtifact:
 
     def __post_init__(self) -> None:
         if self.method != "IsolationForest":
-            raise ValueError(
-                "Unsupported OOD method: "
-                f"{self.method!r}"
-            )
+            raise ValueError(f"Unsupported OOD method: {self.method!r}")
 
         if self.n_estimators <= 0:
-            raise ValueError(
-                "OOD n_estimators must be positive."
-            )
+            raise ValueError("OOD n_estimators must be positive.")
 
         if self.contamination != "auto":
-            raise ValueError(
-                "Frozen OOD contamination must be auto."
-            )
+            raise ValueError("Frozen OOD contamination must be auto.")
 
         if self.n_jobs <= 0:
-            raise ValueError(
-                "OOD n_jobs must be positive."
-            )
+            raise ValueError("OOD n_jobs must be positive.")
 
         if self.feature_count != OOD_FEATURE_COUNT:
-            raise ValueError(
-                "OOD artifact must contain exactly 42 features."
-            )
+            raise ValueError("OOD artifact must contain exactly 42 features.")
 
         if not self.anomaly_thresholds:
-            raise ValueError(
-                "At least one OOD anomaly threshold is required."
-            )
+            raise ValueError("At least one OOD anomaly threshold is required.")
 
-        if (
-            tuple(sorted(self.anomaly_thresholds))
-            != self.anomaly_thresholds
-        ):
-            raise ValueError(
-                "OOD anomaly thresholds must be sorted ascending."
-            )
+        if tuple(sorted(self.anomaly_thresholds)) != self.anomaly_thresholds:
+            raise ValueError("OOD anomaly thresholds must be sorted ascending.")
 
-        if len(set(self.anomaly_thresholds)) != len(
-            self.anomaly_thresholds
-        ):
-            raise ValueError(
-                "OOD anomaly thresholds must be unique."
-            )
+        if len(set(self.anomaly_thresholds)) != len(self.anomaly_thresholds):
+            raise ValueError("OOD anomaly thresholds must be unique.")
 
         for threshold in self.anomaly_thresholds:
-            if (
-                not np.isfinite(threshold)
-                or not 0.0 <= threshold <= 100.0
-            ):
+            if not np.isfinite(threshold) or not 0.0 <= threshold <= 100.0:
                 raise ValueError(
-                    "OOD anomaly thresholds must be "
-                    "percentages in [0, 100]."
+                    "OOD anomaly thresholds must be percentages in [0, 100]."
                 )
 
         scores = np.asarray(
@@ -89,19 +63,13 @@ class OODArtifact:
         )
 
         if scores.ndim != 1:
-            raise ValueError(
-                "Reference anomaly scores must be one-dimensional."
-            )
+            raise ValueError("Reference anomaly scores must be one-dimensional.")
 
         if len(scores) == 0:
-            raise ValueError(
-                "Reference anomaly scores must not be empty."
-            )
+            raise ValueError("Reference anomaly scores must not be empty.")
 
         if not np.isfinite(scores).all():
-            raise ValueError(
-                "Reference anomaly scores must be finite."
-            )
+            raise ValueError("Reference anomaly scores must be finite.")
 
     @classmethod
     def from_config(
@@ -123,14 +91,10 @@ class OODArtifact:
             random_state=config.random_state,
             n_jobs=config.n_jobs,
             anomaly_thresholds=tuple(
-                float(value)
-                for value in config.anomaly_thresholds
+                float(value) for value in config.anomaly_thresholds
             ),
             feature_count=OOD_FEATURE_COUNT,
-            reference_anomaly_scores=tuple(
-                float(value)
-                for value in scores
-            ),
+            reference_anomaly_scores=tuple(float(value) for value in scores),
         )
 
     def anomaly_percentile(
@@ -145,26 +109,19 @@ class OODArtifact:
         )
 
         if scores.ndim != 1:
-            raise ValueError(
-                "Anomaly scores must be one-dimensional."
-            )
+            raise ValueError("Anomaly scores must be one-dimensional.")
 
         if not np.isfinite(scores).all():
-            raise ValueError(
-                "Anomaly scores must be finite."
-            )
+            raise ValueError("Anomaly scores must be finite.")
 
         reference = np.asarray(
             self.reference_anomaly_scores,
             dtype=np.float64,
         )
 
-        return (
-            100.0
-            * np.mean(
-                reference[None, :] <= scores[:, None],
-                axis=1,
-            )
+        return 100.0 * np.mean(
+            reference[None, :] <= scores[:, None],
+            axis=1,
         )
 
     def anomaly_rank(
@@ -179,14 +136,10 @@ class OODArtifact:
         )
 
         if scores.ndim != 1:
-            raise ValueError(
-                "Anomaly scores must be one-dimensional."
-            )
+            raise ValueError("Anomaly scores must be one-dimensional.")
 
         if not np.isfinite(scores).all():
-            raise ValueError(
-                "Anomaly scores must be finite."
-            )
+            raise ValueError("Anomaly scores must be finite.")
 
         reference = np.asarray(
             self.reference_anomaly_scores,
@@ -214,19 +167,13 @@ class OODArtifact:
         )
 
         if percentiles.ndim != 1:
-            raise ValueError(
-                "Anomaly percentiles must be one-dimensional."
-            )
+            raise ValueError("Anomaly percentiles must be one-dimensional.")
 
         if not np.isfinite(percentiles).all():
-            raise ValueError(
-                "Anomaly percentiles must be finite."
-            )
+            raise ValueError("Anomaly percentiles must be finite.")
 
         return {
-            threshold: (
-                percentiles >= threshold
-            ).copy()
+            threshold: (percentiles >= threshold).copy()
             for threshold in self.anomaly_thresholds
         }
 
@@ -240,13 +187,9 @@ class OODArtifact:
             "contamination": self.contamination,
             "random_state": self.random_state,
             "n_jobs": self.n_jobs,
-            "anomaly_thresholds": list(
-                self.anomaly_thresholds
-            ),
+            "anomaly_thresholds": list(self.anomaly_thresholds),
             "feature_count": self.feature_count,
-            "reference_anomaly_scores": list(
-                self.reference_anomaly_scores
-            ),
+            "reference_anomaly_scores": list(self.reference_anomaly_scores),
         }
 
     @classmethod
@@ -257,58 +200,27 @@ class OODArtifact:
         """Reconstruct an OOD artifact from serialized data."""
 
         if not isinstance(payload, dict):
-            raise TypeError(
-                "OOD artifact payload must be a dictionary."
-            )
+            raise TypeError("OOD artifact payload must be a dictionary.")
 
-        if (
-            payload.get("schema_version")
-            != OOD_ARTIFACT_SCHEMA_VERSION
-        ):
-            raise ValueError(
-                "Unsupported OOD artifact schema version."
-            )
+        if payload.get("schema_version") != OOD_ARTIFACT_SCHEMA_VERSION:
+            raise ValueError("Unsupported OOD artifact schema version.")
 
-        thresholds = payload.get(
-            "anomaly_thresholds"
-        )
-        reference_scores = payload.get(
-            "reference_anomaly_scores"
-        )
+        thresholds = payload.get("anomaly_thresholds")
+        reference_scores = payload.get("reference_anomaly_scores")
 
         if not isinstance(thresholds, list):
-            raise TypeError(
-                "OOD anomaly thresholds must be a list."
-            )
+            raise TypeError("OOD anomaly thresholds must be a list.")
 
         if not isinstance(reference_scores, list):
-            raise TypeError(
-                "OOD reference anomaly scores must be a list."
-            )
+            raise TypeError("OOD reference anomaly scores must be a list.")
 
         return cls(
             method=str(payload.get("method")),
-            n_estimators=int(
-                payload.get("n_estimators")
-            ),
-            contamination=str(
-                payload.get("contamination")
-            ),
-            random_state=int(
-                payload.get("random_state")
-            ),
-            n_jobs=int(
-                payload.get("n_jobs")
-            ),
-            anomaly_thresholds=tuple(
-                float(value)
-                for value in thresholds
-            ),
-            feature_count=int(
-                payload.get("feature_count")
-            ),
-            reference_anomaly_scores=tuple(
-                float(value)
-                for value in reference_scores
-            ),
+            n_estimators=int(payload.get("n_estimators")),
+            contamination=str(payload.get("contamination")),
+            random_state=int(payload.get("random_state")),
+            n_jobs=int(payload.get("n_jobs")),
+            anomaly_thresholds=tuple(float(value) for value in thresholds),
+            feature_count=int(payload.get("feature_count")),
+            reference_anomaly_scores=tuple(float(value) for value in reference_scores),
         )

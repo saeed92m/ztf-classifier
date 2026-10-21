@@ -14,11 +14,7 @@ from ztf_classifier.io.parquet_detection import ParquetDetectionBackend
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 SOURCE_ARTIFACT = (
-    PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "benchmark_v0.2"
-    / "features.parquet"
+    PROJECT_ROOT / "data" / "processed" / "benchmark_v0.2" / "features.parquet"
 )
 
 RAW_CACHE = PROJECT_ROOT / "data" / "raw" / "alerce"
@@ -69,13 +65,9 @@ def test_offline_feature_dataset_reproduces_frozen_v0_2() -> None:
         check_exact=True,
     )
 
-    feature_columns = list(
-        expected.columns[len(metadata_columns):]
-    )
+    feature_columns = list(expected.columns[len(metadata_columns) :])
 
-    assert feature_columns == list(
-        actual.columns[len(metadata_columns):]
-    )
+    assert feature_columns == list(actual.columns[len(metadata_columns) :])
 
     assert_frame_equal(
         actual[feature_columns],

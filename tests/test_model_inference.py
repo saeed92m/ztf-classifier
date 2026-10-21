@@ -19,11 +19,7 @@ def _load_dataset() -> pd.DataFrame:
 
 def _feature_names() -> list[str]:
     schema = pd.read_parquet(SCHEMA)
-    return (
-        schema.sort_values("feature_order")["feature"]
-        .astype(str)
-        .tolist()
-    )
+    return schema.sort_values("feature_order")["feature"].astype(str).tolist()
 
 
 def _build_model(dataset: pd.DataFrame) -> XGBClassifier:
@@ -36,12 +32,7 @@ def _build_model(dataset: pd.DataFrame) -> XGBClassifier:
 
     labels = (
         dataset["class"]
-        .map(
-            {
-                name: index
-                for index, name in enumerate(MODEL_CLASSES)
-            }
-        )
+        .map({name: index for index, name in enumerate(MODEL_CLASSES)})
         .to_numpy(dtype=int)
     )
 
@@ -82,14 +73,9 @@ def test_inference_returns_frozen_class_contract() -> None:
     assert result.predicted_class_indices.shape == (150,)
     assert len(result.predicted_labels) == 150
 
-    assert set(result.predicted_class_indices).issubset(
-        set(range(15))
-    )
+    assert set(result.predicted_class_indices).issubset(set(range(15)))
 
-    assert all(
-        label in MODEL_CLASSES
-        for label in result.predicted_labels
-    )
+    assert all(label in MODEL_CLASSES for label in result.predicted_labels)
 
 
 def test_inference_probability_matrix_is_valid() -> None:
@@ -166,13 +152,9 @@ def test_inference_rejects_missing_model() -> None:
             feature_schema_path=SCHEMA,
         )
     except ValueError as exc:
-        assert str(exc) == (
-            "XGBoostInferenceEngine requires a fitted model."
-        )
+        assert str(exc) == ("XGBoostInferenceEngine requires a fitted model.")
     else:
-        raise AssertionError(
-            "Inference engine must reject a missing model."
-        )
+        raise AssertionError("Inference engine must reject a missing model.")
 
 
 def test_inference_result_arrays_are_read_only() -> None:

@@ -10,8 +10,12 @@ def test_source_probe_writes_derived_entry_without_network(tmp_path):
         return 200, b"fixture", "application/octet-stream"
 
     report = run(tmp_path / "probe.json", fetcher=fake_fetch)
-    derived = next(item for item in report["sources"] if item["source_id"] == "ztf_periodic_730k")
+    derived = next(
+        item for item in report["sources"] if item["source_id"] == "ztf_periodic_730k"
+    )
     assert derived["status"] == "DERIVED"
-    live = next(item for item in report["sources"] if item["source_id"] == "alerce_reference")
+    live = next(
+        item for item in report["sources"] if item["source_id"] == "alerce_reference"
+    )
     assert live["status"] == "REACHABLE"
     assert live["sha256"]

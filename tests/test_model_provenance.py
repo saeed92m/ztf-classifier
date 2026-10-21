@@ -14,7 +14,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATASET_PATH = PROJECT_ROOT / "data/processed/benchmark_v0.2/features.parquet"
 FEATURE_SCHEMA_PATH = PROJECT_ROOT / "reports/tables/final_feature_set_v0.2.parquet"
 MODEL_CONFIG_PATH = PROJECT_ROOT / "reports/tables/final_model_config_v0.2.json"
-CALIBRATION_SOURCE_PATH = PROJECT_ROOT / "reports/tables/xgboost_baseline_v0.2_oof_predictions.parquet"
+CALIBRATION_SOURCE_PATH = (
+    PROJECT_ROOT / "reports/tables/xgboost_baseline_v0.2_oof_predictions.parquet"
+)
 
 
 def sha256(path: Path) -> str:
@@ -73,18 +75,32 @@ def test_build_captures_expected_provenance():
 def test_paths_are_project_relative():
     provenance = build_provenance()
     assert provenance.dataset_path == "data/processed/benchmark_v0.2/features.parquet"
-    assert provenance.feature_schema_path == "reports/tables/final_feature_set_v0.2.parquet"
+    assert (
+        provenance.feature_schema_path
+        == "reports/tables/final_feature_set_v0.2.parquet"
+    )
     assert provenance.model_config_path == "reports/tables/final_model_config_v0.2.json"
-    assert provenance.calibration_source_path == "reports/tables/xgboost_baseline_v0.2_oof_predictions.parquet"
+    assert (
+        provenance.calibration_source_path
+        == "reports/tables/xgboost_baseline_v0.2_oof_predictions.parquet"
+    )
 
 
 def test_to_dict_has_stable_top_level_contract():
     provenance = build_provenance()
     data = provenance.to_dict()
     assert set(data) == {
-        "provenance_schema_version", "artifact_version", "model", "dataset",
-        "feature_schema", "model_configuration", "calibration", "source_control",
-        "runtime", "dependencies", "software",
+        "provenance_schema_version",
+        "artifact_version",
+        "model",
+        "dataset",
+        "feature_schema",
+        "model_configuration",
+        "calibration",
+        "source_control",
+        "runtime",
+        "dependencies",
+        "software",
     }
     assert data["provenance_schema_version"] == "1.1"
     assert data["model"] == {"version": "baseline_v0.2", "family": "XGBoost"}

@@ -53,15 +53,9 @@ def test_production_pipeline_matches_frozen_v0_2():
     assert len(production) == len(frozen)
     assert set(production["oid"]) == set(frozen["oid"])
 
-    frozen_cmp = (
-        frozen.set_index("oid")[list(V0_2_FEATURES)]
-        .sort_index()
-    )
+    frozen_cmp = frozen.set_index("oid")[list(V0_2_FEATURES)].sort_index()
 
-    production_cmp = (
-        production.set_index("oid")[list(V0_2_FEATURES)]
-        .sort_index()
-    )
+    production_cmp = production.set_index("oid")[list(V0_2_FEATURES)].sort_index()
 
     for feature in V0_2_FEATURES:
         expected = frozen_cmp[feature].to_numpy(dtype=float)

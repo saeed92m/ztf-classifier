@@ -41,10 +41,7 @@ def _artifact() -> ModelArtifact:
         model_family="XGBoost",
         classes=MODEL_CLASSES,
         feature_schema_version="v0.2",
-        feature_names=tuple(
-            f"feature_{index}"
-            for index in range(42)
-        ),
+        feature_names=tuple(f"feature_{index}" for index in range(42)),
         configuration=ModelConfig(),
         dataset_sha256="a" * 64,
         feature_schema_sha256="b" * 64,
@@ -76,10 +73,7 @@ def test_artifact_requires_model() -> None:
             model_family="XGBoost",
             classes=MODEL_CLASSES,
             feature_schema_version="v0.2",
-            feature_names=tuple(
-                f"feature_{index}"
-                for index in range(42)
-            ),
+            feature_names=tuple(f"feature_{index}" for index in range(42)),
             configuration=ModelConfig(),
             dataset_sha256="a" * 64,
             feature_schema_sha256="b" * 64,
@@ -99,10 +93,7 @@ def test_artifact_rejects_wrong_class_order() -> None:
             model_family="XGBoost",
             classes=classes,
             feature_schema_version="v0.2",
-            feature_names=tuple(
-                f"feature_{index}"
-                for index in range(42)
-            ),
+            feature_names=tuple(f"feature_{index}" for index in range(42)),
             configuration=ModelConfig(),
             dataset_sha256="a" * 64,
             feature_schema_sha256="b" * 64,
@@ -138,10 +129,7 @@ def test_artifact_rejects_configuration_mismatch() -> None:
             model_family="XGBoost",
             classes=MODEL_CLASSES,
             feature_schema_version="v0.2",
-            feature_names=tuple(
-                f"feature_{index}"
-                for index in range(42)
-            ),
+            feature_names=tuple(f"feature_{index}" for index in range(42)),
             configuration=ModelConfig(),
             dataset_sha256="a" * 64,
             feature_schema_sha256="b" * 64,
@@ -159,10 +147,7 @@ def test_artifact_rejects_invalid_hash_length() -> None:
             model_family="XGBoost",
             classes=MODEL_CLASSES,
             feature_schema_version="v0.2",
-            feature_names=tuple(
-                f"feature_{index}"
-                for index in range(42)
-            ),
+            feature_names=tuple(f"feature_{index}" for index in range(42)),
             configuration=ModelConfig(),
             dataset_sha256="invalid",
             feature_schema_sha256="b" * 64,

@@ -20,10 +20,7 @@ def _light_curve() -> pd.DataFrame:
                     "mjd": mjd,
                     "fid": fid,
                     "mag": (
-                        19.0
-                        + offset
-                        + 0.2 * np.sin(mjd / 5.0)
-                        + 0.01 * np.cos(index)
+                        19.0 + offset + 0.2 * np.sin(mjd / 5.0) + 0.01 * np.cos(index)
                     ),
                     "magerr": 0.05,
                 }
@@ -37,9 +34,7 @@ def test_v0_2_features_are_invariant_to_observations_after_cutoff(
 ) -> None:
     """Future rows must not change features computed at a fixed cutoff."""
     observations = _light_curve()
-    historical = observations.loc[
-        observations["mjd"] <= cutoff_mjd
-    ].copy()
+    historical = observations.loc[observations["mjd"] <= cutoff_mjd].copy()
 
     baseline = extract_v0_2_features(
         historical,

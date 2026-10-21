@@ -18,12 +18,8 @@ from ztf_classifier.models.production_inference import (
 from ztf_classifier.models.results import PredictionResult
 from ztf_classifier.pipeline.model import ModelPipeline
 
-LEGACY_ARTIFACT = Path(
-    "runs/model_baseline_v0.2_production/artifact"
-)
-DATASET = Path(
-    "data/processed/features_v0.2.parquet"
-)
+LEGACY_ARTIFACT = Path("runs/model_baseline_v0.2_production/artifact")
+DATASET = Path("data/processed/features_v0.2.parquet")
 
 _MODEL_INPUTS = (
     LEGACY_ARTIFACT,
@@ -57,12 +53,8 @@ def diagnostic_artifact(
             fold_assignments_path=Path(
                 "reports/tables/stratified_cv_fold_assignments_v0.1.parquet"
             ),
-            feature_schema_path=Path(
-                "reports/tables/final_feature_set_v0.2.parquet"
-            ),
-            model_config_path=Path(
-                "reports/tables/final_model_config_v0.2.json"
-            ),
+            feature_schema_path=Path("reports/tables/final_feature_set_v0.2.parquet"),
+            model_config_path=Path("reports/tables/final_model_config_v0.2.json"),
             output_dir=output_dir,
         ).run()
 
@@ -81,12 +73,8 @@ def test_service_loads_production_artifact() -> None:
     service = _build_service()
 
     assert service.artifact_dir == LEGACY_ARTIFACT.resolve()
-    assert service.loaded_artifact.model_artifact.model_version == (
-        "baseline_v0.2"
-    )
-    assert service.loaded_artifact.model_artifact.model_family == (
-        "XGBoost"
-    )
+    assert service.loaded_artifact.model_artifact.model_version == ("baseline_v0.2")
+    assert service.loaded_artifact.model_artifact.model_family == ("XGBoost")
     assert service.loaded_artifact.artifact_schema_version == "1.0"
 
 
@@ -189,9 +177,7 @@ def test_service_does_not_include_diagnostic_outputs() -> None:
 
 
 def test_service_rejects_missing_artifact() -> None:
-    missing = Path(
-        "runs/model_baseline_v0.2_production/missing-artifact"
-    )
+    missing = Path("runs/model_baseline_v0.2_production/missing-artifact")
 
     try:
         ProductionInferenceService(missing)
@@ -211,9 +197,7 @@ def test_service_matches_direct_artifact_inference() -> None:
 
     engine = XGBoostInferenceEngine(
         model=loaded.model_artifact.model,
-        feature_schema_path=(
-            LEGACY_ARTIFACT / "feature_schema.parquet"
-        ),
+        feature_schema_path=(LEGACY_ARTIFACT / "feature_schema.parquet"),
     )
 
     direct_inference = engine.predict(dataset)
@@ -279,10 +263,11 @@ def test_diagnostic_artifact_returns_conformal_outputs(
     assert len(result.conformal.results) == 3
     assert result.conformal.sample_count == 150
 
-    assert tuple(
-        diagnostic.alpha
-        for diagnostic in result.conformal.results
-    ) == (0.05, 0.10, 0.20)
+    assert tuple(diagnostic.alpha for diagnostic in result.conformal.results) == (
+        0.05,
+        0.10,
+        0.20,
+    )
 
     for diagnostic in result.conformal.results:
         assert diagnostic.prediction_sets.shape == (150, 15)
@@ -318,10 +303,7 @@ def test_diagnostic_conformal_uses_raw_probabilities(
             expected_result.prediction_sets,
         )
 
-        assert (
-            actual.prediction_set_labels
-            == expected_result.prediction_set_labels
-        )
+        assert actual.prediction_set_labels == expected_result.prediction_set_labels
 
 
 def test_diagnostic_artifact_returns_ood_outputs(
@@ -358,9 +340,7 @@ def test_diagnostic_ood_matches_persisted_production_model(
 
     engine = XGBoostInferenceEngine(
         model=loaded.model_artifact.model,
-        feature_schema_path=(
-            diagnostic_artifact / "feature_schema.parquet"
-        ),
+        feature_schema_path=(diagnostic_artifact / "feature_schema.parquet"),
     )
 
     features = engine.prepare_features(dataset)
@@ -433,10 +413,7 @@ def test_diagnostic_service_is_deterministic(
             first_result.prediction_sets,
             second_result.prediction_sets,
         )
-        assert (
-            first_result.prediction_set_labels
-            == second_result.prediction_set_labels
-        )
+        assert first_result.prediction_set_labels == second_result.prediction_set_labels
 
     np.testing.assert_array_equal(
         first.ood.anomaly_score,
@@ -468,9 +445,7 @@ def test_diagnostic_ood_rank_is_reference_relative(
     assert service.loaded_artifact.ood is not None
     assert service.loaded_artifact.ood_model is not None
 
-    reference = (
-        service.loaded_artifact.ood_model.reference_anomaly_scores
-    )
+    reference = service.loaded_artifact.ood_model.reference_anomaly_scores
 
     assert reference is not None
 
@@ -478,19 +453,15 @@ def test_diagnostic_ood_rank_is_reference_relative(
 
     assert result.ood is not None
 
-    expected_rank = service.loaded_artifact.ood.anomaly_rank(
-        result.ood.anomaly_score
-    )
+    expected_rank = service.loaded_artifact.ood.anomaly_rank(result.ood.anomaly_score)
 
     np.testing.assert_array_equal(
         result.ood.anomaly_rank,
         expected_rank,
     )
 
-    expected_percentile = (
-        service.loaded_artifact.ood.anomaly_percentile(
-            result.ood.anomaly_score
-        )
+    expected_percentile = service.loaded_artifact.ood.anomaly_percentile(
+        result.ood.anomaly_score
     )
 
     np.testing.assert_array_equal(
@@ -509,9 +480,7 @@ def test_diagnostic_service_matches_direct_classification_inference(
 
     engine = XGBoostInferenceEngine(
         model=loaded.model_artifact.model,
-        feature_schema_path=(
-            diagnostic_artifact / "feature_schema.parquet"
-        ),
+        feature_schema_path=(diagnostic_artifact / "feature_schema.parquet"),
     )
 
     direct = engine.predict(dataset)

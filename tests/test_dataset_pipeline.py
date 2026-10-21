@@ -208,14 +208,9 @@ def test_pipeline_orchestrates_all_stages(project: Path) -> None:
         project_root=project,
         output_dir=output_dir,
         feature_schema_path=(
-            project
-            / "reports"
-            / "tables"
-            / "final_feature_set_v0.2.parquet"
+            project / "reports" / "tables" / "final_feature_set_v0.2.parquet"
         ),
-    ).run(
-        command="pytest test_pipeline_orchestrates_all_stages"
-    )
+    ).run(command="pytest test_pipeline_orchestrates_all_stages")
 
     assert object_backend.requests == [
         "class_a",
@@ -263,11 +258,7 @@ def test_pipeline_writes_canonical_artifact_schema(project: Path) -> None:
         }
     )
 
-    detection_backend = FakeDetectionBackend(
-        {
-            "ZTF_A": _detections("ZTF_A")
-        }
-    )
+    detection_backend = FakeDetectionBackend({"ZTF_A": _detections("ZTF_A")})
 
     output_dir = project / "artifact"
 
@@ -278,27 +269,15 @@ def test_pipeline_writes_canonical_artifact_schema(project: Path) -> None:
         project_root=project,
         output_dir=output_dir,
         feature_schema_path=(
-            project
-            / "reports"
-            / "tables"
-            / "final_feature_set_v0.2.parquet"
+            project / "reports" / "tables" / "final_feature_set_v0.2.parquet"
         ),
     ).run()
 
-    data = pd.read_parquet(
-        result.artifact.artifact_path
-    )
+    data = pd.read_parquet(result.artifact.artifact_path)
 
-    assert tuple(data.columns) == (
-        FEATURE_DATASET_METADATA_COLUMNS
-        + V0_2_FEATURES
-    )
+    assert tuple(data.columns) == (FEATURE_DATASET_METADATA_COLUMNS + V0_2_FEATURES)
 
-    manifest = json.loads(
-        result.artifact.manifest_path.read_text(
-            encoding="utf-8"
-        )
-    )
+    manifest = json.loads(result.artifact.manifest_path.read_text(encoding="utf-8"))
 
     assert manifest["object_count"] == 1
     assert manifest["feature_count"] == 42
@@ -329,11 +308,7 @@ def test_pipeline_rejects_multiple_object_payloads(
         samples_per_class=1,
     )
 
-    detection_backend = FakeDetectionBackend(
-        {
-            "ZTF_A": _detections("ZTF_A")
-        }
-    )
+    detection_backend = FakeDetectionBackend({"ZTF_A": _detections("ZTF_A")})
 
     with pytest.raises(
         ValueError,
@@ -346,10 +321,7 @@ def test_pipeline_rejects_multiple_object_payloads(
             project_root=project,
             output_dir=project / "bad",
             feature_schema_path=(
-                project
-                / "reports"
-                / "tables"
-                / "final_feature_set_v0.2.parquet"
+                project / "reports" / "tables" / "final_feature_set_v0.2.parquet"
             ),
         ).run()
 
@@ -374,11 +346,7 @@ def test_pipeline_rejects_non_dataframe_object_payload(
         samples_per_class=1,
     )
 
-    detection_backend = FakeDetectionBackend(
-        {
-            "ZTF_A": _detections("ZTF_A")
-        }
-    )
+    detection_backend = FakeDetectionBackend({"ZTF_A": _detections("ZTF_A")})
 
     with pytest.raises(
         TypeError,
@@ -391,9 +359,6 @@ def test_pipeline_rejects_non_dataframe_object_payload(
             project_root=project,
             output_dir=project / "bad",
             feature_schema_path=(
-                project
-                / "reports"
-                / "tables"
-                / "final_feature_set_v0.2.parquet"
+                project / "reports" / "tables" / "final_feature_set_v0.2.parquet"
             ),
         ).run()

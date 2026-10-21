@@ -7,9 +7,7 @@ from ztf_classifier.models.conformal import (
     EmpiricalConformalPredictor,
 )
 
-OOF_PATH = Path(
-    "reports/tables/xgboost_baseline_v0.2_oof_predictions.parquet"
-)
+OOF_PATH = Path("reports/tables/xgboost_baseline_v0.2_oof_predictions.parquet")
 
 CLASS_NAMES = (
     "AGN",
@@ -33,16 +31,11 @@ CLASS_NAMES = (
 def _load_oof() -> tuple[np.ndarray, np.ndarray]:
     oof = pd.read_parquet(OOF_PATH)
 
-    probabilities = oof[
-        [
-            f"proba_{name}"
-            for name in CLASS_NAMES
-        ]
-    ].to_numpy(dtype=np.float64)
+    probabilities = oof[[f"proba_{name}" for name in CLASS_NAMES]].to_numpy(
+        dtype=np.float64
+    )
 
-    y_true = oof[
-        "true_class_index"
-    ].to_numpy(dtype=np.int64)
+    y_true = oof["true_class_index"].to_numpy(dtype=np.int64)
 
     return probabilities, y_true
 
@@ -77,27 +70,17 @@ def test_conformal_matches_frozen_v0_2() -> None:
     }
 
     for result in results:
-        threshold, coverage, set_size, singleton = (
-            expected[result.alpha]
-        )
+        threshold, coverage, set_size, singleton = expected[result.alpha]
 
         assert result.sample_count == 150
 
-        assert abs(
-            result.threshold - threshold
-        ) < 1e-8
+        assert abs(result.threshold - threshold) < 1e-8
 
-        assert abs(
-            result.summary.coverage - coverage
-        ) < 1e-8
+        assert abs(result.summary.coverage - coverage) < 1e-8
 
-        assert abs(
-            result.summary.mean_set_size - set_size
-        ) < 1e-12
+        assert abs(result.summary.mean_set_size - set_size) < 1e-12
 
-        assert abs(
-            result.summary.singleton_rate - singleton
-        ) < 1e-8
+        assert abs(result.summary.singleton_rate - singleton) < 1e-8
 
 
 def test_conformal_prediction_sets_are_valid() -> None:
@@ -130,9 +113,7 @@ def test_conformal_prediction_sets_are_valid() -> None:
 
         np.testing.assert_array_equal(
             result.set_sizes,
-            result.prediction_sets.sum(
-                axis=1
-            ),
+            result.prediction_sets.sum(axis=1),
         )
 
         assert (result.set_sizes >= 0).all()
@@ -148,11 +129,7 @@ def test_conformal_prediction_labels_preserve_class_order() -> None:
         0.05,
     )
 
-    labels = (
-        EmpiricalConformalPredictor.prediction_set_labels(
-            result.prediction_sets
-        )
-    )
+    labels = EmpiricalConformalPredictor.prediction_set_labels(result.prediction_sets)
 
     assert len(labels) == 150
 
@@ -216,9 +193,7 @@ def test_conformal_rejects_invalid_alpha() -> None:
         except ValueError:
             pass
         else:
-            raise AssertionError(
-                "Invalid alpha must be rejected."
-            )
+            raise AssertionError("Invalid alpha must be rejected.")
 
 
 def test_conformal_rejects_invalid_probability_shape() -> None:
@@ -239,11 +214,6 @@ def test_conformal_rejects_invalid_probability_shape() -> None:
             0.05,
         )
     except ValueError as exc:
-        assert str(exc) == (
-            "Frozen v0.2 conformal prediction "
-            "requires 15 classes."
-        )
+        assert str(exc) == ("Frozen v0.2 conformal prediction requires 15 classes.")
     else:
-        raise AssertionError(
-            "Invalid class count must be rejected."
-        )
+        raise AssertionError("Invalid class count must be rejected.")

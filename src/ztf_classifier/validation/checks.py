@@ -79,7 +79,9 @@ def check_duplicate_objects(
             "Evaluation artifact contains duplicate object identifiers.",
             duplicate_rows=count,
         )
-    return _pass("duplicate_objects", "Object identifiers are unique.", row_count=len(frame))
+    return _pass(
+        "duplicate_objects", "Object identifiers are unique.", row_count=len(frame)
+    )
 
 
 def check_object_overlap(
@@ -95,8 +97,10 @@ def check_object_overlap(
     values = frame[split_column].astype(str).str.lower()
     train = set(frame.loc[values == "train", manifest.object_id_column].astype(str))
     evaluation = set(
-        frame.loc[values.isin({"validation", "val", "test", "evaluation"}), manifest.object_id_column]
-        .astype(str)
+        frame.loc[
+            values.isin({"validation", "val", "test", "evaluation"}),
+            manifest.object_id_column,
+        ].astype(str)
     )
     if not train or not evaluation:
         return _blocked(
@@ -198,7 +202,10 @@ def check_benchmark_trained_artifacts(
             required_input="input_contract.benchmark_trained_artifact_columns",
         )
     if not isinstance(marker, list):
-        return _blocked("benchmark_trained_artifacts", "benchmark_trained_artifact_columns must be a list.")
+        return _blocked(
+            "benchmark_trained_artifacts",
+            "benchmark_trained_artifact_columns must be a list.",
+        )
     present = sorted(set(map(str, marker)) & set(map(str, frame.columns)))
     if present:
         return _fail(
@@ -244,10 +251,15 @@ def check_schema_compatibility(
 ) -> CheckResult:
     required = manifest.input_contract.get("required_columns")
     if required is None:
-        required = [manifest.object_id_column, manifest.label_column,
-                    str(manifest.input_contract.get("prediction_column", "y_pred"))]
+        required = [
+            manifest.object_id_column,
+            manifest.label_column,
+            str(manifest.input_contract.get("prediction_column", "y_pred")),
+        ]
     if not isinstance(required, list):
-        return _blocked("schema_compatibility", "input_contract.required_columns must be a list.")
+        return _blocked(
+            "schema_compatibility", "input_contract.required_columns must be a list."
+        )
     missing = sorted(set(map(str, required)) - set(map(str, frame.columns)))
     if missing:
         return _fail(
@@ -255,7 +267,10 @@ def check_schema_compatibility(
             "Declared benchmark input columns are missing.",
             missing_columns=missing,
         )
-    return _pass("schema_compatibility", "Benchmark input schema satisfies the declared contract.")
+    return _pass(
+        "schema_compatibility",
+        "Benchmark input schema satisfies the declared contract.",
+    )
 
 
 def check_feature_generation_determinism(
@@ -267,7 +282,10 @@ def check_feature_generation_determinism(
         return _blocked(
             "feature_generation_determinism",
             "A feature fingerprint column and expected fingerprint are required.",
-            required_inputs=["feature_fingerprint_column", "expected_feature_fingerprint"],
+            required_inputs=[
+                "feature_fingerprint_column",
+                "expected_feature_fingerprint",
+            ],
         )
     values = frame[fingerprint].astype(str).unique().tolist()
     if values != [str(expected)]:
@@ -277,13 +295,18 @@ def check_feature_generation_determinism(
             observed=values,
             expected=str(expected),
         )
-    return _pass("feature_generation_determinism", "Feature fingerprint matches the declared contract.")
+    return _pass(
+        "feature_generation_determinism",
+        "Feature fingerprint matches the declared contract.",
+    )
 
 
 def check_qc_acceptance(
     manifest: BenchmarkManifest, frame: pd.DataFrame
 ) -> CheckResult:
-    column = manifest.accepted_column or manifest.input_contract.get("qc_acceptance_column")
+    column = manifest.accepted_column or manifest.input_contract.get(
+        "qc_acceptance_column"
+    )
     if not column or column not in frame.columns:
         return _blocked(
             "qc_acceptance",
@@ -298,7 +321,18 @@ def check_qc_acceptance(
     else:
         normalized = raw.astype(str).str.strip().str.lower()
         accepted = normalized.isin({"1", "true", "yes", "accepted", "pass"})
-        allowed = {"0", "1", "false", "true", "no", "yes", "rejected", "accepted", "fail", "pass"}
+        allowed = {
+            "0",
+            "1",
+            "false",
+            "true",
+            "no",
+            "yes",
+            "rejected",
+            "accepted",
+            "fail",
+            "pass",
+        }
         unknown = sorted(set(normalized) - allowed)
         if unknown:
             return _blocked(
@@ -324,7 +358,10 @@ def check_inference_reproducibility(
         return _blocked(
             "inference_reproducibility",
             "An inference fingerprint column and expected fingerprint are required.",
-            required_inputs=["inference_fingerprint_column", "expected_inference_fingerprint"],
+            required_inputs=[
+                "inference_fingerprint_column",
+                "expected_inference_fingerprint",
+            ],
         )
     values = frame[first].astype(str).unique().tolist()
     if values != [str(expected)]:
@@ -334,7 +371,10 @@ def check_inference_reproducibility(
             observed=values,
             expected=str(expected),
         )
-    return _pass("inference_reproducibility", "Inference fingerprint matches the declared contract.")
+    return _pass(
+        "inference_reproducibility",
+        "Inference fingerprint matches the declared contract.",
+    )
 
 
 def check_failure_code_correctness(
@@ -356,7 +396,9 @@ def check_failure_code_correctness(
             "Observed failure codes are outside the declared vocabulary.",
             invalid_codes=invalid,
         )
-    return _pass("failure_code_correctness", "All observed failure codes are contract-valid.")
+    return _pass(
+        "failure_code_correctness", "All observed failure codes are contract-valid."
+    )
 
 
 def check_provenance(
@@ -375,18 +417,26 @@ def check_provenance(
         )
     path = Path(evidence_path)
     if not path.is_file():
-        return _blocked("provenance", "Bound immutable evidence manifest does not exist.", path=str(path))
+        return _blocked(
+            "provenance",
+            "Bound immutable evidence manifest does not exist.",
+            path=str(path),
+        )
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
         evidence = EvidenceManifest.from_dict(payload)
     except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
-        return _fail("provenance", "Immutable evidence manifest is invalid.", error=str(exc))
+        return _fail(
+            "provenance", "Immutable evidence manifest is invalid.", error=str(exc)
+        )
     errors = evidence.verify(root=path.parent)
     if evidence.benchmark_id != manifest.benchmark_id:
         errors.append("evidence benchmark_id does not match benchmark manifest")
     adapter = manifest.input_contract.get("adapter")
     if not adapter:
-        errors.append("benchmark input contract does not declare a canonical source adapter")
+        errors.append(
+            "benchmark input contract does not declare a canonical source adapter"
+        )
     else:
         try:
             source = get_source(str(adapter))
@@ -394,13 +444,24 @@ def check_provenance(
             errors.append(f"unknown canonical source adapter: {adapter}")
         else:
             if evidence.source_id != source.source_id:
-                errors.append("evidence source_id does not match canonical source adapter")
+                errors.append(
+                    "evidence source_id does not match canonical source adapter"
+                )
             if evidence.source_version != source.version:
-                errors.append("evidence source_version does not match canonical source version")
-    if evidence.source_version != manifest.version and manifest.benchmark_id != "ztf_periodic_730k":
-        errors.append("evidence source_version does not match benchmark manifest version")
+                errors.append(
+                    "evidence source_version does not match canonical source version"
+                )
+    if (
+        evidence.source_version != manifest.version
+        and manifest.benchmark_id != "ztf_periodic_730k"
+    ):
+        errors.append(
+            "evidence source_version does not match benchmark manifest version"
+        )
     if errors:
-        return _fail("provenance", "Evidence manifest verification failed.", errors=errors)
+        return _fail(
+            "provenance", "Evidence manifest verification failed.", errors=errors
+        )
     return _pass(
         "provenance",
         "Immutable evidence manifest is present, verifiable, and bound to the benchmark.",

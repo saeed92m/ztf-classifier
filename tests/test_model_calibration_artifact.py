@@ -28,9 +28,7 @@ def test_calibration_artifact_roundtrip(
     assert restored == artifact
     assert restored.to_dict() == {
         "method": "temperature_scaling",
-        "schema_version": (
-            CALIBRATION_ARTIFACT_SCHEMA_VERSION
-        ),
+        "schema_version": (CALIBRATION_ARTIFACT_SCHEMA_VERSION),
         "temperature": TEMPERATURE,
     }
 

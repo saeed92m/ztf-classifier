@@ -23,17 +23,11 @@ from ztf_classifier.models.ood_production import OODProductionModel
 from ztf_classifier.models.provenance import ModelProvenanceBuilder
 from ztf_classifier.models.xgboost import XGBoostTrainingEngine
 
-DATASET_PATH = Path(
-    "data/processed/benchmark_v0.2/features.parquet"
-)
+DATASET_PATH = Path("data/processed/benchmark_v0.2/features.parquet")
 
-FEATURE_SCHEMA_PATH = Path(
-    "reports/tables/final_feature_set_v0.2.parquet"
-)
+FEATURE_SCHEMA_PATH = Path("reports/tables/final_feature_set_v0.2.parquet")
 
-MODEL_CONFIG_PATH = Path(
-    "reports/tables/final_model_config_v0.2.json"
-)
+MODEL_CONFIG_PATH = Path("reports/tables/final_model_config_v0.2.json")
 
 CALIBRATION_SOURCE_PATH = Path(
     "reports/tables/xgboost_baseline_v0.2_oof_predictions.parquet"
@@ -62,24 +56,18 @@ def _build_artifact() -> ModelArtifact:
 
     model = engine.fit_full(dataset)
 
-    feature_names = tuple(
-        engine.prepare_features(dataset).columns
-    )
+    feature_names = tuple(engine.prepare_features(dataset).columns)
 
     artifact = ModelArtifact(
         model=model,
         model_version="baseline_v0.2",
         model_family="XGBoost",
-        classes=tuple(
-            engine.prepare_target(dataset)[1]
-        ),
+        classes=tuple(engine.prepare_target(dataset)[1]),
         feature_schema_version="v0.2",
         feature_names=feature_names,
         configuration=engine._config,
         dataset_sha256=_sha256(DATASET_PATH),
-        feature_schema_sha256=_sha256(
-            FEATURE_SCHEMA_PATH
-        ),
+        feature_schema_sha256=_sha256(FEATURE_SCHEMA_PATH),
     )
 
     return artifact
@@ -115,10 +103,7 @@ def _build_diagnostics():
 
     ood_model = OODProductionModel().fit(X)
 
-    assert (
-        ood_model.reference_anomaly_scores
-        is not None
-    )
+    assert ood_model.reference_anomaly_scores is not None
 
     ood = OODArtifact.from_config(
         ood_model.config,
@@ -139,11 +124,9 @@ def _build_diagnostics():
         axis=1,
     )
 
-    conformal_results = (
-        EmpiricalConformalPredictor().fit_all(
-            probabilities,
-            true_indices,
-        )
+    conformal_results = EmpiricalConformalPredictor().fit_all(
+        probabilities,
+        true_indices,
     )
 
     conformal = ConformalArtifact.from_results(
@@ -182,9 +165,7 @@ def _write_diagnostic_artifact(
         artifact_version="1.1",
     )
 
-    conformal, ood, ood_model = (
-        _build_diagnostics()
-    )
+    conformal, ood, ood_model = _build_diagnostics()
 
     output_dir = tmp_path / "artifact"
 
@@ -210,19 +191,10 @@ def test_diagnostic_artifact_uses_schema_1_1_and_expected_files(
     )
 
     manifest = json.loads(
-        (
-            artifact_dir
-            / "artifact_manifest.json"
-        ).read_text(
-            encoding="utf-8"
-        )
+        (artifact_dir / "artifact_manifest.json").read_text(encoding="utf-8")
     )
 
-    assert (
-        manifest["artifact_schema_version"]
-        == ARTIFACT_SCHEMA_VERSION
-        == "1.1"
-    )
+    assert manifest["artifact_schema_version"] == ARTIFACT_SCHEMA_VERSION == "1.1"
 
     assert set(manifest["files"]) == {
         "model",
@@ -247,10 +219,7 @@ def test_diagnostic_artifact_uses_schema_1_1_and_expected_files(
         "artifact_manifest.json",
     }
 
-    assert {
-        path.name
-        for path in artifact_dir.iterdir()
-    } == expected_files
+    assert {path.name for path in artifact_dir.iterdir()} == expected_files
 
 
 def test_diagnostic_artifact_loader_roundtrip(
@@ -403,15 +372,11 @@ def test_legacy_writer_still_emits_schema_1_0(
     )
 
     manifest = json.loads(
-        (output_dir / "artifact_manifest.json").read_text(
-            encoding="utf-8"
-        )
+        (output_dir / "artifact_manifest.json").read_text(encoding="utf-8")
     )
 
     assert (
-        manifest["artifact_schema_version"]
-        == LEGACY_ARTIFACT_SCHEMA_VERSION
-        == "1.0"
+        manifest["artifact_schema_version"] == LEGACY_ARTIFACT_SCHEMA_VERSION == "1.0"
     )
     assert not (output_dir / "conformal.json").exists()
     assert not (output_dir / "ood.json").exists()

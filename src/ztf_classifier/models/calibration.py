@@ -74,16 +74,13 @@ class TemperatureScaler:
 
         if not optimization.success:
             raise RuntimeError(
-                "Temperature optimization failed: "
-                f"{optimization.message}"
+                f"Temperature optimization failed: {optimization.message}"
             )
 
         temperature = float(optimization.x)
 
         if not np.isfinite(temperature) or temperature <= 0.0:
-            raise ValueError(
-                "Temperature must be finite and positive."
-            )
+            raise ValueError("Temperature must be finite and positive.")
 
         calibrated = self._softmax_from_logits(
             logits,
@@ -129,9 +126,7 @@ class TemperatureScaler:
         probabilities = self._normalize_probabilities(probabilities)
 
         if not np.isfinite(temperature) or temperature <= 0.0:
-            raise ValueError(
-                "Temperature must be finite and positive."
-            )
+            raise ValueError("Temperature must be finite and positive.")
 
         logits = np.log(
             np.clip(
@@ -178,9 +173,7 @@ class TemperatureScaler:
         """Convert logits to temperature-scaled probabilities."""
 
         if not np.isfinite(temperature) or temperature <= 0.0:
-            raise ValueError(
-                "Temperature must be finite and positive."
-            )
+            raise ValueError("Temperature must be finite and positive.")
 
         scaled = logits / temperature
         scaled = scaled - np.max(
@@ -208,42 +201,28 @@ class TemperatureScaler:
         )
 
         if probabilities.ndim != 2:
-            raise ValueError(
-                "Probability matrix must be two-dimensional."
-            )
+            raise ValueError("Probability matrix must be two-dimensional.")
 
         if probabilities.shape[1] != 15:
-            raise ValueError(
-                "Frozen v0.2 calibration requires 15 classes."
-            )
+            raise ValueError("Frozen v0.2 calibration requires 15 classes.")
 
         if not np.isfinite(probabilities).all():
-            raise ValueError(
-                "Probability matrix contains non-finite values."
-            )
+            raise ValueError("Probability matrix contains non-finite values.")
 
         if (probabilities < 0.0).any():
-            raise ValueError(
-                "Probability matrix contains negative values."
-            )
+            raise ValueError("Probability matrix contains negative values.")
 
         row_sums = probabilities.sum(axis=1)
 
         if (row_sums <= 0.0).any():
-            raise ValueError(
-                "Probability rows must have positive sums."
-            )
+            raise ValueError("Probability rows must have positive sums.")
 
         normalized = probabilities / row_sums[:, None]
 
-        normalized[:, -1] = (
-            1.0 - normalized[:, :-1].sum(axis=1)
-        )
+        normalized[:, -1] = 1.0 - normalized[:, :-1].sum(axis=1)
 
         if (normalized < 0.0).any():
-            raise ValueError(
-                "Normalized probabilities contain negative values."
-            )
+            raise ValueError("Normalized probabilities contain negative values.")
 
         if not np.allclose(
             normalized.sum(axis=1),
@@ -251,9 +230,7 @@ class TemperatureScaler:
             rtol=0.0,
             atol=1e-12,
         ):
-            raise ValueError(
-                "Normalized probabilities do not sum to one."
-            )
+            raise ValueError("Normalized probabilities do not sum to one.")
 
         return normalized
 
@@ -265,19 +242,13 @@ class TemperatureScaler:
         """Validate frozen multiclass target indices."""
 
         if y_true.ndim != 1:
-            raise ValueError(
-                "Target array must be one-dimensional."
-            )
+            raise ValueError("Target array must be one-dimensional.")
 
         if len(y_true) != expected_rows:
-            raise ValueError(
-                "Target length does not match probability rows."
-            )
+            raise ValueError("Target length does not match probability rows.")
 
         if not np.isin(
             y_true,
             np.arange(15),
         ).all():
-            raise ValueError(
-                "Target indices must be in the range 0..14."
-            )
+            raise ValueError("Target indices must be in the range 0..14.")

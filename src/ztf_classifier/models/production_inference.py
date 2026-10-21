@@ -33,9 +33,7 @@ class ProductionInferenceService:
     def __init__(self, artifact_dir: Path) -> None:
         artifact_dir = Path(artifact_dir)
 
-        loaded_artifact = ModelArtifactLoader().load(
-            artifact_dir
-        )
+        loaded_artifact = ModelArtifactLoader().load(artifact_dir)
 
         object.__setattr__(
             self,
@@ -59,9 +57,7 @@ class ProductionInferenceService:
 
         engine = XGBoostInferenceEngine(
             model=model_artifact.model,
-            feature_schema_path=(
-                self.artifact_dir / "feature_schema.parquet"
-            ),
+            feature_schema_path=(self.artifact_dir / "feature_schema.parquet"),
         )
 
         inference = engine.predict(dataset)
@@ -80,37 +76,19 @@ class ProductionInferenceService:
             and self.loaded_artifact.ood_model is not None
         ):
             features = engine.prepare_features(dataset)
-            feature_matrix = features.to_numpy(
-                dtype=np.float64
-            )
+            feature_matrix = features.to_numpy(dtype=np.float64)
 
             ood_model = self.loaded_artifact.ood_model
 
-            anomaly_score = ood_model.anomaly_scores(
-                feature_matrix
-            )
-            normality_score = ood_model.normality_scores(
-                feature_matrix
-            )
-            isolation_forest_label = ood_model.labels(
-                feature_matrix
-            )
+            anomaly_score = ood_model.anomaly_scores(feature_matrix)
+            normality_score = ood_model.normality_scores(feature_matrix)
+            isolation_forest_label = ood_model.labels(feature_matrix)
 
-            anomaly_percentile = (
-                self.loaded_artifact.ood.anomaly_percentile(
-                    anomaly_score
-                )
+            anomaly_percentile = self.loaded_artifact.ood.anomaly_percentile(
+                anomaly_score
             )
-            anomaly_rank = (
-                self.loaded_artifact.ood.anomaly_rank(
-                    anomaly_score
-                )
-            )
-            anomaly_flags = (
-                self.loaded_artifact.ood.anomaly_flags(
-                    anomaly_percentile
-                )
-            )
+            anomaly_rank = self.loaded_artifact.ood.anomaly_rank(anomaly_score)
+            anomaly_flags = self.loaded_artifact.ood.anomaly_flags(anomaly_percentile)
 
             ood = OODResult(
                 anomaly_score=anomaly_score,
@@ -145,9 +123,7 @@ class ProductionInferenceService:
             conformal=conformal,
             ood=ood,
             calibration_status=calibration_status,
-            conformal_status=(
-                "available" if conformal is not None else "unavailable"
-            ),
+            conformal_status=("available" if conformal is not None else "unavailable"),
             ood_status="available" if ood is not None else "unavailable",
             warnings=warnings,
             artifact_schema_version=self.loaded_artifact.artifact_schema_version,

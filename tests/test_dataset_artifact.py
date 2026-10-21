@@ -15,10 +15,7 @@ from ztf_classifier.features.pipeline import V0_2_FEATURES
 
 
 def make_dataset() -> FeatureDataset:
-    row = {
-        column: 0.0
-        for column in V0_2_FEATURES
-    }
+    row = {column: 0.0 for column in V0_2_FEATURES}
 
     metadata = {
         "oid": "ZTF_TEST",
@@ -62,9 +59,7 @@ def test_writer_creates_artifact_and_manifest(tmp_path: Path) -> None:
 
     loaded = pd.read_parquet(result.artifact_path)
 
-    assert tuple(loaded.columns) == (
-        FEATURE_DATASET_METADATA_COLUMNS + V0_2_FEATURES
-    )
+    assert tuple(loaded.columns) == (FEATURE_DATASET_METADATA_COLUMNS + V0_2_FEATURES)
     assert len(loaded) == 1
 
 
@@ -101,9 +96,7 @@ def test_manifest_records_reproducibility_metadata(tmp_path: Path) -> None:
         input_manifest_sha256="input-hash",
     )
 
-    manifest = json.loads(
-        result.manifest_path.read_text(encoding="utf-8")
-    )
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
 
     assert manifest["dataset_version"] == "benchmark_v0.2"
     assert manifest["feature_schema_version"] == "v0.2"
@@ -114,9 +107,5 @@ def test_manifest_records_reproducibility_metadata(tmp_path: Path) -> None:
     assert manifest["deterministic_order"] == "oid_ascending"
     assert manifest["input_manifest_sha256"] == "input-hash"
     assert manifest["artifact_sha256"] == result.artifact_sha256
-    assert manifest["artifact_sha256"] == sha256_file(
-        result.artifact_path
-    )
-    assert manifest["columns"] == list(
-        FEATURE_DATASET_METADATA_COLUMNS + V0_2_FEATURES
-    )
+    assert manifest["artifact_sha256"] == sha256_file(result.artifact_path)
+    assert manifest["columns"] == list(FEATURE_DATASET_METADATA_COLUMNS + V0_2_FEATURES)

@@ -68,10 +68,7 @@ def _prefixed_basic_features(
     """Extract basic features and prefix them with the band name."""
     features = basic_band_features(lc)
 
-    return {
-        f"{band}_{name}": value
-        for name, value in features.items()
-    }
+    return {f"{band}_{name}": value for name, value in features.items()}
 
 
 def extract_v0_2_features(
@@ -95,9 +92,7 @@ def extract_v0_2_features(
     missing = required - set(internal_lc.columns)
 
     if missing:
-        raise ValueError(
-            f"Missing required columns: {sorted(missing)}"
-        )
+        raise ValueError(f"Missing required columns: {sorted(missing)}")
 
     if cutoff_mjd is not None:
         cutoff_mjd = float(cutoff_mjd)
@@ -109,7 +104,8 @@ def extract_v0_2_features(
             pd.to_numeric(
                 internal_lc["mjd"],
                 errors="coerce",
-            ) <= cutoff_mjd
+            )
+            <= cutoff_mjd
         ].copy()
     else:
         working_lc = internal_lc.copy()
@@ -118,9 +114,7 @@ def extract_v0_2_features(
     g = prepare_band_lightcurve(working_lc, fid=1)
     r = prepare_band_lightcurve(working_lc, fid=2)
 
-    features: dict[str, float] = {
-        name: np.nan for name in V0_2_FEATURES
-    }
+    features: dict[str, float] = {name: np.nan for name in V0_2_FEATURES}
 
     if len(g) >= BASIC_MIN_OBSERVATIONS:
         basic_g = _prefixed_basic_features(g, "g")
@@ -157,10 +151,7 @@ def extract_v0_2_features(
             if name in V0_2_FEATURE_SET:
                 features[name] = value
 
-    return {
-        name: features[name]
-        for name in V0_2_FEATURES
-    }
+    return {name: features[name] for name in V0_2_FEATURES}
 
 
 def validate_v0_2_feature_vector(
@@ -169,12 +160,10 @@ def validate_v0_2_feature_vector(
     """Validate the canonical v0.2 feature contract."""
     if tuple(features.keys()) != V0_2_FEATURES:
         raise ValueError(
-            "Feature vector does not match the canonical v0.2 "
-            "feature order."
+            "Feature vector does not match the canonical v0.2 feature order."
         )
 
     if set(features) != V0_2_FEATURE_SET:
         raise ValueError(
-            "Feature vector does not contain exactly the canonical "
-            "v0.2 feature set."
+            "Feature vector does not contain exactly the canonical v0.2 feature set."
         )

@@ -25,7 +25,10 @@ def manifest(**overrides):
         "preprocessing_contract": {"version": "1"},
         "input_contract": {"prediction_column": "prediction"},
         "ground_truth_provenance": {"kind": "independent labels"},
-        "reference_system_provenance": {"kind": "independent reference", "is_ground_truth": False},
+        "reference_system_provenance": {
+            "kind": "independent reference",
+            "is_ground_truth": False,
+        },
         "benchmark_code_version": "test",
         "evaluation_role": "ground_truth",
         "required_leakage_checks": ["duplicate_objects"],
@@ -127,11 +130,8 @@ def test_reference_system_role_is_preserved_in_manifest_and_result(tmp_path):
     )
     assert result.evaluation_role == "reference_system"
     assert result.status == "PASS"
-    payload = json.loads(
-        (tmp_path / "report" / "benchmark_result.json").read_text()
-    )
+    payload = json.loads((tmp_path / "report" / "benchmark_result.json").read_text())
     assert payload["evaluation_role"] == "reference_system"
-
 
 
 def test_release_benchmark_manifests_declare_full_check_contract_and_canonical_adapters():
@@ -182,11 +182,16 @@ def test_release_gate_accepts_executable_external_adapter_contracts():
     registry = BenchmarkRegistry("configs/benchmarks")
     for benchmark_id in ("ztf_dr24_source_subset", "alerce_reference"):
         blockers = _manifest_blockers(registry.load(benchmark_id))
-        assert not any("canonical adapter contract is not executable" in item for item in blockers)
+        assert not any(
+            "canonical adapter contract is not executable" in item for item in blockers
+        )
 
 
 def test_release_manifest_contract_rejects_missing_check_and_adapter():
-    loaded = manifest(required_leakage_checks=["duplicate_objects"], input_contract={"prediction_column": "prediction"})
+    loaded = manifest(
+        required_leakage_checks=["duplicate_objects"],
+        input_contract={"prediction_column": "prediction"},
+    )
     blockers = loaded.validate_release_contract()
     assert any("omits required scientific checks" in item for item in blockers)
     assert "manifest does not declare canonical input_contract.adapter" in blockers
@@ -216,12 +221,14 @@ def test_external_benchmark_adapters_have_pinned_query_contracts():
 def test_release_benchmark_manifests_have_complete_contract():
     registry = BenchmarkRegistry("configs/benchmarks")
     for benchmark_id in (
-        "star_embed_ztf_40k", "ztf_periodic_730k", "ztf_periodic_781k",
-        "ztf_dr24_source_subset", "alerce_reference",
+        "star_embed_ztf_40k",
+        "ztf_periodic_730k",
+        "ztf_periodic_781k",
+        "ztf_dr24_source_subset",
+        "alerce_reference",
     ):
         loaded = registry.load(benchmark_id)
         assert loaded.validate_release_contract() == ()
-
 
 
 def test_runner_reports_ood_and_performance_metrics(tmp_path):
@@ -260,9 +267,9 @@ def test_runner_reports_ood_and_performance_metrics(tmp_path):
 
 def test_runtime_bound_immutable_evidence_can_satisfy_artifact_binding(tmp_path):
     from ztf_classifier.validation.evidence import (
-    EvidenceArtifact,
-    write_evidence_manifest,
-)
+        EvidenceArtifact,
+        write_evidence_manifest,
+    )
 
     benchmark_dir = tmp_path / "runtime_bound"
     benchmark_dir.mkdir()

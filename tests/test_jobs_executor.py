@@ -146,7 +146,9 @@ def test_source_backed_executor_translates_expected_application_errors():
             raise ApplicationInferenceError("internal failure")
 
     executor = SourceBackedAnalysisExecutor(
-        ApiSettings(registry_dir=Path("/models"), default_model_version="baseline_v0.2"),
+        ApiSettings(
+            registry_dir=Path("/models"), default_model_version="baseline_v0.2"
+        ),
         observation_service=FakeObservationService(),
         application_service=FailingApplicationService(),
         feature_engine=FakeFeatureEngine(),

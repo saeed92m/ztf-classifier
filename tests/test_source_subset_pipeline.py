@@ -38,7 +38,9 @@ def test_normalization_is_deterministic_and_preserves_source_rows() -> None:
         ("ngoodobsrel", -1),
     ],
 )
-def test_normalization_rejects_invalid_quality_values(column: str, value: float) -> None:
+def test_normalization_rejects_invalid_quality_values(
+    column: str, value: float
+) -> None:
     frame = pd.DataFrame(
         {
             "oid": ["ZTF0001"],
