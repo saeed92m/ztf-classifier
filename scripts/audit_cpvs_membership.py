@@ -126,27 +126,33 @@ def main() -> int:
 
     if args.parent:
         parent_rows = read_parent_catalog(args.parent)
-        outside_parent = sorted(object_id for object_id in published if object_id not in parent_rows)
-        identity_mismatches = sorted(
-            object_id
-            for object_id in (published & set(parent_rows))
-            if published_rows[object_id] != parent_rows[object_id]
+        parent_names = set(parent_rows.values())
+        published_names = set(published_rows.values())
+        published_names_missing_from_parent = sorted(published_names - parent_names)
+        parent_names_missing_from_published = sorted(parent_names - published_names)
+        duplicate_parent_names = sorted(
+            name for name in parent_names if list(parent_rows.values()).count(name) > 1
         )
+        duplicate_published_names = sorted(
+            name for name in published_names if list(published_rows.values()).count(name) > 1
+        )
+        # Catalog-internal IDs are not assumed to equal parent row ordinals.
+        # Crosswalk by the actual astronomical object identifier instead.
         report.update({
-            "parent_catalog_count": len(parent_rows),
-            "published_ids_outside_parent_count": len(outside_parent),
-            "published_ids_outside_parent": [
-                {"id": object_id, "ztf": published_rows[object_id]}
-                for object_id in outside_parent[:100]
-            ],
-            "published_parent_identity_mismatch_count": len(identity_mismatches),
-            "published_parent_identity_mismatch_sample": [
-                {
-                    "id": object_id,
-                    "published_ztf": published_rows[object_id],
-                    "parent_ztf": parent_rows[object_id],
-                }
-                for object_id in identity_mismatches[:100]
+            "parent_catalog_row_count": len(parent_rows),
+            "parent_unique_ztf_name_count": len(parent_names),
+            "published_unique_ztf_name_count": len(published_names),
+            "published_names_missing_from_parent_count": len(published_names_missing_from_parent),
+            "published_names_missing_from_parent": published_names_missing_from_parent[:100],
+            "parent_names_missing_from_published_count": len(parent_names_missing_from_published),
+            "parent_names_missing_from_published_sample": parent_names_missing_from_published[:100],
+            "duplicate_parent_ztf_name_count": len(duplicate_parent_names),
+            "duplicate_parent_ztf_name_sample": duplicate_parent_names[:100],
+            "duplicate_published_ztf_name_count": len(duplicate_published_names),
+            "duplicate_published_ztf_name_sample": duplicate_published_names[:100],
+            "published_id_to_ztf_name_sample": [
+                {"catalog_internal_id": object_id, "ztf": published_rows[object_id]}
+                for object_id in sorted(published_rows)[:100]
             ],
         })
 
