@@ -6,7 +6,7 @@ import argparse
 import json
 import zipfile
 from pathlib import Path
-from typing import Iterable, TextIO
+from typing import Iterable
 
 
 def read_selected(path: Path) -> set[int]:
