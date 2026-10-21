@@ -64,7 +64,7 @@ jobs:
           python scripts/validation/ic10_raw_photometry_reproduction.py | tee ic10-raw-photometry-report.json
 
       - name: Reproduce IC 10 statistics from pinned DR15/DR23 bulk Parquet
-        if: always() && steps.install_deps.outcome == 'success'
+        if: success() && steps.install_deps.outcome == 'success'
         run: |
           set -o pipefail
           python scripts/validation/ic10_bulk_parquet_reproduction.py | tee ic10-bulk-parquet-reproduction-report.json
