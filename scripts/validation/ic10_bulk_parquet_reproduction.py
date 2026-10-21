@@ -161,6 +161,7 @@ def read_parquet_subset(
             f"{file_metadata['filename']} missing required columns {missing}; "
             f"available columns={list(frame.columns)}"
         )
+    parquet_rows_total = int(len(frame))
     frame = frame.rename(columns={
         oid_column: "oid",
         time_column: "mjd",
@@ -169,6 +170,30 @@ def read_parquet_subset(
     })
     frame["_oid_key"] = frame["oid"].map(normalize_oid)
     frame = frame[frame["_oid_key"].isin(requested_oids)].copy()
+    # Bulk DR15/DR23 files store one row per object with aligned observation
+    # arrays; normalize them to the row-wise schema used by profile_stats.
+    list_columns = [
+        column for column in ("mjd", "mag", "magerr", "catflags")
+        if column in frame.columns and frame[column].map(
+            lambda value: isinstance(value, (list, tuple, np.ndarray))
+        ).any()
+    ]
+    if list_columns:
+        for _, row in frame.iterrows():
+            lengths = {
+                column: len(row[column])
+                for column in list_columns
+                if isinstance(row[column], (list, tuple, np.ndarray))
+            }
+            if len(set(lengths.values())) > 1:
+                raise RuntimeError(
+                    f"Unequal per-observation array lengths for OID {row['_oid_key']}: {lengths}"
+                )
+        for column in list_columns:
+            frame[column] = frame[column].map(
+                lambda value: list(value) if isinstance(value, (list, tuple, np.ndarray)) else value
+            )
+        frame = frame.explode(list_columns, ignore_index=True)
     for column in ("mjd", "mag", "catflags"):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
     metadata = {
@@ -178,7 +203,9 @@ def read_parquet_subset(
         "attempts": attempts,
         "md5": actual_md5,
         "sha256": hashlib.sha256(payload).hexdigest(),
-        "parquet_rows_total": int(pd.read_parquet(io.BytesIO(payload), columns=["oid"], engine="pyarrow").shape[0]),
+        "parquet_rows_total": parquet_rows_total,
+        "parquet_layout": "object_rows_with_list_columns" if list_columns else "observation_rows",
+        "exploded_observation_rows": int(len(frame)),
         "requested_oids": sorted(requested_oids),
         "found_oids": sorted(set(frame["_oid_key"])),
         "selected_rows": int(len(frame)),
