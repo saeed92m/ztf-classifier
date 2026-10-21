@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from scripts.audit_cpvs_residual_epochs import (
     candidate_membership_sets,
+    membership_relation,
     metrics,
     read_vizier,
 )
@@ -70,3 +71,16 @@ def test_membership_count_is_scoped_to_parent_but_outside_ids_remain_traceable()
     assert candidate_only == {2}
     assert published_only == set()
     assert outside_parent == {99}
+
+
+
+def test_outside_parent_candidate_has_distinct_relation_and_no_parent_membership() -> None:
+    parent_ids = {1, 2}
+    candidate_only = {2}
+    published_only = set()
+
+    assert membership_relation(99, parent_ids, candidate_only, published_only) == (
+        "outside_parent_candidate"
+    )
+    assert membership_relation(2, parent_ids, candidate_only, published_only) == "candidate_only"
+    assert membership_relation(3, parent_ids, candidate_only, {3}) == "published_only"
