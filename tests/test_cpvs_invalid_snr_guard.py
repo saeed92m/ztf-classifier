@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 from ztf_classifier.validation.derivation import derive_730k
@@ -30,6 +31,7 @@ def test_invalid_magnitude_errors_do_not_qualify_as_snr_detections(tmp_path: Pat
         output,
         expected_parent_rows=2,
         expected_selected_rows=1,
+        parent_evidence_sha256=hashlib.sha256(parent.read_bytes()).hexdigest(),
     )
 
     assert result.selected_rows == 1
