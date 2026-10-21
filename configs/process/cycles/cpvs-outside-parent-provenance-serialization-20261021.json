@@ -18,12 +18,12 @@
   ],
   "measurement": {
     "metrics": {
-      "serialization_correctness": {
+      "correctness": {
         "before": "TSV writer raises ValueError when a residual SourceID is absent from Table 2",
         "after": "Writer conditionally emits parent metadata and preserves out-of-parent residual rows; CI validation pending",
         "evidence": "scripts/audit_cpvs_residual_epochs.py and tests/test_cpvs_residual_epoch_audit.py on this branch"
       },
-      "scientific_membership": {
+      "scientific_validity": {
         "before": "741,786 candidates; 730,184 published IDs; 11,602 candidate-only; 0 published-only (historical recorded result)",
         "after": "Not changed by this diagnostic serialization fix",
         "evidence": "Issue #170; values must be reverified by current source-backed run"
@@ -55,12 +55,12 @@
     ]
   },
   "regression": {
-    "status": "PENDING",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
       "Await CI and scientific-validation results for this branch."
     ]
   },
-  "decision": "PENDING",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not change CPVS selection thresholds, flags, or published-reference acceptance criteria to force count equality.",
     "Keep issue #170 open until the published rule is justified by source/method evidence.",
