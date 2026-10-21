@@ -108,6 +108,17 @@ def candidate_membership_sets(qualified, parent_ids, published):
     return raw_candidate, candidate, candidate_only, published_only, outside_parent
 
 
+def membership_relation(oid, parent_ids, candidate_only, published_only):
+    """Label residual provenance without treating out-of-parent IDs as members."""
+    if oid not in parent_ids:
+        return "outside_parent_candidate"
+    if oid in candidate_only:
+        return "candidate_only"
+    if oid in published_only:
+        return "published_only"
+    raise ValueError(f"SourceID {oid} is not a discrepant target")
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--g", type=Path, required=True); p.add_argument("--r", type=Path, required=True)
@@ -164,12 +175,13 @@ def main():
         w = csv.DictWriter(f, fieldnames=cols, delimiter="\t", lineterminator="\n"); w.writeheader()
         for oid in sorted(targets):
             rec = {"SourceID": oid, "published_member": oid in published, "snr_candidate": oid in candidate,
-                "membership_relation": "candidate_only" if oid in cand_only else "published_only"}
+                "membership_relation": membership_relation(oid, parent_ids, cand_only, pub_only)}
             parent_row = parent_catalog.get(oid)
-            if parent_row is None:
-                raise ValueError(f"Discrepant SourceID {oid} missing from Table2 catalog")
-            for key, value in parent_row.items():
-                rec[f"parent_{key}"] = value
+            # Out-of-parent candidates remain in the provenance report, with
+            # empty parent metadata; they must not abort TSV serialization.
+            if parent_row is not None:
+                for key, value in parent_row.items():
+                    rec[f"parent_{key}"] = value
             for band in ("g", "r"):
                 es = epochs[oid][band]
                 rec[f"{band}_epoch_count"] = len(es)
