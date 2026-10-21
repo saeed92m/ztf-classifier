@@ -83,4 +83,4 @@ def test_outside_parent_candidate_has_distinct_relation_and_no_parent_membership
         "outside_parent_candidate"
     )
     assert membership_relation(2, parent_ids, candidate_only, published_only) == "candidate_only"
-    assert membership_relation(3, parent_ids, candidate_only, {3}) == "published_only"
+    assert membership_relation(3, parent_ids | {3}, candidate_only, {3}) == "published_only"
