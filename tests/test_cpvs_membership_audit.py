@@ -1,5 +1,5 @@
-from pathlib import Path
 import zipfile
+from pathlib import Path
 
 from scripts.audit_cpvs_membership import (
     read_parent_catalog,
