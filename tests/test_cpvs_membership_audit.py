@@ -1,6 +1,12 @@
 from pathlib import Path
+import zipfile
 
-from scripts.audit_cpvs_membership import read_selected, read_vizier
+from scripts.audit_cpvs_membership import (
+    read_parent_catalog,
+    read_selected,
+    read_vizier,
+    read_vizier_rows,
+)
 
 
 def test_read_selected_uses_sourceid_values(tmp_path: Path):
@@ -9,7 +15,7 @@ def test_read_selected_uses_sourceid_values(tmp_path: Path):
     assert read_selected(path) == {1, 3, 5}
 
 
-def test_read_vizier_reads_fixed_width_id_column(tmp_path: Path):
+def test_read_vizier_reads_fixed_width_id_and_name(tmp_path: Path):
     path = tmp_path / "table4.dat"
     lines = [
         f"{'ZTFJ000000.00+000000.0':<22}{'':1}{1:>6}  EW  0.0  0.0  0.1",
@@ -18,6 +24,11 @@ def test_read_vizier_reads_fixed_width_id_column(tmp_path: Path):
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     assert read_vizier(path) == {1, 3, 5}
+    assert read_vizier_rows(path) == {
+        1: "ZTFJ000000.00+000000.0",
+        3: "ZTFJ000001.00+000000.0",
+        5: "ZTFJ000002.00+000000.0",
+    }
 
 
 def test_read_vizier_reads_tsv_export(tmp_path: Path):
@@ -27,3 +38,34 @@ def test_read_vizier_reads_tsv_export(tmp_path: Path):
         encoding="utf-8",
     )
     assert read_vizier(path) == {7, 9}
+    assert read_vizier_rows(path) == {
+        7: "ZTFJ000000.00+000000.0",
+        9: "ZTFJ000001.00+000000.0",
+    }
+
+
+def test_read_parent_catalog_maps_one_based_row_ordinals(tmp_path: Path):
+    path = tmp_path / "Table2.txt"
+    path.write_text(
+        "metadata ignored\nZTFJ000000.00+000000.0 12.0 -3.0\n"
+        "ZTFJ000001.00+000000.0 13.0 -4.0\n",
+        encoding="utf-8",
+    )
+    assert read_parent_catalog(path) == {
+        1: "ZTFJ000000.00+000000.0",
+        2: "ZTFJ000001.00+000000.0",
+    }
+
+
+def test_read_parent_catalog_reads_zip(tmp_path: Path):
+    path = tmp_path / "Table2.txt.zip"
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr(
+            "Table2.txt",
+            "metadata ignored\nZTFJ000000.00+000000.0 12.0 -3.0\n"
+            "ZTFJ000001.00+000000.0 13.0 -4.0\n",
+        )
+    assert read_parent_catalog(path) == {
+        1: "ZTFJ000000.00+000000.0",
+        2: "ZTFJ000001.00+000000.0",
+    }
