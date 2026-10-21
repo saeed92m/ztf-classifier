@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import zipfile
+from collections import Counter
 from pathlib import Path
 from typing import Iterable
 
@@ -130,11 +131,13 @@ def main() -> int:
         published_names = set(published_rows.values())
         published_names_missing_from_parent = sorted(published_names - parent_names)
         parent_names_missing_from_published = sorted(parent_names - published_names)
+        parent_name_counts = Counter(parent_rows.values())
+        published_name_counts = Counter(published_rows.values())
         duplicate_parent_names = sorted(
-            name for name in parent_names if list(parent_rows.values()).count(name) > 1
+            name for name, count in parent_name_counts.items() if count > 1
         )
         duplicate_published_names = sorted(
-            name for name in published_names if list(published_rows.values()).count(name) > 1
+            name for name, count in published_name_counts.items() if count > 1
         )
         # Catalog-internal IDs are not assumed to equal parent row ordinals.
         # Crosswalk by the actual astronomical object identifier instead.
