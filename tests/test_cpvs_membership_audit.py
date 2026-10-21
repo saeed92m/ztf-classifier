@@ -1,3 +1,4 @@
+import json
 import zipfile
 from pathlib import Path
 
@@ -69,3 +70,44 @@ def test_read_parent_catalog_reads_zip(tmp_path: Path):
         1: "ZTFJ000000.00+000000.0",
         2: "ZTFJ000001.00+000000.0",
     }
+
+
+def test_object_name_crosswalk_compares_parent_sourceids_not_catalog_ids(
+    tmp_path: Path, monkeypatch
+):
+    from scripts import audit_cpvs_membership as audit
+
+    parent = tmp_path / "Table2.txt"
+    parent.write_text(
+        "ZTFJ000000.00+000000.0 10 20\n"
+        "ZTFJ000001.00+000000.0 11 21\n"
+        "ZTFJ000002.00+000000.0 12 22\n",
+        encoding="utf-8",
+    )
+    published = tmp_path / "table4.tsv"
+    published.write_text(
+        "ZTF\tID\n"
+        "ZTFJ000001.00+000000.0\t101\n"
+        "ZTFJ000002.00+000000.0\t102\n",
+        encoding="utf-8",
+    )
+    candidate = tmp_path / "selected.tsv"
+    candidate.write_text("SourceID\n2\n3\n", encoding="utf-8")
+    output = tmp_path / "audit.json"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "audit_cpvs_membership.py",
+            "--candidate", str(candidate),
+            "--published", str(published),
+            "--parent", str(parent),
+            "--output", str(output),
+        ],
+    )
+
+    assert audit.main() == 0
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["catalog_internal_id_comparison_is_object_level"] is False
+    assert report["object_name_crosswalk_exact_membership_match"] is True
+    assert report["object_name_crosswalk_candidate_only_count"] == 0
+    assert report["object_name_crosswalk_published_only_count"] == 0
