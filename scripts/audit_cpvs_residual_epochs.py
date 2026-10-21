@@ -98,6 +98,31 @@ def metrics(row, band):
     snr = FACTOR / err if valid else None
     return oid, mag, snr, bool(valid and snr >= threshold)
 
+def candidate_membership_sets(qualified, parent_ids, published):
+    """Separate raw photometry IDs from candidates inside the authoritative parent catalog."""
+    raw_candidate = qualified["g"] & qualified["r"]
+    candidate = raw_candidate & parent_ids
+    candidate_only = candidate - published
+    published_only = published - candidate
+    outside_parent = raw_candidate - parent_ids
+    return raw_candidate, candidate, candidate_only, published_only, outside_parent
+
+
+def membership_relation(
+    oid, parent_ids, candidate_only, published_only, raw_candidate, published
+):
+    """Label parent membership and out-of-parent provenance without conflating them."""
+    if oid not in parent_ids and oid in raw_candidate:
+        if oid in published:
+            return "outside_parent_candidate_and_published_member"
+        return "outside_parent_candidate"
+    if oid in candidate_only:
+        return "candidate_only"
+    if oid in published_only:
+        return "published_only"
+    raise ValueError(f"SourceID {oid} is not a discrepant target")
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--g", type=Path, required=True); p.add_argument("--r", type=Path, required=True)
@@ -124,9 +149,14 @@ def main():
         band_counts[band] = {"files": len(paths[band]), "parsed_rows": rows,
             "valid_measurement_rows": valid, "qualifying_epoch_rows": qrows,
             "objects_with_qualifying_epoch": len(qualified[band])}
-    candidate = qualified["g"] & qualified["r"]
-    cand_only, pub_only = candidate - published, published - candidate
-    targets = cand_only | pub_only
+    parent_ids = set(parent_catalog)
+    raw_candidate, candidate, cand_only, pub_only, outside_parent = candidate_membership_sets(
+        qualified, parent_ids, published
+    )
+    # Preserve out-of-parent IDs as provenance targets, but do not count them
+    # as members of the reconstructed subset derived from Table 2.
+    raw_cand_only = raw_candidate - published
+    targets = raw_cand_only | pub_only
     epochs = {oid: {"g": [], "r": []} for oid in targets}
     for band in ("g", "r"):
         ek, mk, fk, threshold = SPECS[band]; req = ("SourceID", ek, mk)
@@ -149,12 +179,15 @@ def main():
         w = csv.DictWriter(f, fieldnames=cols, delimiter="\t", lineterminator="\n"); w.writeheader()
         for oid in sorted(targets):
             rec = {"SourceID": oid, "published_member": oid in published, "snr_candidate": oid in candidate,
-                "membership_relation": "candidate_only" if oid in cand_only else "published_only"}
+                "membership_relation": membership_relation(
+                    oid, parent_ids, cand_only, pub_only, raw_candidate, published
+                )}
             parent_row = parent_catalog.get(oid)
-            if parent_row is None:
-                raise ValueError(f"Discrepant SourceID {oid} missing from Table2 catalog")
-            for key, value in parent_row.items():
-                rec[f"parent_{key}"] = value
+            # Out-of-parent candidates remain in the provenance report, with
+            # empty parent metadata; they must not abort TSV serialization.
+            if parent_row is not None:
+                for key, value in parent_row.items():
+                    rec[f"parent_{key}"] = value
             for band in ("g", "r"):
                 es = epochs[oid][band]
                 rec[f"{band}_epoch_count"] = len(es)
@@ -171,8 +204,13 @@ def main():
         "source_archive_sha256":{"g":sha256_file(a.g_archive),"r":sha256_file(a.r_archive)},
         "verified_archive_md5":{"g":"850fcef561dd7407fbe8e19e99100d7a","r":"daa7bc45c67579253eebe6b1c09dfbd9"},
         "snr_formula":"1.0857362047581296 / magnitude_error","thresholds":{"g":2.5,"r":3.0},
-        "counts":{"published":len(published),"snr_candidates_both_bands":len(candidate),
-          "candidate_only_relative_to_published":len(cand_only),"published_only_relative_to_snr_rule":len(pub_only),
+        "counts":{"published":len(published),
+          "snr_candidates_both_bands":len(candidate),
+          "raw_snr_candidates_both_bands":len(raw_candidate),
+          "snr_candidates_outside_parent":len(outside_parent),
+          "candidate_only_relative_to_published":len(cand_only),
+          "candidate_only_including_outside_parent":len(raw_cand_only),
+          "published_only_relative_to_snr_rule":len(pub_only),
           "audited_discrepant_objects":len(targets)},
         "band_scan":band_counts,
         "row_reference_semantics":"relative source file plus parsed data-row ordinal; not publisher-issued row ID",
