@@ -17,12 +17,12 @@
   ],
   "measurement": {
     "metrics": {
-      "security": {
+      "reliability": {
         "before": "9 known vulnerabilities reported across certifi 2026.7.22 and Pillow 12.3.0",
         "after": "Pending CI verification against updated lock",
         "evidence": "CI run 39578853466 Dependency Audit job 119155011184"
       },
-      "compatibility": {
+      "correctness": {
         "before": "Main-branch tests and package build passed before dependency update",
         "after": "Pending full CI verification after dependency update",
         "evidence": "CI run 39578853466"
@@ -52,12 +52,12 @@
     ]
   },
   "regression": {
-    "status": "PENDING",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
       "Await successful dependency audit and full CI on this branch."
     ]
   },
-  "decision": "PENDING",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not bypass pip-audit or relax the CI gate to obtain a green workflow.",
     "Scientific CPVS membership discrepancy remains independent and unresolved."
