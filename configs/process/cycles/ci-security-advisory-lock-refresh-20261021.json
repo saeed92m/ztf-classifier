@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "ci-security-advisory-lock-refresh-20261021",
+  "objective": "Update locked runtime dependencies with known fixed releases after the main-branch dependency audit reported vulnerabilities in certifi and Pillow.",
+  "previous_knowledge_consumed": [
+    "GitHub Actions CI run 39578853466: format, lint, lifecycle, test suite, runtime smoke, and package build succeeded; Dependency Audit failed.",
+    "Dependency audit identified certifi 2026.7.22 (PYSEC-2026-4320; fixed version reported as 2026.10.19) and Pillow 12.3.0 (eight CVEs; fixed version reported as 13.0.0)."
+  ],
+  "baseline": {
+    "revision": "70d6ae8be1d84452eb7999a862c01393a33403d2",
+    "description": "requirements.lock pins certifi 2026.7.22 and Pillow 12.3.0; CI dependency audit reports known vulnerabilities."
+  },
+  "expected_improvement": [
+    "Remove the specific known vulnerable dependency versions identified by the CI audit.",
+    "Keep dependency audit fail-closed and retain exact dependency pins.",
+    "Verify package/test compatibility and rerun the full gated CI."
+  ],
+  "measurement": {
+    "metrics": {
+      "security": {
+        "before": "9 known vulnerabilities reported across certifi 2026.7.22 and Pillow 12.3.0",
+        "after": "Pending CI verification against updated lock",
+        "evidence": "CI run 39578853466 Dependency Audit job 119155011184"
+      },
+      "compatibility": {
+        "before": "Main-branch tests and package build passed before dependency update",
+        "after": "Pending full CI verification after dependency update",
+        "evidence": "CI run 39578853466"
+      }
+    }
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Lockfile pins updated to certifi==2026.10.19 and pillow==13.0.0 based on fixed versions reported by the failing audit.",
+      "No scientific baseline, model artifact, feature definition, taxonomy, or scientific acceptance threshold is changed.",
+      "Full CI and pip-audit rerun are pending; this record does not claim the vulnerabilities are resolved until the new audit passes."
+    ]
+  },
+  "failure_analysis": {
+    "status": "identified",
+    "root_causes": [
+      "The committed lockfile retained certifi 2026.7.22 and Pillow 12.3.0 despite the dependency audit reporting fixed versions."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A green test suite and package build do not establish dependency security; the separate audit remains a release-blocking gate.",
+      "Dependency pins must be refreshed to versions explicitly identified as fixed and then revalidated through the full pipeline."
+    ]
+  },
+  "regression": {
+    "status": "PENDING",
+    "open_blockers": [
+      "Await successful dependency audit and full CI on this branch."
+    ]
+  },
+  "decision": "PENDING",
+  "knowledge_carried_forward": [
+    "Do not bypass pip-audit or relax the CI gate to obtain a green workflow.",
+    "Scientific CPVS membership discrepancy remains independent and unresolved."
+  ]
+}
