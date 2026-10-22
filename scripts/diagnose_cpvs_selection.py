@@ -7,7 +7,11 @@ import json
 import math
 from pathlib import Path
 
-from audit_cpvs_membership import read_parent_catalog, read_vizier_rows
+if __package__:
+    from .audit_cpvs_membership import read_parent_catalog, read_vizier_rows
+else:
+    from audit_cpvs_membership import read_parent_catalog, read_vizier_rows
+
 from ztf_classifier.validation.derivation import _iter_rows
 
 
