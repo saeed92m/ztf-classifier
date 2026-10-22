@@ -16,11 +16,19 @@ from itertools import chain
 from pathlib import Path
 from typing import Any
 
-from scripts.audit_cpvs_membership import (
-    read_parent_catalog,
-    read_selected,
-    read_vizier_rows,
-)
+if __package__:
+    from .audit_cpvs_membership import (
+        read_parent_catalog,
+        read_selected,
+        read_vizier_rows,
+    )
+else:
+    from audit_cpvs_membership import (
+        read_parent_catalog,
+        read_selected,
+        read_vizier_rows,
+    )
+
 from ztf_classifier.validation.derivation import _find_key, _iter_rows
 
 _LINEAR_FACTOR = 1.0857362047581296
