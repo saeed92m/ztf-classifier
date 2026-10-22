@@ -297,7 +297,7 @@ def _snr_from_mag_error(value: str) -> float:
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Read CPVS Table2 IDs, preferring an explicit integer Seq when present.
+    """Read CPVS Table2 IDs using explicit integer Seq values only.
 
     The source-backed Table2 must expose an integer Seq/SourceID in the second
     field. Coordinate-only presentations without that identity are insufficient
@@ -309,7 +309,6 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
     try:
         source_ids: set[str] = set()
         seen_names: set[str] = set()
-        ordinal = 0
         for encoded in raw:
             line = encoded.decode("utf-8", errors="replace").strip()
             if not line:
@@ -323,7 +322,6 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
             if name in seen_names:
                 raise ValueError(f"duplicate ZTF name in CPVS Table2: {name}")
             seen_names.add(name)
-            ordinal += 1
             is_integer = fields[1].isdigit()
             if not is_integer:
                 raise ValueError(
