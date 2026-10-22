@@ -101,6 +101,14 @@ The diagnostic parent-metadata TSV SHA-256 is `3675b1274f73fcb15d47e7a780f194ef8
 3. **Confirmed SNR guard defect:** non-finite SNR values could pass the previous comparison guard. Explicit finite/positive checks are now covered by regression tests.
 4. **Unresolved scientific discrepancy:** 11,602 candidate-only objects remain after the object-name crosswalk and SNR guard correction. Neither a flag-zero cut, a magnitude cut, nor the nonlinear SNR alternative reproduces the reference membership. Do not force the count by changing thresholds.
 
-## Next evidence required
+## Full candidate-only provenance trace (completed 2026-10-22)
 
-The full per-object g/r provenance trace for all 11,602 candidate-only objects is running against the retained heavy source artifact. It should preserve per-band row counts, valid errors, qualifying rows, flags, representative observations, and input/output hashes. Review that report before proposing a scientific-rule change. If the documented criterion still cannot explain the extras, retain the blocker and request clarification from the publication authors rather than inventing a filter.
+The full per-object g/r trace completed successfully in [run 39737844922](https://github.com/saeed92m/ztf-classifier/actions/runs/39737844922), artifact ID `12408367638`, named `cpvs-100-1000-sample-snr-diagnostics`. It contains one diagnostic record for each of the 11,602 candidate-only Seq/ZTF objects, including g/r source-row counts, valid-error counts, qualifying-row counts, flags, representative HJD/magnitude/error rows, and linear/exact SNR comparisons. The run verified the retained heavy-source artifact SHA-256 `debd55db39be64c5e267af44bc1e486824b3d6d0c0caeac9f04fca254c05410c`.
+
+Full-trace findings:
+- All 11,602 candidate-only objects have at least one qualifying source row in both g and r under the SNR-only rule.
+- Qualifying g-row count among extras: minimum 1, median 5, 90th percentile 9, 99th percentile 39, maximum 245; 11,435 objects have 10 or fewer qualifying g rows.
+- The nonlinear inverse-magnitude-error SNR diagnostic changes zero membership classifications.
+- Combined with the parent metadata audit, the extras are numerically accounted for by incomplete/non-positive parent fit metadata. The exact production-method interpretation remains unresolved.
+
+Review the retained per-object trace before proposing any scientific-rule change. If the four-field metadata predicate cannot be supported by the published method or source code, keep the blocker and request author clarification rather than inventing a filter.
