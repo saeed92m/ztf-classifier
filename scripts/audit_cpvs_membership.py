@@ -67,17 +67,16 @@ def read_vizier(path: Path) -> set[int]:
 
 
 def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
-    """Map one-based CPVS Table2 object-row ordinals to ZTF object names.
+    """Map Table2 ZTF names to explicit Seq IDs, with ordinal-only fallback.
 
-    The pinned Table2 data rows contain the ZTF name followed by right
-    ascension, declination, period, and type; they do not expose the light-curve
-    SourceID as a second-column integer. The second field is a coordinate, not
-    an identifier. SourceID therefore follows the one-based object-row ordinal.
-    Non-object metadata/page headers are ignored. Duplicate names are rejected
-    by the object-level crosswalk rather than silently collapsed here.
+    Source-backed Table2 variants may expose an integer Seq/SourceID in the
+    second field. Coordinate-only presentation tables have RA in that field
+    and require one-based object-row ordinals. Select the schema from the first
+    valid object row; do not mix explicit IDs and ordinals within a table.
     """
     result: dict[int, str] = {}
     ordinal = 0
+    explicit_seq: bool | None = None
     for line in lines:
         stripped = line.strip()
         if not stripped:
@@ -85,8 +84,24 @@ def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
         fields = stripped.split()
         if not fields or not fields[0].upper().startswith("ZTF"):
             continue
+        if len(fields) < 2:
+            raise ValueError(f"CPVS Table2 object row has no second field: {fields!r}")
         ordinal += 1
-        result[ordinal] = fields[0]
+        is_integer = fields[1].isdigit()
+        if explicit_seq is None:
+            explicit_seq = is_integer
+        if explicit_seq:
+            if not is_integer:
+                raise ValueError(
+                    "inconsistent CPVS Table2 Seq schema: expected integer Seq "
+                    f"in second field, got {fields[:4]!r}"
+                )
+            source_id = int(fields[1])
+        else:
+            source_id = ordinal
+        if source_id in result:
+            raise ValueError(f"duplicate CPVS Table2 SourceID/Seq: {source_id}")
+        result[source_id] = fields[0]
     return result
 
 
@@ -197,8 +212,8 @@ def main() -> int:
                 ("\n".join(map(str, sorted(mapped_published_ids))) + "\n").encode()
             ).hexdigest(),
             "exact_membership_match": exact_match,
-            "membership_comparison_basis": "ZTF object-name crosswalk into one-based Table 2 object-row ordinals used by light-curve SourceID",
-            "parent_sourceid_mapping_basis": "one-based ordinal of each Table 2 object row; second field is right ascension, not SourceID",
+            "membership_comparison_basis": "ZTF object-name crosswalk into the explicit Table 2 Seq namespace, with ordinal fallback only for coordinate-only presentation tables",
+            "parent_sourceid_mapping_basis": "integer second-field Seq when present; otherwise one-based object-row ordinal for coordinate-only presentation tables",
         })
     else:
         report.update({
