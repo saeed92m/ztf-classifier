@@ -82,8 +82,8 @@ def test_cpvs_table_preserves_explicit_seq_sourceids(tmp_path: Path):
 
     parent = tmp_path / "Table2-seq.txt"
     parent.write_text(
-        "ZTFJ000000.13+620605.8 17 0.00056 62.10163 1.9449979 BYDra\\n"
-        "ZTFJ000000.14+721413.7 29 0.00061 72.23716 0.2991500 EW\\n",
+        "ZTFJ000000.13+620605.8 17 0.00056 62.10163 1.9449979 BYDra\n"
+        "ZTFJ000000.14+721413.7 29 0.00061 72.23716 0.2991500 EW\n",
         encoding="utf-8",
     )
 
