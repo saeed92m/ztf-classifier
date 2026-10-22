@@ -110,9 +110,9 @@ def test_object_name_crosswalk_compares_parent_sourceids_not_catalog_ids(
 
     parent = tmp_path / "Table2.txt"
     parent.write_text(
-        "ZTFJ000000.00+000000.0 0.00056 20 30 EW\n"
-        "ZTFJ000001.00+000000.0 0.00061 21 31 RR\n"
-        "ZTFJ000002.00+000000.0 0.00080 22 32 EA\n",
+        "ZTFJ000000.00+000000.0 10 0.00056 20 30 EW\n"
+        "ZTFJ000001.00+000000.0 20 0.00061 21 31 RR\n"
+        "ZTFJ000002.00+000000.0 30 0.00080 22 32 EA\n",
         encoding="utf-8",
     )
     published = tmp_path / "table4.tsv"
@@ -123,7 +123,7 @@ def test_object_name_crosswalk_compares_parent_sourceids_not_catalog_ids(
         encoding="utf-8",
     )
     candidate = tmp_path / "selected.tsv"
-    candidate.write_text("SourceID\n2\n3\n", encoding="utf-8")
+    candidate.write_text("SourceID\n20\n30\n", encoding="utf-8")
     output = tmp_path / "audit.json"
     monkeypatch.setattr(
         "sys.argv",
