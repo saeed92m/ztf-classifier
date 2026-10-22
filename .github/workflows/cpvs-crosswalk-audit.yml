@@ -1,0 +1,234 @@
+name: CPVS Full-Source 100/1000 Sample and SNR Diagnostic
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit-existing-evidence:
+    name: Sample and compare SNR rules against retained CPVS source
+    if: startsWith(github.head_ref, 'ci/audit/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: pip
+
+      - name: Install locked project dependencies
+        run: |
+          python -m pip install --upgrade pip==26.2 setuptools==84.0.0 wheel==0.48.0
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Download retained full source artifact (no source re-acquisition)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/saeed92m/ztf-classifier/actions/artifacts/12339583820/zip" \
+            -o /tmp/scientific-validation-heavy.zip
+          sha256sum /tmp/scientific-validation-heavy.zip | tee /tmp/artifact.sha256
+          echo "debd55db39be64c5e267af44bc1e486824b3d6d0c0caeac9f04fca254c05410c  /tmp/scientific-validation-heavy.zip" | sha256sum -c -
+
+      - name: Download corrected full-derivation candidate and audit evidence
+        uses: actions/download-artifact@v6
+        with:
+          name: cpvs-sourceid-crosswalk-audit
+          run-id: 39699256625
+          github-token: ${{ github.token }}
+          path: /tmp/cpvs-prior
+
+      - name: Extract parent, publication, and retained light-curve files
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cpvs-audit
+          python - <<'PY'
+          import json
+          import zipfile
+          from pathlib import Path, PurePosixPath
+
+          archive_path = Path("/tmp/scientific-validation-heavy.zip")
+          destination = Path("/tmp/cpvs-audit")
+          wanted = {
+              "Table2.txt.zip": destination / "Table2.txt.zip",
+              "Table2.txt.zip.evidence.json": destination / "Table2.txt.zip.evidence.json",
+              "published_table4.dat": destination / "published_table4.dat",
+          }
+          found = {}
+          band_counts = {"g": {"files": 0, "bytes": 0}, "r": {"files": 0, "bytes": 0}}
+          with zipfile.ZipFile(archive_path) as archive:
+              for info in archive.infolist():
+                  parts = PurePosixPath(info.filename).parts
+                  basename = PurePosixPath(info.filename).name
+                  if basename in wanted and basename not in found:
+                      found[basename] = info.filename
+                  if "ztf_periodic_730k" in parts:
+                      index = parts.index("ztf_periodic_730k")
+                      if index + 2 < len(parts) and parts[index + 1] in ("g", "r") and not info.is_dir():
+                          band = parts[index + 1]
+                          relative = PurePosixPath(*parts[index + 2:])
+                          if ".." in relative.parts or relative.is_absolute():
+                              raise SystemExit(f"Unsafe archive path: {info.filename}")
+                          target = destination / band / Path(*relative.parts)
+                          target.parent.mkdir(parents=True, exist_ok=True)
+                          with archive.open(info) as source, target.open("wb") as output:
+                              while True:
+                                  block = source.read(8 * 1024 * 1024)
+                                  if not block:
+                                      break
+                                  output.write(block)
+                          band_counts[band]["files"] += 1
+                          band_counts[band]["bytes"] += info.file_size
+              missing = sorted(set(wanted) - set(found))
+              if missing:
+                  raise SystemExit(f"Missing required evidence files: {missing}")
+              for basename, member in found.items():
+                  with archive.open(member) as source, wanted[basename].open("wb") as target:
+                      while True:
+                          block = source.read(8 * 1024 * 1024)
+                          if not block:
+                              break
+                          target.write(block)
+          print(json.dumps({"selected_members": found, "lightcurve_files": band_counts}, indent=2))
+          PY
+
+      - name: Run deterministic 100/1000-object and SNR diagnostics
+        run: |
+          set -euo pipefail
+          candidate=/tmp/cpvs-prior/cpvs-audit/selected_corrected.tsv
+          test -s "$candidate"
+          python scripts/diagnose_cpvs_sample.py \
+            --parent /tmp/cpvs-audit/Table2.txt.zip \
+            --g /tmp/cpvs-audit/g \
+            --r /tmp/cpvs-audit/r \
+            --published /tmp/cpvs-audit/published_table4.dat \
+            --candidate "$candidate" \
+            --output /tmp/cpvs-audit/selection_sample_diagnostics.json \
+            --seed 20261022 --sample-size 1000 --diagnostic-size 100 --trace-candidate-only
+
+      - name: Record diagnostic input and output hashes
+        if: always()
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          root = Path("/tmp/cpvs-audit")
+          prior = Path("/tmp/cpvs-prior/cpvs-audit")
+          def digest(path):
+              h = hashlib.sha256()
+              with path.open("rb") as f:
+                  for block in iter(lambda: f.read(8 * 1024 * 1024), b""):
+                      h.update(block)
+              return h.hexdigest()
+          entries = {
+              "parent_table2_zip": root / "Table2.txt.zip",
+              "parent_evidence_manifest": root / "Table2.txt.zip.evidence.json",
+              "published_table4": root / "published_table4.dat",
+              "candidate_corrected_from_run_39699256625": prior / "selected_corrected.tsv",
+              "prior_membership_audit": prior / "membership_audit.json",
+              "selection_sample_diagnostics": root / "selection_sample_diagnostics.json",
+              "candidate_recomputed_linear": root / "candidate_recomputed_linear.tsv",
+              "candidate_nonlinear_exact_diagnostic": root / "candidate_nonlinear_exact_diagnostic.tsv",
+          }
+          manifest = {
+              "source_run_id": 39583481592,
+              "source_artifact_id": 12339583820,
+              "source_artifact_sha256": "debd55db39be64c5e267af44bc1e486824b3d6d0c0caeac9f04fca254c05410c",
+              "prior_full_derivation_run_id": 39699256625,
+              "prior_audit_artifact_id": 12391909327,
+              "sample_seed": 20261022,
+              "sample_design": "500 reference members + 500 non-members; nested diagnostic sample 50 + 50; SHA256-ranked by SourceID",
+              "lightcurve_tree": {
+                  band: {
+                      "file_count": sum(1 for p in (root / band).rglob("*") if p.is_file()) if (root / band).exists() else 0,
+                      "total_bytes": sum(p.stat().st_size for p in (root / band).rglob("*") if p.is_file()) if (root / band).exists() else 0,
+                  } for band in ("g", "r")
+              },
+              "files": {
+                  name: {"size_bytes": path.stat().st_size, "sha256": digest(path)}
+                  for name, path in entries.items() if path.is_file()
+              },
+          }
+          (root / "sample_input_manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+          print(json.dumps(manifest, indent=2))
+          PY
+
+      - name: Preserve sample and alternative membership evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-100-1000-sample-snr-diagnostics
+          path: |
+            /tmp/cpvs-audit/sample_input_manifest.json
+            /tmp/cpvs-audit/selection_sample_diagnostics.json
+            /tmp/cpvs-audit/candidate_recomputed_linear.tsv
+            /tmp/cpvs-audit/candidate_nonlinear_exact_diagnostic.tsv
+            /tmp/cpvs-prior/cpvs-audit/membership_audit.json
+            /tmp/cpvs-prior/cpvs-audit/selected_corrected.tsv
+            /tmp/cpvs-prior/cpvs-audit/input_manifest.json
+            /tmp/artifact.sha256
+          if-no-files-found: warn
+
+      - name: Verify diagnostic completeness (not scientific sign-off)
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("/tmp/cpvs-audit/selection_sample_diagnostics.json")
+          if not path.is_file():
+              raise SystemExit("Sample diagnostic report was not produced.")
+          report = json.loads(path.read_text(encoding="utf-8"))
+          design = report["sample_design"]
+          def comparison_summary(item):
+              keys = (
+                  "candidate_count",
+                  "reference_count",
+                  "intersection_count",
+                  "candidate_only_count",
+                  "published_only_count",
+                  "candidate_only_sha256",
+                  "published_only_sha256",
+              )
+              return {key: item[key] for key in keys}
+          summary = {
+              "parent_count": report["parent_count"],
+              "published_count": report["published_count"],
+              "candidate_current_count": report["candidate_current_count"],
+              "sample_1000": len(report["sample_1000"]),
+              "sample_100": len(report["sample_100"]),
+              "sample_design": design,
+              "linear_comparison": comparison_summary(
+                  report["membership_comparisons"]["recomputed_linear_snr"]
+              ),
+              "nonlinear_diagnostic_comparison": comparison_summary(
+                  report["membership_comparisons"]["nonlinear_exact_snr_diagnostic"]
+              ),
+              "sample_1000_confusion_current": report["sample_1000_confusion_current"],
+              "sample_1000_confusion_nonlinear_exact_diagnostic": report["sample_1000_confusion_nonlinear_exact_diagnostic"],
+          }
+          print(json.dumps(summary, indent=2))
+          if report["parent_count"] != 781602 or report["published_count"] != 730184:
+              raise SystemExit("Unexpected parent/reference counts.")
+          if len(report["sample_1000"]) != 1000 or len(report["sample_100"]) != 100:
+              raise SystemExit("Deterministic 100/1000-object sample is incomplete.")
+          if len(report["candidate_only_diagnostics"]) != report["membership_comparisons"]["current_linear_snr"]["candidate_only_count"]:
+              raise SystemExit("Full candidate-only provenance trace is incomplete.")
+          if design["reference_member_count_in_sample_1000"] != 500 or design["nonmember_count_in_sample_1000"] != 500:
+              raise SystemExit("Sample stratification is invalid.")
+          PY

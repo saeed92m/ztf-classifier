@@ -297,31 +297,40 @@ def _snr_from_mag_error(value: str) -> float:
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Resolve CPVS SourceIDs from the published Table2 catalog row order.
+    """Read the explicit CPVS Table2 Seq/internal SourceID column.
 
-    The published table uses ZTF object names as the row identifiers in its
-    catalog presentation; the benchmark SourceID is the one-based ordinal of
-    catalog rows. Metadata, page furniture, and repeated headers are ignored.
+    Zenodo record 3886372 documents SourceID as the key joining the single-
+    exposure files to Table2. The Table2 catalogue's second field is Seq, the
+    internal source identifier; it is not safe to replace it with row order.
+    Metadata and repeated headers are ignored, while malformed or duplicate
+    identifiers fail closed.
     """
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
-        ordinal = 0
+        seen_names: set[str] = set()
         for encoded in raw:
             line = encoded.decode("utf-8", errors="replace").strip()
             if not line:
                 continue
-            first_token = line.split()[0]
-            if not first_token.upper().startswith("ZTF"):
-                continue
             fields = _split_fields(line)
-            if len(fields) < 2:
+            if not fields or not fields[0].upper().startswith("ZTF"):
                 continue
-            # A valid catalog row starts with a ZTF identifier and has at
-            # least one following field. Do not interpret the next field as
-            # SourceID: in Table2 it is a numeric catalog attribute (e.g. RA).
-            ordinal += 1
-            source_ids.add(str(ordinal))
+            if len(fields) < 2 or not fields[1].isdigit():
+                raise ValueError(
+                    "CPVS Table2 row has no integer Seq/SourceID in its second field: "
+                    f"{fields[:4]!r}"
+                )
+            name = fields[0]
+            source_id = str(int(fields[1]))
+            if name in seen_names:
+                raise ValueError(f"duplicate ZTF name in CPVS Table2: {name}")
+            if source_id in source_ids:
+                raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
+            seen_names.add(name)
+            source_ids.add(source_id)
+        if not source_ids:
+            raise ValueError("no valid CPVS Table2 rows with explicit Seq/SourceID found")
         return source_ids
     finally:
         raw.close()
@@ -398,7 +407,10 @@ def _qualified_ids(
 
     for row in chain((first,), rows):
         oid = row.get(id_key, "").strip()
-        if oid not in parent_ids or _snr_from_mag_error(row.get(error_key, "")) < sigma:
+        snr = _snr_from_mag_error(row.get(error_key, ""))
+        # NaN compares false to '< sigma'; explicitly reject invalid SNR so
+        # missing/non-finite/non-positive magnitude errors cannot qualify.
+        if oid not in parent_ids or not math.isfinite(snr) or snr < sigma:
             continue
         try:
             magnitude = float(row.get(mag_key, ""))
