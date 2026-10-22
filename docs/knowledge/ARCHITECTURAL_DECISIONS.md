@@ -17,3 +17,10 @@
 | AD-PROD-005 | ADOPTED | Cross-match, similar-object search, human review, discovery ranking, and Real/Bogus are explicit architectural boundaries. | Ecosystem review identified these as reusable patterns with clear scientific semantics. | Discovery architecture, analysis modes |
 | AD-PROD-006 | ADOPTED | OOD, uncertainty, scientific anomaly, catalog evidence, and explainability remain separate evidence channels. | Prevents semantic overclaiming. | Result contracts, UI, validation |
 | AD-PROD-007 | ADOPTED | Future alert/streaming support must be enabled by contracts without weakening deterministic offline/batch workflows. | Preserves reproducibility while allowing operational scaling. | Ingestion, orchestration |
+
+
+
+| AD-VAL-001 | ADOPTED | CPVS is a claim-specific historical reproduction benchmark, not the definition of the general product. | Parallel validation plan; independent dataset and second-method workstreams. | Product architecture, validation roadmap, handbook |
+| AD-VAL-002 | ADOPTED | General ingestion and analysis must not inherit dataset-specific selection rules without an explicit versioned adapter contract. | Prevents CPVS selection assumptions from contaminating unrelated inputs. | Ingestion, feature engine, adapters, tests |
+| AD-VAL-003 | ADOPTED | A deterministic 50-object sample is diagnostic evidence, not a population-level performance claim by itself. | Sample-size scope and known-answer validation protocol. | Benchmark reports, scientific claims |
+| AD-VAL-004 | ADOPTED | Ecosystem recommendations require implementation evidence, license review, and a project-specific acceptance test. | Systematic GitHub comparison and gap matrix. | Architecture, dependencies, roadmap |
