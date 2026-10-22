@@ -307,6 +307,20 @@ jobs:
           )
           print(json.dumps(result, indent=2, sort_keys=True))
           PY
+      - name: Upload compact CPVS membership audit evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-membership-audit-compact
+          path: |
+            reports/scientific_validation/ztf_periodic_730k/membership_audit.json
+            reports/scientific_validation/ztf_periodic_730k/selection_diagnostics.json
+            reports/scientific_validation/ztf_periodic_730k/selected.tsv
+            reports/scientific_validation/ztf_periodic_730k/selected.tsv.diagnostic.json
+            reports/scientific_validation/ztf_periodic_730k/cpvs_reconstruction_status.json
+          if-no-files-found: warn
+          compression-level: 6
+
       - name: Validate heavy execution evidence contract
         if: always()
         shell: bash
