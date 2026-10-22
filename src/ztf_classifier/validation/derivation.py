@@ -297,13 +297,14 @@ def _snr_from_mag_error(value: str) -> float:
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Read the explicit CPVS Table2 Seq/internal SourceID column.
+    """Return the one-based Table2 row IDs used by the CPVS light curves.
 
-    Zenodo record 3886372 documents SourceID as the key joining the single-
-    exposure files to Table2. The Table2 catalogue's second field is Seq, the
-    internal source identifier; it is not safe to replace it with row order.
-    Metadata and repeated headers are ignored, while malformed or duplicate
-    identifiers fail closed.
+    The published Table2 parent catalogue lists a ZTF object name followed by
+    coordinates/period metadata; it does not expose the light-curve SourceID
+    as a second-column integer. The light-curve SourceID is the one-based
+    ordinal of each valid catalogue object row. Never parse the RA column as
+    an ID. Ignore non-object metadata/page headers, and fail closed on duplicate
+    object names rather than silently changing the ordinal mapping.
     """
     owner, raw = _open_text(parent_path, member)
     try:
@@ -316,21 +317,13 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
             fields = _split_fields(line)
             if not fields or not fields[0].upper().startswith("ZTF"):
                 continue
-            if len(fields) < 2 or not fields[1].isdigit():
-                raise ValueError(
-                    "CPVS Table2 row has no integer Seq/SourceID in its second field: "
-                    f"{fields[:4]!r}"
-                )
             name = fields[0]
-            source_id = str(int(fields[1]))
             if name in seen_names:
                 raise ValueError(f"duplicate ZTF name in CPVS Table2: {name}")
-            if source_id in source_ids:
-                raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
             seen_names.add(name)
-            source_ids.add(source_id)
+            source_ids.add(str(len(source_ids) + 1))
         if not source_ids:
-            raise ValueError("no valid CPVS Table2 rows with explicit Seq/SourceID found")
+            raise ValueError("no valid CPVS Table2 object rows found")
         return source_ids
     finally:
         raw.close()
