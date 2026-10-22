@@ -106,3 +106,10 @@ Streaming support is a future execution mode, not a requirement to weaken curren
 4. Human feedback is not silently promoted to ground truth.
 5. External-source claims require provenance and access/licensing review.
 6. New analysis modes require explicit contracts, tests, provenance, and scientific validation before being treated as validated capability.
+
+
+## Generality boundary — 2026-10-22
+
+Generic local CSV/Parquet import is not equivalent to arbitrary scientific analysis. The current importer records schema and SHA-256 provenance, while the default NativeV0_2Backend deliberately preserves the frozen v0.2 42-feature schema and the source-backed production inference path requires a compatible registered model. New datasets and feature sets must use explicit, versioned adapters/backends and declare units, missing-value policy, identifiers, feature schema, provenance, and validation scope. Unsupported combinations must fail explicitly rather than silently reusing CPVS or v0.2 assumptions.
+
+The staged generality audit and independent-dataset/50-case/second-method validation are tracked in [the parallel validation plan](../roadmap/PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md) and [Issue #210](https://github.com/saeed92m/ztf-classifier/issues/210). CPVS exact reproduction remains a separate unresolved historical claim; no baseline or scientific gate is changed by this architecture note.
