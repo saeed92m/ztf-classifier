@@ -1,4 +1,4 @@
-name: CPVS Existing-Evidence Object-Name Crosswalk
+name: CPVS Existing-Evidence SourceID Crosswalk
 
 on:
   pull_request:
@@ -11,10 +11,10 @@ permissions:
 
 jobs:
   audit-existing-evidence:
-    if: false # Temporarily paused while correcting SourceID semantics; re-enable after workflow edits.
-    name: Audit CPVS crosswalk using retained source artifact
+    name: Re-derive and audit CPVS using retained source artifact
+    if: startsWith(github.head_ref, 'ci/audit/')
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
 
@@ -33,31 +33,51 @@ jobs:
           sha256sum /tmp/scientific-validation-heavy.zip | tee /tmp/artifact.sha256
           echo "debd55db39be64c5e267af44bc1e486824b3d6d0c0caeac9f04fca254c05410c  /tmp/scientific-validation-heavy.zip" | sha256sum -c -
 
-      - name: Extract only CPVS membership audit inputs
+      - name: Extract parent, publication, and retained light-curve files
         run: |
           set -euo pipefail
           mkdir -p /tmp/cpvs-audit
           python - <<'PY'
           import json
           import zipfile
-          from pathlib import Path
+          from pathlib import Path, PurePosixPath
 
           archive_path = Path("/tmp/scientific-validation-heavy.zip")
           destination = Path("/tmp/cpvs-audit")
           wanted = {
               "Table2.txt.zip": destination / "Table2.txt.zip",
-              "selected.tsv": destination / "selected.tsv",
+              "Table2.txt.zip.evidence.json": destination / "Table2.txt.zip.evidence.json",
+              "selected.tsv": destination / "selected_original.tsv",
               "published_table4.dat": destination / "published_table4.dat",
           }
           found = {}
+          band_counts = {"g": {"files": 0, "bytes": 0}, "r": {"files": 0, "bytes": 0}}
           with zipfile.ZipFile(archive_path) as archive:
               for info in archive.infolist():
-                  basename = Path(info.filename).name
+                  parts = PurePosixPath(info.filename).parts
+                  basename = PurePosixPath(info.filename).name
                   if basename in wanted and basename not in found:
                       found[basename] = info.filename
+                  if "ztf_periodic_730k" in parts:
+                      index = parts.index("ztf_periodic_730k")
+                      if index + 2 < len(parts) and parts[index + 1] in ("g", "r") and not info.is_dir():
+                          band = parts[index + 1]
+                          relative = PurePosixPath(*parts[index + 2:])
+                          if ".." in relative.parts or relative.is_absolute():
+                              raise SystemExit(f"Unsafe archive path: {info.filename}")
+                          target = destination / band / Path(*relative.parts)
+                          target.parent.mkdir(parents=True, exist_ok=True)
+                          with archive.open(info) as source, target.open("wb") as output:
+                              while True:
+                                  block = source.read(8 * 1024 * 1024)
+                                  if not block:
+                                      break
+                                  output.write(block)
+                          band_counts[band]["files"] += 1
+                          band_counts[band]["bytes"] += info.file_size
               missing = sorted(set(wanted) - set(found))
               if missing:
-                  raise SystemExit(f"Missing required evidence files in retained artifact: {missing}")
+                  raise SystemExit(f"Missing required evidence files: {missing}")
               for basename, member in found.items():
                   with archive.open(member) as source, wanted[basename].open("wb") as target:
                       while True:
@@ -65,46 +85,91 @@ jobs:
                           if not block:
                               break
                           target.write(block)
-          print(json.dumps({"selected_members": found}, indent=2))
+          print(json.dumps({"selected_members": found, "lightcurve_files": band_counts}, indent=2))
           PY
 
-      - name: Record immutable input hashes
+      - name: Re-derive candidates using explicit Table2 Seq identifiers
+        id: derive
+        continue-on-error: true
+        env:
+          CODE_VERSION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          evidence_sha="$(sha256sum /tmp/cpvs-audit/Table2.txt.zip.evidence.json | awk '{print $1}')"
+          python -m ztf_classifier.validation derive-730k \
+            --parent /tmp/cpvs-audit/Table2.txt.zip \
+            --g-lightcurve /tmp/cpvs-audit/g \
+            --r-lightcurve /tmp/cpvs-audit/r \
+            --output /tmp/cpvs-audit/selected_corrected.tsv \
+            --parent-evidence-sha256 "$evidence_sha" \
+            --code-version "$CODE_VERSION"
+          test -s /tmp/cpvs-audit/selected_corrected.tsv
+
+      - name: Record immutable input and derivation hashes
+        if: always()
         run: |
           python - <<'PY'
           import hashlib, json
           from pathlib import Path
 
           root = Path("/tmp/cpvs-audit")
-          files = ["Table2.txt.zip", "selected.tsv", "published_table4.dat"]
+          def digest(path):
+              h = hashlib.sha256()
+              with path.open("rb") as f:
+                  for block in iter(lambda: f.read(8 * 1024 * 1024), b""):
+                      h.update(block)
+              return h.hexdigest()
+          files = ["Table2.txt.zip", "Table2.txt.zip.evidence.json", "published_table4.dat", "selected_original.tsv", "selected_corrected.tsv"]
           manifest = {
               "source_run_id": 39583481592,
               "source_artifact_id": 12339583820,
+              "source_artifact_sha256_file": "/tmp/artifact.sha256",
               "source_artifact_expected_sha256": "debd55db39be64c5e267af44bc1e486824b3d6d0c0caeac9f04fca254c05410c",
+              "lightcurve_tree": {
+                  band: {
+                      "file_count": sum(1 for p in (root / band).rglob("*") if p.is_file()) if (root / band).exists() else 0,
+                      "total_bytes": sum(p.stat().st_size for p in (root / band).rglob("*") if p.is_file()) if (root / band).exists() else 0,
+                  } for band in ("g", "r")
+              },
               "inputs": {
                   name: {
                       "size_bytes": (root / name).stat().st_size,
-                      "sha256": hashlib.sha256((root / name).read_bytes()).hexdigest(),
+                      "sha256": digest(root / name),
                   }
-                  for name in files
+                  for name in files if (root / name).is_file()
               },
           }
           (root / "input_manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
           print(json.dumps(manifest, indent=2))
           PY
 
-      - name: Run actual ZTF-name crosswalk against retained full evidence
+      - name: Run actual ZTF-name crosswalk against corrected candidates
         id: audit
+        if: always()
         continue-on-error: true
         run: |
           set -euo pipefail
+          test -s /tmp/cpvs-audit/selected_corrected.tsv
           python scripts/audit_cpvs_membership.py \
-            --candidate /tmp/cpvs-audit/selected.tsv \
+            --candidate /tmp/cpvs-audit/selected_corrected.tsv \
             --published /tmp/cpvs-audit/published_table4.dat \
             --parent /tmp/cpvs-audit/Table2.txt.zip \
             --output /tmp/cpvs-audit/membership_audit.json
-          cp /tmp/cpvs-audit/membership_audit.json reports-membership-audit.json
 
-      - name: Fail closed unless the exact object-level membership is reproduced
+      - name: Preserve full report even if scientific gate remains blocked
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-sourceid-crosswalk-audit
+          path: |
+            /tmp/cpvs-audit/input_manifest.json
+            /tmp/cpvs-audit/membership_audit.json
+            /tmp/cpvs-audit/selected_corrected.tsv
+            /tmp/cpvs-audit/selected_corrected.tsv.diagnostic.json
+            /tmp/artifact.sha256
+          if-no-files-found: warn
+
+      - name: Fail closed unless exact object-level membership is reproduced
         if: always()
         run: |
           python - <<'PY'
@@ -114,24 +179,17 @@ jobs:
           if not report.is_file():
               raise SystemExit("Object-name crosswalk report is missing.")
           payload = json.loads(report.read_text(encoding="utf-8"))
-          print(json.dumps({
+          summary = {
+              "candidate_count": payload.get("candidate_count"),
+              "published_count": payload.get("published_count"),
+              "parent_catalog_row_count": payload.get("parent_catalog_row_count"),
               "object_name_crosswalk_valid": payload.get("object_name_crosswalk_valid"),
               "object_name_crosswalk_exact_membership_match": payload.get("object_name_crosswalk_exact_membership_match"),
               "candidate_only_count": payload.get("object_name_crosswalk_candidate_only_count"),
               "published_only_count": payload.get("object_name_crosswalk_published_only_count"),
               "published_names_missing_from_parent_count": payload.get("published_names_missing_from_parent_count"),
-          }, indent=2))
+          }
+          print(json.dumps(summary, indent=2))
           if payload.get("object_name_crosswalk_exact_membership_match") is not True:
               raise SystemExit("CPVS object-level exact membership remains unresolved; fail-closed.")
           PY
-
-      - name: Preserve report even if scientific gate remains blocked
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: cpvs-object-name-crosswalk-audit
-          path: |
-            /tmp/cpvs-audit/input_manifest.json
-            /tmp/cpvs-audit/membership_audit.json
-            /tmp/artifact.sha256
-          if-no-files-found: warn
