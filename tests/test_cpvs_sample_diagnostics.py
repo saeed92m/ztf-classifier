@@ -36,7 +36,7 @@ def test_band_diagnostics_retains_sample_source_evidence(tmp_path: Path):
     path.write_text(
         "SourceID\tHJD\tgmag\te_gmag\tg_flag\n"
         "1\t1.0\t15.0\t0.1\t0\n"
-        "1\t2.0\t15.1\t0.5\t1\n"
+        "1\t2.0\t15.1\t0.4\t1\n"
         "2\t3.0\t0\t0.2\t0\n"
         "3\t4.0\t16.0\tnan\t0\n",
         encoding="utf-8",
@@ -57,8 +57,8 @@ def test_band_diagnostics_retains_sample_source_evidence(tmp_path: Path):
     assert sample[1]["rows"] == 2
     assert sample[1]["valid_error_rows"] == 2
     assert sample[1]["valid_nonzero_magnitude_rows"] == 2
-    assert sample[1]["linear_qualifying_rows"] == 1
-    assert sample[1]["exact_qualifying_rows"] == 2
+    assert sample[1]["linear_qualifying_rows"] == 2
+    assert sample[1]["exact_qualifying_rows"] == 1
     assert sample[1]["flag_zero_valid_error_rows"] == 1
     assert sample[1]["flag_nonzero_valid_error_rows"] == 1
     assert sample[1]["max_snr_linear_row"]["HJD"] == "1.0"
