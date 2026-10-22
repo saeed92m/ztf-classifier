@@ -180,8 +180,18 @@ def main() -> int:
             "object_name_crosswalk_exact_membership_match": exact_match,
             "object_name_crosswalk_candidate_only_count": len(candidate_only),
             "object_name_crosswalk_candidate_only_sourceid_sample": candidate_only[:100],
+            "object_name_crosswalk_candidate_only_sourceids": candidate_only,
+            "object_name_crosswalk_candidate_only_objects": [
+                {"SourceID": source_id, "ZTF": parent_rows.get(source_id)}
+                for source_id in candidate_only
+            ],
             "object_name_crosswalk_published_only_count": len(published_only),
             "object_name_crosswalk_published_only_sourceid_sample": published_only[:100],
+            "object_name_crosswalk_published_only_sourceids": published_only,
+            "object_name_crosswalk_published_only_objects": [
+                {"SourceID": source_id, "ZTF": parent_rows.get(source_id)}
+                for source_id in published_only
+            ],
             "object_name_crosswalk_candidate_membership_sha256": __import__("hashlib").sha256(
                 ("\n".join(map(str, sorted(candidate))) + "\n").encode()
             ).hexdigest(),
