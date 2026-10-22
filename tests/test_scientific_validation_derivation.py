@@ -90,7 +90,7 @@ def test_cpvs_table_preserves_explicit_seq_sourceids(tmp_path: Path):
     assert _source_ids(parent, None) == {"17", "29"}
 
 
-def test_cpvs_table_falls_back_to_ordinal_sourceids(tmp_path: Path):
+def test_cpvs_table_rejects_catalog_without_explicit_seq(tmp_path: Path):
     from ztf_classifier.validation.derivation import _source_ids
 
     parent = tmp_path / "Table2.txt"
@@ -98,13 +98,12 @@ def test_cpvs_table_falls_back_to_ordinal_sourceids(tmp_path: Path):
         "Table 2. ZTF Variables Catalog\n"
         "ID R.A. (J2000) Dec. (J2000) Period Type\n"
         "ZTFJ000000.13+620605.8 0.00056 62.10163 1.9449979 BYDra\n"
-        "ZTFJ000000.14+721413.7 0.00061 72.23716 0.2991500 EW\n"
-        "ZTFJ000000.19+320847.2 0.00080 32.14645 0.2870590 EW\n"
-        "Note: footer must not become a catalog row\n",
+        "ZTFJ000000.14+721413.7 0.00061 72.23716 0.2991500 EW\n",
         encoding="utf-8",
     )
 
-    assert _source_ids(parent, None) == {"1", "2", "3"}
+    with pytest.raises(ValueError, match="integer Seq/SourceID"):
+        _source_ids(parent, None)
 
 
 def test_cpvs_table_source_ids_ignore_metadata_after_header(tmp_path: Path):
