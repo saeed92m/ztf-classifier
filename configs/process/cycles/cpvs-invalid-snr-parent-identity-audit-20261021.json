@@ -11,7 +11,7 @@
   ],
   "baseline": {
     "revision": "d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
-    "description": "Scientific gate remains unresolved. A confirmed invalid-SNR guard defect and a confirmed Table2 identity-mapping defect are being corrected; full re-derivation and object-level membership validation remain pending."
+    "description": "Source-backed derivation and the object-name-to-Seq membership crosswalk are complete. The SNR-only predicate still has 11602 candidate-only objects; a four-field parent-metadata validity predicate reproduces exact membership, but the publication does not explicitly justify that predicate. The scientific gate remains blocked pending full per-object provenance review, method justification, and latest-head regression checks."
   },
   "expected_improvement": [
     "Reject non-finite SNR values explicitly instead of allowing NaN to pass a threshold comparison.",
