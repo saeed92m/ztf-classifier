@@ -105,6 +105,8 @@ This plan authorizes safe investigation and documentation, not production releas
 
 
 ## Initial architecture evidence snapshot — 2026-10-22
+The initial repository sample and gap matrix are documented in [ECOSYSTEM_GAP_AUDIT_INITIAL_2026-10-22.md](../ECOSYSTEM_GAP_AUDIT_INITIAL_2026-10-22.md). It records only the repositories and files actually inspected and explicitly lists remaining search/inspection gaps.
+
 
 Read-only inspection of the current main-branch source shows a useful boundary but also a concrete generality gap:
 
