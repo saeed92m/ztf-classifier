@@ -250,13 +250,15 @@ def _comparison(
         "published_only_count": len(published_only),
         "candidate_only_sourceids_sample": candidate_only[:100],
         "published_only_sourceids_sample": published_only[:100],
-        "candidate_only_objects_sample": [
+        "candidate_only_sourceids": candidate_only,
+        "published_only_sourceids": published_only,
+        "candidate_only_objects": [
             {"SourceID": oid, "ZTF": parent_rows.get(oid)}
-            for oid in candidate_only[:100]
+            for oid in candidate_only
         ],
-        "published_only_objects_sample": [
+        "published_only_objects": [
             {"SourceID": oid, "ZTF": parent_rows.get(oid)}
-            for oid in published_only[:100]
+            for oid in published_only
         ],
         "candidate_only_sha256": hashlib.sha256(
             ("\n".join(map(str, candidate_only)) + "\n").encode()
@@ -422,6 +424,15 @@ def main() -> int:
     args.output.write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
+    for filename, ids in (
+        ("candidate_recomputed_linear.tsv", candidate_linear),
+        ("candidate_nonlinear_exact_diagnostic.tsv", candidate_exact),
+    ):
+        output = args.output.with_name(filename)
+        output.write_text(
+            "SourceID\n" + "".join(f"{source_id}\n" for source_id in sorted(ids)),
+            encoding="utf-8",
+        )
     print(json.dumps({key: report[key] for key in (
         "parent_count",
         "published_count",
