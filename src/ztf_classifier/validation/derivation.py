@@ -297,19 +297,21 @@ def _snr_from_mag_error(value: str) -> float:
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Return the one-based Table2 row IDs used by the CPVS light curves.
+    """Read CPVS Table2 IDs, preferring an explicit integer Seq when present.
 
-    The published Table2 parent catalogue lists a ZTF object name followed by
-    coordinates/period metadata; it does not expose the light-curve SourceID
-    as a second-column integer. The light-curve SourceID is the one-based
-    ordinal of each valid catalogue object row. Never parse the RA column as
-    an ID. Ignore non-object metadata/page headers, and fail closed on duplicate
-    object names rather than silently changing the ordinal mapping.
+    Some pinned CPVS catalog exports expose the light-curve SourceID/Seq in the
+    second field; coordinate-only Table2 presentations instead require a
+    one-based object-row ordinal. The first valid object row selects the schema
+    and subsequent rows must remain consistent when explicit Seq is present.
+    Never treat a decimal RA field as an identifier. Metadata/page furniture is
+    ignored, while duplicate names and duplicate explicit IDs fail closed.
     """
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
         seen_names: set[str] = set()
+        ordinal = 0
+        explicit_seq: bool | None = None
         for encoded in raw:
             line = encoded.decode("utf-8", errors="replace").strip()
             if not line:
@@ -317,11 +319,28 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
             fields = _split_fields(line)
             if not fields or not fields[0].upper().startswith("ZTF"):
                 continue
+            if len(fields) < 2:
+                raise ValueError(f"CPVS Table2 object row has no second field: {fields!r}")
             name = fields[0]
             if name in seen_names:
                 raise ValueError(f"duplicate ZTF name in CPVS Table2: {name}")
             seen_names.add(name)
-            source_ids.add(str(len(source_ids) + 1))
+            ordinal += 1
+            is_integer = fields[1].isdigit()
+            if explicit_seq is None:
+                explicit_seq = is_integer
+            if explicit_seq:
+                if not is_integer:
+                    raise ValueError(
+                        "inconsistent CPVS Table2 Seq schema: expected integer Seq "
+                        f"in second field, got {fields[:4]!r}"
+                    )
+                source_id = str(int(fields[1]))
+            else:
+                source_id = str(ordinal)
+            if source_id in source_ids:
+                raise ValueError(f"duplicate CPVS Table2 SourceID/Seq: {source_id}")
+            source_ids.add(source_id)
         if not source_ids:
             raise ValueError("no valid CPVS Table2 object rows found")
         return source_ids
