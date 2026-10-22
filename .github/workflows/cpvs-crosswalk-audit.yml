@@ -12,7 +12,7 @@ permissions:
 jobs:
   audit-existing-evidence:
     name: Re-derive and audit CPVS using retained source artifact
-    if: startsWith(github.head_ref, 'ci/audit/')
+    if: false # Paused while switching to sample-only diagnostics using the completed full-derivation artifact.
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
