@@ -108,14 +108,12 @@ def read_parent_catalog(path: Path) -> dict[int, str]:
 def _parent_metadata_rows(lines: Iterable[str]) -> dict[int, dict[str, str]]:
     """Read Table2 g/r fit metadata keyed by explicit Seq; never infer row ordinals."""
     result: dict[int, dict[str, str]] = {}
-    ordinal = 0
     for line in lines:
         fields = line.strip().split()
         if not fields or not fields[0].upper().startswith("ZTF"):
             continue
         if len(fields) < 2:
             raise ValueError(f"CPVS Table2 object row has no second field: {fields!r}")
-        ordinal += 1
         is_integer = fields[1].isdigit()
         if not is_integer:
             raise ValueError(
