@@ -65,7 +65,7 @@
     ]
   },
   "regression": {
-    "status": "IN_PROGRESS",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
       "Await CI, lint/format, regression, and scientific-contract checks on the latest PR head.",
       "Complete corrected full derivation against the pinned parent and original g/r light curves using explicit Seq IDs.",
