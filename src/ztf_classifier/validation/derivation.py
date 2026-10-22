@@ -332,7 +332,7 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
                 )
             source_id = str(int(fields[1]))
             if source_id in source_ids:
-                raise ValueError(f"duplicate CPVS Table2 SourceID/Seq: {source_id}")
+                raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
             source_ids.add(source_id)
         if not source_ids:
             raise ValueError("no valid CPVS Table2 object rows found")
