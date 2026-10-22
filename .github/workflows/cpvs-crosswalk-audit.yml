@@ -30,7 +30,7 @@ jobs:
             "https://api.github.com/repos/saeed92m/ztf-classifier/actions/artifacts/12339583820/zip" \
             -o /tmp/scientific-validation-heavy.zip
           sha256sum /tmp/scientific-validation-heavy.zip | tee /tmp/artifact.sha256
-          echo "Expected historical artifact SHA256: debd55db39be64c5e267af44bc1e486824b3d6d0c0caeac9f04fca254c05410c"
+          echo "debd55db39be64c5e267af44bc1e486824b3d6d0c0caeac9f04fca254c05410c  /tmp/scientific-validation-heavy.zip" | sha256sum -c -
 
       - name: Extract only CPVS membership audit inputs
         run: |
@@ -102,6 +102,27 @@ jobs:
             --parent /tmp/cpvs-audit/Table2.txt.zip \
             --output /tmp/cpvs-audit/membership_audit.json
           cp /tmp/cpvs-audit/membership_audit.json reports-membership-audit.json
+
+      - name: Fail closed unless the exact object-level membership is reproduced
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = Path("/tmp/cpvs-audit/membership_audit.json")
+          if not report.is_file():
+              raise SystemExit("Object-name crosswalk report is missing.")
+          payload = json.loads(report.read_text(encoding="utf-8"))
+          print(json.dumps({
+              "object_name_crosswalk_valid": payload.get("object_name_crosswalk_valid"),
+              "object_name_crosswalk_exact_membership_match": payload.get("object_name_crosswalk_exact_membership_match"),
+              "candidate_only_count": payload.get("object_name_crosswalk_candidate_only_count"),
+              "published_only_count": payload.get("object_name_crosswalk_published_only_count"),
+              "published_names_missing_from_parent_count": payload.get("published_names_missing_from_parent_count"),
+          }, indent=2))
+          if payload.get("object_name_crosswalk_exact_membership_match") is not True:
+              raise SystemExit("CPVS object-level exact membership remains unresolved; fail-closed.")
+          PY
 
       - name: Preserve report even if scientific gate remains blocked
         if: always()
