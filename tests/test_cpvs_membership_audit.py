@@ -38,9 +38,9 @@ def test_read_vizier_reads_fixed_width_id_and_name(tmp_path: Path):
 def test_read_vizier_rejects_duplicate_catalog_ids(tmp_path: Path):
     path = tmp_path / "table4-duplicate.tsv"
     path.write_text(
-        "ZTF\\tID\\n"
-        "ZTFJ000000.00+000000.0\\t7\\n"
-        "ZTFJ000001.00+000000.0\\t7\\n",
+        "ZTF\tID\n"
+        "ZTFJ000000.00+000000.0\t7\n"
+        "ZTFJ000001.00+000000.0\t7\n",
         encoding="utf-8",
     )
 
