@@ -102,3 +102,15 @@ This plan authorizes safe investigation and documentation, not production releas
 - Current CPVS discrepancy: remains unresolved; do not infer resolution from successful CI or exact intersection alone.
 - Dataset choice, paper choice, complete repository inventory, and independent 50-case results: NOT YET VERIFIED.
 - No code behavior, frozen baseline, or release was changed by this plan.
+
+
+## Initial architecture evidence snapshot — 2026-10-22
+
+Read-only inspection of the current main-branch source shows a useful boundary but also a concrete generality gap:
+
+- `src/ztf_classifier/application/ingestion.py` imports local CSV/Parquet tables, checks file size, non-empty content, unique column names, optional required columns, and records SHA-256/source metadata. This establishes generic tabular ingestion, not universal scientific interpretation.
+- `src/ztf_classifier/features/engine.py` defaults to `NativeV0_2Backend`, which calls `extract_v0_2_features` and `validate_v0_2_feature_vector`; this intentionally preserves the frozen 42-feature contract.
+- `src/ztf_classifier/jobs/executor.py` acquires observations through `ObservationService`, computes a registered feature backend, and predicts using a registered production model. The current end-to-end object-analysis path is therefore not a generic arbitrary-dataset analysis engine.
+- `docs/api/API_V1.md` says the production model currently requires its frozen feature schema.
+
+Supported conclusion: local tabular files can be imported generically, while the existing native feature/model path remains schema-specific. Whether every other module preserves this boundary still requires the planned full code audit and independent dataset test. Do not claim arbitrary-feature analysis is already implemented; treat it as a product capability gap to map and prioritize.
