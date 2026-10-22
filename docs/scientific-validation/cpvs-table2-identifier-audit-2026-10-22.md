@@ -66,6 +66,14 @@ The retained-source diagnostic artifact is run 39701473339, artifact ID `1239348
 - The nonlinear inverse magnitude-error/SNR alternative produced the same membership set as the current linear approximation in the full candidate comparison. It does not explain the discrepancy.
 - In the sample, 93 of 94 candidate-only objects had at most 10 g-band rows, whereas all 500 sampled published members had at least 13 g-band rows. This is a diagnostic association, not proof of a minimum-row-count rule. The published method describes at least one qualifying detection per band; do not add a row-count cutoff without source-backed evidence.
 
+## External method check against the publication
+
+The official VizieR ReadMe for [Chan et al. (2022), ApJ 932, 118](https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJ/932/118?format=html&tex=true) states that the analysis extracts 730,184 of the 781,602 CPVS light curves that contain **at least one 2.5σ detection in g and one 3σ detection in r**. The article's [Section 2 methodology](https://doi.org/10.3847/1538-4357/ac69d4) describes those detection thresholds; neither the accessible method text nor the catalog ReadMe explicitly adds a requirement that all four Table2 fields gmag, rmag, Per-g, and Per-r be positive.
+
+The official Table2 VizieR schema independently identifies Seq as the internal source identifier and marks gmag, rmag, Per-g, and Per-r as nullable fields: [Chen et al. (2020), Table2 schema](https://vizier.cfa.harvard.edu/viz-bin/VizieR-3?-source=J%2FApJS%2F249%2F18%2Ftable2). Therefore, exact-set recovery by filtering all four metadata fields is not sufficient scientific evidence that this was the published selection rule. The residuals may reflect an unreported operational constraint, a mismatch in the available parent light-curve rows/versions, or another implementation detail. These are hypotheses, not confirmed causes.
+
+**Next action:** keep the SNR-only derivation and the production criteria unchanged; prepare a concise author clarification request citing the exact count table, source hashes, 11,602-ID discrepancy ledger, and the exact-set metadata diagnostic. Until an answer or source-code evidence is obtained, record exact reproduction as blocked.
+
 ## Additional exact-set diagnostic: parent metadata validity
 
 A separate full-dataset diagnostic in heavy run [38635891449](https://github.com/saeed92m/ztf-classifier/actions/runs/38635891449), artifact ID 11935357767, tested the predicate that all four parent Table2 fields are finite and positive: gmag, rmag, Per-g, and Per-r.
