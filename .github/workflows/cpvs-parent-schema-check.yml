@@ -1,0 +1,134 @@
+name: CPVS Table2 Identifier Schema Verification
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify-pinned-parent-schema:
+    if: startsWith(github.head_ref, 'ci/audit/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+
+      - name: Download and verify official Zenodo Table2 archive
+        run: |
+          set -euo pipefail
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/Table2.txt.zip?download=1" \
+            -o /tmp/Table2.txt.zip
+          echo "24dd4cf138a2687901d64b2d029cc624  /tmp/Table2.txt.zip" | md5sum -c -
+          sha256sum /tmp/Table2.txt.zip
+
+      - name: Inspect the pinned Table2 row schema and identifier mapping
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          import math
+          import zipfile
+          from pathlib import Path
+
+          archive_path = Path("/tmp/Table2.txt.zip")
+          report_path = Path("cpvs-parent-schema-report.json")
+          with zipfile.ZipFile(archive_path) as archive:
+              members = [name for name in archive.namelist() if not name.endswith("/")]
+              if len(members) != 1:
+                  raise SystemExit(f"Expected one data member, found {members!r}")
+              member = members[0]
+              with archive.open(member) as raw:
+                  lines = [line.decode("utf-8", errors="replace").strip() for line in raw]
+
+          object_rows = []
+          for line_number, line in enumerate(lines, start=1):
+              if not line:
+                  continue
+              fields = line.split()
+              if fields and fields[0].upper().startswith("ZTF"):
+                  object_rows.append({"line_number": line_number, "line": line, "fields": fields})
+
+          if len(object_rows) != 781602:
+              raise SystemExit(f"Expected 781602 Table2 object rows, found {len(object_rows)}")
+
+          first_fields = object_rows[0]["fields"]
+          second_field_is_integer = len(first_fields) > 1 and first_fields[1].isdigit()
+          mode = "explicit_integer_seq_in_second_field" if second_field_is_integer else "coordinate_only_one_based_object_row_ordinal"
+
+          names = [row["fields"][0] for row in object_rows]
+          duplicate_names = sorted({name for name in names if names.count(name) > 1})
+          second_field_integer_count = sum(len(row["fields"]) > 1 and row["fields"][1].isdigit() for row in object_rows)
+          second_field_float_count = 0
+          for row in object_rows:
+              if len(row["fields"]) < 2:
+                  continue
+              try:
+                  second_field_float_count += math.isfinite(float(row["fields"][1]))
+              except ValueError:
+                  pass
+
+          ids = []
+          malformed = []
+          for ordinal, row in enumerate(object_rows, start=1):
+              fields = row["fields"]
+              if mode == "explicit_integer_seq_in_second_field":
+                  if len(fields) < 2 or not fields[1].isdigit():
+                      malformed.append({"ordinal": ordinal, "fields": fields[:5]})
+                      continue
+                  ids.append(int(fields[1]))
+              else:
+                  ids.append(ordinal)
+
+          duplicate_ids = sorted({value for value in ids if ids.count(value) > 1})
+          report = {
+              "schema_version": "1.0",
+              "zenodo_record": "3886372",
+              "zenodo_file": "Table2.txt.zip",
+              "expected_archive_md5": "24dd4cf138a2687901d64b2d029cc624",
+              "archive_size_bytes": archive_path.stat().st_size,
+              "archive_sha256": hashlib.sha256(archive_path.read_bytes()).hexdigest(),
+              "archive_member": member,
+              "object_row_count": len(object_rows),
+              "unique_ztf_name_count": len(set(names)),
+              "duplicate_ztf_name_count": len(duplicate_names),
+              "first_object_rows": [
+                  {"line_number": row["line_number"], "fields": row["fields"][:8]}
+                  for row in object_rows[:5]
+              ],
+              "second_field_integer_count": second_field_integer_count,
+              "second_field_numeric_count": second_field_float_count,
+              "detected_identifier_mode": mode,
+              "identifier_count": len(ids),
+              "identifier_unique_count": len(set(ids)),
+              "identifier_min": min(ids) if ids else None,
+              "identifier_max": max(ids) if ids else None,
+              "identifiers_equal_1_to_N": ids == list(range(1, len(object_rows) + 1)),
+              "duplicate_identifier_count": len(duplicate_ids),
+              "malformed_explicit_seq_count": len(malformed),
+              "malformed_explicit_seq_sample": malformed[:20],
+          }
+          report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(json.dumps(report, indent=2))
+          if report["duplicate_ztf_name_count"] or report["duplicate_identifier_count"]:
+              raise SystemExit("Duplicate names/identifiers detected.")
+          if mode == "explicit_integer_seq_in_second_field" and malformed:
+              raise SystemExit("Mixed explicit Seq schema detected.")
+          PY
+
+      - name: Preserve schema verification evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-parent-schema-verification
+          path: cpvs-parent-schema-report.json
+          if-no-files-found: warn
