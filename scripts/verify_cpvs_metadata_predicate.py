@@ -60,7 +60,8 @@ def read_parent_metadata(path: Path) -> dict[int, dict[str, str]]:
     result: dict[int, dict[str, str]] = {}
     for row in reader:
         raw = (row.get("Seq") or "").strip()
-        if not raw:
+        if not raw or set(raw) == {"-"}:
+            # VizieR TSV exports include a dashed separator row after the header.
             continue
         try:
             source_id = int(raw)
