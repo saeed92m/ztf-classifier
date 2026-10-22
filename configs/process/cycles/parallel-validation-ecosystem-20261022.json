@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "parallel-validation-ecosystem-20261022",
+  "objective": "Establish parallel, isolated validation of the general Astronomical Data Analysis & Discovery Platform beyond the CPVS historical reconstruction claim.",
+  "previous_knowledge_consumed": [
+    "README and canonical handbook define ZTF Classifier as an Astronomical Data Analysis & Discovery Platform.",
+    "Issue #170 and the current CPVS audit preserve the 11,602 candidate-only discrepancy as unresolved.",
+    "The frozen v0.2.0 scientific baseline includes 42 features and must remain immutable.",
+    "The product roadmap already distinguishes product-level scientific validation from claim-specific historical reproduction.",
+    "Read-only source inspection shows local CSV/Parquet ingestion is generic, but NativeV0_2Backend uses the frozen 42-feature schema and the source-backed executor is observation-service/model-registry based."
+  ],
+  "baseline": {
+    "revision": "main at base commit d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
+    "status": "v1.0.1 immutable software release; v0.2.0 immutable scientific baseline; CPVS exact membership unresolved; independent dataset and second-paper runs not yet verified."
+  },
+  "expected_improvement": [
+    "Separate generic data ingestion from dataset/model-specific scientific interpretation.",
+    "Obtain known-answer evidence on an independent astronomical dataset and a deterministic 50-object diagnostic sample.",
+    "Exercise 50 input/schema/quality cases and record both success and failure outcomes.",
+    "Review a second scientific method independently of CPVS.",
+    "Build an evidence-backed GitHub ecosystem gap matrix with license and compatibility review.",
+    "Keep the CPVS discrepancy isolated from generic product rules and preserve all scientific gates."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "No verified independent-dataset or deterministic 50-case result is recorded in this stage.",
+        "after": "Plan and tracking issue recorded; execution evidence remains pending."
+      },
+      "reproducibility": {
+        "before": "The parallel test sequence and evidence requirements were not yet consolidated in a current canonical plan.",
+        "after": "Canonical plan defines isolation, manifests, hashes, known-answer checks, acceptance criteria, and workstream ownership."
+      },
+      "scientific_validity": {
+        "before": "CPVS exact reconstruction remains unresolved and cannot serve as the sole test of general product validity.",
+        "after": "Independent dataset, second-method, and general-input validation are explicitly separated from CPVS; their results remain NOT YET VERIFIED."
+      }
+    }
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Created canonical plan at docs/roadmap/PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md on an isolated documentation branch.",
+      "Updated README, handbook, product roadmap, scientific-validation roadmap, ecosystem review, and architectural decisions on that branch.",
+      "Created tracking Issue #210 and draft documentation PR #211; neither is merged.",
+      "Read-only inspection of application/ingestion.py confirms CSV/Parquet import, schema checks, and SHA-256 provenance.",
+      "Read-only inspection of features/engine.py confirms the native backend preserves the frozen v0.2 42-feature schema.",
+      "Read-only inspection of jobs/executor.py and docs/api/API_V1.md confirms current end-to-end object analysis is not a generic arbitrary-feature analysis path.",
+      "No independent dataset was executed; no 50-object sample or 50-case matrix has been run; no second-paper replication is claimed complete.",
+      "No scientific code, model, data, or release artifact was changed."
+    ]
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "root_causes": [
+      "A generic table importer is not equivalent to a general-purpose scientific analysis engine.",
+      "The default feature backend and production model intentionally bind to a frozen schema; cross-dataset analysis requires explicit adapters/versioned feature schemas and validation.",
+      "Prior work was too centered on CPVS reconstruction to provide sufficient independent evidence of general product capability; the new plan creates separate workstreams."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "CPVS is a claim-specific historical benchmark, not the definition of the product.",
+      "Dataset-specific selection and feature rules must not become universal ingestion requirements.",
+      "A deterministic 50-object sample is diagnostic unless a stronger statistical design justifies population-level claims.",
+      "Generic CSV/Parquet ingestion is currently supported, but arbitrary-feature analysis is not established by that fact.",
+      "Passing CI validates only executed contracts and does not independently establish astrophysical validity or broad dataset generality.",
+      "The frozen v0.2.0 baseline and fail-closed scientific gates remain unchanged."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Run and inspect CI, CodeQL, Product Scope Audit, and Scientific Validation for draft PR #211 before merge.",
+      "Complete full source audit of ingestion, normalization, feature engine, analysis modes, output schemas, and provenance.",
+      "Select and hash-record an independent public astronomy dataset and execute a deterministic 50-object sample.",
+      "Execute and report the 50-case input/schema/quality matrix.",
+      "Select a second paper/method and establish a source-backed replication protocol.",
+      "Inspect candidate GitHub repositories, licenses, tests, and implementation details; produce a prioritized gap matrix.",
+      "Continue CPVS Issue #170 independently; explain or source-document the 11,602 candidate-only objects."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Parallel validation and ecosystem comparison are adopted as five isolated workstreams under Issue #210.",
+    "Canonical plan is docs/roadmap/PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md.",
+    "Draft PR #211 records documentation changes but is not merged and is not a completed validation result.",
+    "The native feature/model path remains schema-specific; arbitrary-feature analysis must not be claimed until implemented and tested.",
+    "CPVS exact reconstruction remains unresolved; the frozen v0.2.0 baseline remains immutable."
+  ]
+}
