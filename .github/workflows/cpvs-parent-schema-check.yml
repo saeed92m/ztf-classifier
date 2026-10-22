@@ -38,6 +38,7 @@ jobs:
           import json
           import math
           import zipfile
+          from collections import Counter
           from pathlib import Path
 
           archive_path = Path("/tmp/Table2.txt.zip")
@@ -66,7 +67,8 @@ jobs:
           mode = "explicit_integer_seq_in_second_field" if second_field_is_integer else "coordinate_only_one_based_object_row_ordinal"
 
           names = [row["fields"][0] for row in object_rows]
-          duplicate_names = sorted({name for name in names if names.count(name) > 1})
+          name_counts = Counter(names)
+          duplicate_names = sorted(name for name, count in name_counts.items() if count > 1)
           second_field_integer_count = sum(len(row["fields"]) > 1 and row["fields"][1].isdigit() for row in object_rows)
           second_field_float_count = 0
           for row in object_rows:
@@ -89,7 +91,8 @@ jobs:
               else:
                   ids.append(ordinal)
 
-          duplicate_ids = sorted({value for value in ids if ids.count(value) > 1})
+          id_counts = Counter(ids)
+          duplicate_ids = sorted(value for value, count in id_counts.items() if count > 1)
           report = {
               "schema_version": "1.0",
               "zenodo_record": "3886372",
