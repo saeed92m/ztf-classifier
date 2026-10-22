@@ -124,8 +124,8 @@ def _band_diagnostics(
             "valid_nonzero_magnitude_rows": 0,
             "linear_qualifying_rows": 0,
             "exact_qualifying_rows": 0,
-            "flag_zero_rows": 0,
-            "flag_nonzero_rows": 0,
+            "flag_zero_valid_error_rows": 0,
+            "flag_nonzero_valid_error_rows": 0,
             "max_snr_linear": None,
             "max_snr_exact_diagnostic": None,
             "max_snr_linear_row": None,
@@ -166,9 +166,9 @@ def _band_diagnostics(
             try:
                 flag = int(float(flag_value))
                 if flag == 0:
-                    stats["flag_zero_rows"] += 1
+                    stats["flag_zero_valid_error_rows"] += 1
                 else:
-                    stats["flag_nonzero_rows"] += 1
+                    stats["flag_nonzero_valid_error_rows"] += 1
             except (TypeError, ValueError):
                 pass
 
