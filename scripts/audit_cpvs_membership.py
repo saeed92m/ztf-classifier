@@ -106,7 +106,7 @@ def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
 
 
 def read_parent_catalog(path: Path) -> dict[int, str]:
-    """Read Table 2 catalog row ordinals and names from plain text or ZIP."""
+    """Read explicit Table2 Seq IDs and ZTF names from plain text or ZIP."""
     if not zipfile.is_zipfile(path):
         with path.open(encoding="utf-8", errors="replace") as handle:
             return _catalog_rows(handle)
@@ -117,6 +117,63 @@ def read_parent_catalog(path: Path) -> dict[int, str]:
             if rows:
                 return rows
     raise ValueError(f"no ZTF catalog rows found in parent evidence: {path}")
+
+
+def _parent_metadata_rows(lines: Iterable[str]) -> dict[int, dict[str, str]]:
+    """Read Table2 g/r fit metadata keyed by explicit Seq where available."""
+    result: dict[int, dict[str, str]] = {}
+    ordinal = 0
+    explicit_seq: bool | None = None
+    for line in lines:
+        fields = line.strip().split()
+        if not fields or not fields[0].upper().startswith("ZTF"):
+            continue
+        if len(fields) < 2:
+            raise ValueError(f"CPVS Table2 object row has no second field: {fields!r}")
+        ordinal += 1
+        is_integer = fields[1].isdigit()
+        if explicit_seq is None:
+            explicit_seq = is_integer
+        if explicit_seq:
+            if not is_integer:
+                raise ValueError("inconsistent explicit Seq schema in Table2 metadata")
+            source_id = int(fields[1])
+            if len(fields) < 12:
+                raise ValueError(
+                    "explicit-Seq Table2 row lacks gmag/rmag/Per-g/Per-r fields"
+                )
+            metadata_fields = fields[8:12]
+        else:
+            source_id = ordinal
+            if len(fields) < 11:
+                metadata_fields = ["", "", "", ""]
+            else:
+                metadata_fields = fields[7:11]
+        if source_id in result:
+            raise ValueError(f"duplicate CPVS Table2 SourceID/Seq: {source_id}")
+        result[source_id] = dict(
+            zip(("gmag", "rmag", "Per-g", "Per-r"), metadata_fields, strict=True)
+        )
+    return result
+
+
+def read_parent_metadata_fields(path: Path) -> dict[int, dict[str, str]]:
+    """Read parent mean magnitudes and per-band periods keyed by Table2 Seq."""
+    if not zipfile.is_zipfile(path):
+        with path.open(encoding="utf-8", errors="replace") as handle:
+            rows = _parent_metadata_rows(handle)
+        if rows:
+            return rows
+        raise ValueError(f"no ZTF catalog metadata rows found: {path}")
+    with zipfile.ZipFile(path) as archive:
+        for member in (name for name in archive.namelist() if not name.endswith("/")):
+            with archive.open(member) as raw:
+                rows = _parent_metadata_rows(
+                    line.decode("utf-8", errors="replace") for line in raw
+                )
+            if rows:
+                return rows
+    raise ValueError(f"no ZTF catalog metadata rows found in parent evidence: {path}")
 
 
 def main() -> int:
