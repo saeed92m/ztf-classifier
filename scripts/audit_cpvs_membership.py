@@ -75,25 +75,28 @@ def read_vizier(path: Path) -> set[int]:
 def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
     """Map Table2 ZTF names to explicit Seq IDs; never infer IDs from row order."""
     result: dict[int, str] = {}
-    for line in lines:
-        stripped = line.strip()
-        if not stripped:
-            continue
-        fields = stripped.split()
-        if not fields or not fields[0].upper().startswith("ZTF"):
-            continue
-        if len(fields) < 2:
-            raise ValueError(f"CPVS Table2 object row has no second field: {fields!r}")
-        is_integer = fields[1].isdigit()
-        if not is_integer:
-            raise ValueError(
-                "CPVS Table2 requires integer Seq/SourceID in second field; "
-                f"refusing row-ordinal fallback for {fields[:4]!r}"
-            )
-        source_id = int(fields[1])
-        if source_id in result:
-            raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
-        result[source_id] = fields[0]
+    for raw_line in lines:
+        # Accept both normal line iterators and test/connector inputs containing
+        # embedded newlines; never infer IDs from physical row order.
+        for line in raw_line.splitlines() or [raw_line]:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            fields = stripped.split()
+            if not fields or not fields[0].upper().startswith("ZTF"):
+                continue
+            if len(fields) < 2:
+                raise ValueError(f"CPVS Table2 object row has no second field: {fields!r}")
+            is_integer = fields[1].isdigit()
+            if not is_integer:
+                raise ValueError(
+                    "CPVS Table2 requires integer Seq/SourceID in second field; "
+                    f"refusing row-ordinal fallback for {fields[:4]!r}"
+                )
+            source_id = int(fields[1])
+            if source_id in result:
+                raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
+            result[source_id] = fields[0]
     return result
 
 
@@ -114,28 +117,28 @@ def read_parent_catalog(path: Path) -> dict[int, str]:
 def _parent_metadata_rows(lines: Iterable[str]) -> dict[int, dict[str, str]]:
     """Read Table2 g/r fit metadata keyed by explicit Seq; never infer row ordinals."""
     result: dict[int, dict[str, str]] = {}
-    for line in lines:
-        fields = line.strip().split()
-        if not fields or not fields[0].upper().startswith("ZTF"):
-            continue
-        if len(fields) < 2:
-            raise ValueError(f"CPVS Table2 object row has no second field: {fields!r}")
-        is_integer = fields[1].isdigit()
-        if not is_integer:
-            raise ValueError(
-                "CPVS Table2 metadata requires integer Seq/SourceID in second field"
+    for raw_line in lines:
+        for line in raw_line.splitlines() or [raw_line]:
+            fields = line.strip().split()
+            if not fields or not fields[0].upper().startswith("ZTF"):
+                continue
+            if len(fields) < 2:
+                raise ValueError(f"CPVS Table2 object row has no second field: {fields!r}")
+            if not fields[1].isdigit():
+                raise ValueError(
+                    "CPVS Table2 metadata requires integer Seq/SourceID in second field"
+                )
+            source_id = int(fields[1])
+            if len(fields) < 12:
+                raise ValueError(
+                    "explicit-Seq Table2 row lacks gmag/rmag/Per-g/Per-r fields"
+                )
+            metadata_fields = fields[8:12]
+            if source_id in result:
+                raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
+            result[source_id] = dict(
+                zip(("gmag", "rmag", "Per-g", "Per-r"), metadata_fields, strict=True)
             )
-        source_id = int(fields[1])
-        if len(fields) < 12:
-            raise ValueError(
-                "explicit-Seq Table2 row lacks gmag/rmag/Per-g/Per-r fields"
-            )
-        metadata_fields = fields[8:12]
-        if source_id in result:
-            raise ValueError(f"duplicate CPVS Table2 SourceID/Seq: {source_id}")
-        result[source_id] = dict(
-            zip(("gmag", "rmag", "Per-g", "Per-r"), metadata_fields, strict=True)
-        )
     return result
 
 
