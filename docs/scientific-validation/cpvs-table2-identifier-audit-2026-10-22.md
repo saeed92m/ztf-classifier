@@ -15,7 +15,7 @@ This record documents the source-backed identifier schema used to reconstruct th
 - Table2 object rows: 781,602.
 - Unique ZTF names: 781,602; duplicate names: 0.
 - Explicit Seq identifiers: 781,602 unique values, minimum 1, maximum 781,604.
-- Seq values are **not** equal to the contiguous range 1–781,602. Physical object-row ordinal is therefore not a safe replacement for Seq.
+- Seq values are **not** equal to the contiguous range 1–781,602. The pinned VizieR parent-metadata TSV (SHA-256 `3675b1274f73fcb15d47e7a780f194ef8fa335cd248c6ff53ea4f01559c86591`) identifies the two missing Seq values as **615171 and 615172**. After those gaps, physical row ordinal is offset from Seq by two; row ordinal is therefore not a safe replacement for Seq.
 
 The first data rows establish the schema (fields shown in order):
 
