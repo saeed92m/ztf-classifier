@@ -2,8 +2,6 @@ import json
 import zipfile
 from pathlib import Path
 
-import pytest
-
 from scripts.audit_cpvs_membership import (
     read_parent_catalog,
     read_selected,
