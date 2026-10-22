@@ -1,5 +1,6 @@
-import pytest
 from pathlib import Path
+
+import pytest
 
 from scripts.diagnose_cpvs_sample import _band_diagnostics, select_stratified_ids
 
@@ -25,11 +26,6 @@ def test_cpvs_sample_is_deterministic_balanced_and_nested():
     assert sum(source_id not in published for source_id in diagnostic_a) == 5
     assert set(diagnostic_a).issubset(sample_a)
 
-
-@pytest.mark.parametrize(
-    "sample_size,diagnostic_size",
-    [(0, 10), (11, 10), (20, 0), (20, 21), (20, 9)],
-)
 
 def test_band_diagnostics_retains_sample_source_evidence(tmp_path: Path):
     path = tmp_path / "g.tsv"
@@ -66,6 +62,10 @@ def test_band_diagnostics_retains_sample_source_evidence(tmp_path: Path):
     assert sample[3]["valid_nonzero_magnitude_rows"] == 1
 
 
+@pytest.mark.parametrize(
+    "sample_size,diagnostic_size",
+    [(0, 10), (11, 10), (20, 0), (20, 21), (20, 9)],
+)
 def test_cpvs_sample_rejects_invalid_sizes(sample_size, diagnostic_size):
     with pytest.raises(ValueError):
         select_stratified_ids(
