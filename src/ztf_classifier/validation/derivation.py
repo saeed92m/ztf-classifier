@@ -299,19 +299,17 @@ def _snr_from_mag_error(value: str) -> float:
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
     """Read CPVS Table2 IDs, preferring an explicit integer Seq when present.
 
-    Some pinned CPVS catalog exports expose the light-curve SourceID/Seq in the
-    second field; coordinate-only Table2 presentations instead require a
-    one-based object-row ordinal. The first valid object row selects the schema
-    and subsequent rows must remain consistent when explicit Seq is present.
-    Never treat a decimal RA field as an identifier. Metadata/page furniture is
-    ignored, while duplicate names and duplicate explicit IDs fail closed.
+    The source-backed Table2 must expose an integer Seq/SourceID in the second
+    field. Coordinate-only presentations without that identity are insufficient
+    for a provenance-safe join and fail closed; row ordinals are not substituted.
+    Metadata/page furniture is ignored, while duplicate names and duplicate IDs
+    fail closed.
     """
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
         seen_names: set[str] = set()
         ordinal = 0
-        explicit_seq: bool | None = None
         for encoded in raw:
             line = encoded.decode("utf-8", errors="replace").strip()
             if not line:
@@ -327,17 +325,12 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
             seen_names.add(name)
             ordinal += 1
             is_integer = fields[1].isdigit()
-            if explicit_seq is None:
-                explicit_seq = is_integer
-            if explicit_seq:
-                if not is_integer:
-                    raise ValueError(
-                        "inconsistent CPVS Table2 Seq schema: expected integer Seq "
-                        f"in second field, got {fields[:4]!r}"
-                    )
-                source_id = str(int(fields[1]))
-            else:
-                source_id = str(ordinal)
+            if not is_integer:
+                raise ValueError(
+                    "CPVS Table2 requires integer Seq/SourceID in second field; "
+                    f"refusing row-ordinal fallback for {fields[:4]!r}"
+                )
+            source_id = str(int(fields[1]))
             if source_id in source_ids:
                 raise ValueError(f"duplicate CPVS Table2 SourceID/Seq: {source_id}")
             source_ids.add(source_id)
