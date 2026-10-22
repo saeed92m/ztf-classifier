@@ -35,6 +35,19 @@ def test_read_vizier_reads_fixed_width_id_and_name(tmp_path: Path):
     }
 
 
+def test_read_vizier_rejects_duplicate_catalog_ids(tmp_path: Path):
+    path = tmp_path / "table4-duplicate.tsv"
+    path.write_text(
+        "ZTF\\tID\\n"
+        "ZTFJ000000.00+000000.0\\t7\\n"
+        "ZTFJ000001.00+000000.0\\t7\\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="duplicate VizieR Table4 catalog ID: 7"):
+        read_vizier_rows(path)
+
+
 def test_read_vizier_reads_tsv_export(tmp_path: Path):
     path = tmp_path / "table4.tsv"
     path.write_text(
