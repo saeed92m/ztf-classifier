@@ -18,6 +18,7 @@ def _write_inputs(
     parent.write_text(
         "# VizieR metadata export\n"
         "Seq\tgmag\trmag\tPer-g\tPer-r\n"
+        "------\t------\t------\t------\t------\n"
         f"10\t16.0\t15.0\t1.0\t1.1\n"
         f"20\t{second_object_metadata[0]}\t{second_object_metadata[1]}\t"
         f"{second_object_metadata[2]}\t{second_object_metadata[3]}\n"
