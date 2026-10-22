@@ -8,7 +8,7 @@ import math
 from pathlib import Path
 
 from audit_cpvs_membership import read_parent_catalog, read_vizier_rows
-from ztf_classifier.validation.derivation import _iter_rows, _source_ids
+from ztf_classifier.validation.derivation import _iter_rows
 
 
 def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
