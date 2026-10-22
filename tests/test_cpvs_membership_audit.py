@@ -101,7 +101,7 @@ def test_read_parent_catalog_rejects_catalog_without_explicit_seq(tmp_path: Path
 
 
 
-def test_read_parent_catalog_ignores_metadata_and_uses_object_ordinals(tmp_path: Path):
+def test_read_parent_catalog_rejects_presentation_table_without_explicit_seq(tmp_path: Path):
     path = tmp_path / "Table2.txt"
     path.write_text(
         "Table 2. ZTF Variables Catalog\n"
@@ -111,10 +111,8 @@ def test_read_parent_catalog_ignores_metadata_and_uses_object_ordinals(tmp_path:
         encoding="utf-8",
     )
 
-    assert read_parent_catalog(path) == {
-        1: "ZTFJ000000.00+000000.0",
-        2: "ZTFJ000001.00+000000.0",
-    }
+    with pytest.raises(ValueError, match="integer Seq/SourceID"):
+        read_parent_catalog(path)
 
 
 def test_object_name_crosswalk_compares_parent_sourceids_not_catalog_ids(
