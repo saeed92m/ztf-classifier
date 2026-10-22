@@ -48,7 +48,9 @@
       "Read-only inspection of features/engine.py confirms the native backend preserves the frozen v0.2 42-feature schema.",
       "Read-only inspection of jobs/executor.py and docs/api/API_V1.md confirms current end-to-end object analysis is not a generic arbitrary-feature analysis path.",
       "No independent dataset was executed; no 50-object sample or 50-case matrix has been run; no second-paper replication is claimed complete.",
-      "No scientific code, model, data, or release artifact was changed."
+      "No scientific code, model, data, or release artifact was changed.",
+      "Follow-up source inspection verified that StarEmbed acquisition is implemented, but the benchmark runner requires a prepared sourceid/class_str/y_pred prediction table and does not generate predictions from raw StarEmbed light curves.",
+      "Current heavy scientific-validation workflow acquires StarEmbed and then downloads large CPVS g/r archives; no StarEmbed raw-light-curve-to-model inference step was found."
     ]
   },
   "failure_analysis": {
@@ -56,7 +58,8 @@
     "root_causes": [
       "A generic table importer is not equivalent to a general-purpose scientific analysis engine.",
       "The default feature backend and production model intentionally bind to a frozen schema; cross-dataset analysis requires explicit adapters/versioned feature schemas and validation.",
-      "Prior work was too centered on CPVS reconstruction to provide sufficient independent evidence of general product capability; the new plan creates separate workstreams."
+      "Prior work was too centered on CPVS reconstruction to provide sufficient independent evidence of general product capability; the new plan creates separate workstreams.",
+      "The registered external benchmark acquisition/evaluation contracts are not yet connected to a raw-dataset inference path for StarEmbed; an existing benchmark evaluator is not itself a general scientific analysis engine."
     ]
   },
   "knowledge_extraction": {
@@ -67,7 +70,8 @@
       "A deterministic 50-object sample is diagnostic unless a stronger statistical design justifies population-level claims.",
       "Generic CSV/Parquet ingestion is currently supported, but arbitrary-feature analysis is not established by that fact.",
       "Passing CI validates only executed contracts and does not independently establish astrophysical validity or broad dataset generality.",
-      "The frozen v0.2.0 baseline and fail-closed scientific gates remain unchanged."
+      "The frozen v0.2.0 baseline and fail-closed scientific gates remain unchanged.",
+      "StarEmbed source acquisition is not end-to-end validation: raw-data inference and prediction-table generation are a separate missing step."
     ]
   },
   "regression": {
@@ -79,7 +83,9 @@
       "Execute and report the 50-case input/schema/quality matrix.",
       "Select a second paper/method and establish a source-backed replication protocol.",
       "Inspect candidate GitHub repositories, licenses, tests, and implementation details; produce a prioritized gap matrix.",
-      "Continue CPVS Issue #170 independently; explain or source-document the 11,602 candidate-only objects."
+      "Continue CPVS Issue #170 independently; explain or source-document the 11,602 candidate-only objects.",
+      "Implement a versioned, schema-aware StarEmbed prediction-generation path after inspecting source schema/units and preserving split/OOD boundaries; emit provenance-backed predictions for the existing evaluator.",
+      "Split StarEmbed acquisition/evaluation from the heavy CPVS archive workflow to avoid unnecessary data transfer/runtime."
     ]
   },
   "decision": "REVISE",
@@ -88,6 +94,7 @@
     "Canonical plan is docs/roadmap/PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md.",
     "Draft PR #211 records documentation changes but is not merged and is not a completed validation result.",
     "The native feature/model path remains schema-specific; arbitrary-feature analysis must not be claimed until implemented and tested.",
-    "CPVS exact reconstruction remains unresolved; the frozen v0.2.0 baseline remains immutable."
+    "CPVS exact reconstruction remains unresolved; the frozen v0.2.0 baseline remains immutable.",
+    "As of 2026-10-23, StarEmbed end-to-end evaluation is BLOCKED because the existing runner scores prepared predictions rather than producing them from raw light curves."
   ]
 }
