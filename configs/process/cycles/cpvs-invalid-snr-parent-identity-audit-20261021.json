@@ -28,57 +28,61 @@
       },
       "scientific_validity": {
         "before": "Historical numeric-ID comparison: 741787 candidates; 730184 published objects; 730182 intersection; 11605 candidate-only; 2 published-only. A later row-ordinal crosswalk reported 16686 candidate-only and 5083 published-only, but that crosswalk used the wrong identity mapping and is not valid evidence.",
-        "after": "Corrected full-dataset name-to-Seq crosswalk is valid: parent 781602, published 730184, reconstructed candidates 741786, intersection 730184, candidate-only 11602, published-only 0. Exact membership remains false; the residual 11602 candidate-only objects are unresolved.",
+        "after": "Corrected full-dataset name-to-Seq crosswalk: parent 781602, published 730184, reconstructed candidates 741786, intersection 730184, candidate-only 11602, published-only 0. A separate positive-finite gmag/rmag/Per-g/Per-r diagnostic yields exact set equality at 730184, but the paper does not explicitly document that four-field predicate; scientific acceptance remains blocked pending method evidence.",
         "evidence": "Source-backed audit run 39699256625; artifact 12391909327; candidate SHA256 699ff34bcf8dd4b5043eed48384973cb5109fd86ca260f831a502097370238df; parent SHA256 0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138; Table4 SHA256 cc6b094c9bc38d32cd2ced853d60e74e0924ff3c9819252795f60825972ad46f."
       }
     }
   },
   "validation": {
     "status": "IN_PROGRESS",
-    "scientific_gate_affected": false,
+    "scientific_gate_affected": true,
     "evidence": [
       "Added explicit math.isfinite(snr) check before threshold comparison; full re-derivation reduced candidate count from 741787 to 741786.",
-      "Corrected CPVS Table2 identity mapping to read explicit Seq/SourceID; the full object-name crosswalk has zero missing published names and zero duplicate names.",
-      "Full source-backed membership result: 741786 candidates, 730184 published members, 730184 intersection, 11602 candidate-only, zero published-only; exact membership remains unresolved.",
-      "Full audit artifact preserves the complete 11602 SourceID/ZTF-name discrepancy ledger and input hashes.",
-      "Deterministic 100-object and 1000-object sample diagnostics with per-object g/r evidence and nonlinear SNR alternative are added but have not yet run against the full source artifact."
+      "Official Zenodo Table2 archive passed its expected MD5 check. It contains 781602 object rows and 781602 unique explicit Seq values spanning 1..781604; Seq is not a contiguous 1..781602 range, so row ordinals are invalid.",
+      "Corrected CPVS identity mapping reads explicit Seq/SourceID and crosswalks Table4 entries by normalized ZTF name; zero published names are missing and no duplicate names were found.",
+      "Full source-backed membership result: 741786 candidates, 730184 published members, 730184 intersection, 11602 candidate-only, zero published-only; exact membership under the SNR-only predicate remains false.",
+      "Independent metadata-validity diagnostic: requiring positive finite gmag, rmag, Per-g, and Per-r yields exact set equality with published Table4. Candidate-only partition: 11580 fail both metadata pairs, 17 have valid mean magnitudes but incomplete per-band periods, 5 have valid per-band periods but incomplete mean magnitudes. This predicate is diagnostic only; its scientific justification is not explicit in the paper.",
+      "Deterministic stratified sample run 39701473339: 1000 objects (500 reference members, 500 non-members), confusion counts TP=500, FP=94, FN=0, TN=406. Nonlinear SNR alternative yields the same full candidate membership.",
+      "Schema verification evidence: run 39737844804, artifact 12407398749. Full per-object g/r provenance trace for all 11602 candidate-only objects is running in run 39737844922.",
+      "Full audit artifact preserves the complete 11602 SourceID/ZTF-name discrepancy ledger and source hashes."
     ]
   },
   "failure_analysis": {
     "status": "partially_identified",
     "root_causes": [
       "Confirmed implementation defect: _snr_from_mag_error returned NaN for invalid errors, while the previous guard only checked snr < sigma; NaN comparisons are false, so invalid-error rows could qualify. The explicit finite-SNR guard removed one candidate.",
-      "Confirmed identifier-mapping defect: CPVS Table2's second field is Seq/internal SourceID, but the prior derivation and first crosswalk used one-based row ordinal. The resulting 16686/5083 crosswalk counts are invalid; the corrected explicit-Seq crosswalk is valid.",
-      "Full corrected comparison leaves 11602 candidate-only objects and zero published-only objects. The remaining membership discrepancy is not explained by the currently implemented linear SNR selection rule.",
-      "Table4's catalog-internal IDs are not treated as parent Seq values; published objects are mapped by ZTF name. No threshold or filter was weakened."
+      "Confirmed identifier-mapping defect: the pinned CPVS Table2 has an explicit Seq/internal SourceID field, but prior derivation and audit logic used row ordinals. Seq spans 1..781604 for 781602 rows, so row ordinal is not a safe join key. Corrected audit crosswalks Table4 entries by ZTF name.",
+      "Strong numerical explanation for the remaining 11602 candidate-only objects: all are excluded by requiring positive finite parent gmag, rmag, Per-g, and Per-r; that filtered candidate set equals the 730184 published members exactly. The source paper does not explicitly state this four-field validity predicate, so the scientific selection rule remains unconfirmed.",
+      "The SNR-only predicate admits 11602 extra objects; the nonlinear SNR diagnostic does not change membership, and flag-zero/magnitude-cut variants do not reproduce the reference. No threshold or filter has been accepted merely to force cardinality equality."
     ]
   },
   "knowledge_extraction": {
     "status": "SUPPORTED",
     "findings": [
       "Non-finite numeric results must be rejected explicitly before threshold comparisons.",
-      "CPVS Table2 Seq is the documented internal identifier joining the catalog to single-exposure photometry; row order is not a safe join key.",
-      "VizieR Table4's catalog-internal ID must not be assumed equal to Table2 Seq; use ZTF-name crosswalks.",
-      "Corrected full run verified 741786 candidates, 730184 published objects, 11602 candidate-only and zero published-only; zero false negatives does not explain the excess candidates.",
-      "Do not change SNR thresholds or acceptance criteria merely to force count equality."
+      "CPVS Table2 Seq is the documented internal identifier joining the catalog to single-exposure photometry; physical row order is not a safe join key.",
+      "VizieR Table4's catalog-internal ID must not be assumed equal to Table2 Seq; use a ZTF-name crosswalk.",
+      "The corrected full SNR-only run yields 741786 candidates, 730184 published objects, 11602 candidate-only and zero published-only; zero false negatives does not explain the excess candidates.",
+      "Positive finite gmag/rmag/Per-g/Per-r reproduces exact published membership, and the 11602 extras are accounted for by incomplete parent fit metadata; however, the publication does not explicitly document this predicate, so exact method reproduction remains unresolved.",
+      "Do not change production thresholds or acceptance criteria merely to force count equality."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
       "Await CI, lint/format, regression, and scientific-contract checks on the latest PR head.",
-      "Run deterministic 100-object diagnostics and the fixed 1000-object sample from the full parent, including reference members and non-members, with raw g/r source-row evidence.",
-      "Compare current linear SNR and nonlinear diagnostic SNR membership sets against the published reference; treat the nonlinear rule as diagnostic only until independently supported.",
-      "Trace and explain all 11602 candidate-only SourceID/ZTF objects, with hashes, commands, source rows, and intermediate results.",
-      "Keep exact CPVS reproduction blocked until the residual discrepancy is explained and the required evidence is reviewed."
+      "Review the deterministic 100-object and fixed 1000-object source-row diagnostics, and the full per-object g/r provenance trace for all 11602 candidate-only objects.",
+      "Obtain source-method evidence or author clarification for whether positive finite gmag, rmag, Per-g, and Per-r are required for the published Table4 membership.",
+      "Keep exact CPVS reproduction blocked until the residual predicate is scientifically justified and required evidence is reviewed."
     ]
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
-    "Do not merge until required CI checks pass and the diagnostic code is reviewed.",
-    "Keep CPVS exact reproduction as a scientific validation blocker until the remaining 11602 candidate-only objects are explained.",
+    "Do not merge until required CI checks pass and diagnostic code is reviewed.",
+    "Keep CPVS exact reproduction as a scientific validation blocker until the selection predicate is supported by the published method or author clarification.",
     "Do not claim candidate-only IDs are errors or new discoveries without object-level provenance and independent evidence.",
-    "Do not infer SourceID from parent row order; use explicit Table2 Seq.",
-    "Use full audit artifact 12391909327 as the current source-backed membership evidence; do not reuse the invalid row-ordinal counts."
+    "Use explicit Table2 Seq and a ZTF-name crosswalk; do not compare Table4 internal IDs directly or infer Seq from row order.",
+    "Use full audit artifact 12391909327 as current source-backed membership evidence; do not reuse invalid row-ordinal counts.",
+    "Positive finite gmag/rmag/Per-g/Per-r is an exact-set diagnostic, not yet an approved production selection rule."
   ]
 }
