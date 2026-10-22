@@ -7,7 +7,7 @@ import json
 import math
 from pathlib import Path
 
-from audit_cpvs_membership import read_vizier
+from audit_cpvs_membership import read_parent_catalog, read_vizier_rows
 from ztf_classifier.validation.derivation import _iter_rows, _source_ids
 
 
@@ -49,10 +49,24 @@ def main() -> int:
     p.add_argument("--published", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
-    published = read_vizier(a.published)
-    parent = {int(source_id) for source_id in _source_ids(a.parent, None)}
+    published_rows = read_vizier_rows(a.published)
+    parent_rows = read_parent_catalog(a.parent)
+    parent = set(parent_rows)
     if len(parent) != 781_602:
-        raise ValueError(f"expected 781602 parent SourceIDs, got {len(parent)}")
+        raise ValueError(f"expected 781602 parent Seq/SourceIDs, got {len(parent)}")
+    name_to_ids: dict[str, list[int]] = {}
+    for source_id, name in parent_rows.items():
+        name_to_ids.setdefault(name, []).append(source_id)
+    duplicate_parent_names = sorted(name for name, ids in name_to_ids.items() if len(ids) != 1)
+    published_names = set(published_rows.values())
+    missing_published_names = sorted(published_names - set(name_to_ids))
+    if duplicate_parent_names or missing_published_names:
+        raise ValueError(
+            "published-to-parent ZTF-name crosswalk is not unique: "
+            f"duplicate_parent_names={len(duplicate_parent_names)}, "
+            f"published_names_missing_from_parent={len(missing_published_names)}"
+        )
+    published = {name_to_ids[name][0] for name in published_names}
     g = band_metrics(a.g, parent, "e_gmag", "gmag")
     r = band_metrics(a.r, parent, "e_rmag", "rmag")
     predicates = {
@@ -65,7 +79,12 @@ def main() -> int:
             o for o in parent if g[o]["snr"] and r[o]["snr"] and r[o]["mag206_only"]
         },
     }
-    report = {}
+    report = {
+        "membership_comparison_basis": "published ZTF names crosswalked to explicit Table2 Seq/SourceID values",
+        "parent_sourceid_count": len(parent),
+        "published_object_count": len(published),
+        "published_names_missing_from_parent_count": len(missing_published_names),
+    }
     for name, ids in predicates.items():
         report[name] = {
             "count": len(ids),
