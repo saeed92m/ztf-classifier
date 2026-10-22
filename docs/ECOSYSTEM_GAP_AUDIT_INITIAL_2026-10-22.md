@@ -80,3 +80,26 @@ GitHub search is not exhaustive. The following areas still need deeper targeted 
 4. Treat the current native 42-feature backend as a versioned model contract, not a universal feature schema.
 5. Keep the v0.2.0 baseline immutable and CPVS exact reconstruction unresolved.
 6. Continue the audit under Issue #210; this document is an initial evidence snapshot and must be updated as more repositories are inspected.
+
+
+## Additional candidates inspected — 2026-10-22
+
+### 8. Lasair4 alert broker
+- Repository: https://github.com/lsst-uk/lasair4
+- Evidence inspected: README and LICENSE.
+- Verified: README describes Lasair as a UK alert-stream broker and transient-science platform, developed to serve Rubin LSST alerts while currently processing public ZTF alert streams. The repository's LICENSE file is Apache License 2.0.
+- Reusable lessons: alert-stream ingestion, broker/query workflows, and user-facing transient-science services.
+- Constraints: this is an operational alert broker/platform, not a drop-in local desktop scientific analysis engine. Deployment and operational requirements need separate review.
+
+### 9. cesium time-series feature platform
+- Repository: https://github.com/cesium-ml/cesium
+- Evidence inspected: README, setup.py, LICENSE.txt.
+- Verified: README describes a library for extracting features from raw time series, building ML models from those features, and predicting on new data. The source distribution builds a Cython extension for Lomb–Scargle functionality. LICENSE.txt is a 3-clause BSD license.
+- Reusable lessons: a reusable time-series feature library and a clear feature-extraction-to-model workflow are relevant comparisons for the planned feature-backend architecture.
+- Constraints: dependency/build compatibility, scientific feature definitions, license notices, and fit with the frozen v0.2.0 feature contract must be evaluated before adoption. No dependency is proposed by this audit alone.
+
+## Updated initial conclusions
+
+The broader sample now spans (a) specialized ZTF classifiers, (b) interactive ZTF viewers, (c) a general time-series feature/model library, and (d) an alert-stream transient-science platform. This supports a modular architecture with distinct ingestion adapters, versioned feature backends, analysis/model modes, visualization/review, and provenance. It does not prove that the current implementation already provides arbitrary-feature scientific analysis.
+
+Potentially reusable ideas are architectural references only. Before implementing or importing code, inspect relevant source files, tests, data assumptions, dependency footprint, supported Python versions, license obligations, and scientific validation. The full repository inventory and prioritized gap matrix remain open under Issue #210.
