@@ -87,7 +87,7 @@ def test_read_parent_metadata_fields_uses_explicit_seq(tmp_path: Path):
     }
 
 
-def test_read_parent_catalog_reads_zip(tmp_path: Path):
+def test_read_parent_catalog_rejects_catalog_without_explicit_seq(tmp_path: Path):
     path = tmp_path / "Table2.txt.zip"
     with zipfile.ZipFile(path, "w") as archive:
         archive.writestr(
@@ -95,10 +95,9 @@ def test_read_parent_catalog_reads_zip(tmp_path: Path):
             "metadata ignored\nZTFJ000000.00+000000.0 0.00056 12.0 1.2 EW\n"
             "ZTFJ000001.00+000000.0 0.00061 13.0 2.3 RR\n",
         )
-    assert read_parent_catalog(path) == {
-        1: "ZTFJ000000.00+000000.0",
-        2: "ZTFJ000001.00+000000.0",
-    }
+    with pytest.raises(ValueError, match="integer Seq/SourceID"):
+        read_parent_catalog(path)
+
 
 
 
