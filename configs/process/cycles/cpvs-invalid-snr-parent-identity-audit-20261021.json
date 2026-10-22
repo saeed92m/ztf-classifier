@@ -23,13 +23,13 @@
     "metrics": {
       "correctness": {
         "before": "Invalid SNR can pass the threshold guard when the computed SNR is NaN; derivation reported 741787 candidates versus 741785 in independent row-wise diagnostics.",
-        "after": "Non-finite SNR is explicitly rejected; Table2 Seq parsing and regression tests have been added. Latest CI and full source-backed re-derivation are pending.",
+        "after": "Full source-backed re-derivation completed with explicit Table2 Seq IDs; invalid-SNR guard and regression tests are in place. Corrected candidate count is 741786 (one fewer than the prior 741787 run). Latest CI validation is still running on the newest diagnostic additions.",
         "evidence": "src/ztf_classifier/validation/derivation.py; tests/test_cpvs_invalid_snr_guard.py; PR #206"
       },
       "scientific_validity": {
         "before": "Historical numeric-ID comparison: 741787 candidates; 730184 published objects; 730182 intersection; 11605 candidate-only; 2 published-only. A later row-ordinal crosswalk reported 16686 candidate-only and 5083 published-only, but that crosswalk used the wrong identity mapping and is not valid evidence.",
-        "after": "Explicit Seq-based parent mapping is implemented; the corrected full re-derivation/crosswalk has not completed. No corrected membership counts or residual root cause are claimed.",
-        "evidence": "Zenodo record 3886372; VizieR J/ApJS/249/18 Table2 schema; VizieR J/ApJ/932/118 ReadMe; PR #206; retained artifact from run 39583481592."
+        "after": "Corrected full-dataset name-to-Seq crosswalk is valid: parent 781602, published 730184, reconstructed candidates 741786, intersection 730184, candidate-only 11602, published-only 0. Exact membership remains false; the residual 11602 candidate-only objects are unresolved.",
+        "evidence": "Source-backed audit run 39699256625; artifact 12391909327; candidate SHA256 699ff34bcf8dd4b5043eed48384973cb5109fd86ca260f831a502097370238df; parent SHA256 0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138; Table4 SHA256 cc6b094c9bc38d32cd2ced853d60e74e0924ff3c9819252795f60825972ad46f."
       }
     }
   },
@@ -37,21 +37,20 @@
     "status": "IN_PROGRESS",
     "scientific_gate_affected": false,
     "evidence": [
-      "Added explicit math.isfinite(snr) check before threshold comparison.",
-      "Added regression tests for blank/NaN magnitude errors.",
-      "Corrected CPVS Table2 identity mapping to read explicit Seq/SourceID; row order is no longer accepted as a substitute.",
-      "Added tests for non-contiguous Seq values, missing/duplicate Seq, ZIP input, and ZTF-name crosswalk independent of Table4 internal IDs.",
-      "Corrected selection diagnostics to compare published ZTF names mapped into Table2 Seq IDs.",
-      "Corrected full source-backed re-derivation and audit are pending; no scientific resolution is claimed."
+      "Added explicit math.isfinite(snr) check before threshold comparison; full re-derivation reduced candidate count from 741787 to 741786.",
+      "Corrected CPVS Table2 identity mapping to read explicit Seq/SourceID; the full object-name crosswalk has zero missing published names and zero duplicate names.",
+      "Full source-backed membership result: 741786 candidates, 730184 published members, 730184 intersection, 11602 candidate-only, zero published-only; exact membership remains unresolved.",
+      "Full audit artifact preserves the complete 11602 SourceID/ZTF-name discrepancy ledger and input hashes.",
+      "Deterministic 100-object and 1000-object sample diagnostics with per-object g/r evidence and nonlinear SNR alternative are added but have not yet run against the full source artifact."
     ]
   },
   "failure_analysis": {
     "status": "partially_identified",
     "root_causes": [
-      "Confirmed implementation defect: _snr_from_mag_error returns NaN for invalid errors, while the previous guard only checked snr < sigma; NaN comparisons are false, so invalid-error rows could qualify.",
-      "Confirmed identifier-mapping defect: CPVS Table2's second field is Seq/internal SourceID, but the prior derivation and first crosswalk used one-based row ordinal. The resulting 16686/5083 crosswalk counts are invalid and must not be interpreted as true membership discrepancies.",
-      "Residual selection/membership discrepancy after explicit Seq mapping is not yet measured; selection semantics and every remaining discrepant object must be traced before sign-off.",
-      "Table4's internal ID values 781603/781604 cannot be compared directly to the parent row count as if they were Table2 Seq IDs; map by ZTF object name into the explicit Seq namespace."
+      "Confirmed implementation defect: _snr_from_mag_error returned NaN for invalid errors, while the previous guard only checked snr < sigma; NaN comparisons are false, so invalid-error rows could qualify. The explicit finite-SNR guard removed one candidate.",
+      "Confirmed identifier-mapping defect: CPVS Table2's second field is Seq/internal SourceID, but the prior derivation and first crosswalk used one-based row ordinal. The resulting 16686/5083 crosswalk counts are invalid; the corrected explicit-Seq crosswalk is valid.",
+      "Full corrected comparison leaves 11602 candidate-only objects and zero published-only objects. The remaining membership discrepancy is not explained by the currently implemented linear SNR selection rule.",
+      "Table4's catalog-internal IDs are not treated as parent Seq values; published objects are mapped by ZTF name. No threshold or filter was weakened."
     ]
   },
   "knowledge_extraction": {
@@ -60,7 +59,7 @@
       "Non-finite numeric results must be rejected explicitly before threshold comparisons.",
       "CPVS Table2 Seq is the documented internal identifier joining the catalog to single-exposure photometry; row order is not a safe join key.",
       "VizieR Table4's catalog-internal ID must not be assumed equal to Table2 Seq; use ZTF-name crosswalks.",
-      "Fixing identifier semantics and the invalid-SNR guard does not establish exact CPVS membership until full source-backed validation passes.",
+      "Corrected full run verified 741786 candidates, 730184 published objects, 11602 candidate-only and zero published-only; zero false negatives does not explain the excess candidates.",
       "Do not change SNR thresholds or acceptance criteria merely to force count equality."
     ]
   },
@@ -68,17 +67,18 @@
     "status": "NOT_VERIFIED",
     "open_blockers": [
       "Await CI, lint/format, regression, and scientific-contract checks on the latest PR head.",
-      "Complete corrected full derivation against the pinned parent and original g/r light curves using explicit Seq IDs.",
-      "Complete full ZTF-name-to-Seq membership audit and preserve every discrepant SourceID/ZTF name, input hash, and derivation manifest.",
-      "Run reproducible 100-object diagnostics and the fixed 1000-object parent sample including reference members and non-members.",
-      "Explain any remaining false positives/false negatives before scientific sign-off."
+      "Run deterministic 100-object diagnostics and the fixed 1000-object sample from the full parent, including reference members and non-members, with raw g/r source-row evidence.",
+      "Compare current linear SNR and nonlinear diagnostic SNR membership sets against the published reference; treat the nonlinear rule as diagnostic only until independently supported.",
+      "Trace and explain all 11602 candidate-only SourceID/ZTF objects, with hashes, commands, source rows, and intermediate results.",
+      "Keep exact CPVS reproduction blocked until the residual discrepancy is explained and the required evidence is reviewed."
     ]
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not merge until required CI checks pass and the diagnostic code is reviewed.",
-    "Keep CPVS exact reproduction as a scientific validation blocker until the corrected full derivation and object-level membership comparison pass.",
+    "Keep CPVS exact reproduction as a scientific validation blocker until the remaining 11602 candidate-only objects are explained.",
     "Do not claim candidate-only IDs are errors or new discoveries without object-level provenance and independent evidence.",
-    "Do not infer SourceID from parent row order; use explicit Table2 Seq."
+    "Do not infer SourceID from parent row order; use explicit Table2 Seq.",
+    "Use full audit artifact 12391909327 as the current source-backed membership evidence; do not reuse the invalid row-ordinal counts."
   ]
 }
