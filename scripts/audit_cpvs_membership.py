@@ -70,12 +70,10 @@ def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
     """Map explicit Table 2 Seq/SourceID values to ZTF object names.
 
     CPVS Table2's second field is Seq, the internal source identifier used by
-    the single-exposure attachments. Do not substitute catalog row order.
-    Decimal second fields are treated as legacy coordinate-only fixtures and
-    use row ordinals solely to preserve those older test inputs.
+    the single-exposure attachments. Missing or malformed Seq values fail
+    closed; catalog row order is never used as an identifier.
     """
     result: dict[int, str] = {}
-    ordinal = 0
     for line in lines:
         stripped = line.strip()
         if not stripped:
@@ -83,9 +81,12 @@ def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
         fields = stripped.split()
         if not fields or not fields[0].upper().startswith("ZTF"):
             continue
-        ordinal += 1
-        raw_source_id = fields[1] if len(fields) > 1 else ""
-        source_id = int(raw_source_id) if raw_source_id.isdigit() else ordinal
+        if len(fields) < 2 or not fields[1].isdigit():
+            raise ValueError(
+                "CPVS Table2 row has no integer Seq/SourceID in its second field: "
+                f"{fields[:4]!r}"
+            )
+        source_id = int(fields[1])
         if source_id in result:
             raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
         result[source_id] = fields[0]
