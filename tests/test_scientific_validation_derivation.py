@@ -111,10 +111,10 @@ def test_cpvs_table_source_ids_ignore_metadata_after_header(tmp_path: Path):
 
     parent = tmp_path / "Table2.txt"
     parent.write_text(
-        "SourceID\tName\n"
-        "3\tZTFJ000000.13+620605.8\n"
+        "Table 2. ZTF Variables Catalog\n"
+        "ZTFJ000000.13+620605.8 3 0.00056 62.10163 1.9449979 BYDra\n"
         "metadata row with SourceID token\n"
-        "17\tZTFJ000000.14+721413.7\n"
+        "ZTFJ000000.14+721413.7 17 0.00061 72.23716 0.2991500 EW\n"
         "footer SourceID token\n",
         encoding="utf-8",
     )
