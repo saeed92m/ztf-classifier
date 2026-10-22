@@ -45,16 +45,16 @@ def test_read_vizier_reads_tsv_export(tmp_path: Path):
     }
 
 
-def test_read_parent_catalog_maps_one_based_row_ordinals(tmp_path: Path):
+def test_read_parent_catalog_maps_explicit_seq_ids(tmp_path: Path):
     path = tmp_path / "Table2.txt"
     path.write_text(
-        "metadata ignored\nZTFJ000000.00+000000.0 12.0 -3.0\n"
-        "ZTFJ000001.00+000000.0 13.0 -4.0\n",
+        "metadata ignored\nZTFJ000000.00+000000.0 17 12.0 -3.0\n"
+        "ZTFJ000001.00+000000.0 29 13.0 -4.0\n",
         encoding="utf-8",
     )
     assert read_parent_catalog(path) == {
-        1: "ZTFJ000000.00+000000.0",
-        2: "ZTFJ000001.00+000000.0",
+        17: "ZTFJ000000.00+000000.0",
+        29: "ZTFJ000001.00+000000.0",
     }
 
 
@@ -63,12 +63,12 @@ def test_read_parent_catalog_reads_zip(tmp_path: Path):
     with zipfile.ZipFile(path, "w") as archive:
         archive.writestr(
             "Table2.txt",
-            "metadata ignored\nZTFJ000000.00+000000.0 12.0 -3.0\n"
-            "ZTFJ000001.00+000000.0 13.0 -4.0\n",
+            "metadata ignored\nZTFJ000000.00+000000.0 17 12.0 -3.0\n"
+            "ZTFJ000001.00+000000.0 29 13.0 -4.0\n",
         )
     assert read_parent_catalog(path) == {
-        1: "ZTFJ000000.00+000000.0",
-        2: "ZTFJ000001.00+000000.0",
+        17: "ZTFJ000000.00+000000.0",
+        29: "ZTFJ000001.00+000000.0",
     }
 
 
@@ -79,9 +79,9 @@ def test_object_name_crosswalk_compares_parent_sourceids_not_catalog_ids(
 
     parent = tmp_path / "Table2.txt"
     parent.write_text(
-        "ZTFJ000000.00+000000.0 10 20\n"
-        "ZTFJ000001.00+000000.0 11 21\n"
-        "ZTFJ000002.00+000000.0 12 22\n",
+        "ZTFJ000000.00+000000.0 10 20 30\n"
+        "ZTFJ000001.00+000000.0 20 21 31\n"
+        "ZTFJ000002.00+000000.0 30 22 32\n",
         encoding="utf-8",
     )
     published = tmp_path / "table4.tsv"
@@ -92,7 +92,7 @@ def test_object_name_crosswalk_compares_parent_sourceids_not_catalog_ids(
         encoding="utf-8",
     )
     candidate = tmp_path / "selected.tsv"
-    candidate.write_text("SourceID\n2\n3\n", encoding="utf-8")
+    candidate.write_text("SourceID\n20\n30\n", encoding="utf-8")
     output = tmp_path / "audit.json"
     monkeypatch.setattr(
         "sys.argv",
