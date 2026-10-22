@@ -145,7 +145,6 @@ def _band_diagnostics(
         if source_id not in parent_ids:
             continue
 
-        is_sample = source_id in sample
         stats = sample.get(source_id)
         if stats is not None:
             stats["rows"] += 1
