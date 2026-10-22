@@ -1,5 +1,6 @@
 import json
 import zipfile
+import pytest
 from pathlib import Path
 
 from scripts.audit_cpvs_membership import (
