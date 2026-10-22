@@ -77,8 +77,11 @@ def test_read_parent_catalog_rejects_rows_without_explicit_seq(tmp_path: Path):
 def test_read_parent_catalog_preserves_explicit_seq_ids(tmp_path: Path):
     path = tmp_path / "Table2-seq.txt"
     path.write_text(
-        "ZTFJ000000.00+000000.0 17 12.0 -3.0 1.2 EW\n"
-        "ZTFJ000001.00+000000.0 29 13.0 -4.0 2.3 RR\n",
+        "\\n".join([
+            "ZTFJ000000.00+000000.0 17 12.0 -3.0 1.2 EW",
+            "ZTFJ000001.00+000000.0 29 13.0 -4.0 2.3 RR",
+            "",
+        ]),
         encoding="utf-8",
     )
 
@@ -91,8 +94,11 @@ def test_read_parent_catalog_preserves_explicit_seq_ids(tmp_path: Path):
 def test_read_parent_metadata_fields_uses_explicit_seq(tmp_path: Path):
     path = tmp_path / "Table2.txt"
     path.write_text(
-        "ZTFJ000000.13+620605.8 10 0.00056 62.10163 1.9449979 0.198 5.189 58386.2629478 16.200 15.800 1.100 1.200\n"
-        "ZTFJ000000.14+721413.7 30 0.00061 72.23716 0.2991500 0.263 6.308 58388.2555794 0 15.100 0 0.900\n",
+        "\\n".join([
+            "ZTFJ000000.13+620605.8 10 0.00056 62.10163 1.9449979 0.198 5.189 58386.2629478 16.200 15.800 1.100 1.200",
+            "ZTFJ000000.14+721413.7 30 0.00061 72.23716 0.2991500 0.263 6.308 58388.2555794 0 15.100 0 0.900",
+            "",
+        ]),
         encoding="utf-8",
     )
 
