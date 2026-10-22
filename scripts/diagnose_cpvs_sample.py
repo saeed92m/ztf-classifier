@@ -16,7 +16,11 @@ from itertools import chain
 from pathlib import Path
 from typing import Any
 
-from scripts.audit_cpvs_membership import read_parent_catalog, read_selected, read_vizier_rows
+from scripts.audit_cpvs_membership import (
+    read_parent_catalog,
+    read_selected,
+    read_vizier_rows,
+)
 from ztf_classifier.validation.derivation import _find_key, _iter_rows
 
 _LINEAR_FACTOR = 1.0857362047581296
@@ -99,7 +103,7 @@ def _band_diagnostics(
     flag_column: str,
     sigma: float,
 ) -> tuple[set[int], set[int], dict[int, dict[str, Any]]]:
-    """Stream one band once; return linear/exact-qualified object sets and sample evidence."""
+    """Stream one band once and return qualification sets plus sample evidence."""
     rows = _iter_rows(
         path,
         required_columns=("SourceID", error_column, mag_column),
@@ -222,7 +226,9 @@ def _membership_class(candidate: bool, reference: bool) -> str:
     return "TN"
 
 
-def _comparison(candidate: set[int], reference: set[int], parent_rows: dict[int, str]) -> dict[str, Any]:
+def _comparison(
+    candidate: set[int], reference: set[int], parent_rows: dict[int, str]
+) -> dict[str, Any]:
     candidate_only = sorted(candidate - reference)
     published_only = sorted(reference - candidate)
     return {
@@ -234,10 +240,12 @@ def _comparison(candidate: set[int], reference: set[int], parent_rows: dict[int,
         "candidate_only_sourceids_sample": candidate_only[:100],
         "published_only_sourceids_sample": published_only[:100],
         "candidate_only_objects_sample": [
-            {"SourceID": oid, "ZTF": parent_rows.get(oid)} for oid in candidate_only[:100]
+            {"SourceID": oid, "ZTF": parent_rows.get(oid)}
+            for oid in candidate_only[:100]
         ],
         "published_only_objects_sample": [
-            {"SourceID": oid, "ZTF": parent_rows.get(oid)} for oid in published_only[:100]
+            {"SourceID": oid, "ZTF": parent_rows.get(oid)}
+            for oid in published_only[:100]
         ],
         "candidate_only_sha256": hashlib.sha256(
             ("\n".join(map(str, candidate_only)) + "\n").encode()
@@ -264,9 +272,13 @@ def main() -> int:
     parent_rows = read_parent_catalog(args.parent)
     parent_ids = set(parent_rows)
     if len(parent_ids) != 781_602:
-        raise ValueError(f"expected 781602 explicit Table2 Seq IDs, got {len(parent_ids)}")
+        raise ValueError(
+            f"expected 781602 explicit Table2 Seq IDs, got {len(parent_ids)}"
+        )
     parent_name_counts = Counter(parent_rows.values())
-    duplicate_parent_names = sorted(name for name, count in parent_name_counts.items() if count > 1)
+    duplicate_parent_names = sorted(
+        name for name, count in parent_name_counts.items() if count > 1
+    )
 
     published_rows = read_vizier_rows(args.published)
     published_names = list(published_rows.values())
@@ -320,8 +332,12 @@ def main() -> int:
     candidate_exact = g_exact & r_exact
     comparisons = {
         "current_linear_snr": _comparison(candidate_ids, published_ids, parent_rows),
-        "recomputed_linear_snr": _comparison(candidate_linear, published_ids, parent_rows),
-        "nonlinear_exact_snr_diagnostic": _comparison(candidate_exact, published_ids, parent_rows),
+        "recomputed_linear_snr": _comparison(
+            candidate_linear, published_ids, parent_rows
+        ),
+        "nonlinear_exact_snr_diagnostic": _comparison(
+            candidate_exact, published_ids, parent_rows
+        ),
     }
 
     def object_detail(source_id: int) -> dict[str, Any]:
@@ -337,13 +353,18 @@ def main() -> int:
             "candidate_recomputed_linear": linear,
             "candidate_nonlinear_exact_diagnostic": exact,
             "classification_current": _membership_class(current, reference),
-            "classification_nonlinear_exact_diagnostic": _membership_class(exact, reference),
+            "classification_nonlinear_exact_diagnostic": _membership_class(
+                exact, reference
+            ),
             "g": g_sample[source_id],
             "r": r_sample[source_id],
         }
 
     def sample_confusion(ids: list[int], candidate: set[int]) -> dict[str, int]:
-        labels = Counter(_membership_class(source_id in candidate, source_id in published_ids) for source_id in ids)
+        labels = Counter(
+            _membership_class(source_id in candidate, source_id in published_ids)
+            for source_id in ids
+        )
         return {key: labels.get(key, 0) for key in ("TP", "FP", "FN", "TN")}
 
     report = {
@@ -354,11 +375,17 @@ def main() -> int:
         "sample_design": {
             "sample_size": len(sample_1000),
             "diagnostic_size": len(sample_100),
-            "stratification": "equal numbers of published reference members and non-members",
+            "stratification": (
+                "equal numbers of published reference members and non-members"
+            ),
             "ranking": "ascending SHA256(f'{seed}:{SourceID}') within each stratum",
             "diagnostic_sample_is_nested_in_full_sample": True,
-            "reference_member_count_in_sample_1000": sum(oid in published_ids for oid in sample_1000),
-            "nonmember_count_in_sample_1000": sum(oid not in published_ids for oid in sample_1000),
+            "reference_member_count_in_sample_1000": sum(
+                oid in published_ids for oid in sample_1000
+            ),
+            "nonmember_count_in_sample_1000": sum(
+                oid not in published_ids for oid in sample_1000
+            ),
         },
         "parent_count": len(parent_ids),
         "published_count": len(published_ids),
@@ -367,15 +394,23 @@ def main() -> int:
         "candidate_ids_outside_parent_sample": candidate_ids_outside_parent[:100],
         "membership_comparisons": comparisons,
         "sample_1000_confusion_current": sample_confusion(sample_1000, candidate_ids),
-        "sample_1000_confusion_recomputed_linear": sample_confusion(sample_1000, candidate_linear),
-        "sample_1000_confusion_nonlinear_exact_diagnostic": sample_confusion(sample_1000, candidate_exact),
+        "sample_1000_confusion_recomputed_linear": sample_confusion(
+            sample_1000, candidate_linear
+        ),
+        "sample_1000_confusion_nonlinear_exact_diagnostic": sample_confusion(
+            sample_1000, candidate_exact
+        ),
         "sample_100_confusion_current": sample_confusion(sample_100, candidate_ids),
-        "sample_100_confusion_nonlinear_exact_diagnostic": sample_confusion(sample_100, candidate_exact),
+        "sample_100_confusion_nonlinear_exact_diagnostic": sample_confusion(
+            sample_100, candidate_exact
+        ),
         "sample_1000": [object_detail(oid) for oid in sample_1000],
         "sample_100": [object_detail(oid) for oid in sample_100],
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     print(json.dumps({key: report[key] for key in (
         "parent_count",
         "published_count",
