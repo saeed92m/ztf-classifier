@@ -89,6 +89,8 @@ The documentation update is under review in [PR #175](https://github.com/saeed92
 
 
 ## Parallel validation and ecosystem audit — 2026-10-22
+The initial GitHub repository sample and evidence-based gap matrix are recorded in [ECOSYSTEM_GAP_AUDIT_INITIAL_2026-10-22.md](ECOSYSTEM_GAP_AUDIT_INITIAL_2026-10-22.md). It is an initial sample only; license, implementation, and maintenance checks remain open for several candidates.
+
 
 The product is not limited to the CPVS paper or any single catalog. The canonical execution plan is [PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md](roadmap/PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md). It establishes five isolated workstreams: core/general-input audit; independent dataset plus deterministic 50-object and schema/quality cases; a second paper/method; CPVS historical reconstruction; and systematic GitHub ecosystem review.
 
