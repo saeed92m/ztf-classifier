@@ -118,7 +118,7 @@ jobs:
             --published /tmp/cpvs-audit/published_table4.dat \
             --candidate "$candidate" \
             --output /tmp/cpvs-audit/selection_sample_diagnostics.json \
-            --seed 20261022 --sample-size 1000 --diagnostic-size 100
+            --seed 20261022 --sample-size 1000 --diagnostic-size 100 --trace-candidate-only
 
       - name: Record diagnostic input and output hashes
         if: always()
@@ -227,6 +227,8 @@ jobs:
               raise SystemExit("Unexpected parent/reference counts.")
           if len(report["sample_1000"]) != 1000 or len(report["sample_100"]) != 100:
               raise SystemExit("Deterministic 100/1000-object sample is incomplete.")
+          if len(report["candidate_only_diagnostics"]) != report["membership_comparisons"]["current_linear_snr"]["candidate_only_count"]:
+              raise SystemExit("Full candidate-only provenance trace is incomplete.")
           if design["reference_member_count_in_sample_1000"] != 500 or design["nonmember_count_in_sample_1000"] != 500:
               raise SystemExit("Sample stratification is invalid.")
           PY
