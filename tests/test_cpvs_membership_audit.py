@@ -60,6 +60,20 @@ def test_read_parent_catalog_maps_one_based_object_row_ordinals(tmp_path: Path):
     }
 
 
+def test_read_parent_catalog_preserves_explicit_seq_ids(tmp_path: Path):
+    path = tmp_path / "Table2-seq.txt"
+    path.write_text(
+        "ZTFJ000000.00+000000.0 17 12.0 -3.0 1.2 EW\\n"
+        "ZTFJ000001.00+000000.0 29 13.0 -4.0 2.3 RR\\n",
+        encoding="utf-8",
+    )
+
+    assert read_parent_catalog(path) == {
+        17: "ZTFJ000000.00+000000.0",
+        29: "ZTFJ000001.00+000000.0",
+    }
+
+
 def test_read_parent_catalog_reads_zip(tmp_path: Path):
     path = tmp_path / "Table2.txt.zip"
     with zipfile.ZipFile(path, "w") as archive:
