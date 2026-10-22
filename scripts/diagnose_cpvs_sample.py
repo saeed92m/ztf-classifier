@@ -132,6 +132,7 @@ def _band_diagnostics(
             "flag_nonzero_valid_error_rows": 0,
             "max_snr_linear": None,
             "max_snr_exact_diagnostic": None,
+            "first_source_row": None,
             "max_snr_linear_row": None,
             "max_snr_exact_row": None,
             "first_linear_qualifying_row": None,
@@ -152,6 +153,16 @@ def _band_diagnostics(
         stats = sample.get(source_id)
         if stats is not None:
             stats["rows"] += 1
+            if stats["first_source_row"] is None:
+                stats["first_source_row"] = _row_evidence(
+                    row,
+                    source_id=source_id,
+                    mag_key=mag_key,
+                    error_key=error_key,
+                    flag_key=flag_key,
+                    snr_linear=float("nan"),
+                    snr_exact=float("nan"),
+                )
 
         error = _float_value(row.get(error_key))
         magnitude = _float_value(row.get(mag_key))
