@@ -209,3 +209,10 @@ The earlier **P0 exit status (2026-10-04): COMPLETE** describes the recovery mil
 - The published Table 4 ID ↔ ZTF name ↔ parent-catalog mapping (including IDs 781603 and 781604) is an investigation lead and must be verified against the pinned source tables; it is not yet a confirmed root cause.
 
 **Required next action:** run the heavy source-backed workflow on its intended ci/heavy/* ref after the merged correction, confirm required jobs execute rather than skip, inspect derivation/acquisition artifacts, and independently audit the membership and ID/name mapping. Keep exact reconstruction UNRESOLVED until evidence justifies a different disposition. Do not weaken the product gate or alter the frozen v0.2.0 baseline.
+
+
+## Independent generality validation — 2026-10-22
+
+The protocol is documented in [the parallel validation plan](PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md). This stage evaluates one independent astronomical dataset, a deterministic 50-object diagnostic sample, a separate 50-case input/schema quality matrix, and a second scientific paper/method. At least one supported analysis must be compared with an independent known-answer reference where possible.
+
+Record source/version/license/schema/IDs/hashes, sampling seed, exact commit, environment, commands, and every outcome. Explicitly distinguish execution success from scientific correctness. A 50-object diagnostic sample alone is not population-level validation. CPVS exact reconstruction remains a separate unresolved claim.
