@@ -38,5 +38,5 @@ def test_cpvs_parent_catalog_rejects_duplicate_seq(tmp_path: Path):
         encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="duplicate CPVS Table2 Seq/SourceID"):
+    with pytest.raises(ValueError, match="duplicate CPVS Table2 Seq/SourceID|duplicate CPVS Table2 SourceID/Seq"):
         _source_ids_from_catalog(parent, None)
