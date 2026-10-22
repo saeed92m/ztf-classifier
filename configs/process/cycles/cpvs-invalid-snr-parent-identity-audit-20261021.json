@@ -11,7 +11,7 @@
   ],
   "baseline": {
     "revision": "d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
-    "description": "Source-backed derivation and the object-name-to-Seq membership crosswalk are complete. The SNR-only predicate still has 11602 candidate-only objects; a four-field parent-metadata validity predicate reproduces exact membership, but the publication does not explicitly justify that predicate. The scientific gate remains blocked pending full per-object provenance review, method justification, and latest-head regression checks."
+    "description": "Source-backed derivation, explicit Seq crosswalk, and full per-object provenance trace are complete. The SNR-only predicate still has 11602 candidate-only objects; a four-field parent-metadata validity predicate reproduces exact membership, but the publication does not explicitly justify that predicate. Scientific validation remains blocked pending method justification and latest-head regression checks."
   },
   "expected_improvement": [
     "Reject non-finite SNR values explicitly instead of allowing NaN to pass a threshold comparison.",
@@ -28,7 +28,7 @@
       },
       "scientific_validity": {
         "before": "Historical numeric-ID comparison: 741787 candidates; 730184 published objects; 730182 intersection; 11605 candidate-only; 2 published-only. A later row-ordinal crosswalk reported 16686 candidate-only and 5083 published-only, but that crosswalk used the wrong identity mapping and is not valid evidence.",
-        "after": "Corrected full-dataset name-to-Seq crosswalk: parent 781602, published 730184, reconstructed candidates 741786, intersection 730184, candidate-only 11602, published-only 0. A separate positive-finite gmag/rmag/Per-g/Per-r diagnostic yields exact set equality at 730184, but the paper does not explicitly document that four-field predicate; scientific acceptance remains blocked pending method evidence.",
+        "after": "Source-backed derivation, explicit Seq identity crosswalk, and full 11602-object g/r provenance trace are complete. The SNR-only predicate still has 11602 candidate-only objects; positive finite gmag/rmag/Per-g/Per-r reproduces exact membership, but the paper does not explicitly justify that predicate. The scientific gate remains blocked pending method justification and latest-head regression checks.",
         "evidence": "Source-backed audit run 39699256625; artifact 12391909327; candidate SHA256 699ff34bcf8dd4b5043eed48384973cb5109fd86ca260f831a502097370238df; parent SHA256 0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138; Table4 SHA256 cc6b094c9bc38d32cd2ced853d60e74e0924ff3c9819252795f60825972ad46f."
       }
     }
@@ -43,7 +43,7 @@
       "Full source-backed membership result: 741786 candidates, 730184 published members, 730184 intersection, 11602 candidate-only, zero published-only; exact membership under the SNR-only predicate remains false.",
       "Independent metadata-validity diagnostic: requiring positive finite gmag, rmag, Per-g, and Per-r yields exact set equality with published Table4. Candidate-only partition: 11580 fail both metadata pairs, 17 have valid mean magnitudes but incomplete per-band periods, 5 have valid per-band periods but incomplete mean magnitudes. This predicate is diagnostic only; its scientific justification is not explicit in the paper.",
       "Deterministic stratified sample run 39701473339: 1000 objects (500 reference members, 500 non-members), confusion counts TP=500, FP=94, FN=0, TN=406. Nonlinear SNR alternative yields the same full candidate membership.",
-      "Schema verification evidence: run 39737844804, artifact 12407398749. Full per-object g/r provenance trace for all 11602 candidate-only objects is running in run 39737844922.",
+      "Full per-object g/r provenance trace completed successfully in run 39737844922, artifact 12408367638; all 11602 extras have qualifying g/r rows, median qualifying g rows=5, p90=9, and the nonlinear SNR alternative changes zero membership classifications.",
       "Full audit artifact preserves the complete 11602 SourceID/ZTF-name discrepancy ledger and source hashes."
     ]
   },
@@ -70,9 +70,9 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
+      "Review the completed per-object provenance artifact 12408367638 and the exact metadata-validity diagnostic; do not adopt the four-field rule until scientifically justified.",
+      "Obtain source-method evidence or author clarification for whether positive finite gmag, rmag, Per-g, and Per-r are required for published Table4 membership.",
       "Await CI, lint/format, regression, and scientific-contract checks on the latest PR head.",
-      "Review the deterministic 100-object and fixed 1000-object source-row diagnostics, and the full per-object g/r provenance trace for all 11602 candidate-only objects.",
-      "Obtain source-method evidence or author clarification for whether positive finite gmag, rmag, Per-g, and Per-r are required for the published Table4 membership.",
       "Keep exact CPVS reproduction blocked until the residual predicate is scientifically justified and required evidence is reviewed."
     ]
   },
