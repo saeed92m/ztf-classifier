@@ -69,7 +69,6 @@ def read_vizier(path: Path) -> set[int]:
 def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
     """Map Table2 ZTF names to explicit Seq IDs; never infer IDs from row order."""
     result: dict[int, str] = {}
-    ordinal = 0
     for line in lines:
         stripped = line.strip()
         if not stripped:
@@ -79,7 +78,6 @@ def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
             continue
         if len(fields) < 2:
             raise ValueError(f"CPVS Table2 object row has no second field: {fields!r}")
-        ordinal += 1
         is_integer = fields[1].isdigit()
         if not is_integer:
             raise ValueError(
@@ -88,7 +86,7 @@ def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
             )
         source_id = int(fields[1])
         if source_id in result:
-            raise ValueError(f"duplicate CPVS Table2 SourceID/Seq: {source_id}")
+            raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
         result[source_id] = fields[0]
     return result
 
