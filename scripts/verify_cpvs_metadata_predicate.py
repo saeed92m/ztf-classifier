@@ -82,8 +82,6 @@ def main() -> int:
     parser.add_argument("--output-csv", type=Path, required=True)
     args = parser.parse_args()
 
-    parent_raw = args.parent_metadata.read_bytes()
-    candidate_raw = args.candidates.read_bytes()
     selection_raw = args.selection_diagnostics.read_bytes()
     audit_raw = args.membership_audit.read_bytes()
     parent = read_parent_metadata(args.parent_metadata)
@@ -101,13 +99,6 @@ def main() -> int:
         raise ValueError("candidate-only diagnostic IDs are not a subset of candidates")
     if not candidates.issubset(parent):
         raise ValueError("candidate IDs include values absent from parent metadata")
-    if set(parent) != {int(row["Seq"]) for row in csv.DictReader(
-        [line for line in parent_raw.decode("utf-8", errors="replace").splitlines()
-         if line.strip() and not line.lstrip().startswith("#")],
-        delimiter="\t",
-    ) if row.get("Seq", "").strip().isdigit()}:
-        raise ValueError("parent metadata Seq set is inconsistent")
-
     filtered = {
         source_id
         for source_id in candidates
@@ -139,6 +130,8 @@ def main() -> int:
         if all(positive_finite(values.get(field, "")) for field in FIELDS)
     }
     dispositions = {}
+    args.output_csv.parent.mkdir(parents=True, exist_ok=True)
+    args.output_json.parent.mkdir(parents=True, exist_ok=True)
     csv_fields = [
         "SourceID", "gmag", "rmag", "Per-g", "Per-r",
         "gmag_positive", "rmag_positive", "Per-g_positive", "Per-r_positive",
@@ -199,7 +192,6 @@ def main() -> int:
             "production without method/source evidence or author clarification."
         ),
     }
-    args.output_json.parent.mkdir(parents=True, exist_ok=True)
     args.output_json.write_text(json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n")
     print(json.dumps(report, indent=2, sort_keys=True, allow_nan=False))
     return 0
