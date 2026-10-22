@@ -185,29 +185,30 @@ def _band_diagnostics(
             snr_linear=snr_linear,
             snr_exact=snr_exact,
         )
+        if stats is not None and (
+            stats["max_snr_linear"] is None or snr_linear > stats["max_snr_linear"]
+        ):
+            stats["max_snr_linear"] = snr_linear
+            stats["max_snr_linear_row"] = record
+        if stats is not None and (
+            stats["max_snr_exact_diagnostic"] is None
+            or snr_exact > stats["max_snr_exact_diagnostic"]
+        ):
+            stats["max_snr_exact_diagnostic"] = snr_exact
+            stats["max_snr_exact_row"] = record
+
         if snr_linear >= sigma:
             linear_qualified.add(source_id)
             if stats is not None:
                 stats["linear_qualifying_rows"] += 1
                 if stats["first_linear_qualifying_row"] is None:
                     stats["first_linear_qualifying_row"] = record
-            if stats is not None and (
-                stats["max_snr_linear"] is None or snr_linear > stats["max_snr_linear"]
-            ):
-                stats["max_snr_linear"] = snr_linear
-                stats["max_snr_linear_row"] = record
         if snr_exact >= sigma:
             exact_qualified.add(source_id)
             if stats is not None:
                 stats["exact_qualifying_rows"] += 1
                 if stats["first_exact_qualifying_row"] is None:
                     stats["first_exact_qualifying_row"] = record
-            if stats is not None and (
-                stats["max_snr_exact_diagnostic"] is None
-                or snr_exact > stats["max_snr_exact_diagnostic"]
-            ):
-                stats["max_snr_exact_diagnostic"] = snr_exact
-                stats["max_snr_exact_row"] = record
 
     return linear_qualified, exact_qualified, sample
 
