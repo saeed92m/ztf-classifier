@@ -83,6 +83,13 @@ Partition of the 11,602 candidate-only objects:
 - 5 have both per-band periods positive but lack a positive g-band mean magnitude.
 - 0 pass all four checks.
 
+The raw-photometry diagnostics also show a strong separation in qualifying g-band detections:
+- Candidate-only objects: minimum 1, median 5, 90th percentile 9, 99th percentile 39 qualifying g detections.
+- Published members: minimum 11, median 104, 90th percentile 201, 99th percentile 488 qualifying g detections.
+- Among candidate-only objects, 11,470 have no positive parent gmag and 11,475 have no positive Per-g. Only 171 have any non-zero qualifying flag in g and 680 in r, so a blanket flag-zero rule is not supported.
+
+This suggests the extras are concentrated among objects for which the parent two-band fit metadata is incomplete, rather than being explained by the tested nonlinear SNR conversion. It still does not establish the publisher's exact acceptance rule: a minimum detection count or metadata-validity condition must not be inferred solely from these distributions.
+
 The diagnostic parent-metadata TSV SHA-256 is `3675b1274f73fcb15d47e7a780f194ef8fa335cd248c6ff53ea4f01559c86591`; the candidate set SHA-256 is `699ff34bcf8dd4b5043eed48384973cb5109fd86ca260f831a502097370238df`; the full diagnostic JSON SHA-256 is `7e763d8804a57d75d1633d0a4089a4a6ac5aa40bb4695964d35e645b67ad5b61`; and the membership audit JSON SHA-256 is `4c1a082569820af26cbca80320a4913a00e1849446b0ca0205fc872b5ce89c5c`.
 
 **Interpretation:** this is an exact membership-recovery predicate, not yet a proven statement of the publisher's selection rule. The official Table2 ReadMe marks gmag, rmag, Per-g, and Per-r as missing when zero, but Chan et al. (2022) explicitly describe the g/r SNR thresholds and do not explicitly state that all four metadata fields must be positive. Preserve this distinction: the residuals are fully explained numerically by missing/invalid parent metadata, while the scientific justification for treating all four fields as required remains open. Do not silently change the production predicate until the source method or author clarification supports it.
