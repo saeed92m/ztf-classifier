@@ -67,16 +67,9 @@ def read_vizier(path: Path) -> set[int]:
 
 
 def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
-    """Map Table2 ZTF names to explicit Seq IDs, with ordinal-only fallback.
-
-    Source-backed Table2 variants may expose an integer Seq/SourceID in the
-    second field. Coordinate-only presentation tables have RA in that field
-    and require one-based object-row ordinals. Select the schema from the first
-    valid object row; do not mix explicit IDs and ordinals within a table.
-    """
+    """Map Table2 ZTF names to explicit Seq IDs; never infer IDs from row order."""
     result: dict[int, str] = {}
     ordinal = 0
-    explicit_seq: bool | None = None
     for line in lines:
         stripped = line.strip()
         if not stripped:
@@ -88,17 +81,12 @@ def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
             raise ValueError(f"CPVS Table2 object row has no second field: {fields!r}")
         ordinal += 1
         is_integer = fields[1].isdigit()
-        if explicit_seq is None:
-            explicit_seq = is_integer
-        if explicit_seq:
-            if not is_integer:
-                raise ValueError(
-                    "inconsistent CPVS Table2 Seq schema: expected integer Seq "
-                    f"in second field, got {fields[:4]!r}"
-                )
-            source_id = int(fields[1])
-        else:
-            source_id = ordinal
+        if not is_integer:
+            raise ValueError(
+                "CPVS Table2 requires integer Seq/SourceID in second field; "
+                f"refusing row-ordinal fallback for {fields[:4]!r}"
+            )
+        source_id = int(fields[1])
         if source_id in result:
             raise ValueError(f"duplicate CPVS Table2 SourceID/Seq: {source_id}")
         result[source_id] = fields[0]
@@ -120,10 +108,9 @@ def read_parent_catalog(path: Path) -> dict[int, str]:
 
 
 def _parent_metadata_rows(lines: Iterable[str]) -> dict[int, dict[str, str]]:
-    """Read Table2 g/r fit metadata keyed by explicit Seq where available."""
+    """Read Table2 g/r fit metadata keyed by explicit Seq; never infer row ordinals."""
     result: dict[int, dict[str, str]] = {}
     ordinal = 0
-    explicit_seq: bool | None = None
     for line in lines:
         fields = line.strip().split()
         if not fields or not fields[0].upper().startswith("ZTF"):
@@ -132,23 +119,16 @@ def _parent_metadata_rows(lines: Iterable[str]) -> dict[int, dict[str, str]]:
             raise ValueError(f"CPVS Table2 object row has no second field: {fields!r}")
         ordinal += 1
         is_integer = fields[1].isdigit()
-        if explicit_seq is None:
-            explicit_seq = is_integer
-        if explicit_seq:
-            if not is_integer:
-                raise ValueError("inconsistent explicit Seq schema in Table2 metadata")
-            source_id = int(fields[1])
-            if len(fields) < 12:
-                raise ValueError(
-                    "explicit-Seq Table2 row lacks gmag/rmag/Per-g/Per-r fields"
-                )
-            metadata_fields = fields[8:12]
-        else:
-            source_id = ordinal
-            if len(fields) < 11:
-                metadata_fields = ["", "", "", ""]
-            else:
-                metadata_fields = fields[7:11]
+        if not is_integer:
+            raise ValueError(
+                "CPVS Table2 metadata requires integer Seq/SourceID in second field"
+            )
+        source_id = int(fields[1])
+        if len(fields) < 12:
+            raise ValueError(
+                "explicit-Seq Table2 row lacks gmag/rmag/Per-g/Per-r fields"
+            )
+        metadata_fields = fields[8:12]
         if source_id in result:
             raise ValueError(f"duplicate CPVS Table2 SourceID/Seq: {source_id}")
         result[source_id] = dict(
