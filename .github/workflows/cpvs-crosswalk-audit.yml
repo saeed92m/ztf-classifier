@@ -1,0 +1,115 @@
+name: CPVS Existing-Evidence Object-Name Crosswalk
+
+on:
+  push:
+    branches:
+      - "ci/audit/**"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit-existing-evidence:
+    name: Audit CPVS crosswalk using retained source artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download retained heavy evidence artifact (no source re-acquisition)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/saeed92m/ztf-classifier/actions/artifacts/12339583820/zip" \
+            -o /tmp/scientific-validation-heavy.zip
+          sha256sum /tmp/scientific-validation-heavy.zip | tee /tmp/artifact.sha256
+          echo "Expected historical artifact SHA256: debd55db39be64c5e267af44bc1e486824b3d6d0c0caeac9f04fca254c05410c"
+
+      - name: Extract only CPVS membership audit inputs
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cpvs-audit
+          python - <<'PY'
+          import json
+          import zipfile
+          from pathlib import Path
+
+          archive_path = Path("/tmp/scientific-validation-heavy.zip")
+          destination = Path("/tmp/cpvs-audit")
+          wanted = {
+              "Table2.txt.zip": destination / "Table2.txt.zip",
+              "selected.tsv": destination / "selected.tsv",
+              "published_table4.dat": destination / "published_table4.dat",
+          }
+          found = {}
+          with zipfile.ZipFile(archive_path) as archive:
+              for info in archive.infolist():
+                  basename = Path(info.filename).name
+                  if basename in wanted and basename not in found:
+                      found[basename] = info.filename
+              missing = sorted(set(wanted) - set(found))
+              if missing:
+                  raise SystemExit(f"Missing required evidence files in retained artifact: {missing}")
+              for basename, member in found.items():
+                  with archive.open(member) as source, wanted[basename].open("wb") as target:
+                      while True:
+                          block = source.read(8 * 1024 * 1024)
+                          if not block:
+                              break
+                          target.write(block)
+          print(json.dumps({"selected_members": found}, indent=2))
+          PY
+
+      - name: Record immutable input hashes
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          root = Path("/tmp/cpvs-audit")
+          files = ["Table2.txt.zip", "selected.tsv", "published_table4.dat"]
+          manifest = {
+              "source_run_id": 39583481592,
+              "source_artifact_id": 12339583820,
+              "source_artifact_expected_sha256": "debd55db39be64c5e267af44bc1e486824b3d6d0c0caeac9f04fca254c05410c",
+              "inputs": {
+                  name: {
+                      "size_bytes": (root / name).stat().st_size,
+                      "sha256": hashlib.sha256((root / name).read_bytes()).hexdigest(),
+                  }
+                  for name in files
+              },
+          }
+          (root / "input_manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+          print(json.dumps(manifest, indent=2))
+          PY
+
+      - name: Run actual ZTF-name crosswalk against retained full evidence
+        id: audit
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          python scripts/audit_cpvs_membership.py \
+            --candidate /tmp/cpvs-audit/selected.tsv \
+            --published /tmp/cpvs-audit/published_table4.dat \
+            --parent /tmp/cpvs-audit/Table2.txt.zip \
+            --output /tmp/cpvs-audit/membership_audit.json
+          cp /tmp/cpvs-audit/membership_audit.json reports-membership-audit.json
+
+      - name: Preserve report even if scientific gate remains blocked
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-object-name-crosswalk-audit
+          path: |
+            /tmp/cpvs-audit/input_manifest.json
+            /tmp/cpvs-audit/membership_audit.json
+            /tmp/artifact.sha256
+          if-no-files-found: warn
