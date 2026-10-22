@@ -44,7 +44,10 @@ def _vizier_rows(lines: Iterable[str]) -> dict[int, str]:
                 continue
             raw_id, name = columns[id_index], columns[ztf_index]
             if raw_id.isdigit() and name:
-                rows[int(raw_id)] = name
+                catalog_id = int(raw_id)
+                if catalog_id in rows:
+                    raise ValueError(f"duplicate VizieR Table4 catalog ID: {catalog_id}")
+                rows[catalog_id] = name
         return rows
     # CDS fixed-width table4.dat: ZTF occupies bytes 1-22; ID occupies 24-29.
     for line in materialized:
@@ -52,7 +55,10 @@ def _vizier_rows(lines: Iterable[str]) -> dict[int, str]:
             continue
         raw_name, raw_id = line[0:22].strip(), line[23:29].strip()
         if raw_id.isdigit() and raw_name.startswith("ZTF"):
-            rows[int(raw_id)] = raw_name
+            catalog_id = int(raw_id)
+            if catalog_id in rows:
+                raise ValueError(f"duplicate VizieR Table4 catalog ID: {catalog_id}")
+            rows[catalog_id] = raw_name
     return rows
 
 
