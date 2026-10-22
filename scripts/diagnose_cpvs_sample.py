@@ -288,6 +288,11 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=20261022)
     parser.add_argument("--sample-size", type=int, default=1000)
     parser.add_argument("--diagnostic-size", type=int, default=100)
+    parser.add_argument(
+        "--trace-candidate-only",
+        action="store_true",
+        help="retain per-object g/r row provenance for every candidate-only object",
+    )
     args = parser.parse_args()
 
     parent_rows = read_parent_catalog(args.parent)
@@ -328,7 +333,10 @@ def main() -> int:
         sample_size=args.sample_size,
         diagnostic_size=args.diagnostic_size,
     )
+    candidate_only_ids = sorted(candidate_ids - published_ids)
     sample_ids = set(sample_1000)
+    if args.trace_candidate_only:
+        sample_ids.update(candidate_only_ids)
 
     g_linear, g_exact, g_sample = _band_diagnostics(
         args.g,
@@ -427,6 +435,11 @@ def main() -> int:
         ),
         "sample_1000": [object_detail(oid) for oid in sample_1000],
         "sample_100": [object_detail(oid) for oid in sample_100],
+        "candidate_only_diagnostics": (
+            [object_detail(oid) for oid in candidate_only_ids]
+            if args.trace_candidate_only
+            else []
+        ),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
