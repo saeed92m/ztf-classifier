@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-invalid-snr-parent-identity-audit-20261021",
+  "objective": "Reject invalid CPVS magnitude-error values from SNR qualification and add explicit VizieR-to-parent object identity provenance without weakening scientific acceptance criteria.",
+  "previous_knowledge_consumed": [
+    "Source-backed Scientific Validation run 39583481592 completed the heavy acquisition and uploaded scientific-validation-heavy evidence.",
+    "Its derivation reported 741787 candidates, while the independent selection diagnostics reported 741785 for the corresponding row-wise finite/non-zero-magnitude predicate.",
+    "The independent membership audit reported 730184 published IDs, 730182 intersection IDs, 11605 candidate-only IDs, and published-only IDs 781603 and 781604.",
+    "The official VizieR ReadMe defines Table 4 ID as a catalog internal identifier in the range 1–781604 and ZTF as the object name; the pinned Table 2 parent contains 781602 rows."
+  ],
+  "baseline": {
+    "revision": "d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
+    "description": "Scientific gate remains unresolved; SNR derivation and independent membership audit disagree by two candidates, and two published IDs exceed the pinned parent row count."
+  },
+  "expected_improvement": [
+    "Non-finite SNR values are rejected explicitly instead of passing because NaN < threshold evaluates false.",
+    "Regression coverage proves blank and NaN magnitude errors do not qualify an object.",
+    "Membership audit records published ID-to-ZTF-name mapping, IDs outside the parent, and any parent ordinal/name mismatches.",
+    "The 11603 remaining candidate-only IDs remain visible and the exact-membership gate stays fail-closed."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Invalid SNR can pass the threshold guard when the computed SNR is NaN; derivation reported 741787 candidates versus 741785 in independent row-wise diagnostics.",
+        "after": "Guard rejects non-finite SNR and regression test is added; execution pending CI.",
+        "evidence": "src/ztf_classifier/validation/derivation.py; tests/test_cpvs_invalid_snr_guard.py; PR #206"
+      },
+      "scientific_validity": {
+        "before": "741787 candidates; 730184 published IDs; 730182 intersection; 11605 candidate-only; 2 published-only.",
+        "after": "No full source-backed rerun yet. Exact membership remains unresolved; no acceptance criteria changed.",
+        "evidence": "GitHub Actions run 39583481592 logs; VizieR J/ApJ/932/118 ReadMe; PR #206 diagnostic crosswalk."
+      }
+    }
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Added explicit math.isfinite(snr) check before threshold comparison.",
+      "Added regression test for blank and NaN magnitude-error values.",
+      "Added ID-to-ZTF-name parsing and parent row-ordinal cross-check to the independent membership audit.",
+      "CI and scientific contract checks are pending; no test pass or scientific resolution is claimed."
+    ]
+  },
+  "failure_analysis": {
+    "status": "partially_identified",
+    "root_causes": [
+      "Confirmed implementation defect: _snr_from_mag_error returns NaN for invalid errors, while the previous guard only checked snr < sigma; NaN comparisons are false, so invalid-error rows can qualify.",
+      "The remaining candidate-only membership discrepancy of 11603 IDs is not explained.",
+      "Published IDs 781603 and 781604 exceed the pinned parent row count of 781602; the ZTF-name crosswalk is being added to establish whether this is source-version drift or another identity inconsistency."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Non-finite numeric results must be rejected explicitly before threshold comparisons.",
+      "Catalog-internal IDs and astronomical object names should both be retained for cross-catalogue provenance.",
+      "Fixing the two-object implementation discrepancy does not establish exact CPVS membership.",
+      "Do not change SNR thresholds or acceptance criteria merely to force count equality."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Await CI, lint/format, regression, and scientific-contract checks for PR #206.",
+      "Run the updated parent identity crosswalk against the heavy evidence and capture the two out-of-parent ZTF names.",
+      "Perform reproducible diagnostics for the remaining 11603 candidate-only IDs and identify the root cause before declaring exact reproduction."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not merge until required CI checks pass and the diagnostic code is reviewed.",
+    "Keep CPVS exact reproduction as a scientific validation blocker until the remaining membership discrepancy is explained.",
+    "Do not claim the candidate-only IDs are errors or new discoveries without object-level provenance and independent evidence."
+  ]
+}

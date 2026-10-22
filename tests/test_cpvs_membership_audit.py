@@ -1,6 +1,13 @@
+import json
+import zipfile
 from pathlib import Path
 
-from scripts.audit_cpvs_membership import read_selected, read_vizier
+from scripts.audit_cpvs_membership import (
+    read_parent_catalog,
+    read_selected,
+    read_vizier,
+    read_vizier_rows,
+)
 
 
 def test_read_selected_uses_sourceid_values(tmp_path: Path):
@@ -9,7 +16,7 @@ def test_read_selected_uses_sourceid_values(tmp_path: Path):
     assert read_selected(path) == {1, 3, 5}
 
 
-def test_read_vizier_reads_fixed_width_id_column(tmp_path: Path):
+def test_read_vizier_reads_fixed_width_id_and_name(tmp_path: Path):
     path = tmp_path / "table4.dat"
     lines = [
         f"{'ZTFJ000000.00+000000.0':<22}{'':1}{1:>6}  EW  0.0  0.0  0.1",
@@ -18,6 +25,11 @@ def test_read_vizier_reads_fixed_width_id_column(tmp_path: Path):
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     assert read_vizier(path) == {1, 3, 5}
+    assert read_vizier_rows(path) == {
+        1: "ZTFJ000000.00+000000.0",
+        3: "ZTFJ000001.00+000000.0",
+        5: "ZTFJ000002.00+000000.0",
+    }
 
 
 def test_read_vizier_reads_tsv_export(tmp_path: Path):
@@ -27,3 +39,75 @@ def test_read_vizier_reads_tsv_export(tmp_path: Path):
         encoding="utf-8",
     )
     assert read_vizier(path) == {7, 9}
+    assert read_vizier_rows(path) == {
+        7: "ZTFJ000000.00+000000.0",
+        9: "ZTFJ000001.00+000000.0",
+    }
+
+
+def test_read_parent_catalog_maps_one_based_row_ordinals(tmp_path: Path):
+    path = tmp_path / "Table2.txt"
+    path.write_text(
+        "metadata ignored\nZTFJ000000.00+000000.0 12.0 -3.0\n"
+        "ZTFJ000001.00+000000.0 13.0 -4.0\n",
+        encoding="utf-8",
+    )
+    assert read_parent_catalog(path) == {
+        1: "ZTFJ000000.00+000000.0",
+        2: "ZTFJ000001.00+000000.0",
+    }
+
+
+def test_read_parent_catalog_reads_zip(tmp_path: Path):
+    path = tmp_path / "Table2.txt.zip"
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr(
+            "Table2.txt",
+            "metadata ignored\nZTFJ000000.00+000000.0 12.0 -3.0\n"
+            "ZTFJ000001.00+000000.0 13.0 -4.0\n",
+        )
+    assert read_parent_catalog(path) == {
+        1: "ZTFJ000000.00+000000.0",
+        2: "ZTFJ000001.00+000000.0",
+    }
+
+
+def test_object_name_crosswalk_compares_parent_sourceids_not_catalog_ids(
+    tmp_path: Path, monkeypatch
+):
+    from scripts import audit_cpvs_membership as audit
+
+    parent = tmp_path / "Table2.txt"
+    parent.write_text(
+        "ZTFJ000000.00+000000.0 10 20\n"
+        "ZTFJ000001.00+000000.0 11 21\n"
+        "ZTFJ000002.00+000000.0 12 22\n",
+        encoding="utf-8",
+    )
+    published = tmp_path / "table4.tsv"
+    published.write_text(
+        "ZTF\tID\n"
+        "ZTFJ000001.00+000000.0\t101\n"
+        "ZTFJ000002.00+000000.0\t102\n",
+        encoding="utf-8",
+    )
+    candidate = tmp_path / "selected.tsv"
+    candidate.write_text("SourceID\n2\n3\n", encoding="utf-8")
+    output = tmp_path / "audit.json"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "audit_cpvs_membership.py",
+            "--candidate", str(candidate),
+            "--published", str(published),
+            "--parent", str(parent),
+            "--output", str(output),
+        ],
+    )
+
+    assert audit.main() == 0
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["catalog_internal_id_comparison_is_object_level"] is False
+    assert report["object_name_crosswalk_exact_membership_match"] is True
+    assert report["object_name_crosswalk_candidate_only_count"] == 0
+    assert report["object_name_crosswalk_published_only_count"] == 0
