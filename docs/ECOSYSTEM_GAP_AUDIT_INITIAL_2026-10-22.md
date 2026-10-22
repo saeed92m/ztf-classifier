@@ -103,3 +103,10 @@ GitHub search is not exhaustive. The following areas still need deeper targeted 
 The broader sample now spans (a) specialized ZTF classifiers, (b) interactive ZTF viewers, (c) a general time-series feature/model library, and (d) an alert-stream transient-science platform. This supports a modular architecture with distinct ingestion adapters, versioned feature backends, analysis/model modes, visualization/review, and provenance. It does not prove that the current implementation already provides arbitrary-feature scientific analysis.
 
 Potentially reusable ideas are architectural references only. Before implementing or importing code, inspect relevant source files, tests, data assumptions, dependency footprint, supported Python versions, license obligations, and scientific validation. The full repository inventory and prioritized gap matrix remain open under Issue #210.
+
+
+## Independent-dataset execution gap — 2026-10-23
+
+Source inspection confirms the current StarEmbed adapter supports acquisition, but not yet an end-to-end product prediction path from raw StarEmbed light curves. The registered benchmark runner expects a prepared table with `sourceid`, `class_str`, and `y_pred`; it computes evaluation metrics on predictions rather than generating them from raw data. The heavy scientific-validation workflow acquires StarEmbed and then proceeds to large CPVS source downloads, with no StarEmbed raw-light-curve inference step found in the inspected workflow.
+
+This is a concrete capability gap, not evidence that the model failed. End-to-end validation remains blocked until the dataset schema/units and preprocessing are inspected, a versioned compatible feature/model path is established, split and OOD boundaries are preserved, predictions and provenance are recorded, and the benchmark evaluator is run. The frozen v0.2 42-feature contract must not be silently applied to incompatible data. A dedicated StarEmbed workflow should avoid coupling the independent dataset test to large CPVS downloads.
