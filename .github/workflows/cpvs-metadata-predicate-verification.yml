@@ -1,0 +1,59 @@
+name: CPVS Metadata-Predicate Diagnostic Verification
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-metadata-predicate:
+    if: startsWith(github.head_ref, 'fix/cpvs-parent-identity-crosswalk-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+
+      - name: Download retained metadata diagnostic artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/saeed92m/ztf-classifier/actions/artifacts/11935357767/zip" \
+            -o /tmp/cpvs-metadata-evidence.zip
+          echo "346cd0a22d1490c9d3c5f6ff290ca2377e1c5458895c0c0d4b616b0708630c36  /tmp/cpvs-metadata-evidence.zip" | sha256sum -c -
+          mkdir -p /tmp/cpvs-metadata-evidence
+          unzip -q /tmp/cpvs-metadata-evidence.zip -d /tmp/cpvs-metadata-evidence
+
+      - name: Recompute four-field predicate and exact-set equality
+        run: |
+          set -euo pipefail
+          python scripts/verify_cpvs_metadata_predicate.py \
+            --parent-metadata /tmp/cpvs-metadata-evidence/ztf_periodic_730k/parent_metadata.tsv \
+            --candidates /tmp/cpvs-metadata-evidence/ztf_periodic_730k/selected.tsv \
+            --selection-diagnostics /tmp/cpvs-metadata-evidence/ztf_periodic_730k/selection_diagnostics.json \
+            --membership-audit /tmp/cpvs-metadata-evidence/ztf_periodic_730k/membership_audit.json \
+            --output-json /tmp/cpvs-metadata-predicate-report.json \
+            --output-csv /tmp/cpvs-metadata-predicate-candidate-only.csv
+
+      - name: Preserve reproducible diagnostic outputs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-metadata-predicate-verification
+          path: |
+            /tmp/cpvs-metadata-predicate-report.json
+            /tmp/cpvs-metadata-predicate-candidate-only.csv
+            /tmp/cpvs-metadata-evidence.zip
+          if-no-files-found: warn
