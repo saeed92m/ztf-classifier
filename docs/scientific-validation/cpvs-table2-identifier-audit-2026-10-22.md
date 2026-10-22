@@ -66,6 +66,27 @@ The retained-source diagnostic artifact is run 39701473339, artifact ID `1239348
 - The nonlinear inverse magnitude-error/SNR alternative produced the same membership set as the current linear approximation in the full candidate comparison. It does not explain the discrepancy.
 - In the sample, 93 of 94 candidate-only objects had at most 10 g-band rows, whereas all 500 sampled published members had at least 13 g-band rows. This is a diagnostic association, not proof of a minimum-row-count rule. The published method describes at least one qualifying detection per band; do not add a row-count cutoff without source-backed evidence.
 
+## Additional exact-set diagnostic: parent metadata validity
+
+A separate full-dataset diagnostic in heavy run [38635891449](https://github.com/saeed92m/ztf-classifier/actions/runs/38635891449), artifact ID 11935357767, tested the predicate that all four parent Table2 fields are finite and positive: gmag, rmag, Per-g, and Per-r.
+
+Recalculation from the retained artifact confirms:
+- Candidate set: 741,786 Seq IDs.
+- Candidate IDs with all four parent fields positive: 730,184.
+- Candidate-only IDs retained by the four-field predicate: 0.
+- Published-only IDs relative to that filtered set: 0, because the unfiltered object-name audit maps all 730,184 published rows into the candidate set.
+- Exact set equality: `(candidate ∩ valid(gmag,rmag,Per-g,Per-r)) == published Table4 membership`.
+
+Partition of the 11,602 candidate-only objects:
+- 11,580 fail both the two-mean-magnitude validity pair and the two-per-band-period validity pair.
+- 17 have both mean magnitudes positive but lack a positive value for at least one per-band period.
+- 5 have both per-band periods positive but lack a positive g-band mean magnitude.
+- 0 pass all four checks.
+
+The diagnostic parent-metadata TSV SHA-256 is `3675b1274f73fcb15d47e7a780f194ef8fa335cd248c6ff53ea4f01559c86591`; the candidate set SHA-256 is `699ff34bcf8dd4b5043eed48384973cb5109fd86ca260f831a502097370238df`; the full diagnostic JSON SHA-256 is `7e763d8804a57d75d1633d0a4089a4a6ac5aa40bb4695964d35e645b67ad5b61`; and the membership audit JSON SHA-256 is `4c1a082569820af26cbca80320a4913a00e1849446b0ca0205fc872b5ce89c5c`.
+
+**Interpretation:** this is an exact membership-recovery predicate, not yet a proven statement of the publisher's selection rule. The official Table2 ReadMe marks gmag, rmag, Per-g, and Per-r as missing when zero, but Chan et al. (2022) explicitly describe the g/r SNR thresholds and do not explicitly state that all four metadata fields must be positive. Preserve this distinction: the residuals are fully explained numerically by missing/invalid parent metadata, while the scientific justification for treating all four fields as required remains open. Do not silently change the production predicate until the source method or author clarification supports it.
+
 ## Confirmed defects versus unresolved science
 
 1. **Confirmed identifier-comparison defect:** Table4 catalog-internal IDs and parent SourceIDs are distinct namespaces. The audit must crosswalk by ZTF name.
