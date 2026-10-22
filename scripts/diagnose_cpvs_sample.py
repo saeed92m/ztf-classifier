@@ -151,6 +151,9 @@ def _band_diagnostics(
 
         error = _float_value(row.get(error_key))
         magnitude = _float_value(row.get(mag_key))
+        valid_magnitude = math.isfinite(magnitude) and magnitude != 0.0
+        if stats is not None and valid_magnitude:
+            stats["valid_nonzero_magnitude_rows"] += 1
         if not math.isfinite(error) or error <= 0:
             continue
         if stats is not None:
@@ -169,11 +172,8 @@ def _band_diagnostics(
             except (TypeError, ValueError):
                 pass
 
-        valid_magnitude = math.isfinite(magnitude) and magnitude != 0.0
         if not valid_magnitude:
             continue
-        if stats is not None:
-            stats["valid_nonzero_magnitude_rows"] += 1
 
         record = _row_evidence(
             row,
