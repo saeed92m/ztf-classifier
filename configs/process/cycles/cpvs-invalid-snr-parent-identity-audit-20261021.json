@@ -1,34 +1,35 @@
 {
   "schema_version": "1.1",
   "stage_id": "cpvs-invalid-snr-parent-identity-audit-20261021",
-  "objective": "Reject invalid CPVS magnitude-error values from SNR qualification and add explicit VizieR-to-parent object identity provenance without weakening scientific acceptance criteria.",
+  "objective": "Reject invalid CPVS magnitude-error values and correct the source-identity join by using the documented Table2 Seq/SourceID field; preserve fail-closed scientific validation.",
   "previous_knowledge_consumed": [
-    "Source-backed Scientific Validation run 39583481592 completed the heavy acquisition and uploaded scientific-validation-heavy evidence.",
-    "Its derivation reported 741787 candidates, while the independent selection diagnostics reported 741785 for the corresponding row-wise finite/non-zero-magnitude predicate.",
-    "The independent membership audit reported 730184 published IDs, 730182 intersection IDs, 11605 candidate-only IDs, and published-only IDs 781603 and 781604.",
-    "The official VizieR ReadMe defines Table 4 ID as a catalog internal identifier in the range 1–781604 and ZTF as the object name; the pinned Table 2 parent contains 781602 rows."
+    "Source-backed Scientific Validation run 39583481592 completed acquisition and retained the heavy evidence artifact (artifact SHA256 debd55db39be64c5e267af44bc1e486824b3d6d0c0caeac9f04fca254c05410c).",
+    "Historical derivation reported 741787 candidates versus 741785 in independent row-wise diagnostics under the prior implementation.",
+    "VizieR's original CPVS Table2 schema identifies ID as the ZTF name and Seq as the internal source identifier; Zenodo record 3886372 states SourceID joins the ztf2g/ztf2r attachments to Table2.",
+    "VizieR Table4's ID is a catalog-internal identifier, not a guaranteed Table2 Seq. Numeric ID-only comparison is not object-level proof.",
+    "A first object-name crosswalk that mapped parent row ordinals produced 16686 candidate-only and 5083 published-only; those counts are invalid diagnostics because the implementation ignored the documented Seq field."
   ],
   "baseline": {
     "revision": "d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
-    "description": "Scientific gate remains unresolved; SNR derivation and independent membership audit disagree by two candidates, and two published IDs exceed the pinned parent row count."
+    "description": "Scientific gate remains unresolved. A confirmed invalid-SNR guard defect and a confirmed Table2 identity-mapping defect are being corrected; full re-derivation and object-level membership validation remain pending."
   },
   "expected_improvement": [
-    "Non-finite SNR values are rejected explicitly instead of passing because NaN < threshold evaluates false.",
-    "Regression coverage proves blank and NaN magnitude errors do not qualify an object.",
-    "Membership audit records published ID-to-ZTF-name mapping, IDs outside the parent, and any parent ordinal/name mismatches.",
-    "The 11603 remaining candidate-only IDs remain visible and the exact-membership gate stays fail-closed."
+    "Reject non-finite SNR values explicitly instead of allowing NaN to pass a threshold comparison.",
+    "Use the explicit Table2 Seq/internal SourceID value rather than row ordinal for parent and photometry joins.",
+    "Reject missing, malformed, or duplicate Seq values; preserve full discrepant SourceID/ZTF-name lists and input hashes.",
+    "Keep exact-membership acceptance fail-closed; do not change thresholds to force count equality."
   ],
   "measurement": {
     "metrics": {
       "correctness": {
         "before": "Invalid SNR can pass the threshold guard when the computed SNR is NaN; derivation reported 741787 candidates versus 741785 in independent row-wise diagnostics.",
-        "after": "Guard rejects non-finite SNR and regression test is added; execution pending CI.",
+        "after": "Non-finite SNR is explicitly rejected; Table2 Seq parsing and regression tests have been added. Latest CI and full source-backed re-derivation are pending.",
         "evidence": "src/ztf_classifier/validation/derivation.py; tests/test_cpvs_invalid_snr_guard.py; PR #206"
       },
       "scientific_validity": {
-        "before": "741787 candidates; 730184 published IDs; 730182 intersection; 11605 candidate-only; 2 published-only.",
-        "after": "No full source-backed rerun yet. Exact membership remains unresolved; no acceptance criteria changed.",
-        "evidence": "GitHub Actions run 39583481592 logs; VizieR J/ApJ/932/118 ReadMe; PR #206 diagnostic crosswalk."
+        "before": "Historical numeric-ID comparison: 741787 candidates; 730184 published objects; 730182 intersection; 11605 candidate-only; 2 published-only. A later row-ordinal crosswalk reported 16686 candidate-only and 5083 published-only, but that crosswalk used the wrong identity mapping and is not valid evidence.",
+        "after": "Explicit Seq-based parent mapping is implemented; the corrected full re-derivation/crosswalk has not completed. No corrected membership counts or residual root cause are claimed.",
+        "evidence": "Zenodo record 3886372; VizieR J/ApJS/249/18 Table2 schema; VizieR J/ApJ/932/118 ReadMe; PR #206; retained artifact from run 39583481592."
       }
     }
   },
@@ -37,40 +38,47 @@
     "scientific_gate_affected": false,
     "evidence": [
       "Added explicit math.isfinite(snr) check before threshold comparison.",
-      "Added regression test for blank and NaN magnitude-error values.",
-      "Added ID-to-ZTF-name parsing and parent row-ordinal cross-check to the independent membership audit.",
-      "CI and scientific contract checks are pending; no test pass or scientific resolution is claimed."
+      "Added regression tests for blank/NaN magnitude errors.",
+      "Corrected CPVS Table2 identity mapping to read explicit Seq/SourceID; row order is no longer accepted as a substitute.",
+      "Added tests for non-contiguous Seq values, missing/duplicate Seq, ZIP input, and ZTF-name crosswalk independent of Table4 internal IDs.",
+      "Corrected selection diagnostics to compare published ZTF names mapped into Table2 Seq IDs.",
+      "Corrected full source-backed re-derivation and audit are pending; no scientific resolution is claimed."
     ]
   },
   "failure_analysis": {
     "status": "partially_identified",
     "root_causes": [
-      "Confirmed implementation defect: _snr_from_mag_error returns NaN for invalid errors, while the previous guard only checked snr < sigma; NaN comparisons are false, so invalid-error rows can qualify.",
-      "The remaining candidate-only membership discrepancy of 11603 IDs is not explained.",
-      "Published IDs 781603 and 781604 exceed the pinned parent row count of 781602; the ZTF-name crosswalk is being added to establish whether this is source-version drift or another identity inconsistency."
+      "Confirmed implementation defect: _snr_from_mag_error returns NaN for invalid errors, while the previous guard only checked snr < sigma; NaN comparisons are false, so invalid-error rows could qualify.",
+      "Confirmed identifier-mapping defect: CPVS Table2's second field is Seq/internal SourceID, but the prior derivation and first crosswalk used one-based row ordinal. The resulting 16686/5083 crosswalk counts are invalid and must not be interpreted as true membership discrepancies.",
+      "Residual selection/membership discrepancy after explicit Seq mapping is not yet measured; selection semantics and every remaining discrepant object must be traced before sign-off.",
+      "Table4's internal ID values 781603/781604 cannot be compared directly to the parent row count as if they were Table2 Seq IDs; map by ZTF object name into the explicit Seq namespace."
     ]
   },
   "knowledge_extraction": {
     "status": "SUPPORTED",
     "findings": [
       "Non-finite numeric results must be rejected explicitly before threshold comparisons.",
-      "Catalog-internal IDs and astronomical object names should both be retained for cross-catalogue provenance.",
-      "Fixing the two-object implementation discrepancy does not establish exact CPVS membership.",
+      "CPVS Table2 Seq is the documented internal identifier joining the catalog to single-exposure photometry; row order is not a safe join key.",
+      "VizieR Table4's catalog-internal ID must not be assumed equal to Table2 Seq; use ZTF-name crosswalks.",
+      "Fixing identifier semantics and the invalid-SNR guard does not establish exact CPVS membership until full source-backed validation passes.",
       "Do not change SNR thresholds or acceptance criteria merely to force count equality."
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "IN_PROGRESS",
     "open_blockers": [
-      "Await CI, lint/format, regression, and scientific-contract checks for PR #206.",
-      "Run the updated parent identity crosswalk against the heavy evidence and capture the two out-of-parent ZTF names.",
-      "Perform reproducible diagnostics for the remaining 11603 candidate-only IDs and identify the root cause before declaring exact reproduction."
+      "Await CI, lint/format, regression, and scientific-contract checks on the latest PR head.",
+      "Complete corrected full derivation against the pinned parent and original g/r light curves using explicit Seq IDs.",
+      "Complete full ZTF-name-to-Seq membership audit and preserve every discrepant SourceID/ZTF name, input hash, and derivation manifest.",
+      "Run reproducible 100-object diagnostics and the fixed 1000-object parent sample including reference members and non-members.",
+      "Explain any remaining false positives/false negatives before scientific sign-off."
     ]
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not merge until required CI checks pass and the diagnostic code is reviewed.",
-    "Keep CPVS exact reproduction as a scientific validation blocker until the remaining membership discrepancy is explained.",
-    "Do not claim the candidate-only IDs are errors or new discoveries without object-level provenance and independent evidence."
+    "Keep CPVS exact reproduction as a scientific validation blocker until the corrected full derivation and object-level membership comparison pass.",
+    "Do not claim candidate-only IDs are errors or new discoveries without object-level provenance and independent evidence.",
+    "Do not infer SourceID from parent row order; use explicit Table2 Seq."
   ]
 }
