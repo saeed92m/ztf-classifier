@@ -67,12 +67,14 @@ def read_vizier(path: Path) -> set[int]:
 
 
 def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
-    """Map explicit Table 2 Seq/SourceID values to ZTF object names.
+    """Map one-based CPVS Table2 object-row ordinals to ZTF object names.
 
-    CPVS Table2's second field is Seq, the internal source identifier used by
-    the single-exposure attachments. Do not substitute catalog row order.
-    Decimal second fields are treated as legacy coordinate-only fixtures and
-    use row ordinals solely to preserve those older test inputs.
+    The pinned Table2 data rows contain the ZTF name followed by right
+    ascension, declination, period, and type; they do not expose the light-curve
+    SourceID as a second-column integer. The second field is a coordinate, not
+    an identifier. SourceID therefore follows the one-based object-row ordinal.
+    Non-object metadata/page headers are ignored. Duplicate names are rejected
+    by the object-level crosswalk rather than silently collapsed here.
     """
     result: dict[int, str] = {}
     ordinal = 0
@@ -84,11 +86,7 @@ def _catalog_rows(lines: Iterable[str]) -> dict[int, str]:
         if not fields or not fields[0].upper().startswith("ZTF"):
             continue
         ordinal += 1
-        raw_source_id = fields[1] if len(fields) > 1 else ""
-        source_id = int(raw_source_id) if raw_source_id.isdigit() else ordinal
-        if source_id in result:
-            raise ValueError(f"duplicate CPVS Table2 Seq/SourceID: {source_id}")
-        result[source_id] = fields[0]
+        result[ordinal] = fields[0]
     return result
 
 
@@ -199,8 +197,8 @@ def main() -> int:
                 ("\n".join(map(str, sorted(mapped_published_ids))) + "\n").encode()
             ).hexdigest(),
             "exact_membership_match": exact_match,
-            "membership_comparison_basis": "ZTF object-name crosswalk into explicit Table 2 Seq/SourceID values",
-            "parent_sourceid_mapping_basis": "Table2 second field Seq/internal source identifier; never inferred from row order for integer Seq rows",
+            "membership_comparison_basis": "ZTF object-name crosswalk into one-based Table 2 object-row ordinals used by light-curve SourceID",
+            "parent_sourceid_mapping_basis": "one-based ordinal of each Table 2 object row; second field is right ascension, not SourceID",
         })
     else:
         report.update({
