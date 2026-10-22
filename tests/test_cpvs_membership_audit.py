@@ -2,6 +2,8 @@ import json
 import zipfile
 from pathlib import Path
 
+import pytest
+
 from scripts.audit_cpvs_membership import (
     read_parent_catalog,
     read_selected,
@@ -70,6 +72,17 @@ def test_read_parent_catalog_reads_zip(tmp_path: Path):
         17: "ZTFJ000000.00+000000.0",
         29: "ZTFJ000001.00+000000.0",
     }
+
+
+
+def test_read_parent_catalog_rejects_missing_seq_instead_of_inventing_row_ids(
+    tmp_path: Path,
+):
+    path = tmp_path / "Table2.txt"
+    path.write_text("ZTFJ000000.00+000000.0 12.0 -3.0\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="integer Seq/SourceID"):
+        read_parent_catalog(path)
 
 
 def test_object_name_crosswalk_compares_parent_sourceids_not_catalog_ids(
