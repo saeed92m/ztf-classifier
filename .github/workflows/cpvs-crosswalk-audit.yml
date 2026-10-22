@@ -195,6 +195,17 @@ jobs:
               raise SystemExit("Sample diagnostic report was not produced.")
           report = json.loads(path.read_text(encoding="utf-8"))
           design = report["sample_design"]
+          def comparison_summary(item):
+              keys = (
+                  "candidate_count",
+                  "reference_count",
+                  "intersection_count",
+                  "candidate_only_count",
+                  "published_only_count",
+                  "candidate_only_sha256",
+                  "published_only_sha256",
+              )
+              return {key: item[key] for key in keys}
           summary = {
               "parent_count": report["parent_count"],
               "published_count": report["published_count"],
@@ -202,8 +213,12 @@ jobs:
               "sample_1000": len(report["sample_1000"]),
               "sample_100": len(report["sample_100"]),
               "sample_design": design,
-              "linear_comparison": report["membership_comparisons"]["recomputed_linear_snr"],
-              "nonlinear_diagnostic_comparison": report["membership_comparisons"]["nonlinear_exact_snr_diagnostic"],
+              "linear_comparison": comparison_summary(
+                  report["membership_comparisons"]["recomputed_linear_snr"]
+              ),
+              "nonlinear_diagnostic_comparison": comparison_summary(
+                  report["membership_comparisons"]["nonlinear_exact_snr_diagnostic"]
+              ),
               "sample_1000_confusion_current": report["sample_1000_confusion_current"],
               "sample_1000_confusion_nonlinear_exact_diagnostic": report["sample_1000_confusion_nonlinear_exact_diagnostic"],
           }
