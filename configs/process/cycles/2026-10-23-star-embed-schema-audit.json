@@ -21,7 +21,8 @@
   "measurement": {
     "metrics": {
       "correctness": {
-        "status": "NOT_MEASURED"
+        "status": "MEASURED_WITH_BLOCKING_FINDINGS",
+        "value": "CI real-data audit PASS_SCHEMA_AUDIT_WITH_FINDINGS; one train/test SourceID overlap and one duplicate train SourceID detected"
       },
       "reproducibility": {
         "status": "NOT_MEASURED"
@@ -38,7 +39,10 @@
       "CI on commit e08f2b44be88ec7ea2bc97f3f4d6ca7a93867808 exposed four Ruff lint violations",
       "Lint fixes committed as bfe541b0126a77a47dc7cf9fdefb3393c1d07dd3 and 4de5b7d84008c43d71e6a5dcf764636c0823b88e",
       "Added an isolated StarEmbed acquisition and raw schema-audit step to the existing CI test job, scoped to changes in the StarEmbed audit code, tests, manifest, or acquisition adapter/source code.",
-      "The StarEmbed step is separated from the heavy CPVS archive workflow; its real-data result remains unverified until the new CI execution completes.",
+      "The StarEmbed step is separated from the heavy CPVS archive workflow; CI run 39921499634 completed all CI jobs successfully and uploaded the raw-data audit artifact.",
+      "Downloaded and inspected artifact star-embed-schema-audit-39921499634 (artifact ID 12486134477; 432,452,550 bytes; archive SHA-256 fb280fbee1954ce7ffd6a3f8c094c8f7d122c3a0e567e297271572e48900e8e8).",
+      "Observed source counts: train 29,047 rows / 29,046 unique IDs; validation 4,150 / 4,150; test 8,301 / 8,301; anomaly 1,087 / 1,087. Found one train/test overlap (CSS_J051729.2+083846) and one duplicate within train (CSS_J164349.2+401208).",
+      "The first audit implementation incorrectly returned a non-blocking PASS_SCHEMA_AUDIT_WITH_FINDINGS despite object-ID leakage; a fail-closed regression fix is being added before considering this audit complete.",
       "CI workflow integration was re-inspected after the initial edit; the insertion was repaired and verified in commit 2fd2820d997289e31a3dca48e3b4d6ccaad031ef to contain one acquisition step, one audit step, one artifact upload step, and one test-suite invocation.",
       "The new CI source-audit steps are guarded by changed-file detection and acquire StarEmbed independently of the CPVS archives."
     ]
@@ -46,15 +50,17 @@
   "validation": {
     "scientific_gate_affected": true,
     "status": "BLOCKED",
-    "blocker": "The latest PR head has queued Product Scope Audit, CodeQL, and Scientific Validation runs, but no CI result has yet been retrieved for the repaired workflow; source acquisition and real-data audit are therefore not yet verified.",
+    "blocker": "Real StarEmbed data acquisition and schema audit are verified, but the audit found duplicate/overlapping object IDs and currently does not fail closed on them. A regression fix and new CI execution are required. Raw-data model inference remains unimplemented.",
     "evidence": [
-      "https://github.com/saeed92m/ztf-classifier/actions/runs/39910230897",
+      "https://github.com/saeed92m/ztf-classifier/actions/runs/39921499634",
+      "https://github.com/saeed92m/ztf-classifier/pull/211",
       "https://github.com/saeed92m/ztf-classifier/pull/211"
     ]
   },
   "failure_analysis": {
     "status": "KNOWN_FAILURE_ROOT_CAUSE_IDENTIFIED",
     "root_causes": [
+      "The first real-data audit exposed one train/test SourceID overlap and one duplicate SourceID within train; the current status logic did not treat these as blocking leakage.",
       "Ruff RUF046 flagged redundant int casts in the new audit module",
       "Ruff I001 flagged import ordering in the new test module",
       "The first programmatic CI workflow edit placed part of the inserted shell block incorrectly; a subsequent full-file reconstruction from the main-branch workflow corrected the placement."
@@ -73,8 +79,8 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Obtain CI result for the repaired workflow and confirm lint, lifecycle gate, tests, smoke tests, package build, and dependency audit",
-      "Confirm the StarEmbed source acquisition and audit steps execute and inspect the uploaded JSON evidence",
+      "Make StarEmbed audit return BLOCKED when duplicate object IDs occur within any split or across split boundaries; add regression coverage and rerun CI",
+      "After the fail-closed audit fix, inspect a new uploaded source-audit report and verify the duplicate IDs' source-row details",
       "Implement and independently validate raw-light-curve inference before performance claims",
       "CPVS 11,602 extra candidates remain unresolved"
     ]
