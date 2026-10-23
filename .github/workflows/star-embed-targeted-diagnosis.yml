@@ -99,13 +99,18 @@ jobs:
           cfg = json.load(open("configs/benchmarks/star_embed_ztf_40k.json"))
           print(f"config revision field: {cfg['input_contract']['revision']}")
           print(f"config version: {cfg.get('version')}")
-          print(f"config source: {cfg['input_contract']['source']}")
+          print(f"config source: {cfg.get('source')}")
+          print(f"object_id_column: {cfg.get('object_id_column')}")
           PY
           # Decide effective revision: input > config if concrete, otherwise main
           EFFECTIVE_REVISION="${{ inputs.dataset_revision }}"
           CONFIG_REV=$(python -c "import json; print(json.load(open('configs/benchmarks/star_embed_ztf_40k.json'))['input_contract']['revision'])")
-          echo "Input revision: $EFFECTIVE_REVISION"
+          echo "Input revision: '$EFFECTIVE_REVISION'"
           echo "Config revision: $CONFIG_REV"
+          if [ -z "$EFFECTIVE_REVISION" ]; then
+            EFFECTIVE_REVISION="main"
+            echo "Input empty (push trigger) -> default to main"
+          fi
           if [ "$CONFIG_REV" != "resolve_at_acquisition" ] && [ "$CONFIG_REV" != "" ]; then
             EFFECTIVE_REVISION="$CONFIG_REV"
             echo "Using config revision: $EFFECTIVE_REVISION"
