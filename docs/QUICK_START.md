@@ -1,8 +1,10 @@
 # ZTF Classifier — Quick Start
 
+> Current published package observed on 2026-10-23: v1.0.1. The current product direction includes astronomer-supplied supported data and multiple survey adapters, but the open [PR #212](https://github.com/saeed92m/ztf-classifier/pull/212) is not merged and no end-to-end cross-survey scientific validation is claimed. See [current handbook](HANDBOOK_CURRENT.md), [glossary](PROJECT_GLOSSARY.md) and [state register](PROJECT_STATE_REGISTER.md).
+
 ## Goal
 
-Run the released v1.0.0 production inference path without downloading the complete ZTF archive.
+Run the released v1.0.1 production inference path without downloading the complete ZTF archive.
 
 ## 1. Create an environment
 
@@ -88,7 +90,7 @@ For a reproducible analysis, retain:
 - output artifact;
 - relevant provenance/evidence manifests.
 
-The immutable scientific baseline is v0.2.0 and the production model identity is baseline_v0.2. The software release is v1.0.0.
+The immutable scientific baseline is v0.2.0 and the production model identity is baseline_v0.2. The software release is v1.0.1.
 
 ## 7. Continue to the full workflows
 
