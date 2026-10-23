@@ -46,7 +46,7 @@
       "The first audit implementation incorrectly returned a non-blocking PASS_SCHEMA_AUDIT_WITH_FINDINGS despite object-ID leakage; a fail-closed regression fix is being added before considering this audit complete.",
       "CI workflow integration was re-inspected after the initial edit; the insertion was repaired and verified in commit 2fd2820d997289e31a3dca48e3b4d6ccaad031ef to contain one acquisition step, one audit step, one artifact upload step, and one test-suite invocation.",
       "The new CI source-audit steps are guarded by changed-file detection and acquire StarEmbed independently of the CPVS archives.",
-      "Fail-closed StarEmbed audit regression and source-row provenance details are committed; CI rerun is pending.",
+      "Fail-closed StarEmbed audit regression and source-row provenance details are committed; CI rerun completed at run 39978376473.",
       "Added a dedicated regression test for duplicate SourceIDs within a single split, complementing the train/test overlap test; latest CI verification is pending.",
       "Inspected artifact star-embed-schema-audit-39928356790 (artifact ID 12490871770; 432,452,738 bytes; artifact digest SHA-256 41ac400c3e143e4f1311f09c4eb13107b299db92b9ec78ff1095a8a20335171d). All five Parquet artifacts were acquired and required top-level columns were present.",
       "Verified source counts in the latest artifact: train 29,047 rows / 29,046 unique SourceIDs with duplicate CSS_J164349.2+401208; test 8,301 unique IDs; train/test overlap CSS_J051729.2+083846; validation 4,150 unique IDs; anomaly 1,087 unique IDs. Periods and coordinates had zero invalid/out-of-range rows. Missing g/r/i bands are reported as quality counts, not treated as leakage.",
@@ -56,13 +56,17 @@
       "Reduced StarEmbed audit artifact retention from all acquired Parquet files (~432 MB per run) to the compact schema_audit.json report, which retains source file hashes, byte sizes, row counts, split overlap diagnostics, and the deterministic 50-object sample.",
       "Corrected CLI output to print validation_errors when the audit is blocked and added a regression test for the blocking diagnostic text; latest-head CI verification is pending.",
       "A follow-up source inspection found the within-split duplicate regression test asserted the obsolete report key split_summary while the audit emits splits; corrected the assertion to match the actual report contract. This test correction and the preceding workflow/CLI changes require fresh CI verification.",
-      "Added compact per-band array SHA-256 fingerprints and lengths for each implicated duplicate/overlapping source row, without including raw light-curve arrays in the report; added a regression test where one duplicated record differs in g-band target values. Commit c7963c22fec094480f493db2b36f5430cd72130b; current-head CI verification pending."
+      "Added compact per-band array SHA-256 fingerprints and lengths for each implicated duplicate/overlapping source row, without including raw light-curve arrays in the report; added a regression test where one duplicated record differs in g-band target values. Commit c7963c22fec094480f493db2b36f5430cd72130b.",
+      "Verified latest CI run 39978376473 at head eabf4465088fe85c6c82c7daa1ad9e364ead41cd: Format Check, Lint, Cumulative Lifecycle Gate, and CodeQL passed; pytest completed with 591 passed, 4 skipped, 7 warnings; coverage was 82%. The earlier fixture-aliasing test failure is resolved by isolating g/r fixture arrays with copy.deepcopy.",
+      "The source-audit gate correctly remains BLOCKED. Artifact star-embed-schema-audit-39978376473 (artifact ID 12512323248; compact JSON archive SHA-256 63971c24c7258d4934c7626ab5e568a626d8af7bff49b1f02b0fe6263eb1af14) confirms train has 29,047 rows/29,046 unique IDs; CSS_J164349.2+401208 is duplicated within train with identical g/r/i array hashes, period, coordinates and class. CSS_J051729.2+083846 appears in train and test with identical g/r array hashes, period, coordinates and class, confirming object-level split leakage in this snapshot.",
+      "Source schema and array-quality checks pass; the explicit audit gate fails only for duplicate_sourceids_within_split:train:1 and object_id_overlap_between_splits:train__test:1. Runtime Smoke Tests, Dependency Audit, and Build & Verify Package remain skipped because the fail-closed CI gate is blocked. Do not weaken the gate or merge this PR.",
+      "The matching fingerprints establish identical row content for these implicated records in the current acquired split artifacts, but do not establish when the duplicate/overlap entered the upstream dataset. Next: inspect the pre-split dataset revision and trace source IDs before attributing root cause to the upstream split procedure."
     ]
   },
   "validation": {
     "scientific_gate_affected": true,
     "status": "BLOCKED",
-    "blocker": "Latest real-data StarEmbed audit still blocks on one duplicate-within-train SourceID and one train/test overlap. A targeted compact diagnostic now reports per-band field lengths and SHA-256 fingerprints for each implicated row, enabling exact row comparison without retaining raw arrays in the artifact. Fresh CI and source-artifact diagnostics are pending. CPVS 11,602 extra candidates remain unresolved; raw StarEmbed-to-model inference remains unimplemented.",
+    "blocker": "Latest real-data StarEmbed audit still blocks on one duplicate-within-train SourceID and one train/test overlap. A targeted compact diagnostic now reports per-band field lengths and SHA-256 fingerprints for each implicated row, enabling exact row comparison without retaining raw arrays in the artifact. Latest CI and source-artifact diagnostics completed: pytest passed 591 tests (4 skipped); the source audit still blocks on the duplicate and train/test overlap. Per-band hashes show the duplicate train rows and cross-split object have matching arrays in the current split artifacts; pre-split provenance remains unverified. CPVS 11,602 extra candidates remain unresolved; raw StarEmbed-to-model inference remains unimplemented.",
     "evidence": [
       "https://github.com/saeed92m/ztf-classifier/actions/runs/39921499634",
       "https://github.com/saeed92m/ztf-classifier/pull/211",
@@ -95,6 +99,7 @@
     "status": "BLOCKED",
     "open_blockers": [
       "Verify lifecycle contract, within-split duplicate regression, cross-split overlap regression, and full CI in the latest run",
+      "Trace the two flagged SourceIDs to the pre-split StarEmbed dataset revision; current split-artifact hashes confirm identical curve arrays but do not identify when duplication/leakage entered the dataset.",
       "Review the source-artifact/class/period/coordinates for the two discrepant object IDs and decide whether the dataset can be used without a documented quarantine/split correction",
       "Implement and independently validate raw-light-curve inference before performance claims",
       "CPVS 11,602 extra candidates remain unresolved",
