@@ -5,7 +5,10 @@ import json
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from ztf_classifier.validation.star_embed_audit import ARTIFACTS, audit_star_embed_dataset
+from ztf_classifier.validation.star_embed_audit import (
+    ARTIFACTS,
+    audit_star_embed_dataset,
+)
 
 
 def _row(sourceid: str, class_str: str = "EW") -> dict:
