@@ -1,5 +1,7 @@
 # Source-backed Scientific Validation Adapters
 
+> Scope distinction (reviewed 2026-10-23): this file describes adapters/evidence used by scientific validation gates; it is not a complete inventory of user-import formats or a claim that every listed external source has run successfully. General-purpose ingestion and multi-survey support require separate source adapters, pinned fixtures, explicit schema/time/unit/passband semantics, provenance and compatibility checks. See [Project Charter](PROJECT_CHARTER_AND_SOURCE_OF_TRUTH.md), [Current Handbook](HANDBOOK_CURRENT.md), [Glossary](PROJECT_GLOSSARY.md), and [PR #212](https://github.com/saeed92m/ztf-classifier/pull/212). Open PRs and skipped source-backed jobs are not validation evidence.
+
 The permanent scientific-validation gate uses five external evidence sources. The
 repository stores the **source contract**, not mutable external benchmark data.
 
