@@ -89,3 +89,61 @@ No milestone is complete based on code presence alone. Completion requires measu
 ## Evidence update — 2026-10-11
 
 A deeper source-schema review found that the previous audit mapped published ZTF names to parent row ordinals instead of the explicit CPVS Table2 `Seq` field (bytes 24–29), while lightcurve `SourceID` joins by `Seq`. Thus the 725,101 / 16,686 / 5,083 values from heavy run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are invalid and superseded. PR [#176](https://github.com/saeed92m/ztf-classifier/pull/176) now reads actual Seq IDs for the derived candidate universe and published-name join. The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) has completed: 741,786 candidates; 730,184 intersection; 11,602 candidate-only; 0 published-only; 0 duplicate and 0 unmapped published names. This is a valid identifier-space comparison, but exact CPVS reproduction remains **UNRESOLVED** because 11,602 candidates remain unexplained. The flag-zero variant yields 736,225 candidates / 724,712 intersection / 5,472 published-only; a magnitude 20.6 diagnostic loses 18,865 published objects. Neither is an acceptable fix. Current-head CI must pass and the residual selection semantics must be resolved or documented from evidence; do not tune thresholds to force cardinality equality. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true.
+
+
+## Track C1 — General-purpose light-curve ingestion and cross-survey validation
+
+**Status: NOT IMPLEMENTED / acceptance blocker.** The platform must not assume that every astronomer will provide CPVS or even ZTF data. CPVS is one historical reproduction benchmark, not the product's only input domain. This track is independent of Issue #170 and must proceed regardless of author response.
+
+### Product contract
+
+1. Accept user-selected light-curve tables through an explicit schema-mapping step; never infer that arbitrary column names or units are interchangeable.
+2. Normalize supported inputs into a versioned, survey-neutral observation contract: object identifier, observation time and time scale, passband, measurement type (magnitude or flux), value, uncertainty, quality/mask flags, and optional coordinates. Preserve original columns and values.
+3. Keep survey-specific metadata and units explicit. Convert units only with a documented, tested transformation; never silently treat magnitude as flux, mix AB/Vega systems, or assume all timestamps share a time scale.
+4. Separate **ingestion validity**, **feature computability**, **model compatibility**, and **scientific validity**. A file can import successfully while remaining ineligible for the frozen ZTF model.
+5. The v0.2.0 / v1.0.1 ZTF model, its 42-feature schema, class order, calibration, cutoff, and acceptance gates remain unchanged. Unsupported inputs must return actionable diagnostics, not a fabricated prediction.
+6. Every run emits a machine-readable report: input hashes, source/survey declaration, mapped schema and units, row/object counts, duplicate and missingness statistics, quality-filter counts, time/band coverage, conversion log, feature availability, model-compatibility decision, warnings, and reason-coded failures.
+
+### Initial public-data validation matrix
+
+These are candidate external validation sources, not claims that adapters already exist or that their labels are interchangeable. Each dataset must be pinned by release/version, license/terms, retrieval date, and checksums before use.
+
+| Dataset family | Representative source | What it tests | Initial acceptance lane |
+|---|---|---|---|
+| ZTF periodic variables | CPVS parent + published Table 4 | Existing baseline, identifier joins, historical reproducibility | Historical membership and derivation tests; CPVS blocker remains separate |
+| ZTF survey data | Official IRSA ZTF DR24 | Raw/public-source ingestion and large tabular schemas | Source adapter + time/band/quality/provenance checks |
+| ZTF labeled light curves | StarEmbed ZTF_40k | Split integrity, duplicates, missingness, raw-array handling | Independent dataset audit; no automatic claim of independent ground truth |
+| TESS transients | TESS Transients (MAST/MIT) | Text time-series schema, transients, uneven coverage and quality caveats | Import/normalization first; classification only with compatible labels/features |
+| TESS extracted light curves | MAST TESS products / TGLC | FITS tables, sector/cadence metadata, flux units and time conventions | FITS adapter and unit/time-scale checks |
+| OGLE variable stars | OGLE Collection of Variable Stars | Long baselines, different passbands, catalog labels and text formats | Survey adapter and label-taxonomy mapping audit |
+| AAVSO observations | AAVSO International Database | Heterogeneous contributors, visual/CCD observations, mixed quality and passbands | Import and quality/provenance diagnostics; not direct ZTF-model inference |
+| ATLAS | Public ATLAS light-curve products / cross-survey retrieval | Different passbands, photometric conventions and cadence | Adapter only after official schema/license review |
+| ASAS-SN | Public variable-star/light-curve products | Broad cadence, survey-specific bands and quality flags | Adapter and missingness/cadence stress tests |
+| Gaia variability | Gaia DR3 variability products | Catalog-level variability features vs point-level photometry | Separate catalog-feature lane; do not pretend it is a raw light curve |
+| PLAsTiCC / ELAsTiCC | Public transient benchmark datasets | Simulated-domain shifts, class imbalance and out-of-domain behavior | Benchmark-only lane with simulation/domain labels explicit |
+
+### Required test ladder — per source and per supported input mode
+
+- **L0 — Readability:** valid/invalid files, supported encodings and formats, empty inputs, malformed rows, duplicate headers, oversized files, and clear error messages.
+- **L1 — Schema mapping:** renamed columns, reordered columns, extra columns, missing required fields, ambiguous identifier/time/value fields, and user-confirmed mappings.
+- **L2 — Scientific semantics:** magnitude versus flux, uncertainty units, passband mapping, time scale (UTC/BJD/TDB where applicable), sentinel values, non-finite values, upper limits, quality flags, duplicate observations, and unsorted timestamps.
+- **L3 — Normalization invariants:** deterministic normalized output, unchanged source values retained, row-count accounting, stable object grouping, and reproducible content hashes.
+- **L4 — Feature compatibility:** feature-by-feature availability and missingness; no silent imputation or schema coercion; compare feature output against hand-checked fixtures.
+- **L5 — Model compatibility:** only run a model if its declared input schema, units, passbands, training domain, and preprocessing match. Otherwise return `unsupported_model_domain` or an explicit review-required status.
+- **L6 — Scientific evaluation:** use independently sourced labels where available, object-disjoint and time-aware splits, per-class precision/recall/F1, confusion matrix, calibration, abstention/coverage, OOD behavior, and failure-case review. Report metrics per dataset and never pool incomparable taxonomies.
+- **L7 — Reproducibility/regression:** repeat runs and verify identical normalized hashes/features; record source versions, transformations, dependencies, manifests and results.
+
+### Minimum release gate for a new survey adapter
+
+A source is **supported for import** only after L0–L3 pass. It is **supported for feature analysis** only after L4 passes. It is **supported for prediction** only after L5 passes. It is **scientifically validated for a stated task/domain** only after L6–L7 pass. The UI/CLI/API must display these as distinct statuses and never collapse them into a single green check.
+
+### Execution order
+
+1. Audit and test the existing local CSV/Parquet ingestion boundary against the L0/L1/L3 adversarial fixture matrix.
+2. Define a versioned canonical observation schema and explicit mapping/conversion report; add golden fixtures with known magnitude, flux, band, and time-scale cases.
+3. Implement one additional real source adapter at a time, beginning with TESS Transients text tables and one MAST FITS product because their input representations and cadence/metadata differ from ZTF. Keep acquisition bounded to small, public, pinned samples.
+4. Add OGLE and AAVSO as independent format/quality stress tests; add ATLAS/ASAS-SN/Gaia only after source schema and usage terms are verified.
+5. Run the same test ladder for every adapter in CI. Keep source-download tests separately marked and hash-pinned so ordinary CI does not depend on live endpoints.
+6. Publish a dataset-by-dataset capability table with evidence links, unsupported cases, and metrics. Do not claim universal compatibility from successful file import.
+
+**Scientific boundary:** one universal ingestion interface is achievable; one universal feature vector or classifier is not assumed. Different surveys have different passbands, calibrations, cadence, time conventions, noise, and label taxonomies. Cross-survey predictions require explicit transformations and independent validation; otherwise the correct behavior is import/analyze with limitations or abstain, not silently classify.
