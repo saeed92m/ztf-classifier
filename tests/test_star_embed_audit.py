@@ -76,6 +76,29 @@ def test_star_embed_audit_blocks_duplicate_object_across_splits(tmp_path) -> Non
     assert all(item["source_artifact"] for item in details)
 
 
+def test_star_embed_audit_blocks_duplicate_object_within_split(tmp_path) -> None:
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    rows_by_file = {
+        ARTIFACTS[0]: [_row("duplicate-train"), _row("duplicate-train")],
+        ARTIFACTS[1]: [_row("train-other")],
+        ARTIFACTS[2]: [_row("validation-only")],
+        ARTIFACTS[3]: [_row("test-only")],
+        ARTIFACTS[4]: [_row("anom-only", "Beta_Lyrae")],
+    }
+    for filename, rows in rows_by_file.items():
+        pq.write_table(pa.Table.from_pylist(rows), data_dir / filename)
+
+    report = audit_star_embed_dataset(data_dir, tmp_path / "report.json")
+
+    assert report["status"] == "BLOCKED"
+    assert report["split_summary"]["train"]["duplicate_sourceid_count"] == 1
+    assert "duplicate_sourceids_within_split:train:1" in report["validation_errors"]
+    details = [item for item in report["object_id_issue_details"] if item["issue"] == "duplicate_within_split"]
+    assert len(details) == 2
+    assert {item["source_artifact"] for item in details} == {ARTIFACTS[0]}
+
+
 def test_star_embed_audit_fails_closed_when_artifact_is_missing(tmp_path) -> None:
     report = audit_star_embed_dataset(tmp_path, tmp_path / "report.json")
     assert report["status"] == "BLOCKED"
