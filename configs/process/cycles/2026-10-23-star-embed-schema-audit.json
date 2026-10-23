@@ -51,13 +51,16 @@
       "Inspected artifact star-embed-schema-audit-39928356790 (artifact ID 12490871770; 432,452,738 bytes; artifact digest SHA-256 41ac400c3e143e4f1311f09c4eb13107b299db92b9ec78ff1095a8a20335171d). All five Parquet artifacts were acquired and required top-level columns were present.",
       "Verified source counts in the latest artifact: train 29,047 rows / 29,046 unique SourceIDs with duplicate CSS_J164349.2+401208; test 8,301 unique IDs; train/test overlap CSS_J051729.2+083846; validation 4,150 unique IDs; anomaly 1,087 unique IDs. Periods and coordinates had zero invalid/out-of-range rows. Missing g/r/i bands are reported as quality counts, not treated as leakage.",
       "Run 39928356790 failed the Test Suite job at the fail-closed raw audit step, so pytest was skipped. Format Check, Lint, and Cumulative Lifecycle Gate passed; CodeQL, Scientific Validation contract, and Product Scope Audit workflows completed successfully. Four source-backed scientific jobs remained skipped by workflow conditions.",
-      "Workflow correction committed as 6752210a8a7521f85d39ba30a4498fa023721a01: audit outcome is retained and still blocks the job, but test execution/report upload now precedes explicit audit-gate failure."
+      "Workflow correction committed as 6752210a8a7521f85d39ba30a4498fa023721a01: audit outcome is retained and still blocks the job, but test execution/report upload now precedes explicit audit-gate failure.",
+      "Follow-up review of run 39928356790 showed the workflow's continue-on-error audit step still prevented the pytest step from running because its default success() condition evaluated false; test execution now explicitly uses always() while requiring successful dependency installation and pip check.",
+      "Reduced StarEmbed audit artifact retention from all acquired Parquet files (~432 MB per run) to the compact schema_audit.json report, which retains source file hashes, byte sizes, row counts, split overlap diagnostics, and the deterministic 50-object sample.",
+      "Corrected CLI output to print validation_errors when the audit is blocked and added a regression test for the blocking diagnostic text; latest-head CI verification is pending."
     ]
   },
   "validation": {
     "scientific_gate_affected": true,
     "status": "BLOCKED",
-    "blocker": "Latest real-data StarEmbed audit correctly blocks on one duplicate-within-train SourceID and one train/test overlap. Workflow sequencing has been corrected so regression tests can run despite this known scientific blocker; the correction's CI run is pending. Raw StarEmbed-to-model inference remains unimplemented.",
+    "blocker": "Latest real-data StarEmbed audit correctly blocks on one duplicate-within-train SourceID and one train/test overlap. CI sequencing, compact evidence upload, and CLI diagnostic changes are committed but require current-head verification. Raw StarEmbed-to-model inference remains unimplemented.",
     "evidence": [
       "https://github.com/saeed92m/ztf-classifier/actions/runs/39921499634",
       "https://github.com/saeed92m/ztf-classifier/pull/211",
@@ -71,10 +74,12 @@
       "Ruff RUF046 flagged redundant int casts in the new audit module",
       "Ruff I001 flagged import ordering in the new test module",
       "The first programmatic CI workflow edit placed part of the inserted shell block incorrectly; a subsequent full-file reconstruction from the main-branch workflow corrected the placement.",
-      "The fail-closed source audit returned exit code 2 for confirmed object-ID integrity findings, and because the step was not continue-on-error the pytest step was skipped; this was a CI sequencing defect, not a reason to weaken the scientific gate."
+      "The fail-closed source audit returned exit code 2 for confirmed object-ID integrity findings, and because the step was not continue-on-error the pytest step was skipped; this was a CI sequencing defect, not a reason to weaken the scientific gate.",
+      "The default success() condition on the pytest step still skipped tests after a continue-on-error source audit step returned a failing outcome; explicit always() with successful dependency-install guards is now used.",
+      "The previous evidence upload included all five raw Parquet artifacts, creating a ~432 MB artifact per run; upload now targets only the compact audit JSON."
     ],
     "impact": "The source audit correctly blocked the Test Suite job for real-data integrity findings, but pytest and its report upload were skipped in the same run. The follow-up workflow change is intended to run tests and preserve an explicit failing audit gate.",
-    "correction": "Added an ID to the source audit step, set continue-on-error so the job proceeds to tests/artifact upload, and added a final explicit gate that fails if the audit step outcome is failure. The audit's BLOCKED status and exit behavior are unchanged. Verify the follow-up CI run before claiming the sequencing fix works."
+    "correction": "Keep the StarEmbed audit BLOCKED and fail the job explicitly after tests. Run pytest despite a blocked audit only when dependency installation and pip check succeeded; upload only schema_audit.json with source hashes and diagnostics. Verify latest-head CI and inspect the new artifact before claiming completion."
   },
   "knowledge_extraction": {
     "status": "VERIFIED",
