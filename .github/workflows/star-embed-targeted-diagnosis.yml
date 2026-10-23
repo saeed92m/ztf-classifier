@@ -59,18 +59,19 @@ jobs:
 
       - name: 1b) List artifact contents & small JSONs (low-volume)
         run: |
-          set -euo pipefail
+          set +e
           echo "=== Artifact path ==="
           ls -R /tmp/star-embed-artifact 2>&1 | head -n 120 || echo "no artifact downloaded"
-          du -sh /tmp/star-embed-artifact 2>&1 | head
+          du -sh /tmp/star-embed-artifact 2>&1 | head || true
           echo "=== Small JSONs only ==="
           find /tmp/star-embed-artifact -type f -name "*.json" -exec ls -lh {} \; 2>&1 | head -n 40 || true
           for f in $(find /tmp/star-embed-artifact -type f \( -name "independent_dataset_report.json" -o -name "data.acquisition.json" \) 2>/dev/null | head -5); do
             echo "--- $f ($(wc -c < "$f") bytes) ---"
-            cat "$f" | head -n 300
-            echo "SHA256: $(sha256sum "$f" | cut -d' ' -f1)"
+            cat "$f" 2>&1 | head -n 300 || true
+            echo "SHA256: $(sha256sum "$f" 2>&1 | cut -d' ' -f1 || echo n/a)"
             echo ""
           done
+          echo "Step 1b done (continue regardless)"
 
       - name: Setup Python (locked)
         run: |
