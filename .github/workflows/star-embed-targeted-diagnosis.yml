@@ -24,6 +24,8 @@ on:
 permissions:
   contents: read
   actions: read
+  pull-requests: write
+  issues: write
 
 jobs:
   diagnose:
@@ -293,10 +295,10 @@ jobs:
                           print(f"    {k}: type={type(v)} len={len(v) if hasattr(v,'__len__') else 'n/a'} preview={str(v)[:120]}")
 
           # Write report for artifact
-              out_path = pathlib.Path("/tmp/star-embed-diagnosis-report.json")
-              json.dump(report, open(out_path,"w"), indent=2, ensure_ascii=False)
-              print(f"\nWrote {out_path} ({out_path.stat().st_size} bytes)")
-              print(open(out_path).read()[:8000])
+          out_path = pathlib.Path("/tmp/star-embed-diagnosis-report.json")
+          json.dump(report, open(out_path,"w"), indent=2, ensure_ascii=False)
+          print(f"\nWrote {out_path} ({out_path.stat().st_size} bytes)")
+          print(open(out_path).read()[:8000])
           except Exception as e:
               print(f"ERROR in diagnosis: {e}")
               traceback.print_exc()
@@ -329,6 +331,64 @@ jobs:
           echo "DOI: 10.48550/arXiv.2510.06200"
           echo "Grain must be verified from README/paper: is row = object or observation/lightcurve row?"
 
+      - name: Publish evidence to step summary (no blob needed)
+        if: always()
+        run: |
+          set +e
+          echo "## StarEmbed Diagnosis Evidence (no validator change)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run:** ${{ github.run_id }}  **SHA:** ${{ github.sha }}  **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/star-embed-diagnosis-report.json 2>&1 | head -n 500 >> $GITHUB_STEP_SUMMARY || echo "no report" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Download manifest" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/download_manifest.json 2>&1 | head -n 200 >> $GITHUB_STEP_SUMMARY || echo "no manifest" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "Summary written"
+
+      - name: Post evidence as PR comment (api.github.com — whitelisted)
+        if: always()
+        run: |
+          set +e
+          REPORT=$(cat /tmp/star-embed-diagnosis-report.json 2>&1 | head -c 60000)
+          MANIFEST=$(cat /tmp/download_manifest.json 2>&1 | head -c 20000)
+          REVISION=$(cat /tmp/effective_revision.txt 2>&1)
+          # Build comment body — truncate to stay under 65536 limit
+          cat > /tmp/comment_body.md <<EOF
+          ### StarEmbed Targeted Diagnosis — \`${{ github.sha }}\` (run \${{ github.run_id }})
+          Evidence-only workflow, **no validator/baseline change**, no merge.
+
+          **Effective revision:** \`$REVISION\`
+          **PR #212:** Draft preserved, baseline v0.2.0 unchanged.
+
+          <details><summary>Diagnosis report (counts / nulls / duplicates / overlap)</summary>
+
+          \`\`\`json
+          $REPORT
+          \`\`\`
+
+          </details>
+
+          <details><summary>Download manifest (URL / time / size / SHA-256)</summary>
+
+          \`\`\`json
+          $MANIFEST
+          \`\`\`
+
+          </details>
+
+          Full JSON also uploaded as artifact \`star-embed-diagnosis-report\` (14d).
+          EOF
+          # Post to PR #212 if it exists
+          gh pr view 212 --json number 2>&1 | grep -q '"number": 212' && \
+            gh pr comment 212 --body-file /tmp/comment_body.md 2>&1 | head -20 || echo "PR comment skipped or failed (may need permissions)"
+          echo "Comment step done"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload small diagnosis evidence only (no raw parquet)
         if: always()
         uses: actions/upload-artifact@v6
@@ -338,6 +398,7 @@ jobs:
             /tmp/star-embed-diagnosis-report.json
             /tmp/download_manifest.json
             /tmp/effective_revision.txt
+            /tmp/step4.log
             /tmp/star-embed-artifact/**/independent_dataset_report.json
             /tmp/star-embed-artifact/**/data.acquisition.json
           if-no-files-found: warn
