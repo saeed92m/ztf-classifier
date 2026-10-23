@@ -48,10 +48,10 @@ def audit_event_catalog(
         "file_bytes": len(raw),
         "sha256": hashlib.sha256(raw).hexdigest(),
         "columns": frame.columns.tolist(),
-        "event_rows": int(len(frame)),
-        "unique_object_ids": int(len(multiplicity)),
-        "objects_with_multiple_events": int(len(repeated)),
-        "additional_event_rows_beyond_one_per_object": int(len(frame) - len(multiplicity)),
+        "event_rows": len(frame),
+        "unique_object_ids": len(multiplicity),
+        "objects_with_multiple_events": len(repeated),
+        "additional_event_rows_beyond_one_per_object": len(frame) - len(multiplicity),
         "event_multiplicity_counts": {
             str(k): int(v) for k, v in sorted(Counter(repeated.values()).items())
         },
