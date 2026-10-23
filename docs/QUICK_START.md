@@ -14,7 +14,7 @@ Python 3.11 is required.
 python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install ztf-classifier==1.0.0
+python -m pip install ztf-classifier==1.0.1
 ```
 
 Verify the installation:
