@@ -21,6 +21,14 @@
 | [Data card](DATA_CARD.md) | Dataset lineage, scope and limitations | Pin source version and hashes |
 | [Production acceptance checklist](PRODUCTION_ACCEPTANCE_CHECKLIST.md) | Release gates | Fail-closed |
 
+## User-facing and product architecture references
+
+- [Current User Guide](USER_GUIDE.md) — workflow, inference and result interpretation.
+- [Installation](INSTALLATION.md) — published package setup; not the future self-contained desktop installer.
+- [Troubleshooting](TROUBLESHOOTING.md) — recovery steps and current scientific blocker notice.
+- [v1 Product Architecture Index](architecture/V1_PRODUCT_ARCHITECTURE.md) — system boundaries and user workflows.
+- [Ecosystem Review & Product Expansion Record](ECOSYSTEM_REVIEW_PRODUCT_EXPANSION_2026-10-08.md) — historical design input linked to current governing docs.
+
 ## Architecture and developer references
 
 - `docs/architecture/APPLICATION_CORE_BOUNDARY.md` — application/scientific-core separation.
