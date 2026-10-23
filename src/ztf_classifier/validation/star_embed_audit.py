@@ -127,7 +127,7 @@ def audit_star_embed_dataset(
         )
         class_counts = {str(k): int(v) for k, v in frame["class_str"].astype(str).value_counts().sort_index().items()}
         split_reports[split] = {
-            "rows": int(len(frame)),
+            "rows": len(frame),
             "unique_sourceids": int(ids.nunique()),
             "duplicate_sourceid_count": len(duplicate_ids),
             "duplicate_sourceids_sample": duplicate_ids[:20],
