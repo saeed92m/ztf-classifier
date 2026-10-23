@@ -5,8 +5,9 @@ operations require a separate, named, tested transformation.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal, Mapping
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -59,9 +60,11 @@ class LightCurveColumnMap:
             columns.append(self.quality_flag)
         if len(columns) != len(set(columns)):
             raise ApplicationInputError("Each mapped source field must use a distinct column.")
-        if self.band_map is not None:
-            if any(not str(k).strip() or not str(v).strip() for k, v in self.band_map.items()):
-                raise ApplicationInputError("band_map keys and values must be non-empty.")
+        if self.band_map is not None and any(
+            not str(k).strip() or not str(v).strip()
+            for k, v in self.band_map.items()
+        ):
+            raise ApplicationInputError("band_map keys and values must be non-empty.")
 
 
 @dataclass(frozen=True)
@@ -160,8 +163,8 @@ def normalize_lightcurve_table(
         for column in ("time_value", "value", "uncertainty")
     }
     diagnostics = {
-        "input_rows": int(len(data)),
-        "output_rows": int(len(observations)),
+        "input_rows": len(data),
+        "output_rows": len(observations),
         "unique_objects": int(observations["object_id"].nunique()),
         "bands": sorted(observations["band"].astype(str).unique().tolist()),
         "nonfinite_numeric_values": nonfinite,
