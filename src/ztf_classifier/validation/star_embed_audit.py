@@ -85,6 +85,7 @@ def audit_star_embed_dataset(
         missing = sorted(TOP_LEVEL_COLUMNS - set(frame.columns))
         if missing:
             errors.append(f"missing_columns:{filename}:{','.join(missing)}")
+        frame["_source_artifact"] = filename
         split = "train" if filename.startswith("train-") else filename.split("-")[0]
         split_frames[split].append(frame)
         artifact_reports.append(
@@ -147,16 +148,48 @@ def audit_star_embed_dataset(
             }
 
     leakage_findings: list[str] = []
+    object_id_issue_details: list[dict[str, Any]] = []
+    detail_columns = ["sourceid", "class_str", "period", "ra", "dec", "_source_artifact"]
     for split, split_report in split_reports.items():
         duplicate_count = int(split_report["duplicate_sourceid_count"])
         if duplicate_count:
             leakage_findings.append(
                 f"duplicate_sourceids_within_split:{split}:{duplicate_count}"
             )
+            frame = combined[split]
+            duplicate_ids = set(split_report["duplicate_sourceids_sample"])
+            details = frame.loc[frame["sourceid"].astype(str).isin(duplicate_ids), detail_columns]
+            for row in details.to_dict("records"):
+                object_id_issue_details.append({
+                    "issue": "duplicate_within_split",
+                    "split": split,
+                    "sourceid": str(row["sourceid"]),
+                    "class_str": str(row["class_str"]),
+                    "period": float(row["period"]) if _finite_number(row["period"]) else None,
+                    "ra": float(row["ra"]) if _finite_number(row["ra"]) else None,
+                    "dec": float(row["dec"]) if _finite_number(row["dec"]) else None,
+                    "source_artifact": str(row["_source_artifact"]),
+                })
     for pair, overlap_report in overlap_reports.items():
         overlap_count = int(overlap_report["overlap_count"])
         if overlap_count:
             leakage_findings.append(f"object_id_overlap_between_splits:{pair}:{overlap_count}")
+            left, right = pair.split("__", maxsplit=1)
+            overlapping_ids = set(overlap_report["overlap_sourceids_sample"])
+            for split in (left, right):
+                frame = combined[split]
+                details = frame.loc[frame["sourceid"].astype(str).isin(overlapping_ids), detail_columns]
+                for row in details.to_dict("records"):
+                    object_id_issue_details.append({
+                        "issue": "cross_split_overlap",
+                        "split": split,
+                        "sourceid": str(row["sourceid"]),
+                        "class_str": str(row["class_str"]),
+                        "period": float(row["period"]) if _finite_number(row["period"]) else None,
+                        "ra": float(row["ra"]) if _finite_number(row["ra"]) else None,
+                        "dec": float(row["dec"]) if _finite_number(row["dec"]) else None,
+                        "source_artifact": str(row["_source_artifact"]),
+                    })
 
     array_report = Counter()
     array_examples: list[dict[str, Any]] = []
@@ -236,6 +269,7 @@ def audit_star_embed_dataset(
         "benchmark_id": "star_embed_ztf_40k",
         "status": "BLOCKED" if errors or leakage_findings else "PASS_SCHEMA_AUDIT_WITH_FINDINGS",
         "validation_errors": leakage_findings,
+        "object_id_issue_details": object_id_issue_details,
         "interpretation": "Schema and data-quality audit only; no model predictions or scientific classification performance are evaluated.",
         "seed": seed,
         "artifacts": artifact_reports,
