@@ -123,3 +123,21 @@ Supported conclusion: local tabular files can be imported generically, while the
 A follow-up read-only audit of `configs/benchmarks/star_embed_ztf_40k.json`, `src/ztf_classifier/validation/adapters.py`, `src/ztf_classifier/validation/acquisition.py`, `src/ztf_classifier/validation/runner.py`, `src/ztf_classifier/validation/__main__.py`, and `.github/workflows/scientific-validation.yml` found that the existing adapter can acquire the five Parquet source artifacts and resolve/record a Hugging Face revision, but the benchmark runner evaluates an already-prepared prediction table. The runner requires `sourceid`, `class_str`, and `y_pred`; it does not generate predictions from raw StarEmbed light curves. The current heavy workflow acquires StarEmbed and then proceeds into large CPVS g/r archive acquisition/derivation; no StarEmbed raw-light-curve-to-model prediction step was found in the inspected workflow.
 
 Therefore the independent-dataset end-to-end evaluation is **BLOCKED pending an explicit prediction-generation path**. Before running it, inspect actual StarEmbed Parquet schema, units, arrays, split semantics, and preprocessing; define a versioned adapter/feature mapping or separately compatible model; preserve train/validation/test and OOD split boundaries; generate a provenance-backed prediction table; and then run the benchmark evaluator. Do not force the frozen v0.2 42-feature model onto incompatible raw inputs or train on the held-out test sample. A targeted StarEmbed workflow should be separated from large CPVS downloads to avoid unnecessary transfer/runtime. No heavy run was started in this audit.
+
+
+## Raw StarEmbed schema audit implementation — 2026-10-23
+
+A first executable diagnostic has now been added at `src/ztf_classifier/validation/star_embed_audit.py`, with focused tests in `tests/test_star_embed_audit.py`. Run it after acquiring the five pinned Parquet artifacts:
+
+```bash
+python -m ztf_classifier.validation.star_embed_audit \
+  --data-dir reports/scientific_validation/ztf_star_embed \
+  --output reports/scientific_validation/ztf_star_embed/schema_audit.json \
+  --sample-size 50 --seed 20261023
+```
+
+The report records each artifact's SHA-256, byte size, row count and columns; split-level counts, duplicate IDs, class counts, invalid period/coordinates; pairwise ID overlap; in-distribution/OOD class overlap; per-band array consistency findings; and a deterministic sample of IDs from the held-out test split. It fails closed if any required source artifact or top-level schema column is missing. It does **not** train, infer, score classification accuracy, or establish astrophysical validity.
+
+The public StarEmbed dataset card describes top-level columns `sourceid`, `bands_data`, `period`, `class_str`, `ra`, and `dec`; nested per-band fields `target`, `past_feat_dynamic_real`, `feat_dynamic_real`, `mjd`, and `length`; and train/validation/test plus an `anom` OOD split. The audit implements these as observed source-contract checks, not assumptions that every object has every band.
+
+**Current evidence boundary:** code and synthetic-fixture tests have been added to the draft PR branch; the real Parquet artifacts have not yet been acquired/audited in this step, and CI for the new head has not yet been observed. The independent inference/evaluation path remains blocked. Do not treat the presence of this audit tool as completion of the 50-object scientific evaluation.
