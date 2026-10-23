@@ -12,11 +12,11 @@
 - Repository is public, default branch `main`, and the connected account has admin/push permission.
 - GitHub release `v1.0.1` exists and is immutable; wheel and source archive assets are attached.
 - PR #187 (documentation ecosystem alignment) is still open and unmerged as of this check.
-- PR #212 (explicit multi-survey light-curve normalization contract) is open, draft, unmerged, based on `main@d88e54a2...`, head `51f323e8a6b8bf52b0eaf0fd2b0da2eaae0def79`.
-- PR #212 adds a normalization module, tests and a roadmap track. This is not evidence of real external survey adapter execution or scientific cross-survey model compatibility.
+- PR #212 (explicit multi-survey light-curve normalization contract and documentation control plane) is open, draft and unmerged, based on main. Read the live PR for the current head SHA; any SHA copied into a mirror is a dated snapshot.
+- PR #212 now proposes the normalization module/tests/roadmap track plus canonical product charter, current handbook, state register, glossary, documentation index, and README links. These changes are not merged. This is not evidence of real external survey adapter execution or scientific cross-survey model compatibility.
 - Repository metadata says Wiki is enabled; Pages are disabled (`has_pages=false`). Wiki write access has not been verified by this connection.
 - The connected Supabase account currently lists projects `company-platform-pilot` and `company-website`; neither is identified as a ZTF Classifier backend. No ZTF-specific Supabase schema/project has been verified. Do not modify either company database as part of this project.
-- The Notion Knowledge Base snapshot currently records HEAD `9ab910ddd04d2352e81f7c02c5715bcddf5944c6`, while main is `d88e54a2...`; its recorded snapshot is stale. The GitHub Snapshot Archive explicitly says its attached ZIP is old and should not be represented as a current backup.
+- The Notion Knowledge Base previously recorded HEAD `9ab910ddd04d2352e81f7c02c5715bcddf5944c6`, while main is `d88e54a2...`; a new dated Notion update now records this drift. The attached repository ZIP itself remains stale. The GitHub Snapshot Archive explicitly says its attached ZIP is old and should not be represented as a current backup.
 - Notion’s latest discovered Handbook v2.9 is dated 2026-10-16 and references PR #187; it predates the current multi-survey PR and requires an evidence-based update.
 
 ## Product scope
@@ -56,9 +56,9 @@ For every change:
 
 ## Immediate work sequence
 
-- [ ] Add and review canonical project charter and state register on the documentation branch.
-- [ ] Update README and roadmap to point to these governing documents and clearly separate product scope from shipped capabilities.
-- [ ] Update current handbook and documentation index in the same PR; preserve older handbook snapshots.
+- [x] Add canonical project charter, state register, current handbook, glossary and documentation index on the documentation branch; preserve historical handbook snapshots.
+- [x] Update README and roadmap to point to governing documents and distinguish product scope from shipped capabilities.
+- [x] Create a current Notion handbook snapshot and update the Knowledge Base, documentation index, README mirror, ecosystem action plan, and archive-validity notice.
 - [ ] Inspect PR #212 checks, fix concrete failures, add a pinned external-source fixture and run actual bounded ingestion tests before claiming cross-survey support.
 - [ ] Update Notion Knowledge Base, Handbook, Documentation Index and Snapshot Archive with the correct current main SHA and pending PR status; do not fabricate a fresh ZIP attachment.
 - [ ] Verify Wiki edit capability; if unavailable, record it as blocked and provide the canonical documentation link instead.
