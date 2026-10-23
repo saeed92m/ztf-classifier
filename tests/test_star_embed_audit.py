@@ -1,5 +1,6 @@
 """Tests for raw StarEmbed dataset schema and sample audit."""
 
+import copy
 import json
 
 import pyarrow as pa
@@ -22,7 +23,7 @@ def _row(sourceid: str, class_str: str = "EW") -> dict:
     }
     return {
         "sourceid": sourceid,
-        "bands_data": {"g": band, "r": band, "i": None},
+        "bands_data": {"g": copy.deepcopy(band), "r": copy.deepcopy(band), "i": None},
         "period": 0.5,
         "class_str": class_str,
         "ra": 120.0,
