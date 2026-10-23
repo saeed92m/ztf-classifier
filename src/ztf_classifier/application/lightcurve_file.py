@@ -6,8 +6,9 @@ column mappings, or perform scientific unit/time conversions.
 """
 from __future__ import annotations
 
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 
 from ztf_classifier.application.errors import ApplicationInputError
 from ztf_classifier.application.lightcurve_schema import (
