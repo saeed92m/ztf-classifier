@@ -60,7 +60,7 @@
       "Verified latest CI run 39978376473 at head eabf4465088fe85c6c82c7daa1ad9e364ead41cd: Format Check, Lint, Cumulative Lifecycle Gate, and CodeQL passed; pytest completed with 591 passed, 4 skipped, 7 warnings; coverage was 82%. The earlier fixture-aliasing test failure is resolved by isolating g/r fixture arrays with copy.deepcopy.",
       "The source-audit gate correctly remains BLOCKED. Artifact star-embed-schema-audit-39978376473 (artifact ID 12512323248; compact JSON archive SHA-256 63971c24c7258d4934c7626ab5e568a626d8af7bff49b1f02b0fe6263eb1af14) confirms train has 29,047 rows/29,046 unique IDs; CSS_J164349.2+401208 is duplicated within train with identical g/r/i array hashes, period, coordinates and class. CSS_J051729.2+083846 appears in train and test with identical g/r array hashes, period, coordinates and class, confirming object-level split leakage in this snapshot.",
       "Source schema and array-quality checks pass; the explicit audit gate fails only for duplicate_sourceids_within_split:train:1 and object_id_overlap_between_splits:train__test:1. Runtime Smoke Tests, Dependency Audit, and Build & Verify Package remain skipped because the fail-closed CI gate is blocked. Do not weaken the gate or merge this PR.",
-      "The matching fingerprints establish identical row content for these implicated records in the current acquired split artifacts, but do not establish when the duplicate/overlap entered the upstream dataset. Next: inspect the pre-split dataset revision and trace source IDs before attributing root cause to the upstream split procedure."
+      "Inspected upstream StarEmbed source at https://github.com/skai-institute/StarEmbed/blob/master/src/datasets/ZTF/build_split.py (blob SHA 89253d4079cc7242c887b1082d32367eed0d3932) and dataset guide https://github.com/skai-institute/StarEmbed/blob/master/src/datasets/ZTF/README.md (blob SHA a08fd43de6756c67e148947bed112fb772e4d4db). The builder loads hf_csdr1_raw4_catflags_filtered_with_labels_multiband, applies a one-to-one flattening map, then performs two row-wise Hugging Face train_test_split calls stratified by class with seed 42; it does not deduplicate or group by sourceid. This is a confirmed leakage mechanism if duplicate sourceids exist before splitting, but it does not prove whether the two observed records were duplicated in the pre-split dataset or elsewhere in the upstream pipeline. That provenance remains unresolved."
     ]
   },
   "validation": {
@@ -99,7 +99,7 @@
     "status": "BLOCKED",
     "open_blockers": [
       "Verify lifecycle contract, within-split duplicate regression, cross-split overlap regression, and full CI in the latest run",
-      "Trace the two flagged SourceIDs to the pre-split StarEmbed dataset revision; current split-artifact hashes confirm identical curve arrays but do not identify when duplication/leakage entered the dataset.",
+      "Trace the two flagged SourceIDs to the pre-split StarEmbed dataset revision; the inspected split builder uses row-wise stratified splitting without sourceid grouping/deduplication, but pre-split duplicate provenance is not yet verified.",
       "Review the source-artifact/class/period/coordinates for the two discrepant object IDs and decide whether the dataset can be used without a documented quarantine/split correction",
       "Implement and independently validate raw-light-curve inference before performance claims",
       "CPVS 11,602 extra candidates remain unresolved",
