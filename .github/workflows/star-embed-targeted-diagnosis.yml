@@ -105,6 +105,7 @@ jobs:
           print(f"object_id_column: {cfg.get('object_id_column')}")
           PY
           # Decide effective revision: input > config if concrete, otherwise main
+          # For resolve_at_acquisition we must call HF dataset API to get real commit SHA (see acquisition.py:_resolve_star_embed_urls)
           EFFECTIVE_REVISION="${{ inputs.dataset_revision }}"
           CONFIG_REV=$(python -c "import json; print(json.load(open('configs/benchmarks/star_embed_ztf_40k.json'))['input_contract']['revision'])")
           echo "Input revision: '$EFFECTIVE_REVISION'"
@@ -117,17 +118,49 @@ jobs:
             EFFECTIVE_REVISION="$CONFIG_REV"
             echo "Using config revision: $EFFECTIVE_REVISION"
           fi
+          # If still resolve_at_acquisition, resolve via HF API (canonical path from acquisition.py)
+          if [ "$EFFECTIVE_REVISION" = "resolve_at_acquisition" ] || [ "$EFFECTIVE_REVISION" = "main" ]; then
+            echo "Resolving revision via HF API https://huggingface.co/api/datasets/StarEmbed/ZTF_40k ..."
+            python <<'PYRESOLVE'
+          import requests, json
+          try:
+              r = requests.get("https://huggingface.co/api/datasets/StarEmbed/ZTF_40k", timeout=30, params=[("expand","sha"),("expand","siblings")])
+              r.raise_for_status()
+              payload = r.json()
+              rev = payload.get("sha")
+              print(f"HF API sha: {rev}")
+              # also list available files
+              sibs = [x.get("rfilename") for x in payload.get("siblings",[]) if isinstance(x, dict)]
+              for s in sibs:
+                  if "train-00001" in s or s.endswith(".parquet"):
+                      print(f"  sibling: {s}")
+              if rev and len(rev)==40:
+                  open("/tmp/resolved_revision.txt","w").write(rev)
+                  print(f"Resolved revision: {rev}")
+              else:
+                  print(f"HF did not return valid sha: {rev}")
+          except Exception as e:
+              print(f"HF API resolve failed: {e}")
+          PYRESOLVE
+            if [ -f /tmp/resolved_revision.txt ]; then
+              EFFECTIVE_REVISION=$(cat /tmp/resolved_revision.txt)
+              echo "Resolved via HF API to: $EFFECTIVE_REVISION"
+            else
+              echo "Could not resolve via API, keeping $EFFECTIVE_REVISION (will likely 401 if gated)"
+            fi
+          fi
           echo "EFFECTIVE_REVISION=$EFFECTIVE_REVISION" >> $GITHUB_ENV
-          # Expose for python step
           echo "$EFFECTIVE_REVISION" > /tmp/effective_revision.txt
           cat /tmp/effective_revision.txt
           echo "--- HF URL that will be used ---"
           python <<PY2
           from huggingface_hub import hf_hub_url
           rev = open("/tmp/effective_revision.txt").read().strip()
-          for fname in ["data/train-00001-of-00002.parquet", "data/train-00002-of-00002.parquet", "data/validation-00000-of-00001.parquet", "data/test-00000-of-00001.parquet"]:
+          for fname in ["data/train-00001-of-00002.parquet", "data/train-00002-of-00002.parquet", "data/validation-00000-of-00001.parquet", "data/test-00000-of-00001.parquet", "data/anom-00000-of-00001.parquet"]:
               print(hf_hub_url(repo_id="StarEmbed/ZTF_40k", filename=fname, revision=rev))
           PY2
+          echo "--- Check HF_TOKEN presence (for gated repo) ---"
+          if [ -n "${HF_TOKEN:-}" ]; then echo "HF_TOKEN is set (length ${#HF_TOKEN})"; else echo "HF_TOKEN not set — gated dataset will 401 without it"; fi
 
       - name: 3) Download train-00001 + siblings (if accessible) with SHA-256
         run: |
@@ -186,18 +219,31 @@ jobs:
           shard_dir = pathlib.Path("/tmp/star-embed-shards")
           shards = sorted(shard_dir.glob("*.parquet"))
           if not shards:
-              # fallback to HF cache
               import glob as g
               shards = [pathlib.Path(p) for p in g.glob(os.path.expanduser("~/.cache/huggingface/**/train-00001-of-00002.parquet"), recursive=True)]
+          manifest = json.load(open("/tmp/download_manifest.json")) if pathlib.Path("/tmp/download_manifest.json").exists() else {}
+          effective_rev = open("/tmp/effective_revision.txt").read().strip() if pathlib.Path("/tmp/effective_revision.txt").exists() else None
           if not shards:
-              print("No shards found — nothing to diagnose")
+              print("No shards found — dataset download failed (likely gated/private, see manifest 401).")
+              # Write minimal evidence so push step has something to commit
+              report = {"generated_utc": __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime()),
+                        "effective_revision": effective_rev,
+                        "manifest": manifest,
+                        "note": "No parquet shards downloaded — HF returned 401 for gated dataset StarEmbed/ZTF_40k without HF_TOKEN; see manifest.errors",
+                        "shards": {},
+                        "cross_shard_overlap": {"num_sourceids_in_multiple_shards": 0, "examples": {}},
+                        "status": "BLOCKED_GATED_DATASET"}
+              out = pathlib.Path("/tmp/star-embed-diagnosis-report.json")
+              json.dump(report, open(out,"w"), indent=2, ensure_ascii=False)
+              print(f"Wrote gated-status report to {out} ({out.stat().st_size} bytes)")
+              print(open(out).read()[:4000])
               raise SystemExit(0)
 
           print(f"Found shards: {[str(s) for s in shards]}")
 
-          manifest = json.load(open("/tmp/download_manifest.json")) if pathlib.Path("/tmp/download_manifest.json").exists() else {}
+          # manifest/effective_rev already loaded above for gated case; reuse
           report = {"generated_utc": __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime()),
-                    "effective_revision": open("/tmp/effective_revision.txt").read().strip() if pathlib.Path("/tmp/effective_revision.txt").exists() else None,
+                    "effective_revision": effective_rev,
                     "manifest": manifest,
                     "shards": {}}
           all_sourceids = {}
