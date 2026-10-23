@@ -150,21 +150,73 @@ jobs:
           cache: pip
 
       - name: Install locked dependencies
+        id: install_dependencies
         run: |
           python -m pip install --upgrade pip==26.2 setuptools==84.0.0 wheel==0.48.0
           python -m pip install -r requirements.lock
           python -m pip install -e . --no-deps
 
       - name: Verify installed dependencies
+        id: verify_dependencies
         run: python -m pip check
 
+      - name: Detect StarEmbed source-audit scope
+        id: star_embed_scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "${GITHUB_BASE_REF:-main}" --depth=1
+          if git diff --name-only "origin/${GITHUB_BASE_REF:-main}" HEAD | grep -Eq '^(src/ztf_classifier/validation/star_embed_audit\.py|tests/test_star_embed_audit\.py|configs/benchmarks/star_embed_ztf_40k\.json|src/ztf_classifier/validation/(acquisition|adapters|sources)\.py)$'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Acquire StarEmbed source artifacts (isolated from CPVS)
+        if: steps.star_embed_scope.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          root=reports/scientific_validation/ztf_star_embed
+          mkdir -p "$root"
+          python -m ztf_classifier.validation acquire \
+            --benchmark-id star_embed_ztf_40k \
+            --output "$root" \
+            --code-version "${GITHUB_SHA}"
+
+      - name: Run raw StarEmbed schema and quality audit
+        id: star_embed_audit
+        if: steps.star_embed_scope.outputs.changed == 'true'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          python -m ztf_classifier.validation.star_embed_audit \
+            --data-dir reports/scientific_validation/ztf_star_embed \
+            --output reports/scientific_validation/ztf_star_embed/schema_audit.json \
+            --sample-size 50 \
+            --seed 20261023
+
+      - name: Upload StarEmbed audit evidence
+        if: always() && steps.star_embed_scope.outputs.changed == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: star-embed-schema-audit-${{ github.run_id }}
+          path: reports/scientific_validation/ztf_star_embed/schema_audit.json
+          if-no-files-found: error
+
       - name: Run test suite with coverage
+        if: ${{ always() && steps.install_dependencies.outcome == 'success' && steps.verify_dependencies.outcome == 'success' }}
         run: |
           python -m pytest -q \
             --cov=ztf_classifier \
             --cov-report=term-missing \
             --cov-report=xml \
             --junitxml=pytest-report.xml
+
+      - name: Enforce StarEmbed source-audit gate
+        if: ${{ always() && steps.star_embed_scope.outputs.changed == 'true' && steps.star_embed_audit.outcome == 'failure' }}
+        run: |
+          echo "StarEmbed audit found blocking source-data integrity findings; inspect the uploaded schema audit artifact."
+          exit 1
 
       - name: Upload test and coverage reports
         if: ${{ always() }}

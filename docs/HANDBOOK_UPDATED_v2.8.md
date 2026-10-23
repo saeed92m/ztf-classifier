@@ -86,3 +86,21 @@ Issue [#158](https://github.com/saeed92m/ztf-classifier/issues/158) is the track
 The documentation update is under review in [PR #175](https://github.com/saeed92m/ztf-classifier/pull/175). It adds a canonical product roadmap, updates the scientific-validation roadmap and troubleshooting, links the handbook/roadmap from README, and records this stage in the cumulative lifecycle ledger.
 
 **Immutable constraints:** v1.0.1 remains unchanged; scientific baseline v0.2.0 remains frozen; scientific validation stays fail-closed; OOD is not represented as scientific anomaly detection.
+
+
+## Parallel validation and ecosystem audit — 2026-10-22
+The initial GitHub repository sample and evidence-based gap matrix are recorded in [ECOSYSTEM_GAP_AUDIT_INITIAL_2026-10-22.md](ECOSYSTEM_GAP_AUDIT_INITIAL_2026-10-22.md). It is an initial sample only; license, implementation, and maintenance checks remain open for several candidates.
+
+
+The product is not limited to the CPVS paper or any single catalog. The canonical execution plan is [PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md](roadmap/PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md). It establishes five isolated workstreams: core/general-input audit; independent dataset plus deterministic 50-object and schema/quality cases; a second paper/method; CPVS historical reconstruction; and systematic GitHub ecosystem review.
+
+### Operating rules
+- Parallel investigations are encouraged; concurrent edits to the same path are not. Use isolated branches and record the exact base commit.
+- Dataset selection, schema, identifiers, hashes, license/access terms, sample seed, commands, environment, and output artifacts must be recorded.
+- A 50-case run is diagnostic unless a separate statistical design supports broader claims. Execution success is not scientific correctness; compare outputs with independent known-answer calculations where possible.
+- Keep dataset-specific semantics in versioned adapters. CPVS selection rules must not become universal preprocessing requirements.
+- Preserve v0.2.0, the 42-feature contract, class order, model artifact, and fail-closed gates. Changes require explicit versioning, regression tests, and evidence.
+- CPVS exact membership remains UNRESOLVED; the 11,602 candidate-only objects must not be filtered away merely to match published cardinality.
+- Findings must be labeled FACT, VERIFIED, SUPPORTED, HYPOTHESIS, ASSUMPTION, UNRESOLVED, or REJECTED. Skipped evidence is not PASS.
+
+Current state: the plan is recorded; independent dataset/paper selection, 50-case outputs, and complete ecosystem gap analysis are not yet verified. Do not report those deliverables as complete until artifacts exist and have been inspected.

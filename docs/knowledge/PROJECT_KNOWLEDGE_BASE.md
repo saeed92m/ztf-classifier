@@ -52,3 +52,23 @@ Every implementation cycle consumes validated prior knowledge, records its inher
 2. Never tune a scientific selection predicate to reproduce a published row count.
 3. Never allow a reference-system prediction to satisfy an independent-ground-truth requirement.
 4. Every immutable external archive used for release validation must be hash-verified and provenance-recorded.
+
+
+## Generality and validation scope — 2026-10-22
+
+- CPVS is a claim-specific historical reproduction investigation, not the product definition. — VERIFIED
+- The local CSV/Parquet importer records input hashes and schema metadata, but the default NativeV0_2Backend preserves the frozen 42-feature v0.2 contract. Generic import does not prove arbitrary scientific analysis. — VERIFIED from source inspection
+- The StarEmbed ZTF_40k manifest and adapter exist; acquisition, hash-verified execution, a deterministic 50-object evaluation, and known-answer comparisons are still unverified. — VERIFIED / execution UNRESOLVED
+- A 50-object diagnostic sample alone is not population-level validation. — SUPPORTED
+- Ecosystem recommendations require source/test/documentation inspection, license/runtime review, and a project-specific acceptance test. — SUPPORTED
+- Canonical plan: docs/roadmap/PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md. Initial partial ecosystem audit: docs/ECOSYSTEM_GAP_AUDIT_INITIAL_2026-10-22.md. Tracking issue: #210. — VERIFIED
+- CPVS exact membership remains UNRESOLVED at 11,602 candidate-only objects; do not tune generic rules merely to force cardinality equality. — UNRESOLVED
+
+
+## StarEmbed end-to-end validation blocker — 2026-10-23
+
+- The StarEmbed acquisition adapter can retrieve source Parquet artifacts and resolve a dataset revision; this is not an end-to-end model evaluation. — VERIFIED from source inspection
+- The current benchmark runner consumes an existing prediction table with `sourceid`, `class_str`, and `y_pred`; it does not infer directly from raw StarEmbed light curves. — VERIFIED from source inspection
+- The current heavy workflow couples StarEmbed acquisition with subsequent large CPVS downloads and derivation; no raw-StarEmbed-to-model prediction step was found in the inspected workflow. — VERIFIED from workflow inspection
+- Independent dataset end-to-end validation is BLOCKED pending schema/units inspection, a versioned compatible feature/model path, split/OOD preservation, provenance-backed predictions, and evaluation. This is not a model failure and not a pass. — VERIFIED / BLOCKED
+- Do not silently force the immutable v0.2 42-feature model onto incompatible inputs. Prefer a targeted StarEmbed workflow separate from the large CPVS acquisition path. — DECISION

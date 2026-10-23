@@ -1,0 +1,119 @@
+{
+  "stage_id": "2026-10-23-star-embed-raw-schema-audit",
+  "objective": "Add a reproducible, source-artifact-level StarEmbed schema and data-quality audit without claiming classifier performance or changing the frozen v0.2.0 baseline.",
+  "previous_knowledge_consumed": [
+    "AD-CI-004",
+    "StarEmbed ZTF_40k is an independent source dataset with train/validation/test and anomaly splits",
+    "Raw StarEmbed-to-model inference remains unimplemented and must not be represented as completed"
+  ],
+  "baseline": {
+    "repository_branch": "docs/parallel-validation-ecosystem-plan-20261022",
+    "baseline_preserved": "v0.2.0",
+    "benchmark": "star_embed_ztf_40k",
+    "source_snapshot": "Hugging Face revision is resolved and recorded at acquisition time",
+    "current_code_head_before_changes": "e08f2b44be88ec7ea2bc97f3f4d6ca7a93867808"
+  },
+  "expected_improvement": [
+    "Provide deterministic raw-source schema, object-overlap, array-consistency, hash, and sample diagnostics",
+    "Fail closed when source artifacts or required columns are missing",
+    "Prevent schema audit output from being misrepresented as model evaluation"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The audit's fail-closed status correctly blocks on source-ID duplicates/overlap, but its nonzero exit caused GitHub Actions to skip the test suite, preventing regression tests from running in the same CI attempt.",
+        "after": "CI now records the audit step outcome with continue-on-error, runs the unit suite and uploads reports, then explicitly fails the job if the source audit is blocked. Scientific criteria remain fail-closed.",
+        "evidence": "Run 39928356790 acquired all five StarEmbed Parquet artifacts; schema audit returned BLOCKED due to train duplicate CSS_J164349.2+401208 and train/test overlap CSS_J051729.2+083846. The test suite was skipped because the audit failure short-circuited the job; workflow sequencing correction committed as 6752210a8a7521f85d39ba30a4498fa023721a01. Re-run required."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      },
+      "runtime": {
+        "status": "NOT_MEASURED"
+      }
+    },
+    "evidence": [
+      "Unit tests added for deterministic sample/report and missing-artifact blocking",
+      "CI on commit e08f2b44be88ec7ea2bc97f3f4d6ca7a93867808 exposed four Ruff lint violations",
+      "Lint fixes committed as bfe541b0126a77a47dc7cf9fdefb3393c1d07dd3 and 4de5b7d84008c43d71e6a5dcf764636c0823b88e",
+      "Added an isolated StarEmbed acquisition and raw schema-audit step to the existing CI test job, scoped to changes in the StarEmbed audit code, tests, manifest, or acquisition adapter/source code.",
+      "The StarEmbed step is separated from the heavy CPVS archive workflow; CI run 39921499634 completed all CI jobs successfully and uploaded the raw-data audit artifact.",
+      "Downloaded and inspected artifact star-embed-schema-audit-39921499634 (artifact ID 12486134477; 432,452,550 bytes; archive SHA-256 fb280fbee1954ce7ffd6a3f8c094c8f7d122c3a0e567e297271572e48900e8e8).",
+      "Observed source counts: train 29,047 rows / 29,046 unique IDs; validation 4,150 / 4,150; test 8,301 / 8,301; anomaly 1,087 / 1,087. Found one train/test overlap (CSS_J051729.2+083846) and one duplicate within train (CSS_J164349.2+401208).",
+      "The first audit implementation incorrectly returned a non-blocking PASS_SCHEMA_AUDIT_WITH_FINDINGS despite object-ID leakage; a fail-closed regression fix is being added before considering this audit complete.",
+      "CI workflow integration was re-inspected after the initial edit; the insertion was repaired and verified in commit 2fd2820d997289e31a3dca48e3b4d6ccaad031ef to contain one acquisition step, one audit step, one artifact upload step, and one test-suite invocation.",
+      "The new CI source-audit steps are guarded by changed-file detection and acquire StarEmbed independently of the CPVS archives.",
+      "Fail-closed StarEmbed audit regression and source-row provenance details are committed; CI rerun completed at run 39978376473.",
+      "Added a dedicated regression test for duplicate SourceIDs within a single split, complementing the train/test overlap test; latest CI verification is pending.",
+      "Inspected artifact star-embed-schema-audit-39928356790 (artifact ID 12490871770; 432,452,738 bytes; artifact digest SHA-256 41ac400c3e143e4f1311f09c4eb13107b299db92b9ec78ff1095a8a20335171d). All five Parquet artifacts were acquired and required top-level columns were present.",
+      "Verified source counts in the latest artifact: train 29,047 rows / 29,046 unique SourceIDs with duplicate CSS_J164349.2+401208; test 8,301 unique IDs; train/test overlap CSS_J051729.2+083846; validation 4,150 unique IDs; anomaly 1,087 unique IDs. Periods and coordinates had zero invalid/out-of-range rows. Missing g/r/i bands are reported as quality counts, not treated as leakage.",
+      "Run 39928356790 failed the Test Suite job at the fail-closed raw audit step, so pytest was skipped. Format Check, Lint, and Cumulative Lifecycle Gate passed; CodeQL, Scientific Validation contract, and Product Scope Audit workflows completed successfully. Four source-backed scientific jobs remained skipped by workflow conditions.",
+      "Workflow correction committed as 6752210a8a7521f85d39ba30a4498fa023721a01: audit outcome is retained and still blocks the job, but test execution/report upload now precedes explicit audit-gate failure.",
+      "Follow-up review of run 39928356790 showed the workflow's continue-on-error audit step still prevented the pytest step from running because its default success() condition evaluated false; test execution now explicitly uses always() while requiring successful dependency installation and pip check.",
+      "Reduced StarEmbed audit artifact retention from all acquired Parquet files (~432 MB per run) to the compact schema_audit.json report, which retains source file hashes, byte sizes, row counts, split overlap diagnostics, and the deterministic 50-object sample.",
+      "Corrected CLI output to print validation_errors when the audit is blocked and added a regression test for the blocking diagnostic text; latest-head CI verification is pending.",
+      "A follow-up source inspection found the within-split duplicate regression test asserted the obsolete report key split_summary while the audit emits splits; corrected the assertion to match the actual report contract. This test correction and the preceding workflow/CLI changes require fresh CI verification.",
+      "Added compact per-band array SHA-256 fingerprints and lengths for each implicated duplicate/overlapping source row, without including raw light-curve arrays in the report; added a regression test where one duplicated record differs in g-band target values. Commit c7963c22fec094480f493db2b36f5430cd72130b.",
+      "Verified latest CI run 39978376473 at head eabf4465088fe85c6c82c7daa1ad9e364ead41cd: Format Check, Lint, Cumulative Lifecycle Gate, and CodeQL passed; pytest completed with 591 passed, 4 skipped, 7 warnings; coverage was 82%. The earlier fixture-aliasing test failure is resolved by isolating g/r fixture arrays with copy.deepcopy.",
+      "The source-audit gate correctly remains BLOCKED. Artifact star-embed-schema-audit-39978376473 (artifact ID 12512323248; compact JSON archive SHA-256 63971c24c7258d4934c7626ab5e568a626d8af7bff49b1f02b0fe6263eb1af14) confirms train has 29,047 rows/29,046 unique IDs; CSS_J164349.2+401208 is duplicated within train with identical g/r/i array hashes, period, coordinates and class. CSS_J051729.2+083846 appears in train and test with identical g/r array hashes, period, coordinates and class, confirming object-level split leakage in this snapshot.",
+      "Source schema and array-quality checks pass; the explicit audit gate fails only for duplicate_sourceids_within_split:train:1 and object_id_overlap_between_splits:train__test:1. Runtime Smoke Tests, Dependency Audit, and Build & Verify Package remain skipped because the fail-closed CI gate is blocked. Do not weaken the gate or merge this PR.",
+      "Inspected upstream StarEmbed source at https://github.com/skai-institute/StarEmbed/blob/master/src/datasets/ZTF/build_split.py (blob SHA 89253d4079cc7242c887b1082d32367eed0d3932) and dataset guide https://github.com/skai-institute/StarEmbed/blob/master/src/datasets/ZTF/README.md (blob SHA a08fd43de6756c67e148947bed112fb772e4d4db). The builder loads hf_csdr1_raw4_catflags_filtered_with_labels_multiband, applies a one-to-one flattening map, then performs two row-wise Hugging Face train_test_split calls stratified by class with seed 42; it does not deduplicate or group by sourceid. This is a confirmed leakage mechanism if duplicate sourceids exist before splitting, but it does not prove whether the two observed records were duplicated in the pre-split dataset or elsewhere in the upstream pipeline. That provenance remains unresolved.",
+      "Verified latest-head CI on commit d064345e7e8bfe7871a939bc325155f61fdefb10: run 39980758101 completed. Format Check, Lint, and Cumulative Lifecycle Gate passed; pytest completed with 591 passed, 4 skipped, 7 warnings and 82% coverage. The StarEmbed source-audit command and compact artifact upload succeeded, then the explicit fail-closed gate correctly failed the job. CodeQL run 39980758022, Scientific Validation run 39980758163, and Product Scope Audit run 39980758129 all completed successfully. Runtime Smoke Tests, Dependency Audit, and Build & Verify Package were skipped because the source integrity gate remains blocked. Latest blocker is unchanged: one duplicate SourceID within train (CSS_J164349.2+401208) and one train/test SourceID overlap (CSS_J051729.2+083846); matching per-band hashes in current splits do not establish pre-split provenance."
+    ]
+  },
+  "validation": {
+    "scientific_gate_affected": true,
+    "status": "BLOCKED",
+    "blocker": "Latest-head real-data StarEmbed audit remains blocked by one duplicate SourceID within train and one train/test overlap. CI confirms the test suite passes (591 passed, 4 skipped, 7 warnings; 82% coverage), but the fail-closed audit gate prevents Runtime Smoke Tests, Dependency Audit, and package verification. Per-band hashes match within the current split artifacts; the upstream builder uses row-wise stratified splits without sourceid grouping, but the provenance of these specific rows before splitting remains unverified. CPVS 11,602 candidate-only IDs remain unresolved; raw StarEmbed-to-model inference remains unimplemented.",
+    "evidence": [
+      "https://github.com/saeed92m/ztf-classifier/actions/runs/39921499634",
+      "https://github.com/saeed92m/ztf-classifier/pull/211",
+      "https://github.com/saeed92m/ztf-classifier/actions/runs/39928356790",
+      "Latest-head verification: https://github.com/saeed92m/ztf-classifier/actions/runs/39980758101 (591 passed, 4 skipped, 7 warnings; 82% coverage; source audit remains BLOCKED), https://github.com/saeed92m/ztf-classifier/actions/runs/39980758022 (CodeQL success), https://github.com/saeed92m/ztf-classifier/actions/runs/39980758163 (scientific contract success; source-backed acquisition stages skipped), and https://github.com/saeed92m/ztf-classifier/actions/runs/39980758129 (product-scope audit success)."
+    ]
+  },
+  "failure_analysis": {
+    "status": "KNOWN_FAILURE_ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The first real-data audit exposed one train/test SourceID overlap and one duplicate SourceID within train; the current status logic did not treat these as blocking leakage.",
+      "Ruff RUF046 flagged redundant int casts in the new audit module",
+      "Ruff I001 flagged import ordering in the new test module",
+      "The first programmatic CI workflow edit placed part of the inserted shell block incorrectly; a subsequent full-file reconstruction from the main-branch workflow corrected the placement.",
+      "The fail-closed source audit returned exit code 2 for confirmed object-ID integrity findings, and because the step was not continue-on-error the pytest step was skipped; this was a CI sequencing defect, not a reason to weaken the scientific gate.",
+      "The default success() condition on the pytest step still skipped tests after a continue-on-error source audit step returned a failing outcome; explicit always() with successful dependency-install guards is now used.",
+      "The previous evidence upload included all five raw Parquet artifacts, creating a ~432 MB artifact per run; upload now targets only the compact audit JSON."
+    ],
+    "impact": "The source audit correctly blocked the Test Suite job for real-data integrity findings, but pytest and its report upload were skipped in the same run. The follow-up workflow change is intended to run tests and preserve an explicit failing audit gate.",
+    "correction": "Keep the StarEmbed audit BLOCKED and fail the job explicitly after tests. Run pytest despite a blocked audit only when dependency installation and pip check succeeded; upload only schema_audit.json with source hashes and diagnostics. Verify latest-head CI and inspect the new artifact before claiming completion."
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "A schema audit is not a classifier benchmark; model inference and performance evaluation remain separate blocked work.",
+      "A successful scientific-validation contract job does not imply source-backed data acquisition occurred when acquisition jobs were skipped.",
+      "CI findings must be repaired and the new commit's workflow results checked before asserting resolution."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Verify lifecycle contract, within-split duplicate regression, cross-split overlap regression, and full CI in the latest run",
+      "Trace the two flagged SourceIDs to the pre-split StarEmbed dataset revision; the inspected split builder uses row-wise stratified splitting without sourceid grouping/deduplication, but pre-split duplicate provenance is not yet verified.",
+      "Review the source-artifact/class/period/coordinates for the two discrepant object IDs and decide whether the dataset can be used without a documented quarantine/split correction",
+      "Implement and independently validate raw-light-curve inference before performance claims",
+      "CPVS 11,602 extra candidates remain unresolved",
+      "Verify the workflow sequencing correction in the next CI run; ensure pytest runs and the job still fails explicitly for the observed source-ID leakage.",
+      "Verify the corrected duplicate-within-split test against the current report schema and confirm all unit tests execute before the explicit source-audit gate fails.",
+      "Verify current-head tests and inspect object_curve_diagnostics for both flagged IDs; determine whether duplicate records have identical per-band arrays and compare with the pre-split upstream dataset."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not label StarEmbed schema audit as model validation",
+    "Do not change v0.2.0 baseline or weaken the fail-closed scientific gate",
+    "Keep CPVS exact-membership discrepancy as an explicit scientific validation blocker until provenance-backed root cause is established"
+  ]
+}

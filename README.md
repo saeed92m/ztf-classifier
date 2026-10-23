@@ -423,3 +423,13 @@ The current production model explicitly does **not** claim a scientific-anomaly 
 - Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
 - Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
 - Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.
+
+
+
+## Parallel validation and ecosystem audit — 2026-10-22
+The initial source-backed repository sample is recorded in [ECOSYSTEM_GAP_AUDIT_INITIAL_2026-10-22.md](docs/ECOSYSTEM_GAP_AUDIT_INITIAL_2026-10-22.md); it is explicitly partial, not an exhaustive audit.
+
+
+The product is not defined by CPVS or any single paper. The active parallel plan covers: (1) core architecture/general-input audit, (2) independent astronomical dataset plus deterministic 50-object and 50 schema/quality-case diagnostics, (3) a second independent paper/method, (4) continued claim-specific CPVS reconstruction, and (5) systematic GitHub ecosystem comparison. See [the parallel validation and ecosystem plan](docs/roadmap/PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md).
+
+These are planned workstreams, not completed validation. The 50-case sample is diagnostic, not a population-level performance claim. Dataset-specific rules must remain in versioned adapters; CPVS filters must not become global input rules. External data stays outside Git. The v0.2.0 scientific baseline remains immutable and CPVS exact reconstruction remains unresolved until independently supported evidence establishes otherwise.
