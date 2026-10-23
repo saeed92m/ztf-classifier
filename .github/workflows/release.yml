@@ -181,7 +181,7 @@ jobs:
             find "$RUNNER_TEMP/scientific-frozen-cpvs" -mindepth 1 -maxdepth 1 -exec mv -t reports/scientific_validation/frozen_reference/ztf_periodic_730k_published {} +
           fi
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11.16"
 
