@@ -1,0 +1,83 @@
+{
+  "stage_id": "2026-10-23-star-embed-raw-schema-audit",
+  "objective": "Add a reproducible, source-artifact-level StarEmbed schema and data-quality audit without claiming classifier performance or changing the frozen v0.2.0 baseline.",
+  "previous_knowledge_consumed": [
+    "AD-CI-004",
+    "StarEmbed ZTF_40k is an independent source dataset with train/validation/test and anomaly splits",
+    "Raw StarEmbed-to-model inference remains unimplemented and must not be represented as completed"
+  ],
+  "baseline": {
+    "repository_branch": "docs/parallel-validation-ecosystem-plan-20261022",
+    "baseline_preserved": "v0.2.0",
+    "benchmark": "star_embed_ztf_40k",
+    "source_snapshot": "Hugging Face revision is resolved and recorded at acquisition time",
+    "current_code_head_before_changes": "e08f2b44be88ec7ea2bc97f3f4d6ca7a93867808"
+  },
+  "expected_improvement": [
+    "Provide deterministic raw-source schema, object-overlap, array-consistency, hash, and sample diagnostics",
+    "Fail closed when source artifacts or required columns are missing",
+    "Prevent schema audit output from being misrepresented as model evaluation"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      },
+      "runtime": {
+        "status": "NOT_MEASURED"
+      }
+    },
+    "evidence": [
+      "Unit tests added for deterministic sample/report and missing-artifact blocking",
+      "CI on commit e08f2b44be88ec7ea2bc97f3f4d6ca7a93867808 exposed four Ruff lint violations",
+      "Lint fixes committed as bfe541b0126a77a47dc7cf9fdefb3393c1d07dd3 and 4de5b7d84008c43d71e6a5dcf764636c0823b88e"
+    ]
+  },
+  "validation": {
+    "scientific_gate_affected": true,
+    "status": "BLOCKED",
+    "blocker": "Latest lint-fix commit has not yet produced a verified CI result; no real StarEmbed artifacts have been acquired or audited, and no raw-data inference path exists.",
+    "evidence": [
+      "https://github.com/saeed92m/ztf-classifier/actions/runs/39910230897",
+      "https://github.com/saeed92m/ztf-classifier/pull/211"
+    ]
+  },
+  "failure_analysis": {
+    "status": "KNOWN_FAILURE_ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "Ruff RUF046 flagged redundant int casts in the new audit module",
+      "Ruff I001 flagged import ordering in the new test module"
+    ],
+    "impact": "CI lint failed, causing downstream cumulative lifecycle, test, smoke, build, and dependency-audit jobs to be skipped.",
+    "correction": "Remove redundant casts and format the test import block; verify with a new CI run before treating the correction as validated."
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "A schema audit is not a classifier benchmark; model inference and performance evaluation remain separate blocked work.",
+      "A successful scientific-validation contract job does not imply source-backed data acquisition occurred when acquisition jobs were skipped.",
+      "CI findings must be repaired and the new commit's workflow results checked before asserting resolution."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Verify CI lint after commits bfe541b0126a77a47dc7cf9fdefb3393c1d07dd3 and 4de5b7d84008c43d71e6a5dcf764636c0823b88e",
+      "Run the dedicated StarEmbed audit against actual downloaded source artifacts",
+      "Implement and independently validate raw-light-curve inference before performance claims",
+      "CPVS 11,602 extra candidates remain unresolved"
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not label StarEmbed schema audit as model validation",
+    "Do not change v0.2.0 baseline or weaken the fail-closed scientific gate",
+    "Keep CPVS exact-membership discrepancy as an explicit scientific validation blocker until provenance-backed root cause is established"
+  ]
+}
