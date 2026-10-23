@@ -44,7 +44,12 @@
         "reason": "The 11,602-object CPVS membership discrepancy remains unresolved until the raw-row audit is executed and independently reviewed."
       }
     },
-    "trade_off": "No membership predicate, SNR threshold, model artifact, immutable baseline, or scientific acceptance criterion is changed."
+    "trade_off": "No membership predicate, SNR threshold, model artifact, immutable baseline, or scientific acceptance criterion is changed.",
+    "evidence": [
+      "2026-10-23 code review found the diagnostic audit compared Table 4's internal numeric ID directly to light-curve SourceID. Corrected to map published ZTF names through the parent Table2 explicit SourceID, with a regression fixture whose Table4 IDs intentionally differ from SourceIDs.",
+      "2026-10-23 code review found discrepant light-curve SourceIDs absent from the explicit parent SourceID set caused the row audit to abort. The audit now preserves those IDs with parent_catalog_present=false instead of dropping them or terminating.",
+      "2026-10-23 workflow cleanup now removes normalized g/r epoch directories and the raw Table2 parent archive only after both compact row-audit JSON/TSV outputs exist; this addresses the 2.16 GB artifact observed in run 39232347068. Runtime verification is pending."
+    ]
   },
   "validation": {
     "status": "NOT_VERIFIED",
@@ -55,13 +60,15 @@
       "The initial CI attempt failed the repository's cumulative-cycle-record requirement; this record is added to satisfy that repository contract.",
       "The heavy source-backed job has not executed for this diagnostic change."
     ],
-    "blocker": "Execute the source-backed heavy workflow on the diagnostic branch and review the resulting per-epoch evidence; do not treat contract CI success as scientific validation."
+    "blocker": "Run CI on the corrected draft PR and, when resource budget permits, rerun the source-backed CPVS audit using the name-based reference join. Review candidate/reference sets and raw-row provenance; do not treat these implementation fixes as scientific resolution."
   },
   "failure_analysis": {
     "status": "known-failure",
     "root_causes": [
       "The prior compact heavy artifact excluded raw light-curve archives and per-epoch provenance needed to independently trace the 11,602 candidate-only IDs.",
-      "The repository CI lifecycle gate requires a machine-readable cycle record for meaningful pull requests."
+      "The repository CI lifecycle gate requires a machine-readable cycle record for meaningful pull requests.",
+      "The diagnostic audit's prior reference join conflated Table 4's catalog-internal numeric ID with the light-curve SourceID; a name-based join to the parent Table2 explicit SourceID is required.",
+      "The audit aborted on discrepant SourceIDs absent from the explicit parent SourceID mapping instead of retaining them as unresolved provenance records."
     ]
   },
   "knowledge_extraction": {
