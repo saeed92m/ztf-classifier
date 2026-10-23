@@ -85,6 +85,7 @@ def audit_star_embed_dataset(
         missing = sorted(TOP_LEVEL_COLUMNS - set(frame.columns))
         if missing:
             errors.append(f"missing_columns:{filename}:{','.join(missing)}")
+        source_columns = list(frame.columns)
         frame["_source_artifact"] = filename
         split = "train" if filename.startswith("train-") else filename.split("-")[0]
         split_frames[split].append(frame)
@@ -94,7 +95,7 @@ def audit_star_embed_dataset(
                 "sha256": _sha256(path),
                 "bytes": path.stat().st_size,
                 "rows": len(frame),
-                "columns": list(frame.columns),
+                "columns": source_columns,
                 "missing_required_columns": missing,
             }
         )
