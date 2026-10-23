@@ -56,7 +56,7 @@ For every change:
 
 ## Documentation work completed on the current PR branch
 
-The following were added or aligned on this branch: project charter/source-of-truth policy; current handbook; project state register; glossary/status vocabulary; documentation index; README; platform roadmap; user guide; installation guide (v1.0.1); troubleshooting status/version; product architecture index; scientific validation source-adapter boundary; ecosystem expansion record. These are still proposed until PR #212 merges. No historical handbook snapshot or immutable release artifact was rewritten.
+The following were added or aligned on this branch: project charter/source-of-truth policy; current handbook; project state register; glossary/status vocabulary; documentation index; README; platform roadmap; user guide; Quick Start (v1.0.1); installation guide (v1.0.1); model card release identity; troubleshooting status/version; product architecture index; scientific validation source-adapter boundary; ecosystem expansion record. These are still proposed until PR #212 merges. No historical handbook snapshot or immutable release artifact was rewritten.
 
 ## Immediate work sequence
 
