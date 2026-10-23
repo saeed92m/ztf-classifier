@@ -15,7 +15,8 @@
     "Preserve source-row identity, order, duplicate observations, missing numeric values, units, time semantics, and declared measurement type during normalization.",
     "Reject ambiguous or malformed mappings without silently converting units, flux/magnitude, or time systems.",
     "Add regression coverage for reordered/renamed columns, missing values, malformed inputs, duplicate observations, and no implicit conversions.",
-    "Keep import normalization distinct from model compatibility and scientific validation."
+    "Keep import normalization distinct from model compatibility and scientific validation.",
+    "Provide a local CSV/Parquet file-loading entry point that retains leading-zero identifiers, row order, missing numeric values, and file-format provenance."
   ],
   "measurement": {
     "metrics": {
@@ -39,7 +40,8 @@
       "No model, feature schema, class order, training data, production thresholds, or scientific acceptance criteria were changed.",
       "Successful normalization does not imply model compatibility or scientific validation.",
       "The cycle record is being added in response to the current-head Cumulative Lifecycle Gate failure; a fresh full CI run must verify it.",
-      "Current-head CI run 39952475356 failed the cumulative lifecycle gate because decision was IN_PROGRESS, which is not an allowed terminal decision value. The record is corrected to BLOCKED while remaining scientific and implementation checks are pending."
+      "Current-head CI run 39952475356 failed the cumulative lifecycle gate because decision was IN_PROGRESS, which is not an allowed terminal decision value. The record is corrected to BLOCKED while remaining scientific and implementation checks are pending.",
+      "Added src/ztf_classifier/application/lightcurve_file.py and tests/test_application_lightcurve_file.py on the PR branch; CI has not yet verified these new commits."
     ]
   },
   "failure_analysis": {
@@ -62,9 +64,9 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Verify normalization regression tests, runtime smoke tests, package build, and dependency audit.",
+      "Run current-head normalization and file-loader regression tests, Ruff, runtime smoke tests, package build, and dependency audit.",
       "Implement and validate at least one source-backed external-survey adapter and compatible analysis path before making cross-survey capability claims.",
-      "Rerun and inspect current-head CI after correcting the lifecycle decision enum."
+      "Scientific validity and reproducibility remain NOT_MEASURED; this loader only reads local CSV/Parquet tables and does not fetch data or prove model compatibility."
     ]
   },
   "decision": "BLOCKED",
