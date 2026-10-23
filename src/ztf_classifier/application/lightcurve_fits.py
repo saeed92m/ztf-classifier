@@ -5,10 +5,9 @@ This is a format reader, not an automatic TESS/TGLC schema guesser.
 """
 from __future__ import annotations
 
-from pathlib import Path
 from collections.abc import Mapping
+from pathlib import Path
 
-import pandas as pd
 from astropy.table import Table
 
 from ztf_classifier.application.errors import ApplicationInputError
