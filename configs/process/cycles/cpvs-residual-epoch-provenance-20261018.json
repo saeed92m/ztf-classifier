@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-residual-epoch-provenance-20261018",
+  "objective": "Add a diagnostic-only, source-backed CPVS residual epoch audit that preserves per-object g/r epoch provenance without changing scientific membership rules.",
+  "previous_knowledge_consumed": [
+    "CPVS membership discrepancy recorded in Issue #180",
+    "Heavy run 39122831320 artifact and selection diagnostics",
+    "PR #201 diagnostic-only residual epoch audit"
+  ],
+  "baseline": {
+    "revision": "d331036dddbbdbe399f18a58c7a204b7ca039558",
+    "description": "Main contains the CPVS derivation and existing heavy source-backed workflow. Prior evidence found 741,786 SNR candidates, 730,184 published members, and 11,602 candidate-only IDs; root cause remains unresolved."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility",
+    "scientific_validity"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "before": "UNRESOLVED",
+        "after": "NOT_MEASURED",
+        "reason": "The new row-level audit has not yet run against raw archives; no discrepancy cause is asserted."
+      },
+      "reliability": {
+        "status": "PARTIAL",
+        "before": "PARTIAL",
+        "after": "PARTIAL",
+        "reason": "The audit is wired into the source-backed workflow and contract CI is being checked; raw-source execution remains pending."
+      },
+      "reproducibility": {
+        "status": "PARTIAL",
+        "before": "PARTIAL",
+        "after": "PARTIAL",
+        "reason": "The planned output includes source file and parsed row ordinal, code revision, reference counts, archive MD5 values, and output SHA-256; generated evidence is pending."
+      },
+      "scientific_validity": {
+        "status": "BLOCKED",
+        "before": "BLOCKED",
+        "after": "BLOCKED",
+        "reason": "The 11,602-object CPVS membership discrepancy remains unresolved until the raw-row audit is executed and independently reviewed."
+      }
+    },
+    "trade_off": "No membership predicate, SNR threshold, model artifact, immutable baseline, or scientific acceptance criterion is changed.",
+    "evidence": [
+      "2026-10-23 code review found the diagnostic audit compared Table 4's internal numeric ID directly to light-curve SourceID. Corrected to map published ZTF names through the parent Table2 explicit SourceID, with a regression fixture whose Table4 IDs intentionally differ from SourceIDs.",
+      "2026-10-23 code review found discrepant light-curve SourceIDs absent from the explicit parent SourceID set caused the row audit to abort. The audit now preserves those IDs with parent_catalog_present=false instead of dropping them or terminating.",
+      "2026-10-23 workflow cleanup now removes normalized g/r epoch directories and the raw Table2 parent archive only after both compact row-audit JSON/TSV outputs exist; this addresses the 2.16 GB artifact observed in run 39232347068. Runtime verification is pending."
+    ]
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Draft PR #201 adds scripts/audit_cpvs_residual_epochs.py and a source-backed workflow step.",
+      "CodeQL passed for the initial PR revision; Format Check and Lint passed for that revision.",
+      "The initial CI attempt failed the repository's cumulative-cycle-record requirement; this record is added to satisfy that repository contract.",
+      "The heavy source-backed job has not executed for this diagnostic change."
+    ],
+    "blocker": "Run CI on the corrected draft PR and, when resource budget permits, rerun the source-backed CPVS audit using the name-based reference join. Review candidate/reference sets and raw-row provenance; do not treat these implementation fixes as scientific resolution."
+  },
+  "failure_analysis": {
+    "status": "known-failure",
+    "root_causes": [
+      "The prior compact heavy artifact excluded raw light-curve archives and per-epoch provenance needed to independently trace the 11,602 candidate-only IDs.",
+      "The repository CI lifecycle gate requires a machine-readable cycle record for meaningful pull requests.",
+      "The diagnostic audit's prior reference join conflated Table 4's catalog-internal numeric ID with the light-curve SourceID; a name-based join to the parent Table2 explicit SourceID is required.",
+      "The audit aborted on discrepant SourceIDs absent from the explicit parent SourceID mapping instead of retaining them as unresolved provenance records."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "UNRESOLVED",
+    "findings": [
+      "Candidate count matching is not sufficient to establish the published CPVS membership rule.",
+      "The raw-row audit must preserve provenance before temporary source files are discarded.",
+      "Per-band period availability and parent mean-magnitude validity remain diagnostic correlates, not established membership rules."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "CPVS 11,602-object membership discrepancy; row-level source-backed audit pending."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "CPVS membership discrepancy Issue #180",
+    "scientific-validation-blockers-20260928"
+  ]
+}
