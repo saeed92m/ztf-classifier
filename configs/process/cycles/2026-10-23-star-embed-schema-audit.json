@@ -36,13 +36,15 @@
     "evidence": [
       "Unit tests added for deterministic sample/report and missing-artifact blocking",
       "CI on commit e08f2b44be88ec7ea2bc97f3f4d6ca7a93867808 exposed four Ruff lint violations",
-      "Lint fixes committed as bfe541b0126a77a47dc7cf9fdefb3393c1d07dd3 and 4de5b7d84008c43d71e6a5dcf764636c0823b88e"
+      "Lint fixes committed as bfe541b0126a77a47dc7cf9fdefb3393c1d07dd3 and 4de5b7d84008c43d71e6a5dcf764636c0823b88e",
+      "Added an isolated StarEmbed acquisition and raw schema-audit step to the existing CI test job, scoped to changes in the StarEmbed audit code, tests, manifest, or acquisition adapter/source code.",
+      "The StarEmbed step is separated from the heavy CPVS archive workflow; its real-data result remains unverified until the new CI execution completes."
     ]
   },
   "validation": {
     "scientific_gate_affected": true,
     "status": "BLOCKED",
-    "blocker": "Latest lint-fix commit has not yet produced a verified CI result; no real StarEmbed artifacts have been acquired or audited, and no raw-data inference path exists.",
+    "blocker": "Lint fixes and the isolated StarEmbed CI path are committed, but no workflow result for the latest head has yet been retrieved; real StarEmbed artifact acquisition/audit and raw-data inference are not yet verified.",
     "evidence": [
       "https://github.com/saeed92m/ztf-classifier/actions/runs/39910230897",
       "https://github.com/saeed92m/ztf-classifier/pull/211"
@@ -55,7 +57,7 @@
       "Ruff I001 flagged import ordering in the new test module"
     ],
     "impact": "CI lint failed, causing downstream cumulative lifecycle, test, smoke, build, and dependency-audit jobs to be skipped.",
-    "correction": "Remove redundant casts and format the test import block; verify with a new CI run before treating the correction as validated."
+    "correction": "Removed the reported redundant casts and sorted imports; added an isolated CI source-audit step with scope detection compatible with shallow checkouts. Await workflow evidence before declaring the fixes validated."
   },
   "knowledge_extraction": {
     "status": "VERIFIED",
@@ -68,8 +70,8 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Verify CI lint after commits bfe541b0126a77a47dc7cf9fdefb3393c1d07dd3 and 4de5b7d84008c43d71e6a5dcf764636c0823b88e",
-      "Run the dedicated StarEmbed audit against actual downloaded source artifacts",
+      "Verify CI lint and full test suite after the latest workflow/code commits",
+      "Run the isolated StarEmbed acquisition and schema audit against actual source artifacts and inspect its report",
       "Implement and independently validate raw-light-curve inference before performance claims",
       "CPVS 11,602 extra candidates remain unresolved"
     ]
