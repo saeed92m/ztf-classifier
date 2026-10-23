@@ -9,8 +9,8 @@ background, recalibrate photometry, or claim cross-survey model compatibility.
 from __future__ import annotations
 
 import re
-from pathlib import Path
 from collections.abc import Mapping
+from pathlib import Path
 
 import pandas as pd
 
@@ -22,8 +22,16 @@ from ztf_classifier.application.lightcurve_schema import (
 )
 
 TESS_TRANSIENT_COLUMNS = (
-    "BTJD", "TJD", "cts_per_s", "e_cts_per_s", "mag", "e_mag",
-    "bkg", "bkg_model", "bkg2", "e_bkg2",
+    "BTJD",
+    "TJD",
+    "cts_per_s",
+    "e_cts_per_s",
+    "mag",
+    "e_mag",
+    "bkg",
+    "bkg_model",
+    "bkg2",
+    "e_bkg2",
 )
 
 
@@ -69,8 +77,12 @@ def load_tess_transient(
 
     try:
         table = pd.read_csv(
-            source, sep=r"\s+", skiprows=2, header=None,
-            names=list(TESS_TRANSIENT_COLUMNS), comment="#",
+            source,
+            sep=r"\s+",
+            skiprows=2,
+            header=None,
+            names=list(TESS_TRANSIENT_COLUMNS),
+            comment="#",
         )
     except (OSError, ValueError, pd.errors.ParserError) as exc:
         raise ApplicationInputError(f"Could not parse TESS Transients observations: {exc}") from exc
@@ -91,11 +103,16 @@ def load_tess_transient(
 
     table["tess_band"] = "TESS"
     mapping = LightCurveColumnMap(
-        object_id="object_id", time="BTJD", band="tess_band",
-        value=value_column, uncertainty=error_column,
-        time_format="BTJD", time_scale="TDB_spacecraft_frame",
+        object_id="object_id",
+        time="BTJD",
+        band="tess_band",
+        value=value_column,
+        uncertainty=error_column,
+        time_format="BTJD",
+        time_scale="TDB_spacecraft_frame",
         value_kind=measurement,  # type: ignore[arg-type]
-        value_unit=value_unit, quality_flag="tess_upper_limit",
+        value_unit=value_unit,
+        quality_flag="tess_upper_limit",
         band_map={"TESS": "TESS"},
     )
     result = normalize_lightcurve_table(table, mapping)
@@ -108,7 +125,9 @@ def load_tess_transient(
         "reference_flux_counts_per_second": float(reference_match.group(1)),
         "measurement_selected": measurement,
         "magnitude_upper_limit_sentinel": "e_mag == 99.9",
-        "magnitude_upper_limit_rows": int(table["tess_upper_limit"].eq("magnitude_upper_limit_3sigma").sum()),
+        "magnitude_upper_limit_rows": int(
+            table["tess_upper_limit"].eq("magnitude_upper_limit_3sigma").sum()
+        ),
         "background_correction_performed": False,
         "photometric_recalibration_performed": False,
         "model_compatibility_asserted": False,
