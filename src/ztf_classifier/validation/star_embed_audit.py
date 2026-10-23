@@ -146,6 +146,18 @@ def audit_star_embed_dataset(
                 "overlap_sourceids_sample": overlap[:20],
             }
 
+    leakage_findings: list[str] = []
+    for split, split_report in split_reports.items():
+        duplicate_count = int(split_report["duplicate_sourceid_count"])
+        if duplicate_count:
+            leakage_findings.append(
+                f"duplicate_sourceids_within_split:{split}:{duplicate_count}"
+            )
+    for pair, overlap_report in overlap_reports.items():
+        overlap_count = int(overlap_report["overlap_count"])
+        if overlap_count:
+            leakage_findings.append(f"object_id_overlap_between_splits:{pair}:{overlap_count}")
+
     array_report = Counter()
     array_examples: list[dict[str, Any]] = []
     for split, frame in combined.items():
@@ -222,7 +234,8 @@ def audit_star_embed_dataset(
     report = {
         "schema_version": "1.0",
         "benchmark_id": "star_embed_ztf_40k",
-        "status": "PASS_SCHEMA_AUDIT_WITH_FINDINGS" if not errors else "BLOCKED",
+        "status": "BLOCKED" if errors or leakage_findings else "PASS_SCHEMA_AUDIT_WITH_FINDINGS",
+        "validation_errors": leakage_findings,
         "interpretation": "Schema and data-quality audit only; no model predictions or scientific classification performance are evaluated.",
         "seed": seed,
         "artifacts": artifact_reports,
