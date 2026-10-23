@@ -4,6 +4,7 @@ CSV identifiers are read as strings to preserve leading zeros. Parquet is
 read with its stored schema. This loader does not fetch remote data, infer
 column mappings, or perform scientific unit/time conversions.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,7 +17,6 @@ from ztf_classifier.application.lightcurve_schema import (
     LightCurveNormalizationResult,
     normalize_lightcurve_table,
 )
-
 
 SUPPORTED_SUFFIXES = {".csv", ".parquet", ".pq"}
 
