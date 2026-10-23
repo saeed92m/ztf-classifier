@@ -80,8 +80,11 @@ def test_star_embed_audit_blocks_duplicate_object_across_splits(tmp_path) -> Non
 def test_star_embed_audit_blocks_duplicate_object_within_split(tmp_path) -> None:
     data_dir = tmp_path / "data"
     data_dir.mkdir()
+    duplicate_a = _row("duplicate-train")
+    duplicate_b = _row("duplicate-train")
+    duplicate_b["bands_data"]["g"]["target"] = [15.1, 15.3, 15.0]
     rows_by_file = {
-        ARTIFACTS[0]: [_row("duplicate-train"), _row("duplicate-train")],
+        ARTIFACTS[0]: [duplicate_a, duplicate_b],
         ARTIFACTS[1]: [_row("train-other")],
         ARTIFACTS[2]: [_row("validation-only")],
         ARTIFACTS[3]: [_row("test-only")],
@@ -98,6 +101,19 @@ def test_star_embed_audit_blocks_duplicate_object_within_split(tmp_path) -> None
     details = [item for item in report["object_id_issue_details"] if item["issue"] == "duplicate_within_split"]
     assert len(details) == 2
     assert {item["source_artifact"] for item in details} == {ARTIFACTS[0]}
+    diagnostics = report["object_curve_diagnostics"]
+    assert len(diagnostics) == 2
+    g_target_hashes = {
+        item["bands"]["g"]["target"]["sha256"]
+        for item in diagnostics
+    }
+    r_target_hashes = {
+        item["bands"]["r"]["target"]["sha256"]
+        for item in diagnostics
+    }
+    assert len(g_target_hashes) == 2
+    assert len(r_target_hashes) == 1
+    assert all(item["bands"]["g"]["target"]["length"] == 3 for item in diagnostics)
 
 
 def test_star_embed_audit_fails_closed_when_artifact_is_missing(tmp_path) -> None:
