@@ -38,13 +38,15 @@
       "CI on commit e08f2b44be88ec7ea2bc97f3f4d6ca7a93867808 exposed four Ruff lint violations",
       "Lint fixes committed as bfe541b0126a77a47dc7cf9fdefb3393c1d07dd3 and 4de5b7d84008c43d71e6a5dcf764636c0823b88e",
       "Added an isolated StarEmbed acquisition and raw schema-audit step to the existing CI test job, scoped to changes in the StarEmbed audit code, tests, manifest, or acquisition adapter/source code.",
-      "The StarEmbed step is separated from the heavy CPVS archive workflow; its real-data result remains unverified until the new CI execution completes."
+      "The StarEmbed step is separated from the heavy CPVS archive workflow; its real-data result remains unverified until the new CI execution completes.",
+      "CI workflow integration was re-inspected after the initial edit; the insertion was repaired and verified in commit 2fd2820d997289e31a3dca48e3b4d6ccaad031ef to contain one acquisition step, one audit step, one artifact upload step, and one test-suite invocation.",
+      "The new CI source-audit steps are guarded by changed-file detection and acquire StarEmbed independently of the CPVS archives."
     ]
   },
   "validation": {
     "scientific_gate_affected": true,
     "status": "BLOCKED",
-    "blocker": "Lint fixes and the isolated StarEmbed CI path are committed, but no workflow result for the latest head has yet been retrieved; real StarEmbed artifact acquisition/audit and raw-data inference are not yet verified.",
+    "blocker": "The latest PR head has queued Product Scope Audit, CodeQL, and Scientific Validation runs, but no CI result has yet been retrieved for the repaired workflow; source acquisition and real-data audit are therefore not yet verified.",
     "evidence": [
       "https://github.com/saeed92m/ztf-classifier/actions/runs/39910230897",
       "https://github.com/saeed92m/ztf-classifier/pull/211"
@@ -54,10 +56,11 @@
     "status": "KNOWN_FAILURE_ROOT_CAUSE_IDENTIFIED",
     "root_causes": [
       "Ruff RUF046 flagged redundant int casts in the new audit module",
-      "Ruff I001 flagged import ordering in the new test module"
+      "Ruff I001 flagged import ordering in the new test module",
+      "The first programmatic CI workflow edit placed part of the inserted shell block incorrectly; a subsequent full-file reconstruction from the main-branch workflow corrected the placement."
     ],
     "impact": "CI lint failed, causing downstream cumulative lifecycle, test, smoke, build, and dependency-audit jobs to be skipped.",
-    "correction": "Removed the reported redundant casts and sorted imports; added an isolated CI source-audit step with scope detection compatible with shallow checkouts. Await workflow evidence before declaring the fixes validated."
+    "correction": "Removed the reported Ruff findings and reconstructed the CI workflow from the canonical main-branch file with the isolated StarEmbed steps inserted into the Test Suite job; the workflow text was fetched again and structurally inspected. Runtime validation is still pending."
   },
   "knowledge_extraction": {
     "status": "VERIFIED",
@@ -70,8 +73,8 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Verify CI lint and full test suite after the latest workflow/code commits",
-      "Run the isolated StarEmbed acquisition and schema audit against actual source artifacts and inspect its report",
+      "Obtain CI result for the repaired workflow and confirm lint, lifecycle gate, tests, smoke tests, package build, and dependency audit",
+      "Confirm the StarEmbed source acquisition and audit steps execute and inspect the uploaded JSON evidence",
       "Implement and independently validate raw-light-curve inference before performance claims",
       "CPVS 11,602 extra candidates remain unresolved"
     ]
