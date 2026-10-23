@@ -147,3 +147,26 @@ A source is **supported for import** only after L0–L3 pass. It is **supported 
 6. Publish a dataset-by-dataset capability table with evidence links, unsupported cases, and metrics. Do not claim universal compatibility from successful file import.
 
 **Scientific boundary:** one universal ingestion interface is achievable; one universal feature vector or classifier is not assumed. Different surveys have different passbands, calibrations, cadence, time conventions, noise, and label taxonomies. Cross-survey predictions require explicit transformations and independent validation; otherwise the correct behavior is import/analyze with limitations or abstain, not silently classify.
+
+
+## Platform-wide product contract — reviewed 2026-10-23
+
+The product is an Astronomical Data Analysis & Discovery Platform. ZTF/CPVS is the first scientific domain and an important validation task, not the only allowed user input. The platform must accept astronomer-selected data through supported, explicit source/file contracts and must not assume that a successfully imported file is eligible for the frozen ZTF classifier.
+
+Governing references:
+- Product vision, architecture boundaries, capability-state vocabulary and documentation rules: [Project Charter](../PROJECT_CHARTER_AND_SOURCE_OF_TRUTH.md).
+- Verified current release/PR/documentation state and blockers: [Project State Register](../PROJECT_STATE_REGISTER.md).
+
+### Capability acceptance states
+
+Track these separately for each input/source and analysis mode:
+1. **Import-supported:** format, schema mapping, provenance and row/object accounting pass pinned tests.
+2. **Analysis-supported:** declared QC/features/analysis pass deterministic fixtures for that source.
+3. **Model-compatible:** exact artifact, schema, preprocessing, units, passbands, taxonomy and domain contract match.
+4. **Scientifically validated:** source-backed, leakage-safe evaluation, calibration/failure analysis and reproducibility gates pass for a stated task/domain.
+
+A successful state at one level does not imply the next. Unsupported or unvalidated inputs must return explicit diagnostics/abstention, not a fabricated classification.
+
+### Documentation synchronization rule
+
+Any material change to product scope, architecture, validation criteria, release status, or known blockers must update this roadmap, the current handbook/state register, and relevant user/developer docs in the same change. Update Notion as a revision-stamped mirror after the source commit is known. Preserve historical handbook versions. Do not report Wiki/Pages/Supabase as updated unless access, target identity and the saved result are verified.
