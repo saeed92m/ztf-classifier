@@ -21,8 +21,8 @@
     "metrics": {
       "correctness": {
         "before": "The first CI run for PR #212 failed Ruff lint with four findings in lightcurve_schema.py.",
-        "after": "The four reported Ruff findings were corrected in commit d684aecbb32230b22d68489947265d00de4d43e7; current-head test suite and package validation are pending.",
-        "evidence": "CI run 39937197738 failed the lint job; CI run 39951937288 later reported Format Check and Lint success but failed the Cumulative Lifecycle Gate because this cycle record was missing."
+        "after": "Ruff format and lint pass on current head; lifecycle validation failed because this record used unsupported decision value IN_PROGRESS. Corrected record uses BLOCKED pending full CI and scientific validation.",
+        "evidence": "CI run 39952475356: Format Check and Lint passed; Cumulative Lifecycle Gate failed with 'decision must be ACCEPT, REVISE, or BLOCKED'."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED"
@@ -33,12 +33,13 @@
     }
   },
   "validation": {
-    "status": "IN_PROGRESS",
+    "status": "BLOCKED",
     "scientific_gate_affected": false,
     "evidence": [
       "No model, feature schema, class order, training data, production thresholds, or scientific acceptance criteria were changed.",
       "Successful normalization does not imply model compatibility or scientific validation.",
-      "The cycle record is being added in response to the current-head Cumulative Lifecycle Gate failure; a fresh full CI run must verify it."
+      "The cycle record is being added in response to the current-head Cumulative Lifecycle Gate failure; a fresh full CI run must verify it.",
+      "Current-head CI run 39952475356 failed the cumulative lifecycle gate because decision was IN_PROGRESS, which is not an allowed terminal decision value. The record is corrected to BLOCKED while remaining scientific and implementation checks are pending."
     ]
   },
   "failure_analysis": {
@@ -61,12 +62,12 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Verify lifecycle record schema and complete CI on the current PR head.",
       "Verify normalization regression tests, runtime smoke tests, package build, and dependency audit.",
-      "Implement and validate at least one source-backed external-survey adapter and compatible analysis path before making cross-survey capability claims."
+      "Implement and validate at least one source-backed external-survey adapter and compatible analysis path before making cross-survey capability claims.",
+      "Rerun and inspect current-head CI after correcting the lifecycle decision enum."
     ]
   },
-  "decision": "IN_PROGRESS",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Keep the v0.2.0 baseline and v1.0.1 release immutable.",
     "Do not claim end-to-end multi-survey support or cross-survey model performance from schema normalization alone.",
