@@ -45,13 +45,14 @@
       "The first audit implementation incorrectly returned a non-blocking PASS_SCHEMA_AUDIT_WITH_FINDINGS despite object-ID leakage; a fail-closed regression fix is being added before considering this audit complete.",
       "CI workflow integration was re-inspected after the initial edit; the insertion was repaired and verified in commit 2fd2820d997289e31a3dca48e3b4d6ccaad031ef to contain one acquisition step, one audit step, one artifact upload step, and one test-suite invocation.",
       "The new CI source-audit steps are guarded by changed-file detection and acquire StarEmbed independently of the CPVS archives.",
-      "Fail-closed StarEmbed audit regression and source-row provenance details are committed; CI rerun is pending."
+      "Fail-closed StarEmbed audit regression and source-row provenance details are committed; CI rerun is pending.",
+      "Added a dedicated regression test for duplicate SourceIDs within a single split, complementing the train/test overlap test; latest CI verification is pending."
     ]
   },
   "validation": {
     "scientific_gate_affected": true,
     "status": "BLOCKED",
-    "blocker": "Latest CI run failed at cumulative lifecycle record validation because the correctness metric used an unsupported status/value shape. Correct the cycle schema, then verify the fail-closed regression in a fresh CI run. Raw-data model inference remains unimplemented.",
+    "blocker": "CI verification of the corrected lifecycle record and fail-closed duplicate/cross-split regression tests is pending. Raw StarEmbed-to-model inference remains unimplemented.",
     "evidence": [
       "https://github.com/saeed92m/ztf-classifier/actions/runs/39921499634",
       "https://github.com/saeed92m/ztf-classifier/pull/211",
@@ -80,7 +81,7 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Correct lifecycle cycle-record schema and verify fail-closed leakage regression in fresh CI",
+      "Verify lifecycle contract, within-split duplicate regression, cross-split overlap regression, and full CI in the latest run",
       "Review the source-artifact/class/period/coordinates for the two discrepant object IDs and decide whether the dataset can be used without a documented quarantine/split correction",
       "Implement and independently validate raw-light-curve inference before performance claims",
       "CPVS 11,602 extra candidates remain unresolved"
