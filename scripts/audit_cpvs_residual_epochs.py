@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse, csv, hashlib, json, math
 from pathlib import Path
 from ztf_classifier.validation.derivation import _iter_rows, _open_text, _path_member_matches_header
+from scripts.audit_cpvs_membership import read_parent_name_to_sourceid, read_published_ztf_names
 
 FACTOR = 1.0857362047581296
 SPECS = {"g": ("e_gmag", "gmag", "g_flag", 2.5), "r": ("e_rmag", "rmag", "r_flag", 3.0)}
@@ -20,32 +21,23 @@ def files(root, required):
     return sorted(p for p in root.rglob("*") if p.is_file()
         and p.suffix.lower() in SUFFIXES and _path_member_matches_header(p, required))
 
-def read_vizier(path: Path) -> set[int]:
-    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    ids: set[int] = set()
-    for index, line in enumerate(lines):
-        stripped = line.strip()
-        if not stripped:
-            continue
-        candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
-        columns = [item.strip().lower() for item in candidate.split("\t")]
-        if "id" in columns and ("ztf" in columns or "ztf identifier" in columns):
-            id_index = columns.index("id")
-            for data_line in lines[index + 1:]:
-                value_line = data_line.strip()
-                if not value_line or value_line.startswith("#"):
-                    continue
-                values = [item.strip() for item in data_line.split("\t")]
-                if id_index < len(values) and values[id_index].isdigit():
-                    ids.add(int(values[id_index]))
-            return ids
-    for line in lines:
-        if not line.strip() or line.lstrip().startswith("#"):
-            continue
-        raw = line[23:29].strip()
-        if raw.isdigit():
-            ids.add(int(raw))
-    return ids
+def read_vizier(path: Path, parent_path: Path) -> set[int]:
+    """Map Table 4 ZTF names to the parent catalog's explicit SourceIDs.
+
+    Table 4's numeric ID is internal to that catalog; it must never be
+    compared directly with the SourceID used by the light-curve archives.
+    """
+    names = read_published_ztf_names(path)
+    if len(names) != len(set(names)):
+        raise ValueError("published Table 4 contains duplicate ZTF object names")
+    parent_mapping = read_parent_name_to_sourceid(parent_path)
+    unmapped = sorted(set(names) - set(parent_mapping))
+    if unmapped:
+        raise ValueError(
+            f"{len(unmapped)} published Table 4 ZTF names do not map to "
+            f"the parent Table2 catalog; sample={unmapped[:10]!r}"
+        )
+    return {parent_mapping[name] for name in names}
 
 def field(row, name):
     normalized = {key.strip().lower(): value for key, value in row.items()}
@@ -107,7 +99,7 @@ def main():
     p.add_argument("--published", type=Path, required=True); p.add_argument("--output", type=Path, required=True)
     p.add_argument("--code-version", default="unknown")
     a = p.parse_args()
-    published = read_vizier(a.published)
+    published = read_vizier(a.published, a.parent)
     parent_catalog = read_parent_catalog(a.parent)
     paths, qualified, band_counts = {}, {"g": set(), "r": set()}, {}
     for band, root in (("g", a.g), ("r", a.r)):
