@@ -5,6 +5,7 @@ import json
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from ztf_classifier.validation import star_embed_audit
 from ztf_classifier.validation.star_embed_audit import (
     ARTIFACTS,
     audit_star_embed_dataset,
@@ -103,3 +104,21 @@ def test_star_embed_audit_fails_closed_when_artifact_is_missing(tmp_path) -> Non
     report = audit_star_embed_dataset(tmp_path, tmp_path / "report.json")
     assert report["status"] == "BLOCKED"
     assert any(item.startswith("missing_artifact:") for item in report["errors"])
+
+
+def test_star_embed_cli_reports_validation_findings_when_blocked(tmp_path, monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        star_embed_audit,
+        "audit_star_embed_dataset",
+        lambda *args, **kwargs: {
+            "status": "BLOCKED",
+            "validation_errors": ["object_id_overlap_between_splits:train__test:1"],
+        },
+    )
+
+    result = star_embed_audit.main(
+        ["--data-dir", str(tmp_path), "--output", str(tmp_path / "report.json")]
+    )
+
+    assert result == 2
+    assert 'errors=["object_id_overlap_between_splits:train__test:1"]' in capsys.readouterr().out
