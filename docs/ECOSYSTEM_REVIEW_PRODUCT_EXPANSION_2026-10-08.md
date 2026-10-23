@@ -1,5 +1,9 @@
 # ZTF Classifier — Ecosystem Review & Product Expansion Record
 
+**Current governing documents (2026-10-23):** [Project Charter](PROJECT_CHARTER_AND_SOURCE_OF_TRUTH.md), [Current Handbook](HANDBOOK_CURRENT.md), [Project Glossary](PROJECT_GLOSSARY.md), [State Register](PROJECT_STATE_REGISTER.md), and [Documentation Index](DOCUMENTATION_INDEX.md). This 2026-10-08 record is retained as historical design input; current implementation state is determined by live GitHub code, releases, PRs and checks.
+
+**Input requirement:** user-supplied astronomical data and multi-survey ingestion are part of the core platform direction, not a feature limited to CPVS. This does not imply universal model compatibility. Import, analysis, model compatibility and scientific validation must be evidenced separately.
+
 Status date: 2026-10-08
 Review scope: GitHub repository-search ecosystem review for “Ztf classifier” plus adjacent ZTF/astronomy ML tooling.
 Purpose: Preserve reusable lessons and convert them into explicit product, architecture, UX, scientific, and roadmap requirements.
