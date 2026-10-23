@@ -22,7 +22,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
   actions: read
   pull-requests: write
   issues: write
@@ -356,7 +356,6 @@ jobs:
           REPORT=$(cat /tmp/star-embed-diagnosis-report.json 2>&1 | head -c 60000)
           MANIFEST=$(cat /tmp/download_manifest.json 2>&1 | head -c 20000)
           REVISION=$(cat /tmp/effective_revision.txt 2>&1)
-          # Build comment body — truncate to stay under 65536 limit
           cat > /tmp/comment_body.md <<EOF
           ### StarEmbed Targeted Diagnosis — \`${{ github.sha }}\` (run \${{ github.run_id }})
           Evidence-only workflow, **no validator/baseline change**, no merge.
@@ -382,12 +381,34 @@ jobs:
 
           Full JSON also uploaded as artifact \`star-embed-diagnosis-report\` (14d).
           EOF
-          # Post to PR #212 if it exists
           gh pr view 212 --json number 2>&1 | grep -q '"number": 212' && \
             gh pr comment 212 --body-file /tmp/comment_body.md 2>&1 | head -20 || echo "PR comment skipped or failed (may need permissions)"
           echo "Comment step done"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push evidence to arena branch (github.com — whitelisted, no blob)
+        if: always()
+        run: |
+          set +e
+          mkdir -p docs/diagnosis
+          cp /tmp/star-embed-diagnosis-report.json docs/diagnosis/${{ github.sha }}-report.json 2>&1 | head
+          cp /tmp/download_manifest.json docs/diagnosis/${{ github.sha }}-manifest.json 2>&1 | head
+          cp /tmp/effective_revision.txt docs/diagnosis/${{ github.sha }}-revision.txt 2>&1 | head
+          cp /tmp/step4.log docs/diagnosis/${{ github.sha }}-step4.log 2>&1 | head
+          echo "${{ github.run_id }}" > docs/diagnosis/${{ github.sha }}-run_id.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/diagnosis/${{ github.sha }}-*.json docs/diagnosis/${{ github.sha }}-*.txt docs/diagnosis/${{ github.sha }}-*.log 2>&1 | head
+          if git diff --cached --quiet; then
+            echo "No evidence to commit"
+            exit 0
+          fi
+          git commit -m "docs: StarEmbed diagnosis evidence ${{ github.sha }} (run ${{ github.run_id }}, no code change)" 2>&1 | head
+          # Pull rebase in case of concurrent CI pushes
+          git pull --rebase origin ${{ github.ref_name }} 2>&1 | head -20 || true
+          git push origin ${{ github.ref_name }} 2>&1 | head -20
+          echo "Evidence pushed to ${{ github.ref_name }}"
 
       - name: Upload small diagnosis evidence only (no raw parquet)
         if: always()
