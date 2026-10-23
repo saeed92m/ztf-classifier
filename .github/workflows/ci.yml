@@ -182,7 +182,9 @@ jobs:
             --code-version "${GITHUB_SHA}"
 
       - name: Run raw StarEmbed schema and quality audit
+        id: star_embed_audit
         if: steps.star_embed_scope.outputs.changed == 'true'
+        continue-on-error: true
         run: |
           set -euo pipefail
           python -m ztf_classifier.validation.star_embed_audit \
@@ -206,6 +208,12 @@ jobs:
             --cov-report=term-missing \
             --cov-report=xml \
             --junitxml=pytest-report.xml
+
+      - name: Enforce StarEmbed source-audit gate
+        if: ${{ always() && steps.star_embed_scope.outputs.changed == 'true' && steps.star_embed_audit.outcome == 'failure' }}
+        run: |
+          echo "StarEmbed audit found blocking source-data integrity findings; inspect the uploaded schema audit artifact."
+          exit 1
 
       - name: Upload test and coverage reports
         if: ${{ always() }}
