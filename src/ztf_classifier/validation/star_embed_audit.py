@@ -54,6 +54,68 @@ def _sequence_length(value: Any) -> int | None:
         return None
 
 
+def _array_digest(value: Any) -> str | None:
+    """Hash a JSON-normalized array without copying its raw values into the report."""
+    if value is None:
+        return None
+    try:
+        normalized = np.asarray(value).tolist()
+    except (TypeError, ValueError):
+        normalized = value
+    encoded = json.dumps(normalized, sort_keys=True, separators=(",", ":"), allow_nan=True).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _object_curve_diagnostics(
+    combined: dict[str, pd.DataFrame],
+    issue_details: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Summarize per-band array lengths and hashes for each implicated row."""
+    implicated = {
+        (item["split"], item["sourceid"])
+        for item in issue_details
+    }
+    diagnostics: list[dict[str, Any]] = []
+    for split, frame in combined.items():
+        for row_index, row in frame.iterrows():
+            sourceid = str(row.get("sourceid"))
+            if (split, sourceid) not in implicated:
+                continue
+            bands_data = row.get("bands_data")
+            band_diagnostics: dict[str, Any] = {}
+            if isinstance(bands_data, dict):
+                for band in BANDS:
+                    payload = bands_data.get(band)
+                    if payload is None:
+                        band_diagnostics[band] = None
+                        continue
+                    if not isinstance(payload, dict):
+                        band_diagnostics[band] = {"invalid_structure": True}
+                        continue
+                    band_diagnostics[band] = {
+                        field: {
+                            "length": _sequence_length(payload.get(field)),
+                            "sha256": _array_digest(payload.get(field)),
+                        }
+                        for field in BAND_ARRAY_FIELDS
+                    }
+                    band_diagnostics[band]["declared_length"] = payload.get("length")
+            diagnostics.append(
+                {
+                    "split": split,
+                    "row_index_in_combined_split": int(row_index),
+                    "sourceid": sourceid,
+                    "source_artifact": str(row.get("_source_artifact")),
+                    "class_str": str(row.get("class_str")),
+                    "period": float(row["period"]) if _finite_number(row.get("period")) else None,
+                    "ra": float(row["ra"]) if _finite_number(row.get("ra")) else None,
+                    "dec": float(row["dec"]) if _finite_number(row.get("dec")) else None,
+                    "bands": band_diagnostics,
+                }
+            )
+    return diagnostics
+
+
 def audit_star_embed_dataset(
     data_dir: str | Path,
     output_path: str | Path,
@@ -192,6 +254,8 @@ def audit_star_embed_dataset(
                         "source_artifact": str(row["_source_artifact"]),
                     })
 
+    object_curve_diagnostics = _object_curve_diagnostics(combined, object_id_issue_details)
+
     array_report = Counter()
     array_examples: list[dict[str, Any]] = []
     for split, frame in combined.items():
@@ -271,6 +335,7 @@ def audit_star_embed_dataset(
         "status": "BLOCKED" if errors or leakage_findings else "PASS_SCHEMA_AUDIT_WITH_FINDINGS",
         "validation_errors": leakage_findings,
         "object_id_issue_details": object_id_issue_details,
+        "object_curve_diagnostics": object_curve_diagnostics,
         "interpretation": "Schema and data-quality audit only; no model predictions or scientific classification performance are evaluated.",
         "seed": seed,
         "artifacts": artifact_reports,
