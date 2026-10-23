@@ -54,6 +54,10 @@ For every change:
 5. Verify edits by fetching the saved files/pages again.
 6. Report only completed writes and verified results. Record anything blocked by connector permissions separately.
 
+## Documentation work completed on the current PR branch
+
+The following were added or aligned on this branch: project charter/source-of-truth policy; current handbook; project state register; glossary/status vocabulary; documentation index; README; platform roadmap; user guide; installation guide (v1.0.1); troubleshooting status/version; product architecture index; scientific validation source-adapter boundary; ecosystem expansion record. These are still proposed until PR #212 merges. No historical handbook snapshot or immutable release artifact was rewritten.
+
 ## Immediate work sequence
 
 - [x] Add canonical project charter, state register, current handbook, glossary and documentation index on the documentation branch; preserve historical handbook snapshots.
