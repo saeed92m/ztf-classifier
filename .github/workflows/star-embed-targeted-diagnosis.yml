@@ -1,15 +1,22 @@
-name: StarEmbed Targeted Diagnosis (no code change)
+name: StarEmbed Targeted Diagnosis (evidence-only, no code change)
 
+# Runs in GitHub Runner with full internet — not in restricted sandbox.
+# Trigger: push to this arena branch (dispatch requires default branch, push does not).
 on:
+  push:
+    branches:
+      - arena/d3039cf3-ztf-classifier
+    paths:
+      - .github/workflows/star-embed-targeted-diagnosis.yml
   workflow_dispatch:
     inputs:
       target_run_id:
-        description: 'Source run to inspect (39577115285)'
+        description: 'Source artifact run to inspect (e.g. 39577115285)'
         required: false
         default: '39577115285'
         type: string
       dataset_revision:
-        description: 'HF revision, use commit SHA or resolve_at_acquisition'
+        description: 'HF revision — commit SHA, tag, or branch; use "main" if unknown'
         required: false
         default: 'main'
         type: string
@@ -21,151 +28,288 @@ permissions:
 jobs:
   diagnose:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Show initial state
+      - name: 0) Initial state — commits & PR
         run: |
-          echo "origin/main: $(git rev-parse origin/main | cut -c1-7)"
+          set -euo pipefail
+          echo "origin/main: $(git rev-parse origin/main 2>/dev/null | cut -c1-7 || echo unknown)"
           echo "HEAD: $(git rev-parse HEAD | cut -c1-7)"
-          git log --oneline -3
-          gh pr view 212 --json number,headRefOid,state,isDraft | jq . || true
+          git log --oneline -5
+          echo "--- PR #212 ---"
+          gh pr view 212 --json number,state,isDraft,headRefName,headRefOid,baseRefName 2>&1 | jq . || true
+          echo "--- prior heavy failure ---"
+          gh api repos/saeed92m/ztf-classifier/actions/runs/39577115285 --jq '{id: .id, head_branch: .head_branch, head_sha: .head_sha[0:7], conclusion: .conclusion, name: .name}' 2>&1 | jq . || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download artifact small files only (if available)
+      - name: 1) Attempt small artifact extraction (no 432 MB transfer)
         uses: actions/download-artifact@v7
         with:
           name: star-embed-independent-validation
           path: /tmp/star-embed-artifact
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ inputs.target_run_id }}
+          repository: saeed92m/ztf-classifier
         continue-on-error: true
 
-      - name: List artifact contents (low-volume)
+      - name: 1b) List artifact contents & small JSONs (low-volume)
         run: |
-          echo "=== Artifact download attempt ==="
-          ls -R /tmp/star-embed-artifact 2>&1 | head -n 100
+          set -euo pipefail
+          echo "=== Artifact path ==="
+          ls -R /tmp/star-embed-artifact 2>&1 | head -n 120 || echo "no artifact downloaded"
           du -sh /tmp/star-embed-artifact 2>&1 | head
-          echo "=== Look for small JSONs ==="
-          find /tmp/star-embed-artifact -type f -name "*.json" -exec ls -lh {} \; 2>&1 | head -n 30
-          for f in $(find /tmp/star-embed-artifact -type f -name "independent_dataset_report.json" -o -name "data.acquisition.json" 2>&1 | head); do
-            echo "--- $f ---"
-            cat "$f" 2>&1 | head -n 200
+          echo "=== Small JSONs only ==="
+          find /tmp/star-embed-artifact -type f -name "*.json" -exec ls -lh {} \; 2>&1 | head -n 40 || true
+          for f in $(find /tmp/star-embed-artifact -type f \( -name "independent_dataset_report.json" -o -name "data.acquisition.json" \) 2>/dev/null | head -5); do
+            echo "--- $f ($(wc -c < "$f") bytes) ---"
+            cat "$f" | head -n 300
             echo "SHA256: $(sha256sum "$f" | cut -d' ' -f1)"
+            echo ""
           done
 
-      - name: Install Python deps (locked)
+      - name: Setup Python (locked)
         run: |
+          set -euo pipefail
+          python --version
           python -m pip install --upgrade pip==26.2 setuptools==84.0.0 wheel==0.48.0
           python -m pip install -r requirements.lock
           python -m pip install -e . --no-deps
           python -m pip install huggingface_hub pyarrow pandas --quiet
+          python -c "import pyarrow, pandas, huggingface_hub; print(pyarrow.__version__, pandas.__version__, huggingface_hub.__version__)"
 
-      - name: Fetch ONLY train-00001 shard from pinned revision (if artifact insufficient)
+      - name: 2) Record dataset revision & download ONLY needed shards (pinned)
         run: |
           set -euo pipefail
-          echo "=== Step 2-5: Minimal download ==="
-          REVISION="${{ inputs.dataset_revision }}"
-          echo "Requested revision: $REVISION"
-          # Resolve actual commit if resolve_at_acquisition used in benchmark json
-          CONFIG_REV=$(python -c "import json; print(json.load(open('configs/benchmarks/star_embed_ztf_40k.json'))['input_contract']['revision'])")
-          echo "Config revision: $CONFIG_REV"
-          if [ "$CONFIG_REV" != "resolve_at_acquisition" ]; then
-            REVISION="$CONFIG_REV"
-          fi
-          echo "Using revision: $REVISION for diagnosis"
-          # Use huggingface_hub with revision pinning
-          python <<PY
-          from huggingface_hub import hf_hub_download, hf_hub_url
-          import hashlib, pathlib, json, os
-          revision = os.environ.get("REVISION", "${{ inputs.dataset_revision }}")
-          # Fallback to config revision
-          import json as j
-          cfg = j.load(open("configs/benchmarks/star_embed_ztf_40k.json"))
-          if cfg["input_contract"]["revision"] != "resolve_at_acquisition":
-              revision = cfg["input_contract"]["revision"]
-          print(f"Downloading with revision={revision}")
-          for fname in ["data/train-00001-of-00002.parquet"]:
-              url = hf_hub_url(repo_id="StarEmbed/ZTF_40k", filename=fname, revision=revision)
-              print(f"URL: {url}")
-              path = hf_hub_download(repo_id="StarEmbed/ZTF_40k", filename=fname, revision=revision)
-              print(f"Downloaded: {path} size={pathlib.Path(path).stat().st_size}")
-              print(f"SHA256: {hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()}")
+          echo "=== Config provenance ==="
+          cat configs/benchmarks/star_embed_ztf_40k.json | python -m json.tool
+          python <<'PY'
+          import json
+          cfg = json.load(open("configs/benchmarks/star_embed_ztf_40k.json"))
+          print(f"config revision field: {cfg['input_contract']['revision']}")
+          print(f"config version: {cfg.get('version')}")
+          print(f"config source: {cfg['input_contract']['source']}")
           PY
-        env:
-          REVISION: ${{ inputs.dataset_revision }}
+          # Decide effective revision: input > config if concrete, otherwise main
+          EFFECTIVE_REVISION="${{ inputs.dataset_revision }}"
+          CONFIG_REV=$(python -c "import json; print(json.load(open('configs/benchmarks/star_embed_ztf_40k.json'))['input_contract']['revision'])")
+          echo "Input revision: $EFFECTIVE_REVISION"
+          echo "Config revision: $CONFIG_REV"
+          if [ "$CONFIG_REV" != "resolve_at_acquisition" ] && [ "$CONFIG_REV" != "" ]; then
+            EFFECTIVE_REVISION="$CONFIG_REV"
+            echo "Using config revision: $EFFECTIVE_REVISION"
+          fi
+          echo "EFFECTIVE_REVISION=$EFFECTIVE_REVISION" >> $GITHUB_ENV
+          # Expose for python step
+          echo "$EFFECTIVE_REVISION" > /tmp/effective_revision.txt
+          cat /tmp/effective_revision.txt
+          echo "--- HF URL that will be used ---"
+          python <<PY2
+          from huggingface_hub import hf_hub_url
+          rev = open("/tmp/effective_revision.txt").read().strip()
+          for fname in ["data/train-00001-of-00002.parquet", "data/train-00002-of-00002.parquet", "data/validation-00000-of-00001.parquet", "data/test-00000-of-00001.parquet"]:
+              print(hf_hub_url(repo_id="StarEmbed/ZTF_40k", filename=fname, revision=rev))
+          PY2
 
-      - name: Diagnose shard — counts & grain
+      - name: 3) Download train-00001 + siblings (if accessible) with SHA-256
         run: |
           set -euo pipefail
-          echo "=== Step 4-5: Counts & grain ==="
-          # Find the downloaded file (HF cache)
-          HF_FILE=$(find ~/.cache/huggingface -name "train-00001-of-00002.parquet" 2>/dev/null | head -n1)
-          if [ -z "$HF_FILE" ]; then
-            # Try alternative artifact path if downloaded
-            HF_FILE=$(find /tmp/star-embed-artifact -name "train-00001-of-00002.parquet" 2>/dev/null | head -n1)
-          fi
-          if [ -z "$HF_FILE" ]; then
-            echo "No parquet file found to diagnose"
-            exit 0
-          fi
-          echo "File: $HF_FILE"
-          ls -lh "$HF_FILE"
-          sha256sum "$HF_FILE"
+          REVISION=$(cat /tmp/effective_revision.txt)
+          echo "Effective revision: $REVISION (time: $(date -u +%Y-%m-%dT%H:%M:%SZ))"
+          mkdir -p /tmp/star-embed-shards
           python <<PY
+          import os, pathlib, hashlib, json, time
+          from huggingface_hub import hf_hub_download, hf_hub_url
+          rev = open("/tmp/effective_revision.txt").read().strip()
+          repo = "StarEmbed/ZTF_40k"
+          # Minimal set: failing shard + one sibling per split for overlap check
+          files = [
+              "data/train-00001-of-00002.parquet",  # failing shard
+              "data/train-00002-of-00002.parquet",
+              "data/validation-00000-of-00001.parquet",
+              "data/test-00000-of-00001.parquet",
+          ]
+          out = {}
+          for fname in files:
+              url = hf_hub_url(repo_id=repo, filename=fname, revision=rev)
+              print(f"URL: {url}")
+              try:
+                  path = hf_hub_download(repo_id=repo, filename=fname, revision=rev)
+                  size = pathlib.Path(path).st_size
+                  sha = hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+                  print(f"OK {fname}: path={path} size={size} sha256={sha}")
+                  out[fname] = {"local_path": path, "url": url, "revision": rev, "size": size, "sha256": sha, "time_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+                  # copy to stable path for next step
+                  import shutil
+                  dest = pathlib.Path("/tmp/star-embed-shards") / pathlib.Path(fname).name
+                  dest.parent.mkdir(parents=True, exist_ok=True)
+                  shutil.copy(path, dest)
+                  print(f"  -> copied to {dest}")
+              except Exception as e:
+                  print(f"SKIP {fname}: {e}")
+                  out[fname] = {"url": url, "revision": rev, "error": str(e)}
+          json.dump(out, open("/tmp/download_manifest.json","w"), indent=2, ensure_ascii=False)
+          print(open("/tmp/download_manifest.json").read())
+          PY
+          cat /tmp/download_manifest.json
+          ls -lh /tmp/star-embed-shards/ || true
+          sha256sum /tmp/star-embed-shards/* 2>&1 | head -20 || true
+
+      - name: 4) Compute counts — rows, nulls, duplicates, distinct, frequencies, samples, row indices, overlap
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          import pathlib, glob, json, hashlib, os
           import pyarrow.parquet as pq
           import pandas as pd
-          import json, pathlib, sys, hashlib
-          f = pathlib.Path("$HF_FILE".strip())
-          # If variable substitution didn't work, find again
-          import os, glob
-          candidates = glob.glob(os.path.expanduser("~/.cache/huggingface/**/train-00001-of-00002.parquet"), recursive=True)
-          if candidates:
-              f = pathlib.Path(candidates[0])
-          print(f"Analyzing: {f}")
-          table = pq.read_table(f)
-          print(f"Schema: {table.schema}")
-          print(f"Columns: {table.column_names}")
-          print(f"Rows: {table.num_rows}")
-          df = table.to_pandas()
-          print(f"Null sourceid: {df['sourceid'].isna().sum()}")
-          print(f"Duplicated rows (sourceid): {df['sourceid'].duplicated().sum()}")
-          dup_counts = df['sourceid'].value_counts()
-          dups = dup_counts[dup_counts>1]
-          print(f"Distinct duplicated IDs: {len(dups)}")
-          if len(dups):
-              print(dups.head(10).to_string())
-              for sid in dups.head(3).index:
-                  print(f"--- examples for {sid} ---")
-                  print(df[df['sourceid']==sid].head(2).to_string())
-          # Check bands_data grain
-          sample = df.iloc[0]['bands_data']
-          print(f"bands_data sample type: {type(sample)} keys: {sample.keys() if isinstance(sample, dict) else 'not dict'}")
-          # Check overlap with other shards if present
-          import glob
-          other_files = glob.glob("/tmp/star-embed-artifact/**/*.parquet", recursive=True) + glob.glob(os.path.expanduser("~/.cache/huggingface/**/train-*.parquet"), recursive=True)
-          print(f"Other shards found: {other_files[:5]}")
+
+          shard_dir = pathlib.Path("/tmp/star-embed-shards")
+          shards = sorted(shard_dir.glob("*.parquet"))
+          if not shards:
+              # fallback to HF cache
+              import glob as g
+              shards = [pathlib.Path(p) for p in g.glob(os.path.expanduser("~/.cache/huggingface/**/train-00001-of-00002.parquet"), recursive=True)]
+          if not shards:
+              print("No shards found — nothing to diagnose")
+              raise SystemExit(0)
+
+          print(f"Found shards: {[str(s) for s in shards]}")
+
+          manifest = json.load(open("/tmp/download_manifest.json")) if pathlib.Path("/tmp/download_manifest.json").exists() else {}
+          report = {"generated_utc": __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime()),
+                    "effective_revision": open("/tmp/effective_revision.txt").read().strip() if pathlib.Path("/tmp/effective_revision.txt").exists() else None,
+                    "manifest": manifest,
+                    "shards": {}}
+          all_sourceids = {}
+
+          for shard_path in shards:
+              print(f"\n{'='*80}\nAnalyzing: {shard_path} (size={shard_path.stat().st_size} sha256={hashlib.sha256(shard_path.read_bytes()).hexdigest()[:16]}...)")
+              table = pq.read_table(shard_path)
+              print(f"  schema fields: {table.schema.names if hasattr(table.schema, 'names') else table.column_names}")
+              print(f"  columns: {table.column_names}")
+              print(f"  rows: {table.num_rows}")
+              # Full pandas for counts (40k rows is small)
+              df = table.to_pandas()
+              # Ensure sourceid exists
+              if "sourceid" not in df.columns:
+                  print(f"  ERROR: no sourceid column in {shard_path.name}")
+                  report["shards"][shard_path.name] = {"error": "no sourceid column", "rows": int(table.num_rows)}
+                  continue
+              total = len(df)
+              null_n = int(df["sourceid"].isna().sum())
+              dup_mask = df["sourceid"].duplicated(keep=False)  # all rows that are part of a duplicate
+              dup_rows = int(dup_mask.sum())
+              # duplicated() default keep=first counts only 2nd+ occurrences
+              dup_rows_keep_first = int(df["sourceid"].duplicated().sum())
+              vc = df["sourceid"].value_counts(dropna=False)
+              dups = vc[vc > 1]
+              distinct_dup_ids = int(len(dups))
+              print(f"  total rows: {total}")
+              print(f"  null sourceid: {null_n}")
+              print(f"  duplicated rows (keep=False, all members): {dup_rows}")
+              print(f"  duplicated rows (keep=first, 2nd+ only): {dup_rows_keep_first}")
+              print(f"  distinct duplicated sourceids: {distinct_dup_ids}")
+              if distinct_dup_ids:
+                  print(f"  top 10 duplicate frequencies:")
+                  print(dups.head(10).to_string())
+                  # frequencies histogram: how many ids appear 2x, 3x, etc
+                  freq_of_freq = dups.value_counts().sort_index()
+                  print(f"  frequency-of-frequencies (count -> how many IDs):")
+                  print(freq_of_freq.head(20).to_string())
+                  print(f"  samples — 3 duplicated IDs with row indices:")
+                  for sid in dups.head(3).index:
+                      # skip NaN
+                      if pd.isna(sid):
+                          continue
+                      idx = df.index[df["sourceid"] == sid].tolist()
+                      print(f"    sourceid={sid!r} count={int(vc[sid])} row_indices={idx[:10]}{' ...' if len(idx)>10 else ''}")
+                      # show 1-2 full rows truncated
+                      sample_rows = df[df["sourceid"] == sid].head(2)
+                      for _, r in sample_rows.iterrows():
+                          # truncate long fields
+                          row_dict = {k: (str(v)[:120] + "..." if isinstance(v, str) and len(v)>120 else v) for k,v in r.items()}
+                          # bands_data may be dict
+                          if "bands_data" in row_dict and isinstance(row_dict["bands_data"], dict):
+                              row_dict["bands_data_keys"] = list(row_dict["bands_data"].keys())
+                              row_dict["bands_data"] = {k: f"len={len(v) if hasattr(v,'__len__') else '?'} sample={str(v)[:80]}" for k,v in r["bands_data"].items()} if isinstance(r["bands_data"], dict) else str(r["bands_data"])[:200]
+                          print(f"      row: {row_dict}")
+              # collect for overlap
+              for sid in df["sourceid"].dropna().unique():
+                  all_sourceids.setdefault(str(sid), []).append(shard_path.name)
+              report["shards"][shard_path.name] = {
+                  "file": str(shard_path),
+                  "size": int(shard_path.stat().st_size),
+                  "sha256": hashlib.sha256(shard_path.read_bytes()).hexdigest(),
+                  "rows": int(total),
+                  "null_sourceid": int(null_n),
+                  "duplicated_rows_all_members": int(dup_rows),
+                  "duplicated_rows_keep_first": int(dup_rows_keep_first),
+                  "distinct_duplicated_ids": int(distinct_dup_ids),
+                  "top_duplicate_frequencies": {str(k): int(v) for k,v in dups.head(20).items()} if distinct_dup_ids else {},
+                  "frequency_of_frequencies": {str(k): int(v) for k,v in (dups.value_counts().sort_index().head(20).items())} if distinct_dup_ids else {},
+              }
+
+          # 5) Overlap between splits
+          print(f"\n{'='*80}\nCross-shard overlap check:")
+          overlapping = {sid: shards for sid, shards in all_sourceids.items() if len(shards) > 1}
+          print(f"  sourceids appearing in >1 shard: {len(overlapping)}")
+          if overlapping:
+              for sid, shs in list(overlapping.items())[:5]:
+                  print(f"    {sid!r} in {shs}")
+          report["cross_shard_overlap"] = {
+              "num_sourceids_in_multiple_shards": len(overlapping),
+              "examples": {k: v for k,v in list(overlapping.items())[:10]}
+          }
+
+          # Grain hint
+          print(f"\nGrain hint — check one row's structure:")
+          for shard_path in shards[:1]:
+              table = pq.read_table(shard_path)
+              df = table.to_pandas()
+              if "bands_data" in df.columns:
+                  sample = df.iloc[0]["bands_data"]
+                  print(f"  bands_data type: {type(sample)}")
+                  if isinstance(sample, dict):
+                      print(f"  bands_data keys: {list(sample.keys())}")
+                      for k,v in list(sample.items())[:2]:
+                          print(f"    {k}: type={type(v)} len={len(v) if hasattr(v,'__len__') else 'n/a'} preview={str(v)[:120]}")
+
+          # Write report for artifact
+          out_path = pathlib.Path("/tmp/star-embed-diagnosis-report.json")
+          json.dump(report, open(out_path,"w"), indent=2, ensure_ascii=False)
+          print(f"\nWrote {out_path} ({out_path.stat().st_size} bytes)")
+          print(open(out_path).read()[:8000])
           PY
+          cat /tmp/star-embed-diagnosis-report.json | head -n 200
 
-      - name: Check dataset documentation grain
+      - name: 5) Documented grain — paper/README
         run: |
-          echo "=== Step 5: Documented grain ==="
+          set -euo pipefail
+          echo "=== configs/benchmarks/star_embed_ztf_40k.json ==="
           cat configs/benchmarks/star_embed_ztf_40k.json | python -m json.tool
-          echo "--- Try fetching paper README from HF ---"
-          curl -sL https://huggingface.co/datasets/StarEmbed/ZTF_40k/raw/main/README.md 2>&1 | head -n 100 || true
+          echo ""
+          echo "=== HF README (dataset card) ==="
+          curl -fsSL https://huggingface.co/datasets/StarEmbed/ZTF_40k/raw/main/README.md 2>&1 | head -n 200 || echo "README fetch failed"
+          echo ""
+          echo "=== StarEmbed paper (arXiv DOI from config) ==="
+          echo "DOI: 10.48550/arXiv.2510.06200"
+          echo "Grain must be verified from README/paper: is row = object or observation/lightcurve row?"
 
-      - name: Upload small diagnosis report only (no raw data)
+      - name: Upload small diagnosis evidence only (no raw parquet)
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: star-embed-diagnosis-report
           path: |
+            /tmp/star-embed-diagnosis-report.json
+            /tmp/download_manifest.json
+            /tmp/effective_revision.txt
             /tmp/star-embed-artifact/**/independent_dataset_report.json
             /tmp/star-embed-artifact/**/data.acquisition.json
-            /tmp/pip-report-build.json
           if-no-files-found: warn
+          retention-days: 14
 
