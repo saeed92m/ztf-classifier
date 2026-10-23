@@ -1,7 +1,6 @@
 name: StarEmbed Targeted Diagnosis (evidence-only, no code change)
-
 # Runs in GitHub Runner with full internet — not in restricted sandbox.
-# Trigger: push to this arena branch (dispatch requires default branch, push does not).
+# No validator / production code change, no merge / release / baseline change.
 on:
   push:
     branches:
@@ -16,16 +15,17 @@ on:
         default: '39577115285'
         type: string
       dataset_revision:
-        description: 'HF revision — commit SHA, tag, or branch; use "main" if unknown'
+        description: 'HF revision — pinned 40-char SHA; fixed to 33046797fb619f93a991aa4e38a9dc36f27e2d24 for failing shard'
         required: false
-        default: 'main'
+        default: '33046797fb619f93a991aa4e38a9dc36f27e2d24'
         type: string
 
+# 3) حداقل مجوزها — تنها خواندن. دلیل هر مجوز نوشتن باید مستند شود؛ این workflow هیچ نوشتن ندارد.
 permissions:
-  contents: write
-  actions: read
-  pull-requests: write
-  issues: write
+  contents: read   # checkout + خواندن configs/benchmarks/star_embed_ztf_40k.json
+  actions: read    # download-artifact از run قبلی (فقط JSONهای کوچک)
+# بدون contents:write — از پوش خودکار گزارش به مخزن خودداری شد (دلیل: جلوگیری از آلودگی تاریخچه و حفظ اصل کمترین مجوز)
+# بدون pull-requests:write / issues:write — از ارسال PR comment غیرضروری خودداری شد (دلیل: شواهد فقط از طریق artifact و step summary قابل بازیابی است)
 
 jobs:
   diagnose:
@@ -42,7 +42,7 @@ jobs:
           python-version: "3.11.16"
           cache: pip
 
-      - name: 0) Initial state — commits & PR
+      - name: 0) Initial state — commits & PR (exit 0 expected)
         run: |
           set -euo pipefail
           echo "origin/main: $(git rev-parse origin/main 2>/dev/null | cut -c1-7 || echo unknown)"
@@ -50,7 +50,7 @@ jobs:
           git log --oneline -5
           echo "--- PR #212 ---"
           gh pr view 212 --json number,state,isDraft,headRefName,headRefOid,baseRefName 2>&1 | jq . || true
-          echo "--- prior heavy failure ---"
+          echo "--- prior heavy failure 39577115285 ---"
           gh api repos/saeed92m/ztf-classifier/actions/runs/39577115285 --jq '{id: .id, head_branch: .head_branch, head_sha: .head_sha[0:7], conclusion: .conclusion, name: .name}' 2>&1 | jq . || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -65,21 +65,25 @@ jobs:
           repository: saeed92m/ztf-classifier
         continue-on-error: true
 
+      - name: Record exit code of artifact download
+        if: always()
+        run: |
+          set -euo pipefail
+          echo "Artifact download step finished (continue-on-error=true, exit code not failing job). Check 1b for contents."
+
       - name: 1b) List artifact contents & small JSONs (low-volume)
         run: |
-          set +e
+          set -euo pipefail
           echo "=== Artifact path ==="
           ls -R /tmp/star-embed-artifact 2>&1 | head -n 120 || echo "no artifact downloaded"
-          du -sh /tmp/star-embed-artifact 2>&1 | head || true
+          du -sh /tmp/star-embed-artifact 2>&1 | head -n 5 || true
           echo "=== Small JSONs only ==="
           find /tmp/star-embed-artifact -type f -name "*.json" -exec ls -lh {} \; 2>&1 | head -n 40 || true
           for f in $(find /tmp/star-embed-artifact -type f \( -name "independent_dataset_report.json" -o -name "data.acquisition.json" \) 2>/dev/null | head -5); do
             echo "--- $f ($(wc -c < "$f") bytes) ---"
             cat "$f" 2>&1 | head -n 300 || true
             echo "SHA256: $(sha256sum "$f" 2>&1 | cut -d' ' -f1 || echo n/a)"
-            echo ""
           done
-          echo "Step 1b done (continue regardless)"
 
       - name: Setup Python (locked)
         run: |
@@ -91,7 +95,7 @@ jobs:
           python -m pip install huggingface_hub pyarrow pandas --quiet
           python -c "import pyarrow, pandas, huggingface_hub; print(pyarrow.__version__, pandas.__version__, huggingface_hub.__version__)"
 
-      - name: 2) Record dataset revision & download ONLY needed shards (pinned)
+      - name: 2) Resolve dataset revision (pinned, no download)
         run: |
           set -euo pipefail
           echo "=== Config provenance ==="
@@ -104,93 +108,171 @@ jobs:
           print(f"config source: {cfg.get('source')}")
           print(f"object_id_column: {cfg.get('object_id_column')}")
           PY
-          # Decide effective revision: input > config if concrete, otherwise main
-          # For resolve_at_acquisition we must call HF dataset API to get real commit SHA (see acquisition.py:_resolve_star_embed_urls)
           EFFECTIVE_REVISION="${{ inputs.dataset_revision }}"
           CONFIG_REV=$(python -c "import json; print(json.load(open('configs/benchmarks/star_embed_ztf_40k.json'))['input_contract']['revision'])")
-          echo "Input revision: '$EFFECTIVE_REVISION'"
-          echo "Config revision: $CONFIG_REV"
+          echo "Input revision (workflow_dispatch): '$EFFECTIVE_REVISION'"
+          echo "Config revision: '$CONFIG_REV'"
           if [ -z "$EFFECTIVE_REVISION" ]; then
-            EFFECTIVE_REVISION="main"
-            echo "Input empty (push trigger) -> default to main"
+            EFFECTIVE_REVISION="33046797fb619f93a991aa4e38a9dc36f27e2d24"
+            echo "Input empty (push trigger) -> fixed to pinned failing-shard revision: $EFFECTIVE_REVISION"
           fi
-          if [ "$CONFIG_REV" != "resolve_at_acquisition" ] && [ "$CONFIG_REV" != "" ]; then
-            EFFECTIVE_REVISION="$CONFIG_REV"
-            echo "Using config revision: $EFFECTIVE_REVISION"
+          # اگر config resolve_at_acquisition بود، در این workflow ثابت پین‌شده را ترجیح می‌دهیم
+          # چون هدف 5) فقط shard شکست‌خورده روی revision ثابت است
+          if [ "$CONFIG_REV" != "resolve_at_acquisition" ] && [ "$CONFIG_REV" != "" ] && [ "$EFFECTIVE_REVISION" = "33046797fb619f93a991aa4e38a9dc36f27e2d24" ]; then
+            # pin را حفظ کن
+            echo "Keeping pinned revision: $EFFECTIVE_REVISION (config is resolve_at_acquisition, documented for reproducibility)"
           fi
-          # If still resolve_at_acquisition, resolve via HF API (canonical path from acquisition.py)
-          if [ "$EFFECTIVE_REVISION" = "resolve_at_acquisition" ] || [ "$EFFECTIVE_REVISION" = "main" ]; then
-            echo "Resolving revision via HF API https://huggingface.co/api/datasets/StarEmbed/ZTF_40k ..."
-            python <<'PYRESOLVE'
-          import requests, json
-          try:
-              r = requests.get("https://huggingface.co/api/datasets/StarEmbed/ZTF_40k", timeout=30, params=[("expand","sha"),("expand","siblings")])
-              r.raise_for_status()
-              payload = r.json()
-              rev = payload.get("sha")
-              print(f"HF API sha: {rev}")
-              # also list available files
-              sibs = [x.get("rfilename") for x in payload.get("siblings",[]) if isinstance(x, dict)]
-              for s in sibs:
-                  if "train-00001" in s or s.endswith(".parquet"):
-                      print(f"  sibling: {s}")
-              if rev and len(rev)==40:
-                  open("/tmp/resolved_revision.txt","w").write(rev)
-                  print(f"Resolved revision: {rev}")
-              else:
-                  print(f"HF did not return valid sha: {rev}")
-          except Exception as e:
-              print(f"HF API resolve failed: {e}")
-          PYRESOLVE
-            if [ -f /tmp/resolved_revision.txt ]; then
-              EFFECTIVE_REVISION=$(cat /tmp/resolved_revision.txt)
-              echo "Resolved via HF API to: $EFFECTIVE_REVISION"
-            else
-              echo "Could not resolve via API, keeping $EFFECTIVE_REVISION (will likely 401 if gated)"
-            fi
+          # Validate 40-char SHA format
+          if ! echo "$EFFECTIVE_REVISION" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "ERROR: revision must be 40-char hex SHA, got: $EFFECTIVE_REVISION" >&2
+            exit 1
           fi
           echo "EFFECTIVE_REVISION=$EFFECTIVE_REVISION" >> $GITHUB_ENV
           echo "$EFFECTIVE_REVISION" > /tmp/effective_revision.txt
           cat /tmp/effective_revision.txt
-          echo "--- HF URL that will be used ---"
+          echo "--- HF URL for failing shard only ---"
           python <<PY2
           from huggingface_hub import hf_hub_url
           rev = open("/tmp/effective_revision.txt").read().strip()
-          for fname in ["data/train-00001-of-00002.parquet", "data/train-00002-of-00002.parquet", "data/validation-00000-of-00001.parquet", "data/test-00000-of-00001.parquet", "data/anom-00000-of-00001.parquet"]:
-              print(hf_hub_url(repo_id="StarEmbed/ZTF_40k", filename=fname, revision=rev))
+          print(hf_hub_url(repo_id="StarEmbed/ZTF_40k", filename="data/train-00001-of-00002.parquet", revision=rev))
           PY2
-          echo "--- Check HF_TOKEN presence (for gated repo) ---"
-          if [ -n "${HF_TOKEN:-}" ]; then echo "HF_TOKEN is set (length ${#HF_TOKEN})"; else echo "HF_TOKEN not set — gated dataset will 401 without it"; fi
 
-      - name: 3) Download train-00001 + siblings (if accessible) with SHA-256
+      - name: 2b) Fixture tests — counting logic without secret (must pass before real data)
+        run: |
+          set -euo pipefail
+          echo "=== 4) آزمون‌های بدون secret — fixtureهای مصنوعی ==="
+          python <<'PY'
+          import pathlib, tempfile, json, hashlib
+          import pyarrow as pa, pyarrow.parquet as pq, pandas as pd
+
+          def diagnose_counts(df):
+              """Same logic as validator: returns dict with required fields, raises on missing sourceid column."""
+              if "sourceid" not in df.columns:
+                  raise ValueError("missing sourceid column")
+              total = len(df)
+              null_n = int(df["sourceid"].isna().sum())
+              dup_keep_false = int(df["sourceid"].duplicated(keep=False).sum())
+              dup_keep_first = int(df["sourceid"].duplicated().sum())
+              vc = df["sourceid"].value_counts(dropna=False)
+              dups = vc[vc > 1]
+              distinct_dup = int(len(dups))
+              # overlap helper
+              return {
+                  "rows": total,
+                  "null_sourceid": null_n,
+                  "duplicated_rows_all_members": dup_keep_false,
+                  "duplicated_rows_keep_first": dup_keep_first,
+                  "distinct_duplicated_ids": distinct_dup,
+                  "top_duplicate_frequencies": {str(k): int(v) for k,v in dups.head(10).items()},
+              }
+
+          def write_parquet(path, data):
+              # data: dict column -> list
+              table = pa.table(data)
+              pq.write_table(table, path)
+
+          tmp = pathlib.Path(tempfile.mkdtemp())
+          ok = True
+
+          # Fixture A: شناسه تهی
+          df_a = pd.DataFrame({"sourceid": [1, None, 3], "class_str": ["EW","EA","RRab"]})
+          p_a = tmp / "a.parquet"
+          write_parquet(p_a, {"sourceid": [1, None, 3], "class_str": ["EW","EA","RRab"]})
+          r_a = diagnose_counts(df_a)
+          assert r_a["rows"] == 3, r_a
+          assert r_a["null_sourceid"] == 1, r_a
+          assert r_a["distinct_duplicated_ids"] == 0, r_a
+          print(f"Fixture A (null) PASS: {r_a}")
+
+          # Fixture B: یکتا
+          df_b = pd.DataFrame({"sourceid": [10,11,12]})
+          r_b = diagnose_counts(df_b)
+          assert r_b["rows"] == 3 and r_b["null_sourceid"] == 0 and r_b["distinct_duplicated_ids"] == 0
+          print(f"Fixture B (unique) PASS: {r_b}")
+
+          # Fixture C: تکراری
+          df_c = pd.DataFrame({"sourceid": [1,1,2,2,2,3]})
+          r_c = diagnose_counts(df_c)
+          assert r_c["rows"] == 6, r_c
+          assert r_c["duplicated_rows_all_members"] == 5, r_c  # 1 appears 2x, 2 appears 3x => 5 rows part of duplicate
+          assert r_c["duplicated_rows_keep_first"] == 3, r_c  # second 1 + two extra 2s
+          assert r_c["distinct_duplicated_ids"] == 2, r_c
+          assert r_c["top_duplicate_frequencies"]["2"] == 3
+          print(f"Fixture C (duplicate) PASS: {r_c}")
+
+          # Fixture D: overlap بین دو split
+          df_d1 = pd.DataFrame({"sourceid": [1,2,3]})
+          df_d2 = pd.DataFrame({"sourceid": [3,4,5]})
+          all_ids = {}
+          for name, df in [("train-00001", df_d1), ("validation", df_d2)]:
+              for sid in df["sourceid"].dropna().unique():
+                  all_ids.setdefault(str(sid), []).append(name)
+          overlap = {k:v for k,v in all_ids.items() if len(v)>1}
+          assert len(overlap) == 1 and "3" in overlap, overlap
+          print(f"Fixture D (overlap) PASS: {overlap}")
+
+          # Fixture E: گزارش شکست — ستون sourceid مفقود باید ValueError بدهد و exit غیرصفر
+          try:
+              diagnose_counts(pd.DataFrame({"oid": [1,2]}))
+              print("Fixture E FAIL: expected ValueError for missing sourceid")
+              ok = False
+          except ValueError as e:
+              print(f"Fixture E (missing column correctly fails) PASS: {e}")
+
+          # Validate JSON schema of report
+          sample_report = {
+              "generated_utc": "2026-10-23T00:00:00Z",
+              "effective_revision": "33046797fb619f93a991aa4e38a9dc36f27e2d24",
+              "manifest": {},
+              "shards": {"train-00001-of-00002.parquet": r_c},
+              "cross_shard_overlap": {"num_sourceids_in_multiple_shards": 1},
+          }
+          required_top = ["generated_utc","effective_revision","manifest","shards"]
+          for k in required_top:
+              assert k in sample_report, f"missing required field {k}"
+          json.dumps(sample_report)  # must be serializable
+          print("JSON schema validation PASS")
+
+          if not ok:
+              raise SystemExit(1)
+          print("All fixture tests PASSED")
+          PY
+
+      - name: 3) Download ONLY failing shard on pinned revision (HF_TOKEN scoped here)
         run: |
           set -euo pipefail
           REVISION=$(cat /tmp/effective_revision.txt)
-          echo "Effective revision: $REVISION (time: $(date -u +%Y-%m-%dT%H:%M:%SZ))"
+          echo "Effective revision: $REVISION"
+          echo "Time (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          # 1) احراز هویت Hugging Face — فقط وضعیت configured/missing، بدون چاپ توکن یا طول آن
+          if [ -n "${HF_TOKEN:-}" ]; then
+            echo "HF_TOKEN status: configured"
+          else
+            echo "HF_TOKEN status: missing — gated dataset will 401; real counts will be BLOCKED_GATED_DATASET"
+          fi
           mkdir -p /tmp/star-embed-shards
-          python <<PY
+          python <<'PY'
           import os, pathlib, hashlib, json, time
           from huggingface_hub import hf_hub_download, hf_hub_url
           rev = open("/tmp/effective_revision.txt").read().strip()
           repo = "StarEmbed/ZTF_40k"
-          # Minimal set: failing shard + one sibling per split for overlap check
-          files = [
-              "data/train-00001-of-00002.parquet",  # failing shard
-              "data/train-00002-of-00002.parquet",
-              "data/validation-00000-of-00001.parquet",
-              "data/test-00000-of-00001.parquet",
-          ]
+          # 5) پس از تأیید امنیت — فقط shard شکست‌خورده روی revision ثابت
+          files = ["data/train-00001-of-00002.parquet"]
           out = {}
           for fname in files:
               url = hf_hub_url(repo_id=repo, filename=fname, revision=rev)
               print(f"URL: {url}")
+              print(f"Revision: {rev}")
+              print(f"Time UTC: {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}")
+              # HF_TOKEN is read from env automatically by huggingface_hub; never print it
+              token_status = "configured" if os.environ.get("HF_TOKEN") else "missing"
+              print(f"HF_TOKEN status: {token_status}")
               try:
                   path = hf_hub_download(repo_id=repo, filename=fname, revision=rev)
                   size = pathlib.Path(path).st_size
                   sha = hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
-                  print(f"OK {fname}: path={path} size={size} sha256={sha}")
-                  out[fname] = {"local_path": path, "url": url, "revision": rev, "size": size, "sha256": sha, "time_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-                  # copy to stable path for next step
+                  print(f"OK {fname}: size={size} sha256={sha}")
+                  out[fname] = {"url": url, "revision": rev, "size": size, "sha256": sha, "time_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
                   import shutil
                   dest = pathlib.Path("/tmp/star-embed-shards") / pathlib.Path(fname).name
                   dest.parent.mkdir(parents=True, exist_ok=True)
@@ -198,108 +280,97 @@ jobs:
                   print(f"  -> copied to {dest}")
               except Exception as e:
                   print(f"SKIP {fname}: {e}")
-                  out[fname] = {"url": url, "revision": rev, "error": str(e)}
+                  out[fname] = {"url": url, "revision": rev, "error": str(e), "time_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
           json.dump(out, open("/tmp/download_manifest.json","w"), indent=2, ensure_ascii=False)
           print(open("/tmp/download_manifest.json").read())
           PY
           cat /tmp/download_manifest.json
           ls -lh /tmp/star-embed-shards/ || true
           sha256sum /tmp/star-embed-shards/* 2>&1 | head -20 || true
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
-      - name: 4) Compute counts — rows, nulls, duplicates, distinct, frequencies, samples, row indices, overlap
+      - name: 4) Compute counts — rows, nulls, duplicates, distinct, frequencies, samples, row indices, overlap (strict, no false success)
         run: |
-          set +e
-          python <<'PY' 2>&1 | tee /tmp/step4.log
-          import traceback
-          try:
-          import pathlib, glob, json, hashlib, os
+          set -euo pipefail
+          python <<'PY'
+          import pathlib, json, hashlib, os, time
           import pyarrow.parquet as pq
           import pandas as pd
 
           shard_dir = pathlib.Path("/tmp/star-embed-shards")
           shards = sorted(shard_dir.glob("*.parquet"))
+          manifest = json.load(open("/tmp/download_manifest.json")) if pathlib.Path("/tmp/download_manifest.json").exists() else {}
+          effective_rev = open("/tmp/effective_revision.txt").read().strip() if pathlib.Path("/tmp/effective_revision.txt").exists() else None
+
+          # اگر gated و بدون HF_TOKEN — گزارش BLOCKED را بساز و با موفقیت خارج شو (دسترسی مسدود، نه باگ شمارش)
           if not shards:
               import glob as g
               shards = [pathlib.Path(p) for p in g.glob(os.path.expanduser("~/.cache/huggingface/**/train-00001-of-00002.parquet"), recursive=True)]
-          manifest = json.load(open("/tmp/download_manifest.json")) if pathlib.Path("/tmp/download_manifest.json").exists() else {}
-          effective_rev = open("/tmp/effective_revision.txt").read().strip() if pathlib.Path("/tmp/effective_revision.txt").exists() else None
           if not shards:
-              print("No shards found — dataset download failed (likely gated/private, see manifest 401).")
-              # Write minimal evidence so push step has something to commit
-              report = {"generated_utc": __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime()),
-                        "effective_revision": effective_rev,
-                        "manifest": manifest,
-                        "note": "No parquet shards downloaded — HF returned 401 for gated dataset StarEmbed/ZTF_40k without HF_TOKEN; see manifest.errors",
-                        "shards": {},
-                        "cross_shard_overlap": {"num_sourceids_in_multiple_shards": 0, "examples": {}},
-                        "status": "BLOCKED_GATED_DATASET"}
+              print("No shards downloaded — HF_TOKEN missing or gated repo inaccessible. Recording BLOCKED_GATED_DATASET.")
+              report = {
+                  "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                  "effective_revision": effective_rev,
+                  "manifest": manifest,
+                  "shards": {},
+                  "cross_shard_overlap": {"num_sourceids_in_multiple_shards": 0, "examples": {}},
+                  "status": "BLOCKED_GATED_DATASET",
+                  "note": "HF_TOKEN missing or insufficient — cannot read failing shard on pinned revision; counts unavailable until token configured"
+              }
+              # اعتبارسنجی JSON و فیلدهای اجباری
+              for k in ["generated_utc", "effective_revision", "manifest", "shards", "status"]:
+                  assert k in report, f"missing required field {k}"
               out = pathlib.Path("/tmp/star-embed-diagnosis-report.json")
-              json.dump(report, open(out,"w"), indent=2, ensure_ascii=False)
-              print(f"Wrote gated-status report to {out} ({out.stat().st_size} bytes)")
+              json.dump(report, open(out, "w"), indent=2, ensure_ascii=False)
+              assert json.load(open(out)), "written JSON is invalid"
+              print(f"Wrote {out} ({out.stat().st_size} bytes)")
               print(open(out).read()[:4000])
               raise SystemExit(0)
 
+          # حالت عادی — شمارش واقعی
           print(f"Found shards: {[str(s) for s in shards]}")
-
-          # manifest/effective_rev already loaded above for gated case; reuse
-          report = {"generated_utc": __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime()),
-                    "effective_revision": effective_rev,
-                    "manifest": manifest,
-                    "shards": {}}
+          report = {
+              "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+              "effective_revision": effective_rev,
+              "manifest": manifest,
+              "shards": {}
+          }
           all_sourceids = {}
 
           for shard_path in shards:
-              print(f"\n{'='*80}\nAnalyzing: {shard_path} (size={shard_path.stat().st_size} sha256={hashlib.sha256(shard_path.read_bytes()).hexdigest()[:16]}...)")
+              print(f"\n{'='*80}\nAnalyzing: {shard_path} (size={shard_path.stat().st_size} sha256={hashlib.sha256(shard_path.read_bytes()).hexdigest()})")
               table = pq.read_table(shard_path)
-              print(f"  schema fields: {table.schema.names if hasattr(table.schema, 'names') else table.column_names}")
-              print(f"  columns: {table.column_names}")
+              cols = table.column_names
+              print(f"  columns: {cols}")
               print(f"  rows: {table.num_rows}")
-              # Full pandas for counts (40k rows is small)
               df = table.to_pandas()
-              # Ensure sourceid exists
               if "sourceid" not in df.columns:
-                  print(f"  ERROR: no sourceid column in {shard_path.name}")
-                  report["shards"][shard_path.name] = {"error": "no sourceid column", "rows": int(table.num_rows)}
-                  continue
+                  raise ValueError(f"missing sourceid column in {shard_path.name} — columns were {cols}")
               total = len(df)
               null_n = int(df["sourceid"].isna().sum())
-              dup_mask = df["sourceid"].duplicated(keep=False)  # all rows that are part of a duplicate
-              dup_rows = int(dup_mask.sum())
-              # duplicated() default keep=first counts only 2nd+ occurrences
-              dup_rows_keep_first = int(df["sourceid"].duplicated().sum())
+              dup_all = int(df["sourceid"].duplicated(keep=False).sum())
+              dup_first = int(df["sourceid"].duplicated().sum())
               vc = df["sourceid"].value_counts(dropna=False)
               dups = vc[vc > 1]
-              distinct_dup_ids = int(len(dups))
+              distinct_dup = int(len(dups))
               print(f"  total rows: {total}")
               print(f"  null sourceid: {null_n}")
-              print(f"  duplicated rows (keep=False, all members): {dup_rows}")
-              print(f"  duplicated rows (keep=first, 2nd+ only): {dup_rows_keep_first}")
-              print(f"  distinct duplicated sourceids: {distinct_dup_ids}")
-              if distinct_dup_ids:
-                  print(f"  top 10 duplicate frequencies:")
+              print(f"  duplicated_rows_all_members: {dup_all}")
+              print(f"  duplicated_rows_keep_first: {dup_first}")
+              print(f"  distinct_duplicated_ids: {distinct_dup}")
+              if distinct_dup:
+                  print("  top duplicate frequencies:")
                   print(dups.head(10).to_string())
-                  # frequencies histogram: how many ids appear 2x, 3x, etc
                   freq_of_freq = dups.value_counts().sort_index()
-                  print(f"  frequency-of-frequencies (count -> how many IDs):")
+                  print("  frequency-of-frequencies:")
                   print(freq_of_freq.head(20).to_string())
-                  print(f"  samples — 3 duplicated IDs with row indices:")
+                  print("  samples — up to 3 duplicated IDs with row indices:")
                   for sid in dups.head(3).index:
-                      # skip NaN
                       if pd.isna(sid):
                           continue
                       idx = df.index[df["sourceid"] == sid].tolist()
-                      print(f"    sourceid={sid!r} count={int(vc[sid])} row_indices={idx[:10]}{' ...' if len(idx)>10 else ''}")
-                      # show 1-2 full rows truncated
-                      sample_rows = df[df["sourceid"] == sid].head(2)
-                      for _, r in sample_rows.iterrows():
-                          # truncate long fields
-                          row_dict = {k: (str(v)[:120] + "..." if isinstance(v, str) and len(v)>120 else v) for k,v in r.items()}
-                          # bands_data may be dict
-                          if "bands_data" in row_dict and isinstance(row_dict["bands_data"], dict):
-                              row_dict["bands_data_keys"] = list(row_dict["bands_data"].keys())
-                              row_dict["bands_data"] = {k: f"len={len(v) if hasattr(v,'__len__') else '?'} sample={str(v)[:80]}" for k,v in r["bands_data"].items()} if isinstance(r["bands_data"], dict) else str(r["bands_data"])[:200]
-                          print(f"      row: {row_dict}")
-              # collect for overlap
+                      print(f"    sourceid={sid!r} count={int(vc[sid])} row_indices={idx[:10]}")
               for sid in df["sourceid"].dropna().unique():
                   all_sourceids.setdefault(str(sid), []).append(shard_path.name)
               report["shards"][shard_path.name] = {
@@ -308,153 +379,63 @@ jobs:
                   "sha256": hashlib.sha256(shard_path.read_bytes()).hexdigest(),
                   "rows": int(total),
                   "null_sourceid": int(null_n),
-                  "duplicated_rows_all_members": int(dup_rows),
-                  "duplicated_rows_keep_first": int(dup_rows_keep_first),
-                  "distinct_duplicated_ids": int(distinct_dup_ids),
-                  "top_duplicate_frequencies": {str(k): int(v) for k,v in dups.head(20).items()} if distinct_dup_ids else {},
-                  "frequency_of_frequencies": {str(k): int(v) for k,v in (dups.value_counts().sort_index().head(20).items())} if distinct_dup_ids else {},
+                  "duplicated_rows_all_members": int(dup_all),
+                  "duplicated_rows_keep_first": int(dup_first),
+                  "distinct_duplicated_ids": int(distinct_dup),
+                  "top_duplicate_frequencies": {str(k): int(v) for k,v in dups.head(10).items()} if distinct_dup else {},
+                  "frequency_of_frequencies": {str(k): int(v) for k,v in (dups.value_counts().sort_index().head(10).items())} if distinct_dup else {},
               }
 
-          # 5) Overlap between splits
-          print(f"\n{'='*80}\nCross-shard overlap check:")
-          overlapping = {sid: shards for sid, shards in all_sourceids.items() if len(shards) > 1}
-          print(f"  sourceids appearing in >1 shard: {len(overlapping)}")
-          if overlapping:
-              for sid, shs in list(overlapping.items())[:5]:
-                  print(f"    {sid!r} in {shs}")
-          report["cross_shard_overlap"] = {
-              "num_sourceids_in_multiple_shards": len(overlapping),
-              "examples": {k: v for k,v in list(overlapping.items())[:10]}
-          }
+          overlapping = {sid: shs for sid, shs in all_sourceids.items() if len(shs) > 1}
+          print(f"\nCross-shard overlap: {len(overlapping)} sourceids in >1 shard")
+          report["cross_shard_overlap"] = {"num_sourceids_in_multiple_shards": len(overlapping), "examples": {k: v for k,v in list(overlapping.items())[:5]}}
 
-          # Grain hint
-          print(f"\nGrain hint — check one row's structure:")
-          for shard_path in shards[:1]:
-              table = pq.read_table(shard_path)
-              df = table.to_pandas()
-              if "bands_data" in df.columns:
-                  sample = df.iloc[0]["bands_data"]
-                  print(f"  bands_data type: {type(sample)}")
-                  if isinstance(sample, dict):
-                      print(f"  bands_data keys: {list(sample.keys())}")
-                      for k,v in list(sample.items())[:2]:
-                          print(f"    {k}: type={type(v)} len={len(v) if hasattr(v,'__len__') else 'n/a'} preview={str(v)[:120]}")
-
-          # Write report for artifact
+          # اعتبارسنجی ساختار JSON و فیلدهای اجباری — در صورت نقص، خطا و exit غیرصفر
+          for k in ["generated_utc", "effective_revision", "manifest", "shards"]:
+              if k not in report:
+                  raise AssertionError(f"missing required field {k}")
           out_path = pathlib.Path("/tmp/star-embed-diagnosis-report.json")
-          json.dump(report, open(out_path,"w"), indent=2, ensure_ascii=False)
+          json.dump(report, open(out_path, "w"), indent=2, ensure_ascii=False)
+          # اعتبارسنجی JSON نوشته‌شده
+          loaded = json.load(open(out_path))
+          assert loaded == report, "round-trip JSON mismatch"
           print(f"\nWrote {out_path} ({out_path.stat().st_size} bytes)")
           print(open(out_path).read()[:8000])
-          except Exception as e:
-              print(f"ERROR in diagnosis: {e}")
-              traceback.print_exc()
-              # Write partial report so evidence is not lost
-              try:
-                  partial = {"error": str(e), "traceback": traceback.format_exc(), "shards": report.get("shards", {}), "manifest": manifest}
-                  json.dump(partial, open("/tmp/star-embed-diagnosis-report.json","w"), indent=2, ensure_ascii=False)
-                  print("Wrote partial report")
-              except Exception as e2:
-                  print(f"Failed to write partial: {e2}")
-                  open("/tmp/star-embed-diagnosis-report.json","w").write(json.dumps({"error": str(e), "note": "partial write failed"}, indent=2))
           PY
-          echo "=== step4 log tail ==="
-          cat /tmp/step4.log | tail -n 200 || true
-          echo "=== report ==="
-          cat /tmp/star-embed-diagnosis-report.json 2>&1 | head -n 300 || echo "no report"
-          echo "=== manifest ==="
-          cat /tmp/download_manifest.json 2>&1 | head -n 100 || true
 
-      - name: 5) Documented grain — paper/README
+      - name: Validate JSON report structure (separate check, non-zero on invalid)
+        run: |
+          set -euo pipefail
+          echo "Validating /tmp/star-embed-diagnosis-report.json ..."
+          test -f /tmp/star-embed-diagnosis-report.json || { echo "ERROR: report not found"; exit 1; }
+          python <<'PY'
+          import json, pathlib
+          p = pathlib.Path("/tmp/star-embed-diagnosis-report.json")
+          data = json.load(open(p))
+          required = ["generated_utc", "effective_revision", "manifest", "shards"]
+          for k in required:
+              assert k in data, f"missing required field: {k}"
+          # shards entries must have rows/null/duplicated fields if present
+          for name, shard in data.get("shards", {}).items():
+              if "error" not in shard:
+                  for fk in ["rows", "null_sourceid", "sha256"]:
+                      assert fk in shard, f"shard {name} missing {fk}"
+          print("JSON valid, all required fields present")
+          print(f"effective_revision: {data['effective_revision']}")
+          print(f"status: {data.get('status','OK')}")
+          PY
+          echo "JSON validation exit code: $?"
+
+      - name: 5) Documented grain — paper/README (no secret)
         run: |
           set -euo pipefail
           echo "=== configs/benchmarks/star_embed_ztf_40k.json ==="
           cat configs/benchmarks/star_embed_ztf_40k.json | python -m json.tool
           echo ""
           echo "=== HF README (dataset card) ==="
-          curl -fsSL https://huggingface.co/datasets/StarEmbed/ZTF_40k/raw/main/README.md 2>&1 | head -n 200 || echo "README fetch failed"
+          curl -fsSL https://huggingface.co/datasets/StarEmbed/ZTF_40k/raw/main/README.md 2>&1 | head -n 200 || echo "README fetch failed (expected if gated)"
           echo ""
-          echo "=== StarEmbed paper (arXiv DOI from config) ==="
-          echo "DOI: 10.48550/arXiv.2510.06200"
-          echo "Grain must be verified from README/paper: is row = object or observation/lightcurve row?"
-
-      - name: Publish evidence to step summary (no blob needed)
-        if: always()
-        run: |
-          set +e
-          echo "## StarEmbed Diagnosis Evidence (no validator change)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Run:** ${{ github.run_id }}  **SHA:** ${{ github.sha }}  **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```json' >> $GITHUB_STEP_SUMMARY
-          cat /tmp/star-embed-diagnosis-report.json 2>&1 | head -n 500 >> $GITHUB_STEP_SUMMARY || echo "no report" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Download manifest" >> $GITHUB_STEP_SUMMARY
-          echo '```json' >> $GITHUB_STEP_SUMMARY
-          cat /tmp/download_manifest.json 2>&1 | head -n 200 >> $GITHUB_STEP_SUMMARY || echo "no manifest" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "Summary written"
-
-      - name: Post evidence as PR comment (api.github.com — whitelisted)
-        if: always()
-        run: |
-          set +e
-          REPORT=$(cat /tmp/star-embed-diagnosis-report.json 2>&1 | head -c 60000)
-          MANIFEST=$(cat /tmp/download_manifest.json 2>&1 | head -c 20000)
-          REVISION=$(cat /tmp/effective_revision.txt 2>&1)
-          cat > /tmp/comment_body.md <<EOF
-          ### StarEmbed Targeted Diagnosis — \`${{ github.sha }}\` (run \${{ github.run_id }})
-          Evidence-only workflow, **no validator/baseline change**, no merge.
-
-          **Effective revision:** \`$REVISION\`
-          **PR #212:** Draft preserved, baseline v0.2.0 unchanged.
-
-          <details><summary>Diagnosis report (counts / nulls / duplicates / overlap)</summary>
-
-          \`\`\`json
-          $REPORT
-          \`\`\`
-
-          </details>
-
-          <details><summary>Download manifest (URL / time / size / SHA-256)</summary>
-
-          \`\`\`json
-          $MANIFEST
-          \`\`\`
-
-          </details>
-
-          Full JSON also uploaded as artifact \`star-embed-diagnosis-report\` (14d).
-          EOF
-          gh pr view 212 --json number 2>&1 | grep -q '"number": 212' && \
-            gh pr comment 212 --body-file /tmp/comment_body.md 2>&1 | head -20 || echo "PR comment skipped or failed (may need permissions)"
-          echo "Comment step done"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push evidence to arena branch (github.com — whitelisted, no blob)
-        if: always()
-        run: |
-          set +e
-          mkdir -p docs/diagnosis
-          cp /tmp/star-embed-diagnosis-report.json docs/diagnosis/${{ github.sha }}-report.json 2>&1 | head
-          cp /tmp/download_manifest.json docs/diagnosis/${{ github.sha }}-manifest.json 2>&1 | head
-          cp /tmp/effective_revision.txt docs/diagnosis/${{ github.sha }}-revision.txt 2>&1 | head
-          cp /tmp/step4.log docs/diagnosis/${{ github.sha }}-step4.log 2>&1 | head
-          echo "${{ github.run_id }}" > docs/diagnosis/${{ github.sha }}-run_id.txt
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/diagnosis/${{ github.sha }}-*.json docs/diagnosis/${{ github.sha }}-*.txt docs/diagnosis/${{ github.sha }}-*.log 2>&1 | head
-          if git diff --cached --quiet; then
-            echo "No evidence to commit"
-            exit 0
-          fi
-          git commit -m "docs: StarEmbed diagnosis evidence ${{ github.sha }} (run ${{ github.run_id }}, no code change)" 2>&1 | head
-          # Pull rebase in case of concurrent CI pushes
-          git pull --rebase origin ${{ github.ref_name }} 2>&1 | head -20 || true
-          git push origin ${{ github.ref_name }} 2>&1 | head -20
-          echo "Evidence pushed to ${{ github.ref_name }}"
+          echo "DOI: 10.48550/arXiv.2510.06200 — grain must be verified: row = object or observation?"
 
       - name: Upload small diagnosis evidence only (no raw parquet)
         if: always()
@@ -465,9 +446,20 @@ jobs:
             /tmp/star-embed-diagnosis-report.json
             /tmp/download_manifest.json
             /tmp/effective_revision.txt
-            /tmp/step4.log
-            /tmp/star-embed-artifact/**/independent_dataset_report.json
-            /tmp/star-embed-artifact/**/data.acquisition.json
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Report data access status (never print token)
+        if: always()
+        run: |
+          set -euo pipefail
+          echo "=== Data access status ==="
+          if [ -f /tmp/download_manifest.json ]; then
+            python -c "import json; m=json.load(open('/tmp/download_manifest.json')); print('manifest entries:', len(m)); [print(k, 'error' if 'error' in v else 'OK', v.get('sha256','')[0:8]) for k,v in m.items()]"
+          else
+            echo "No manifest — download step did not run"
+          fi
+          if [ -f /tmp/star-embed-diagnosis-report.json ]; then
+            python -c "import json; d=json.load(open('/tmp/star-embed-diagnosis-report.json')); print('report status:', d.get('status','OK')); print('revision:', d.get('effective_revision'))"
+          fi
 
