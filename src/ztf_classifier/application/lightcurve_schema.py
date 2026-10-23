@@ -92,6 +92,7 @@ def normalize_lightcurve_table(
     if not data.columns.is_unique:
         raise ApplicationInputError("Input contains duplicate column names.")
 
+    data = data.reset_index(drop=True)
     required = [
         mapping.object_id, mapping.time, mapping.band, mapping.value,
         mapping.uncertainty,
