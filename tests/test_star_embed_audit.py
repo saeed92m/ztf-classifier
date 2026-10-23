@@ -71,6 +71,9 @@ def test_star_embed_audit_blocks_duplicate_object_across_splits(tmp_path) -> Non
     assert report["status"] == "BLOCKED"
     assert report["object_id_overlap"]["train__test"]["overlap_count"] == 1
     assert "object_id_overlap_between_splits:train__test:1" in report["validation_errors"]
+    details = [item for item in report["object_id_issue_details"] if item["issue"] == "cross_split_overlap"]
+    assert {item["split"] for item in details} == {"train", "test"}
+    assert all(item["source_artifact"] for item in details)
 
 
 def test_star_embed_audit_fails_closed_when_artifact_is_missing(tmp_path) -> None:
