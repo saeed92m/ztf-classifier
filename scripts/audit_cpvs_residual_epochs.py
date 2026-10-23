@@ -2,7 +2,6 @@
 from __future__ import annotations
 import argparse, csv, hashlib, json, math
 from pathlib import Path
-from scripts.audit_cpvs_membership import read_parent_name_to_sourceid, read_published_ztf_names
 from ztf_classifier.validation.derivation import _iter_rows, _open_text, _path_member_matches_header
 
 FACTOR = 1.0857362047581296
@@ -21,8 +20,28 @@ def files(root, required):
     return sorted(p for p in root.rglob("*") if p.is_file()
         and p.suffix.lower() in SUFFIXES and _path_member_matches_header(p, required))
 
-def read_vizier(path: Path, parent_path: Path) -> set[int]:
-    """Map Table 4 ZTF names to the parent catalog's explicit SourceIDs.
+def read_published_ztf_names(path: Path) -> list[str]:
+    """Extract ZTF object names from VizieR TSV, whitespace, or fixed-width rows."""
+    names: list[str] = []
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        fixed_name = line[:22].strip()
+        if fixed_name.upper().startswith("ZTFJ"):
+            names.append(fixed_name.upper())
+            continue
+        for token in stripped.replace("\\t", " ").split():
+            if token.upper().startswith("ZTFJ"):
+                names.append(token.upper())
+                break
+    if not names:
+        raise ValueError(f"could not parse any published ZTF names from {path}")
+    return names
+
+
+def read_vizier(path: Path, parent_catalog: dict[int, dict[str, object]]) -> set[int]:
+    """Map Table 4 ZTF names to parent Table2's explicit SourceIDs.
 
     Table 4's numeric ID is internal to that catalog; it must never be
     compared directly with the SourceID used by the light-curve archives.
@@ -30,7 +49,12 @@ def read_vizier(path: Path, parent_path: Path) -> set[int]:
     names = read_published_ztf_names(path)
     if len(names) != len(set(names)):
         raise ValueError("published Table 4 contains duplicate ZTF object names")
-    parent_mapping = read_parent_name_to_sourceid(parent_path)
+    parent_mapping: dict[str, int] = {}
+    for source_id, row in parent_catalog.items():
+        name = str(row["catalog_object_name"]).upper()
+        if name in parent_mapping:
+            raise ValueError(f"duplicate ZTF name in parent catalog: {name}")
+        parent_mapping[name] = int(source_id)
     unmapped = sorted(set(names) - set(parent_mapping))
     if unmapped:
         raise ValueError(
@@ -99,8 +123,8 @@ def main():
     p.add_argument("--published", type=Path, required=True); p.add_argument("--output", type=Path, required=True)
     p.add_argument("--code-version", default="unknown")
     a = p.parse_args()
-    published = read_vizier(a.published, a.parent)
     parent_catalog = read_parent_catalog(a.parent)
+    published = read_vizier(a.published, parent_catalog)
     paths, qualified, band_counts = {}, {"g": set(), "r": set()}, {}
     for band, root in (("g", a.g), ("r", a.r)):
         ek, mk, fk, threshold = SPECS[band]; req = ("SourceID", ek, mk)
