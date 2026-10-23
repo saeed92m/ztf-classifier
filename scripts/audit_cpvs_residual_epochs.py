@@ -2,8 +2,8 @@
 from __future__ import annotations
 import argparse, csv, hashlib, json, math
 from pathlib import Path
-from ztf_classifier.validation.derivation import _iter_rows, _open_text, _path_member_matches_header
 from scripts.audit_cpvs_membership import read_parent_name_to_sourceid, read_published_ztf_names
+from ztf_classifier.validation.derivation import _iter_rows, _open_text, _path_member_matches_header
 
 FACTOR = 1.0857362047581296
 SPECS = {"g": ("e_gmag", "gmag", "g_flag", 2.5), "r": ("e_rmag", "rmag", "r_flag", 3.0)}
