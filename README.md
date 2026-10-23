@@ -45,6 +45,17 @@ The product expansion includes:
 
 The canonical product contract and current evidence register are `docs/PROJECT_CHARTER_AND_SOURCE_OF_TRUTH.md` and `docs/PROJECT_STATE_REGISTER.md`. The expansion history is recorded in `docs/ECOSYSTEM_REVIEW_PRODUCT_EXPANSION_2026-10-08.md` and `docs/architecture/V1_PRODUCT_ARCHITECTURE.md`. See `docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md` for the staged implementation plan. Open PRs describe proposed changes only; they are not shipped capabilities.
 
+## Documentation source of truth
+
+- [Current operational handbook](docs/HANDBOOK_CURRENT.md)
+- [Project charter and source-of-truth policy](docs/PROJECT_CHARTER_AND_SOURCE_OF_TRUTH.md)
+- [Verified project state and blockers](docs/PROJECT_STATE_REGISTER.md)
+- [Project glossary and status vocabulary](docs/PROJECT_GLOSSARY.md)
+- [Documentation index and ownership](docs/DOCUMENTATION_INDEX.md)
+- [Platform expansion roadmap](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md)
+
+Open PRs are proposals, not shipped capabilities. Check the current state register and exact GitHub workflow evidence before describing a feature as implemented or scientifically validated.
+
 ## Scientific objective
 
 The project investigates whether public ZTF light curves can be used to construct a reproducible CPU-oriented classifier that provides:
