@@ -92,7 +92,7 @@ def audit_star_embed_dataset(
                 "file": filename,
                 "sha256": _sha256(path),
                 "bytes": path.stat().st_size,
-                "rows": int(len(frame)),
+                "rows": len(frame),
                 "columns": list(frame.columns),
                 "missing_required_columns": missing,
             }
@@ -129,7 +129,7 @@ def audit_star_embed_dataset(
         split_reports[split] = {
             "rows": int(len(frame)),
             "unique_sourceids": int(ids.nunique()),
-            "duplicate_sourceid_count": int(len(duplicate_ids)),
+            "duplicate_sourceid_count": len(duplicate_ids),
             "duplicate_sourceids_sample": duplicate_ids[:20],
             "class_counts": class_counts,
             "invalid_nonpositive_or_nonfinite_periods": invalid_periods,
