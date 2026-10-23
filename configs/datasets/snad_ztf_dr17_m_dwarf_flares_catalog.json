@@ -1,0 +1,55 @@
+{
+  "dataset_id": "snad_ztf_dr17_m_dwarf_flares_catalog",
+  "status": "externally_inspected_bounded_catalog_audit",
+  "source": {
+    "repository": "https://github.com/snad-space/flare-classifier",
+    "repository_commit": "9a132ad9ac20df1d7a4b08ea36547271c9eff05e",
+    "file_path": "data/flares_catalog.csv",
+    "raw_url": "https://raw.githubusercontent.com/snad-space/flare-classifier/master/data/flares_catalog.csv",
+    "git_blob_sha1": "fb6fc6cafe263529e7af5198ffca724520d7b4aa",
+    "file_bytes": 158539,
+    "schema_documentation": "https://github.com/snad-space/flare-classifier/blob/master/data/catalog_readme.md",
+    "citation_doi": "10.1093/mnras/stag145",
+    "retrieval_method": "GitHub connector raw-file fetch",
+    "sha256": "not_computed"
+  },
+  "observed_summary": {
+    "event_rows": 1234,
+    "unique_ztf_object_ids": 1227,
+    "objects_with_two_catalogued_events": 7,
+    "additional_event_rows_beyond_one_per_object": 7,
+    "interpretation": "Repeated oid values represent multiple catalogued flare events per ZTF object in this event catalogue; they must not be automatically deduplicated as duplicate light-curve rows.",
+    "spectral_class_counts": {
+      "M0": 45,
+      "M1": 132,
+      "M2": 243,
+      "M3": 311,
+      "M4": 401,
+      "M5": 53,
+      "M6": 30,
+      "M7": 2,
+      "missing": 17
+    },
+    "missing_values": {
+      "distance": 6,
+      "distance_low": 6,
+      "distance_up": 6,
+      "plx_flag": 37,
+      "fwhm": 105,
+      "spec_class": 17,
+      "energy": 575,
+      "energy_low": 575,
+      "energy_up": 575
+    }
+  },
+  "validation_limits": [
+    "This is an event catalogue, not a per-observation light-curve table; it must not be passed to the light-curve normalizer as if each row were an observation.",
+    "This bounded audit was computed from the public CSV content fetched via the GitHub connector; no local copy, SHA-256, model inference, or scientific performance evaluation is claimed.",
+    "Catalog labels and physical parameters retain the source publication's definitions and selection effects."
+  ],
+  "next_actions": [
+    "Add a reproducible local audit command that emits these counts and SHA-256 from a downloaded source file.",
+    "Use the catalogue to define a source-specific flare-event analysis workflow, separate from general light-curve ingestion.",
+    "Retrieve a small real TESS Transients text file and TGLC FITS file and verify their adapters against raw-file hashes and source row counts."
+  ]
+}
