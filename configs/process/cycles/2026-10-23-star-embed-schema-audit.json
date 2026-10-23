@@ -54,13 +54,14 @@
       "Workflow correction committed as 6752210a8a7521f85d39ba30a4498fa023721a01: audit outcome is retained and still blocks the job, but test execution/report upload now precedes explicit audit-gate failure.",
       "Follow-up review of run 39928356790 showed the workflow's continue-on-error audit step still prevented the pytest step from running because its default success() condition evaluated false; test execution now explicitly uses always() while requiring successful dependency installation and pip check.",
       "Reduced StarEmbed audit artifact retention from all acquired Parquet files (~432 MB per run) to the compact schema_audit.json report, which retains source file hashes, byte sizes, row counts, split overlap diagnostics, and the deterministic 50-object sample.",
-      "Corrected CLI output to print validation_errors when the audit is blocked and added a regression test for the blocking diagnostic text; latest-head CI verification is pending."
+      "Corrected CLI output to print validation_errors when the audit is blocked and added a regression test for the blocking diagnostic text; latest-head CI verification is pending.",
+      "A follow-up source inspection found the within-split duplicate regression test asserted the obsolete report key split_summary while the audit emits splits; corrected the assertion to match the actual report contract. This test correction and the preceding workflow/CLI changes require fresh CI verification."
     ]
   },
   "validation": {
     "scientific_gate_affected": true,
     "status": "BLOCKED",
-    "blocker": "Latest real-data StarEmbed audit correctly blocks on one duplicate-within-train SourceID and one train/test overlap. CI sequencing, compact evidence upload, and CLI diagnostic changes are committed but require current-head verification. Raw StarEmbed-to-model inference remains unimplemented.",
+    "blocker": "Latest real-data StarEmbed audit correctly blocks on one duplicate-within-train SourceID and one train/test overlap. Workflow sequencing, compact artifact upload, CLI diagnostics, and a stale test-report-key correction are committed but require current-head verification. Raw StarEmbed-to-model inference remains unimplemented.",
     "evidence": [
       "https://github.com/saeed92m/ztf-classifier/actions/runs/39921499634",
       "https://github.com/saeed92m/ztf-classifier/pull/211",
@@ -96,7 +97,8 @@
       "Review the source-artifact/class/period/coordinates for the two discrepant object IDs and decide whether the dataset can be used without a documented quarantine/split correction",
       "Implement and independently validate raw-light-curve inference before performance claims",
       "CPVS 11,602 extra candidates remain unresolved",
-      "Verify the workflow sequencing correction in the next CI run; ensure pytest runs and the job still fails explicitly for the observed source-ID leakage."
+      "Verify the workflow sequencing correction in the next CI run; ensure pytest runs and the job still fails explicitly for the observed source-ID leakage.",
+      "Verify the corrected duplicate-within-split test against the current report schema and confirm all unit tests execute before the explicit source-audit gate fails."
     ]
   },
   "decision": "BLOCKED",
