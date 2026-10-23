@@ -173,8 +173,10 @@ jobs:
 
       - name: 4) Compute counts — rows, nulls, duplicates, distinct, frequencies, samples, row indices, overlap
         run: |
-          set -euo pipefail
-          python <<'PY'
+          set +e
+          python <<'PY' 2>&1 | tee /tmp/step4.log
+          import traceback
+          try:
           import pathlib, glob, json, hashlib, os
           import pyarrow.parquet as pq
           import pandas as pd
@@ -291,12 +293,28 @@ jobs:
                           print(f"    {k}: type={type(v)} len={len(v) if hasattr(v,'__len__') else 'n/a'} preview={str(v)[:120]}")
 
           # Write report for artifact
-          out_path = pathlib.Path("/tmp/star-embed-diagnosis-report.json")
-          json.dump(report, open(out_path,"w"), indent=2, ensure_ascii=False)
-          print(f"\nWrote {out_path} ({out_path.stat().st_size} bytes)")
-          print(open(out_path).read()[:8000])
+              out_path = pathlib.Path("/tmp/star-embed-diagnosis-report.json")
+              json.dump(report, open(out_path,"w"), indent=2, ensure_ascii=False)
+              print(f"\nWrote {out_path} ({out_path.stat().st_size} bytes)")
+              print(open(out_path).read()[:8000])
+          except Exception as e:
+              print(f"ERROR in diagnosis: {e}")
+              traceback.print_exc()
+              # Write partial report so evidence is not lost
+              try:
+                  partial = {"error": str(e), "traceback": traceback.format_exc(), "shards": report.get("shards", {}), "manifest": manifest}
+                  json.dump(partial, open("/tmp/star-embed-diagnosis-report.json","w"), indent=2, ensure_ascii=False)
+                  print("Wrote partial report")
+              except Exception as e2:
+                  print(f"Failed to write partial: {e2}")
+                  open("/tmp/star-embed-diagnosis-report.json","w").write(json.dumps({"error": str(e), "note": "partial write failed"}, indent=2))
           PY
-          cat /tmp/star-embed-diagnosis-report.json | head -n 200
+          echo "=== step4 log tail ==="
+          cat /tmp/step4.log | tail -n 200 || true
+          echo "=== report ==="
+          cat /tmp/star-embed-diagnosis-report.json 2>&1 | head -n 300 || echo "no report"
+          echo "=== manifest ==="
+          cat /tmp/download_manifest.json 2>&1 | head -n 100 || true
 
       - name: 5) Documented grain — paper/README
         run: |
