@@ -57,4 +57,4 @@ Files named `HANDBOOK_UPDATED_v*.md` are historical continuity snapshots. Preser
 
 ## Status snapshot at review time
 
-Main HEAD `d88e54a2eb70d5e4531bc950341ef3136c29a5e2`; published release v1.0.1; frozen baseline v0.2.0. PR #212 is open/draft/unmerged and its CI was in progress at last check. CPVS exact reconstruction remains unresolved. No cross-survey scientific validation claim is made.
+Main HEAD `d88e54a2eb70d5e4531bc950341ef3136c29a5e2`; published release v1.0.1; frozen baseline v0.2.0. PR #212 is open/draft/unmerged. Its latest workflow states must be read from live GitHub checks; prior checks were in progress and do not constitute a final validation result. CPVS exact reconstruction remains unresolved. No cross-survey scientific validation claim is made.
