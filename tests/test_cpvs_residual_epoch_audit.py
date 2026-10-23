@@ -55,10 +55,10 @@ def test_read_vizier_maps_ztf_names_to_parent_sourceids(tmp_path) -> None:
     source = tmp_path / "table4.tsv"
     # The Table 4 internal IDs deliberately differ from parent SourceIDs.
     source.write_text(
-        "# VizieR export\\n"
-        "ZTF\\tID\\n"
-        f"{names[0]}\\t777\\n"
-        f"{names[2]}\\t999\\n",
+        "# VizieR export\n"
+        "ZTF\tID\n"
+        f"{names[0]}\t777\n"
+        f"{names[2]}\t999\n",
         encoding="utf-8",
     )
 
