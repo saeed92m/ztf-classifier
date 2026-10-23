@@ -43,7 +43,7 @@ The product expansion includes:
 - integrated Help and Troubleshooting;
 - reproducible reports and exports.
 
-See `docs/ECOSYSTEM_REVIEW_PRODUCT_EXPANSION_2026-10-08.md` and `docs/architecture/V1_PRODUCT_ARCHITECTURE.md` for the canonical expansion record.
+The canonical product contract and current evidence register are `docs/PROJECT_CHARTER_AND_SOURCE_OF_TRUTH.md` and `docs/PROJECT_STATE_REGISTER.md`. The expansion history is recorded in `docs/ECOSYSTEM_REVIEW_PRODUCT_EXPANSION_2026-10-08.md` and `docs/architecture/V1_PRODUCT_ARCHITECTURE.md`. See `docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md` for the staged implementation plan. Open PRs describe proposed changes only; they are not shipped capabilities.
 
 ## Scientific objective
 
