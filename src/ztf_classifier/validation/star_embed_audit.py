@@ -309,7 +309,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"status={report['status']}")
     print(f"report={args.output}")
     if report["status"] == "BLOCKED":
-        print("errors=" + json.dumps(report.get("errors", [])))
+        print("errors=" + json.dumps(report.get("errors") or report.get("validation_errors", [])))
         return 2
     return 0
 
