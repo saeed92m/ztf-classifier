@@ -48,8 +48,7 @@
     "evidence": [
       "2026-10-23 code review found the diagnostic audit compared Table 4's internal numeric ID directly to light-curve SourceID. Corrected to map published ZTF names through the parent Table2 explicit SourceID, with a regression fixture whose Table4 IDs intentionally differ from SourceIDs.",
       "2026-10-23 code review found discrepant light-curve SourceIDs absent from the explicit parent SourceID set caused the row audit to abort. The audit now preserves those IDs with parent_catalog_present=false instead of dropping them or terminating.",
-      "2026-10-23 workflow cleanup now removes normalized g/r epoch directories and the raw Table2 parent archive only after both compact row-audit JSON/TSV outputs exist; this addresses the 2.16 GB artifact observed in run 39232347068. Runtime verification is pending.",
-      "2026-10-23: branch creation triggered Scientific Validation run 39996878461, but its CPVS heavy job was skipped because the workflow condition requires a push/workflow-dispatch event. A follow-up commit on the ci/heavy branch is being used to trigger the configured push path; the skipped job is not validation evidence."
+      "2026-10-23 workflow cleanup now removes normalized g/r epoch directories and the raw Table2 parent archive only after both compact row-audit JSON/TSV outputs exist; this addresses the 2.16 GB artifact observed in run 39232347068. Runtime verification is pending."
     ]
   },
   "validation": {
@@ -61,7 +60,7 @@
       "The initial CI attempt failed the repository's cumulative-cycle-record requirement; this record is added to satisfy that repository contract.",
       "The heavy source-backed job has not executed for this diagnostic change."
     ],
-    "blocker": "The source-backed CPVS job has not run on this corrected head yet. Trigger it via an actual push event, then review the compact row-level evidence and exact-membership audit."
+    "blocker": "Run CI on the corrected draft PR and, when resource budget permits, rerun the source-backed CPVS audit using the name-based reference join. Review candidate/reference sets and raw-row provenance; do not treat these implementation fixes as scientific resolution."
   },
   "failure_analysis": {
     "status": "known-failure",
