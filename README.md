@@ -43,7 +43,18 @@ The product expansion includes:
 - integrated Help and Troubleshooting;
 - reproducible reports and exports.
 
-See `docs/ECOSYSTEM_REVIEW_PRODUCT_EXPANSION_2026-10-08.md` and `docs/architecture/V1_PRODUCT_ARCHITECTURE.md` for the canonical expansion record.
+The canonical product contract and current evidence register are `docs/PROJECT_CHARTER_AND_SOURCE_OF_TRUTH.md` and `docs/PROJECT_STATE_REGISTER.md`. The expansion history is recorded in `docs/ECOSYSTEM_REVIEW_PRODUCT_EXPANSION_2026-10-08.md` and `docs/architecture/V1_PRODUCT_ARCHITECTURE.md`. See `docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md` for the staged implementation plan. Open PRs describe proposed changes only; they are not shipped capabilities.
+
+## Documentation source of truth
+
+- [Current operational handbook](docs/HANDBOOK_CURRENT.md)
+- [Project charter and source-of-truth policy](docs/PROJECT_CHARTER_AND_SOURCE_OF_TRUTH.md)
+- [Verified project state and blockers](docs/PROJECT_STATE_REGISTER.md)
+- [Project glossary and status vocabulary](docs/PROJECT_GLOSSARY.md)
+- [Documentation index and ownership](docs/DOCUMENTATION_INDEX.md)
+- [Platform expansion roadmap](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md)
+
+Open PRs are proposals, not shipped capabilities. Check the current state register and exact GitHub workflow evidence before describing a feature as implemented or scientifically validated.
 
 ## Scientific objective
 
@@ -415,11 +426,17 @@ The platform architecture now has executable domain contracts for external catal
 The current production model explicitly does **not** claim a scientific-anomaly detector: OOD diagnostics and scientific anomaly evidence are separate result channels. Scientific anomaly evidence remains `not_evaluated` until a dedicated analysis mode supplies and versions such evidence.
 
 
-## Current project roadmap and status (2026-10-11)
+## Current project roadmap and status (2026-10-23)
 
-- Current immutable software release: **v1.0.1**; frozen scientific baseline: **v0.2.0**.
-- Canonical continuity handbook: [HANDBOOK_UPDATED_v2.8.md](docs/HANDBOOK_UPDATED_v2.8.md).
-- Canonical cross-platform product roadmap: [PLATFORM_EXPANSION_ROADMAP.md](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md).
-- Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
-- Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
-- Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.
+- Latest published software release observed: **v1.0.1** (immutable); frozen scientific baseline: **v0.2.0**.
+- Current operational handbook: [HANDBOOK_CURRENT.md](docs/HANDBOOK_CURRENT.md).
+- Product charter/source-of-truth policy: [PROJECT_CHARTER_AND_SOURCE_OF_TRUTH.md](docs/PROJECT_CHARTER_AND_SOURCE_OF_TRUTH.md).
+- Verified state and blockers: [PROJECT_STATE_REGISTER.md](docs/PROJECT_STATE_REGISTER.md).
+- Normative terms/status vocabulary: [PROJECT_GLOSSARY.md](docs/PROJECT_GLOSSARY.md).
+- Documentation ownership/index: [DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md).
+- Product roadmap: [PLATFORM_EXPANSION_ROADMAP.md](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md).
+- Current proposed platform/input/documentation alignment: [PR #212](https://github.com/saeed92m/ztf-classifier/pull/212), open/draft/unmerged at the time of this snapshot. Open PRs are not shipped capabilities.
+- CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Latest recorded Seq-based counts remain 781,602 parent IDs, 730,184 published IDs, 741,786 candidates, 11,602 candidate-only and zero published-only; reverify against current artifacts before treating them as fresh. Exact reconstruction remains unresolved.
+- Multi-survey support: generic normalization is proposed but not yet demonstrated as end-to-end source adapters or scientifically validated cross-survey predictions. Import, analysis support, model compatibility and scientific validation are separate states.
+- Repository metadata reports GitHub Wiki enabled, but write access is unverified; GitHub Pages is disabled. No ZTF-specific Supabase project/schema is verified in the connected account.
+- No claim is made that the broader discovery platform is scientifically complete merely because v1.0.1 was published.

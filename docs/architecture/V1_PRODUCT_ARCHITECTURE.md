@@ -1,5 +1,9 @@
 # ZTF Classifier — v1.0 Product Architecture Index
 
+**Current governing references:** [Project Charter](../PROJECT_CHARTER_AND_SOURCE_OF_TRUTH.md), [Current Handbook](../HANDBOOK_CURRENT.md), [Project Glossary](../PROJECT_GLOSSARY.md), [State Register](../PROJECT_STATE_REGISTER.md), [Documentation Index](../DOCUMENTATION_INDEX.md).
+
+**Input scope:** astronomer-selected supported data is a core product requirement. ZTF is the first established scientific domain, not the only input. The source adapter, normalization/QC, feature availability, model compatibility and scientific validation are separate boundaries. A generic import layer must not silently convert units/time systems or imply that every dataset is compatible with the frozen ZTF model. The multi-survey normalization work is proposed in [PR #212](https://github.com/saeed92m/ztf-classifier/pull/212), not yet shipped.
+
 Canonical product: **Astronomical Data Analysis & Discovery Platform**.
 
 ## Scientific Core

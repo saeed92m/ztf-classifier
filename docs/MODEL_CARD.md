@@ -1,7 +1,9 @@
 # ZTF Classifier — Model Card
 
+> This card describes the frozen `baseline_v0.2` scientific model, not every planned platform capability. The software package release is v1.0.1; the model/scientific baseline remains v0.2.0. See [current handbook](HANDBOOK_CURRENT.md), [project glossary](PROJECT_GLOSSARY.md), and [state register](PROJECT_STATE_REGISTER.md).
+
 ## Model identity
-- Software release: v1.0.0
+- Latest published software release observed on 2026-10-23: v1.0.1
 - Scientific baseline: v0.2.0 (immutable)
 - Production model version: baseline_v0.2
 - Model family: XGBoost

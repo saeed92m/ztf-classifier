@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "2026-10-23-multisurvey-lightcurve-input-contract",
+  "objective": "Introduce a survey-neutral, explicit light-curve normalization contract and align product documentation without changing the frozen scientific model baseline.",
+  "previous_knowledge_consumed": [
+    "The product roadmap requires separation of import support, analysis support, model compatibility, and scientific validation.",
+    "PR #212 introduces explicit source-column mapping and declared time/measurement semantics; it does not implement end-to-end external survey adapters or establish cross-survey model performance.",
+    "The v0.2.0 42-feature contract and v1.0.1 release artifacts must remain unchanged."
+  ],
+  "baseline": {
+    "revision": "d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
+    "description": "Main branch and published release v1.0.1; frozen scientific baseline v0.2.0."
+  },
+  "expected_improvement": [
+    "Preserve source-row identity, order, duplicate observations, missing numeric values, units, time semantics, and declared measurement type during normalization.",
+    "Reject ambiguous or malformed mappings without silently converting units, flux/magnitude, or time systems.",
+    "Add regression coverage for reordered/renamed columns, missing values, malformed inputs, duplicate observations, and no implicit conversions.",
+    "Keep import normalization distinct from model compatibility and scientific validation.",
+    "Provide a local CSV/Parquet file-loading entry point that retains leading-zero identifiers, row order, missing numeric values, and file-format provenance.",
+    "Add a TESS Transients text adapter that preserves the documented BTJD/TDB semantics, selected source measurement, and e_mag=99.9 upper-limit marker without implicit calibration.",
+    "Add an explicit-column FITS reader for TESS/TGLC-like table products and regression tests for source-value/row preservation.",
+    "Audit a public ZTF DR17 flare-event catalogue, preserve event multiplicity, and provide a reproducible local catalogue audit command.",
+    "Maintain a public multi-survey test matrix that distinguishes synthetic format tests from real-source import verification and scientific model validation."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The first CI run for PR #212 failed Ruff lint with four findings in lightcurve_schema.py.",
+        "after": "Latest-head workflows are queued/in progress after adding the TESS text adapter, explicit-schema FITS reader, event-catalogue audit utility, tests, and source matrix. No latest-head pass is claimed yet.",
+        "evidence": "Latest branch head before this cycle update: 5ff95bd5a0dab996f3571e5292f46a6bb6b175a9. CI runs 40013095773 and 40013088299 are pending; Scientific Validation 40013095379, Product Scope Audit 40013095370, and CodeQL 40013095442 are in progress."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "BLOCKED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "No model, feature schema, class order, training data, production thresholds, or scientific acceptance criteria were changed.",
+      "TESS Transients and FITS adapters currently have synthetic regression fixtures only; live source-file retrieval, checksums, and source row-count reconciliation remain pending.",
+      "A bounded inspection of public SNAD flare-catalogue CSV content at source commit 9a132ad9ac20df1d7a4b08ea36547271c9eff05e found 1,234 event rows and 1,227 unique object IDs; seven objects each have two events. This is an event catalogue, not a per-observation light curve.",
+      "Catalogue missingness and class counts are recorded in configs/datasets/snad_ztf_dr17_m_dwarf_flares_catalog.json. The source file Git blob SHA is recorded; SHA-256 of a locally retrieved file has not yet been computed.",
+      "Latest-head CI/security/scientific workflows must finish and be inspected before this PR is considered validated."
+    ]
+  },
+  "failure_analysis": {
+    "status": "IN_PROGRESS",
+    "root_causes": [
+      "The earlier CI run failed Ruff import ordering in the local CSV/Parquet loader; an import-order correction was committed, but the latest-head CI result is still pending.",
+      "A synthetic test fixture is not evidence of a real external source file being retrieved or reconciled; the external data validation workflow must explicitly separate format tests from source-backed verification."
+    ],
+    "impact": "No release or main-branch change was made. New adapters remain proposed on an open draft PR. Live TESS/TGLC import and model scientific compatibility are not established.",
+    "correction": "Add TESS text and explicit FITS ingestion with regression tests, record a bounded public ZTF flare-event catalogue audit, add a repeatable event-catalogue audit utility, and keep source-backed retrieval and scientific validation explicitly pending."
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Every meaningful implementation change requires a lifecycle record in the same pull request.",
+      "Schema normalization must preserve explicit units and time semantics and must not silently imply model compatibility.",
+      "CI success is not scientific acceptance; source-backed cross-survey inference remains unimplemented and unvalidated.",
+      "Survey-neutral ingestion requires format-specific parsers where source formats differ; FITS is not a CSV variant.",
+      "Event catalogues require event-level row accounting: repeated object IDs may indicate multiple real events rather than duplicate observation rows.",
+      "Public source-backed experiments must pin the repository revision, source file identity, schema, row accounting, missingness, and file hash before results are considered reproducible."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run latest-head Ruff format/lint, full test suite, lifecycle gate, runtime smoke tests, package build, and dependency audit.",
+      "Retrieve a pinned real TESS Transients text file and a TGLC/TESS FITS file; record SHA-256, source schema, row/object counts, and reconciliation evidence.",
+      "Implement a source-appropriate analysis workflow for the ZTF flare event catalogue; do not treat event rows as light-curve observation rows.",
+      "Fix StarEmbed object-level split/duplicate leakage before reporting any benchmark score.",
+      "Scientific validity and cross-survey model compatibility remain NOT_MEASURED."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Keep the v0.2.0 baseline and v1.0.1 release immutable.",
+    "Do not claim end-to-end multi-survey support or cross-survey model performance from schema normalization alone.",
+    "Keep CPVS exact reconstruction unresolved until its published-method semantics are supported by evidence.",
+    "TESS Transients format adapter: synthetic tests exist, but live-file retrieval and source reconciliation are still required.",
+    "Generic explicit-schema FITS reader: synthetic TESS-like FITS fixture exists, but actual TGLC/TESS file compatibility is unverified.",
+    "SNAD flare catalog audit: source revision 9a132ad9ac20df1d7a4b08ea36547271c9eff05e; 1,234 event rows; 1,227 unique object IDs; seven two-event objects; do not deduplicate by oid."
+  ]
+}
