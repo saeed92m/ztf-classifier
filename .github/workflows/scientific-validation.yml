@@ -364,11 +364,16 @@ jobs:
         run: |
           set -euo pipefail
           root="reports/scientific_validation/ztf_periodic_730k"
-          if [ -f "$root/residual_epoch_audit.json" ] && [ -f "$root/residual_epoch_audit.tsv" ]; then
+          if [ -s "$root/residual_epoch_audit.json" ] && [ -s "$root/residual_epoch_audit.tsv" ]; then
             rm -f "$root/ztf2g.zip" "$root/ztf2r.zip"
-            echo "Removed raw CPVS archives after their hashes and residual row evidence were retained."
+            rm -rf "$root/g" "$root/r"
+            parent="reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip"
+            if [ -f "$parent" ]; then
+              rm -f "$parent"
+            fi
+            echo "Removed raw CPVS archives, normalized epoch directories, and the raw parent archive after compact hashed row-level evidence was retained."
           else
-            echo "Residual row audit is missing; preserving raw archives for failure diagnosis."
+            echo "Residual row audit is missing; preserving raw archives and normalized directories for failure diagnosis."
           fi
 
       - name: Record release provenance
