@@ -48,11 +48,10 @@ def test_read_vizier_maps_ztf_names_to_parent_sourceids(tmp_path) -> None:
         "ZTFJ000001.00+000000.0",
         "ZTFJ000002.00+000000.0",
     ]
-    parent = tmp_path / "parent.txt"
-    parent.write_text(
-        "".join(f"{name} {100 + i} {200 + i}\\n" for i, name in enumerate(names)),
-        encoding="utf-8",
-    )
+    parent_catalog = {
+        100 + i: {"catalog_object_name": name}
+        for i, name in enumerate(names)
+    }
     source = tmp_path / "table4.tsv"
     # The Table 4 internal IDs deliberately differ from parent SourceIDs.
     source.write_text(
@@ -63,4 +62,4 @@ def test_read_vizier_maps_ztf_names_to_parent_sourceids(tmp_path) -> None:
         encoding="utf-8",
     )
 
-    assert read_vizier(source, parent) == {100, 102}
+    assert read_vizier(source, parent_catalog) == {100, 102}
