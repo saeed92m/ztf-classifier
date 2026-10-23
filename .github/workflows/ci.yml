@@ -164,25 +164,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin "${GITHUB_BASE_REF:-main}" --depth=1
-          if git diff --name-only "origin/${GITHUB_BASE_REF:-main}" HEAD | grep -Eq '^(src/ztf_classifier/validation/star_embed_audit\.py|tests/test_star_embed_audit\.py|configs/benchmarks/star_embed_ztf_40k\.json|src/ztf_classifier/validation/(acquisition|adapters|sources)\.py)
-      - name: Run test suite with coverage
-        run: |
-          python -m pytest -q \
-            --cov=ztf_classifier \
-            --cov-report=term-missing \
-            --cov-report=xml \
-            --junitxml=pytest-report.xml
-
-      - name: Upload test and coverage reports
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: ci-test-reports-${{ github.run_id }}
-          path: |
-            coverage.xml
-            pytest-report.xml
-          if-no-files-found: error
-; then
+          if git diff --name-only "origin/${GITHUB_BASE_REF:-main}" HEAD | grep -Eq '^(src/ztf_classifier/validation/star_embed_audit\.py|tests/test_star_embed_audit\.py|configs/benchmarks/star_embed_ztf_40k\.json|src/ztf_classifier/validation/(acquisition|adapters|sources)\.py)$'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -216,7 +198,6 @@ jobs:
           name: star-embed-schema-audit-${{ github.run_id }}
           path: reports/scientific_validation/ztf_star_embed/**
           if-no-files-found: error
-
 
       - name: Run test suite with coverage
         run: |
