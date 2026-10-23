@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-
 import pytest
 
 from ztf_classifier.validation.catalog_audit import audit_event_catalog
