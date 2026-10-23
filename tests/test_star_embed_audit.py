@@ -93,7 +93,7 @@ def test_star_embed_audit_blocks_duplicate_object_within_split(tmp_path) -> None
     report = audit_star_embed_dataset(data_dir, tmp_path / "report.json")
 
     assert report["status"] == "BLOCKED"
-    assert report["split_summary"]["train"]["duplicate_sourceid_count"] == 1
+    assert report["splits"]["train"]["duplicate_sourceid_count"] == 1
     assert "duplicate_sourceids_within_split:train:1" in report["validation_errors"]
     details = [item for item in report["object_id_issue_details"] if item["issue"] == "duplicate_within_split"]
     assert len(details) == 2
