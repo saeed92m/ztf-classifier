@@ -1,10 +1,12 @@
 # ZTF Classifier — Troubleshooting
 
+> The latest published package observed on 2026-10-23 is v1.0.1. Check the [live release page](https://github.com/saeed92m/ztf-classifier/releases) for the exact artifact. Product scope, status vocabulary and current blockers are in the [current handbook](HANDBOOK_CURRENT.md), [glossary](PROJECT_GLOSSARY.md) and [state register](PROJECT_STATE_REGISTER.md).
+
 ## Installation problems
 
 ### Python version rejected
 
-The v1.0.0 package supports Python 3.11 and requires:
+The v1.0.1 package supports Python 3.11 and requires:
 
 ```text
 >=3.11,<3.12
@@ -155,3 +157,8 @@ The fresh heavy runs are tracked at [#38120880783](https://github.com/saeed92m/z
 ### Current Seq-based CPVS result (2026-10-11)
 
 The independent audit now maps all 730,184 published Table4 names to actual Table2 Seq IDs, with no duplicates or unmapped names. Candidate set: 741,786; intersection: 730,184; candidate-only: 11,602; published-only: 0. This proves the identifier join is now consistent but does not prove exact reproduction. Flag-zero-only diagnostics worsen the match (736,225 candidates, 724,712 intersection, 5,472 published-only), so do not adopt a zero-flag rule. A magnitude 20.6 diagnostic also loses 18,865 published objects and is not a valid fix. Keep Issue #170 open until the 11,602 extras are explained from source-backed selection semantics.
+
+
+## Current status notice — 2026-10-23
+
+The CPVS membership discrepancy remains unresolved. The latest recorded Seq-based values are historical evidence until rechecked against current workflow artifacts. Do not change thresholds/flags to force equality. The general-purpose data-ingestion work is tracked independently in [PR #212](https://github.com/saeed92m/ztf-classifier/pull/212), which is a proposal until merged and validated. Its source-backed acquisition jobs may be skipped on ordinary PR runs; skipped source-backed checks are not scientific validation.
