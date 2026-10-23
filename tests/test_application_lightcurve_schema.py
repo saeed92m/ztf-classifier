@@ -120,7 +120,7 @@ def test_rejects_ambiguous_or_malformed_inputs(frame, mapping, message):
 
 def test_rejects_duplicated_source_field_mapping_and_empty_input():
     with pytest.raises(ApplicationInputError, match="distinct column"):
-        _mapping(uncertainty="value").validate()
+        _mapping(uncertainty="flux_uJy").validate()
 
     mapping = _mapping()
     with pytest.raises(ApplicationInputError, match="no observation rows"):
