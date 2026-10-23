@@ -42,11 +42,25 @@ def test_metrics_rejects_zero_or_invalid_magnitude_and_error() -> None:
     )
 
 
-def test_read_vizier_reads_tsv_ids(tmp_path) -> None:
+def test_read_vizier_maps_ztf_names_to_parent_sourceids(tmp_path) -> None:
+    names = [
+        "ZTFJ000000.00+000000.0",
+        "ZTFJ000001.00+000000.0",
+        "ZTFJ000002.00+000000.0",
+    ]
+    parent = tmp_path / "parent.txt"
+    parent.write_text(
+        "".join(f"{name} {100 + i} {200 + i}\\n" for i, name in enumerate(names)),
+        encoding="utf-8",
+    )
     source = tmp_path / "table4.tsv"
+    # The Table 4 internal IDs deliberately differ from parent SourceIDs.
     source.write_text(
-        "# ZTF\tID\nZTF123\t12345\nZTF456\t45678\n",
+        "# VizieR export\\n"
+        "ZTF\\tID\\n"
+        f"{names[0]}\\t777\\n"
+        f"{names[2]}\\t999\\n",
         encoding="utf-8",
     )
 
-    assert read_vizier(source) == {12345, 45678}
+    assert read_vizier(source, parent) == {100, 102}
