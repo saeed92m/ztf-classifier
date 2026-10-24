@@ -62,7 +62,7 @@ class BenchmarkRunResult:
         }
 
 
-def _peak_rss_mb() -> float:
+def _peak_rss_mb() -> float | None:
     """Peak resident set size of this process, in MiB.
 
     ``resource`` is a Unix-only standard-library module: importing it raises
@@ -73,8 +73,8 @@ def _peak_rss_mb() -> float:
 
     Both figures describe the same OS-level quantity, so ``peak_rss_mb`` keeps
     the same meaning on every supported platform and the reported metric stays
-    comparable. If the OS call fails the value is 0.0 rather than a fabricated
-    number.
+    comparable. If the OS call fails, the value is None. The output records the
+    measurement as unavailable rather than misreporting zero.
     """
     if sys.platform == "win32":
         return _windows_peak_rss_mb()
@@ -88,7 +88,7 @@ def _peak_rss_mb() -> float:
     return peak / 1024.0
 
 
-def _windows_peak_rss_mb() -> float:
+def _windows_peak_rss_mb() -> float | None:
     """Peak working set of this process, in MiB, via psapi."""
     import ctypes
     from ctypes import wintypes
@@ -135,7 +135,7 @@ def _windows_peak_rss_mb() -> float:
     process = kernel32.GetCurrentProcess()
     succeeded = query(process, ctypes.byref(counters), counters.cb)
     if not succeeded:
-        return 0.0
+        return None
     return float(counters.PeakWorkingSetSize) / (1024.0 * 1024.0)
 
 
@@ -367,6 +367,9 @@ def run_table_benchmark(
     metrics["performance"] = {
         "runtime_seconds": float(elapsed),
         "peak_rss_mb": peak_rss_mb,
+        "peak_rss_measurement_status": (
+            "measured" if peak_rss_mb is not None else "unavailable"
+        ),
     }
 
     result = BenchmarkRunResult(
