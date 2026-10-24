@@ -81,6 +81,34 @@ class DataIngestionService:
                 "Unsupported file format; choose CSV or Parquet."
             )
 
+        # Fail-closed duplicate header detection before pandas mangling (oid,oid -> oid.1)
+        if file_format == "csv":
+            try:
+                import csv
+
+                with path.open("r", encoding="utf-8", errors="strict") as handle:
+                    header_line = handle.readline()
+                    if header_line:
+                        # Use csv parsing to handle quoted headers; fallback to simple split
+                        try:
+                            header = next(csv.reader([header_line]))
+                        except csv.Error:
+                            header = header_line.split(",")
+                        normalized = [
+                            h.strip().lower() for h in header if h.strip() != ""
+                        ]
+                        if len(normalized) != len(set(normalized)):
+                            dups = sorted(
+                                {x for x in normalized if normalized.count(x) > 1}
+                            )
+                            raise ApplicationInputError(
+                                f"Input contains duplicate column names: {dups!r}."
+                            )
+            except ApplicationInputError:
+                raise
+            except (OSError, csv.Error, UnicodeDecodeError, ValueError):
+                pass
+
         try:
             if file_format == "csv":
                 data = pd.read_csv(path)

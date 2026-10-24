@@ -62,17 +62,25 @@ def test_ingestion_supports_csv_and_parquet_with_provenance(tmp_path: Path):
     assert result2.source.source_type == "local_parquet"
 
 
-def test_ingestion_duplicate_column_handling(tmp_path: Path):
+def test_ingestion_rejects_duplicate_column_names(tmp_path: Path):
     svc = DataIngestionService()
-    # Pandas mangles duplicate headers to oid, oid.1 — service currently does not reject
-    # This documents the actual behavior and identifies a gap: duplicate headers should ideally fail.
+    # Fail-closed: duplicate headers (even with case/whitespace variation) are rejected
+    # before pandas mangling (previously oid,oid -> oid.1 silent).
     path = tmp_path / "dup.csv"
     path.write_text("oid,oid,mjd\nZTF1,ZTF1,60000\n", encoding="utf-8")
-    result = svc.import_file(ImportRequest(path=path))
-    # Actual: pandas produces columns ['oid','oid.1','mjd'] which are unique, so import succeeds
-    # Gap noted: we should reject semantic duplicate column names before mangling.
-    assert "oid" in result.columns
-    assert result.row_count == 1
+    with pytest.raises(ApplicationInputError) as exc:
+        svc.import_file(ImportRequest(path=path))
+    assert "duplicate" in str(exc.value).lower()
+    # Case-insensitive and whitespace-normalized
+    path2 = tmp_path / "dup2.csv"
+    path2.write_text("Oid, oid ,mjd\nZTF1,ZTF1,60000\n", encoding="utf-8")
+    with pytest.raises(ApplicationInputError):
+        svc.import_file(ImportRequest(path=path2))
+    # Quoted header also detected
+    path3 = tmp_path / "dup3.csv"
+    path3.write_text('"oid","oid",mjd\nZTF1,ZTF1,60000\n', encoding="utf-8")
+    with pytest.raises(ApplicationInputError):
+        svc.import_file(ImportRequest(path=path3))
 
 
 def test_ingestion_rejects_missing_required_columns(tmp_path: Path):

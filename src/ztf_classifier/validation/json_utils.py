@@ -20,10 +20,22 @@ def sanitize_for_strict_json(payload: Any) -> Any:
     """Recursively replace non-finite floats with None for strict JSON.
 
     None maps to JSON null. Integers, strings, booleans, and finite
-    floats pass through unchanged. Containers are traversed.
+    floats pass through unchanged. Containers are traversed. Numeric
+    numpy scalars are normalized to Python types.
     """
     if isinstance(payload, float):
         return None if not math.isfinite(payload) else payload
+    # numpy scalar handling (optional, no hard dependency)
+    try:
+        import numpy as np
+
+        if isinstance(payload, np.floating):
+            return None if not np.isfinite(payload) else float(payload)
+        if isinstance(payload, np.integer):
+            return int(payload)
+        # numpy bool is subclass of generic, but not needed
+    except (ImportError, AttributeError, TypeError):
+        pass
     if isinstance(payload, dict):
         return {key: sanitize_for_strict_json(value) for key, value in payload.items()}
     if isinstance(payload, (list, tuple)):
