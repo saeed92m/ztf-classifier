@@ -93,6 +93,19 @@ def test_report_fails_closed_when_candidate_lacks_parent_provenance(
             candidate_ids=candidates,
             published_ids=published,
             output_dir=tmp_path / "out",
+            source_revision="test-sha",
+        )
+
+
+def test_report_requires_a_recorded_source_revision(tmp_path: Path):
+    parent, candidates, published = make_inputs(tmp_path)
+    with pytest.raises(ValueError, match="source_revision must identify"):
+        build_cpvs_discrepancy_report(
+            parent_metadata=parent,
+            candidate_ids=candidates,
+            published_ids=published,
+            output_dir=tmp_path / "out",
+            source_revision="UNRECORDED",
         )
 
 
