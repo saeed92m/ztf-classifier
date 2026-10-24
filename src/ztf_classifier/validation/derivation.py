@@ -297,17 +297,17 @@ def _snr_from_mag_error(value: str) -> float:
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Read authoritative Table2 Seq IDs and fail closed on ordinal disagreement.
+    """Read authoritative Table2 Seq IDs without substituting row ordinals.
 
     CDS ReadMe J/ApJS/249/18 defines the Table2 internal source identifier
-    (Seq) at bytes 24-29. The attached ztf2g/ztf2r records use this identifier;
-    deriving IDs from the number of rows silently corrupts joins if Seq has a
-    gap or a catalog row is skipped.
+    (Seq) at bytes 24-29 and documents a range of 1..781604 for 781602 rows.
+    Seq is an identifier, not a row number: legitimate gaps must be preserved.
+    This parser therefore validates the field and uniqueness, but does not
+    require Seq to equal the ordinal of the parsed catalog row.
     """
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
-        ordinal = 0
         for line_number, encoded in enumerate(raw, start=1):
             line = encoded.decode("utf-8", errors="strict").rstrip("\r\n")
             if not line.strip():
@@ -327,12 +327,10 @@ def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
                     f"field at bytes 24-29: {seq_text!r}"
                 )
             seq = int(seq_text)
-            ordinal += 1
-            if seq != ordinal:
+            if not 1 <= seq <= 781604:
                 raise ValueError(
-                    f"{parent_path}:{line_number}: CPVS Table2 Seq/ordinal "
-                    f"mismatch: Seq={seq}, catalog_row_ordinal={ordinal}; "
-                    "refusing to construct potentially misaligned SourceIDs"
+                    f"{parent_path}:{line_number}: CPVS Table2 Seq={seq} "
+                    "outside the documented range 1..781604"
                 )
             source_id = str(seq)
             if source_id in source_ids:
