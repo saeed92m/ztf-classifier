@@ -274,10 +274,11 @@ def build_cpvs_discrepancy_report(
             value = str(record.get(key, ""))
             if key == "SourceID":
                 safe_id = html.escape(value, quote=True)
-                value = (
-                    f"<a href='cpvs_object_detail.html#{safe_id}'>{safe_id}</a>"
+                cells.append(
+                    f"<td><a href='cpvs_object_detail.html#{safe_id}'>{safe_id}</a></td>"
                 )
-            cells.append(f"<td>{html.escape(value)}</td>")
+            else:
+                cells.append(f"<td>{html.escape(value)}</td>")
         table_rows.append(f"<tr>{''.join(cells)}</tr>")
     html_path = out / "cpvs_candidate_only_objects.html"
     html_path.write_text(
