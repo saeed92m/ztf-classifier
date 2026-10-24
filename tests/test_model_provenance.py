@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from importlib import metadata as importlib_metadata
 from pathlib import Path
 
 from ztf_classifier.models.provenance import (
@@ -63,13 +64,27 @@ def test_build_captures_expected_provenance():
     assert provenance.python_version
     assert provenance.platform
     assert provenance.machine
+    # The project's own version is asserted literally on purpose: it is a
+    # release guard and must not follow whatever happens to be installed.
     assert provenance.dependencies["ztf-classifier"] == "1.0.1"
-    assert provenance.dependencies["numpy"] == "2.4.6"
-    assert provenance.dependencies["pandas"] == "3.0.6"
-    assert provenance.dependencies["scipy"] == "1.17.1"
-    assert provenance.dependencies["scikit-learn"] == "1.9.1"
-    assert provenance.dependencies["xgboost"] == "3.2.0"
-    assert provenance.dependencies["pyarrow"] == "25.0.1"
+
+    # Third-party versions are compared against the *installed* distribution
+    # metadata rather than against literals. Literals only reproduced under
+    # requirements.lock, which is a Linux/x86-64-only freeze: on any other
+    # platform, or after a normal `pip install -e .[dev]`, pandas resolves to a
+    # different patch and this test failed for a reason unrelated to the code
+    # under test. Comparing with metadata checks the property that actually
+    # matters - that provenance records the versions genuinely in use - and it
+    # does so in every environment.
+    for name in (
+        "numpy",
+        "pandas",
+        "scipy",
+        "scikit-learn",
+        "xgboost",
+        "pyarrow",
+    ):
+        assert provenance.dependencies[name] == importlib_metadata.version(name)
 
 
 def test_paths_are_project_relative():

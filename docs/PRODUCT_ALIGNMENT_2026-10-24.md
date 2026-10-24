@@ -114,6 +114,45 @@ irreversible for this identity, so it is **not** performed. A batched cleanup
 plan with an acceptance criterion (≤ 40 branches, ≤ 8 open PRs) is recorded in
 `docs/REPOSITORY_HYGIENE_POLICY.md` §4, pending maintainer approval.
 
+### 2.5 Two further defects, found only because the claim was measured — **fixed**
+
+The new `Cross-platform` job failed on its first run. That failure was the most
+useful result of the round: both causes were real product defects that no
+documented claim had exposed.
+
+**(a) The `dev` extra could not run the test suite.**
+`tests/test_api.py`, `tests/test_reporting.py` and `tests/test_web_workbench.py`
+construct `fastapi.testclient.TestClient`. `starlette.testclient` requires an
+HTTP client at import time, and `httpx` was present in `requirements.lock` but
+absent from `pyproject.toml`. Consequence: every lock-based job was green, while
+the documented portable path (`pip install -e .[dev]`) **could not even collect
+the suite** — `3 errors during collection`, exit code 2. Fixed by declaring
+`httpx` in the `dev` extra, documented in place as test-only (no module under
+`src/` imports it).
+
+**(b) A test asserted the sandbox, not the product.**
+`tests/test_model_provenance.py` compared provenance to hardcoded third-party
+patch versions (`numpy==2.4.6`, `pandas==3.0.6`, …). Those literals reproduce
+only under `requirements.lock`; under a portable install pandas resolves to
+`3.1.0` and the test failed for a reason unrelated to the code under test. Fixed
+by comparing against `importlib.metadata.version(...)` for the same six
+packages, which verifies the property that actually matters — that provenance
+records the versions genuinely in use — in every environment. The project's own
+version (`1.0.1`) remains asserted literally as a release guard.
+
+Both fixes are accompanied by `tests/test_dependency_declarations.py` (4 tests):
+the lockfile must cover every declared runtime dependency, the `dev` extra must
+declare an HTTP client, `fastapi.testclient` must import in the running
+environment, and every package that provenance records must be a declared
+runtime dependency.
+
+**One further correction.** The job requested `python-version: "3.11.16"`.
+The runner manifests do not publish every 3.11.x patch for every
+OS/architecture, so `setup-python` failed outright on `macos-latest` (arm64) and
+on Windows **before a single test ran**. The matrix now requests the minor
+version `"3.11"`, which resolves to the newest available 3.11.x per platform and
+is also the honest test of the declared floor `requires-python = ">=3.11,<3.12"`.
+
 ---
 
 ## 3. Sources examined with **no change made** (and why)
@@ -134,11 +173,20 @@ plan with an acceptance criterion (≤ 40 branches, ≤ 8 open PRs) is recorded 
 | Check | Command / job | Result |
 |---|---|---|
 | Documentation authority suite | `pytest tests/test_documentation_authority.py` | 12 passed |
-| Full suite | `pytest tests/` | see §6 |
-| Lint | `ruff check src tests` | see §6 |
-| Format | `ruff format --check src tests` | see §6 |
-| Cross-platform | CI job `Cross-platform (ubuntu-latest / macos-latest / windows-latest)` | see §6 |
+| Dependency declaration guards | `pytest tests/test_dependency_declarations.py` | 4 passed |
+| Full suite, locked environment | `python -m pytest tests/ -q` | **664 passed, 5 skipped** |
+| Full suite, portable environment (`pip install -e ".[dev]"` in a clean venv) | `python -m pytest -q` | **664 passed, 5 skipped** |
+| Lint | `ruff check src tests` | All checks passed |
+| Format | `ruff format --check src tests` | 233 files already formatted |
+| CLI entry point | `ztf-classifier --help` | usage printed, exit 0 |
 | Root cleanliness | `git status` after `git mv` | 4 renames, 0 deletions |
+| Cross-platform | CI job `Cross-platform (ubuntu-latest / macos-latest / windows-latest)` | see §6 |
+
+The two environments matter independently. The locked environment is the one the
+four ubuntu CI jobs install and is the only place the pinned scientific stack is
+reproduced. The portable environment is what a Windows or macOS user actually
+gets from `pyproject.toml`. A test suite that passes in only one of them is not
+evidence of cross-platform support.
 
 ---
 

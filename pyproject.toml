@@ -64,6 +64,13 @@ dev = [
     "ruff",
     "build",
     "pip-audit",
+    # Test-only: tests/test_api.py, tests/test_reporting.py and
+    # tests/test_web_workbench.py construct fastapi.testclient.TestClient,
+    # which imports starlette.testclient, which requires an HTTP client.
+    # Without this the portable install path (`pip install -e .[dev]`)
+    # cannot even collect the suite. It is not a runtime dependency:
+    # no module under src/ imports httpx.
+    "httpx",
 ]
 
 [tool.setuptools.packages.find]

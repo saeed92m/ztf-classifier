@@ -23,6 +23,11 @@ All notable changes to the ZTF Classifier platform are documented here.
 - `tests/test_documentation_authority.py` — 12 tests that make the authority map
   enforceable: unlisted documents, missing canonical targets, growth of the frozen
   handbook series, known version drift, and re-appearance of archived artefacts.
+- `tests/test_dependency_declarations.py` — 4 tests guarding the declarations the
+  test suite depends on: the lockfile must cover every declared runtime
+  dependency, the `dev` extra must declare an HTTP client, `fastapi.testclient`
+  must import in the running environment, and every package that provenance
+  records must be a declared runtime dependency.
 
 ### Changed
 - `docs/INSTALLATION.md` rewritten. It previously instructed
@@ -34,6 +39,25 @@ All notable changes to the ZTF Classifier platform are documented here.
   `HANDBOOK_UPDATED_v2.8.md` a "canonical continuity handbook". It now points at
   `docs/README.md` as the authority and describes the handbook series as frozen
   history.
+- `pyproject.toml`: `httpx` added to the `dev` extra. `tests/test_api.py`,
+  `tests/test_reporting.py` and `tests/test_web_workbench.py` build
+  `fastapi.testclient.TestClient`, whose import requires an HTTP client.
+  `httpx` was in `requirements.lock`, so every lock-based job was green, but it
+  was missing from the package metadata, so the documented portable install path
+  (`pip install -e .[dev]`) failed to collect three test modules with exit code
+  2. Test-only: no module under `src/` imports `httpx`.
+- `tests/test_model_provenance.py`: third-party version assertions now compare
+  against `importlib.metadata.version(...)` instead of hardcoded patch versions.
+  The literals only reproduced under `requirements.lock`; under a portable
+  install pandas resolves to a newer patch and the test failed for a reason
+  unrelated to the code under test. Coverage is unchanged (the same six
+  packages) and the project's own version is still asserted literally as a
+  release guard.
+- CI: the `Cross-platform` job requests `python-version: "3.11"` rather than
+  `"3.11.16"`. The runner manifests do not publish every 3.11.x patch for every
+  OS/architecture, so `setup-python` failed on macOS arm64 and on Windows before
+  any test ran. The minor-version request resolves per platform and matches the
+  declared floor `requires-python = ">=3.11,<3.12"`.
 
 ### Moved
 - Four unreferenced files were moved out of the repository root into
@@ -46,9 +70,11 @@ All notable changes to the ZTF Classifier platform are documented here.
 ### Not changed, deliberately
 - No release, tag, merge or scientific baseline change. `v1.0.1` remains the
   current immutable release and `v0.2.0` the frozen scientific baseline.
-- `requirements.lock`, `pyproject.toml`, `.github/release-manifest.json` and the
-  release workflow were left untouched. Regenerating a lockfile or changing a
-  licence is a separate, reviewable decision; the defects are documented instead.
+- `requirements.lock`, `.github/release-manifest.json`, the licence declaration
+  (`license = {text = "Proprietary"}`, no `LICENSE` file) and the release
+  workflow were left untouched. Regenerating a lockfile, choosing a licence or
+  changing the release path are separate, reviewable decisions; the defects are
+  documented instead.
 - No Supabase project, schema or migration was created. The account's two
   projects belong to other products; issue #183 already records evaluation-only.
 - Branch deletion and PR closure were **not** performed — destructive and

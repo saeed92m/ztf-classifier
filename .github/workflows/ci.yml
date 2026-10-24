@@ -258,7 +258,13 @@ jobs:
       - name: Set up Python 3.11
         uses: actions/setup-python@v7
         with:
-          python-version: "3.11.16"
+          # Minor version, not an exact patch: the runner manifests do not
+          # publish every 3.11.x patch for every OS/architecture, and pinning
+          # 3.11.16 made setup-python fail outright on macOS arm64 and on
+          # Windows before a single test ran. Resolving the newest available
+          # 3.11.x per platform is also the honest test of the declared floor
+          # requires-python = ">=3.11,<3.12".
+          python-version: "3.11"
           cache: pip
 
       - name: Install from pyproject (portable path)

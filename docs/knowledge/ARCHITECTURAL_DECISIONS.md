@@ -31,3 +31,48 @@ Each entry states the consequence so a later reader can see what it forces.
 | AD-ALIGN-004 | ADOPTED | `requirements.lock` is a Linux/x86-64 freeze, not a cross-platform lock. The portable installation path is `pyproject.toml`. | The lock pins `nvidia-nccl-cu12` (CUDA, Linux x86-64), `jeepney` and `SecretStorage` (Linux). `pip install -r requirements.lock` cannot succeed on macOS or Windows. | Documentation must not present the lock as cross-platform. Per-platform locks are required work before Windows/macOS can claim a hermetic install. |
 | AD-ALIGN-005 | OPEN — BLOCKER | The packaging requirement in AD-PROD-003 (self-contained install with no Python, pip, venv, Git or terminal) is **not met**. | Releases attach only `ztf_classifier-1.0.1-py3-none-any.whl` and `ztf_classifier-1.0.1.tar.gz`. There is no installer, no bundled runtime, and the package is not on PyPI (verified HTTP 404). | Until an installer exists, the product is installable only by a user with a Python 3.11 toolchain. Describing it as an end-user desktop product would be an overclaim. Tracked as remaining work item 10 in `docs/PRODUCT_ALIGNMENT_2026-10-24.md`. |
 | AD-ALIGN-006 | ADOPTED | Unreferenced artefacts are archived by `git mv`, never deleted. | Four root files had zero inbound references; they record provenance of past fixes. | `docs/archive/` preserves them with history; `tests/test_documentation_authority.py` asserts they are neither deleted nor returned to the root. |
+
+### AD-ALIGN-007 — A green lockfile job is not evidence that the product installs
+
+**Date:** 2026-10-24
+**Status:** Accepted
+**Consequences:** `pyproject.toml` must be sufficient to install and run the
+product on every supported OS; `requirements.lock` is an additional, narrower
+guarantee.
+
+The first run of the new `Cross-platform` CI job failed on all three operating
+systems. Neither cause was visible in any document or in the eight previously
+existing jobs:
+
+1. `httpx` was in `requirements.lock` but not in `pyproject.toml`. Every
+   lock-based job was green, while `pip install -e .[dev]` — the documented
+   portable path — could not collect three test modules (`TestClient` import).
+2. A test asserted hardcoded third-party patch versions and therefore asserted
+   the sandbox rather than the code under test.
+
+**Decision.** A platform claim is only supported by a job that installs through
+the path a user on that platform has. The four lock-based jobs keep their role
+(the pinned scientific stack), and the matrix job installs from
+`pyproject.toml`. When the two disagree, `pyproject.toml` is the product and the
+lock is the reproducibility artefact; disagreement is a defect to fix, not a
+reason to relax the assertion.
+
+**Also decided.** Tests must not assert environment snapshots. Where a test
+needs to verify that a value was captured, it compares against the live source
+of that value (`importlib.metadata`), so the test keeps its meaning on every OS.
+Guards against environment drift belong in the declaration files and in CI, not
+in per-platform assertions.
+
+### AD-ALIGN-008 — The project's own version is a literal; third-party versions are not
+
+**Date:** 2026-10-24
+**Status:** Accepted
+**Consequences:** Bumping the release version requires updating
+`tests/test_model_provenance.py`; that is intentional and is part of the release
+checklist.
+
+`assert provenance.dependencies["ztf-classifier"] == "1.0.1"` is a release
+guard: it fails if the packaged metadata and the tagged release diverge, which is
+a defect worth failing on. Third-party versions are compared with the installed
+distribution metadata instead, because a literal there can only ever describe one
+machine.
