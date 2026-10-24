@@ -12,7 +12,7 @@ This document is the dated, evidence-conscious coordination point for the ZTF Cl
 - Security PR [#223](https://github.com/saeed92m/ztf-classifier/pull/223) is open and unmerged. Its latest recorded CI, Product Scope Audit, Scientific Validation workflow, and CodeQL runs succeeded. A successful workflow is not authorization to merge; inspect the current checks again before any merge.
 - CPVS report PR [#224](https://github.com/saeed92m/ztf-classifier/pull/224) is open and draft. Its latest recorded CI failed at Dependency Audit while the base branch still had vulnerable dependency pins. The report implementation/tests are not equivalent to a generated, source-backed 11,602-row deliverable.
 - [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170) remains the scientific membership-reconstruction blocker.
-- [Issue #222](https://github.com/saeed92m/ztf-classifier/issues/222) defines a separate 100-object external benchmark using raw/source-level data and independent reference analyses.
+- [Issue #222](https://github.com/saeed92m/ztf-classifier/issues/222) defines a bounded operational behavior test on 100 random object-level inputs; it is not an independent scientific benchmark.
 
 ## CPVS discrepancy: what is and is not established
 
@@ -42,15 +42,16 @@ The recorded diagnostic partition of candidate-only IDs is 11,580 failing at lea
 5. Keep raw-light-curve review and external catalog cross-match as `NOT_ASSESSED` until their evidence is actually present.
 6. Do not close Issue #170 merely because the report is generated.
 
-### B. Independent 100-object validation
+### B. 100-random-object operational behavior test
 
-- Use 100 object-level cases, not 100 individual photometry rows.
-- Capture source study/catalog/paper, DOI or URL, identifiers, coordinates, survey/instrument, bands, time window, license/access, retrieval time, source version, and SHA-256.
-- Preserve raw data unchanged; store QC, normalized data, features, predictions, and references as separate versioned artifacts.
-- Record independently reported class and quantitative analysis (period/parameters and uncertainties where applicable); a class label alone is insufficient for quantitative parity.
-- Audit object-level and temporal leakage against training, feature selection, calibration, and threshold tuning before scoring.
-- Pre-register metrics and comparison rules; report exact match separately from calibrated performance, uncertainty, abstention, and failure cases.
-- Keep this benchmark distinct from the 150-object/15-class ALeRCE v0.2 benchmark and from CPVS membership reproduction. ALeRCE labels are benchmark labels, not independent ground truth.
+This is a bounded test of how the current program behaves on 100 random object-level inputs, not an independent scientific benchmark and not an accuracy claim.
+
+- Select exactly 100 object-level IDs from a defined parent population using a fixed recorded random seed; record the selection frame, source version, selection command, software revision, configuration, and input hashes.
+- Account for all selected objects, including ingestion failures and exclusions; never silently replace difficult cases.
+- Per object, record input/schema validation, QC and feature-generation status, inference/analysis completion or failure, output/uncertainty/abstention fields where supported, warnings, errors, and runtime/resource observations if available.
+- Evaluate operational behavior: input handling, robustness, reproducibility, traceable outputs, and clarity of failure states. Do not tune model parameters or frozen artifacts using this sample.
+- Do not infer accuracy, calibration, novelty, representativeness of all ZTF objects, or independent scientific validity from this test alone.
+- Keep this test separate from the frozen 150-object/15-class ALeRCE v0.2 benchmark and CPVS membership reconstruction. ALeRCE labels remain benchmark labels, not independent ground truth.
 
 ### C. New ZTF inputs and identity/provenance tests
 
@@ -93,7 +94,7 @@ The recorded diagnostic partition of candidate-only IDs is 11,580 failing at lea
 1. Exact historical CPVS selection semantics are not independently proven; Issue #170 remains open.
 2. The actual 11,602-row report has not yet been verified as generated from the source-backed artifacts by the current report PR.
 3. Raw light-curve inspection and a full external-catalog cross-match have not been established for all 11,602 objects.
-4. The 100-object independent benchmark has a protocol issue but no verified completed evaluation results in this status record.
+4. The 100-random-object operational test has not yet been run and audited; no results are claimed.
 5. Windows/macOS clean-machine packaging and a user-ready GUI have not been verified by this review.
 6. PR #223 and #224 remain unmerged at the time of this record.
 
@@ -102,7 +103,7 @@ The recorded diagnostic partition of candidate-only IDs is 11,580 failing at lea
 1. Verify current branch/PR/workflow state and security audit.
 2. Use authoritative source-backed artifacts to generate and audit the CPVS report.
 3. Re-run CPVS reporting CI on a base that contains the reviewed dependency remediation.
-4. Execute the 100-object benchmark only after reference data, licenses, provenance, and leakage audit are ready.
+4. Execute the 100-random-object operational test with a fixed seed, complete per-object accounting, and a reproducible manifest.
 5. Implement and test cross-platform packaging and GUI incrementally.
 6. Define Company-Platform API integration after the independent product workflows are stable.
 
@@ -120,3 +121,8 @@ GitHub Actions exposes the source-backed diagnostic run [#38635891449](https://g
 - `scientific-validation-provenance`, artifact ID `11927184945`, 1,016 bytes, digest `sha256:248f14c9872085aceaa1ecb313c0c7e4e5d3be2dd6e8319b9aafecea09700d94`.
 
 These are artifact-service metadata, not a completed local content audit. The ZIP was fetched into the working file service, but the available execution environment returned errors when attempting to inspect/extract its bytes. Therefore its internal members, source file hashes, and the 11,602-row report have **not** been verified in this turn. Retrieve/materialize the artifact in a functioning local runtime, inspect its manifest and member list, validate archive integrity, and reproduce the report before relying on its contents. Do not let the artifact expire before preserving the necessary provenance evidence.
+
+
+## Product data-input boundary — clarified 2026-10-25
+
+The standard application distribution does not include a large astronomical data archive for the user. Users select and supply the astronomical data they need. Product work should therefore prioritize supported input formats, schema/quality validation, clear rejection/error messages, provenance and hashes, local processing/privacy defaults, and explicit consent before any upload or disclosure. Small synthetic fixtures or separately licensed test samples may be used in development/CI but are not a bundled scientific dataset or a promise of data delivery.
