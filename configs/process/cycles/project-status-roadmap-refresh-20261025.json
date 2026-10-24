@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "project-status-roadmap-refresh-20261025",
+  "objective": "Synchronize README, continuity handbook, platform roadmap, and the evidence-based execution ledger with verified repository state while preserving scientific blockers and the immutable baseline.",
+  "previous_knowledge_consumed": [
+    "CI run 40139324754 failed the cumulative lifecycle gate because meaningful documentation changes lacked a cycle record.",
+    "PR #223 dependency refresh has successful CI and Dependency Audit evidence but remains open and unmerged.",
+    "PR #224 adds a CPVS discrepancy-report builder but is open/draft; its latest CI failed at Dependency Audit on the unchanged main base.",
+    "Issue #170 records 781602 parent objects, 730184 published members, 741786 Seq-based candidates, 11602 candidate-only IDs, zero published-only IDs, and an unresolved historical selection rule.",
+    "Issue #222 defines a separate 100-object source-level external benchmark.",
+    "Issue #158 defines the cross-platform desktop product and GUI acceptance criteria."
+  ],
+  "baseline": {
+    "revision": "d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
+    "status": "README and roadmap status were dated 2026-10-11. The immutable software release is v1.0.1 and the frozen scientific baseline is v0.2.0. The CPVS discrepancy, independent benchmark, and cross-platform desktop acceptance remain open workstreams."
+  },
+  "expected_improvement": [
+    "Provide a single dated execution ledger with verified facts, explicit limitations, and acceptance criteria.",
+    "Align README, handbook, and platform roadmap with the current PR/issue state.",
+    "Record scientific uncertainty without implying that candidate-only IDs are discoveries.",
+    "Preserve standalone product direction and optional future Company-Platform integration.",
+    "Satisfy the repository's cumulative lifecycle-record gate without weakening CI."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Canonical docs were dated 2026-10-11 and did not capture the current PR #223/#224 state and detailed acceptance boundaries.",
+        "after": "README, handbook, roadmap, and a dated execution ledger explicitly record the verified state as of 2026-10-25."
+      },
+      "reproducibility": {
+        "before": "Current workstreams and acceptance criteria were spread across issues and earlier docs.",
+        "after": "A linked ledger records the CPVS counts, independent benchmark requirements, cross-platform tests, GUI acceptance, integration guardrails, and evidence limits."
+      },
+      "scientific_validity": {
+        "before": "Risk of conflating diagnostic membership equality with proof of the publisher's historical selection semantics or discovery claims.",
+        "after": "Documentation explicitly preserves Issue #170 as open and prohibits scientific completion claims without source-backed, reproducible evidence."
+      }
+    }
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Repository main ref verified at d88e54a2eb70d5e4531bc950341ef3136c29a5e2.",
+      "PR #223 and #224 states and their recorded workflow results were re-fetched.",
+      "Issue #170, #158, and #222 were inspected and linked from the ledger.",
+      "The documentation branch changes README.md, docs/HANDBOOK_UPDATED_v2.8.md, docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md, and docs/PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-10-25.md.",
+      "The first CI run exposed the required lifecycle record; this record is being added to satisfy that gate, not to bypass it."
+    ],
+    "blocker": "Re-run the complete CI, CodeQL, Product Scope Audit, and Scientific Validation workflows on the final branch head; do not treat skipped source-backed scientific jobs as validation."
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "The first documentation PR commit set changed meaningful files but omitted the required machine-readable record under configs/process/cycles/.",
+      "Existing docs did not yet point to a single current ledger with the evidence boundaries and acceptance criteria for the active workstreams."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Documentation changes are subject to the same cumulative lifecycle gate as other meaningful changes.",
+      "A diagnostic predicate matching a published membership set does not, by itself, establish the publisher's historical selection semantics.",
+      "A successful workflow with skipped source-backed scientific jobs is not scientific validation.",
+      "The repository's product description already expresses the cross-platform CPU-first platform direction; installer and OS support claims still require test evidence."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Validate this lifecycle record with the repository validator.",
+      "Re-run all PR checks on the final documentation branch head.",
+      "Keep Issue #170 open until source-backed scientific semantics are resolved.",
+      "Do not claim the 11602-row report, 100-object benchmark, Windows/macOS installers, or finished desktop GUI are complete without their respective evidence."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not weaken or bypass the lifecycle gate.",
+    "Preserve the immutable v0.2.0 baseline and v1.0.1 release.",
+    "Do not modify scientific selection logic, model artifacts, or production database/schema as part of a documentation-only change.",
+    "Keep Company-Platform integration optional and preserve independent installation.",
+    "Revisit GitHub wiki updates only through a supported, verifiable write path; do not claim wiki changes unless verified."
+  ]
+}

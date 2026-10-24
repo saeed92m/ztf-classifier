@@ -86,3 +86,25 @@ Issue [#158](https://github.com/saeed92m/ztf-classifier/issues/158) is the track
 The documentation update is under review in [PR #175](https://github.com/saeed92m/ztf-classifier/pull/175). It adds a canonical product roadmap, updates the scientific-validation roadmap and troubleshooting, links the handbook/roadmap from README, and records this stage in the cumulative lifecycle ledger.
 
 **Immutable constraints:** v1.0.1 remains unchanged; scientific baseline v0.2.0 remains frozen; scientific validation stays fail-closed; OOD is not represented as scientific anomaly detection.
+
+## Continuity update — 2026-10-25
+
+Read the [Project Status & Execution Ledger](PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-10-25.md) for the current verified evidence, acceptance criteria, and ordered workstreams. This dated note supplements rather than replaces earlier records.
+
+- CPVS membership discrepancy remains an open scientific blocker (Issue #170). Recorded counts: 781,602 parent objects; 730,184 published Table 4 IDs; 741,786 Seq-based candidates; 11,602 candidate-only; zero published-only. The four-field predicate is a diagnostic membership match for the recorded artifacts, not yet proof of the publisher's historical selection semantics.
+- PR #223 (dependency security refresh) and PR #224 (candidate-only report) are open and unmerged. Re-check current workflows before acting; do not merge automatically.
+- The report is not complete until source files are frozen by URL/version/hash, the actual 11,602-row output is generated, provenance and count invariants are verified, and external cross-match/raw-light-curve review status is explicitly represented.
+- The independent 100-object benchmark is tracked separately in Issue #222. Require object-level provenance, raw data preservation, independent quantitative references, leakage audit, and predeclared metrics.
+- Cross-platform target is Windows, Ubuntu, and macOS. Current Python support declaration remains `>=3.11,<3.12`; do not claim an OS/package supported until clean-machine tests pass.
+- The documented FastAPI/`/workbench/` interface is an existing UI surface, not proof of a finished desktop GUI. Keep scientific logic independent from any GUI.
+- Company-Platform integration is a future optional integration; preserve standalone installation and define API/authentication/provenance contracts before connecting runtime data.
+- No database schema or production-data changes are made by this documentation refresh; such changes require a concrete migration/integration requirement and validation plan.
+
+
+## Product input-data boundary — clarified 2026-10-25
+
+The standard application installer does not deliver a large astronomical dataset to the user. Users select and supply the data they intend to analyze. The application should validate supported formats and schemas, report data-quality problems clearly, preserve source identifiers/provenance and hashes, and default to local/private processing unless the user explicitly authorizes transfer. Small synthetic or separately licensed test fixtures may support development and CI, but they are not a bundled data archive.
+
+## 100-random-object behavior test — clarified 2026-10-25
+
+Issue [#222](https://github.com/saeed92m/ztf-classifier/issues/222) is an operational behavior test on 100 randomly selected object-level inputs, using a fixed recorded seed and source/input hashes. It observes ingestion, validation, QC/features, inference outcomes, warnings, errors, and reproducibility. It does not establish model accuracy, calibration, novelty, or independent scientific validity. The frozen 150-object/15-class ALeRCE benchmark remains a separate baseline.
