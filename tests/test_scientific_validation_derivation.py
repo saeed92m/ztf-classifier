@@ -77,55 +77,60 @@ def test_cpvs_table_parser_skips_metadata_before_sourceid_header(tmp_path: Path)
     ]
 
 
-def test_cpvs_table_falls_back_to_ordinal_sourceids(tmp_path: Path):
+def _fixed_width_cpvs_table2_row(name: str, seq: str | int) -> str:
+    return f"{name:<22} {str(seq):>6}\\n"
+
+
+def test_cpvs_table_source_ids_use_official_seq_field(tmp_path: Path):
     from ztf_classifier.validation.derivation import _source_ids
 
     parent = tmp_path / "Table2.txt"
     parent.write_text(
-        "Table 2. ZTF Variables Catalog\n"
-        "ID R.A. (J2000) Dec. (J2000) Period Type\n"
-        "ZTFJ000000.13+620605.8 0.00056 62.10163 1.9449979 BYDra\n"
-        "ZTFJ000000.14+721413.7 0.00061 72.23716 0.2991500 EW\n"
-        "ZTFJ000000.19+320847.2 0.00080 32.14645 0.2870590 EW\n"
-        "Note: footer must not become a catalog row\n",
-        encoding="utf-8",
-    )
-
-    assert _source_ids(parent, None) == {"1", "2", "3"}
-
-
-def test_cpvs_table_source_ids_ignore_metadata_after_header(tmp_path: Path):
-    from ztf_classifier.validation.derivation import _source_ids
-
-    parent = tmp_path / "Table2.txt"
-    parent.write_text(
-        "SourceID\tName\n"
-        "metadata row with SourceID token\n"
-        "ZTFJ000000.13+620605.8 0.00056 62.10163 1.9449979 BYDra\n"
-        "ZTFJ000000.14+721413.7 0.00061 72.23716 0.2991500 EW\n"
-        "footer SourceID token\n",
+        "Table 2. ZTF Variables Catalog\\n"
+        + _fixed_width_cpvs_table2_row("ZTFJ000000.13+620605.8", 1)
+        + "page 1 footer\\n"
+        + _fixed_width_cpvs_table2_row("ZTFJ000000.14+721413.7", 2),
         encoding="utf-8",
     )
 
     assert _source_ids(parent, None) == {"1", "2"}
 
 
-def test_cpvs_table_fallback_scans_past_interleaved_metadata(tmp_path: Path):
+def test_cpvs_table_source_ids_fail_closed_on_seq_ordinal_mismatch(tmp_path: Path):
     from ztf_classifier.validation.derivation import _source_ids
 
     parent = tmp_path / "Table2.txt"
     parent.write_text(
-        "Table 2. ZTF Variables Catalog\n"
-        "ZTFJ000000.13+620605.8 0.00056 62.10163 1.9449979 BYDra\n"
-        "page 1 footer\n"
-        "ZTFJ000000.14+721413.7 0.00061 72.23716 0.2991500 EW\n"
-        "repeated catalog header\n"
-        "ZTFJ000000.19+320847.2 0.00080 32.14645 0.2870590 EW\n"
-        "end of table\n",
+        _fixed_width_cpvs_table2_row("ZTFJ000000.13+620605.8", 1)
+        + _fixed_width_cpvs_table2_row("ZTFJ000000.14+721413.7", 3),
         encoding="utf-8",
     )
 
-    assert _source_ids(parent, None) == {"1", "2", "3"}
+    with pytest.raises(ValueError, match="Seq/ordinal mismatch"):
+        _source_ids(parent, None)
+
+
+def test_cpvs_table_source_ids_fail_closed_on_missing_seq(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _source_ids
+
+    parent = tmp_path / "Table2.txt"
+    parent.write_text(
+        _fixed_width_cpvs_table2_row("ZTFJ000000.13+620605.8", "bad"),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="invalid CPVS Table2 Seq"):
+        _source_ids(parent, None)
+
+
+def test_cpvs_table_source_ids_fail_closed_on_truncated_row(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _source_ids
+
+    parent = tmp_path / "Table2.txt"
+    parent.write_text("ZTFJ000000.13+620605.8\\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="truncated CPVS Table2 row"):
+        _source_ids(parent, None)
 
 
 def test_lightcurve_directory_auto_selects_data_file(tmp_path: Path):
