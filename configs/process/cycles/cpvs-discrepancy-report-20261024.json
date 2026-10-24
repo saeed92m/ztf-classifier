@@ -53,14 +53,15 @@
       "Product Scope Audit passed on an earlier implementation commit; current-head result is not verified",
       "Scientific Validation contract job passed on the current report branch, but source-backed scientific jobs were skipped and do not validate CPVS science",
       "The report generator and CLI now require a recorded source revision and reject UNRECORDED",
-      "Regression tests now verify SHA-256 hashes for all five non-manifest deliverables; these tests have not yet been run on the current head"
+      "Regression tests verify SHA-256 hashes for all five non-manifest deliverables; current CI exposed one test call that omitted the newly required source_revision argument, and the test was corrected to supply a recorded fixture revision"
     ],
-    "blocker": "Current-head CI/test/build/security audit is unverified; generation and audit against source-backed 11602-object evidence inputs remain pending"
+    "blocker": "Re-run current-head CI after correcting the required source_revision fixture argument; generation and audit against source-backed 11602-object evidence inputs remain pending"
   },
   "failure_analysis": {
-    "status": "IN_PROGRESS",
+    "status": "VERIFIED",
     "root_causes": [
-      "First lint run identified UTC alias and implicit string-concatenation findings; these were corrected in a follow-up commit"
+      "First lint run identified UTC alias and implicit string-concatenation findings; these were corrected in a follow-up commit",
+      "Latest Test Suite run failed because test_required_diagnostic_fields_are_mandatory omitted source_revision after the report builder made it a required keyword-only argument; the fixture now supplies source_revision=test-sha so the test can reach the intended missing-fields validation path"
     ]
   },
   "knowledge_extraction": {
@@ -72,9 +73,9 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "IN_PROGRESS",
     "open_blockers": [
-      "Current-head unit tests and package build are not yet verified after source-revision and output-hash hardening",
+      "Re-run current-head unit tests and package build after correcting the required source_revision fixture argument",
       "The actual source-backed 11602-object report has not yet been generated and audited"
     ]
   },
