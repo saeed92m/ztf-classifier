@@ -62,6 +62,9 @@ def test_report_exports_every_candidate_only_id_and_explicit_unknowns(
     )
     assert manifest["interpretation"]["historical_publisher_rule"] == "UNRESOLVED"
     assert (output / "cpvs_candidate_only_objects.html").exists()
+    detail = (output / "cpvs_object_detail.html").read_text(encoding="utf-8")
+    assert "No matching object in this report." in detail
+    assert "candidate_only_not_in_published_table4" in detail
     assert (output / "cpvs_discrepancy_report.md").exists()
 
 
