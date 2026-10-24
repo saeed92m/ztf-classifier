@@ -17,13 +17,13 @@
   ],
   "measurement": {
     "metrics": {
-      "security": {
-        "before": "Dependency Audit fails with four known vulnerabilities in two packages",
-        "after": "Update filelock to 4.2.1 and setuptools to 84.1.0; require fresh pip-audit results before acceptance"
+      "reliability": {
+        "before": "Dependency Audit fails with four known vulnerabilities in two packages.",
+        "after": "Refresh filelock to 4.2.1 and setuptools to 84.1.0; require a fresh Dependency Audit pass before acceptance."
       },
       "reproducibility": {
-        "before": "Build environment pins vulnerable versions",
-        "after": "All CI workflow pins and requirements.lock use the same reviewed versions"
+        "before": "Build environment pins vulnerable versions and CI workflow pins must remain consistent.",
+        "after": "All CI workflow pins and requirements.lock use the same reviewed versions, with dependency resolution and tests passing."
       }
     }
   },
@@ -34,7 +34,7 @@
       "Audit log from run 40123404290 lists the vulnerable packages and fix versions.",
       "Updated requirements.lock and all 13 setuptools workflow pins across CI, scientific validation, release, and product-scope audit workflows."
     ],
-    "blocker": "New branch CI and dependency audit must pass; dependency resolution and tests must confirm the new pins are compatible."
+    "blocker": "Fresh CI must validate the lifecycle record, dependency resolution, tests, package build, and Dependency Audit on this branch."
   },
   "failure_analysis": {
     "status": "VERIFIED",
