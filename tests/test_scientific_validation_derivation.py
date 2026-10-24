@@ -96,7 +96,7 @@ def test_cpvs_table_source_ids_use_official_seq_field(tmp_path: Path):
     assert _source_ids(parent, None) == {"1", "2"}
 
 
-def test_cpvs_table_source_ids_fail_closed_on_seq_ordinal_mismatch(tmp_path: Path):
+def test_cpvs_table_source_ids_preserve_authoritative_seq_gaps(tmp_path: Path):
     from ztf_classifier.validation.derivation import _source_ids
 
     parent = tmp_path / "Table2.txt"
@@ -106,7 +106,36 @@ def test_cpvs_table_source_ids_fail_closed_on_seq_ordinal_mismatch(tmp_path: Pat
         encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="Seq/ordinal mismatch"):
+    # Seq is the source identifier, not the parsed row ordinal. Gaps are valid.
+    assert _source_ids(parent, None) == {"1", "3"}
+
+
+def test_cpvs_table_source_ids_fail_closed_outside_documented_seq_range(
+    tmp_path: Path,
+):
+    from ztf_classifier.validation.derivation import _source_ids
+
+    parent = tmp_path / "Table2.txt"
+    parent.write_text(
+        _fixed_width_cpvs_table2_row("ZTFJ000000.13+620605.8", 781605),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="outside the documented range"):
+        _source_ids(parent, None)
+
+
+def test_cpvs_table_source_ids_fail_closed_on_duplicate_seq(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _source_ids
+
+    parent = tmp_path / "Table2.txt"
+    row = _fixed_width_cpvs_table2_row("ZTFJ000000.13+620605.8", 1)
+    parent.write_text(
+        row + _fixed_width_cpvs_table2_row("ZTFJ000000.14+721413.7", 1),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="duplicate CPVS Table2 Seq"):
         _source_ids(parent, None)
 
 
