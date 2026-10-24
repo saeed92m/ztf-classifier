@@ -27,6 +27,7 @@ from sklearn.metrics import (
 from ztf_classifier.validation.checks import run_scientific_checks
 from ztf_classifier.validation.manifest import BenchmarkManifest
 
+
 def _peak_rss_mb() -> float | None:
     """Return process peak resident memory in MiB, or None if unavailable."""
     if sys.platform == "win32":
