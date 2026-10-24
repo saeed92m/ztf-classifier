@@ -88,6 +88,38 @@ All notable changes to the ZTF Classifier platform are documented here.
 ## [1.0.1] — 2026-10-07
 
 ### Fixed
+- **Provenance recorded OS-specific path separators.** `dataset_path`,
+  `feature_schema_path`, `model_config_path` and `calibration_source_path` were
+  serialised with `str(Path)`, which yields backslashes on Windows, so a
+  provenance record produced there did not match the same record produced on
+  Linux and did not match the data contract. All four now use `as_posix()`,
+  consistent with `reproducibility/manifest.py`, which already normalised this
+  way. This is a change to a recorded field: records produced before this commit
+  on Windows are not comparable with records produced after it.
+- **Peak memory was reported as 0.0 on Windows.** The `ctypes` handle type was
+  not declared, so `GetCurrentProcess()`'s `-1` pseudo-handle was truncated to
+  `0x00000000FFFFFFFF` on 64-bit Windows, `GetProcessMemoryInfo` failed, and the
+  helper returned its failure value. `restype`/`argtypes` are now declared and
+  the call falls back to `kernel32.K32GetProcessMemoryInfo` where `psapi` does not
+  export it. The metric is reported in validation output, so a silent zero was a
+  reporting defect, not just a test failure.
+- **The frozen OOF reference was compared across platforms.** The value-level
+  comparison against `xgboost_baseline_v0.2_oof_predictions.parquet` is
+  meaningful only in the environment that produced it, which
+  `reproducibility_manifest_v0.2.json` records exactly
+  (`Linux-…-x86_64-with-glibc2.43`, numpy 2.4.6, pandas 3.0.6, scikit-learn
+  1.9.1, xgboost 3.2.0). The test now asserts structure, internal consistency and
+  label validity on every platform, and additionally asserts value-level
+  agreement when the environment matches the record — so the strict comparison
+  stays in force on the reference system and automatically applies anywhere the
+  artefact is regenerated. Cross-platform numerical identity of the frozen
+  artefact is explicitly **not** claimed.
+- **macOS: `import xgboost` failed without the OpenMP runtime.**
+  The macOS wheel links `@rpath/libomp.dylib` and does not ship it, so nine test
+  modules failed to collect on `macos-latest`. `brew install libomp` is now a
+  documented installation prerequisite in `docs/INSTALLATION.md` and is installed
+  by the `Cross-platform` job before the package. Windows and Linux wheels bundle
+  the runtime.
 - **`ztf_classifier.validation.runner` was unimportable on Windows.**
   It imported `resource`, a Unix-only standard-library module, at module scope,
   so the declared Windows support was false for any code path touching the

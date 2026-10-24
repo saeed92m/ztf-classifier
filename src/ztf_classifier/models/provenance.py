@@ -73,6 +73,11 @@ class ModelProvenance:
     platform: str
     machine: str
     dependencies: dict[str, str]
+    # Recorded paths use POSIX separators on every platform (`as_posix()`), so a
+    # provenance record produced on Windows is byte-comparable with one produced
+    # on Linux and matches the data contract in
+    # docs/contracts/PLATFORM_INTEGRATION_BOUNDARY_V1.md. This mirrors
+    # reproducibility/manifest.py, which already normalised this way.
     software_version: str = "unknown"
 
     def to_dict(self) -> dict[str, Any]:
@@ -228,17 +233,19 @@ class ModelProvenanceBuilder:
             model_version=model_version,
             model_family=model_family,
             dataset_version=dataset_version,
-            dataset_path=str(dataset_path.relative_to(project_root)),
+            dataset_path=dataset_path.relative_to(project_root).as_posix(),
             dataset_sha256=_sha256(dataset_path),
             feature_schema_version=feature_schema_version,
-            feature_schema_path=str(feature_schema_path.relative_to(project_root)),
+            feature_schema_path=feature_schema_path.relative_to(
+                project_root
+            ).as_posix(),
             feature_schema_sha256=_sha256(feature_schema_path),
-            model_config_path=str(model_config_path.relative_to(project_root)),
+            model_config_path=model_config_path.relative_to(project_root).as_posix(),
             model_config_sha256=_sha256(model_config_path),
             calibration_method=calibration_method,
             calibration_temperature=float(calibration_temperature),
             calibration_source_path=str(
-                calibration_source_path.relative_to(project_root)
+                calibration_source_path.relative_to(project_root).as_posix()
             ),
             calibration_source_sha256=_sha256(calibration_source_path),
             git_commit=git_commit,

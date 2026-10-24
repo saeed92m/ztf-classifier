@@ -107,12 +107,33 @@ def _windows_peak_rss_mb() -> float:
             ("PeakPagefileUsage", ctypes.c_size_t),
         ]
 
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    # The handle types must be declared. Without restype, ctypes assumes C int and
+    # truncates the -1 pseudo-handle to 0x00000000FFFFFFFF on 64-bit Windows,
+    # which is not a valid handle: GetProcessMemoryInfo then fails and peak memory
+    # was reported as 0.0 on every Windows run.
+    kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+    kernel32.GetCurrentProcess.argtypes = []
+
+    # GetProcessMemoryInfo lives in psapi on older Windows and in kernel32 as
+    # K32GetProcessMemoryInfo on current versions; both are supported.
+    try:
+        query = ctypes.WinDLL("psapi", use_last_error=True).GetProcessMemoryInfo
+    except (AttributeError, OSError):
+        query = ctypes.WinDLL("kernel32", use_last_error=True).K32GetProcessMemoryInfo
+
+    query.restype = wintypes.BOOL
+    query.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(ProcessMemoryCounters),
+        wintypes.DWORD,
+    ]
+
     counters = ProcessMemoryCounters()
     counters.cb = ctypes.sizeof(counters)
-    process = ctypes.windll.kernel32.GetCurrentProcess()
-    succeeded = ctypes.windll.psapi.GetProcessMemoryInfo(
-        process, ctypes.byref(counters), counters.cb
-    )
+    process = kernel32.GetCurrentProcess()
+    succeeded = query(process, ctypes.byref(counters), counters.cb)
     if not succeeded:
         return 0.0
     return float(counters.PeakWorkingSetSize) / (1024.0 * 1024.0)

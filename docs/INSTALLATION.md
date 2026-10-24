@@ -23,6 +23,20 @@ narrower than the target, and is stated here per platform rather than implied.
 - CPU-first. No GPU is required; `xgboost` may pull CUDA libraries on Linux
   because they ship in the same wheel.
 
+### macOS: the OpenMP runtime is a separate install
+
+`xgboost`'s macOS wheel links against `libomp.dylib` but does not ship it.
+Without it, `import xgboost` fails with
+`Library not loaded: @rpath/libomp.dylib`, which also makes every test module
+that imports xgboost fail to collect. Install it once with Homebrew before
+installing the package:
+
+    brew install libomp
+
+This is a real, user-visible installation step, not a CI workaround; it was
+discovered when `Cross-platform (macos-latest)` failed with nine collection
+errors. Windows and Linux wheels bundle the runtime and need no extra step.
+
 ## Installing a released version
 
 **`ztf-classifier` is not published on PyPI.** Verified 2026-10-24:

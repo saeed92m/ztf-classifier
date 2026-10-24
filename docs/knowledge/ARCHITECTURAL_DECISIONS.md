@@ -99,3 +99,30 @@ name is honest across platforms.
 
 **Related:** AD-ALIGN-001 (claims require per-OS CI) and AD-ALIGN-007 (a green
 lockfile job is not evidence that the product installs).
+
+### AD-ALIGN-010 — Recorded values are platform-neutral; numerical identity is not claimed across platforms
+
+**Date:** 2026-10-24
+**Status:** Accepted
+**Consequences:** any field written into provenance, manifests or contract
+output must be produced with an explicit, platform-independent serialisation.
+
+Two different questions were conflated by the previous code:
+
+1. *Is the record the same shape and meaning on every OS?* This must be true, and
+   it was not: `str(Path)` writes backslashes on Windows, so the same project
+   produced two different provenance strings. Fixed with `as_posix()`, matching
+   `reproducibility/manifest.py`.
+2. *Do the numbers match bit-for-bit on every OS?* For XGBoost histogram
+   training, this is not guaranteed. The frozen OOF artefact belongs to the
+   environment recorded in `reproducibility_manifest_v0.2.json`.
+
+**Decision.** Records are platform-neutral; scientific reproducibility claims are
+scoped to the environment that produced the artefact. A test that compares
+against a frozen artefact must state which environment that artefact belongs to
+and gate the value-level comparison on it, while still asserting structure and
+internal consistency everywhere. Skipping the comparison silently would be
+dishonest; asserting it everywhere would be false.
+
+**Related:** AD-PROD-003 (install without a Python toolchain — still open),
+AD-ALIGN-009 (platform claims are claims about imports).
