@@ -14,7 +14,6 @@ This test ensures:
 from __future__ import annotations
 
 import json
-import math
 
 from ztf_classifier.validation.json_utils import dumps_strict, sanitize_for_strict_json
 

@@ -308,7 +308,8 @@ def run_table_benchmark(
         output_path=str(output_dir / "benchmark_result.json"),
     )
     (output_dir / "benchmark_result.json").write_text(
-        dumps_strict(result.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        dumps_strict(result.to_dict(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
     (output_dir / "benchmark_result.md").write_text(
         _render_markdown(result), encoding="utf-8"
