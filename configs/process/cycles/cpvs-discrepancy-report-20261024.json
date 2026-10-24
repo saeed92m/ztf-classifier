@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-discrepancy-report-20261024",
+  "objective": "Implement a traceable user-facing report for CPVS candidate-only objects without changing membership rules or treating the published reference as independent astrophysical ground truth",
+  "previous_knowledge_consumed": [
+    "Issue #170: 741786 reconstructed candidates, 730184 published Table 4 members, 11602 candidate-only, 0 published-only; historical publisher selection semantics remain unresolved",
+    "Issue #195: candidate-only objects need source IDs, metadata diagnostics, cross-match evidence, light-curve review, and conservative disposition",
+    "Four-field gmag/rmag/Per-g/Per-r predicate reproduces the published membership set diagnostically but is not established as the publisher's exact historical rule",
+    "Raw source data must not be committed to Git; retain compact manifests and hashes"
+  ],
+  "baseline": {
+    "revision": "d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
+    "description": "main at PR creation; v0.2.0 baseline, production model, feature schema, class order, thresholds, v1.0.1 release, and scientific gate remain unchanged"
+  },
+  "expected_improvement": [
+    "Export all candidate-only object IDs with original parent metadata and per-field missing/invalid/nonpositive reasons",
+    "Provide CSV, searchable local HTML, Markdown summary, strict JSON summary, and source/output SHA-256 manifest",
+    "Represent raw-light-curve and external cross-match states explicitly as NOT_ASSESSED unless evidence is supplied",
+    "Fail closed on duplicate IDs, missing required fields, malformed identifiers, and missing parent provenance",
+    "Keep the CPVS historical selection-rule blocker unresolved until source-backed evidence supports a conclusion"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      },
+      "lifecycle_contract_coverage": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      },
+      "regression_protection_count": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Initial PR CI Format Check passed",
+      "Initial lint failure was fixed using the exact Ruff findings; latest CI rerun is pending",
+      "CodeQL passed on the current implementation commit",
+      "Product Scope Audit passed on the current implementation commit",
+      "Scientific Validation contract job passed; source-backed scientific jobs were skipped and do not validate the CPVS science"
+    ],
+    "blocker": "Full CI test/build/audit completion and generation against the source-backed 11602-object evidence inputs remain pending"
+  },
+  "failure_analysis": {
+    "status": "IN_PROGRESS",
+    "root_causes": [
+      "First lint run identified UTC alias and implicit string-concatenation findings; these were corrected in a follow-up commit"
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A discrepancy report is a product capability that improves transparency but does not itself prove the historical publisher selection semantics",
+      "Missing cross-match or light-curve evidence must remain NOT_ASSESSED rather than being treated as a negative or positive scientific result",
+      "The report generator requires source-backed input artifacts to create the actual 11602-row output; raw data should remain outside Git"
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Current-head unit tests and package build are not yet verified",
+      "The actual source-backed 11602-object report has not yet been generated and audited"
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "PR #224 implements a draft reporting capability; it is not merged or a release",
+    "Issue #170 remains an explicit scientific validation blocker",
+    "Do not claim a cross-match, raw-light-curve review, new discovery, or full 11602-object output until the corresponding evidence is actually generated and checked"
+  ]
+}
