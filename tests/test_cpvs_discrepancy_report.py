@@ -72,7 +72,8 @@ def test_report_exports_every_candidate_only_id_and_explicit_unknowns(
     for output_record in manifest["outputs"].values():
         generated = output / output_record["path"]
         assert generated.is_file()
-        assert hashlib.sha256(generated.read_bytes()).hexdigest() == output_record["sha256"]
+        digest = hashlib.sha256(generated.read_bytes()).hexdigest()
+        assert digest == output_record["sha256"]
     table = (output / "cpvs_candidate_only_objects.html").read_text(encoding="utf-8")
     assert "href='cpvs_object_detail.html#2'" in table
     detail = (output / "cpvs_object_detail.html").read_text(encoding="utf-8")
