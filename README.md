@@ -423,3 +423,15 @@ The current production model explicitly does **not** claim a scientific-anomaly 
 - Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
 - Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
 - Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.
+
+
+## Current evidence and execution plan (2026-10-25)
+
+The latest verified project state and acceptance criteria are maintained in [the Project Status & Execution Ledger](docs/PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-10-25.md). Key boundaries:
+
+- CPVS exact historical reconstruction remains unresolved ([Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170)); 11,602 candidate-only IDs are a catalog-membership discrepancy, not automatically discoveries.
+- [PR #223](https://github.com/saeed92m/ztf-classifier/pull/223) is an open dependency-security change; [PR #224](https://github.com/saeed92m/ztf-classifier/pull/224) is an open/draft report implementation. Neither is merged.
+- The 100-object independent raw-data benchmark is tracked separately in [Issue #222](https://github.com/saeed92m/ztf-classifier/issues/222).
+- Windows, Ubuntu, macOS packaging and a user-ready GUI require clean-machine/end-to-end evidence; existing API/Workbench code is not by itself proof of a finished cross-platform desktop product.
+- Company-Platform integration remains optional and must not become a hard dependency.
+- A successful CI workflow is not a scientific validation result when the scientific jobs were skipped. Preserve the immutable v0.2.0 baseline and keep unresolved blockers visible.
