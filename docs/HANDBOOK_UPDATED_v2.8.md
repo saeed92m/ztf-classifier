@@ -99,3 +99,12 @@ Read the [Project Status & Execution Ledger](PROJECT_STATUS_AND_EXECUTION_LEDGER
 - The documented FastAPI/`/workbench/` interface is an existing UI surface, not proof of a finished desktop GUI. Keep scientific logic independent from any GUI.
 - Company-Platform integration is a future optional integration; preserve standalone installation and define API/authentication/provenance contracts before connecting runtime data.
 - No database schema or production-data changes are made by this documentation refresh; such changes require a concrete migration/integration requirement and validation plan.
+
+
+## Product input-data boundary — clarified 2026-10-25
+
+The standard application installer does not deliver a large astronomical dataset to the user. Users select and supply the data they intend to analyze. The application should validate supported formats and schemas, report data-quality problems clearly, preserve source identifiers/provenance and hashes, and default to local/private processing unless the user explicitly authorizes transfer. Small synthetic or separately licensed test fixtures may support development and CI, but they are not a bundled data archive.
+
+## 100-random-object behavior test — clarified 2026-10-25
+
+Issue [#222](https://github.com/saeed92m/ztf-classifier/issues/222) is an operational behavior test on 100 randomly selected object-level inputs, using a fixed recorded seed and source/input hashes. It observes ingestion, validation, QC/features, inference outcomes, warnings, errors, and reproducibility. It does not establish model accuracy, calibration, novelty, or independent scientific validity. The frozen 150-object/15-class ALeRCE benchmark remains a separate baseline.
