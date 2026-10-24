@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "security-refresh-vulnerable-build-deps-20261024",
+  "objective": "Resolve newly reported dependency-audit failures by updating the vulnerable filelock and setuptools pins while preserving reproducible CI environments.",
+  "previous_knowledge_consumed": [
+    "ci-env-pinning-20261019",
+    "ci-dependency-audit-failure-40123404290"
+  ],
+  "baseline": {
+    "revision": "d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
+    "status": "The default-branch dependency audit pinned filelock 4.0.3 and setuptools 84.0.0. CI run 40123404290 reported 4 known vulnerabilities: three affecting filelock 4.0.3 (fix version 4.2.1) and one affecting setuptools 84.0.0 (fix version 84.1.0)."
+  },
+  "expected_improvement": [
+    "dependency security",
+    "reproducible builds",
+    "CI reliability"
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "Dependency Audit fails with four known vulnerabilities in two packages.",
+        "after": "Refresh filelock to 4.2.1 and setuptools to 84.1.0; require a fresh Dependency Audit pass before acceptance."
+      },
+      "reproducibility": {
+        "before": "Build environment pins vulnerable versions and CI workflow pins must remain consistent.",
+        "after": "All CI workflow pins and requirements.lock use the same reviewed versions, with dependency resolution and tests passing."
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Audit log from run 40123404290 lists the vulnerable packages and fix versions.",
+      "Updated requirements.lock and all 13 setuptools workflow pins across CI, scientific validation, release, and product-scope audit workflows."
+    ],
+    "blocker": "Fresh CI must validate the lifecycle record, dependency resolution, tests, package build, and Dependency Audit on this branch."
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "New advisories now affect pinned filelock 4.0.3 and setuptools 84.0.0, so the previously green dependency audit fails."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Pinned build tools and lockfile dependencies must be refreshed when new advisories identify fixed versions.",
+      "A green CI result from an earlier date does not prove the same dependency pins remain vulnerability-free."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Run CI and inspect the Dependency Audit job on this branch.",
+      "Check all workflow files for stale vulnerable pins and verify no lock inconsistencies."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not weaken or skip the dependency audit to obtain green CI.",
+    "Keep scientific baseline v0.2.0 and released artifacts unchanged."
+  ]
+}
