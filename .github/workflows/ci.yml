@@ -311,6 +311,29 @@ jobs:
           PY
           exit $status
 
+      - name: Report the test outcome on this platform
+        # A notice annotation, always emitted, so the per-platform result is
+        # readable from the check itself rather than only from log storage.
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import pathlib
+
+          path = pathlib.Path("pytest-output.log")
+          if not path.is_file():
+              print("::notice::pytest did not run on this platform")
+              raise SystemExit(0)
+          lines = [
+              line
+              for line in path.read_text(
+                  encoding="utf-8", errors="replace"
+              ).splitlines()
+              if line.strip()
+          ]
+          print(f"::notice::{(lines[-1] if lines else 'no output')}")
+          PY
+
       - name: Smoke test CLI entry point
         run: ztf-classifier --help
 

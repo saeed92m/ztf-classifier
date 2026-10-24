@@ -91,8 +91,24 @@ The product vision targets **Windows, macOS and Ubuntu**. The verified state is:
 | Platform | Verified install path | Evidence |
 |---|---|---|
 | Ubuntu (x86-64) | `requirements.lock` (hermetic freeze) | CI `Test Suite`, `Build & Verify Package` |
-| macOS | `pip install -e ".[dev]"` from `pyproject.toml` | CI `Cross-platform (macos-latest)` |
-| Windows | `pip install -e ".[dev]"` from `pyproject.toml` | CI `Cross-platform (windows-latest)` |
+| Ubuntu (x86-64) | `pip install -e ".[dev]"` from `pyproject.toml` | CI `Cross-platform (ubuntu-latest)` |
+| macOS (arm64) | `pip install -e ".[dev]"` from `pyproject.toml`, plus `brew install libomp` | CI `Cross-platform (macos-latest)` |
+| Windows (x64) | `pip install -e ".[dev]"` from `pyproject.toml` | CI `Cross-platform (windows-latest)` |
+
+**Status as of 2026-10-24:** all three operating systems install the package and
+pass the full test suite. CI run
+[`40104989502`](https://github.com/saeed92m/ztf-classifier/actions/runs/40104989502)
+reported 11 of 11 jobs successful, including all three `Cross-platform` matrix
+entries. Reaching that state required fixing six defects, each recorded in
+[`PRODUCT_ALIGNMENT_2026-10-24.md`](PRODUCT_ALIGNMENT_2026-10-24.md) §2.1–§2.7:
+a `dev` extra without an HTTP client, a test asserting a sandbox snapshot, a
+setup-python patch pin that does not exist for macOS arm64 or Windows, a
+POSIX-only `import resource`, OS-specific separators in provenance, and macOS
+needing the OpenMP runtime.
+
+Windows and macOS are verified through the **portable** install path only. The
+hermetic `requirements.lock` path remains Linux/x86-64, so do not describe the
+product as hermetically reproducible on macOS or Windows.
 
 `requirements.lock` is a **Linux/x86-64 freeze**. It pins CUDA-only
 (`nvidia-nccl-cu12`) and Linux-only (`jeepney`, `SecretStorage`) distributions

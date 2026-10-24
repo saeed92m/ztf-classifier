@@ -8,8 +8,12 @@ narrower than the target, and is stated here per platform rather than implied.
 | Platform | Install path | Status |
 |---|---|---|
 | Ubuntu (x86-64) | `requirements.lock` (hermetic) or `pip install -e .` | **Verified** — CI `Test Suite`, `Build & Verify Package` |
-| macOS | `pip install -e ".[dev]"` from `pyproject.toml` | **Measured by CI** — job `Cross-platform (macos-latest)`. See `docs/README.md` §5 for the current result. |
-| Windows | `pip install -e ".[dev]"` from `pyproject.toml` | **Measured by CI** — job `Cross-platform (windows-latest)`. See `docs/README.md` §5. |
+| macOS (arm64) | `brew install libomp`, then `pip install -e ".[dev]"` | **Verified** — CI `Cross-platform (macos-latest)` passes |
+| Windows (x64) | `pip install -e ".[dev]"` from `pyproject.toml` | **Verified** — CI `Cross-platform (windows-latest)` passes |
+
+All three platforms install the package and pass the full suite as of
+2026-10-24 (CI run 40104989502, 11 of 11 jobs green). The lockfile path below
+remains Linux-only.
 
 `requirements.lock` is a **Linux/x86-64 freeze**. It pins `nvidia-nccl-cu12`,
 `jeepney` and `SecretStorage`, which have no macOS or Windows distributions, so

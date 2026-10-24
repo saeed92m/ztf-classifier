@@ -272,7 +272,7 @@ No existing Notion page was deleted or overwritten.
 | # | Item | Owner | Acceptance criterion |
 |---|---|---|---|
 | 1 | Verify `saeed92m/Company-Platform` contents and licence | Maintainer with read access | A read-only identity can list the repo; its licence, versioning and release cycle are recorded in its own repository |
-| 2 | Cross-platform CI green on all three OSes | Maintainer (may need portability fixes) | `Cross-platform (*)` jobs all succeed on `main` |
+| 2 | Cross-platform CI green on `main` | Maintainer | **Done on the working branch** (run 40104989502, 11/11). Remains open until the change reaches `main`, which needs a merge this identity does not perform |
 | 3 | Per-platform lockfiles | Maintainer | `requirements/linux.lock`, `requirements/macos.lock`, `requirements/windows.lock`, each installing successfully in its matrix job |
 | 4 | Decide the licence question | Maintainer | `pyproject.toml` `license` matches the intended distribution model; classifiers updated |
 | 5 | Widen `requires-python` | Maintainer | CI matrix proves 3.12 works before the constraint is relaxed |
@@ -290,10 +290,10 @@ documented; it is 100% when its acceptance criterion is demonstrably met.
 
 | Subsystem | Criteria met | Score | Basis |
 |---|---|---|---|
-| Scientific core (features/model/calibration) | 6/6 | **100%** | 648 tests green, frozen baseline intact, model card present |
+| Scientific core (features/model/calibration) | 6/6 | **100%** | 667 tests green (locked env), frozen baseline intact, model card present |
 | Scientific validation & claim discipline | 5/6 | **83%** | Claim vocabulary + fail-closed gates verified; CPVS #170 unresolved |
 | Ubuntu / Linux install | 4/4 | **100%** | Hermetic lock + CI green |
-| macOS / Windows install | 2/4 | **50%** | Matrix job added and wired to the gate; **green run not yet observed** |
+| macOS / Windows install | 4/4 | **100%** | Matrix job green on `macos-latest` and `windows-latest` (run 40104989502); install prerequisite documented |
 | Packaging & release automation | 4/4 | **100%** | 6 releases, tags verified, release workflow gated on Scientific Validation |
 | API & integration contracts | 3/4 | **75%** | `/v1` documented + boundary contract v1; no consumer exists yet |
 | Documentation authority | 4/4 | **100%** | Authority map + 12 enforcement tests |
@@ -303,5 +303,13 @@ documented; it is 100% when its acceptance criterion is demonstrably met.
 | Licence clarity | 0/2 | **0%** | `Proprietary` in `pyproject.toml`, no `LICENSE` file, GitHub reports `license: null` |
 
 **Weighted product readiness (excluding the blocked Company-Platform axis):
-≈ 78%.** The three largest deductions are repository hygiene (25%), licence
-clarity (0%) and macOS/Windows (50%).
+≈ 84%.** With macOS and Windows verified, the remaining deductions are
+repository hygiene (25%) and licence clarity (0%), plus the unverified
+Company-Platform axis (0%, access blocked) and the absent end-user installer
+(0%, AD-PROD-003 still open).
+
+Scores move only on evidence. macOS/Windows moved from 50% to 100% on
+2026-10-24 because run
+[40104989502](https://github.com/saeed92m/ztf-classifier/actions/runs/40104989502)
+reported both matrix entries green — not because the job was added to the
+workflow.
