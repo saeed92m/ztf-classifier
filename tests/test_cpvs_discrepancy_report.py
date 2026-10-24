@@ -100,3 +100,37 @@ def test_required_diagnostic_fields_are_mandatory(tmp_path: Path):
             published_ids=published,
             output_dir=tmp_path / "out",
         )
+
+
+def test_report_accepts_vizier_tsv_metadata_units_and_separator(tmp_path: Path):
+    parent = write_file(
+        tmp_path / "parent_vizier.tsv",
+        "# VizieR export\n"
+        "#Table: J/ApJS/249/18/table2\n"
+        "Seq\tPer\tgmag\trmag\tPer-g\tPer-r\n"
+        " \td\tmag\tmag\td\td\n"
+        "------\t---\t----\t----\t-----\t-----\n"
+        "1\t0.5\t15\t16\t0.5\t0.6\n"
+        "2\t0.6\t\t16\t0.6\t0.7\n",
+    )
+    candidates = write_file(tmp_path / "candidates.tsv", "SourceID\n1\n2\n")
+    published = write_file(
+        tmp_path / "published_vizier.tsv",
+        "# Published reference export\n"
+        "Name\tSeq\n"
+        " \t \n"
+        "------\t---\n"
+        "ZTFJ000000.00+000000.0\t1\n",
+    )
+    result = build_cpvs_discrepancy_report(
+        parent_metadata=parent,
+        candidate_ids=candidates,
+        published_ids=published,
+        output_dir=tmp_path / "vizier-report",
+        source_revision="test-vizier-source",
+    )
+    assert result["counts"]["parent_metadata_objects"] == 2
+    assert result["counts"]["published_reference_objects"] == 1
+    assert result["counts"]["candidate_only_objects"] == 1
+    assert result["counts"]["published_only_objects"] == 0
+
