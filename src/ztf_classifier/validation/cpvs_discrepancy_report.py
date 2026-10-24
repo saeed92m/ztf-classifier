@@ -105,9 +105,11 @@ def build_cpvs_discrepancy_report(
     candidate_ids: str | Path,
     published_ids: str | Path,
     output_dir: str | Path,
-    source_revision: str = "UNRECORDED",
+    source_revision: str,
 ) -> dict[str, Any]:
     """Write CSV, strict JSON manifest, searchable HTML and Markdown summary."""
+    if not source_revision.strip() or source_revision.strip().upper() == "UNRECORDED":
+        raise ValueError("source_revision must identify the revision that produced the inputs")
     parent_path, candidate_path, published_path = map(
         Path, (parent_metadata, candidate_ids, published_ids)
     )
