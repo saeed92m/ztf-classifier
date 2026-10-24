@@ -16,7 +16,11 @@ def main() -> int:
     parser.add_argument("--candidate-ids", type=Path, required=True)
     parser.add_argument("--published-ids", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--source-revision", required=True, help="revision that produced the input artifacts")
+    parser.add_argument(
+        "--source-revision",
+        required=True,
+        help="revision that produced the input artifacts",
+    )
     args = parser.parse_args()
     summary = build_cpvs_discrepancy_report(
         parent_metadata=args.parent_metadata,
