@@ -13,6 +13,7 @@ from ztf_classifier.validation.acquisition import (
 )
 from ztf_classifier.validation.derivation import derive_730k
 from ztf_classifier.validation.gate import write_release_gate_report
+from ztf_classifier.validation.json_utils import dumps_strict
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.report import write_scientific_validation_report
 from ztf_classifier.validation.runner import run_table_benchmark
@@ -105,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
             result = acquire_source(request, code_version=args.code_version)
             report = args.output.with_name(args.output.name + ".acquisition.json")
             report.write_text(
-                json.dumps(result.to_dict(), indent=2, sort_keys=True) + "\n",
+                dumps_strict(result.to_dict(), indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
             print(f"acquisition={result.status}")

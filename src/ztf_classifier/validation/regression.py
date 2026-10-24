@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ztf_classifier.validation.json_utils import dumps_strict
+
 
 def compare_metrics(
     current: dict[str, Any],
@@ -57,7 +59,7 @@ def compare_report_files(
     )
     if output_path is not None:
         Path(output_path).write_text(
-            json.dumps(result, indent=2, sort_keys=True) + "\n",
+            dumps_strict(result, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
     return result

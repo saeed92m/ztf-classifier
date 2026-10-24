@@ -8,6 +8,7 @@ from typing import Any
 
 from ztf_classifier.validation.adapters import AdapterContractError, build_adapter_plan
 from ztf_classifier.validation.evidence import EvidenceManifest
+from ztf_classifier.validation.json_utils import dumps_strict
 from ztf_classifier.validation.manifest import BenchmarkManifest
 from ztf_classifier.validation.registry import BenchmarkRegistry
 
@@ -213,6 +214,6 @@ def write_release_gate_report(
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        dumps_strict(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     return result

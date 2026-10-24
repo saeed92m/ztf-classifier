@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -18,6 +17,7 @@ from ztf_classifier.validation.evidence import (
     EvidenceManifest,
     write_evidence_manifest,
 )
+from ztf_classifier.validation.json_utils import dumps_strict
 from ztf_classifier.validation.registry import BenchmarkRegistry
 from ztf_classifier.validation.sources import get_source
 
@@ -108,7 +108,7 @@ def _derive_row_count(request: AcquisitionRequest, artifact: Path) -> int | None
 def _query_manifest_hash(payload: dict[str, object] | None) -> str | None:
     if payload is None:
         return None
-    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode(
+    canonical = dumps_strict(payload, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
     )
     return _sha256_bytes(canonical)
@@ -307,7 +307,7 @@ def acquire_source(
                 else root.with_name(root.name + ".evidence.query.json")
             )
             query_path.write_text(
-                json.dumps(request.query_manifest, indent=2, sort_keys=True) + "\n",
+                dumps_strict(request.query_manifest, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
 

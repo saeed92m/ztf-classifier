@@ -5,7 +5,6 @@ from __future__ import annotations
 import csv
 import gzip
 import hashlib
-import json
 import math
 import zipfile
 from collections import Counter
@@ -19,6 +18,7 @@ from ztf_classifier.validation.evidence import (
     EvidenceArtifact,
     write_evidence_manifest,
 )
+from ztf_classifier.validation.json_utils import dumps_strict
 
 
 @dataclass(frozen=True)
@@ -513,13 +513,13 @@ def derive_730k(
             "candidate_sha256": digest.hexdigest(),
         }
         output.with_name(output.name + ".diagnostic.json").write_text(
-            json.dumps(diagnostic, indent=2, sort_keys=True) + "\n",
+            dumps_strict(diagnostic, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
         raise ValueError(
             "derived subset count mismatch: "
             f"expected {expected_selected_rows}, got {len(selected)}; "
-            f"quality diagnostics={json.dumps(diagnostics, sort_keys=True)}"
+            f"quality diagnostics={dumps_strict(diagnostics, sort_keys=True)}"
         )
 
     result = DerivationResult(
@@ -533,7 +533,7 @@ def derive_730k(
         raise ValueError(
             "parent_evidence_sha256 is required to emit scientific 730k evidence"
         )
-    selection_manifest = json.dumps(
+    selection_manifest = dumps_strict(
         result.to_dict()["selection"],
         sort_keys=True,
         separators=(",", ":"),
@@ -549,7 +549,7 @@ def derive_730k(
         query_manifest_sha256=hashlib.sha256(selection_manifest).hexdigest(),
     )
     output.with_name(output.name + ".derivation.json").write_text(
-        json.dumps(result.to_dict(), indent=2, sort_keys=True) + "\n",
+        dumps_strict(result.to_dict(), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return result

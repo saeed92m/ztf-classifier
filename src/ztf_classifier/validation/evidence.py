@@ -7,7 +7,6 @@ and the code/provenance used to produce the evidence.
 from __future__ import annotations
 
 import hashlib
-import json
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -178,10 +177,12 @@ def write_evidence_manifest(
     )
     if not manifest.artifacts:
         raise ValueError("Evidence manifest requires at least one artifact")
+    from ztf_classifier.validation.json_utils import dumps_strict
+
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(manifest.to_dict(), indent=2, sort_keys=True) + "\n",
+        dumps_strict(manifest.to_dict(), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return manifest

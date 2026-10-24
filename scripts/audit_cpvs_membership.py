@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
+
+from ztf_classifier.validation.json_utils import dumps_strict
 
 
 def read_selected(path: Path) -> set[int]:
@@ -76,10 +77,10 @@ def main() -> int:
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        dumps_strict(report, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    print(json.dumps(report, indent=2, sort_keys=True))
+    print(dumps_strict(report, indent=2, sort_keys=True))
     return 0 if report["exact_membership_match"] else 2
 
 

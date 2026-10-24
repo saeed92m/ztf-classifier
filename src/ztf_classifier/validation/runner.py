@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import resource
 import sys
 import time
@@ -26,6 +25,7 @@ from sklearn.metrics import (
 )
 
 from ztf_classifier.validation.checks import run_scientific_checks
+from ztf_classifier.validation.json_utils import dumps_strict
 from ztf_classifier.validation.manifest import BenchmarkManifest
 
 
@@ -308,7 +308,7 @@ def run_table_benchmark(
         output_path=str(output_dir / "benchmark_result.json"),
     )
     (output_dir / "benchmark_result.json").write_text(
-        json.dumps(result.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        dumps_strict(result.to_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     (output_dir / "benchmark_result.md").write_text(
         _render_markdown(result), encoding="utf-8"
@@ -329,7 +329,7 @@ def _render_markdown(result: BenchmarkRunResult) -> str:
         "",
     ]
     lines.extend(
-        f"- **{key}**: {json.dumps(value, sort_keys=True)}"
+        f"- **{key}**: {dumps_strict(value, sort_keys=True)}"
         for key, value in result.metrics.items()
     )
     lines.extend(["", "## Leakage", ""])

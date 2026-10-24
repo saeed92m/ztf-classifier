@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import argparse
-import json
 import math
 from pathlib import Path
 
 from audit_cpvs_membership import read_vizier
+
 from ztf_classifier.validation.derivation import _iter_rows, _source_ids
+from ztf_classifier.validation.json_utils import dumps_strict
 
 
 def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
@@ -75,10 +76,10 @@ def main() -> int:
         }
     a.output.parent.mkdir(parents=True, exist_ok=True)
     a.output.write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        dumps_strict(report, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    print(json.dumps(report, indent=2, sort_keys=True))
+    print(dumps_strict(report, indent=2, sort_keys=True))
     return 0
 
 

@@ -7,13 +7,13 @@ It does not convert live responses into benchmark truth.
 from __future__ import annotations
 
 import hashlib
-import json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
+from ztf_classifier.validation.json_utils import dumps_strict
 from ztf_classifier.validation.sources import SOURCES
 
 PROBES = {
@@ -92,7 +92,7 @@ def run(output: str | Path, fetcher=fetch) -> dict[str, object]:
     path = Path(output)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        dumps_strict(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     return report
 
