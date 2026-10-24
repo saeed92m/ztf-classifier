@@ -24,31 +24,42 @@ def sha256_file(path: str | Path) -> str:
 
 
 def read_table(path: str | Path) -> tuple[list[str], list[dict[str, str]]]:
-    with Path(path).open("r", encoding="utf-8-sig", newline="") as stream:
-        sample = stream.read(8192)
-        stream.seek(0)
-        try:
-            dialect = csv.Sniffer().sniff(sample, delimiters="\t,;")
-        except csv.Error:
-            dialect = csv.excel_tab
-        reader = csv.DictReader(stream, dialect=dialect)
-        if not reader.fieldnames:
-            raise ValueError(f"{path}: missing header")
-        headers = [str(name).strip() for name in reader.fieldnames]
-        if len(headers) != len(set(headers)):
-            raise ValueError(f"{path}: duplicate headers")
-        rows = []
-        for line_number, raw in enumerate(reader, start=2):
-            if None in raw:
-                raise ValueError(f"{path}:{line_number}: extra fields")
-            rows.append(
-                {
-                    key.strip(): (value or "").strip()
-                    for key, value in raw.items()
-                    if key is not None
-                }
-            )
-        return headers, rows
+    # VizieR TSV exports include a multi-line comment preamble, a units row,
+    # and a dashed separator before the actual records. Remove those structural
+    # lines while retaining original line numbers for actionable errors.
+    source_lines = Path(path).read_text(encoding="utf-8-sig").splitlines()
+    numbered_lines = [
+        (line_number, line)
+        for line_number, line in enumerate(source_lines, start=1)
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    if not numbered_lines:
+        raise ValueError(f"{path}: missing header")
+    sample = "\n".join(line for _, line in numbered_lines[:20])
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters="\t,;")
+    except csv.Error:
+        dialect = csv.excel_tab
+    parsed = csv.reader((line for _, line in numbered_lines), dialect=dialect)
+    headers = [str(name).strip() for name in next(parsed, [])]
+    if not headers or any(not header for header in headers):
+        raise ValueError(f"{path}: missing or blank header")
+    if len(headers) != len(set(headers)):
+        raise ValueError(f"{path}: duplicate headers")
+
+    rows: list[dict[str, str]] = []
+    for (line_number, _), raw in zip(numbered_lines[1:], parsed):
+        cells = [(value or "").strip() for value in raw]
+        # Skip VizieR's units row (blank first field) and dashed ruler row.
+        if cells and not cells[0] and any(cells[1:]):
+            continue
+        if cells and all(not cell or set(cell) == {"-"} for cell in cells):
+            continue
+        if len(cells) > len(headers):
+            raise ValueError(f"{path}:{line_number}: extra fields")
+        cells.extend([""] * (len(headers) - len(cells)))
+        rows.append(dict(zip(headers, cells, strict=True)))
+    return headers, rows
 
 
 def id_column(headers: list[str]) -> str:
