@@ -29,7 +29,7 @@ The official ReadMe specifies Table 2's byte layout:
 
 In CDS ReadMe notation, ?=0 marks a nullable numeric field whose null sentinel is zero. Thus positive values are evidence that the relevant summary field is present; they do not by themselves prove the paper required every such field for sample membership.
 
-The ReadMe also reports 781,602 Table 2 records and a Seq range of [1/781604]. Because the declared range extends two above the row count, the source identifier must be read from Seq, not synthesized from row ordinal. Any discrepancy between Seq and ordinal must be surfaced explicitly rather than silently shifting joins.
+The ReadMe also reports 781,602 Table 2 records and a Seq range of [1/781604]. Because the declared range extends two above the row count, Seq is not equivalent to a one-based row ordinal. The parser must preserve authoritative Seq values, including legitimate gaps, while rejecting malformed, out-of-range, or duplicate identifiers.
 
 ## Current reconstructed membership evidence
 
@@ -53,7 +53,7 @@ This partition sums to 11,602. A separate earlier field-pattern report used a di
 
 The current main implementation of _source_ids_from_catalog counts ZTF-named rows and assigns one-based ordinals instead of reading the official Seq field. That contradicts the published source schema and can silently misalign light-curve joins if a row is skipped or Seq is non-contiguous.
 
-The isolated branch fix/cpvs-seq-authoritative-ids-20261024 changes this parser to read bytes 24–29 and fail closed when a parsed Seq disagrees with the row ordinal, is malformed, or the row is truncated. Regression tests cover valid fixed-width rows, an ordinal mismatch, a malformed Seq, and a truncated row. This branch is not merged; CI and a source-backed run must confirm behavior against the full official parent file before adoption. If the real file contains legitimate gaps, the fail-closed result is evidence to investigate—not permission to fall back to ordinals.
+The isolated branch fix/cpvs-seq-authoritative-ids-20261024 reads bytes 24–29 as the authoritative Seq, preserves gaps, and fails closed on malformed, truncated, out-of-range, or duplicate identifiers. Regression tests cover valid fixed-width rows, a legitimate Seq gap, an out-of-range value, a duplicate Seq, a malformed Seq, and a truncated row. This branch is not merged; CI and a source-backed run must confirm behavior against the full official parent file before adoption.
 
 ## Next scientific checks
 
