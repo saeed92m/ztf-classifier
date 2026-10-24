@@ -245,7 +245,16 @@ documented as such in `docs/INSTALLATION.md` and performed by the matrix job.
 | Format | `ruff format --check src tests` | 234 files already formatted |
 | CLI entry point | `ztf-classifier --help` | usage printed, exit 0 |
 | Root cleanliness | `git status` after `git mv` | 4 renames, 0 deletions |
-| Cross-platform | CI job `Cross-platform (ubuntu-latest / macos-latest / windows-latest)` | see §6 |
+| Full suite on macOS arm64 (CI) | `Cross-platform (macos-latest)` | **666 passed, 14 skipped** |
+| Full suite on Windows x64 (CI) | `Cross-platform (windows-latest)` | **674 passed, 6 skipped** |
+| Full suite on Ubuntu (CI, portable path) | `Cross-platform (ubuntu-latest)` | **666 passed, 14 skipped** |
+| Whole pipeline | CI run [40105786612](https://github.com/saeed92m/ztf-classifier/actions/runs/40105786612) | **11 of 11 jobs successful** |
+
+The Windows count is higher because the eight `test_posix_only_module_list…`
+cases are skipped on POSIX by definition and run on Windows, where they assert
+that the guarded modules really are absent. The two environments differ by
+exactly that one expected skip, which is itself evidence that the platform
+guard is behaving as designed rather than being silently inert.
 
 The two environments matter independently. The locked environment is the one the
 four ubuntu CI jobs install and is the only place the pinned scientific stack is
