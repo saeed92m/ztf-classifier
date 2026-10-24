@@ -7,7 +7,7 @@ import html
 import json
 import math
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -211,7 +211,7 @@ def build_cpvs_discrepancy_report(
 
     summary: dict[str, Any] = {
         "report_schema": "cpvs-discrepancy-report/1.0",
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(UTC).isoformat(),
         "source_revision": source_revision,
         "source_files": {
             name: {
@@ -302,8 +302,8 @@ def build_cpvs_discrepancy_report(
     markdown = [
         "# CPVS candidate-only discrepancy report",
         "",
-        "**Scientific disposition: UNRESOLVED.** Candidate-only membership is not "
-        "astrophysical ground truth or evidence of a new discovery.",
+        ("**Scientific disposition: UNRESOLVED.** Candidate-only membership is not "
+         "astrophysical ground truth or evidence of a new discovery."),
         "",
         "## Counts",
         "",
