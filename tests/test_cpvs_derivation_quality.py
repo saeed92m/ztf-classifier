@@ -95,4 +95,4 @@ def test_read_vizier_accepts_commented_tsv_header(tmp_path: Path):
         encoding="utf-8",
     )
 
-    assert read_vizier(path) == {1, 730184}
+    assert read_vizier(path)["unique"] == {1, 730184}
