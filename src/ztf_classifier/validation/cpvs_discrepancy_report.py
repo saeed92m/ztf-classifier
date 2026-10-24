@@ -269,11 +269,16 @@ def build_cpvs_discrepancy_report(
     )
     table_rows = []
     for record in records:
-        cells = "".join(
-            f"<td>{html.escape(str(record.get(key, '')))}</td>"
-            for key in visible
-        )
-        table_rows.append(f"<tr>{cells}</tr>")
+        cells = []
+        for key in visible:
+            value = str(record.get(key, ""))
+            if key == "SourceID":
+                safe_id = html.escape(value, quote=True)
+                value = (
+                    f"<a href='cpvs_object_detail.html#{safe_id}'>{safe_id}</a>"
+                )
+            cells.append(f"<td>{html.escape(value)}</td>")
+        table_rows.append(f"<tr>{''.join(cells)}</tr>")
     html_path = out / "cpvs_candidate_only_objects.html"
     html_path.write_text(
         "<!doctype html><html lang='en'><meta charset='utf-8'>"
@@ -296,6 +301,44 @@ def build_cpvs_discrepancy_report(
         "f.addEventListener('input',()=>{const q=f.value.toLowerCase();"
         "for(const r of document.querySelectorAll('#records tbody tr'))"
         "r.hidden=!r.textContent.toLowerCase().includes(q);});</script></html>\n",
+        encoding="utf-8",
+    )
+
+    detail_data = json.dumps(records, ensure_ascii=False, allow_nan=False)
+    detail_data = (
+        detail_data.replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
+    )
+    detail_path = out / "cpvs_object_detail.html"
+    detail_path.write_text(
+        "<!doctype html><html lang='en'><meta charset='utf-8'>"
+        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+        "<title>CPVS object evidence detail</title>"
+        "<style>body{font:15px system-ui;margin:2rem}input{padding:.6rem;width:20rem}"
+        "dt{font-weight:700;margin-top:.6rem}dd{margin-left:0;overflow-wrap:anywhere}"
+        ".warning{padding:.8rem;border:1px solid #b66}</style>"
+        "<h1>CPVS object evidence detail</h1>"
+        "<p class='warning'>Membership difference is not a discovery claim. "
+        "Historical publisher selection semantics remain UNRESOLVED.</p>"
+        "<label for='object-id'>SourceID</label> "
+        "<input id='object-id' type='search' placeholder='Enter SourceID'> "
+        "<button id='show'>Show object</button><p id='status'></p><dl id='details'></dl>"
+        "<script>const records = "
+        + detail_data
+        + ";const field=document.getElementById('object-id');"
+        "const details=document.getElementById('details');"
+        "function show(){const id=field.value.trim();"
+        "const row=records.find(x=>String(x.SourceID)===id);details.replaceChildren();"
+        "if(!row){document.getElementById('status').textContent='No matching object in this report.';return;}"
+        "document.getElementById('status').textContent='Evidence fields for SourceID '+id;"
+        "for(const [key,value] of Object.entries(row)){const dt=document.createElement('dt');"
+        "dt.textContent=key;const dd=document.createElement('dd');"
+        "dd.textContent=value===null?'MISSING':String(value);details.append(dt,dd);}}"
+        "document.getElementById('show').addEventListener('click',show);"
+        "field.addEventListener('keydown',e=>{if(e.key==='Enter')show();});"
+        "if(location.hash){field.value=decodeURIComponent(location.hash.slice(1));show();}"
+        "</script></html>\n",
         encoding="utf-8",
     )
 
