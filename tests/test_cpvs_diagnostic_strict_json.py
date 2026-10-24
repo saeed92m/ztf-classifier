@@ -14,6 +14,7 @@ This test ensures:
 from __future__ import annotations
 
 import json
+import math
 
 from ztf_classifier.validation.json_utils import dumps_strict, sanitize_for_strict_json
 
@@ -141,10 +142,10 @@ def test_strict_json_preserves_finite_types():
 
 
 def test_strict_json_handles_numpy_scalars():
-    pytest = pytest_import()
     # numpy NaN/Inf should become null, finite becomes Python float/int
     try:
         import numpy as np
+        import pytest
 
         payload = {
             "np_nan": np.float64(float("nan")),
@@ -152,6 +153,9 @@ def test_strict_json_handles_numpy_scalars():
             "np_ninf": np.float64(float("-inf")),
             "np_finite": np.float64(1.5),
             "np_int": np.int64(42),
+            # NumPy booleans must serialize as JSON booleans, not null or numbers
+            "np_bool_true": np.bool_(True),
+            "np_bool_false": np.bool_(False),
         }
         text = dumps_strict(payload, sort_keys=True)
         assert "NaN" not in text
@@ -162,6 +166,8 @@ def test_strict_json_handles_numpy_scalars():
         assert parsed["np_ninf"] is None
         assert parsed["np_finite"] == 1.5
         assert parsed["np_int"] == 42
+        assert parsed["np_bool_true"] is True
+        assert parsed["np_bool_false"] is False
         json.dumps(parsed, allow_nan=False)
     except ImportError:
         pytest.skip("numpy not available")
@@ -226,12 +232,10 @@ def test_strict_json_distinguishes_missing_from_invalid_scientifically():
         if is_valid(
             {
                 "gmag": None
-                if isinstance(o["gmag"], float)
-                and not __import__("math").isfinite(o["gmag"])
+                if isinstance(o["gmag"], float) and not math.isfinite(o["gmag"])
                 else o["gmag"],
                 "Per_g": None
-                if isinstance(o["Per_g"], float)
-                and not __import__("math").isfinite(o["Per_g"])
+                if isinstance(o["Per_g"], float) and not math.isfinite(o["Per_g"])
                 else o["Per_g"],
             }
         )
@@ -314,20 +318,16 @@ def test_representative_cpvs_diagnostic_roundtrip_and_scientific_meaning():
         if passes_all_four(
             {
                 "gmag": None
-                if isinstance(o["gmag"], float)
-                and not __import__("math").isfinite(o["gmag"])
+                if isinstance(o["gmag"], float) and not math.isfinite(o["gmag"])
                 else o["gmag"],
                 "rmag": None
-                if isinstance(o["rmag"], float)
-                and not __import__("math").isfinite(o["rmag"])
+                if isinstance(o["rmag"], float) and not math.isfinite(o["rmag"])
                 else o["rmag"],
                 "Per_g": None
-                if isinstance(o["Per_g"], float)
-                and not __import__("math").isfinite(o["Per_g"])
+                if isinstance(o["Per_g"], float) and not math.isfinite(o["Per_g"])
                 else o["Per_g"],
                 "Per_r": None
-                if isinstance(o["Per_r"], float)
-                and not __import__("math").isfinite(o["Per_r"])
+                if isinstance(o["Per_r"], float) and not math.isfinite(o["Per_r"])
                 else o["Per_r"],
             }
         )
@@ -343,7 +343,180 @@ def test_representative_cpvs_diagnostic_roundtrip_and_scientific_meaning():
     assert parsed["partition"] == pre_payload["partition"]
 
 
-def pytest_import():
-    import pytest
+def test_strict_json_deeply_nested_mixed_types():
+    """Deeply nested structures with mixed types at every level."""
+    payload = {
+        "level1": {
+            "level2": {
+                "level3": {
+                    "finite_float": 3.14159,
+                    "nan_value": float("nan"),
+                    "inf_value": float("inf"),
+                    "neg_inf": float("-inf"),
+                    "int_val": 42,
+                    "bool_val": True,
+                    "str_val": "hello",
+                    "none_val": None,
+                    "array_mixed": [
+                        1,
+                        2.0,
+                        "x",
+                        False,
+                        None,
+                        float("nan"),
+                        {"nested_in_array": float("inf")},
+                    ],
+                    "object_mixed": {
+                        "a": 1,
+                        "b": float("nan"),
+                        "c": [1, 2, float("-inf")],
+                        "d": {"e": None, "f": True},
+                    },
+                },
+                "sibling": [1, 2, 3],
+            },
+            "sibling2": "text",
+        },
+        "top_array": [
+            {"deep": float("nan")},
+            {"deep": 1.5},
+            {"deep": None},
+        ],
+    }
+    text = dumps_strict(payload, sort_keys=True)
+    assert "NaN" not in text
+    assert "Infinity" not in text
+    assert "-Infinity" not in text
+    # Count expected nulls:
+    #   nan_value, inf_value, neg_inf, none_val = 4
+    #   array_mixed[4] (None), array_mixed[5] (nan), array_mixed[6].nested_in_array (inf) = 3
+    #   object_mixed.b (nan), object_mixed.c[2] (neg_inf), object_mixed.d.e (None) = 3
+    #   top_array[0].deep (nan), top_array[2].deep (None) = 2
+    # Total = 12
+    assert text.count("null") == 12
+    parsed = json.loads(text)
+    # Strict re-dump must succeed
+    json.dumps(parsed, allow_nan=False)
+    # Scientific meaning: all non-finite became null, finite values preserved
+    assert parsed["level1"]["level2"]["level3"]["finite_float"] == 3.14159
+    assert parsed["level1"]["level2"]["level3"]["nan_value"] is None
+    assert parsed["level1"]["level2"]["level3"]["inf_value"] is None
+    assert parsed["level1"]["level2"]["level3"]["neg_inf"] is None
+    assert parsed["level1"]["level2"]["level3"]["array_mixed"][5] is None
+    assert (
+        parsed["level1"]["level2"]["level3"]["array_mixed"][6]["nested_in_array"]
+        is None
+    )
+    assert parsed["level1"]["level2"]["level3"]["object_mixed"]["b"] is None
+    assert parsed["level1"]["level2"]["level3"]["object_mixed"]["c"][2] is None
 
-    return pytest
+
+def test_strict_json_missing_vs_invalid_downstream_consumer():
+    """Downstream consumer logic: null (missing) and invalid values both fail >0,
+    preserving counts. This is the exact pattern used by CPVS selection."""
+    payload = {
+        "objects": [
+            {"oid": "1", "gmag": float("nan"), "Per_g": float("nan")},  # missing both
+            {"oid": "2", "gmag": 0.0, "Per_g": 1.5},  # invalid gmag (0)
+            {"oid": "3", "gmag": 18.0, "Per_g": 0.0},  # invalid Per_g (0)
+            {"oid": "4", "gmag": float("inf"), "Per_g": 1.5},  # invalid gmag (Inf)
+            {"oid": "5", "gmag": 18.0, "Per_g": 1.5},  # valid
+            {"oid": "6", "gmag": None, "Per_g": 1.5},  # missing gmag (already null)
+        ]
+    }
+    # Pre-fix: NaN/Inf literals fail strict parsing
+    pre_text = json.dumps(payload)  # allow_nan=True default
+    assert "NaN" in pre_text
+    assert "Infinity" in pre_text
+    try:
+        json.dumps(payload, allow_nan=False)
+        assert False, "pre-fix payload should fail strict"
+    except ValueError:
+        pass
+
+    # Post-fix: nulls
+    post_text = dumps_strict(payload, sort_keys=True)
+    assert "NaN" not in post_text
+    assert "Infinity" not in post_text
+    # 2 NaN + 1 Inf + 1 already-null = 4 nulls (but None stays None, not re-counted as conversion)
+    # Actually: oid1 has 2 NaN -> 2 null, oid4 has 1 Inf -> 1 null, oid6 already None -> stays None
+    # JSON null count = 4
+    assert post_text.count("null") == 4
+
+    parsed = json.loads(post_text)
+    json.dumps(parsed, allow_nan=False)  # strict round-trip
+
+    # Downstream consumer: exactly the CPVS four-field >0 pattern
+    def passes_all_four(obj):
+        g = obj["gmag"]
+        p = obj["Per_g"]
+        return g is not None and p is not None and g > 0 and p > 0
+
+    # Pre-fix simulation: treat NaN/Inf as missing (not passing)
+    def passes_all_four_pre(obj):
+        g = obj["gmag"]
+        p = obj["Per_g"]
+        import math
+
+        g_ok = not (isinstance(g, float) and not math.isfinite(g))
+        p_ok = not (isinstance(p, float) and not math.isfinite(p))
+        return g_ok and p_ok and g is not None and p is not None and g > 0 and p > 0
+
+    pre_pass_count = sum(1 for o in payload["objects"] if passes_all_four_pre(o))
+    post_pass_count = sum(1 for o in parsed["objects"] if passes_all_four(o))
+    assert pre_pass_count == post_pass_count == 1  # only oid 5 passes
+
+    # Verify each object's pass/fail status is preserved
+    expected = {  # oid -> passes_all_four
+        "1": False,  # missing both (NaN)
+        "2": False,  # invalid gmag (0)
+        "3": False,  # invalid Per_g (0)
+        "4": False,  # invalid gmag (Inf)
+        "5": True,  # valid
+        "6": False,  # missing gmag (None)
+    }
+    for o in parsed["objects"]:
+        assert passes_all_four(o) == expected[o["oid"]], (
+            f"oid {o['oid']}: pass/fail status changed after serialization"
+        )
+
+
+def test_strict_json_preserves_scientific_distinction_null_vs_zero():
+    """Null (missing) must remain distinct from zero (invalid measured value)."""
+    payload = {
+        "measurements": [
+            {"oid": "1", "gmag": None},  # missing - no measurement
+            {"oid": "2", "gmag": 0.0},  # invalid - measured as zero
+            {"oid": "3", "gmag": float("nan")},  # missing - was NaN, now null
+            {"oid": "4", "gmag": 18.5},  # valid
+        ]
+    }
+    text = dumps_strict(payload, sort_keys=True)
+    assert "NaN" not in text
+    # 2 nulls: oid 1 (already None) + oid 3 (NaN converted)
+    assert text.count("null") == 2
+    parsed = json.loads(text)
+
+    # Downstream: distinguish missing from zero
+    def classify(obj):
+        g = obj["gmag"]
+        if g is None:
+            return "missing"
+        if g == 0.0:
+            return "zero_invalid"
+        if g > 0:
+            return "valid"
+        return "negative_invalid"
+
+    classifications = {o["oid"]: classify(o) for o in parsed["measurements"]}
+    assert classifications == {
+        "1": "missing",
+        "2": "zero_invalid",
+        "3": "missing",
+        "4": "valid",
+    }, f"classifications: {classifications}"
+
+    # Counts preserved: 1 valid, 1 zero_invalid, 2 missing (same as pre-fix NaN handling)
+    assert sum(1 for c in classifications.values() if c == "missing") == 2
+    assert sum(1 for c in classifications.values() if c == "valid") == 1
+    assert sum(1 for c in classifications.values() if c == "zero_invalid") == 1

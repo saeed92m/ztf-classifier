@@ -29,11 +29,12 @@ def sanitize_for_strict_json(payload: Any) -> Any:
     try:
         import numpy as np
 
+        if isinstance(payload, np.bool_):
+            return bool(payload)
         if isinstance(payload, np.floating):
             return None if not np.isfinite(payload) else float(payload)
         if isinstance(payload, np.integer):
             return int(payload)
-        # numpy bool is subclass of generic, but not needed
     except (ImportError, AttributeError, TypeError):
         pass
     if isinstance(payload, dict):
