@@ -104,6 +104,15 @@ def test_validation_runner_imports_when_resource_is_unavailable():
     assert "imported" in completed.stdout
 
 
+def test_failed_windows_memory_query_is_explicit_not_zero(monkeypatch):
+    from ztf_classifier.validation import runner
+
+    monkeypatch.setattr(runner.sys, "platform", "win32")
+    monkeypatch.setattr(runner, "_windows_peak_rss_mb", lambda: None)
+
+    assert runner._peak_rss_mb() is None
+
+
 def test_peak_rss_is_reported_as_a_positive_number():
     from ztf_classifier.validation.runner import _peak_rss_mb
 
