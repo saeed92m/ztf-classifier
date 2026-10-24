@@ -394,6 +394,8 @@ def build_cpvs_discrepancy_report(
         for name, path in (
             ("csv", csv_path),
             ("html", html_path),
+            ("object_detail_html", detail_path),
+            ("summary_json", out / "cpvs_discrepancy_summary.json"),
             ("markdown", md_path),
         )
     }
