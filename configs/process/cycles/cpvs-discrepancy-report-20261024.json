@@ -47,13 +47,15 @@
     "status": "NOT_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
-      "Initial PR CI Format Check passed",
-      "Initial lint failure was fixed using the exact Ruff findings; latest CI rerun is pending",
-      "CodeQL passed on the current implementation commit",
-      "Product Scope Audit passed on the current implementation commit",
-      "Scientific Validation contract job passed; source-backed scientific jobs were skipped and do not validate the CPVS science"
+      "Initial PR CI Format Check passed on an earlier head",
+      "Initial lint failure was fixed using the exact Ruff findings; current-head CI has not been verified",
+      "CodeQL passed on an earlier implementation commit; current-head result is not verified",
+      "Product Scope Audit passed on an earlier implementation commit; current-head result is not verified",
+      "Scientific Validation contract job passed on the current report branch, but source-backed scientific jobs were skipped and do not validate CPVS science",
+      "The report generator and CLI now require a recorded source revision and reject UNRECORDED",
+      "Regression tests now verify SHA-256 hashes for all five non-manifest deliverables; these tests have not yet been run on the current head"
     ],
-    "blocker": "Full CI test/build/audit completion and generation against the source-backed 11602-object evidence inputs remain pending"
+    "blocker": "Current-head CI/test/build/security audit is unverified; generation and audit against source-backed 11602-object evidence inputs remain pending"
   },
   "failure_analysis": {
     "status": "IN_PROGRESS",
@@ -72,7 +74,7 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Current-head unit tests and package build are not yet verified",
+      "Current-head unit tests and package build are not yet verified after source-revision and output-hash hardening",
       "The actual source-backed 11602-object report has not yet been generated and audited"
     ]
   },
