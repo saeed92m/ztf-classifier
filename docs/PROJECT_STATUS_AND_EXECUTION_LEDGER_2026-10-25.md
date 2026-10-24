@@ -107,3 +107,16 @@ The recorded diagnostic partition of candidate-only IDs is 11,580 failing at lea
 6. Define Company-Platform API integration after the independent product workflows are stable.
 
 No scientific blocker is considered resolved solely by this document.
+
+
+## Additional artifact inventory — 2026-10-25
+
+GitHub Actions exposes the source-backed diagnostic run [#38635891449](https://github.com/saeed92m/ztf-classifier/actions/runs/38635891449) (branch `ci/heavy/cpvs-parent-metadata-diagnostic-20261012`, commit `d9c6ac40a17cdce7e0b6a65d12e471a3a1dbb175`). Its artifact listing includes:
+
+- `scientific-validation-heavy`, artifact ID `11935357767`, reported size 34,104,786 bytes, GitHub-reported digest `sha256:346cd0a22d1490c9d3c5f6ff290ca2377e1c5458895c0c0d4b616b0708630c36`, expires 2027-01-12.
+- `frozen-reference-evidence-ztf_periodic_730k_published`, artifact ID `11929663226`, 439 bytes, digest `sha256:921a7b82881bf0b12827b4036699cf4fb19d56d2818988ccb6f1aa0540e9027c`.
+- `scientific-validation-external-source-evidence`, artifact ID `11929070312`, 18,998 bytes, digest `sha256:b89d3f3ea513ecfc5513fb06dc0723ebb4e5f7ee517239cf5f54bb64565aa359`.
+- `frozen-reference-evidence-alerce_reference_frozen_20200609`, artifact ID `11928138398`, 487 bytes, digest `sha256:cf69a4da28a20451016f42d555f42d9f3675ec95cd1500392163c384d4d70a6f`.
+- `scientific-validation-provenance`, artifact ID `11927184945`, 1,016 bytes, digest `sha256:248f14c9872085aceaa1ecb313c0c7e4e5d3be2dd6e8319b9aafecea09700d94`.
+
+These are artifact-service metadata, not a completed local content audit. The ZIP was fetched into the working file service, but the available execution environment returned errors when attempting to inspect/extract its bytes. Therefore its internal members, source file hashes, and the 11,602-row report have **not** been verified in this turn. Retrieve/materialize the artifact in a functioning local runtime, inspect its manifest and member list, validate archive integrity, and reproduce the report before relying on its contents. Do not let the artifact expire before preserving the necessary provenance evidence.
