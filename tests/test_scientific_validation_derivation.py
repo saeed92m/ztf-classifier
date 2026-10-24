@@ -78,7 +78,7 @@ def test_cpvs_table_parser_skips_metadata_before_sourceid_header(tmp_path: Path)
 
 
 def _fixed_width_cpvs_table2_row(name: str, seq: str | int) -> str:
-    return f"{name:<22} {seq!s:>6}\\n"
+    return f"{name:<22} {seq!s:>6}\n"
 
 
 def test_cpvs_table_source_ids_use_official_seq_field(tmp_path: Path):
@@ -86,9 +86,9 @@ def test_cpvs_table_source_ids_use_official_seq_field(tmp_path: Path):
 
     parent = tmp_path / "Table2.txt"
     parent.write_text(
-        "Table 2. ZTF Variables Catalog\\n"
+        "Table 2. ZTF Variables Catalog\n"
         + _fixed_width_cpvs_table2_row("ZTFJ000000.13+620605.8", 1)
-        + "page 1 footer\\n"
+        + "page 1 footer\n"
         + _fixed_width_cpvs_table2_row("ZTFJ000000.14+721413.7", 2),
         encoding="utf-8",
     )
@@ -156,7 +156,7 @@ def test_cpvs_table_source_ids_fail_closed_on_truncated_row(tmp_path: Path):
     from ztf_classifier.validation.derivation import _source_ids
 
     parent = tmp_path / "Table2.txt"
-    parent.write_text("ZTFJ000000.13+620605.8\\n", encoding="utf-8")
+    parent.write_text("ZTFJ000000.13+620605.8\n", encoding="utf-8")
 
     with pytest.raises(ValueError, match="truncated CPVS Table2 row"):
         _source_ids(parent, None)
