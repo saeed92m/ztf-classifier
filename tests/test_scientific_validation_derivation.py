@@ -78,7 +78,7 @@ def test_cpvs_table_parser_skips_metadata_before_sourceid_header(tmp_path: Path)
 
 
 def _fixed_width_cpvs_table2_row(name: str, seq: str | int) -> str:
-    return f"{name:<22} {str(seq):>6}\\n"
+    return f"{name:<22} {seq!s:>6}\\n"
 
 
 def test_cpvs_table_source_ids_use_official_seq_field(tmp_path: Path):
