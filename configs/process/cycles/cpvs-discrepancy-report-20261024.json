@@ -53,15 +53,17 @@
       "Product Scope Audit passed on an earlier implementation commit; current-head result is not verified",
       "Scientific Validation contract job passed on the current report branch, but source-backed scientific jobs were skipped and do not validate CPVS science",
       "The report generator and CLI now require a recorded source revision and reject UNRECORDED",
-      "Regression tests verify SHA-256 hashes for all five non-manifest deliverables; current CI exposed one test call that omitted the newly required source_revision argument, and the test was corrected to supply a recorded fixture revision"
+      "Regression tests verify SHA-256 hashes for all five non-manifest deliverables; current CI exposed one test call that omitted the newly required source_revision argument, and the test was corrected to supply a recorded fixture revision",
+      "Current-head CI run 40142835625 was inspected: Format Check and Lint passed, but Cumulative Lifecycle Gate failed before Test Suite/Dependency Audit/Runtime Smoke/Build because regression.status=IN_PROGRESS is outside the lifecycle contract's allowed values; downstream jobs were skipped."
     ],
-    "blocker": "Re-run current-head CI after correcting the required source_revision fixture argument; generation and audit against source-backed 11602-object evidence inputs remain pending"
+    "blocker": "Correct the lifecycle record to use an allowed regression status, then rerun current-head CI. Source-backed 11602-object report generation and audit remain pending."
   },
   "failure_analysis": {
     "status": "VERIFIED",
     "root_causes": [
       "First lint run identified UTC alias and implicit string-concatenation findings; these were corrected in a follow-up commit",
-      "Latest Test Suite run failed because test_required_diagnostic_fields_are_mandatory omitted source_revision after the report builder made it a required keyword-only argument; the fixture now supplies source_revision=test-sha so the test can reach the intended missing-fields validation path"
+      "Latest Test Suite run failed because test_required_diagnostic_fields_are_mandatory omitted source_revision after the report builder made it a required keyword-only argument; the fixture now supplies source_revision=test-sha so the test can reach the intended missing-fields validation path",
+      "Current-head CI run 40142835625 failed at Cumulative Lifecycle Gate because regression.status was IN_PROGRESS, which is not an allowed contract status; Test Suite, Dependency Audit, Runtime Smoke Tests, and package build were skipped."
     ]
   },
   "knowledge_extraction": {
@@ -73,9 +75,9 @@
     ]
   },
   "regression": {
-    "status": "IN_PROGRESS",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Re-run current-head unit tests and package build after correcting the required source_revision fixture argument",
+      "Correct the lifecycle record status enum failure and rerun current-head CI; the CI gate skipped the test suite and downstream checks",
       "The actual source-backed 11602-object report has not yet been generated and audited"
     ]
   },
