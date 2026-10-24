@@ -1,0 +1,38 @@
+# CPVS candidate-only discrepancy report
+
+This utility creates an object-level evidence table for candidate IDs absent from the supplied published Table 4 membership list. It is a reporting and triage capability, **not a fix to the CPVS historical selection-rule blocker**.
+
+## Inputs
+
+- \`--parent-metadata\`: TSV/CSV with a stable integer object ID (SourceID or Seq) and all four fields: gmag, rmag, Per-g, Per-r.
+- \`--candidate-ids\` and \`--published-ids\`: TSV/CSV files with an ID column.
+- \`--source-revision\`: code revision that produced the input files.
+
+Every candidate-only ID must join to exactly one parent metadata row. Duplicate IDs, missing required columns, malformed IDs, or missing parent provenance stop report generation.
+
+## Outputs
+
+- cpvs_candidate_only_objects.csv: all candidate-only IDs, original metadata columns, feature status/reasons, raw-light-curve and cross-match states.
+- cpvs_candidate_only_objects.html: local filterable object table.
+- cpvs_discrepancy_summary.json: counts and interpretation boundaries.
+- cpvs_discrepancy_report.md: human-readable summary.
+- cpvs_discrepancy_manifest.json: source and output SHA-256 hashes.
+
+Example:
+
+\`\`\`bash
+python scripts/build_cpvs_discrepancy_report.py \\
+  --parent-metadata /path/to/parent_metadata.tsv \\
+  --candidate-ids /path/to/candidate_ids.tsv \\
+  --published-ids /path/to/published_table4_ids.tsv \\
+  --source-revision "$(git rev-parse HEAD)" \\
+  --output-dir /path/to/cpvs-discrepancy-report
+\`\`\`
+
+## Scientific interpretation
+
+- Candidate-only means absent from the supplied published membership reference, not a new astrophysical discovery.
+- The four-field predicate is diagnostic only; it must not silently become the production selection rule.
+- Raw-light-curve and external-cross-match statuses default to NOT_ASSESSED unless explicitly supplied in input metadata.
+- The publisher's historical selection semantics remain UNRESOLVED until source evidence or author clarification establishes them.
+- Raw datasets must remain outside Git. Keep compact manifests/reports and workflow artifacts with hashes.
