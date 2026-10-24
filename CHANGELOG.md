@@ -28,6 +28,10 @@ All notable changes to the ZTF Classifier platform are documented here.
   dependency, the `dev` extra must declare an HTTP client, `fastapi.testclient`
   must import in the running environment, and every package that provenance
   records must be a declared runtime dependency.
+- `tests/test_platform_portability.py` — 2 tests plus a parametrized sanity check
+  guarding imports: no module in `src/` may import a POSIX-only standard-library
+  module at module scope, and `ztf_classifier.validation.runner` must import with
+  `resource` unavailable, which is how it behaves on Windows.
 
 ### Changed
 - `docs/INSTALLATION.md` rewritten. It previously instructed
@@ -84,6 +88,18 @@ All notable changes to the ZTF Classifier platform are documented here.
 ## [1.0.1] — 2026-10-07
 
 ### Fixed
+- **`ztf_classifier.validation.runner` was unimportable on Windows.**
+  It imported `resource`, a Unix-only standard-library module, at module scope,
+  so the declared Windows support was false for any code path touching the
+  validation runner. Peak memory is now obtained through a small portable
+  helper: `resource.getrusage` on Linux/macOS, and `GetProcessMemoryInfo`
+  (psapi, via `ctypes`) on Windows. Both report the same OS-level quantity, so
+  the `peak_rss_mb` figure in validation output keeps the same meaning, and it
+  stays 0.0 rather than fabricated if the OS call fails.
+- CI: the `Cross-platform` job's test step now re-emits pytest failures as
+  GitHub annotations. Without it a failing matrix job could only be diagnosed
+  through the runner's log storage, which is not always reachable from the
+  tooling that needs to read it.
 - Made the FastAPI and Uvicorn runtime dependencies part of the standard package installation because `ztf-classifier-api` is a published production entrypoint.
 - Kept optional `web` dependencies limited to presentation-only packages (`plotly` and `streamlit`).
 - Preserved the v0.2 scientific baseline and `baseline_v0.2` model identity; this is a packaging/productization patch, not a scientific-model change.

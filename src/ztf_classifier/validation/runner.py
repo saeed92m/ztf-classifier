@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import resource
 import sys
 import time
 from dataclasses import dataclass
@@ -61,6 +60,62 @@ class BenchmarkRunResult:
             "row_count": self.row_count,
             "output_path": self.output_path,
         }
+
+
+def _peak_rss_mb() -> float:
+    """Peak resident set size of this process, in MiB.
+
+    ``resource`` is a Unix-only standard-library module: importing it raises
+    ``ModuleNotFoundError`` on Windows, which made this module unimportable
+    there and therefore made the declared Windows support untrue. The Windows
+    equivalent is the process's ``PeakWorkingSetSize``, available from psapi
+    through ``ctypes`` (standard library, no new dependency).
+
+    Both figures describe the same OS-level quantity, so ``peak_rss_mb`` keeps
+    the same meaning on every supported platform and the reported metric stays
+    comparable. If the OS call fails the value is 0.0 rather than a fabricated
+    number.
+    """
+    if sys.platform == "win32":
+        return _windows_peak_rss_mb()
+
+    import resource
+
+    peak = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+    # getrusage reports KiB on Linux and bytes on macOS.
+    if sys.platform == "darwin":
+        peak /= 1024.0
+    return peak / 1024.0
+
+
+def _windows_peak_rss_mb() -> float:
+    """Peak working set of this process, in MiB, via psapi."""
+    import ctypes
+    from ctypes import wintypes
+
+    class ProcessMemoryCounters(ctypes.Structure):
+        _fields_ = [
+            ("cb", wintypes.DWORD),
+            ("PageFaultCount", wintypes.DWORD),
+            ("PeakWorkingSetSize", ctypes.c_size_t),
+            ("WorkingSetSize", ctypes.c_size_t),
+            ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+            ("PagefileUsage", ctypes.c_size_t),
+            ("PeakPagefileUsage", ctypes.c_size_t),
+        ]
+
+    counters = ProcessMemoryCounters()
+    counters.cb = ctypes.sizeof(counters)
+    process = ctypes.windll.kernel32.GetCurrentProcess()
+    succeeded = ctypes.windll.psapi.GetProcessMemoryInfo(
+        process, ctypes.byref(counters), counters.cb
+    )
+    if not succeeded:
+        return 0.0
+    return float(counters.PeakWorkingSetSize) / (1024.0 * 1024.0)
 
 
 def _read_table(path: Path) -> pd.DataFrame:
@@ -287,9 +342,7 @@ def run_table_benchmark(
         blockers.append("provenance")
     status = "PASS" if not blockers else "BLOCKED"
     elapsed = time.perf_counter() - started
-    peak_rss_mb = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) / 1024.0
-    if sys.platform == "darwin":
-        peak_rss_mb /= 1024.0
+    peak_rss_mb = _peak_rss_mb()
     metrics["performance"] = {
         "runtime_seconds": float(elapsed),
         "peak_rss_mb": peak_rss_mb,

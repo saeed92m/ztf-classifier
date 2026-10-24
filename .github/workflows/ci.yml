@@ -280,7 +280,29 @@ jobs:
           python -c "import platform, sys; print('os=', platform.system(), 'release=', platform.release(), 'machine=', platform.machine(), 'python=', sys.version)"
 
       - name: Run test suite on this platform
-        run: python -m pytest -q
+        # Output is captured and re-emitted as annotations. Logs of a failed
+        # matrix job are otherwise only reachable through the runner's blob
+        # storage, which is not always reachable from the tooling that needs to
+        # read them; annotations are served by the API and appear on the check.
+        shell: bash
+        run: |
+          status=0
+          python -m pytest -q --tb=line -rf > pytest-output.log 2>&1 || status=$?
+          python - <<'PY' || true
+          import pathlib
+
+          text = pathlib.Path("pytest-output.log").read_text(
+              encoding="utf-8", errors="replace"
+          )
+          lines = text.splitlines()
+          print("\n".join(lines[-40:]))
+          signals = [line for line in lines if line.startswith(("FAILED ", "ERROR "))]
+          if not signals:
+              signals = [line for line in lines if line.strip()][-10:]
+          for line in signals[:10]:
+              print(f"::error::{line.strip()}")
+          PY
+          exit $status
 
       - name: Smoke test CLI entry point
         run: ztf-classifier --help

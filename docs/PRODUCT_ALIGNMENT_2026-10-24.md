@@ -153,6 +153,34 @@ on Windows **before a single test ran**. The matrix now requests the minor
 version `"3.11"`, which resolves to the newest available 3.11.x per platform and
 is also the honest test of the declared floor `requires-python = ">=3.11,<3.12"`.
 
+### 2.6 A POSIX-only import made the Windows claim false — **fixed**
+
+Running the suite on macOS and Windows produced a second class of defect, one
+that no Linux job could ever have found:
+`src/ztf_classifier/validation/runner.py` imported `resource` at module scope.
+`resource` is a Unix-only standard-library module, so the module could not be
+imported on Windows at all, which makes the declared Windows support false for
+every code path that touches the validation runner.
+
+Peak memory is now reported through a small portable helper: `resource.getrusage`
+on Linux and macOS (KiB and bytes respectively, as before), and
+`GetProcessMemoryInfo` from psapi via `ctypes` on Windows — standard library, no
+new dependency. Both describe the same OS-level quantity, so `peak_rss_mb` keeps
+the same meaning; if the OS call fails the value is `0.0` rather than a
+fabricated number, because that figure is reported in validation output.
+
+`tests/test_platform_portability.py` now enforces the rule at the cheapest
+possible level: no module in `src/` may import one of
+`fcntl`, `grp`, `pty`, `pwd`, `resource`, `syslog`, `termios`, `tty` at module
+scope, and the runner must import with `resource` unavailable.
+
+**Diagnosability.** Logs from a failed matrix job are served from the runner's
+blob storage, which was not reachable from the tooling performing this audit.
+The `Cross-platform` test step now captures pytest output and re-emits every
+`FAILED`/`ERROR` line as a GitHub annotation, which is served by the API and
+shown on the check. A platform failure is therefore legible to whoever is
+reviewing it, not only to whoever can reach the log bucket.
+
 ---
 
 ## 3. Sources examined with **no change made** (and why)
@@ -174,10 +202,11 @@ is also the honest test of the declared floor `requires-python = ">=3.11,<3.12"`
 |---|---|---|
 | Documentation authority suite | `pytest tests/test_documentation_authority.py` | 12 passed |
 | Dependency declaration guards | `pytest tests/test_dependency_declarations.py` | 4 passed |
-| Full suite, locked environment | `python -m pytest tests/ -q` | **664 passed, 5 skipped** |
-| Full suite, portable environment (`pip install -e ".[dev]"` in a clean venv) | `python -m pytest -q` | **664 passed, 5 skipped** |
+| Platform import guards | `pytest tests/test_platform_portability.py` | 3 passed, 8 skipped |
+| Full suite, locked environment | `python -m pytest tests/ -q` | **667 passed, 13 skipped** |
+| Full suite, portable environment (`pip install -e ".[dev]"` in a clean venv) | `python -m pytest -q` | **667 passed, 13 skipped** |
 | Lint | `ruff check src tests` | All checks passed |
-| Format | `ruff format --check src tests` | 233 files already formatted |
+| Format | `ruff format --check src tests` | 234 files already formatted |
 | CLI entry point | `ztf-classifier --help` | usage printed, exit 0 |
 | Root cleanliness | `git status` after `git mv` | 4 renames, 0 deletions |
 | Cross-platform | CI job `Cross-platform (ubuntu-latest / macos-latest / windows-latest)` | see §6 |

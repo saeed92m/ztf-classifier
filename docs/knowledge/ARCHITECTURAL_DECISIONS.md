@@ -76,3 +76,26 @@ guard: it fails if the packaged metadata and the tagged release diverge, which i
 a defect worth failing on. Third-party versions are compared with the installed
 distribution metadata instead, because a literal there can only ever describe one
 machine.
+
+### AD-ALIGN-009 — A declared platform is a claim about imports, not about CI
+
+**Date:** 2026-10-24
+**Status:** Accepted
+**Consequences:** `tests/test_platform_portability.py` fails the build if a
+module-scope import of a POSIX-only standard-library module appears in `src/`.
+
+`ztf_classifier.validation.runner` imported `resource` at module scope. Every
+Linux job was green, the Linux install worked, and nothing in the documentation
+was wrong: the code simply could not be imported on Windows. Declaring an
+Operating System classifier does not test the declaration; running an import on
+that platform does, and it is far cheaper than running a full suite there.
+
+**Decision.** Platform-specific standard-library modules may be imported only
+inside the function that needs them or behind `try/except ImportError`. Where a
+platform needs a genuinely different implementation, implement it and document
+why the two are comparable — for peak memory, `resource.getrusage` and
+`GetProcessMemoryInfo` both report the process peak working set, so one metric
+name is honest across platforms.
+
+**Related:** AD-ALIGN-001 (claims require per-OS CI) and AD-ALIGN-007 (a green
+lockfile job is not evidence that the product installs).
