@@ -435,3 +435,12 @@ The latest verified project state and acceptance criteria are maintained in [the
 - Windows, Ubuntu, macOS packaging and a user-ready GUI require clean-machine/end-to-end evidence; existing API/Workbench code is not by itself proof of a finished cross-platform desktop product.
 - Company-Platform integration remains optional and must not become a hard dependency.
 - A successful CI workflow is not a scientific validation result when the scientific jobs were skipped. Preserve the immutable v0.2.0 baseline and keep unresolved blockers visible.
+
+
+## User-supplied data and privacy boundary
+
+The standard application distribution is not intended to bundle or deliver a large astronomical archive. Users select and supply the data they want to analyze. The product roadmap prioritizes documented input formats, schema/quality validation, actionable errors, preservation of source identifiers and provenance/hashes, and local processing by default. Data should not be uploaded or disclosed without explicit user authorization. Small synthetic or appropriately licensed fixtures may be used for development and CI but remain separate from the normal installer.
+
+**Current interface limitation:** the production inference CLI currently accepts feature-level Parquet inputs. Do not assume that arbitrary raw CSV, FITS, AVRO, or other light-curve formats are already supported; ingestion adapters and their schema contracts are added and validated incrementally.
+
+The 100-object task in [Issue #222](https://github.com/saeed92m/ztf-classifier/issues/222) is a fixed-seed operational behavior test on randomly selected object-level inputs. It is not an independent scientific benchmark or an accuracy claim.
