@@ -297,37 +297,54 @@ def _snr_from_mag_error(value: str) -> float:
 
 
 def _source_ids_from_catalog(parent_path: Path, member: str | None) -> set[str]:
-    """Resolve CPVS SourceIDs from the published Table2 catalog row order.
+    """Read authoritative Table2 Seq IDs and fail closed on ordinal disagreement.
 
-    The published table uses ZTF object names as the row identifiers in its
-    catalog presentation; the benchmark SourceID is the one-based ordinal of
-    catalog rows. Metadata, page furniture, and repeated headers are ignored.
+    CDS ReadMe J/ApJS/249/18 defines the Table2 internal source identifier
+    (Seq) at bytes 24-29. The attached ztf2g/ztf2r records use this identifier;
+    deriving IDs from the number of rows silently corrupts joins if Seq has a
+    gap or a catalog row is skipped.
     """
     owner, raw = _open_text(parent_path, member)
     try:
         source_ids: set[str] = set()
         ordinal = 0
-        for encoded in raw:
-            line = encoded.decode("utf-8", errors="replace").strip()
-            if not line:
+        for line_number, encoded in enumerate(raw, start=1):
+            line = encoded.decode("utf-8", errors="strict").rstrip("\r\n")
+            if not line.strip():
                 continue
-            first_token = line.split()[0]
-            if not first_token.upper().startswith("ZTF"):
+            # Table2 ID occupies bytes 1-22; ignore metadata and page furniture.
+            if not line[:22].strip().upper().startswith("ZTF"):
                 continue
-            fields = _split_fields(line)
-            if len(fields) < 2:
-                continue
-            # A valid catalog row starts with a ZTF identifier and has at
-            # least one following field. Do not interpret the next field as
-            # SourceID: in Table2 it is a numeric catalog attribute (e.g. RA).
+            if len(line) < 29:
+                raise ValueError(
+                    f"{parent_path}:{line_number}: truncated CPVS Table2 row "
+                    f"({len(line)} characters; need at least 29 for Seq)"
+                )
+            seq_text = line[23:29].strip()
+            if not seq_text or not seq_text.isascii() or not seq_text.isdecimal():
+                raise ValueError(
+                    f"{parent_path}:{line_number}: invalid CPVS Table2 Seq "
+                    f"field at bytes 24-29: {seq_text!r}"
+                )
+            seq = int(seq_text)
             ordinal += 1
-            source_ids.add(str(ordinal))
+            if seq != ordinal:
+                raise ValueError(
+                    f"{parent_path}:{line_number}: CPVS Table2 Seq/ordinal "
+                    f"mismatch: Seq={seq}, catalog_row_ordinal={ordinal}; "
+                    "refusing to construct potentially misaligned SourceIDs"
+                )
+            source_id = str(seq)
+            if source_id in source_ids:
+                raise ValueError(
+                    f"{parent_path}:{line_number}: duplicate CPVS Table2 Seq={seq}"
+                )
+            source_ids.add(source_id)
         return source_ids
     finally:
         raw.close()
         if owner is not None:
             owner.close()
-
 
 def _source_ids(parent_path: Path, member: str | None) -> set[str]:
     """Resolve IDs for either published CPVS Table2 or generic test/artifact tables."""
