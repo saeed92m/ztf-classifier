@@ -13,7 +13,8 @@ Every candidate-only ID must join to exactly one parent metadata row. Duplicate 
 ## Outputs
 
 - cpvs_candidate_only_objects.csv: all candidate-only IDs, original metadata columns, feature status/reasons, raw-light-curve and cross-match states.
-- cpvs_candidate_only_objects.html: local filterable object table.
+- cpvs_candidate_only_objects.html: local filterable object table with links by SourceID.
+- cpvs_object_detail.html: per-object evidence view; open with a SourceID fragment from the table or enter an ID.
 - cpvs_discrepancy_summary.json: counts and interpretation boundaries.
 - cpvs_discrepancy_report.md: human-readable summary.
 - cpvs_discrepancy_manifest.json: source and output SHA-256 hashes.
