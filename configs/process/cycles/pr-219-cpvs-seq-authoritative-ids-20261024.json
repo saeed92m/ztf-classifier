@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-219-cpvs-seq-authoritative-ids-20261024",
+  "objective": "Replace synthesized CPVS identifiers with authoritative Table 2 Seq values while preserving fail-closed behavior and the unresolved scientific membership blocker.",
+  "previous_knowledge_consumed": [
+    "PR-170",
+    "PR-179",
+    "PR-201",
+    "CPVS-source-provenance-audit",
+    "cumulative-lifecycle-gate"
+  ],
+  "baseline": {
+    "revision": "bfba995ea3251d3370a0ab124a71864b4b73b327",
+    "status": "CI Format Check and Lint pass, but Cumulative Lifecycle Gate fails because this meaningful PR lacks its required machine-readable cycle record. Historical CPVS comparison remains 741786 candidates versus 730184 published IDs, 11602 candidate-only, 0 published-only."
+  },
+  "expected_improvement": [
+    "identifier provenance correctness",
+    "reproducibility",
+    "failure transparency",
+    "scientific auditability"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "SourceID may be synthesized from row ordinal in the derivation path",
+        "after": "Read explicit fixed-width Seq and reject malformed, truncated, duplicate, or ordinal-mismatched identifiers"
+      },
+      "reproducibility": {
+        "before": "Identifier provenance can depend on parser row counting",
+        "after": "Identifier field and fail-closed assumptions are explicit and covered by regression fixtures"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      },
+      "reliability": {
+        "before": "Potential silent identifier misalignment",
+        "after": "Invalid or unexpected identifier layouts surface as explicit failures"
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "blocker": "Full source-backed validation of the official Table 2 artifact is still required to verify row count, actual Seq range, gaps, duplicates, and correspondence with the published membership table.",
+    "evidence": [
+      "Synthetic fixed-width parser tests are present in the PR branch.",
+      "Latest observed CI run 40122887888: Format Check and Lint passed; Cumulative Lifecycle Gate failed before the test suite; source-backed heavy jobs are not established by ordinary PR checks."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "The CI lifecycle gate rejected the meaningful PR because no matching JSON cycle record was included under configs/process/cycles/.",
+      "The scientific identifier-provenance risk remains a hypothesis until official source rows are checked; this record does not claim a root cause for the 11602-object membership discrepancy."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Every meaningful PR must include a schema-valid lifecycle record.",
+      "Official object identifiers must be read from the source's explicit identifier field; row ordinals are not a safe substitute when gaps or skipped rows are possible.",
+      "Passing parser unit tests does not establish exact CPVS membership reconstruction."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Rerun CI after adding this lifecycle record and inspect every required job.",
+      "Run source-backed validation against the official full Table 2 artifact.",
+      "Keep Issue #170 open until the 11602 candidate-only discrepancy has a reproducible, source-supported explanation."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "CPVS membership discrepancy remains unresolved",
+    "fail-closed scientific validation",
+    "official-source identifier provenance",
+    "frozen v0.2.0 baseline remains unchanged"
+  ]
+}
