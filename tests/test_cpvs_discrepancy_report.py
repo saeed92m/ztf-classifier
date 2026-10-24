@@ -125,6 +125,7 @@ def test_required_diagnostic_fields_are_mandatory(tmp_path: Path):
             candidate_ids=candidates,
             published_ids=published,
             output_dir=tmp_path / "out",
+            source_revision="test-sha",
         )
 
 
