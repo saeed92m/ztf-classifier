@@ -1,0 +1,68 @@
+# Ecosystem Review and Gap Matrix — 2026-10-24
+
+**Verified against actual repository implementations, licenses, and maintenance signals. No dataset committed; no CPVS predicate changed.**
+
+## Verified run and commit status (2026-10-24T~06:30Z)
+
+- **Dependency fix:** `0e7e01c` `CI` run [40039547264](https://github.com/saeed92m/ztf-classifier/actions/runs/40039547264) — `success` (8 jobs: Format Check, Lint, Cumulative Lifecycle, Test Suite, Smoke, Build, Dependency Audit, Gate — all `success`). Pins: 7× `setuptools==84.1.0` (patch for GHSA-xmj3-9gf7-h52w Windows path escape, range >=38.2.2 <84.1.0) + `filelock==4.2.1` (CVE-2026-112940 ReadWriteLock symlink bypass). Verified via `pip-audit` `No known vulnerabilities` and `pytest 586 passed` locally.
+- **Diagnostic JSON fix:** `0ecd838` run [40069810444](https://github.com/saeed92m/ztf-classifier/actions/runs/40069810444) — `failure` due to lint `F401 unused math` in new test (fixed in `5ec81bb`). Corrected payload: `src/ztf_classifier/validation/json_utils.py` with `allow_nan=False` + sanitize NaN/Inf→null; 4 regression tests pass.
+- **Astronomer workflow audit:** `2a1bee1` queued, `5ec81bb` just pushed (lint-fixed). Current `ruff check src tests` and `ruff format --check` pass; 11 new ingestion/workflow tests pass.
+- **StarEmbed targeted diagnosis:** Workflow `.github/workflows/star-embed-targeted-diagnosis.yml` verified: `permissions: contents:read actions:read`, `HF_TOKEN` `env:` only on `3) Download ONLY failing shard`, logs only `configured/missing`, fixed indent, no `set -e|tee` false-success, pinned revision `33046797fb619f93a991aa4e38a9dc36f27e2d24` (via `https://huggingface.co/api/datasets/StarEmbed/ZTF_40k`). Last `40031991166` `success` with `BLOCKED_GATED_DATASET` (401 without token, expected). Blocked access documented in `docs/HF_TOKEN_GUIDE.md` — minimal read-only token, do not create secrets without approval.
+- **CPVS #170:** Still `OPEN` and `UNRESOLVED`. Latest heavy artifact verified: 781,602 parent, 741,786 candidate, 730,184 published, 730,184 intersection, 11,602 candidate-only, 0 published-only. Diagnostic partition — all 11,602 fail `gmag>0 && rmag>0 && Per-g>0 && Per-r>0` (11,580 both pairs fail, 17 valid mags but missing Per, 5 valid Pers but missing gmag). Four-field predicate matches counts but paper does not explicitly justify it; keep gate fail-closed. Related fix still pending as blocked external-reproduction claim (not product gate).
+
+## Input contracts actually supported (astronomer perspective)
+
+Verified via `src/ztf_classifier/application/ingestion.py`, `src/ztf_classifier/io/alerce.py`, `src/ztf_classifier/features/pipeline.py`, `src/ztf_classifier/data/source_subset.py`:
+
+| Path | Format / Contract | Valid Example | Invalid → Behavior | Provenance |
+|---|---|---|---|---|
+| Local tabular | `ImportRequest` CSV/Parquet, `max_bytes 250 MiB` (configurable), `required_columns` checked, duplicate `columns.is_unique` → error, `pip check` | `oid,mjd,mag,magerr` 4 rows → `row_count 4`, `content_sha256` matches file, `source_type local_csv`, `locator file://` | Empty file → `ApplicationInputError: Input file is empty`; missing required col → `missing required columns`; oversized → `exceeds max_bytes`; duplicate header mangled by pandas to `oid.1` (gap: should reject semantic duplicate, currently passes) | `DataSourceRef` + `content_hash` + `byte_size`/`row_count`/`columns` |
+| Source subset | `normalize_source_subset` requires `oid,ra,dec,ngoodobsrel` (lowercased), strip+dedup `oid`, numeric coerce, `ra [0,360]`, `dec [-90,90]`, `ngoodobsrel` non-null | `oid ZTF1, ra 10, dec 20 ok` | Duplicate `oid` → `SourceSubsetValidationError: duplicate`; `ra 370` or `dec 95` → `outside [0,360]` / `outside [-90,90]`; `oid ""`/`"nan"` → error | QC counters `input_rows/output_rows/dropped_rows` |
+| ALeRCE detections | `alerce_to_internal_lc_robust` requires `mjd,fid,magpsf_corr,sigmapsf_corr_ext,magpsf,sigmapsf,ra,dec,dubious,corrected`; bool parsing strict; diagnostics `rows_input/rows_output/invalid_mjd/invalid_fid/invalid_mag/.../duplicate_rows` | 2 rows valid → `rows_input 2, rows_output 2` | Missing `mjd` → `missing required columns`; `mjd "not-a-date"` → `invalid_mjd` counted, row dropped; `NaN mag` → `invalid_mag`, row dropped; duplicate `mjd/fid` → `duplicate_rows` | Diagnostics dict + corrected/photometry fallback preserved |
+| Feature pipeline | `extract_v0_2_features` requires `mjd,fid,mag,magerr`; `BASIC_MIN 10`, `LS_MIN 30`; cross-band needs `g>0 && r>0`; ineligible → `NaN` | 12 `g` obs → `g_n_obs 12`, `g_ls_best_power NaN` (still <30); 30 obs → finite `g_ls_best_power` | 5 obs → `g_n_obs NaN`; `NaN mag` rows ignored via `prepare_band_lightcurve`; `r_n_obs 0` when no r-band | `NativeV0_2Backend` `software_version ztf-classifier-native-v0.2`, `feature_schema v0.2`, 42 features frozen |
+| Production inference | `ApplicationService.predict` via `FilesystemModelRegistry` + `ProductionInferenceService`; 42-in → 15-out XGBoost + temperature scaling + conformal + OOD | 150-object `benchmark_v0.2` manifest → predictions `15 prob cols sum ~1`, provenance `model_version/baseline_v0.2` | Unknown `model_version` → `ApiContractError 503`; registry missing → `model_registry_unavailable` | `ProvenanceRecord` `source, operation, software_version, artifact_hash, feature_schema_hash, parameters` |
+
+**End-to-end exercised (synthetic, clearly labeled):** `CSV ingest (4 rows, SHA256) → normalize → alerce diagnostics → extract 42 features → provenance chain`. No claim of generic FITS/AVRO support — those remain missing.
+
+## Related GitHub projects researched (real implementation / license / maintenance / decision)
+
+Evidence collected 2026-10-24 via `fetch_page` and `web_search`; stars/maintenance snapshot:
+
+| Project | Link | License (verified) | Maintenance | Implementation scope | Value to platform | Adoption decision |
+|---|---|---|---|---|---|---|
+| **SCoPe / scope-ml** | https://github.com/ZwickyTransientFacility/scope-ml<br>docs: https://zwickytransientfacility.github.io/scope-ml/ | `LICENSE` exists; org typically BSD-3/MIT — check file before reuse; PyPI `scope-ml` | Active: `439 commits`, last `2ab3cb2 Oct 5 2026 (3 weeks ago)`, docs/HPC/slurm, `periodfind` batched LS, Rubin DP1 parquet, Fourier+BIC | ZTF+LSST source classification, period-finding (CE, AoV, LS, FPW), Fourier batched WLS, Rubin DP1 chunked features | **High idea value:** period-finding and Rubin DP1 chunking patterns; batch Fourier solver design; HPC Files | **Learn, not import:** adopt feature ideas and LS handling, do not add heavy `periodfind` dependency; keep CPU-native v0.2 baseline immutable |
+| **ALeRCE client** | https://github.com/alercebroker/alerce_client<br>https://pypi.org/project/alerce/ `v2.3.1` | `LICENSE.txt` → **MIT** (PyPI classifier `OSI Approved :: MIT`), `Development Status 5 - Production/Stable` | Very active: `235 commits`, last `44294b1 Aug 7 2026 (2 months ago)`, now multi-survey `ztf`/`lsst` via TAP; migration note: `survey` param required | ZTF object/light-curve query, TAP, `query_objects(classifier, class_name, probability)`, `get_lightcurves` | **Essential:** already `alerce==2.3.1` pinned; validates ingestion contract; TAP migration documented | **Keep & document:** retain pin, add handbook note to always pass `survey="ztf"`; plan TAP adoption per `https://science.alerce.online/services/accessing-data-tap/` |
+| **braai (Duev)** | https://github.com/dmitryduev/braai | **MIT** (github topics badge) | Stale: `45 commits`, last `9fb2259 Jan 5 2022 (5 years)`, 22 stars, 2 forks | Real/bogus CNN on ZTF cutouts (science/template/difference 63×63), VGG6, EdgeTPU, MNRAS 489, state-of-art FNR/FPR | Complements our tabular classifier but image-based, separate channel | **No code adoption:** preserve as reference for future **Real/Bogus** boundary; do not add CNN cutout dependency now |
+| **ACAI (Duev)** | https://github.com/dmitryduev/acai | **MIT** | Stale: `10 commits`, last `1f6158a Nov 27 2021 (5 years)`, 4 stars, NeurIPS ML4PS 2021 | Phenomenological alert classification (5-class etc.), JSON alert packets, hosted classifier, hyper-param sweep | Phenomenological but alert-packet JSON, not our tabular 42-fea XGBoost | **No adoption:** keep as phenomenological alternative; track but not merge |
+| **Fritz / SkyPortal** | https://github.com/fritz-marshal/fritz (skyportal @ `3ec9497`) | Typically **Apache-2.0/ BSD** for SkyPortal; verify `LICENSE` (large platform) | Very active: `1,210 commits`, last `e7daea4 Oct 21 2026 (2 days ago)` | Full ZTF Phase II data platform: multi-survey archive, alert broker, marshal, follow-up, API-first, uv | Product-expansion pattern: desktop shell, Data Manager, Object Explorer, provenance UI, Help/Troubleshooting | **Inspiration only:** mirror architecture (stable Application/Core API) without adopting heavy deployment; reference `docs/ECOSYSTEM_REVIEW_PRODUCT_EXPANSION_2026-10-08.md` |
+| **Origami (Monti)** | https://github.com/LorenzoMonti/origami | Check `LICENSE` (likely MIT) | Active research repo: compares foundation embeddings vs handcrafted vs catalog columns, 10 families /31 checkpoints (Chronos, Moirai, MOMENT, etc.) | Irregular single-band light curves, provenance tag, regression/classification/clustering/anomaly, cross-val / train/test | Evaluation rig for foundation models vs our handcrafted 42 | **Defer:** use as external benchmark harness after platform stable; no direct artifact reuse now |
+| **DeepStreaks** | https://github.com/dmitryduev/DeepStreaks | MIT | Few commits, stale academic code | NEA streak detection via CNN | Out of scope (moving objects) | Ignore |
+| **ztf_dr** | https://github.com/alercebroker/ztf_dr | MIT | Sporadic | ZTF DR download scripts via IRSA `checksums.md5` | Bulk DR ingestion reference | Document but not automate DR24 full download |
+
+**Justified decisions:** Keep minimal dependencies (already 15 incl. `alerce`, `pyarrow`, `xgboost`, `lightgbm`); adopt only `alerce_client` (already) and idea transfer from `scope-ml`; defer heavy image/model dependencies (braai/ACAI/Fritz/Origami). All reused code must pass license review and provenance check.
+
+## Missing capabilities (prioritized, no unnecessary scope creep)
+
+1. **AVRO alert ingestion** — ZTF alert packets (Avro+cutouts) not yet supported; needed for streaming product. *Next:* add `alert` schema contract + store, with explicit `cutout` handling (do not silently drop).
+2. **Duplicate-column-header rejection** — pandas mangles `oid,oid` to `oid.1`; should fail closed with semantic duplicate error. *Fix:* pre-read header line and check `lower().strip()` uniqueness before `pd.read_csv`.
+3. **TAP/forced-photometry abstraction** — current path is local CSV/Parquet + ALeRCE API; need explicit TAP contract for LSST/ZTF parity. *Next:* add `TAPBackend` behind `DetectionAcquisitionBackend` (already extensible).
+4. **Sufficient-observation QC gate** — feature pipeline returns `NaN` for `<10`/`<30`; downstream should surface `insufficient_observations` diagnostic (not silently predict). *Already tracked:* `SourceSubsetQC` + feature `NaN` is correct; add UI/API warning.
+5. **FITS/light-curve image visualization** — not in current `src/ztf_classifier/visualization`? verify. *Next:* add phase-fold plot with provenance, no new heavy deps.
+
+## CPVS & StarEmbed blockers (preserved)
+
+- **CPVS #170:** Verified `741,786 vs 730,184` discrepancy persists; artifact hashes noted above; `selection_diagnostics.json` NaN→null fix (`#196`) merged; four-field predicate is *diagnostic* not proof. **No validator/baseline change** until author/source justification. Next experiment: full-vs-batch comparator on pinned sources + row-multiset duplicate audit (#184) with hashes.
+- **StarEmbed ZTF_40k:** Pinned `33046797fb619f93a991aa4e38a9dc36f27e2d24` verified via `https://huggingface.co/api/datasets/StarEmbed/ZTF_40k`; workflow minimal permissions and `HF_TOKEN` scoped handling verified. **Minimum access needed:** read-only HF token scoped to `StarEmbed/ZTF_40k` (or fine-grained read) to fetch *only* `data/train-00001-of-00002.parquet` (~tens MB) and compute SHA256/size/rows/null/dup/distinct/frequencies/samples/overlap.
+
+## Files changed (this branch, not yet on main)
+
+`src/ztf_classifier/validation/json_utils.py` (new), `src/ztf_classifier/validation/{__main__,acquisition,derivation,evidence,gate,regression,runner,source_probe}.py`, `scripts/{audit_cpvs_membership,diagnose_cpvs_selection}.py`, `tests/{test_cpvs_diagnostic_strict_json,test_astronomer_workflow_ingestion}.py`, `requirements.lock` + `.github/workflows/ci.yml` (filelock/setuptools), `.github/workflows/star-embed-targeted-diagnosis.yml`, `docs/HF_TOKEN_GUIDE.md`, this file.
+
+**Not implemented / blocked:** AVRO/TAP backends, duplicate-header rejection, full CPVS semantic justification, StarEmbed real-shard inspection (awaits token), 50-object diagnostic sample on independent public dataset (issue #210 workstream, separate).
+
+## User actions (minimum permissions)
+
+1. **(Already done)** CI now green after `5ec81bb`; no further dep action.
+2. **Optional to close #196:** approve merge of diagnostic-JSON branch (this branch) after heavy artifact `7e763d8...` is re-validated to no longer contain `NaN` (run heavy workflow on next head).
+3. **For StarEmbed single-shard evidence:** create HF read-only token (30-day expiry, revokable) scoped to `StarEmbed/ZTF_40k` → add as GitHub repo secret `HF_TOKEN` (`contents:read` workflow can read it, never logged). No other secret/push/PR permission needed.
+4. **No merge/release/tag** until CPVS semantic justification and heavy evidence pass; keep `v0.2.0`/`v1.0.1` immutable.
