@@ -23,27 +23,27 @@
   ],
   "measurement": {
     "metrics": {
-      "source_reproducibility": {
+      "reproducibility": {
         "before": null,
         "after": null,
         "status": "NOT_MEASURED"
       },
-      "identifier_integrity": {
+      "correctness": {
         "before": null,
         "after": null,
         "status": "NOT_MEASURED"
       },
-      "false_inclusion_exclusion": {
+      "scientific_validity": {
         "before": null,
         "after": null,
         "status": "NOT_MEASURED"
       },
-      "independent_input_generalization": {
+      "robustness": {
         "before": null,
         "after": null,
         "status": "NOT_MEASURED"
       },
-      "provenance_completeness": {
+      "reliability": {
         "before": null,
         "after": null,
         "status": "NOT_MEASURED"
@@ -60,9 +60,10 @@
       "No source-backed experiment has been executed; no scientific result is claimed",
       "Downloaded retained source-backed GitHub Actions artifact run 38635891449, artifact 11935357767, and generated a local discrepancy-report bundle from its candidate_only_all_objects list.",
       "Report audit verified 11602 unique candidate-only IDs, 11602 parent-metadata joins, 0 missing parent rows, strict JSON parsing, and ZIP integrity; bundle SHA-256 9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc.",
-      "The report reuses the previously audited candidate-only list; raw published Table 4 was absent from the retained artifact, so the report did not independently rerun the Table 4 membership join."
+      "The report reuses the previously audited candidate-only list; raw published Table 4 was absent from the retained artifact, so the report did not independently rerun the Table 4 membership join.",
+      "CI run 40176601271 exposed a lifecycle-contract failure because the new record used metric keys unsupported by src/ztf_classifier/lifecycle.py; metric keys were aligned to the existing contract without changing any scientific gate or claiming measurements."
     ],
-    "blocker": "Track A Jupyter reconstruction has not been rerun; PR #224 CLI has not yet been executed against a complete source-backed published Table 4 ID input. Retrieve/hash Table 4 and compare both tracks on identical inputs."
+    "blocker": "Track A Jupyter reconstruction has not been rerun; PR #224 CLI has not yet been executed against a complete source-backed published Table 4 ID input. Fresh CI must validate the lifecycle record before further acceptance."
   },
   "failure_analysis": {
     "status": "SUPPORTED",
@@ -70,7 +71,8 @@
       "The historical publisher selection rule has not been established from the available evidence",
       "The source-backed 11,602-row report has not been generated and audited",
       "The current available code-search interface returned no notebook/code matches; actual source inventory remains pending",
-      "The retained heavy artifact contains the complete 11602 candidate-only diagnostic list and parent Table 2 metadata, but not the raw published Table 4 input; therefore an auditable report can be generated now, while an independent Table 4 re-join still requires that source input."
+      "The retained heavy artifact contains the complete 11602 candidate-only diagnostic list and parent Table 2 metadata, but not the raw published Table 4 input; therefore an auditable report can be generated now, while an independent Table 4 re-join still requires that source input.",
+      "The first experiment lifecycle record used metric names not accepted by the existing lifecycle contract; corrected to supported metric names while leaving all metrics NOT_MEASURED."
     ]
   },
   "knowledge_extraction": {
@@ -89,7 +91,8 @@
     "open_blockers": [
       "Track A Jupyter reconstruction and source-backed baseline reproduction remain pending.",
       "The PR #224 CLI must be run against the complete published Table 4 ID input and its outputs compared with the retained audit.",
-      "No independent Table 4 join or external cross-match was performed in this report-generation step."
+      "No independent Table 4 join or external cross-match was performed in this report-generation step.",
+      "Fresh CI must confirm the lifecycle record now passes the existing metric-name contract."
     ]
   },
   "decision": "BLOCKED",
