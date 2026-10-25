@@ -581,19 +581,10 @@ def main(argv: list[str] | None = None) -> int:
         DetectionRule(snr_method="magnitude_over_error", flag_policy="none"),
     ]
 
-    try:
-        manifest = build_report(
-            table2_path=args.table2,
-            table4_path=args.table4,
-            ztf2g_path=args.ztf2g,
-            ztf2r_path=args.ztf2r,
-            output_dir=args.output_dir,
-            rules=rules,
-        )
-    except (ValueError, OSError) as error:
-        sys.stderr.write(f"reconstruct_cpvs_from_photometry: {error}\n")
-        return 1
-
+    # Checksums are verified BEFORE the report is built, not after. Verifying
+    # afterwards would still write a complete, plausible-looking report from a
+    # corrupt or truncated download, and only then exit non-zero - leaving an
+    # artifact that reads like a result. Provenance precedes analysis.
     if args.manifest is not None:
         try:
             checksums = verify_publisher_checksums(
@@ -609,6 +600,19 @@ def main(argv: list[str] | None = None) -> int:
             sys.stderr.write(f"reconstruct_cpvs_from_photometry: {error}\n")
             return 1
         print(json.dumps(checksums, indent=2))
+
+    try:
+        manifest = build_report(
+            table2_path=args.table2,
+            table4_path=args.table4,
+            ztf2g_path=args.ztf2g,
+            ztf2r_path=args.ztf2r,
+            output_dir=args.output_dir,
+            rules=rules,
+        )
+    except (ValueError, OSError) as error:
+        sys.stderr.write(f"reconstruct_cpvs_from_photometry: {error}\n")
+        return 1
 
     print(json.dumps(manifest["comparison"]["detection_runs"], indent=2))
     return 0

@@ -743,3 +743,38 @@ def test_full_id_lists_are_never_truncated():
     assert len(report2["produced_only_ids"]) == 500
     assert len(report2["produced_only_objects"]) == 200
     assert report2["produced_only_sample_truncated"] == 300
+
+
+def test_checksum_failure_writes_no_report(tmp_path: Path):
+    """Provenance must precede analysis.
+
+    Verifying md5 after building the report would leave a complete, plausible
+    report on disk from a corrupt download, and only then exit non-zero. That
+    artifact would read like a result. It must not exist.
+    """
+    from scripts.reconstruct_cpvs_from_photometry import md5_file
+
+    paths = _build_fixture(tmp_path)
+    correct = {label: md5_file(p) for label, p in paths.items()}
+    correct["table2"] = "0" * 32  # simulate a corrupted download
+    manifest_path = _write_manifest(tmp_path, correct)
+
+    output = tmp_path / "out"
+    code = main(
+        [
+            "--table2",
+            str(paths["table2"]),
+            "--table4",
+            str(paths["table4"]),
+            "--ztf2g",
+            str(paths["ztf2g"]),
+            "--ztf2r",
+            str(paths["ztf2r"]),
+            "--output-dir",
+            str(output),
+            "--manifest",
+            str(manifest_path),
+        ]
+    )
+    assert code == 1
+    assert not (output / "cpvs_documented_rule_report.json").exists()
