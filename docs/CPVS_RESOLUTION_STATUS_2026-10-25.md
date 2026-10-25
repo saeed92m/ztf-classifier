@@ -1,20 +1,45 @@
 # CPVS Discrepancy — Scientific Status, 2026-10-25
 
 **Status: UNRESOLVED (scientific) / PARTIALLY VERIFIED (engineering).**
-The 11,602-object difference is now characterised exactly and its mechanism is
-identified from primary sources. The equivalence between that mechanism and the
-publisher's *documented* rule remains unproven, and one required input is not
-reachable from this environment.
+The 11,602-object difference is characterised arithmetically, but its mechanism
+is **not** proven. The candidate mechanism (null-exclusion on four nullable
+fields) is consistent with the documented counts and reproduces them
+arithmetically; it has **not** been demonstrated on the primary data, because
+`table2.dat`, `table4.dat`, `ztf2g.dat` and `ztf2r.dat` are not reachable from
+this environment. An earlier revision of this document labelled two such
+relationships VERIFIED FACT; both are downgraded below, with the reason.
 
 This document supersedes nothing. It records the current evidentiary state and
 keeps every earlier claim that is still true, plus the reason any earlier claim
-was narrowed. Three labels are used strictly:
+was narrowed. Four labels are used strictly:
 
 - **VERIFIED FACT** — proven by a primary source, a reproducible run, or an
   arithmetic identity over published numbers.
 - **HYPOTHESIS** — a plausible explanation consistent with the evidence, not
   proven.
+- **CORROBORATING** — evidence consistent with a conclusion that does not
+  establish it. Specifically: agreement that cannot distinguish the conclusion
+  from its alternatives.
 - **UNKNOWN / BLOCKED** — the evidence or input needed does not exist here.
+
+### Revision log
+
+**Rev 2 (2026-10-25, commit `c7066a5`).** Two earlier labels are withdrawn:
+
+- `table4.ID` = `table2.Seq` was labelled VERIFIED FACT. It is now
+  **CORROBORATING** (§5.2). Same byte span, same printed range and the same role
+  wording are evidence, not proof; no source states the equivalence. The two joins
+  are therefore computed independently and compared, and the ID join is never a
+  substitute for the name join.
+- The four-way partition of the 11,602 was labelled VERIFIED FACT. It is now
+  **REPORTED, NOT RE-EXECUTED** (§4.1, §7), because it derives from artifact bytes
+  that are not retrievable here.
+- The count match on null-exclusion is explicitly **not** treated as the cause
+  (§3). A count match cannot distinguish mechanisms: any rule removing 11,602 of
+  741,786 rows produces the same total. Only object identity separates them.
+- Added: the publisher's own `SourceID` statement (§5.1), the SNR-definition
+  finding (§8.1), the ready harness (§8.2), publisher checksums (§8.3), and the
+  record of what was attempted against the real data (§9.1).
 
 ---
 
@@ -72,8 +97,22 @@ immediate, because an object with no measured mean magnitude or no measured
 per-band period is one the publisher could not have used to build a phase-folded
 light curve at all.
 
-**VERIFIED FACT (arithmetic)** — this predicate reproduces the published count
-exactly: 741,786 filtered by all four conditions leaves 730,184.
+**VERIFIED FACT (arithmetic only)** — the four conditions applied to 741,786
+rows leave 730,184. This is arithmetic on published numbers, and it is all that
+it is.
+
+**NOT PROVEN — the count match is not an explanation.** Matching the published
+total is a necessary condition, not a sufficient one. Three things remain: the
+arithmetic was never run on the primary file, so it is not known that the 11,602
+removed rows are *the same objects* the publisher removed; the partition has never
+been re-executed against a hashed version of `table2.dat`; and the resulting set
+has never been compared object-by-object with the published detection criterion
+(2.5σ g / 3σ r). Until all three are done, the four-field predicate is a
+**candidate mechanism**, not the cause.
+
+A count match also cannot distinguish competing mechanisms: any rule that removes
+11,602 of 741,786 rows reproduces the same total. Only object identity separates
+them.
 
 **UNKNOWN / BLOCKED** — that it *is* the publisher's rule. The paper states the
 rule in terms of detection significance. No source retrieved here equates the two.
@@ -91,10 +130,18 @@ measurement entirely.
 | Earlier finding (2-way) | 11,585 lack both a positive finite magnitude pair and a positive period pair; 17 remain | 11,602 |
 | Issue #170 and the cycle record (4-way) | 11,580 fail both pairs; 17 have valid magnitudes but an incomplete period pair; 5 have valid periods but an incomplete `gmag`; 0 pass all four | 11,602 |
 
-Arithmetic identity (**VERIFIED FACT**):
+Arithmetic identity (**VERIFIED FACT** — the addition is certain; the
+*provenance of the four numbers* is not, because they come from an artifact whose
+bytes are not retrievable from here):
 
     11,580 + 5 = 11,585
     11,580 + 17 + 5 + 0 = 11,602
+
+The distinction matters. That the two partitions are mutually consistent is an
+arithmetic fact about the reported figures. That those figures are correct
+descriptions of the real catalogue is an unverified claim about an artifact.
+The partition is therefore **reported, not confirmed**, and §6 records why the
+artifact could not be re-read.
 
 The 4-way partition *refines* the 2-way one. It does not contradict it. The
 5-object group — valid `Per-g` and `Per-r` but a null `gmag` — is exactly the
@@ -136,31 +183,67 @@ contribution cannot be confirmed, and no code path here hard-codes them. They ar
 11,602, and treating a small correction as the root cause would be a
 miscount-to-count inference of exactly the kind this investigation forbids.
 
-## 5. The identifier question, settled from the ReadMes
+## 5. The identifier question — what is documented and what is not
 
-This is the one place where a documentary answer exists.
+### 5.1 What the publisher states explicitly
+
+The Zenodo record for the Chen+ 2020 light curves — the dataset cited in the
+paper itself — describes its own key:
+
+> "SourceID is the internal source identifier joins these attachments to Table 2.
+> Example: For variable star ZTFJ000000.19+320847.2 in Table 2, the SourceID=3 is
+> adopted to search corresponding single-exposure information in both 'ztf2g'
+> and ''ztf2r'."
+
+**VERIFIED FACT (publisher statement).** For `ztf2g`/`ztf2r`, the key that joins
+photometry to `table2.dat` is `SourceID`, and it is `table2.Seq`. This settles
+the photometry-to-parent join, which is the join the documented detection
+criterion actually needs.
+
+The worked example is worth recording for a second reason. `ZTFJ000000.19+320847.2`
+encodes RA 00h00m00.19s — the minimum right ascension in the catalogue, so it is
+plausibly the first row of `table2.dat`. The publisher assigns it `SourceID=3`,
+not 1. **That is direct publisher evidence that `Seq` is not a row ordinal**,
+independent of the gap-counting argument below. The row position of that object
+is not stated in the record, so the example is strong but not itself conclusive;
+the gap argument does not depend on it.
+
+### 5.2 What is *not* established: `table4.ID` = `table2.Seq`
 
 | Catalogue | File | Bytes | Label | Documented range | Documented meaning |
 |---|---|---|---|---|---|
 | Chen+ 2020 | `table2.dat` (781,602 rows) | 24-29 | `Seq` | `[1/781604]` | Internal source identifier |
 | Chan+ 2022 | `table4.dat` (730,184 rows) | 24-29 | `ID` | `[1/781604]` | Catalog internal identifier |
 
-**VERIFIED FACT:** the two columns occupy the same bytes, carry the same
-documented range, and are described with the same role. `table4.dat` has 730,184
-rows, so its `ID` cannot be a position within itself; it must reference the
-parent catalogue. The two are one namespace, and this is the documentary
-relationship that a ruling on the ID join requires.
+These two columns share a byte span, a documented range, a role description and
+a referenced catalogue. `table4.dat` has 730,184 rows, so its `ID` cannot be a
+dense index within itself, and Chan+ 2022 Appendix F labels the column "Catalog
+Internal Identifier".
 
-**VERIFIED FACT:** the parent's `Seq` cannot be replaced by a row ordinal.
-`table2.dat` holds 781,602 rows while `Seq` spans 781,604 values, so 2 values are
-absent. From the first gap onward, row position is strictly less than `Seq` and
-every later object would silently receive the wrong parent identifier.
+**CORROBORATING, NOT PROVEN.** Each of those facts is *consistent with* the two
+being one namespace. None of them *states* it. No retrieved source says in one
+sentence that `table4.ID` is `table2.Seq`. An earlier revision of this document
+called this VERIFIED FACT. That was wrong: identical byte position and a similar
+integer range are evidence, not proof, and treating them as proof is exactly the
+inference this project must not make. A confirmation requires either an explicit
+statement of the identifier's meaning in the primary documentation, or a
+real-data match of both joins.
 
-**Consequence.** Both a name-based and an ID-based join are now *permitted*.
-Neither is adopted alone: the audit resolves membership by normalized object name
-(which fails closed on ambiguity) and, with `--crosscheck-published-ids`,
-independently by the documented ID column, requiring the two to select the same
-objects. Disagreement is an error, not a tie to be broken.
+**Consequence for the code.** The audit therefore resolves membership by
+normalized object name — documented, and the primary route — and offers the
+documented-ID join only as an independent cross-check (`--crosscheck-published-ids`),
+requiring the two to select the same objects. Disagreement raises rather than
+being resolved in favour of either. The ID route is never a substitute for the
+name route.
+
+### 5.3 What is proven about ordinals
+
+**VERIFIED FACT.** `table2.dat` holds 781,602 rows while `Seq` spans 781,604
+values, so 2 values are absent. From the first gap onward, row position is
+strictly less than `Seq`, and every later object would silently receive the
+wrong parent identifier. Ordinal-derived identifiers were used in an earlier
+implementation and are unsound for this reason. The publisher example in §5.1
+points the same way.
 
 ## 6. Artifact and provenance audit
 
@@ -190,9 +273,12 @@ derivation is internally consistent and arithmetically reconciled above, but it
 
 ## 7. What the 11,602 are
 
-**VERIFIED FACT:** every one of the 11,602 is an object present in the
-reconstruction and absent from the published set, and — on the recorded partition
-— each fails at least one of the four nullable catalogue fields.
+**REPORTED, NOT CONFIRMED:** every one of the 11,602 was recorded as an object
+present in the reconstruction and absent from the published set, and — on the
+recorded partition — as failing at least one of the four nullable catalogue
+fields. This has not been re-executed object-by-object against a hashed copy of
+`table2.dat`, so it remains a description of the earlier run rather than a fact
+this document can certify.
 
 **HYPOTHESIS (mechanism, strongly supported):** they are objects for which Chen+
 2020 provides no usable measurement of mean `g` magnitude, mean `r` magnitude,
@@ -231,6 +317,70 @@ call:
 3. the SNR rule does not reproduce 730,184 → the published set involved a further
    undocumented step, and the gap stays open with a new, narrower question.
 
+### 8.1 The SNR definition is not documented, and the choice is decisive
+
+"SNR ≥ 2.5σ" has two standard readings, and the source does not say which was
+used. They are not equivalent:
+
+| Detection | `f/σ_f = 1.0857/σ_m` SNR | shortcut `m/σ_m` | passes 2.5σ? |
+|---|---|---|---|
+| g=18.0, σ=0.10 | 10.86 | 180.0 | yes / yes |
+| g=18.0, σ=0.30 | 3.62 | 60.0 | yes / yes |
+| g=18.0, σ=0.50 | 2.17 | 36.0 | **no** / yes |
+| g=20.0, σ=1.00 | 1.09 | 20.0 | **no** / yes |
+| g=20.0, σ=7.00 | 0.16 | 2.86 | **no** / yes |
+
+The first is magnitude independent by construction: `f ∝ 10^(-0.4m)` and
+`σ_f ∝ f·σ_m·ln10/2.5`, so the magnitude cancels. The second scales with
+magnitude, and since `e_mag` would have to exceed `m/2.5` — about 7 mag at r=18 —
+for a real detection to fail, it is nearly vacuous. Under that reading the
+criterion would select essentially all 781,602 objects rather than 730,184.
+
+This is a genuine finding, not pedantry: the two readings are observations apart,
+so a reproduction that does not state which was used is not reproducible, and a
+result that happens to match under one reading does not validate the other. The
+harness therefore computes **all** of them and refuses to pick a winner.
+
+### 8.2 The harness that is ready for the data
+
+`scripts/reconstruct_cpvs_from_photometry.py` implements the documented rule
+without adopting any unproven premise. It parses all four files at the byte
+offsets the ReadMes specify, evaluates both SNR definitions and both flag
+policies, and reports, per route:
+
+- SHA-256 and md5 of every input, plus row counts;
+- both joins (normalized name, and documented ID) with an explicit
+  `AGREE` / `DISAGREE` verdict;
+- the full set difference against the published membership, with the size of each
+  side, `produced_only`, `reference_only`, and object-level rows for every
+  discrepancy (capped, with truncation counts stated);
+- the null-exclusion route alongside, so the two mechanisms are compared on
+  identity rather than on arithmetic.
+
+It writes `cpvs_documented_rule_report.json` with `status: UNRESOLVED` and
+`validated_on_real_data: false` baked in, so a report can never be mistaken for a
+confirmation. `--manifest configs/cpvs/cpvs_input_acquisition.json` verifies the
+publisher's md5 before analysis, and treats an input with no publisher checksum as
+`NO_PUBLISHER_CHECKSUM` rather than as a pass.
+
+25 tests cover it (`tests/test_cpvs_documented_rule.py`), including fixtures
+written at the documented byte offsets, decoy detection for a shifted layout, and
+the equal-count/different-membership case that a count-only check would wrongly
+pass. **The tests prove the code does what it claims. They say nothing about the
+real catalogues, because nothing here has been run on them.**
+
+### 8.3 Publisher checksums, so the download can be verified
+
+| File | Size | md5 (published on Zenodo 3886372) |
+|---|---|---|
+| `Table2.txt.zip` (contains `Table2.txt`, 175.1 MB) | 64.0 MB | `24dd4cf138a2687901d64b2d029cc624` |
+| `ztf2g.zip` | 753.7 MB | `850fcef561dd7407fbe8e19e99100d7a` |
+| `ztf2r.zip` | 881.5 MB | `daa7bc45c67579253eebe6b1c09dfbd9` |
+| `Table6.txt.zip` | — | `fcad26b036c8dbee29f6d868fecc9697` |
+
+`table4.dat` has no publisher checksum; its provenance rests on the CDS ReadMe for
+`J/ApJ/932/118` and is recorded as unverifiable against a publisher value.
+
 ## 9. Engineering status, kept separate
 
 Engineering success is not scientific resolution and is recorded separately.
@@ -248,18 +398,47 @@ the defective ID-based membership.
 `setuptools` 84.0.0 carried GHSA-xmj3-9gf7-h52w. Both raised to the fixed versions;
 `pip_audit` goes from exit 1 with 4 advisories to exit 0.
 
+**VERIFIED:** `scripts/reconstruct_cpvs_from_photometry.py` and its 25 tests are
+committed as `c7066a5`. The tests found a real defect in the first version
+(`read_table4` returns a name→id mapping, which `build_report` subtracted as if it
+were a set). Suite at that commit: **631 passed, 4 skipped**, ruff clean, 231 files
+formatted, CI green. This is engineering evidence and nothing more.
+
 **Not claimed:** that a green suite means the CPVS question is answered. It does
-not. The scientific gate stays closed.
+not. The scientific gate stays closed. A test suite over synthetic fixtures cannot
+confirm anything about 781,602 real objects, and no number in this document should
+be read as if it did.
+
+### 9.1 What was actually attempted against the real data, and what refused
+
+The blocker is stated precisely because "no data" is not a useful report:
+
+| Attempt | Result |
+|---|---|
+| `curl` to `cdsarc.cds.unistra.fr`, `zenodo.org`, `vizier.u-strasbg.fr` | HTTP `000` — no connection |
+| `curl` to `*.blob.core.windows.net` (Actions artifacts) | HTTP `000` |
+| `curl` to `results-receiver.actions.githubusercontent.com` | HTTP `000` |
+| `curl` to `api.github.com` | HTTP `200` |
+| `fetch_page` on the Zenodo record page | works — text only (this is where §5.1 and §8.3 come from) |
+| `fetch_page` on the Zenodo file preview | returns the filename and size, **no rows** |
+| `gh api .../actions/artifacts/11935357767/zip` | `EOF`; the artifact is metadata-only here |
+
+So: the documentary evidence in §5.1 and §8.3 is genuinely obtained, the data is
+publicly available but unreachable, and no amount of further work in this
+environment will produce a row-level comparison. That is an access limitation, and
+it is **not** a reason to declare the four-field hypothesis correct.
 
 ## 10. Conclusions
 
-1. The difference is not a counting artefact and not a rounding error. It is
-   11,602 specific objects, each failing at least one of four nullable catalogue
-   fields. **VERIFIED FACT** on the recorded partition; not re-executed here.
+1. The difference is not a counting artefact and not a rounding error. On the
+   recorded partition it is 11,602 specific objects, each failing at least one of
+   four nullable catalogue fields. **REPORTED, NOT RE-EXECUTED** — the artifact
+   bytes are not retrievable from here, so this is not certified by this document.
 2. Those four fields are exactly `table2.dat`'s nullable columns, so the predicate
    in use is null-exclusion. **VERIFIED FACT** from the ReadMe.
 3. The published rule is a per-detection significance threshold, documented
-   verbatim. **VERIFIED FACT** from the paper.
+   verbatim. **VERIFIED FACT** from the paper. **The two are not the same rule**,
+   and nothing retrieved equates them.
 4. Null-exclusion reproducing the count is explainable and expected, because an
    object with null magnitude or period cannot supply a two-band light curve.
    **HYPOTHESIS**, not proof.

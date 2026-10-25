@@ -531,3 +531,87 @@ def test_committed_acquisition_manifest_matches_the_repo_convention():
     assert ids == ["table2", "table4", "ztf2g", "ztf2r"]
     assert manifest["status"] == "BLOCKED"
     assert manifest["never_run"]  # the limitation must stay stated
+
+
+# ---------------------------------------------------------------------------
+# The status document's epistemic labels are a reviewable claim.
+#
+# An earlier revision of this document labelled the table4.ID = table2.Seq
+# relation and the four-way partition VERIFIED FACT. Both were withdrawn as
+# overclaims. These tests keep the withdrawal from silently regressing, because
+# a document that quietly re-promotes a hypothesis is worse than no document.
+# ---------------------------------------------------------------------------
+
+
+def _status_doc() -> str:
+    repo = Path(__file__).resolve().parents[1]
+    return (repo / "docs/CPVS_RESOLUTION_STATUS_2026-10-25.md").read_text(
+        encoding="utf-8"
+    )
+
+
+def test_status_doc_does_not_call_the_id_seq_relation_verified():
+    text = _status_doc()
+    assert "CORROBORATING, NOT PROVEN" in text
+    # The only place the two may appear together is the retraction itself.
+    for line in text.splitlines():
+        if "table4.ID" in line and "table2.Seq" in line and "VERIFIED" in line:
+            assert "was labelled" in line, line
+            assert "withdrawn" in line or "now" in line, line
+
+
+def test_status_doc_states_the_gate_is_unresolved():
+    text = _status_doc()
+    assert "Status: UNRESOLVED" in text
+    assert "scientific gate stays closed" in text.lower()
+
+
+def test_status_doc_does_not_present_a_count_match_as_the_cause():
+    text = _status_doc()
+    assert "count match is not an explanation" in text.lower()
+    assert "candidate mechanism" in text.lower()
+
+
+def test_status_doc_records_the_access_limitation():
+    text = _status_doc()
+    assert "not reachable from" in text
+    assert "HTTP `000`" in text
+
+
+def test_harness_defaults_to_unresolved_even_on_perfect_agreement(tmp_path: Path):
+    """A perfect match must still not flip the status to resolved.
+
+    Resolution requires the real data and a human decision; the script's job is
+    to report, not to bless.
+    """
+    table2 = write(
+        tmp_path / "table2.dat",
+        [
+            table2_line("ZTFJ000000.00+000000.0", 1),
+            table2_line("ZTFJ000001.00+000000.0", 2),
+        ],
+    )
+    table4 = write(
+        tmp_path / "table4.dat",
+        [
+            table4_line("ZTFJ000000.00+000000.0", 1),
+            table4_line("ZTFJ000001.00+000000.0", 2),
+        ],
+    )
+    photo = [photometry_line(1, 18.0, 0.1), photometry_line(2, 18.0, 0.1)]
+    ztf2g = write(tmp_path / "ztf2g.dat", photo)
+    ztf2r = write(tmp_path / "ztf2r.dat", photo)
+
+    manifest = build_report(
+        table2_path=table2,
+        table4_path=table4,
+        ztf2g_path=ztf2g,
+        ztf2r_path=ztf2r,
+        output_dir=tmp_path / "out",
+        rules=[DetectionRule()],
+    )
+    # Every route agrees perfectly...
+    routes = manifest["comparison"]["routes"]
+    assert all(route["exact_set_equality"] for route in routes.values())
+    # ...and the status is still UNRESOLVED.
+    assert manifest["status"] == "UNRESOLVED"
