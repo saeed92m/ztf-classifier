@@ -63,9 +63,11 @@
       "Report audit verified 11602 unique candidate-only IDs, 11602 parent-metadata joins, 0 missing parent rows, strict JSON parsing, and ZIP integrity; bundle SHA-256 9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc.",
       "The report reuses the previously audited candidate-only list; raw published Table 4 was absent from the retained artifact, so the report did not independently rerun the Table 4 membership join.",
       "CI run 40176601271 exposed a lifecycle-contract failure because the new record used metric keys unsupported by src/ztf_classifier/lifecycle.py; metric keys were aligned to the existing contract without changing any scientific gate or claiming measurements.",
-      "Reviewed official CDS/VizieR ReadMe for J/ApJ/932/118: it states the 730,184 sample contains at least one 2.5σ and 3σ detection in g and r, respectively, and defines Table 4 ID as catalog internal ID while ZTF is a separate column. This narrows the literature claim but does not by itself reproduce the exact per-object selection."
+      "Reviewed official CDS/VizieR ReadMe for J/ApJ/932/118: it states the 730,184 sample contains at least one 2.5σ and 3σ detection in g and r, respectively, and defines Table 4 ID as catalog internal ID while ZTF is a separate column. This narrows the literature claim but does not by itself reproduce the exact per-object selection.",
+      "Deterministic SHA-256-ranked stratified 100-object spot-check queried official CDS/VizieR TAP: 100/100 parent Seq-to-ZTF-name mappings; 50/50 known-overlap objects present in Table 4; 0/25 candidate-only and 0/25 parent-not-candidate names present. This validates only the sampled membership crosswalk, not full-set or raw detection-rule reproduction.",
+      "Primary paper Section 2.1 reviewed: at least one 2.5σ g-band detection and one 3σ r-band detection; common Table 2 period used for folding. Exact implementation against source photometry remains unverified."
     ],
-    "blocker": "Track A Jupyter reconstruction has not been rerun; PR #224 CLI has not yet been executed against complete hash-identified parent metadata, candidate IDs, and the authoritative Table 4 ZTF-name/ID rows. Fresh CI must validate the lifecycle record. The four-field positive-value predicate remains diagnostic only and is not equivalent by definition to the paper's stated detection criterion."
+    "blocker": "Full deterministic 1,000-object sample and full Table 4 join remain pending; PR #224 CLI has not yet been executed against complete hash-identified parent metadata, candidate IDs, and published Table 4 rows; Track A Jupyter reconstruction and raw per-epoch detection-rule reproduction remain pending."
   },
   "failure_analysis": {
     "status": "SUPPORTED",
@@ -97,7 +99,8 @@
       "The PR #224 CLI must be run against the complete published Table 4 ID input and its outputs compared with the retained audit.",
       "No independent Table 4 join or external cross-match was performed in this report-generation step.",
       "Fresh CI must confirm the lifecycle record now passes the existing metric-name contract.",
-      "Derive and test the published g/r detection-significance criterion on source-backed photometry; do not substitute the four-field metadata predicate."
+      "Derive and test the published g/r detection-significance criterion on source-backed photometry; do not substitute the four-field metadata predicate.",
+      "Run and archive the fixed 1,000-object parent-dataset sample with both published members and non-members, source-to-Seq/name provenance, and deterministic hashes."
     ]
   },
   "decision": "BLOCKED",
@@ -106,6 +109,7 @@
     "Track A and Track B remain experimental; neither is selected as winner",
     "If the historical rule remains unprovable, keep the scientific blocker open and retain discrepancy reporting as a product capability",
     "Local report bundle generated from artifact run 38635891449; ZIP SHA-256 9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc; report has 11602 rows and 0 missing parent-metadata joins.",
-    "Published high-level rule from Chan et al. (2022): at least one 2.5σ and 3σ detection in g and r, respectively; exact code-level semantics remain to be reconstructed."
+    "Published high-level rule from Chan et al. (2022): at least one 2.5σ and 3σ detection in g and r, respectively; exact code-level semantics remain to be reconstructed.",
+    "A 100-object stratified identity/membership spot-check agrees with expected membership strata but is not a full-dataset validation or a detection-threshold test."
   ]
 }
