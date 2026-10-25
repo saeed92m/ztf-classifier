@@ -86,3 +86,14 @@ Still pending. The retained artifact is sufficient to establish an auditable bas
 2. Run the PR #224 CLI using the complete authoritative parent metadata, candidate membership IDs, and published Table 4 IDs; compare all report outputs against the retained audit.
 3. Inventory the actual Jupyter notebook and scripts used for reconstruction, reproduce the baseline, and test candidate changes only on the experiment branch.
 4. Compare both tracks against the same source artifacts and explicit reference definition; do not select a winner based only on the count 730,184.
+
+
+### Deterministic 100-object identity/membership spot-check — partial validation
+
+A fixed stratified sample was generated from the retained Table 2 parent metadata and candidate list using SHA-256 ranking with seed string `CPVS-fixed-100-v1` (independent of Python RNG versions): 50 candidate/reference-overlap objects, 25 candidate-only objects, and 25 parent objects not selected by the candidate pipeline. For each selected Seq, the official CDS/VizieR TAP service was queried to retrieve the parent Table 2 ZTF object name, then published Table 4 membership was checked by that ZTF name, not by Table 4's internal ID.
+
+Observed: 100/100 Seq values mapped to a parent ZTF name; 50/50 overlap-stratum objects were found in Table 4; 0/25 candidate-only objects were found; 0/25 parent-not-candidate objects were found. This supports the prior membership partition and join-key direction for this sample. It is not a full-dataset audit, not a raw per-epoch 2.5σ/3σ detection-semantic test, and not proof that the candidate algorithm reproduces the paper's rule. The fixed sample before adding the ZTF-name crosswalk had SHA-256 `1ffd4c94c6f707e68e77462b07b5daf2690e45a60e362bf80d7d6a53cf8f2a53`.
+
+### Literature rule and unresolved implementation
+
+Chan et al. (2022), Section 2.1, says the retained light curves have at least one 2.5σ detection in g and one 3σ detection in r, respectively, and that both bands are phase-folded using the common Table 2 period ([DOI](https://doi.org/10.3847/1538-4357/ac69d4)). The four-field positive-value predicate `gmag/rmag/Per-g/Per-r > 0` is not equivalent by definition. Full 1,000-object sampling, source-backed CLI run on complete inputs, raw photometry review, and independent reconstruction remain outstanding.
