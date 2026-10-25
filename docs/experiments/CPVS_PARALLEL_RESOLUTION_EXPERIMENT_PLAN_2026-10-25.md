@@ -97,3 +97,8 @@ Observed: 100/100 Seq values mapped to a parent ZTF name; 50/50 overlap-stratum 
 ### Literature rule and unresolved implementation
 
 Chan et al. (2022), Section 2.1, says the retained light curves have at least one 2.5σ detection in g and one 3σ detection in r, respectively, and that both bands are phase-folded using the common Table 2 period ([DOI](https://doi.org/10.3847/1538-4357/ac69d4)). The four-field positive-value predicate `gmag/rmag/Per-g/Per-r > 0` is not equivalent by definition. Full 1,000-object sampling, source-backed CLI run on complete inputs, raw photometry review, and independent reconstruction remain outstanding.
+
+
+### Fixed 1,000-object sample preparation — membership query pending
+
+Prepared a deterministic stratified 1,000-object sample from the full parent Table 2 identifier universe and the retained candidate set using SHA-256 rank with seed `CPVS-fixed-1000-v1`: 500 candidate/reference-overlap expected objects, 250 candidate-only objects, and 250 parent objects not selected by the candidate pipeline. Sample file: local `cpvs_fixed_1000_sample_ids.json`; file SHA-256 `94b4c966abaa059ff3c1f63172542e9eb2c11323a814f3b0d4eb7a9c506087b0`; compact sample-ID payload SHA-256 `2beb0912cbf1d12c48f7f82157eaf0dd31864204450e40d181afbdf61e6c29f7`. This is sample preparation only: the full 1,000-name crosswalk and published Table 4 membership query have not completed, so no validation outcome is claimed.
