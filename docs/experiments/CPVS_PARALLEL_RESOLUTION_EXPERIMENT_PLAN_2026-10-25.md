@@ -59,3 +59,29 @@ If the publisher's historical rule remains unknowable, keep that uncertainty exp
 As of 2026-10-25, the experiment branch exists and the comparison plan is recorded in [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). The two tracks have not yet been run and compared. The source-backed 11,602-row report has not yet been generated and audited. No method is selected as winner and the scientific blocker remains open.
 
 The 100-object operational behavior test in [Issue #222](https://github.com/saeed92m/ztf-classifier/issues/222) is separate; it does not establish scientific accuracy or resolve CPVS membership.
+
+
+## Execution update — 2026-10-25
+
+### Track B: retained-audit report generated (partial validation)
+
+Downloaded and inspected GitHub Actions source-backed artifact run [#38635891449](https://github.com/saeed92m/ztf-classifier/actions/runs/38635891449), artifact `scientific-validation-heavy` (artifact ID `11935357767`). Generated a local report bundle from the retained `candidate_only_all_objects` diagnostic list, joined each ID to the authoritative Table 2 parent metadata, and verified the output:
+
+- 11,602 unique candidate-only IDs; all 11,602 map to exactly one parent metadata row.
+- Parent Table 2 metadata contains 781,602 rows.
+- Diagnostic partition: 11,580 fail both the parent magnitude pair and per-band period pair; 17 have positive magnitudes but an incomplete/nonpositive period pair; 5 have positive per-band periods but incomplete/nonpositive `gmag`; 0 pass all four positivity checks.
+- CSV and JSON row counts both equal 11,602; JSON parses strictly; output ZIP integrity check passed.
+- Report ZIP SHA-256: `9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc`.
+
+**Scope limitation:** this report reuses the candidate-only list from the existing membership-audit artifact. The raw published Table 4 file was not present in the retained artifact, so this run did **not** independently repeat the Table 4 join and does not replace the source-backed PR #224 CLI run. The report marks raw-light-curve review and external cross-match as `NOT_ASSESSED`. It is an auditable user-facing diagnostic deliverable, not a scientific resolution of the historical publisher rule.
+
+### Track A: reconstruction / Jupyter
+
+Still pending. The retained artifact is sufficient to establish an auditable baseline for the known candidate-only IDs, but it does not identify a justified code correction by itself. Do not edit the notebook or production selection until the exact derivation path, source inputs, and membership join have been inspected and reproduced.
+
+### Next acceptance actions
+
+1. Locate the exact Table 4 source input or a reproducible acquisition step and record its hash.
+2. Run the PR #224 CLI using the complete authoritative parent metadata, candidate membership IDs, and published Table 4 IDs; compare all report outputs against the retained audit.
+3. Inventory the actual Jupyter notebook and scripts used for reconstruction, reproduce the baseline, and test candidate changes only on the experiment branch.
+4. Compare both tracks against the same source artifacts and explicit reference definition; do not select a winner based only on the count 730,184.
