@@ -1,6 +1,6 @@
 # Astronomical Data Analysis & Discovery Platform — Product Roadmap
 
-Status date: 2026-10-11  
+Status date: 2026-10-25  
 Current immutable software release: v1.0.1  
 Product implementation tracker: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158)  
 Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170)
@@ -104,3 +104,14 @@ The following items are explicit current workstreams; this refresh does not chan
 - **Release and evidence discipline:** a successful CI workflow is not proof of scientific validity when scientific jobs are skipped. Keep blockers open until their specific acceptance criteria pass.
 
 The detailed acceptance criteria and current evidence boundary are maintained in [Project Status & Execution Ledger](../PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-10-25.md).
+
+
+## CPVS parallel resolution experiment — recorded 2026-10-25
+
+Two independent tracks will be evaluated side by side. Neither track is accepted in advance, and neither may change the immutable v0.2.0 scientific baseline or v1.0.1 release artifacts.
+
+- **Track A — source-backed reconstruction / Jupyter processing:** branch `experiment/cpvs-jupyter-reconstruction-20261025`. Audit the actual notebook/code, source versions and hashes, Table2 `Seq` versus light-curve SourceID mapping, object-level versus row-level grain, joins, filter order, duplicate policy, and missing/non-finite values. Reproduce the current set from identified inputs before testing the four-field diagnostic condition (`gmag > 0`, `rmag > 0`, `Per-g > 0`, `Per-r > 0`) as a hypothesis, not an assumed publisher rule. Record every included/excluded ID and reason, exact set differences, commands/environment, hashes, and deterministic rerun results.
+- **Track B — discrepancy reporting:** implementation branch `feature/cpvs-discrepancy-report-20261024`, PR [#224](https://github.com/saeed92m/ztf-classifier/pull/224). Run the report builder against authoritative, hash-identified source artifacts; verify candidate-only IDs, parent provenance, counts across CSV/HTML/Markdown/JSON, deterministic output hashes, and explicit `NOT_ASSESSED` labels for checks not performed. This track makes discrepancies auditable; it does not itself prove the historical rule or eliminate the underlying discrepancy.
+- **Shared comparison criteria:** identifier/source integrity; deterministic reproducibility; false inclusion/exclusion against an explicitly defined reference; missing/invalid-value behavior; traceability; and tests on additional independent, source-backed astronomical inputs outside CPVS. A matching count alone is insufficient. Do not choose conditions solely to force 730,184 IDs.
+- **Decision rule:** choose a production method only after evidence and regression tests support its scientific meaning and robustness. If the publisher's historical rule cannot be established, retain the uncertainty explicitly and keep discrepancy reporting as a product capability. The exact-reproduction blocker in [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170) remains open until its evidence criteria are met. The 100-object operational behavior test in [Issue #222](https://github.com/saeed92m/ztf-classifier/issues/222) is separate and does not establish scientific accuracy.
+- **Current execution state:** experiment branch exists; experiment plan is recorded in Issue #170. The two tracks have not yet been executed and compared. The source-backed report has not yet been generated and audited. No winner or scientific resolution is claimed.
