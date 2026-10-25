@@ -17,6 +17,7 @@ Branch: `experiment/cpvs-jupyter-reconstruction-20261025`
 3. Verify object-level versus light-curve-row-level grain; joins; normalization; filtering order; duplicate handling; missing, zero, NaN, and infinite values.
 4. Reproduce the current candidate set from hash-identified inputs before changing any logic.
 5. Run the four-field predicate `gmag > 0`, `rmag > 0`, `Per-g > 0`, `Per-r > 0` only as a separate diagnostic hypothesis. Do not assume it is the historical publisher rule.
+6. Preserve the distinction between the paper's stated high-level criterion and our diagnostic predicate: Chan et al. (2022), CDS/VizieR ReadMe `J/ApJ/932/118`, says the 730,184 objects contain at least one 2.5σ and 3σ detection in g and r, respectively ([official ReadMe](https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJ/932/118?format=html&tex=true); [official catalogue directory](https://cdsarc.cds.unistra.fr/ftp/J/ApJ/932/118/)). The `gmag/rmag/Per-g/Per-r > 0` test is not interchangeable with that detection criterion and cannot be described as the authors' rule without a source-backed derivation.
 6. Record every included/excluded object ID, source-row mapping, field values, reason, source hashes, environment, commands, and deterministic rerun result.
 7. Add regression tests for non-contiguous identifiers, duplicate IDs, missing/non-finite values, object/row grain, and set equality/difference invariants.
 
@@ -56,7 +57,7 @@ If the publisher's historical rule remains unknowable, keep that uncertainty exp
 
 ## Current state
 
-As of 2026-10-25, the experiment branch exists and the comparison plan is recorded in [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). The two tracks have not yet been run and compared. The source-backed 11,602-row report has not yet been generated and audited. No method is selected as winner and the scientific blocker remains open.
+As of 2026-10-25, the experiment branch exists and the comparison plan is recorded in [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). The two tracks have not yet been run and compared. A local 11,602-row report bundle has been generated and row-count/provenance-join/strict-JSON/ZIP checks passed, but it reuses the retained candidate-only diagnostic list and does not independently rerun the Table 4 join. No method is selected as winner and the scientific blocker remains open.
 
 The 100-object operational behavior test in [Issue #222](https://github.com/saeed92m/ztf-classifier/issues/222) is separate; it does not establish scientific accuracy or resolve CPVS membership.
 
