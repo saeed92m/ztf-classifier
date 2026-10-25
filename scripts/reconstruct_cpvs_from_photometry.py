@@ -38,9 +38,15 @@ being silently assumed:
     ``m / sigma_m``. The two give materially different answers for faint
     detections, so both are computed and the disagreement is reported.
 
-``require_flag_zero``
-    The paper does not say whether flagged measurements were excluded before
-    counting detections. Both possibilities are computed.
+``flag_policy``
+    Chan+ 2022 states the sigma criterion and says nothing about flags. Chen+
+    2020 section III does state the cut used to build the parent catalogue:
+    ``INFOBITS < 33,554,432`` and ``catflags != 32768``. That is one bit value,
+    not "flag == 0". Three policies are therefore computed: no cut (closest to
+    Chan+ 2022), Chen's documented ``catflags != 32768``, and a stricter
+    "any nonzero flag" that is labelled as a sensitivity check because nothing
+    documents it. ``INFOBITS`` is image level and is not present in any of the
+    four files, so it cannot be applied here and is recorded as UNKNOWN.
 
 A run is only interpretable if the caller states, in the output, which definitions
 were used. The manifest does that.
@@ -160,14 +166,52 @@ def normalize_name(value: str) -> str:
     return "".join(value.split()).upper()
 
 
+# Flag policies, each traceable to a source rather than to convenience.
+#
+# Chen+ 2020 section III states the photometry cut it applied when building the
+# parent catalogue: "poor-quality images and photometry were excluded by adopting
+# INFOBITS < 33,554,432 and catflags != 32,768". That is one specific bit value,
+# not "flag == 0", so a policy that discards every nonzero flag is stricter than
+# anything documented and must not be presented as the published rule.
+#
+# Chan+ 2022 states only the 2.5-sigma/3-sigma criterion and says nothing about
+# flags. Since ztf2g/ztf2r are Chen's own single-exposure files, the exposures they
+# contain may already have passed Chen's cut, in which case no further flag
+# filtering belongs in this reconstruction at all.
+FLAG_POLICIES = {
+    "none": "no flag cut; closest to Chan+ 2022, which states none",
+    "catflags_32768": "exclude flag == 32768; Chen+ 2020 section III verbatim",
+    "any_nonzero": "exclude any nonzero flag; undocumented, sensitivity check only",
+}
+
+
+def flag_is_usable(flag_policy: str, flag: int | None) -> bool:
+    if flag_policy == "none":
+        return True
+    if flag_policy == "catflags_32768":
+        return flag != 32768
+    if flag_policy == "any_nonzero":
+        return flag == 0
+    raise ValueError(f"unknown flag_policy: {flag_policy!r}")
+
+
 @dataclass(frozen=True)
 class DetectionRule:
-    """The documented criterion, with its two genuinely unknown details."""
+    """The documented criterion, with the details the sources leave open.
+
+    ``snr_method`` and ``flag_policy`` are NOT settled by the primary source; see
+    FLAG_POLICIES above and the module docstring. Both are evaluated rather than
+    chosen, because choosing either would be an unstated assumption.
+    """
 
     g_sigma: float = 2.5
     r_sigma: float = 3.0
     snr_method: str = "inverse_error"
-    require_flag_zero: bool = False
+    flag_policy: str = "none"
+
+    def __post_init__(self) -> None:
+        if self.flag_policy not in FLAG_POLICIES:
+            raise ValueError(f"unknown flag_policy: {self.flag_policy!r}")
 
     def signal_to_noise(self, magnitude: float, magnitude_error: float) -> float:
         if magnitude_error <= 0.0:
@@ -269,38 +313,83 @@ def read_table4(path: Path) -> tuple[dict[str, int], set[int]]:
     return name_to_id, ids
 
 
-def qualifying_sequences(path: Path, rule: DetectionRule, sigma: float) -> set[int]:
+# A layout error produces wholesale parse failure, not an occasional blank field.
+# Any failure rate above this is treated as "the parser does not match this file"
+# and aborts. It is a guard against silent miscounting, not a scientific cut: it
+# never changes which rows qualify, only whether we trust the parse at all.
+MAX_UNPARSED_FRACTION = 0.01
+
+# Both conditions must hold before the guard fires. The count floor keeps a small
+# fixture with one legitimately blank field from looking like a wholesale layout
+# mismatch, while an 89,697,393-row file with the wrong offsets trips it at once.
+MIN_UNPARSED_TO_ABORT = 100
+
+
+def qualifying_sequences(
+    path: Path,
+    rule: DetectionRule,
+    sigma: float,
+    stats: dict[str, int] | None = None,
+) -> set[int]:
     """Sequences with at least one detection at or above ``sigma``.
 
     Streams the file: ``ztf2g.dat`` and ``ztf2r.dat`` are 89,697,393 rows each, so
     the only state kept is the set of qualifying sequences (bounded by 781,604).
+
+    Rows that cannot be parsed are counted, never silently dropped. An earlier
+    implementation in this project skipped unreadable rows, which turned a parse
+    failure into an empty set and therefore into a plausible-looking "clean"
+    result. A high failure rate now raises instead.
     """
     qualifying: set[int] = set()
+    counts = stats if stats is not None else {}
+    for key in ("rows", "unparsed", "nonpositive_error", "blank"):
+        counts.setdefault(key, 0)
+
     with path.open("r", encoding="utf-8-sig", errors="replace") as handle:
         for line_number, line in enumerate(handle, start=1):
-            if not line.strip() or line.lstrip().startswith("#"):
+            if not line.strip():
+                counts["blank"] += 1
+                continue
+            if line.lstrip().startswith("#"):
+                counts["blank"] += 1
                 continue
             raw_seq = line[PHOTOMETRY_FIXED_WIDTH["seq"]].strip()
             if not raw_seq.isdigit():
                 raise ValueError(
                     f"{path}:{line_number}: Seq is not an integer ({raw_seq!r})"
                 )
+            counts["rows"] += 1
             seq = int(raw_seq)
             if seq in qualifying:
                 continue
-            if rule.require_flag_zero:
+            if rule.flag_policy != "none":
                 raw_flag = line[PHOTOMETRY_FIXED_WIDTH["flag"]].strip()
-                if raw_flag and raw_flag.isdigit() and int(raw_flag) != 0:
+                parsed_flag = int(raw_flag) if raw_flag.isdigit() else None
+                if not flag_is_usable(rule.flag_policy, parsed_flag):
                     continue
             try:
                 magnitude = float(line[PHOTOMETRY_FIXED_WIDTH["mag"]])
                 magnitude_error = float(line[PHOTOMETRY_FIXED_WIDTH["e_mag"]])
             except ValueError:
+                counts["unparsed"] += 1
                 continue
             if magnitude_error <= 0.0:
+                counts["nonpositive_error"] += 1
                 continue
             if rule.signal_to_noise(magnitude, magnitude_error) >= sigma:
                 qualifying.add(seq)
+
+    if (
+        counts["rows"]
+        and counts["unparsed"] >= MIN_UNPARSED_TO_ABORT
+        and counts["unparsed"] / counts["rows"] > MAX_UNPARSED_FRACTION
+    ):
+        raise ValueError(
+            f"{path}: {counts['unparsed']} of {counts['rows']} rows have an "
+            f"unparseable mag/e_mag ({counts['unparsed'] / counts['rows']:.1%}), "
+            "which indicates the fixed-width offsets do not match this file"
+        )
     return qualifying
 
 
@@ -404,10 +493,12 @@ def build_report(
 
     detection_runs = []
     for rule in rules:
-        g_ok = qualifying_sequences(ztf2g_path, rule, rule.g_sigma)
-        r_ok = qualifying_sequences(ztf2r_path, rule, rule.r_sigma)
+        g_stats: dict[str, int] = {}
+        r_stats: dict[str, int] = {}
+        g_ok = qualifying_sequences(ztf2g_path, rule, rule.g_sigma, g_stats)
+        r_ok = qualifying_sequences(ztf2r_path, rule, rule.r_sigma, r_stats)
         produced = g_ok & r_ok
-        label = f"documented_rule[{rule.snr_method},flag{rule.require_flag_zero}]"
+        label = f"documented_rule[{rule.snr_method},{rule.flag_policy}]"
         routes[label] = produced
         detection_runs.append(
             {
@@ -416,6 +507,10 @@ def build_report(
                 "g_band_objects": len(g_ok),
                 "r_band_objects": len(r_ok),
                 "both_bands_objects": len(produced),
+                # Per-band parse accounting. A non-zero 'unparsed' here is a
+                # defect signal, not a data-quality remark.
+                "g_band_rows": g_stats,
+                "r_band_rows": r_stats,
             }
         )
 
@@ -471,9 +566,9 @@ def main(argv: list[str] | None = None) -> int:
     # Both SNR definitions and both flag policies are evaluated, because neither
     # is settled by the primary source and the difference is informative.
     rules = [
-        DetectionRule(snr_method="inverse_error", require_flag_zero=False),
-        DetectionRule(snr_method="inverse_error", require_flag_zero=True),
-        DetectionRule(snr_method="magnitude_over_error", require_flag_zero=False),
+        DetectionRule(snr_method="inverse_error", flag_policy="none"),
+        DetectionRule(snr_method="inverse_error", flag_policy="catflags_32768"),
+        DetectionRule(snr_method="magnitude_over_error", flag_policy="none"),
     ]
 
     try:

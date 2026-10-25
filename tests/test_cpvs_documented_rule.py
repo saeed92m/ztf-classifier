@@ -226,10 +226,35 @@ def test_qualifying_sequences_needs_only_one_detection(tmp_path: Path):
 
 def test_flag_policy_changes_the_selection(tmp_path: Path):
     path = write(tmp_path / "ztf2g.dat", [photometry_line(9, 18.0, 0.1, flag=32)])
-    permissive = DetectionRule(require_flag_zero=False)
-    strict = DetectionRule(require_flag_zero=True)
+    permissive = DetectionRule(flag_policy="none")
+    strict = DetectionRule(flag_policy="any_nonzero")
     assert qualifying_sequences(path, permissive, 2.5) == {9}
     assert qualifying_sequences(path, strict, 2.5) == set()
+
+
+def test_catflags_policy_excludes_only_the_documented_value():
+    """Chen+ 2020 cuts catflags != 32768. Any other value survives.
+
+    A policy discarding every nonzero flag would drop 32 as well; the documented
+    cut does not. Conflating the two would silently shrink the selected set, and
+    the difference is not small.
+
+    This is asserted on the predicate rather than through a fixture because the
+    width of the flag field could not be confirmed without the ReadMe, and
+    32768 needs five characters. Asserting a layout here would be inventing one.
+    """
+    from scripts.reconstruct_cpvs_from_photometry import flag_is_usable
+
+    assert flag_is_usable("catflags_32768", 32) is True
+    assert flag_is_usable("catflags_32768", 32768) is False
+    assert flag_is_usable("any_nonzero", 32) is False
+    assert flag_is_usable("none", 32768) is True
+    assert flag_is_usable("catflags_32768", None) is True
+
+
+def test_unknown_flag_policy_is_rejected():
+    with pytest.raises(ValueError, match="unknown flag_policy"):
+        DetectionRule(flag_policy="ten_sigma")
 
 
 def test_null_exclusion_requires_all_four_fields(tmp_path: Path):
@@ -321,7 +346,7 @@ def test_end_to_end_report_records_hashes_and_every_route(tmp_path: Path):
         ztf2g_path=paths["ztf2g"],
         ztf2r_path=paths["ztf2r"],
         output_dir=tmp_path / "out",
-        rules=[DetectionRule(snr_method="inverse_error", require_flag_zero=False)],
+        rules=[DetectionRule(snr_method="inverse_error", flag_policy="none")],
     )
 
     for name in ("table2", "table4", "ztf2g", "ztf2r"):
@@ -340,7 +365,7 @@ def test_end_to_end_report_records_hashes_and_every_route(tmp_path: Path):
     assert comparison["routes"]["null_exclusion"]["exact_set_equality"] is True
 
     # The documented photometric route includes seq 5, so it must disagree.
-    key = "documented_rule[inverse_error,flagFalse]"
+    key = "documented_rule[inverse_error,none]"
     assert comparison["routes"][key]["exact_set_equality"] is False
     assert comparison["routes"][key]["produced_only"] == 1
     assert comparison["routes"][key]["produced_only_objects"][0]["seq"] == 5
@@ -406,7 +431,7 @@ def test_module_docstring_documents_the_unresolved_parts():
 
     docstring = module.__doc__ or ""
     assert "snr_method" in docstring
-    assert "require_flag_zero" in docstring
+    assert "flag_policy" in docstring
     assert "not" in docstring.lower()
 
 
@@ -615,3 +640,67 @@ def test_harness_defaults_to_unresolved_even_on_perfect_agreement(tmp_path: Path
     assert all(route["exact_set_equality"] for route in routes.values())
     # ...and the status is still UNRESOLVED.
     assert manifest["status"] == "UNRESOLVED"
+
+
+# ---------------------------------------------------------------------------
+# Silent parse failure was the original defect. It must not return.
+# ---------------------------------------------------------------------------
+
+
+def test_unparsed_rows_are_counted_not_hidden(tmp_path: Path):
+    """A few blanks are data; they must be reported, not swallowed."""
+    path = write(
+        tmp_path / "ztf2g.dat",
+        [
+            photometry_line(1, 18.0, 0.1),
+            photometry_line(2, 18.0, 0.1).replace(" 18.0000000", "           "),
+        ],
+    )
+    stats: dict[str, int] = {}
+    result = qualifying_sequences(path, DetectionRule(), 2.5, stats)
+    assert result == {1}
+    assert stats["unparsed"] == 1
+    assert stats["rows"] == 2
+
+
+def test_a_layout_mismatch_aborts_instead_of_returning_an_empty_set(tmp_path: Path):
+    """The bug that produced the historical false result, as a regression test.
+
+    If the fixed-width offsets do not match the file, every mag/e_mag slice is
+    garbage. Skipping those rows yields an empty set, an empty set yields
+    'nothing disagreees', and the run looks clean. It must raise instead.
+    """
+    lines = [f"{i:>6}{'x' * 69}" for i in range(1, 101)]
+    path = write(tmp_path / "ztf2g.dat", lines)
+    with pytest.raises(ValueError, match="fixed-width offsets"):
+        qualifying_sequences(path, DetectionRule(), 2.5)
+
+
+def test_nonpositive_error_is_counted_separately(tmp_path: Path):
+    path = write(
+        tmp_path / "ztf2g.dat",
+        [
+            photometry_line(1, 18.0, 0.1),
+            photometry_line(2, 18.0, 0.0),
+        ],
+    )
+    stats: dict[str, int] = {}
+    qualifying_sequences(path, DetectionRule(), 2.5, stats)
+    assert stats["nonpositive_error"] == 1
+    assert stats["unparsed"] == 0
+
+
+def test_report_exposes_per_band_parse_counts(tmp_path: Path):
+    paths = _build_fixture(tmp_path)
+    manifest = build_report(
+        table2_path=paths["table2"],
+        table4_path=paths["table4"],
+        ztf2g_path=paths["ztf2g"],
+        ztf2r_path=paths["ztf2r"],
+        output_dir=tmp_path / "out",
+        rules=[DetectionRule()],
+    )
+    run = manifest["comparison"]["detection_runs"][0]
+    for band in ("g_band_rows", "r_band_rows"):
+        assert run[band]["rows"] == 3
+        assert run[band]["unparsed"] == 0

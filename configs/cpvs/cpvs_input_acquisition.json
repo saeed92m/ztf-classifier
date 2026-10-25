@@ -5,7 +5,6 @@
   "blocked_reason": "From the environment where this was written, cdsarc.cds.unistra.fr, zenodo.org and the GitHub Actions artifact host (*.blob.core.windows.net) are all unreachable: curl returns HTTP 000 (no connection) for each, while api.github.com returns 200. The data is public; only the network path is missing.",
   "verified_by": "curl -sS -o /dev/null -w '%{http_code}' against each host, 2026-10-25",
   "never_run": "No file in this manifest has been downloaded or parsed by this project. Nothing here has been validated against real data.",
-
   "inputs": [
     {
       "id": "table2",
@@ -99,7 +98,6 @@
       "why_needed": "The only input from which 'at least one 3-sigma detection in r' can be computed."
     }
   ],
-
   "publisher_evidence_for_seq": {
     "statement": "SourceID is the internal source identifier joins these attachments to Table 2.",
     "example": "For variable star ZTFJ000000.19+320847.2 in Table 2, the SourceID=3 is adopted to search corresponding single-exposure information in both 'ztf2g' and 'ztf2r'.",
@@ -111,7 +109,6 @@
     ],
     "limits": "The example does not state the object's row position in table2.dat, so the ordinal implication is strong but not closed. The row-count argument (781,602 rows spanning [1/781604]) does not depend on the example and already proves ordinals are unsafe."
   },
-
   "not_publisher_evidence": {
     "table4_id_equals_table2_seq": {
       "status": "CORROBORATED, NOT ESTABLISHED",
@@ -124,9 +121,7 @@
       "why_not_enough": "Each argument is consistent with the equivalence without asserting it. No retrieved source says in one sentence that table4.ID is table2.Seq. The finding is therefore treated as a cross-check whose disagreement aborts the run, never as a licence to join on ID alone."
     }
   },
-
   "reproduction_command": "python scripts/reconstruct_cpvs_from_photometry.py --table2 table2.dat --table4 table4.dat --ztf2g ztf2g.dat --ztf2r ztf2r.dat --output-dir out/cpvs-documented-rule",
-
   "acceptance_evidence_required": [
     "SHA-256 of all four inputs, recorded in the report manifest",
     "row counts matching the values declared above",
@@ -135,5 +130,28 @@
     "exact set difference for every route against the published membership",
     "object-level rows for every discrepancy",
     "a statement of which SNR definition and flag policy were used"
-  ]
+  ],
+  "open_layout_questions": {
+    "flag_field_width": {
+      "question": "What is the exact byte span and width of the g_flag/r_flag column?",
+      "why_it_matters": "Chen+ 2020 section III cuts catflags != 32768, which needs five characters. The span currently coded is 71-75, four characters, which cannot hold 32768. Either the span is wrong or the column is not catflags.",
+      "current_handling": "The documented cut is asserted on the predicate (flag_is_usable) rather than through a fixture, so no test depends on an unverified width. The parser must be checked against the ReadMe the moment a real file is present.",
+      "status": "UNVERIFIED"
+    },
+    "infobits_cut_not_applicable": {
+      "detail": "Chen+ 2020 also applies INFOBITS < 33,554,432. INFOBITS is image level and appears in none of the four files, so it cannot be reproduced here. It is recorded as UNKNOWN rather than approximated.",
+      "status": "UNKNOWN"
+    }
+  },
+  "publisher_evidence_for_flag_cut": {
+    "statement": "Second, poor-quality images and photometry were excluded by adopting INFOBITS < 33,554,432 and catflags != 32,768, respectively.",
+    "source": "Chen+ 2020, section III, arXiv:2005.08662v2",
+    "retrieved": "2026-10-25",
+    "significance": [
+      "The photometry cut is one specific bit value, not 'flag == 0'.",
+      "Chan+ 2022 states no flag cut at all, so 'none' is the reading closest to its stated criterion.",
+      "A policy discarding every nonzero flag is stricter than anything documented and is labelled a sensitivity check only."
+    ],
+    "limits": "This is Chen's cut for building the parent catalogue. Whether ztf2g/ztf2r already contain only rows passing it is unknown, and would make any further flag cut double-counting."
+  }
 }

@@ -24,6 +24,12 @@ was narrowed. Four labels are used strictly:
 
 ### Revision log
 
+**Rev 3 (2026-10-25, commit `21faaf5` and later).** Added: Chan+ 2022's silence on
+the sigma definition, the flag and per-exposure count (§2.1); Chen+ 2020's actual
+photometry cut (§2.2); the commit/test-count/CI table with the missing green run
+for `c7066a5` stated plainly (§9); the documented `catflags != 32768` policy
+replacing the undocumented "flag = 0" assumption; and the parse-failure guard.
+
 **Rev 2 (2026-10-25, commit `c7066a5`).** Two earlier labels are withdrawn:
 
 - `table4.ID` = `table2.Seq` was labelled VERIFIED FACT. It is now
@@ -72,6 +78,42 @@ period per band.
 **VERIFIED FACT** — therefore the documented rule is a *per-detection significance
 threshold applied to the light curves*, evaluated per band. It is not a statement
 about catalogue columns being positive.
+
+### 2.1 What Chan+ 2022 does *not* say
+
+The full sentence was re-read from the arXiv HTML rather than from a summary. It
+gives the two sigma values and nothing else. It does **not** say:
+
+- how σ is computed — flux significance or magnitude divided by its error;
+- whether any photometric flag was applied before counting detections;
+- which exposures enter the count.
+
+These are the three quantities that determine the answer, and the paper is silent
+on all three. This is why §8.1 and §8.2 compute the alternatives instead of
+picking one, and it is the direct answer to "settle the definition from the
+paper's method": the paper does not contain that definition.
+
+### 2.2 Chen+ 2020 *does* state the photometry cut
+
+The parent-catalogue paper is more forthcoming. Chen+ 2020, §III, verbatim:
+
+> Second, poor-quality images and photometry were excluded by adopting INFOBITS <
+> 33,554,432 and catflags ≠ 32,768, respectively.
+
+This is a specific bit value on the photometry flag, not "flag = 0". It corrects a
+plausible but undocumented assumption: a reconstruction that discards every
+nonzero flag is stricter than the published cut and would shrink the selected set
+silently. The harness therefore carries three named policies — `none` (closest to
+Chan+ 2022, which states no flag cut), `catflags_32768` (Chen's documented value),
+and `any_nonzero` (undocumented, sensitivity check only).
+
+Two limits, both recorded rather than papered over:
+
+- `INFOBITS` is an **image-level** bitmask and is present in none of the four
+  files. It cannot be reproduced here and is marked UNKNOWN.
+- Whether `ztf2g`/`ztf2r` already contain only rows that passed Chen's cut is
+  unknown. If they do, applying the cut again would double-count it. This can only
+  be settled by looking at the files.
 
 ## 3. What the predicate in use actually is
 
@@ -398,11 +440,32 @@ the defective ID-based membership.
 `setuptools` 84.0.0 carried GHSA-xmj3-9gf7-h52w. Both raised to the fixed versions;
 `pip_audit` goes from exit 1 with 4 advisories to exit 0.
 
-**VERIFIED:** `scripts/reconstruct_cpvs_from_photometry.py` and its 25 tests are
-committed as `c7066a5`. The tests found a real defect in the first version
-(`read_table4` returns a name→id mapping, which `build_report` subtracted as if it
-were a set). Suite at that commit: **631 passed, 4 skipped**, ruff clean, 231 files
-formatted, CI green. This is engineering evidence and nothing more.
+**VERIFIED:** `scripts/reconstruct_cpvs_from_photometry.py` and its tests are
+committed as `c7066a5`, extended by `21faaf5`. The tests found a real defect in the
+first version (`read_table4` returns a name→id mapping, which `build_report`
+subtracted as if it were a set).
+
+Test counts are quoted against a specific commit because a bare number is not
+auditable. The following table is the only correct way to read them:
+
+| Commit | Tests in `test_cpvs_documented_rule.py` | Suite result | CI run | CI conclusion |
+|---|---|---|---|---|
+| `c630701` | — | 606 passed, 4 skipped | 40182831760 | success (8/8) |
+| `c7066a5` | 25 | 631 passed, 4 skipped | 40191856009 | **cancelled** — superseded by the next push, `concurrency: cancel-in-progress` |
+| `21faaf5` | 30 | 636 passed, 4 skipped | 40192030836 | success (8/8) |
+
+The 631 → 636 step is the five new document-guard tests added in `21faaf5`;
+`git diff c7066a5..21faaf5 -- tests/` shows exactly those five functions. So the
+two numbers are not in conflict — but the earlier report quoted 631 without
+saying that **no green CI run exists for `c7066a5`**. Only `21faaf5` carries a
+completed 8/8 run. That is a real reporting gap and it is corrected here.
+
+The later commit also strengthens the parser against the defect that caused the
+original false result: unparseable rows are now counted and reported per band, and
+a wholesale parse failure (more than 1% of rows, at least 100) raises instead of
+returning a small set that would look like agreement.
+
+This is engineering evidence and nothing more.
 
 **Not claimed:** that a green suite means the CPVS question is answered. It does
 not. The scientific gate stays closed. A test suite over synthetic fixtures cannot
