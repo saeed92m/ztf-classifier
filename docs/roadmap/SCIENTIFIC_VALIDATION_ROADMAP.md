@@ -172,15 +172,18 @@ This overlay does not relax the permanent Scientific Validation Product-Level Ga
 
 The CPVS 730k reconstruction is now explicitly split from the product gate.
 
-Observed evidence:
-- parent CPVS: 781,602
-- published membership: 730,184
-- current candidate: 741,788
-- exact intersection: 730,184
+Latest recorded Seq-based diagnostic evidence (revalidate primary artifacts before new claims):
+- parent CPVS table: 781,602 rows
+- published membership reference: 730,184 objects
+- candidate set: 741,786 objects
+- intersection: 730,184 objects
 - published-only: 0
-- candidate-only: 11,604
+- candidate-only: 11,602 objects
+- duplicate/unmapped published names: 0 / 0
 
-Interpretation: the current selection predicate contains the complete published membership but also admits 11,604 additional parent objects. This is an unresolved historical-selection reconstruction discrepancy, not an ML error.
+Source record: [heavy run #38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) and [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). The older 741,788 / 11,604 figures are superseded by the recorded Seq-based diagnostic result; they must not be presented as current. The source-backed artifact still needs renewed integrity/content audit before relying on it for a new scientific claim.
+
+Interpretation: the recorded candidate set contains all published members and 11,602 candidate-only objects. The four-field predicate can reproduce the reference set diagnostically, but its identity with the historical publisher selection rule remains unproven. This is an unresolved external-method reproduction question, not an ML error.
 
 Policy:
 1. Do not introduce a threshold solely to force the candidate count to 730,184.
