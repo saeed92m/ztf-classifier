@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-parallel-resolution-experiment-20261025",
+  "objective": "Compare source-backed Jupyter/reconstruction analysis with provenance-rich discrepancy reporting to determine the most scientifically justified and reproducible handling of CPVS membership differences without changing production selection or the immutable baseline.",
+  "previous_knowledge_consumed": [
+    "Issue #170: CPVS candidate/reference membership discrepancy remains scientifically unresolved; prior recorded counts must be revalidated against authoritative inputs and correct Seq/SourceID mapping before reuse",
+    "The four-field gmag/rmag/Per-g/Per-r condition is a diagnostic hypothesis, not established as the historical publisher rule",
+    "PR #224 implements a discrepancy-reporting workflow, but the actual source-backed report has not been generated and audited",
+    "Issue #222 defines a separate operational test on 100 object-level inputs and is not an independent scientific accuracy benchmark",
+    "Raw astronomical data must not be committed to Git; preserve source/output hashes and provenance"
+  ],
+  "baseline": {
+    "revision": "d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
+    "description": "Experimental branch based on main; preserve scientific baseline v0.2.0, production model, 42-feature schema, frozen class order, historical cutoff, diagnostics schema 1.1, fail-closed scientific gate, and immutable v1.0.1 release."
+  },
+  "expected_improvement": [
+    "Reproduce the existing candidate set from hash-identified authoritative source inputs before modifying reconstruction logic",
+    "Audit object identifiers, Table2 Seq versus light-curve SourceID, joins, row/object grain, filtering, duplicate handling, and missing/non-finite values",
+    "Compare a Jupyter/reconstruction diagnostic track with a source-backed discrepancy-reporting track",
+    "Record all included/excluded IDs, per-ID reasons, hashes, commands, environment, and deterministic rerun evidence",
+    "Evaluate behavior on independent source-backed astronomical inputs outside CPVS before accepting a generalized method",
+    "Keep unresolved historical publisher semantics explicit if authoritative evidence is insufficient"
+  ],
+  "measurement": {
+    "metrics": {
+      "source_reproducibility": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      },
+      "identifier_integrity": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      },
+      "false_inclusion_exclusion": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      },
+      "independent_input_generalization": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      },
+      "provenance_completeness": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Experiment branch experiment/cpvs-jupyter-reconstruction-20261025 was created from main",
+      "Experiment plan was committed as docs/experiments/CPVS_PARALLEL_RESOLUTION_EXPERIMENT_PLAN_2026-10-25.md",
+      "Parallel plan and decision criteria were recorded in Issue #170",
+      "No source-backed experiment has been executed; no scientific result is claimed"
+    ],
+    "blocker": "Locate and inspect the exact authoritative source artifacts and existing notebook/script path, reproduce the current output, then execute and compare both tracks with hashes and regression coverage."
+  },
+  "failure_analysis": {
+    "status": "NOT_VERIFIED",
+    "root_causes": [
+      "The historical publisher selection rule has not been established from the available evidence",
+      "The source-backed 11,602-row report has not been generated and audited",
+      "The current available code-search interface returned no notebook/code matches; actual source inventory remains pending"
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A matching output count alone is not sufficient evidence of scientific correctness",
+      "A discrepancy report can improve auditability without resolving historical method semantics",
+      "NOT_ASSESSED must remain distinct from a negative scientific finding",
+      "The 100-object operational behavior test is separate from CPVS membership validation"
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "No source-backed rerun or comparison of the two tracks has yet been completed",
+      "No regression tests for the proposed experiment have yet been run on authoritative inputs",
+      "No independent source-backed dataset has yet been evaluated"
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not alter production selection predicates, thresholds, model artifacts, or the immutable scientific baseline before evidence-based acceptance",
+    "Track A and Track B remain experimental; neither is selected as winner",
+    "If the historical rule remains unprovable, keep the scientific blocker open and retain discrepancy reporting as a product capability"
+  ]
+}
