@@ -57,16 +57,20 @@
       "Experiment branch experiment/cpvs-jupyter-reconstruction-20261025 was created from main",
       "Experiment plan was committed as docs/experiments/CPVS_PARALLEL_RESOLUTION_EXPERIMENT_PLAN_2026-10-25.md",
       "Parallel plan and decision criteria were recorded in Issue #170",
-      "No source-backed experiment has been executed; no scientific result is claimed"
+      "No source-backed experiment has been executed; no scientific result is claimed",
+      "Downloaded retained source-backed GitHub Actions artifact run 38635891449, artifact 11935357767, and generated a local discrepancy-report bundle from its candidate_only_all_objects list.",
+      "Report audit verified 11602 unique candidate-only IDs, 11602 parent-metadata joins, 0 missing parent rows, strict JSON parsing, and ZIP integrity; bundle SHA-256 9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc.",
+      "The report reuses the previously audited candidate-only list; raw published Table 4 was absent from the retained artifact, so the report did not independently rerun the Table 4 membership join."
     ],
-    "blocker": "Locate and inspect the exact authoritative source artifacts and existing notebook/script path, reproduce the current output, then execute and compare both tracks with hashes and regression coverage."
+    "blocker": "Track A Jupyter reconstruction has not been rerun; PR #224 CLI has not yet been executed against a complete source-backed published Table 4 ID input. Retrieve/hash Table 4 and compare both tracks on identical inputs."
   },
   "failure_analysis": {
-    "status": "NOT_VERIFIED",
+    "status": "SUPPORTED",
     "root_causes": [
       "The historical publisher selection rule has not been established from the available evidence",
       "The source-backed 11,602-row report has not been generated and audited",
-      "The current available code-search interface returned no notebook/code matches; actual source inventory remains pending"
+      "The current available code-search interface returned no notebook/code matches; actual source inventory remains pending",
+      "The retained heavy artifact contains the complete 11602 candidate-only diagnostic list and parent Table 2 metadata, but not the raw published Table 4 input; therefore an auditable report can be generated now, while an independent Table 4 re-join still requires that source input."
     ]
   },
   "knowledge_extraction": {
@@ -75,21 +79,24 @@
       "A matching output count alone is not sufficient evidence of scientific correctness",
       "A discrepancy report can improve auditability without resolving historical method semantics",
       "NOT_ASSESSED must remain distinct from a negative scientific finding",
-      "The 100-object operational behavior test is separate from CPVS membership validation"
+      "The 100-object operational behavior test is separate from CPVS membership validation",
+      "A provenance-rich report can be generated from retained source-backed audit output without claiming that the historical selection rule has been resolved.",
+      "A report generated from a prior audit list is not equivalent to independently rerunning the published membership join."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "No source-backed rerun or comparison of the two tracks has yet been completed",
-      "No regression tests for the proposed experiment have yet been run on authoritative inputs",
-      "No independent source-backed dataset has yet been evaluated"
+      "Track A Jupyter reconstruction and source-backed baseline reproduction remain pending.",
+      "The PR #224 CLI must be run against the complete published Table 4 ID input and its outputs compared with the retained audit.",
+      "No independent Table 4 join or external cross-match was performed in this report-generation step."
     ]
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not alter production selection predicates, thresholds, model artifacts, or the immutable scientific baseline before evidence-based acceptance",
     "Track A and Track B remain experimental; neither is selected as winner",
-    "If the historical rule remains unprovable, keep the scientific blocker open and retain discrepancy reporting as a product capability"
+    "If the historical rule remains unprovable, keep the scientific blocker open and retain discrepancy reporting as a product capability",
+    "Local report bundle generated from artifact run 38635891449; ZIP SHA-256 9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc; report has 11602 rows and 0 missing parent-metadata joins."
   ]
 }
