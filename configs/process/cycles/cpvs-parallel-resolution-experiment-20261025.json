@@ -7,7 +7,8 @@
     "The four-field gmag/rmag/Per-g/Per-r condition is a diagnostic hypothesis, not established as the historical publisher rule",
     "PR #224 implements a discrepancy-reporting workflow, but the actual source-backed report has not been generated and audited",
     "Issue #222 defines a separate operational test on 100 object-level inputs and is not an independent scientific accuracy benchmark",
-    "Raw astronomical data must not be committed to Git; preserve source/output hashes and provenance"
+    "Raw astronomical data must not be committed to Git; preserve source/output hashes and provenance",
+    "Official CDS/VizieR ReadMe J/ApJ/932/118 states the high-level 730,184-object selection as at least one 2.5σ and 3σ detection in g and r, respectively; this is distinct from the four-field positive-value diagnostic predicate."
   ],
   "baseline": {
     "revision": "d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
@@ -61,9 +62,10 @@
       "Downloaded retained source-backed GitHub Actions artifact run 38635891449, artifact 11935357767, and generated a local discrepancy-report bundle from its candidate_only_all_objects list.",
       "Report audit verified 11602 unique candidate-only IDs, 11602 parent-metadata joins, 0 missing parent rows, strict JSON parsing, and ZIP integrity; bundle SHA-256 9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc.",
       "The report reuses the previously audited candidate-only list; raw published Table 4 was absent from the retained artifact, so the report did not independently rerun the Table 4 membership join.",
-      "CI run 40176601271 exposed a lifecycle-contract failure because the new record used metric keys unsupported by src/ztf_classifier/lifecycle.py; metric keys were aligned to the existing contract without changing any scientific gate or claiming measurements."
+      "CI run 40176601271 exposed a lifecycle-contract failure because the new record used metric keys unsupported by src/ztf_classifier/lifecycle.py; metric keys were aligned to the existing contract without changing any scientific gate or claiming measurements.",
+      "Reviewed official CDS/VizieR ReadMe for J/ApJ/932/118: it states the 730,184 sample contains at least one 2.5σ and 3σ detection in g and r, respectively, and defines Table 4 ID as catalog internal ID while ZTF is a separate column. This narrows the literature claim but does not by itself reproduce the exact per-object selection."
     ],
-    "blocker": "Track A Jupyter reconstruction has not been rerun; PR #224 CLI has not yet been executed against a complete source-backed published Table 4 ID input. Fresh CI must validate the lifecycle record before further acceptance."
+    "blocker": "Track A Jupyter reconstruction has not been rerun; PR #224 CLI has not yet been executed against complete hash-identified parent metadata, candidate IDs, and the authoritative Table 4 ZTF-name/ID rows. Fresh CI must validate the lifecycle record. The four-field positive-value predicate remains diagnostic only and is not equivalent by definition to the paper's stated detection criterion."
   },
   "failure_analysis": {
     "status": "SUPPORTED",
@@ -72,7 +74,8 @@
       "The source-backed 11,602-row report has not been generated and audited",
       "The current available code-search interface returned no notebook/code matches; actual source inventory remains pending",
       "The retained heavy artifact contains the complete 11602 candidate-only diagnostic list and parent Table 2 metadata, but not the raw published Table 4 input; therefore an auditable report can be generated now, while an independent Table 4 re-join still requires that source input.",
-      "The first experiment lifecycle record used metric names not accepted by the existing lifecycle contract; corrected to supported metric names while leaving all metrics NOT_MEASURED."
+      "The first experiment lifecycle record used metric names not accepted by the existing lifecycle contract; corrected to supported metric names while leaving all metrics NOT_MEASURED.",
+      "The primary literature describes a detection-significance criterion (at least one 2.5σ and 3σ detection in g and r, respectively); a positive gmag/rmag/Per-g/Per-r metadata predicate is not a direct implementation of that criterion and must not be treated as the historical rule without a derivation."
     ]
   },
   "knowledge_extraction": {
@@ -83,7 +86,8 @@
       "NOT_ASSESSED must remain distinct from a negative scientific finding",
       "The 100-object operational behavior test is separate from CPVS membership validation",
       "A provenance-rich report can be generated from retained source-backed audit output without claiming that the historical selection rule has been resolved.",
-      "A report generated from a prior audit list is not equivalent to independently rerunning the published membership join."
+      "A report generated from a prior audit list is not equivalent to independently rerunning the published membership join.",
+      "The official CDS ReadMe provides a high-level published detection criterion, but exact operational reconstruction still requires raw-light-curve or equivalent source-backed evidence and correct object-name/ID mapping."
     ]
   },
   "regression": {
@@ -92,7 +96,8 @@
       "Track A Jupyter reconstruction and source-backed baseline reproduction remain pending.",
       "The PR #224 CLI must be run against the complete published Table 4 ID input and its outputs compared with the retained audit.",
       "No independent Table 4 join or external cross-match was performed in this report-generation step.",
-      "Fresh CI must confirm the lifecycle record now passes the existing metric-name contract."
+      "Fresh CI must confirm the lifecycle record now passes the existing metric-name contract.",
+      "Derive and test the published g/r detection-significance criterion on source-backed photometry; do not substitute the four-field metadata predicate."
     ]
   },
   "decision": "BLOCKED",
@@ -100,6 +105,7 @@
     "Do not alter production selection predicates, thresholds, model artifacts, or the immutable scientific baseline before evidence-based acceptance",
     "Track A and Track B remain experimental; neither is selected as winner",
     "If the historical rule remains unprovable, keep the scientific blocker open and retain discrepancy reporting as a product capability",
-    "Local report bundle generated from artifact run 38635891449; ZIP SHA-256 9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc; report has 11602 rows and 0 missing parent-metadata joins."
+    "Local report bundle generated from artifact run 38635891449; ZIP SHA-256 9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc; report has 11602 rows and 0 missing parent-metadata joins.",
+    "Published high-level rule from Chan et al. (2022): at least one 2.5σ and 3σ detection in g and r, respectively; exact code-level semantics remain to be reconstructed."
   ]
 }
