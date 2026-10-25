@@ -69,9 +69,10 @@
       "Prepared a deterministic 1,000-object stratified sample from the full parent universe using SHA-256 ranking: 500 overlap-stratum IDs, 250 candidate-only IDs, 250 parent-not-candidate IDs. Local sample file SHA-256 94b4c966abaa059ff3c1f63172542e9eb2c11323a814f3b0d4eb7a9c506087b0; compact ID payload SHA-256 2beb0912cbf1d12c48f7f82157eaf0dd31864204450e40d181afbdf61e6c29f7. This is preparation only; Table 2 name crosswalk and Table 4 membership query have not completed.",
       "Audited all 11,602 candidate-only entries in selection_diagnostics.json (SHA-256 7e763d8804a57d75d1633d0a4089a4a6ac5aa40bb4695964d35e645b67ad5b61): all 11,602 have current-implementation g.snr_exact/r.snr_exact true and >=1 qualifying detection in each band; 10,887 have zero nonzero qualifying flags in both bands. This is implementation-specific diagnostic evidence, not proof of equivalence to the paper's exact rule.",
       "Parent-magnitude diagnostic gives 730,201 candidates, 17 candidate-only and 0 published-only; the remaining 17 extras have incomplete per-band period metadata. Four-field predicate matches 730,184 membership diagnostically, but publisher's exact historical rule remains unestablished.",
-      "Locally verified fixed 1,000-object sample integrity: 1,000 unique IDs, all present in parent metadata, with exact strata counts and membership-in-candidate-set checks. Sample SHA-256 94b4c966abaa059ff3c1f63172542e9eb2c11323a814f3b0d4eb7a9c506087b0. Table 4 membership for all 1,000 has not been independently re-queried."
+      "Locally verified fixed 1,000-object sample integrity: 1,000 unique IDs, all present in parent metadata, with exact strata counts and membership-in-candidate-set checks. Sample SHA-256 94b4c966abaa059ff3c1f63172542e9eb2c11323a814f3b0d4eb7a9c506087b0. Table 4 membership for all 1,000 has not been independently re-queried.",
+      "Code review found the experiment branch's prior scripts/audit_cpvs_membership.py compared Table 4's numeric internal ID directly to candidate SourceID. Corrected the experiment branch to join normalized Table 4 ZTF names through parent Table 2 ID names to Seq/SourceID; tests include deliberately unrelated internal IDs. Fresh CI and real-data rerun remain pending."
     ],
-    "blocker": "Raw per-epoch detection semantics (SNR convention and quality flags) remain unverified against source/paper definitions. All 11,602 candidate-only records satisfy the current reconstruction's g/r SNR predicate, so that predicate does not explain their absence from Table 4. Full Table 4 name crosswalk and 1,000-object membership comparison remain pending; Track A Jupyter reconstruction remains unrun."
+    "blocker": "Fresh CI must validate the corrected membership audit and PR #224 name-crosswalk tests. The corrected audit has not yet been run on complete real Table 2/Table 4 inputs; full 1,000-object membership comparison and Track A Jupyter reconstruction remain pending. The current SNR diagnostic passes all candidate-only objects, so the paper's operational threshold/quality semantics remain unresolved."
   },
   "failure_analysis": {
     "status": "SUPPORTED",
@@ -106,7 +107,8 @@
       "Derive and test the published g/r detection-significance criterion on source-backed photometry; do not substitute the four-field metadata predicate.",
       "Run and archive the fixed 1,000-object parent-dataset sample with both published members and non-members, source-to-Seq/name provenance, and deterministic hashes.",
       "Complete and archive the 1,000-object sample's parent Seq-to-ZTF-name crosswalk and published Table 4 membership query; sample preparation alone is not validation.",
-      "Determine why current SNR-qualified candidate-only objects are absent from published Table 4: compare source-backed per-epoch uncertainties, quality flags, object-name crosswalk, common period/period metadata, and any documented additional eligibility constraints."
+      "Determine why current SNR-qualified candidate-only objects are absent from published Table 4: compare source-backed per-epoch uncertainties, quality flags, object-name crosswalk, common period/period metadata, and any documented additional eligibility constraints.",
+      "Rerun the corrected scripts/audit_cpvs_membership.py on full hash-identified Table 2 and Table 4 data and compare its result with the previously retained name-crosswalk audit."
     ]
   },
   "decision": "BLOCKED",
@@ -117,6 +119,7 @@
     "Local report bundle generated from artifact run 38635891449; ZIP SHA-256 9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc; report has 11602 rows and 0 missing parent-metadata joins.",
     "Published high-level rule from Chan et al. (2022): at least one 2.5σ and 3σ detection in g and r, respectively; exact code-level semantics remain to be reconstructed.",
     "A 100-object stratified identity/membership spot-check agrees with expected membership strata but is not a full-dataset validation or a detection-threshold test.",
-    "All 11,602 candidate-only objects pass the current implementation's per-band SNR predicate and have >=1 qualifying detection in each band; do not infer they fail the published detection criterion until the implementation convention is validated."
+    "All 11,602 candidate-only objects pass the current implementation's per-band SNR predicate and have >=1 qualifying detection in each band; do not infer they fail the published detection criterion until the implementation convention is validated.",
+    "The experiment branch's old membership audit parser used Table 4 numeric internal IDs as if they were SourceID; this is now corrected to an explicit ZTF-name crosswalk but requires CI and full real-data verification."
   ]
 }
