@@ -54,9 +54,11 @@
       "Scientific Validation contract job passed on the current report branch, but source-backed scientific jobs were skipped and do not validate CPVS science",
       "The report generator and CLI now require a recorded source revision and reject UNRECORDED",
       "Regression tests verify SHA-256 hashes for all five non-manifest deliverables; current CI exposed one test call that omitted the newly required source_revision argument, and the test was corrected to supply a recorded fixture revision",
-      "Historical CI run 40142835625 failed the lifecycle gate on an earlier head where regression.status was IN_PROGRESS; the current committed record uses the allowed status NOT_VERIFIED, but a fresh current-head CI run is required to verify this correction."
+      "Historical CI run 40142835625 failed the lifecycle gate on an earlier head where regression.status was IN_PROGRESS; the current committed record uses the allowed status NOT_VERIFIED, but a fresh current-head CI run is required to verify this correction.",
+      "Code review found the raw Table 4 numeric ID is not the parent Table 2 Seq/SourceID join key; the report implementation now uses the published ZTF object-name column to crosswalk through the parent Table 2 name column, and fails closed on missing parent names, duplicates/collisions, blank names, or unmapped published names. Regression tests were added; fresh CI is pending.",
+      "PR scope was narrowed by restoring pre-existing dependency pins (setuptools 84.0.0 and filelock 4.0.3) in this feature branch; dependency/toolchain changes should remain separate from the CPVS report feature."
     ],
-    "blocker": "Fresh current-head CI has not yet verified the lifecycle-record correction; source-backed 11,602-object report generation and audit remain pending."
+    "blocker": "Fresh CI and scientific-validation workflows for the latest branch head must complete; verify the new Table 4 ZTF-name crosswalk tests pass. Full real-data CLI execution on complete hash-identified parent metadata, candidate IDs, and raw Table 4 is still pending. Historical CPVS selection semantics remain unresolved."
   },
   "failure_analysis": {
     "status": "VERIFIED",
@@ -78,13 +80,15 @@
     "status": "NOT_VERIFIED",
     "open_blockers": [
       "Fresh current-head CI must verify the lifecycle-record correction and run the previously skipped test, dependency-audit, runtime-smoke, and package-build jobs.",
-      "The actual source-backed 11,602-object report has not yet been generated and audited."
+      "The actual source-backed 11,602-object report has not yet been generated and audited.",
+      "Run the new regression tests using a real Table 4-like export where the numeric internal ID intentionally differs from parent Seq, and confirm the ZTF-name crosswalk is used."
     ]
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "PR #224 implements a draft reporting capability; it is not merged or a release",
     "Issue #170 remains an explicit scientific validation blocker",
-    "Do not claim a cross-match, raw-light-curve review, new discovery, or full 11602-object output until the corresponding evidence is actually generated and checked"
+    "Do not claim a cross-match, raw-light-curve review, new discovery, or full 11602-object output until the corresponding evidence is actually generated and checked",
+    "Table 4 membership must be mapped by normalized ZTF object name to Table 2 Seq/SourceID; the Table 4 internal numeric ID must never be assumed to share the parent identifier namespace."
   ]
 }
