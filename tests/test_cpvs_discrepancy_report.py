@@ -161,3 +161,52 @@ def test_report_accepts_vizier_tsv_metadata_units_and_separator(tmp_path: Path):
     assert result["counts"]["candidate_only_objects"] == 1
     assert result["counts"]["published_only_objects"] == 0
 
+
+
+def test_published_table4_uses_ztf_name_not_internal_id(tmp_path: Path):
+    parent = write_file(
+        tmp_path / "parent.tsv",
+        "Seq\tID\tgmag\trmag\tPer-g\tPer-r\n"
+        "1\tZTFJ000000.00+000000.0\t15\t16\t0.5\t0.6\n"
+        "2\tZTFJ000001.00+000001.0\t\t16\t0.5\t0.6\n",
+    )
+    candidates = write_file(tmp_path / "candidates.tsv", "SourceID\n1\n2\n")
+    # Table 4's numeric ID is intentionally unrelated to parent Seq. The ZTF
+    # object-name crosswalk is the authoritative membership join.
+    published = write_file(
+        tmp_path / "table4.tsv",
+        "ID\tZTF\n"
+        "99999\tZTF J000000.00+000000.0\n",
+    )
+    result = build_cpvs_discrepancy_report(
+        parent_metadata=parent,
+        candidate_ids=candidates,
+        published_ids=published,
+        output_dir=tmp_path / "report",
+        source_revision="test-sha",
+    )
+    assert result["counts"]["intersection_objects"] == 1
+    assert result["counts"]["candidate_only_objects"] == 1
+    with (tmp_path / "report" / "cpvs_candidate_only_objects.csv").open(
+        encoding="utf-8", newline=""
+    ) as stream:
+        rows = list(csv.DictReader(stream))
+    assert [row["SourceID"] for row in rows] == ["2"]
+
+
+def test_table4_ztf_names_fail_closed_without_parent_name_crosswalk(
+    tmp_path: Path,
+):
+    parent, candidates, _ = make_inputs(tmp_path)
+    published = write_file(
+        tmp_path / "table4.tsv",
+        "ID\tZTF\n99999\tZTFJ000000.00+000000.0\n",
+    )
+    with pytest.raises(ValueError, match="parent metadata has no object-name column"):
+        build_cpvs_discrepancy_report(
+            parent_metadata=parent,
+            candidate_ids=candidates,
+            published_ids=published,
+            output_dir=tmp_path / "out",
+            source_revision="test-sha",
+        )
