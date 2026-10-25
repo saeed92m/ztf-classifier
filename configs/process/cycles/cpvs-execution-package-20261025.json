@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-execution-package-20261025",
+  "objective": "Make the CPVS resolution work executable on real data: repair the selection diagnostic that an earlier fix broke, enforce strict JSON at its serialization boundary, resolve the ztf2[gr].dat flag column layout from the authoritative CDS ReadMe, and publish a reproducible local acquisition and reconstruction runbook. Record the scientific status as UNRESOLVED and keep the SNR policies independent.",
+  "previous_knowledge_consumed": [
+    "v0.2.0 baseline is immutable: 150-object benchmark, 15 classes, final_feature_set_v0.2 (42 features), cutoff 59447.224132, fail-closed gate",
+    "Issue #170: CPVS 730k reconstruction does not match the published membership; 11,602 candidate-only objects remain unexplained",
+    "Issue #196 remains open",
+    "docs/CPVS_RESOLUTION_STATUS_2026-10-25.md Rev 2-3: table4.ID = table2.Seq is CORROBORATING, NOT PROVEN; the four-field null-exclusion predicate reproduces 741,786 -> 730,184 arithmetically but is a candidate mechanism, not the cause",
+    "Chan+ 2022 section II.1 states only '2.5 sigma and 3 sigma detection in g and r band'; it does not define sigma, state a flag cut, or say which exposures are counted",
+    "Chan+ 2020 section III states the parent-catalogue photometry cut as INFOBITS < 33,554,432 and catflags != 32768",
+    "CDS ReadMe J/ApJS/249/18: ztf2[gr].dat Flag is bytes 72-75 I4 with range [0/4628]",
+    "fix/cpvs-diagnostic-json-null is an unmerged branch carrying a 694-line diagnostic with a _json_safe helper; main and this branch carry an 86-line diagnostic. Evidence from one must not be attributed to the other"
+  ],
+  "baseline": {
+    "revision": "b9936ef",
+    "description": "main is d88e54a. Branch head before this cycle: b9936ef, CI run 40205935270 success 8/8 (Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, CI Gate). Suite 645 passed, 4 skipped. scripts/diagnose_cpvs_selection.py raised ImportError on this revision."
+  },
+  "expected_improvement": [
+    "The heavy-validation diagnostic step can execute instead of failing at import",
+    "Its artifact is strict RFC 8259 JSON, so a non-Python parser cannot reject it",
+    "The ztf2[gr].dat flag span and range are resolved from the CDS ReadMe rather than recorded as unverified",
+    "A local runbook exists for Ubuntu/WSL and Windows with publisher checksums and verified column positions",
+    "PR-triggered CI can pass the cumulative lifecycle gate"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "scripts/diagnose_cpvs_selection.py: ImportError, cannot import name 'read_vizier' from 'audit_cpvs_membership'",
+        "after": "runs end to end on a real-layout fixture (zipped CSV parent, VizieR TSV published, CSV photometry); emits four predicate blocks",
+        "evidence": "tests/test_cpvs_selection_diagnostic.py, 9 tests, exit 0"
+      },
+      "reproducibility": {
+        "before": "artifact written with plain json.dumps, which emits bare NaN and Infinity; not valid JSON",
+        "after": "allow_nan=False plus a test that parses with parse_constant set to raise; and a test proving allow_nan=False is load bearing (plain dumps emits 'Infinity', strict dumps raises)",
+        "evidence": "synthetic artifact sha256 1e070607958c8c5a51fcec411dfc262a2b629699ce0419485437126dd0b63ce2, 514 bytes, accepted by json.loads(parse_constant=raise) and yaml.safe_load"
+      },
+      "scientific_validity": {
+        "before": "parent SourceID derived from row ordinal via _source_ids; published membership derived from table4.ID",
+        "after": "both sides use the documented Seq column; published membership resolved through the object-name join, raising on any unmapped name",
+        "evidence": "Seq-gap regression (1,2,4,5,6,7,8,9) would expose any ordinal-derived join; unmapped-name test asserts refusal"
+      },
+      "test_execution_efficiency": {
+        "before": "645 passed, 4 skipped",
+        "after": "654 passed, 4 skipped",
+        "evidence": "local pytest -q, 89s"
+      }
+    }
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Local: ruff check PASS, ruff format --check PASS, pytest 654 passed 4 skipped",
+      "Strict JSON proven on the artifact the diagnostic writes, with the encoder guard shown to be load bearing",
+      "CDS ReadMe J/ApJS/249/18 fetched 2026-10-25: ztf2[gr].dat Seq 1-6, MJD 32-44, mag 46-55, e_mag 57-70, Flag 72-75 I4 [0/4628]; all sixteen coded spans across the three files match the ReadMe",
+      "Because Flag max is 4628, Chen's catflags != 32768 cut cannot occur in these files; the catflags_32768 policy was removed rather than shipped as a no-op, and a test pins its absence",
+      "Scientific gate NOT claimed passed: status remains UNRESOLVED, validated_on_real_data false",
+      "Decision is BLOCKED, not ACCEPT: the lifecycle contract requires ACCEPT to have no open blockers, and this cycle has three (scientific UNRESOLVED, source access, issue/PR write). The engineering work is verified; the science is not."
+    ]
+  },
+  "failure_analysis": {
+    "status": "no-new-failure",
+    "root_causes": [
+      "Removing the defective read_vizier broke its only consumer, and no test covered that consumer, so the break was silent",
+      "JSON serialization was never asserted to be strict, so a permissive default was indistinguishable from a correct one",
+      "The flag span had been recorded as UNVERIFIED from an assumption rather than checked against the ReadMe",
+      "An early version of _split_parent_row stripped the whole line before splitting, collapsing leading empty fields and breaking VizieR units rows; caught by an existing test before commit"
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A CI run per event type is not interchangeable: the same SHA d1082ce passed CI on push (40122701389) and failed on pull_request (40122728663), because the cumulative lifecycle gate only runs on pull_request and only requires a cycle record there. Neither result can stand in for the other",
+      "Removing a function from a script requires checking every consumer; scripts/ has no __init__.py and no coverage for diagnose_cpvs_selection.py, so imports are unverified by default",
+      "Python's json.dumps emits NaN and Infinity by default. An artifact can look fine to json.loads in Python and still be unparseable elsewhere, so strictness has to be asserted, not assumed",
+      "A documented range can disprove the applicability of a documented cut: Flag [0/4628] means catflags != 32768 is vacuous here, and offering it as a policy would have implied a test that can never fail",
+      "The heavy validation acquires from zenodo.org and vizier.cds.unistra.fr, both unreachable from the Arena sandbox (curl HTTP 000 while api.github.com returns 200), so the heavy job must run on a machine with that egress"
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [
+      "Scientific: the CPVS 11,602-object discrepancy is UNRESOLVED. No run has been executed on real table2.dat, table4.dat, ztf2g.dat or ztf2r.dat",
+      "Access: zenodo.org, vizier.cds.unistra.fr, cdsarc.cds.unistra.fr and the Actions artifact blob host are unreachable from this environment",
+      "Process: PR-triggered CI cannot pass without a cycle record; this record supplies it. Issue and PR write access is denied (403 Resource not accessible by integration), so evidence updates cannot be posted by this agent"
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "The scientific gate remains UNRESOLVED and must not be reported as passed; the diagnostic and the runbook produce evidence, not resolution",
+    "SNR policies stay independent: inverse_error and magnitude_over_error are both computed and neither is selected on the basis of matching 730,184",
+    "table4.ID = table2.Seq remains CORROBORATING, not proven; the name join is primary and the documented-ID join is an independent cross-check whose disagreement raises",
+    "The next required action is a single local run of scripts/reconstruct_cpvs_from_photometry.py on the four publisher files, with the resulting cpvs_documented_rule_report.json returned for interpretation"
+  ]
+}
