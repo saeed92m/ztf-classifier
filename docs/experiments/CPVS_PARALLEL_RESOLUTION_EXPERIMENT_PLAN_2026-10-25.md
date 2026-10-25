@@ -102,3 +102,17 @@ Chan et al. (2022), Section 2.1, says the retained light curves have at least on
 ### Fixed 1,000-object sample preparation — membership query pending
 
 Prepared a deterministic stratified 1,000-object sample from the full parent Table 2 identifier universe and the retained candidate set using SHA-256 rank with seed `CPVS-fixed-1000-v1`: 500 candidate/reference-overlap expected objects, 250 candidate-only objects, and 250 parent objects not selected by the candidate pipeline. Sample file: local `cpvs_fixed_1000_sample_ids.json`; file SHA-256 `94b4c966abaa059ff3c1f63172542e9eb2c11323a814f3b0d4eb7a9c506087b0`; compact sample-ID payload SHA-256 `2beb0912cbf1d12c48f7f82157eaf0dd31864204450e40d181afbdf61e6c29f7`. This is sample preparation only: the full 1,000-name crosswalk and published Table 4 membership query have not completed, so no validation outcome is claimed.
+
+
+### Full candidate-only per-epoch SNR diagnostic audit
+
+The retained selection_diagnostics.json (SHA-256 7e763d8804a57d75d1633d0a4089a4a6ac5aa40bb4695964d35e645b67ad5b61, source revision a5d3e27056ec4b679c98ad0c3887b0f3d44b0864) was re-opened and all 11,602 candidate-only records were checked:
+- 11,602/11,602 have g.snr_exact == true and r.snr_exact == true under the current reconstruction's implementation.
+- 11,602/11,602 have at least one qualifying detection in each band (minimum one in g and one in r).
+- 10,887 have zero nonzero qualifying flags in both bands; 171 have a nonzero g qualifying flag and 680 have a nonzero r qualifying flag (sets can overlap).
+- 11,585 lack both positive/finite parent-table mean magnitudes; 17 have both.
+- Requiring positive/finite parent mean magnitudes yields 730,201 candidates, 17 candidate-only and 0 published-only. The remaining 17 candidate-only records have incomplete per-band period fields; requiring all four metadata fields matches 730,184 in the retained audit.
+
+This is counter-evidence to the simple hypothesis that the 11,602 extras lack any qualifying g/r detection under the current implementation. It is not proof that the implementation matches the paper's exact measurement/error convention, and it does not establish the four-field predicate as the historical publisher rule. Quality-flag semantics and raw photometry must be validated against source/paper definitions.
+
+The 1,000-object sample was also locally checked for integrity: 1,000 unique IDs, all 1,000 present in the 781,602-row parent metadata, and exact strata integrity (500 overlap-expected IDs all in candidates/not in candidate-only; 250 candidate-only all in candidate-only; 250 parent-not-candidate none in candidates). Sample file SHA-256 94b4c966abaa059ff3c1f63172542e9eb2c11323a814f3b0d4eb7a9c506087b0. This verifies sample construction, not published Table 4 membership or scientific selection semantics.
