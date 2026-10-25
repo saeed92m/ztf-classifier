@@ -6,6 +6,7 @@ import argparse
 import json
 import re
 import sys
+import zipfile
 from collections import Counter
 from pathlib import Path
 
@@ -84,32 +85,82 @@ def read_vizier_names(path: Path) -> set[str]:
     return set(names)
 
 
+def _read_text_lines(path: Path) -> list[str]:
+    """Read lines from plain text or from the single member of a .zip archive.
+
+    The heavy validation passes Table2.txt.zip, so a plain read_text() would
+    raise on the real input.
+    """
+    if path.suffix.lower() == ".zip":
+        with zipfile.ZipFile(path) as archive:
+            members = [n for n in archive.namelist() if not n.endswith("/")]
+            if len(members) != 1:
+                raise ValueError(
+                    f"{path}: expected exactly one member in the archive, "
+                    f"found {len(members)}: {sorted(members)[:5]}"
+                )
+            payload = archive.read(members[0]).decode("utf-8-sig", errors="replace")
+        return payload.splitlines()
+    return path.read_text(encoding="utf-8-sig", errors="replace").splitlines()
+
+
+# The parent catalogue reaches this parser in three shapes: a VizieR TSV export
+# (tab), the publisher's Zenodo Table2.txt (comma), and the CDS fixed-width
+# table2.dat (no delimiter at all). The heavy validation uses the Zenodo CSV via
+# ztf_periodic_781k, so a tab-only header check cannot be relied on.
+_PARENT_DELIMITERS = ("\t", ",")
+
+
+def _split_parent_row(line: str, delimiter: str) -> list[str]:
+    # Split the RAW line, then strip each field. Stripping the whole line first
+    # collapses leading empty fields, which turns a VizieR units row such as
+    # " \t \td" into ["d"] and breaks column indexing.
+    return [item.strip() for item in line.split(delimiter)]
+
+
 def read_parent_name_map(path: Path) -> dict[str, int]:
     """Map Table 2 ZTF object names to its stable Seq/SourceID namespace."""
-    lines = path.read_text(encoding="utf-8-sig", errors="replace").splitlines()
+    lines = _read_text_lines(path)
     header_index: int | None = None
     seq_index: int | None = None
     name_index: int | None = None
+    delimiter: str | None = None
     for index, line in enumerate(lines):
         stripped = line.strip()
-        if not stripped or stripped.startswith("#") or "\t" not in stripped:
+        if not stripped:
             continue
-        columns = [item.strip().lower() for item in stripped.split("\t")]
-        if "seq" in columns and "id" in columns:
-            header_index = index
-            seq_index = columns.index("seq")
-            name_index = columns.index("id")
+        # CDS/VizieR exports prefix the header with '#'. Strip it, exactly as
+        # read_vizier_names already does, or a real TSV header is skipped and the
+        # parser silently falls through to the fixed-width path.
+        if stripped.startswith("#"):
+            stripped = stripped[1:].strip()
+        for candidate in _PARENT_DELIMITERS:
+            if candidate not in stripped:
+                continue
+            columns = [item.strip().lower() for item in stripped.split(candidate)]
+            if "seq" in columns and "id" in columns:
+                header_index = index
+                seq_index = columns.index("seq")
+                name_index = columns.index("id")
+                delimiter = candidate
+                break
+        if header_index is not None:
             break
 
     name_to_id: dict[str, int] = {}
-    if header_index is not None and seq_index is not None and name_index is not None:
+    if (
+        header_index is not None
+        and seq_index is not None
+        and name_index is not None
+        and delimiter is not None
+    ):
         for line_number, line in enumerate(
             lines[header_index + 1 :], start=header_index + 2
         ):
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
                 continue
-            columns = [item.strip() for item in line.split("\t")]
+            columns = _split_parent_row(line, delimiter)
             if len(columns) <= max(seq_index, name_index):
                 raise ValueError(
                     f"{path}:{line_number}: row has {len(columns)} columns, "
@@ -134,8 +185,9 @@ def read_parent_name_map(path: Path) -> dict[str, int]:
 
     if not name_to_id:
         raise ValueError(
-            f"{path}: cannot build parent name crosswalk; expected a Table 2 TSV export "
-            "with 'Seq' and 'ID' columns, or the original fixed-width table2.dat"
+            f"{path}: cannot build parent name crosswalk; expected a Table 2 export "
+            "with 'Seq' and 'ID' columns (tab- or comma-separated), or the original "
+            "fixed-width table2.dat"
         )
     _validate_parent_seq_monotonic(path, name_to_id)
     return name_to_id
