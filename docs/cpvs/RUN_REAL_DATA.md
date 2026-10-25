@@ -419,9 +419,12 @@ The report is a single JSON file at
 | `comparison.routes.<label>.produced_only_sample_truncated` | rows beyond the sample |
 | `comparison.routes.<label>.exact_set_equality` | the only field that decides equality |
 
-Route labels are `documented_rule[<snr_method>,<flag_policy>]` for
-`{inverse_error_··none}`, `{inverse_error·any_nonzero}`,
-`{magnitude_over_error·none}`, plus `null_exclusion`.
+Route labels are `documented_rule[<snr_method>,<flag_policy>]`, plus
+`null_exclusion`. The three rule routes actually produced are:
+
+`documented_rule[inverse_error,none]`
+`documented_rule[inverse_error,any_nonzero]`
+`documented_rule[magnitude_over_error,none]`
 
 **All four routes are always reported.** No route is ranked, selected, or
 discarded on the basis of matching 730,184. A route reproducing the published
