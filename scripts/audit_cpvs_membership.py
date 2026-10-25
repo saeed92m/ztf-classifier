@@ -212,6 +212,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--published", type=Path, required=True)
     parser.add_argument("--parent", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--crosscheck-published-ids",
+        action="store_true",
+        help=(
+            "also read the documented Table 4 ID column (columns 24-29) and "
+            "require it to agree with the object-name join. Use this for the "
+            "real fixed-width table4.dat."
+        ),
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -237,6 +246,14 @@ def _run_audit(args: argparse.Namespace) -> int:
             f"examples={unmapped[:10]}"
         )
     published = {parent_name_map[name] for name in published_names}
+    # Only meaningful for the real fixed-width table4.dat, whose ID column the
+    # ReadMes document. A TSV export may legitimately carry no such column, so
+    # the cross-check is opt-in rather than silently assumed.
+    crosscheck: dict[str, object] = {}
+    if args.crosscheck_published_ids:
+        crosscheck = crosscheck_published_names_against_ids(
+            args.published, published_names, parent_name_map
+        )
     report = {
         "candidate_count": len(candidate),
         "published_count": len(published),
@@ -250,6 +267,7 @@ def _run_audit(args: argparse.Namespace) -> int:
         "membership_join_key": "normalized ZTF object name -> parent Table 2 Seq/SourceID",
         "parent_name_mapping_count": len(parent_name_map),
         "published_unmapped_name_count": 0,
+        **crosscheck,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
@@ -262,3 +280,72 @@ def _run_audit(args: argparse.Namespace) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+def read_published_table4_ids(path: Path) -> set[int]:
+    """Read the ``ID`` column of published table4.dat.
+
+    Per the CDS ReadMe for J/ApJ/932/118, published ``table4.dat`` carries
+    ``ZTF`` in columns 1-22 and ``ID`` in columns 24-29 with the documented
+    range [1/781604] and the description "Catalog internal identifier". The
+    parent catalogue's ``table2.dat`` carries ``Seq`` in the same columns with
+    the same range and the description "Internal source identifier". Since
+    ``table4.dat`` holds only 730,184 rows, its ``ID`` cannot be a row position
+    within itself, so both ReadMes describe one shared identifier namespace.
+
+    That documentary relationship is what makes this reading legitimate. It is
+    still used only as an independent cross-check: the membership itself is
+    established from object names, and a disagreement between the two is
+    treated as an error rather than resolved by preferring one.
+    """
+    lines = path.read_text(encoding="utf-8-sig", errors="replace").splitlines()
+    ids: set[int] = set()
+    for line_number, line in enumerate(lines, start=1):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        raw = line[23:29].strip()
+        if not raw:
+            raise ValueError(f"{path}:{line_number}: blank Table 4 ID field")
+        if not raw.isdigit():
+            raise ValueError(
+                f"{path}:{line_number}: columns 24-29 are not a Table 4 ID ({raw!r})"
+            )
+        ids.add(int(raw))
+    if not ids:
+        raise ValueError(f"{path}: no Table 4 IDs found")
+    return ids
+
+
+def crosscheck_published_names_against_ids(
+    path: Path,
+    published_names: set[str],
+    parent_name_map: dict[str, int],
+) -> dict[str, object]:
+    """Confirm the name join and the documented ID join select the same objects.
+
+    The two routes are independent: one resolves membership through normalized
+    object names, the other reads the catalog internal identifier that both
+    ReadMes document for these files. Agreement is evidence that the crosswalk
+    and the identifier handling are both correct. Disagreement means at least one
+    of them is wrong, and which one cannot be decided from the data, so the audit
+    refuses to report a membership count.
+    """
+    published_ids = read_published_table4_ids(path)
+    name_join = {parent_name_map[name] for name in published_names}
+
+    if name_join == published_ids:
+        return {
+            "published_id_crosscheck": "AGREE",
+            "published_id_count": len(published_ids),
+            "published_name_join_count": len(name_join),
+        }
+
+    only_by_name = sorted(name_join - published_ids)
+    only_by_id = sorted(published_ids - name_join)
+    raise ValueError(
+        "published membership is inconsistent between the object-name join and "
+        f"the documented Table 4 ID column: {len(only_by_name)} objects resolved "
+        f"only by name (examples={only_by_name[:10]}), {len(only_by_id)} present "
+        f"only in the ID column (examples={only_by_id[:10]}). The audit cannot "
+        "decide which route is correct, so no membership result is reported."
+    )

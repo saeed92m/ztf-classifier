@@ -4,13 +4,15 @@ from pathlib import Path
 import pytest
 
 from scripts.audit_cpvs_membership import (
-    main as audit_main,
-)
-from scripts.audit_cpvs_membership import (
+    crosscheck_published_names_against_ids,
     normalize_name,
     read_parent_name_map,
+    read_published_table4_ids,
     read_selected,
     read_vizier_names,
+)
+from scripts.audit_cpvs_membership import (
+    main as audit_main,
 )
 
 
@@ -300,3 +302,158 @@ def test_end_to_end_audit_maps_by_name_and_reports_both_directions(tmp_path: Pat
     assert report["exact_membership_match"] is False
     # A non-empty difference is reported, and the exit status says so.
     assert rc == 2
+
+
+# ---------------------------------------------------------------------------
+# Independent cross-check of the published membership.
+#
+# The ReadMes document one shared identifier namespace: published table4.dat has
+# "ID [1/781604] Catalog internal identifier" in columns 24-29, and parent
+# table2.dat has "Seq [1/781604] Internal source identifier" in the same columns.
+# Because table4.dat holds only 730,184 rows, its ID cannot be a row position in
+# itself.
+#
+# That makes a second, independent route to membership available. When both
+# routes agree, the crosswalk and the identifier handling are both corroborated.
+# When they disagree, the audit must refuse to report a number rather than pick
+# the route it prefers.
+# ---------------------------------------------------------------------------
+
+
+def _table4_row(name: str, internal_id: int, klass: str = "EW") -> str:
+    """Build one CDS-style table4.dat row (Lrecl 63)."""
+    return (
+        f"{name:<22} {internal_id:>6} {klass:<5} "
+        f"{123.45678:>9.5f} {45.67890:>9.5f} {0.12345:>7.5f}"
+    )
+
+
+def test_read_published_table4_ids_reads_documented_id_column(tmp_path: Path):
+    path = tmp_path / "table4.dat"
+    path.write_text(
+        "\n".join(
+            [
+                _table4_row("ZTFJ000000.00+000000.0", 1),
+                _table4_row("ZTFJ000004.00+000000.0", 5),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    assert read_published_table4_ids(path) == {1, 5}
+
+
+def test_crosscheck_agrees_when_name_and_id_routes_match(tmp_path: Path):
+    parent = tmp_path / "table2.tsv"
+    parent.write_text(
+        "Seq\tID\tPer\n"
+        "1\tZTFJ000000.00+000000.0\t0.5\n"
+        "5\tZTFJ000004.00+000000.0\t0.6\n",
+        encoding="utf-8",
+    )
+    published = tmp_path / "table4.dat"
+    published.write_text(
+        "\n".join(
+            [
+                _table4_row("ZTFJ000000.00+000000.0", 1),
+                _table4_row("ZTFJ000004.00+000000.0", 5),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    parent_map = read_parent_name_map(parent)
+    names = read_vizier_names(published)
+
+    result = crosscheck_published_names_against_ids(published, names, parent_map)
+    assert result["published_id_crosscheck"] == "AGREE"
+    assert result["published_id_count"] == 2
+    assert result["published_name_join_count"] == 2
+
+
+def test_crosscheck_refuses_when_name_and_id_routes_disagree(tmp_path: Path):
+    """A shifted or mis-parsed layout must stop the audit, not pick a winner."""
+    parent = tmp_path / "table2.tsv"
+    parent.write_text(
+        "Seq\tID\tPer\n"
+        "1\tZTFJ000000.00+000000.0\t0.5\n"
+        "5\tZTFJ000004.00+000000.0\t0.6\n",
+        encoding="utf-8",
+    )
+    # The ID column claims 1 and 5, but the names resolve to 1 and 5 as well,
+    # so force the disagreement by changing which object the name belongs to.
+    published = tmp_path / "table4.dat"
+    published.write_text(
+        "\n".join(
+            [
+                _table4_row("ZTFJ000000.00+000000.0", 1),
+                _table4_row("ZTFJ000004.00+000000.0", 9),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    parent_map = read_parent_name_map(parent)
+    names = read_vizier_names(published)
+
+    with pytest.raises(ValueError, match="inconsistent between the object-name join"):
+        crosscheck_published_names_against_ids(published, names, parent_map)
+
+
+def test_crosscheck_rejects_blank_or_non_numeric_id_field(tmp_path: Path):
+    parent = tmp_path / "table2.tsv"
+    parent.write_text(
+        "Seq\tID\tPer\n1\tZTFJ000000.00+000000.0\t0.5\n", encoding="utf-8"
+    )
+    published = tmp_path / "table4.dat"
+    row = f"{'ZTFJ000000.00+000000.0':<22} {'XXXXXX':>6} EW    123.45678  45.67890 0.12345"
+    published.write_text(row + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="not a Table 4 ID"):
+        read_published_table4_ids(published)
+
+
+def test_crosscheck_is_opt_in_and_reported(tmp_path: Path):
+    """Without the flag the audit still runs; with it the result is recorded."""
+    parent = tmp_path / "table2.tsv"
+    parent.write_text(
+        "Seq\tID\tPer\n"
+        "1\tZTFJ000000.00+000000.0\t0.5\n"
+        "5\tZTFJ000004.00+000000.0\t0.6\n",
+        encoding="utf-8",
+    )
+    candidate = tmp_path / "selected.tsv"
+    candidate.write_text("SourceID\n1\n5\n", encoding="utf-8")
+    published = tmp_path / "table4.dat"
+    published.write_text(
+        "\n".join(
+            [
+                _table4_row("ZTFJ000000.00+000000.0", 1),
+                _table4_row("ZTFJ000004.00+000000.0", 5),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "report.json"
+
+    rc = audit_main(
+        [
+            "--candidate",
+            str(candidate),
+            "--published",
+            str(published),
+            "--parent",
+            str(parent),
+            "--output",
+            str(output),
+            "--crosscheck-published-ids",
+        ]
+    )
+
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["published_id_crosscheck"] == "AGREE"
+    assert report["published_count"] == 2
+    assert report["published_only_count"] == 0
+    assert report["exact_membership_match"] is True
+    assert rc == 0
