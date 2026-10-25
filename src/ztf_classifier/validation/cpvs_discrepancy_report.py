@@ -87,6 +87,76 @@ def read_ids(path: str | Path) -> set[str]:
     return set(values)
 
 
+def normalize_object_name(raw: str) -> str:
+    """Normalize whitespace/case only for a conservative object-name crosswalk."""
+    return "".join(raw.split()).upper()
+
+
+def published_membership_ids(
+    published_path: Path,
+    parent_rows: list[dict[str, str]],
+    parent_id_key: str,
+) -> set[str]:
+    """Return published membership in the parent ID namespace.
+
+    A CDS Table 4 export can contain both an internal numeric ID and the
+    actual ZTF object-name column. If a ZTF-name column is present, always use
+    the name crosswalk; never silently compare Table 4's internal ID to Seq.
+    """
+    headers, rows = read_table(published_path)
+    normalized_headers = {header.lower(): header for header in headers}
+    name_key = next(
+        (normalized_headers[key] for key in ("ztf", "ztfname", "ztf_name") if key in normalized_headers),
+        None,
+    )
+    if name_key is None:
+        # Already-mapped membership inputs are allowed, but their identifier
+        # namespace must match the candidate and parent ID namespace.
+        return read_ids(published_path)
+
+    normalized_headers_parent = {header.lower(): header for header in parent_rows[0]} if parent_rows else {}
+    parent_name_key = next(
+        (normalized_headers_parent[key] for key in ("id", "ztf", "ztfname", "ztf_name", "name", "object_name") if key in normalized_headers_parent),
+        None,
+    )
+    if parent_name_key is None:
+        raise ValueError(
+            "published Table 4 contains ZTF object names but parent metadata has no object-name column; "
+            "include the Table 2 ID/ZTF name crosswalk instead of using Table 4's internal ID"
+        )
+
+    parent_name_to_id: dict[str, str] = {}
+    for line_number, row in enumerate(parent_rows, start=2):
+        raw_name = row.get(parent_name_key, "").strip()
+        raw_id = row.get(parent_id_key, "").strip()
+        if not raw_name:
+            raise ValueError(f"parent metadata row {line_number} has a blank object name")
+        if not raw_id.isdigit():
+            raise ValueError(f"parent metadata row {line_number} has an invalid parent ID {raw_id!r}")
+        normalized_name = normalize_object_name(raw_name)
+        if normalized_name in parent_name_to_id:
+            raise ValueError(
+                f"parent object-name normalization collision at row {line_number}: {raw_name!r}"
+            )
+        parent_name_to_id[normalized_name] = str(int(raw_id))
+
+    published_names: list[str] = []
+    for line_number, row in enumerate(rows, start=2):
+        raw_name = row.get(name_key, "").strip()
+        if not raw_name:
+            raise ValueError(f"{published_path}:{line_number}: blank published ZTF object name")
+        published_names.append(normalize_object_name(raw_name))
+    duplicates = sorted(name for name, count in Counter(published_names).items() if count > 1)
+    if duplicates:
+        raise ValueError(f"{published_path}: duplicate published ZTF names, examples={duplicates[:10]}")
+    unmapped = sorted(set(published_names) - set(parent_name_to_id))
+    if unmapped:
+        raise ValueError(
+            f"{len(unmapped)} published ZTF names do not map to parent metadata; examples={unmapped[:10]}"
+        )
+    return {parent_name_to_id[name] for name in published_names}
+
+
 def number_status(raw: str | None) -> str:
     if raw is None or not raw.strip():
         return "missing"
@@ -145,7 +215,7 @@ def build_cpvs_discrepancy_report(
         parent[object_id] = row
 
     candidates = read_ids(candidate_path)
-    published = read_ids(published_path)
+    published = published_membership_ids(published_path, parent_rows, id_key)
     extras = sorted(candidates - published, key=int)
     if not extras:
         raise ValueError(
