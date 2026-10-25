@@ -87,7 +87,23 @@ def test_qualified_ids_empty_input_returns_two_sets(tmp_path: Path):
 
 
 def test_read_vizier_accepts_commented_tsv_header(tmp_path: Path):
-    from scripts.audit_cpvs_membership import read_vizier
+    """A '#'-prefixed TSV header must be accepted and the object-name column used.
+
+    This test previously asserted the Table 4 internal ``ID`` integers
+    (``{1, 730184}``) through a ``read_vizier`` function that returned
+    ``set[int]``. Two things were wrong with that:
+
+    * the function no longer exists, because the internal Table 4 identifier is
+      not the parent namespace and must not be used as a join key; and
+    * the assertion itself encoded the defect - it verified that internal IDs
+      were being read as membership identifiers.
+
+    The behaviour this test is named for is still checked: a commented header is
+    recognised, and the rows below it are read. What changed is *which column* is
+    taken, so the assertion now expects normalized object names. The internal IDs
+    (1 and 730184) must not appear anywhere in the result.
+    """
+    from scripts.audit_cpvs_membership import read_vizier_names
 
     path = tmp_path / "table4.dat"
     path.write_text(
@@ -95,4 +111,4 @@ def test_read_vizier_accepts_commented_tsv_header(tmp_path: Path):
         encoding="utf-8",
     )
 
-    assert read_vizier(path) == {1, 730184}
+    assert read_vizier_names(path) == {"ZTF1", "ZTF2"}
