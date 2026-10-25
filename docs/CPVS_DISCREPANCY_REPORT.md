@@ -8,7 +8,7 @@ This utility creates an object-level evidence table for candidate IDs absent fro
 - \`--candidate-ids\` and \`--published-ids\`: TSV/CSV files with an ID column.
 - \`--source-revision\`: code revision that produced the input files.
 
-Every candidate-only ID must join to exactly one parent metadata row. Duplicate IDs, missing required columns, malformed IDs, or missing parent provenance stop report generation.
+Every candidate-only ID must join to exactly one parent metadata row. Duplicate IDs, missing required columns, malformed IDs, missing parent provenance, and invalid/unmapped Table 4 name crosswalks stop report generation.
 
 ## Outputs
 
