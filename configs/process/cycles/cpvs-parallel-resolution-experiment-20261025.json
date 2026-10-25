@@ -66,9 +66,12 @@
       "Reviewed official CDS/VizieR ReadMe for J/ApJ/932/118: it states the 730,184 sample contains at least one 2.5σ and 3σ detection in g and r, respectively, and defines Table 4 ID as catalog internal ID while ZTF is a separate column. This narrows the literature claim but does not by itself reproduce the exact per-object selection.",
       "Deterministic SHA-256-ranked stratified 100-object spot-check queried official CDS/VizieR TAP: 100/100 parent Seq-to-ZTF-name mappings; 50/50 known-overlap objects present in Table 4; 0/25 candidate-only and 0/25 parent-not-candidate names present. This validates only the sampled membership crosswalk, not full-set or raw detection-rule reproduction.",
       "Primary paper Section 2.1 reviewed: at least one 2.5σ g-band detection and one 3σ r-band detection; common Table 2 period used for folding. Exact implementation against source photometry remains unverified.",
-      "Prepared a deterministic 1,000-object stratified sample from the full parent universe using SHA-256 ranking: 500 overlap-stratum IDs, 250 candidate-only IDs, 250 parent-not-candidate IDs. Local sample file SHA-256 94b4c966abaa059ff3c1f63172542e9eb2c11323a814f3b0d4eb7a9c506087b0; compact ID payload SHA-256 2beb0912cbf1d12c48f7f82157eaf0dd31864204450e40d181afbdf61e6c29f7. This is preparation only; Table 2 name crosswalk and Table 4 membership query have not completed."
+      "Prepared a deterministic 1,000-object stratified sample from the full parent universe using SHA-256 ranking: 500 overlap-stratum IDs, 250 candidate-only IDs, 250 parent-not-candidate IDs. Local sample file SHA-256 94b4c966abaa059ff3c1f63172542e9eb2c11323a814f3b0d4eb7a9c506087b0; compact ID payload SHA-256 2beb0912cbf1d12c48f7f82157eaf0dd31864204450e40d181afbdf61e6c29f7. This is preparation only; Table 2 name crosswalk and Table 4 membership query have not completed.",
+      "Audited all 11,602 candidate-only entries in selection_diagnostics.json (SHA-256 7e763d8804a57d75d1633d0a4089a4a6ac5aa40bb4695964d35e645b67ad5b61): all 11,602 have current-implementation g.snr_exact/r.snr_exact true and >=1 qualifying detection in each band; 10,887 have zero nonzero qualifying flags in both bands. This is implementation-specific diagnostic evidence, not proof of equivalence to the paper's exact rule.",
+      "Parent-magnitude diagnostic gives 730,201 candidates, 17 candidate-only and 0 published-only; the remaining 17 extras have incomplete per-band period metadata. Four-field predicate matches 730,184 membership diagnostically, but publisher's exact historical rule remains unestablished.",
+      "Locally verified fixed 1,000-object sample integrity: 1,000 unique IDs, all present in parent metadata, with exact strata counts and membership-in-candidate-set checks. Sample SHA-256 94b4c966abaa059ff3c1f63172542e9eb2c11323a814f3b0d4eb7a9c506087b0. Table 4 membership for all 1,000 has not been independently re-queried."
     ],
-    "blocker": "Full deterministic 1,000-object sample and full Table 4 join remain pending; PR #224 CLI has not yet been executed against complete hash-identified parent metadata, candidate IDs, and published Table 4 rows; Track A Jupyter reconstruction and raw per-epoch detection-rule reproduction remain pending."
+    "blocker": "Raw per-epoch detection semantics (SNR convention and quality flags) remain unverified against source/paper definitions. All 11,602 candidate-only records satisfy the current reconstruction's g/r SNR predicate, so that predicate does not explain their absence from Table 4. Full Table 4 name crosswalk and 1,000-object membership comparison remain pending; Track A Jupyter reconstruction remains unrun."
   },
   "failure_analysis": {
     "status": "SUPPORTED",
@@ -102,7 +105,8 @@
       "Fresh CI must confirm the lifecycle record now passes the existing metric-name contract.",
       "Derive and test the published g/r detection-significance criterion on source-backed photometry; do not substitute the four-field metadata predicate.",
       "Run and archive the fixed 1,000-object parent-dataset sample with both published members and non-members, source-to-Seq/name provenance, and deterministic hashes.",
-      "Complete and archive the 1,000-object sample's parent Seq-to-ZTF-name crosswalk and published Table 4 membership query; sample preparation alone is not validation."
+      "Complete and archive the 1,000-object sample's parent Seq-to-ZTF-name crosswalk and published Table 4 membership query; sample preparation alone is not validation.",
+      "Determine why current SNR-qualified candidate-only objects are absent from published Table 4: compare source-backed per-epoch uncertainties, quality flags, object-name crosswalk, common period/period metadata, and any documented additional eligibility constraints."
     ]
   },
   "decision": "BLOCKED",
@@ -112,6 +116,7 @@
     "If the historical rule remains unprovable, keep the scientific blocker open and retain discrepancy reporting as a product capability",
     "Local report bundle generated from artifact run 38635891449; ZIP SHA-256 9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc; report has 11602 rows and 0 missing parent-metadata joins.",
     "Published high-level rule from Chan et al. (2022): at least one 2.5σ and 3σ detection in g and r, respectively; exact code-level semantics remain to be reconstructed.",
-    "A 100-object stratified identity/membership spot-check agrees with expected membership strata but is not a full-dataset validation or a detection-threshold test."
+    "A 100-object stratified identity/membership spot-check agrees with expected membership strata but is not a full-dataset validation or a detection-threshold test.",
+    "All 11,602 candidate-only objects pass the current implementation's per-band SNR predicate and have >=1 qualifying detection in each band; do not infer they fail the published detection criterion until the implementation convention is validated."
   ]
 }
