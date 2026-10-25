@@ -1,0 +1,139 @@
+{
+  "schema": "cpvs-input-acquisition/1.0",
+  "purpose": "Declare exactly which files the documented-rule reconstruction needs, where they come from, and how their provenance is checked. This exists so that the remaining blocker is a concrete, verifiable download rather than an open-ended 'more data needed'.",
+  "status": "BLOCKED",
+  "blocked_reason": "From the environment where this was written, cdsarc.cds.unistra.fr, zenodo.org and the GitHub Actions artifact host (*.blob.core.windows.net) are all unreachable: curl returns HTTP 000 (no connection) for each, while api.github.com returns 200. The data is public; only the network path is missing.",
+  "verified_by": "curl -sS -o /dev/null -w '%{http_code}' against each host, 2026-10-25",
+  "never_run": "No file in this manifest has been downloaded or parsed by this project. Nothing here has been validated against real data.",
+
+  "inputs": [
+    {
+      "id": "table2",
+      "role": "parent catalogue: 781,602 periodic variables (Chen+ 2020)",
+      "catalogue": "J/ApJS/249/18",
+      "filename": "table2.dat",
+      "expected_rows": 781602,
+      "expected_record_length": 228,
+      "source_url": "https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/table2.dat",
+      "alternative": {
+        "filename": "Table2.txt.zip",
+        "source_url": "https://zenodo.org/records/3886372/files/Table2.txt.zip?download=1",
+        "zenodo_record": "10.5281/zenodo.3886372",
+        "size_bytes_reported": 67108864,
+        "md5_published_by_publisher": "24dd4cf138a2687901d64b2d029cc624",
+        "md5_is_publisher_supplied": true
+      },
+      "columns_used": {
+        "name": "1-22 A22  ID   ZTF variables catalog identifier",
+        "seq": "24-29 I6   Seq  [1/781604] Internal source identifier",
+        "gmag": "90-95 F6.3  ?=0  Mean g magnitude",
+        "rmag": "97-102 F6.3 ?=0  Mean r magnitude",
+        "per_g": "104-116 F13.7 ?=0 Period in g band",
+        "per_r": "118-130 F13.7 ?=0 Period in r band"
+      },
+      "why_needed": "Supplies the object-name to Seq crosswalk and the four nullable fields used by the current predicate."
+    },
+    {
+      "id": "table4",
+      "role": "published membership: 730,184 objects (Chan+ 2022)",
+      "catalogue": "J/ApJ/932/118",
+      "filename": "table4.dat",
+      "expected_rows": 730184,
+      "expected_record_length": 63,
+      "source_url": "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/932/118/table4.dat",
+      "md5_published_by_publisher": null,
+      "md5_is_publisher_supplied": false,
+      "columns_used": {
+        "name": "1-22 A22  ZTF  ZTF identifier",
+        "id": "24-29 I6   ID   [1/781604] Catalog internal identifier"
+      },
+      "why_needed": "The reference membership. Both joins (by name and by documented ID) are compared against it.",
+      "unresolved": "The ReadMe gives table4.ID the same byte span, range and role wording as table2.Seq, and 730,184 rows cannot carry a dense 1..781604 index. That is strong corroboration that the two are one namespace, but no retrieved source states the equivalence in one sentence, so it is NOT established and must not be assumed."
+    },
+    {
+      "id": "ztf2g",
+      "role": "g-band single-exposure photometry",
+      "catalogue": "J/ApJS/249/18",
+      "filename": "ztf2g.dat",
+      "expected_rows": 89697393,
+      "expected_record_length": 75,
+      "source_url": "https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/ztf2g.dat",
+      "alternative": {
+        "filename": "ztf2g.zip",
+        "source_url": "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1",
+        "zenodo_record": "10.5281/zenodo.3886372",
+        "size_bytes_reported": 790417971,
+        "md5_published_by_publisher": "850fcef561dd7407fbe8e19e99100d7a",
+        "md5_is_publisher_supplied": true
+      },
+      "columns_used": {
+        "seq": "1-6 I6   Seq   Running sequence number",
+        "mag": "46-55 F10.7 mag",
+        "e_mag": "57-70 E14.7 mag",
+        "flag": "72-75 I4   Flag"
+      },
+      "why_needed": "The only input from which 'at least one 2.5-sigma detection in g' can be computed. Without it the documented criterion cannot be evaluated at all."
+    },
+    {
+      "id": "ztf2r",
+      "role": "r-band single-exposure photometry",
+      "catalogue": "J/ApJS/249/18",
+      "filename": "ztf2r.dat",
+      "expected_rows": 89697393,
+      "expected_record_length": 75,
+      "source_url": "https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/ztf2r.dat",
+      "alternative": {
+        "filename": "ztf2r.zip",
+        "source_url": "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1",
+        "zenodo_record": "10.5281/zenodo.3886372",
+        "size_bytes_reported": 924319744,
+        "md5_published_by_publisher": "daa7bc45c67579253eebe6b1c09dfbd9",
+        "md5_is_publisher_supplied": true
+      },
+      "columns_used": {
+        "seq": "1-6 I6   Seq   Running sequence number",
+        "mag": "46-55 F10.7 mag",
+        "e_mag": "57-70 E14.7 mag",
+        "flag": "72-75 I4   Flag"
+      },
+      "why_needed": "The only input from which 'at least one 3-sigma detection in r' can be computed."
+    }
+  ],
+
+  "publisher_evidence_for_seq": {
+    "statement": "SourceID is the internal source identifier joins these attachments to Table 2.",
+    "example": "For variable star ZTFJ000000.19+320847.2 in Table 2, the SourceID=3 is adopted to search corresponding single-exposure information in both 'ztf2g' and 'ztf2r'.",
+    "source": "https://zenodo.org/records/3886372 (description text, Zenodo record 10.5281/zenodo.3886372)",
+    "retrieved": "2026-10-25",
+    "significance": [
+      "It states explicitly that the photometry Seq/SourceID is the same key as table2.Seq, so j oining photometry to the parent by Seq is documented rather than assumed.",
+      "The worked example assigns SourceID=3 to ZTFJ000000.19+320847.2. If that object is the first row of table2.dat - its identifier encodes RA 00h00m00.19s, the minimum in the catalogue - then a Seq of 3 for the first row disproves 'Seq equals row ordinal' directly from a publisher source, independently of the 781,602-versus-781,604 argument."
+    ],
+    "limits": "The example does not state the object's row position in table2.dat, so the ordinal implication is strong but not closed. The row-count argument (781,602 rows spanning [1/781604]) does not depend on the example and already proves ordinals are unsafe."
+  },
+
+  "not_publisher_evidence": {
+    "table4_id_equals_table2_seq": {
+      "status": "CORROBORATED, NOT ESTABLISHED",
+      "arguments": [
+        "Both ReadMes place the column at bytes 24-29 with range [1/781604].",
+        "Both ReadMes describe it as an internal catalogue identifier.",
+        "table4.dat has 730,184 rows, so its ID cannot be a dense row index over that span.",
+        "Chan+ 2022 Appendix F labels the column 'Catalog Internal Identifier', matching the ReadMe wording."
+      ],
+      "why_not_enough": "Each argument is consistent with the equivalence without asserting it. No retrieved source says in one sentence that table4.ID is table2.Seq. The finding is therefore treated as a cross-check whose disagreement aborts the run, never as a licence to join on ID alone."
+    }
+  },
+
+  "reproduction_command": "python scripts/reconstruct_cpvs_from_photometry.py --table2 table2.dat --table4 table4.dat --ztf2g ztf2g.dat --ztf2r ztf2r.dat --output-dir out/cpvs-documented-rule",
+
+  "acceptance_evidence_required": [
+    "SHA-256 of all four inputs, recorded in the report manifest",
+    "row counts matching the values declared above",
+    "both joins (name and documented ID) agreeing on the published membership",
+    "per-band qualifying-object counts under each SNR definition",
+    "exact set difference for every route against the published membership",
+    "object-level rows for every discrepancy",
+    "a statement of which SNR definition and flag policy were used"
+  ]
+}
