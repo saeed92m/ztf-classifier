@@ -232,24 +232,28 @@ def test_flag_policy_changes_the_selection(tmp_path: Path):
     assert qualifying_sequences(path, strict, 2.5) == set()
 
 
-def test_catflags_policy_excludes_only_the_documented_value():
-    """Chen+ 2020 cuts catflags != 32768. Any other value survives.
+def test_chen_catflags_cut_is_not_reproduced_because_it_is_a_noop():
+    """The ReadMe gives Flag the range [0/4628]; 32768 never occurs.
 
-    A policy discarding every nonzero flag would drop 32 as well; the documented
-    cut does not. Conflating the two would silently shrink the selected set, and
-    the difference is not small.
-
-    This is asserted on the predicate rather than through a fixture because the
-    width of the flag field could not be confirmed without the ReadMe, and
-    32768 needs five characters. Asserting a layout here would be inventing one.
+    Chen+ 2020 cuts catflags != 32768 when building the parent catalogue. Since
+    32768 lies outside the documented range of this column, that cut is already
+    reflected in the files and re-applying it would change nothing. Offering it
+    as a distinct policy would imply a test that cannot fail, so it is absent
+    and this test pins its absence.
     """
+    from scripts.reconstruct_cpvs_from_photometry import FLAG_POLICIES
+
+    assert set(FLAG_POLICIES) == {"none", "any_nonzero"}
+    assert "catflags_32768" not in FLAG_POLICIES
+
+
+def test_flag_policy_predicate_behaviour():
     from scripts.reconstruct_cpvs_from_photometry import flag_is_usable
 
-    assert flag_is_usable("catflags_32768", 32) is True
-    assert flag_is_usable("catflags_32768", 32768) is False
+    assert flag_is_usable("none", 4628) is True
+    assert flag_is_usable("none", 0) is True
     assert flag_is_usable("any_nonzero", 32) is False
-    assert flag_is_usable("none", 32768) is True
-    assert flag_is_usable("catflags_32768", None) is True
+    assert flag_is_usable("any_nonzero", 0) is True
 
 
 def test_unknown_flag_policy_is_rejected():
@@ -704,3 +708,38 @@ def test_report_exposes_per_band_parse_counts(tmp_path: Path):
     for band in ("g_band_rows", "r_band_rows"):
         assert run[band]["rows"] == 3
         assert run[band]["unparsed"] == 0
+
+
+def test_full_id_lists_are_never_truncated():
+    """The ID arrays must account for every discrepant object.
+
+    A capped sample of 200 would leave 11,402 of an 11,602-object difference
+    unaccounted for, which cannot satisfy an object-by-object requirement.
+    """
+    table2 = {
+        seq: {
+            "name": f"ZTFJ{seq:06d}.00+000000.0",
+            "gmag": 18.0,
+            "rmag": 18.0,
+            "per_g": 1.0,
+            "per_r": 1.0,
+        }
+        for seq in range(1, 501)
+    }
+    reference = set(range(1, 201))
+    produced = set(range(1, 401))  # 200 produced-only, above the sample cap
+    report = compare_sets({"route": produced}, reference, table2)["routes"]["route"]
+
+    assert report["produced_only"] == 200
+    assert len(report["produced_only_ids"]) == 200
+    assert report["produced_only_ids"] == sorted(produced - reference)
+    # The human-readable sample is capped; the ID list is not.
+    assert len(report["produced_only_objects"]) == 200
+    assert report["produced_only_sample_truncated"] == 0
+
+    bigger = set(range(1, 401)) | set(range(1000, 1300))
+    report2 = compare_sets({"route": bigger}, reference, table2)["routes"]["route"]
+    assert report2["produced_only"] == 500
+    assert len(report2["produced_only_ids"]) == 500
+    assert len(report2["produced_only_objects"]) == 200
+    assert report2["produced_only_sample_truncated"] == 300

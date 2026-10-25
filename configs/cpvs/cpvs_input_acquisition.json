@@ -153,5 +153,201 @@
       "A policy discarding every nonzero flag is stricter than anything documented and is labelled a sensitivity check only."
     ],
     "limits": "This is Chen's cut for building the parent catalogue. Whether ztf2g/ztf2r already contain only rows passing it is unknown, and would make any further flag cut double-counting."
+  },
+  "authoritative_layout": {
+    "source": "CDS ReadMe, J/ApJS/249/18 (prepared 18-Sep-2020) and J/ApJ/932/118 (prepared 20-Mar-2025)",
+    "retrieved": "2026-10-25",
+    "note": "Byte spans are 1-indexed inclusive as printed by CDS; the script uses 0-indexed slices [start-1, end+1].",
+    "verified_against_committed_code": true,
+    "files": {
+      "ztf2g.dat / ztf2r.dat": {
+        "lrecl": 75,
+        "records": 89697393,
+        "columns": [
+          {
+            "label": "Seq",
+            "bytes": "1-6",
+            "format": "I6",
+            "range": "[1/781604]",
+            "used": true
+          },
+          {
+            "label": "RAdeg",
+            "bytes": "8-18",
+            "format": "E11.7",
+            "used": false
+          },
+          {
+            "label": "DEdeg",
+            "bytes": "20-30",
+            "format": "E11.7",
+            "range": "[-20.8/80.3]",
+            "used": false
+          },
+          {
+            "label": "MJD",
+            "bytes": "32-44",
+            "format": "F13.7",
+            "range": "[58197.15/58725.2]",
+            "used": true
+          },
+          {
+            "label": "mag",
+            "bytes": "46-55",
+            "format": "F10.7",
+            "range": "[9.97/22.63]",
+            "used": true
+          },
+          {
+            "label": "e_mag",
+            "bytes": "57-70",
+            "format": "E14.7",
+            "range": "[-0.005/0.4]",
+            "used": true
+          },
+          {
+            "label": "Flag",
+            "bytes": "72-75",
+            "format": "I4",
+            "range": "[0/4628]",
+            "used": true
+          }
+        ]
+      },
+      "table2.dat": {
+        "lrecl": 228,
+        "records": 781602,
+        "columns": [
+          {
+            "label": "ID",
+            "bytes": "1-22",
+            "format": "A22",
+            "used": true
+          },
+          {
+            "label": "Seq",
+            "bytes": "24-29",
+            "format": "I6",
+            "range": "[1/781604]",
+            "used": true
+          },
+          {
+            "label": "Per",
+            "bytes": "51-61",
+            "format": "F11.7",
+            "range": "[0.03/973.5]",
+            "used": false
+          },
+          {
+            "label": "gmag",
+            "bytes": "90-95",
+            "format": "F6.3",
+            "range": "[11.7/22]?=0",
+            "used": true
+          },
+          {
+            "label": "rmag",
+            "bytes": "97-102",
+            "format": "F6.3",
+            "range": "[11.2/21.4]?=0",
+            "used": true
+          },
+          {
+            "label": "Per-g",
+            "bytes": "104-116",
+            "format": "F13.7",
+            "range": "[0.02/18340]?=0",
+            "used": true
+          },
+          {
+            "label": "Per-r",
+            "bytes": "118-130",
+            "format": "F13.7",
+            "range": "[0.02/13242]?=0",
+            "used": true
+          },
+          {
+            "label": "Ng",
+            "bytes": "132-135",
+            "format": "I4",
+            "range": "[0/2084]",
+            "used": false
+          },
+          {
+            "label": "Nr",
+            "bytes": "137-140",
+            "format": "I4",
+            "range": "[0/3300]",
+            "used": false
+          }
+        ]
+      },
+      "table4.dat": {
+        "lrecl": 63,
+        "records": 730184,
+        "columns": [
+          {
+            "label": "ZTF",
+            "bytes": "1-22",
+            "format": "A22",
+            "used": true
+          },
+          {
+            "label": "ID",
+            "bytes": "24-29",
+            "format": "I6",
+            "range": "[1/781604]",
+            "used": true
+          },
+          {
+            "label": "Class",
+            "bytes": "31-35",
+            "format": "A5",
+            "used": false
+          },
+          {
+            "label": "RAdeg",
+            "bytes": "37-45",
+            "format": "F9.5",
+            "used": false
+          },
+          {
+            "label": "DEdeg",
+            "bytes": "47-55",
+            "format": "F9.5",
+            "range": "[-21/81]",
+            "used": false
+          },
+          {
+            "label": "Score",
+            "bytes": "57-63",
+            "format": "F7.5",
+            "range": "[0/1]",
+            "used": false
+          }
+        ]
+      }
+    }
+  },
+  "resolved_layout_questions": {
+    "flag_field_width": {
+      "resolution": "RESOLVED from the CDS ReadMe for J/ApJS/249/18.",
+      "answer": "Flag occupies bytes 72-75 as I4, with documented range [0/4628].",
+      "consequence": "Chen+ 2020 section III cuts catflags != 32768. Because 32768 lies outside the documented range [0/4628], that value never occurs in these files: the cut is already reflected upstream. Re-applying it would be a provable no-op, so it was removed as a policy rather than shipped as one that can never change a result.",
+      "code_state": "FLAG_POLICIES is now {'none', 'any_nonzero'} only; the no-op policy was deleted and its absence is pinned by a test."
+    },
+    "negative_magnitude_errors": {
+      "detail": "The ReadMe gives e_mag the range [-0.005/0.4], so negative uncertainties occur in the real data. They cannot yield a meaningful significance under either SNR definition and are excluded from qualifying detections while being counted separately as nonpositive_error.",
+      "status": "DOCUMENTED, COUNTED"
+    },
+    "infobits_cut_not_applicable": {
+      "detail": "Chen+ 2020 also applies INFOBITS < 33,554,432. INFOBITS is an image-level bitmask and appears in none of the four files, so it cannot be reproduced. Recorded as UNKNOWN, not approximated.",
+      "status": "UNKNOWN"
+    }
+  },
+  "download_sources_note": {
+    "important": "The CDS .dat files are fixed-width and match the ReadMe layout. The Zenodo files are .txt/.csv archives whose published md5 applies to those zips, not to the CDS files. They are different representations, so a Zenodo md5 can never validate a CDS download.",
+    "recommended": "CDS .dat (fixed-width) - the only representation this parser reads.",
+    "md5_applies_to": "Zenodo zip archives only; CDS downloads will report NO_PUBLISHER_CHECKSUM, which is the correct verdict and not a pass."
   }
 }

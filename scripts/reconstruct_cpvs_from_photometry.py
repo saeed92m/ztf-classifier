@@ -41,12 +41,13 @@ being silently assumed:
 ``flag_policy``
     Chan+ 2022 states the sigma criterion and says nothing about flags. Chen+
     2020 section III does state the cut used to build the parent catalogue:
-    ``INFOBITS < 33,554,432`` and ``catflags != 32768``. That is one bit value,
-    not "flag == 0". Three policies are therefore computed: no cut (closest to
-    Chan+ 2022), Chen's documented ``catflags != 32768``, and a stricter
-    "any nonzero flag" that is labelled as a sensitivity check because nothing
-    documents it. ``INFOBITS`` is image level and is not present in any of the
-    four files, so it cannot be applied here and is recorded as UNKNOWN.
+    ``INFOBITS < 33,554,432`` and ``catflags != 32768``. Neither is reproduced,
+    for two checkable reasons. The CDS ReadMe gives the Flag column of
+    ztf2[gr].dat the range ``[0/4628]``, so the value Chen removes (32768) never
+    occurs here and re-applying the cut would be a no-op. ``INFOBITS`` is image
+    level and appears in no file. Two policies remain meaningful: no cut
+    (closest to Chan+ 2022) and "any nonzero flag", which is explicitly a
+    sensitivity check because nothing documents it.
 
 A run is only interpretable if the caller states, in the output, which definitions
 were used. The manifest does that.
@@ -166,21 +167,24 @@ def normalize_name(value: str) -> str:
     return "".join(value.split()).upper()
 
 
-# Flag policies, each traceable to a source rather than to convenience.
+# Flag policies.
 #
 # Chen+ 2020 section III states the photometry cut it applied when building the
-# parent catalogue: "poor-quality images and photometry were excluded by adopting
-# INFOBITS < 33,554,432 and catflags != 32,768". That is one specific bit value,
-# not "flag == 0", so a policy that discards every nonzero flag is stricter than
-# anything documented and must not be presented as the published rule.
+# parent catalogue: "INFOBITS < 33,554,432 and catflags != 32,768". That cut is
+# NOT reproduced here, and the reason is quotable rather than assumed: the CDS
+# ReadMe for J/ApJS/249/18 gives the Flag column of ztf2[gr].dat the range
+# [0/4628]. Since 32768 is outside that range, the value Chen's cut removes does
+# not occur in these files - the cut has already been applied upstream, so
+# re-applying it would be a provable no-op and could not be presented as a
+# distinct policy without misleading the reader.
+#
+# INFOBITS is an image-level bitmask that appears in none of the four files, so
+# it cannot be reproduced at all. It is recorded as UNKNOWN, not approximated.
 #
 # Chan+ 2022 states only the 2.5-sigma/3-sigma criterion and says nothing about
-# flags. Since ztf2g/ztf2r are Chen's own single-exposure files, the exposures they
-# contain may already have passed Chen's cut, in which case no further flag
-# filtering belongs in this reconstruction at all.
+# flags. Two policies therefore remain meaningful.
 FLAG_POLICIES = {
     "none": "no flag cut; closest to Chan+ 2022, which states none",
-    "catflags_32768": "exclude flag == 32768; Chen+ 2020 section III verbatim",
     "any_nonzero": "exclude any nonzero flag; undocumented, sensitivity check only",
 }
 
@@ -188,8 +192,6 @@ FLAG_POLICIES = {
 def flag_is_usable(flag_policy: str, flag: int | None) -> bool:
     if flag_policy == "none":
         return True
-    if flag_policy == "catflags_32768":
-        return flag != 32768
     if flag_policy == "any_nonzero":
         return flag == 0
     raise ValueError(f"unknown flag_policy: {flag_policy!r}")
@@ -421,9 +423,17 @@ def compare_sets(
             "produced_only": len(only_produced),
             "reference_only": len(only_reference),
             "exact_set_equality": produced == reference,
+            # The complete ID lists, never truncated. A capped sample is fine for
+            # a human reader but useless for traceability: reporting 200 of
+            # 11,602 would leave 11,402 objects unaccounted for. These two arrays
+            # are the authoritative record of the difference.
+            "produced_only_ids": only_produced,
+            "reference_only_ids": only_reference,
             # Object-level rows are what make a difference auditable rather than
             # merely counted. Names are included so the entry can be checked
-            # against the published table without re-deriving the join.
+            # against the published table without re-deriving the join. These are
+            # a convenience sample; produced_only_ids/reference_only_ids above are
+            # exhaustive.
             "produced_only_objects": [
                 {
                     "seq": seq,
@@ -442,8 +452,8 @@ def compare_sets(
                 }
                 for seq in only_reference[:200]
             ],
-            "produced_only_truncated": max(0, len(only_produced) - 200),
-            "reference_only_truncated": max(0, len(only_reference) - 200),
+            "produced_only_sample_truncated": max(0, len(only_produced) - 200),
+            "reference_only_sample_truncated": max(0, len(only_reference) - 200),
         }
     return report
 
@@ -567,7 +577,7 @@ def main(argv: list[str] | None = None) -> int:
     # is settled by the primary source and the difference is informative.
     rules = [
         DetectionRule(snr_method="inverse_error", flag_policy="none"),
-        DetectionRule(snr_method="inverse_error", flag_policy="catflags_32768"),
+        DetectionRule(snr_method="inverse_error", flag_policy="any_nonzero"),
         DetectionRule(snr_method="magnitude_over_error", flag_policy="none"),
     ]
 

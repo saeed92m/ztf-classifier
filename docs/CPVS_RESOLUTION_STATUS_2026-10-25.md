@@ -107,13 +107,34 @@ silently. The harness therefore carries three named policies — `none` (closest
 Chan+ 2022, which states no flag cut), `catflags_32768` (Chen's documented value),
 and `any_nonzero` (undocumented, sensitivity check only).
 
-Two limits, both recorded rather than papered over:
+### 2.3 The flag question is now resolved, and it retires a policy
 
-- `INFOBITS` is an **image-level** bitmask and is present in none of the four
-  files. It cannot be reproduced here and is marked UNKNOWN.
-- Whether `ztf2g`/`ztf2r` already contain only rows that passed Chen's cut is
-  unknown. If they do, applying the cut again would double-count it. This can only
-  be settled by looking at the files.
+The CDS ReadMe for `J/ApJS/249/18` gives the `Flag` column of `ztf2[gr].dat` as
+bytes **72-75, I4, range `[0/4628]`**. That resolves the layout uncertainty in the
+direction of the existing offsets — and it also settles the flag-policy question:
+
+**Chen's documented cut cannot be applied to this file.** `catflags != 32768`
+removes a value that lies outside the documented range, so it never occurs. The cut
+is already reflected in the files (or the column is a post-mask value); either way,
+re-applying it changes nothing. Shipping it as a distinct "documented" policy would
+have implied a test that can never fail, so the `catflags_32768` policy was
+**removed**, and a test now pins its absence.
+
+What remains is honest:
+
+| Policy | Status |
+|---|---|
+| `none` | closest to Chan+ 2022, which states no flag cut |
+| `any_nonzero` | undocumented — sensitivity check only, labelled as such |
+
+**UNKNOWN, and not approximated:** `INFOBITS < 33,554,432` is an image-level
+bitmask present in none of the four files. It cannot be reproduced here.
+
+**Documented and counted:** the ReadMe gives `e_mag` the range `[-0.005/0.4]`, so
+negative uncertainties occur in the real data. They cannot produce a meaningful
+significance under either SNR definition, so they are excluded from qualifying
+detections while being counted separately as `nonpositive_error`. They are never
+silently dropped.
 
 ## 3. What the predicate in use actually is
 
