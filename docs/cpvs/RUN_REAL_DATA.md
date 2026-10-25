@@ -18,14 +18,27 @@ cannot, close the scientific gate by itself.
 | Parent chain | `4d3d902` → `89c6847` → `a04ce3b` → `21faaf5` → `c7066a5` → `c630701` → `d88e54a` (`main`) |
 | `main` | untouched at `d88e54a2eb70d5e4531bc950341ef3136c29a5e2` |
 
-`a04ce3b` is an ancestor, not the tip. `4d3d902` is the **code** commit: it contains
-`a04ce3b` plus the layout resolution, the full-ID traceability fix, and the
-checksum-before-analysis fix. Commits after it touch only this document, so either
-`4d3d902` or a later tip runs identical code.
+`a04ce3b` is an ancestor, not the tip. `4d3d902` is the **code** commit for this
+runbook: it contains `a04ce3b` plus the layout resolution, the full-ID traceability
+fix, and the checksum-before-analysis fix.
 
-**The file digests below are the authoritative check, not the commit name.** They
-are unchanged from `4d3d902` through the current tip; if your digests match, you are
-running the audited code regardless of which of those commits you checked out.
+Later commits on the branch do touch code — `scripts/diagnose_cpvs_selection.py`
+and `scripts/audit_cpvs_membership.py` were repaired after `4d3d902` (see
+`docs/CPVS_RESOLUTION_STATUS_2026-10-25.md`). They are **not** the three files this
+runbook executes, so the reconstruction path below is unaffected.
+
+**The file digests are the authoritative check, not the commit name.** The three
+digests in the table are unchanged from `4d3d902` through the current tip, and were
+re-verified against the working tree. If your digests match, you are running the
+audited reconstruction code regardless of which commit you checked out.
+
+The two repaired scripts have their own digests, for anyone auditing the diagnostic
+rather than the reconstruction:
+
+| File | SHA-256 |
+|---|---|
+| `scripts/diagnose_cpvs_selection.py` | `9b6c80f4f8f7e5adcb22e51cd9e8a5fafbf91824e18da56f34df03c364f03b5d` |
+| `scripts/audit_cpvs_membership.py` | `29cb09c8ef7aee01f0c1cee6c9f2130a2ddde3c847f6d0563ab9073e2d854562` |
 
 ### Verify you have exactly this code
 
