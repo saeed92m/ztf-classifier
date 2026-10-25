@@ -14,28 +14,28 @@ cannot, close the scientific gate by itself.
 |---|---|
 | Repository | `https://github.com/saeed92m/ztf-classifier` |
 | Branch | `arena/5d244d9d-ztf-classifier` |
-| **Commit** | **`89c6847cf6e1a9e07e2594cc07ba5dba7a8f77ec`** (short `89c6847`) |
-| Parent chain | `89c6847` → `a04ce3b` → `21faaf5` → `c7066a5` → `c630701` → `d88e54a` (`main`) |
+| **Commit** | **`4d3d902088ae2ce0dfe5e526f44feb2840e1f151`** (short `4d3d902`) |
+| Parent chain | `4d3d902` → `89c6847` → `a04ce3b` → `21faaf5` → `c7066a5` → `c630701` → `d88e54a` (`main`) |
 | `main` | untouched at `d88e54a2eb70d5e4531bc950341ef3136c29a5e2` |
 
-`a04ce3b` is an ancestor, not the tip. Use `89c6847`, which contains it plus the
-layout resolution and the full-ID traceability fix.
+`a04ce3b` is an ancestor, not the tip. Use `4d3d902`, which contains it plus the
+layout resolution, the full-ID traceability fix, and the checksum-before-analysis fix.
 
 ### Verify you have exactly this code
 
-File digests at `89c6847` (SHA-256 of the committed blob):
+File digests at `4d3d902` (SHA-256 of the committed blob):
 
 | File | SHA-256 | Bytes |
 |---|---|---|
-| `scripts/reconstruct_cpvs_from_photometry.py` | `0a0ee9df5fd92d6d6abdac59c47e889e246f73a0521f01010763b6d21b1af47a` | 24,466 |
+| `scripts/reconstruct_cpvs_from_photometry.py` | `5a2fc1ca9ef29506ebf1fa0bbb200c7adf91adad741e226526dd0d96743757f4` | 24,772 |
 | `configs/cpvs/cpvs_input_acquisition.json` | `a6234721010453d52d70f8d77cd2d2ec6305a4517eba1181faec264830b47795` | 15,904 |
-| `tests/test_cpvs_documented_rule.py` | `396be9e192c673f7f2eb1fcdf97117868c0d8204f40c76ebe9d2ec72276f7ebc` | 26,319 |
+| `tests/test_cpvs_documented_rule.py` | `d487e63d176c6b3af665ee694b8e2469ef7c8b9bb99c07fc61b6bb5868f7fcf0` | 27,439 |
 
 ```bash
 git clone https://github.com/saeed92m/ztf-classifier.git
 cd ztf-classifier
-git checkout 89c6847cf6e1a9e07e2594cc07ba5dba7a8f77ec
-git rev-parse HEAD                     # must print 89c6847cf6e1a9e07e2594cc07ba5dba7a8f77ec
+git checkout 4d3d902088ae2ce0dfe5e526f44feb2840e1f151
+git rev-parse HEAD   # must print 4d3d902088ae2ce0dfe5e526f44feb2840e1f151
 sha256sum scripts/reconstruct_cpvs_from_photometry.py \
           configs/cpvs/cpvs_input_acquisition.json
 ```
@@ -45,7 +45,7 @@ Windows PowerShell:
 ```powershell
 git clone https://github.com/saeed92m/ztf-classifier.git
 cd ztf-classifier
-git checkout 89c6847cf6e1a9e07e2594cc07ba5dba7a8f77ec
+git checkout 4d3d902088ae2ce0dfe5e526f44feb2840e1f151
 git rev-parse HEAD
 Get-FileHash scripts\reconstruct_cpvs_from_photometry.py -Algorithm SHA256
 Get-FileHash configs\cpvs\cpvs_input_acquisition.json  -Algorithm SHA256
@@ -219,7 +219,7 @@ set -euo pipefail
 # --- 0. code -----------------------------------------------------------------
 git clone https://github.com/saeed92m/ztf-classifier.git
 cd ztf-classifier
-git checkout 89c6847cf6e1a9e07e2594cc07ba5dba7a8f77ec
+git checkout 4d3d902088ae2ce0dfe5e526f44feb2840e1f151
 git rev-parse HEAD
 python3 --version          # need >= 3.10
 nproc                      # 2+ cores is fine; run time scales ~linearly
@@ -334,7 +334,7 @@ filesystem (`~/cpvs`), not under `/mnt/c`, or throughput collapses.
 ```powershell
 git clone https://github.com/saeed92m/ztf-classifier.git
 Set-Location ztf-classifier
-git checkout 89c6847cf6e1a9e07e2594cc07ba5dba7a8f77ec
+git checkout 4d3d902088ae2ce0dfe5e526f44feb2840e1f151
 git rev-parse HEAD
 
 New-Item -ItemType Directory -Force -Path data\raw\cpvs | Out-Null
