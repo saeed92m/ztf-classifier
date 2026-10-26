@@ -46,25 +46,45 @@ jobs:
           test -n "$candidate" && test -s "$candidate"
           test -n "$published" && test -s "$published"
           test -s "$parent.evidence.json"
-          test -s "$candidate.evidence.json"
+          candidate_evidence="$candidate.evidence.json"
+          candidate_diagnostic="$candidate.diagnostic.json"
+          if [[ -s "$candidate_evidence" ]]; then
+            sidecar="$candidate_evidence"
+            sidecar_kind="evidence"
+          elif [[ -s "$candidate_diagnostic" ]]; then
+            sidecar="$candidate_diagnostic"
+            sidecar_kind="diagnostic"
+          else
+            echo "Candidate list has neither evidence nor diagnostic sidecar." >&2
+            exit 1
+          fi
           printf 'parent=%s\n' "$parent" >> "$GITHUB_OUTPUT"
           printf 'candidate=%s\n' "$candidate" >> "$GITHUB_OUTPUT"
           printf 'published=%s\n' "$published" >> "$GITHUB_OUTPUT"
-          sha256sum "$parent" "$parent.evidence.json" "$candidate" "$candidate.evidence.json" "$published"
+          printf 'candidate_sidecar=%s\n' "$sidecar" >> "$GITHUB_OUTPUT"
+          printf 'candidate_sidecar_kind=%s\n' "$sidecar_kind" >> "$GITHUB_OUTPUT"
+          sha256sum "$parent" "$parent.evidence.json" "$candidate" "$sidecar" "$published"
 
       - name: Generate source-backed CPVS discrepancy report
+        shell: bash
         run: |
           set -euo pipefail
-          PYTHONPATH=src python scripts/build_cpvs_discrepancy_report.py \
-            --parent-metadata "${{ steps.inputs.outputs.parent }}" \
-            --candidate-ids "${{ steps.inputs.outputs.candidate }}" \
-            --published-ids "${{ steps.inputs.outputs.published }}" \
-            --output-dir reports/cpvs_report_validation/cpvs_discrepancy_report \
-            --source-revision "${{ github.event.workflow_run.head_sha }}" \
-            --report-code-revision "${{ github.sha }}" \
-            --parent-evidence "${{ steps.inputs.outputs.parent }}.evidence.json" \
-            --candidate-evidence "${{ steps.inputs.outputs.candidate }}.evidence.json" \
+          args=(
+            --parent-metadata "${{ steps.inputs.outputs.parent }}"
+            --candidate-ids "${{ steps.inputs.outputs.candidate }}"
+            --published-ids "${{ steps.inputs.outputs.published }}"
+            --output-dir reports/cpvs_report_validation/cpvs_discrepancy_report
+            --source-revision "${{ github.event.workflow_run.head_sha }}"
+            --report-code-revision "${{ github.sha }}"
+            --parent-evidence "${{ steps.inputs.outputs.parent }}.evidence.json"
             --expected-parent-count 781602
+          )
+          if [[ "${{ steps.inputs.outputs.candidate_sidecar_kind }}" == "evidence" ]]; then
+            args+=(--candidate-evidence "${{ steps.inputs.outputs.candidate_sidecar }}")
+          else
+            args+=(--candidate-diagnostic "${{ steps.inputs.outputs.candidate_sidecar }}")
+          fi
+          PYTHONPATH=src python scripts/build_cpvs_discrepancy_report.py "${args[@]}"
 
       - name: Verify report counts and provenance hashes
         env:
@@ -130,8 +150,11 @@ jobs:
               source = Path(record["path"])
               if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != record["sha256"]:
                   raise SystemExit(f"Source hash verification failed: {name}")
-          if set(manifest["source_evidence_files"]) != {"parent_evidence", "candidate_evidence"}:
-              raise SystemExit("Parent and candidate evidence sidecars must be recorded")
+          sidecars = set(manifest["source_evidence_files"])
+          if "parent_evidence" not in sidecars or not (
+              "candidate_evidence" in sidecars or "candidate_diagnostic" in sidecars
+          ):
+              raise SystemExit("Parent evidence and candidate evidence/diagnostic sidecar must be recorded")
           for name, record in manifest["source_evidence_files"].items():
               source = Path(record["path"])
               if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != record["sha256"]:
