@@ -39,7 +39,9 @@
       "The live-data result and integration test status must be reviewed before this record can be finalized.",
       "First real-data smoke run 40396734263 completed successfully for 12 objects; all 12 requests and native feature-engine calls succeeded, but every object had g_valid=162 and r_valid=0, yielding 19 finite features and 23 null/NaN features per object. Model inference remained NOT_RUN.",
       "Artifact audit found the upstream 150-row DR24 object subset is the lexicographically first 150 OIDs and all rows map to one HATS sky partition; the first smoke selector then chose the highest ngoodobsrel objects. This is smoke evidence only and is not a representative survey sample.",
-      "The selector was revised to use stable SHA-256 ranking within the pinned eligible subset, with seed DR24-LIGHTCURVE-SMOKE-v1, and now records eligible-pool size and selection scope. Fresh CI and live-data rerun are required."
+      "The selector was revised to use stable SHA-256 ranking within the pinned eligible subset, with seed DR24-LIGHTCURVE-SMOKE-v1, and now records eligible-pool size and selection scope. Fresh CI and live-data rerun are required.",
+      "A second run after hash-ranking within the original 150-row subset still returned 12/12 g-only objects, confirming the limitation was upstream subset composition rather than only the per-object ranking.",
+      "The DR24 HATS index selector has now been changed to choose up to 15 evenly spaced index fragments and SHA-256-rank OIDs within each fragment. The pinned query contract records this method and seed; unit tests cover fragment spread and order-independent ranking. Fresh CI and live-source rerun are pending."
     ]
   },
   "failure_analysis": {
@@ -58,9 +60,10 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Rerun the updated hash-ranked live DR24 lightcurve smoke workflow and inspect whether the sample includes both g and r observations; if not, broaden the source selection across HATS partitions before claiming the two-band feature path is exercised.",
+      "Run CI and the live DR24 acquisition/smoke workflow on the latest head; verify the 150-object subset spans multiple HATS partitions and inspect g/r counts in the new 12-object sample.",
+      "If the updated sample still has no r-band observations, investigate IRSA query semantics and expand the bounded sample across additional fragments before claiming the two-band feature path is exercised.",
       "Keep model inference NOT_RUN until the frozen model artifact is made available through an authorized, traceable artifact source.",
-      "Add a survey-wide or multi-partition source selection before treating DR24 evidence as representative; current 150-row subset is a bounded smoke fixture only."
+      "Treat this as a bounded ingestion/feature-engine smoke test, not a representative survey sample or scientific benchmark."
     ]
   },
   "decision": "BLOCKED",
