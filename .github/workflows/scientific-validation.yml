@@ -359,7 +359,7 @@ jobs:
               "discovery_claim": "NONE",
           }
           (root / "report_validation_summary.json").write_text(
-              json.dumps(validation_summary, indent=2, sort_keys=True) + "\\n",
+              json.dumps(validation_summary, indent=2, sort_keys=True) + "\n",
               encoding="utf-8",
           )
           print(json.dumps(validation_summary, indent=2, sort_keys=True))
