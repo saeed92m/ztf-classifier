@@ -53,8 +53,8 @@ def test_candidate_set_comparison_records_added_removed_ids_and_hashes(
     assert result["previous_candidate_ids"]["objects"] == 3
     assert result["current_candidate_ids"]["objects"] == 4
     assert result["shared_objects"] == 2
-    assert result["added_in_current_ids"] == ["4", "5"]
-    assert result["removed_from_current_ids"] == ["1"]
+    assert result["added_in_current_ids_preview"] == ["4", "5"]
+    assert result["removed_from_current_ids_preview"] == ["1"]
     assert result["set_equal"] is False
     assert result["previous_candidate_ids"]["sha256"] == hashlib.sha256(
         previous.read_bytes()
