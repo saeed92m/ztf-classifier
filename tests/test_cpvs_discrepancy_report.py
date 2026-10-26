@@ -327,8 +327,18 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
     with pytest.raises(ValueError, match="duplicate authoritative Seq"):
         read_parent_metadata(duplicate_seq_archive, expected_parent_count=2)
 
-    candidate_diagnostic = write_file(
-        tmp_path / "candidates.tsv.diagnostic.json", '{"status":"count_mismatch"}\n'
+    candidate_diagnostic = tmp_path / "candidates.tsv.diagnostic.json"
+    candidate_diagnostic.write_text(
+        json.dumps(
+            {
+                "status": "COUNT_MISMATCH",
+                "expected_selected_rows": 3,
+                "observed_selected_rows": 3,
+                "candidate_sha256": hashlib.sha256(candidates.read_bytes()).hexdigest(),
+            }
+        )
+        + "\n",
+        encoding="utf-8",
     )
     diagnostic_result = build_cpvs_discrepancy_report(
         parent_metadata=parent_archive,
@@ -348,5 +358,5 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
     assert "candidate_diagnostic" in diagnostic_result["source_evidence_files"]
     assert (
         diagnostic_result["source_evidence_metadata"]["candidate_diagnostic"]["status"]
-        == "count_mismatch"
+        == "COUNT_MISMATCH"
     )
