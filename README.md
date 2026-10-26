@@ -430,7 +430,7 @@ The current production model explicitly does **not** claim a scientific-anomaly 
 The latest verified project state and acceptance criteria are maintained in [the Project Status & Execution Ledger](docs/PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-10-25.md). Key boundaries:
 
 - CPVS exact historical reconstruction remains unresolved ([Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170)); 11,602 candidate-only IDs are a catalog-membership discrepancy, not automatically discoveries.
-- [PR #223](https://github.com/saeed92m/ztf-classifier/pull/223) merged on 2026-10-26 (`8c2ba057a572b1cd460c47d1e02940e1ba44e366`). [PR #224](https://github.com/saeed92m/ztf-classifier/pull/224) remains open/draft; its report still requires fresh independent membership/provenance validation.
+- [PR #223](https://github.com/saeed92m/ztf-classifier/pull/223) merged on 2026-10-26 (`8c2ba057a572b1cd460c47d1e02940e1ba44e366`). [PR #224](https://github.com/saeed92m/ztf-classifier/pull/224) merged as `b56c90bafe9e6e0c5630dd4b96c9843dbd26301c`, adding the traceable discrepancy-report utility. The actual 11,602-row report still requires regeneration from authoritative source artifacts and review.
 - The 100-object independent raw-data benchmark is tracked separately in [Issue #222](https://github.com/saeed92m/ztf-classifier/issues/222).
 - Windows, Ubuntu, macOS packaging and a user-ready GUI require clean-machine/end-to-end evidence; existing API/Workbench code is not by itself proof of a finished cross-platform desktop product.
 - Company-Platform integration remains optional and must not become a hard dependency.
