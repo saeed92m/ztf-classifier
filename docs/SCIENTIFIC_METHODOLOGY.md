@@ -20,6 +20,10 @@ Classification uncertainty, calibration, conformal prediction, OOD, and scientif
 
 The immutable published membership reference contains 730,184 objects from a parent table with 781,602 rows. The latest recorded Seq-based heavy audit reports 741,786 candidates, all 730,184 published members in the candidate set, 11,602 candidate-only objects, and zero published-only or unmapped published names (run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146); see [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170)). These are recorded diagnostic results and should be revalidated against the primary artifact hashes before new scientific claims. The four-field predicate reproduces the membership set diagnostically, but its identity with the publisher's historical rule is not established. Exact historical selection semantics remain unresolved; do not force cardinality by threshold tuning.
 
+### CPVS report crosswalk contract
+
+The published Table 4 has both a ZTF object-name column (`ZTF`) and its own numeric internal `ID`. Membership reporting must join by normalized ZTF object name to the parent Table 2 object-name field (`ID`) and map that name to parent `Seq`/SourceID. Never compare Table 4's numeric `ID` directly with parent `Seq`. For report inputs, the parent metadata export must include `ID,Seq,gmag,rmag,Per-g,Per-r`; an export containing only `Seq` and the four metrics cannot support the official name crosswalk unless a separate verified crosswalk is joined. Record exact query URLs, retrieval timestamps, and hashes.
+
 ## Reproducibility
 
 Scientific claims require source identity, retrieval/version information, object identifiers, hashes, schemas, taxonomy, temporal/leakage controls, and retained evidence artifacts.
