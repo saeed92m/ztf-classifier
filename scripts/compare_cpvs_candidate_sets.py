@@ -104,9 +104,6 @@ def compare_candidate_sets(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     csv_path = out / "cpvs_candidate_set_change.csv"
-    name_keys = {"id", "ztf", "ztfname", "ztf_name", "name", "object_name"}
-    metadata_keys = {"gmag", "rmag", "per_g", "per_r"}
-
     def metadata_for(object_id: str, change_type: str) -> dict[str, Any]:
         parent_row = next(
             (
