@@ -56,6 +56,14 @@ jobs:
           github-token: ${{ github.token }}
           path: source-artifact
 
+      - name: Download previous candidate-set artifact for run-to-run diff
+        uses: actions/download-artifact@v8
+        with:
+          name: scientific-validation-heavy
+          run-id: 38635891449
+          github-token: ${{ github.token }}
+          path: previous-artifact
+
       - name: Locate and verify required source inputs
         id: inputs
         shell: bash
@@ -64,9 +72,11 @@ jobs:
           parent="$(find source-artifact -type f -path '*/ztf_periodic_781k/Table2.txt.zip' -print -quit)"
           candidate="$(find source-artifact -type f -path '*/ztf_periodic_730k/selected.tsv' -print -quit)"
           published="$(find source-artifact -type f -path '*/ztf_periodic_730k/published_table4.dat' -print -quit)"
+          previous_candidate="$(find previous-artifact -type f -path '*/ztf_periodic_730k/selected.tsv' -print -quit)"
           test -n "$parent" && test -s "$parent"
           test -n "$candidate" && test -s "$candidate"
           test -n "$published" && test -s "$published"
+          test -n "$previous_candidate" && test -s "$previous_candidate"
           test -s "$parent.evidence.json"
           candidate_evidence="$candidate.evidence.json"
           candidate_diagnostic="$candidate.diagnostic.json"
@@ -83,9 +93,10 @@ jobs:
           printf 'parent=%s\n' "$parent" >> "$GITHUB_OUTPUT"
           printf 'candidate=%s\n' "$candidate" >> "$GITHUB_OUTPUT"
           printf 'published=%s\n' "$published" >> "$GITHUB_OUTPUT"
+          printf 'previous_candidate=%s\n' "$previous_candidate" >> "$GITHUB_OUTPUT"
           printf 'candidate_sidecar=%s\n' "$sidecar" >> "$GITHUB_OUTPUT"
           printf 'candidate_sidecar_kind=%s\n' "$sidecar_kind" >> "$GITHUB_OUTPUT"
-          sha256sum "$parent" "$parent.evidence.json" "$candidate" "$sidecar" "$published"
+          sha256sum "$parent" "$parent.evidence.json" "$candidate" "$sidecar" "$published" "$previous_candidate"
 
       - name: Generate source-backed CPVS discrepancy report
         shell: bash
@@ -107,6 +118,17 @@ jobs:
             args+=(--candidate-diagnostic "${{ steps.inputs.outputs.candidate_sidecar }}")
           fi
           PYTHONPATH=src python scripts/build_cpvs_discrepancy_report.py "${args[@]}"
+
+      - name: Compare current candidate IDs with previous source-backed run
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python scripts/compare_cpvs_candidate_sets.py \
+            --previous-candidate-ids "${{ steps.inputs.outputs.previous_candidate }}" \
+            --current-candidate-ids "${{ steps.inputs.outputs.candidate }}" \
+            --previous-source-run-id 38635891449 \
+            --current-source-run-id "${{ steps.source.outputs.run_id }}" \
+            --output-dir reports/cpvs_report_validation/cpvs_discrepancy_report
 
       - name: Verify report counts and provenance hashes
         env:
