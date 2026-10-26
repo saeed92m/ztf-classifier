@@ -331,7 +331,7 @@ def build_cpvs_discrepancy_report(
                 evidence_file.read_text(encoding="utf-8"),
                 parse_constant=_reject_nonfinite_json_constant,
             )
-        except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as exc:
+        except (UnicodeDecodeError, ValueError) as exc:
             raise ValueError(
                 f"invalid strict JSON in source sidecar {name}: {exc}"
             ) from exc
