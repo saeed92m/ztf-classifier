@@ -41,7 +41,8 @@
       "Artifact audit found the upstream 150-row DR24 object subset is the lexicographically first 150 OIDs and all rows map to one HATS sky partition; the first smoke selector then chose the highest ngoodobsrel objects. This is smoke evidence only and is not a representative survey sample.",
       "The selector was revised to use stable SHA-256 ranking within the pinned eligible subset, with seed DR24-LIGHTCURVE-SMOKE-v1, and now records eligible-pool size and selection scope. Fresh CI and live-data rerun are required.",
       "A second run after hash-ranking within the original 150-row subset still returned 12/12 g-only objects, confirming the limitation was upstream subset composition rather than only the per-object ranking.",
-      "The DR24 HATS index selector has now been changed to choose up to 15 evenly spaced index fragments and SHA-256-rank OIDs within each fragment. The pinned query contract records this method and seed; unit tests cover fragment spread and order-independent ranking. Fresh CI and live-source rerun are pending."
+      "The DR24 HATS index selector has now been changed to choose up to 15 evenly spaced index fragments and SHA-256-rank OIDs within each fragment. The pinned query contract records this method and seed; unit tests cover fragment spread and order-independent ranking. Fresh CI and live-source rerun are pending.",
+      "Latest Scientific Validation run 40398912969 exposed a contract mismatch: the manifest had moved to sha256_ranked_across_evenly_spaced_hats_index_fragments while the adapter still accepted only deterministic_lexicographic. The adapter now accepts the two explicit deterministic methods and validates seed/fragment_sample_count for fragment sampling; a regression assertion checks the new manifest contract. Re-run all checks on this head before considering the issue fixed."
     ]
   },
   "failure_analysis": {
@@ -60,7 +61,7 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Run CI and the live DR24 acquisition/smoke workflow on the latest head; verify the 150-object subset spans multiple HATS partitions and inspect g/r counts in the new 12-object sample.",
+      "Re-run CI and the live DR24 acquisition/smoke workflow on the latest head; verify the 150-object subset spans multiple HATS partitions and inspect g/r counts in the new 12-object sample.",
       "If the updated sample still has no r-band observations, investigate IRSA query semantics and expand the bounded sample across additional fragments before claiming the two-band feature path is exercised.",
       "Keep model inference NOT_RUN until the frozen model artifact is made available through an authorized, traceable artifact source.",
       "Treat this as a bounded ingestion/feature-engine smoke test, not a representative survey sample or scientific benchmark."
