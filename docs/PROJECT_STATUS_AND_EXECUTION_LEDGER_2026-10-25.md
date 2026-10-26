@@ -10,7 +10,7 @@ This document is the dated, evidence-conscious coordination point for the ZTF Cl
 - Current immutable software release documented by the repository: `v1.0.1`.
 - Frozen scientific baseline: `v0.2.0`; production model: `baseline_v0.2`; preserve the 42-feature `final_feature_set_v0.2`, frozen class order, historical cutoff `59447.224132`, diagnostics schema 1.1, and fail-closed scientific gate.
 - Security PR [#223](https://github.com/saeed92m/ztf-classifier/pull/223) merged on 2026-10-26 as `8c2ba057a572b1cd460c47d1e02940e1ba44e366`. The merge refreshed dependency pins; dependent PRs still require current-head CI and dependency-audit verification.
-- CPVS report PR [#224](https://github.com/saeed92m/ztf-classifier/pull/224) remains open and draft. Its implementation/tests are not equivalent to a generated, source-backed 11,602-row deliverable; verify current-head checks and independently audit the actual outputs before merge.
+- CPVS report utility PR [#224](https://github.com/saeed92m/ztf-classifier/pull/224) merged as `b56c90bafe9e6e0c5630dd4b96c9843dbd26301c`. The latest source-backed Seq run [#40397098709](https://github.com/saeed92m/ztf-classifier/actions/runs/40397098709) reports 11,604 candidate-only IDs; its object-level report still needs generation and audit.
 - [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170) remains the scientific membership-reconstruction blocker.
 - [Issue #222](https://github.com/saeed92m/ztf-classifier/issues/222) defines a bounded operational behavior test on 100 random object-level inputs; it is not an independent scientific benchmark.
 
@@ -22,9 +22,9 @@ The currently recorded full-set result is:
 |---|---:|
 | CPVS Table 2 parent rows / source objects | 781,602 |
 | Published Table 4 reference IDs | 730,184 |
-| Seq-based reconstructed candidates | 741,786 |
+| Latest source-backed Seq-based reconstructed candidates (run #40397098709) | 741,788 |
 | Shared IDs | 730,184 |
-| Candidate-only IDs | 11,602 |
+| Candidate-only IDs in latest run | 11,604 |
 | Published-only IDs | 0 |
 
 The recorded diagnostic partition of candidate-only IDs is 11,580 failing at least one condition in both the parent mean-magnitude pair and per-band-period pair; 17 with positive mean magnitudes but a missing/nonpositive period; and 5 with both periods but missing/nonpositive `gmag`. The four-field predicate (`gmag > 0`, `rmag > 0`, `Per-g > 0`, `Per-r > 0`) has been recorded as matching Table 4 membership exactly for the source-backed diagnostic artifacts.
@@ -36,7 +36,7 @@ The recorded diagnostic partition of candidate-only IDs is 11,580 failing at lea
 ### A. CPVS discrepancy report
 
 1. Re-fetch and freeze the authoritative parent metadata, published Table 4 membership, and Seq-based candidate IDs; record source URLs, retrieval timestamps, row counts, schema, and SHA-256.
-2. Run the report builder from PR #224 against those exact inputs. Confirm the CSV has exactly 11,602 unique candidate-only object IDs, every ID maps to an authoritative parent record, and the manifest hashes match the generated files.
+2. Run the merged report builder against the immutable artifact from run #40397098709. Confirm the CSV contains every computed candidate-only ID (currently 11,604), each maps to an authoritative parent record, and the manifest/source-evidence/output hashes reconcile. Compare against the prior 11,602 baseline without forcing it.
 3. Review every diagnostic reason; missing and invalid values must remain explicit, never imputed silently.
 4. Generate HTML/CSV/Markdown/JSON outputs and verify internal count consistency and deterministic rebuild behavior.
 5. Keep raw-light-curve review and external catalog cross-match as `NOT_ASSESSED` until their evidence is actually present.
@@ -92,11 +92,11 @@ This is a bounded test of how the current program behaves on 100 random object-l
 ## Current blockers
 
 1. Exact historical CPVS selection semantics are not independently proven; Issue #170 remains open.
-2. The actual 11,602-row report has not yet been verified as generated from the source-backed artifacts by the current report PR.
-3. Raw light-curve inspection and a full external-catalog cross-match have not been established for all 11,602 objects.
+2. The report for the latest source-backed run (currently 11,604 candidate-only IDs) has not yet been generated and audited from that run's artifact.
+3. Raw-light-curve inspection and a full external-catalog cross-match have not been established for all 11,604 candidate-only IDs.
 4. The 100-random-object operational test has not yet been run and audited; no results are claimed.
 5. Windows/macOS clean-machine packaging and a user-ready GUI have not been verified by this review.
-6. PR #223 is merged; PR #224 merged as `b56c90bafe9e6e0c5630dd4b96c9843dbd26301c`. The report utility is now in main, but the actual 11,602-row report still requires regeneration from authoritative source artifacts and audit.
+6. PR #223 is merged; PR #224 merged as `b56c90bafe9e6e0c5630dd4b96c9843dbd26301c`. The report utility is in main, but the report from the latest Seq-based artifact (currently 11,604 candidate-only IDs) still requires generation and audit.
 
 ## Next execution sequence
 
@@ -120,7 +120,7 @@ GitHub Actions exposes the source-backed diagnostic run [#38635891449](https://g
 - `frozen-reference-evidence-alerce_reference_frozen_20200609`, artifact ID `11928138398`, 487 bytes, digest `sha256:cf69a4da28a20451016f42d555f42d9f3675ec95cd1500392163c384d4d70a6f`.
 - `scientific-validation-provenance`, artifact ID `11927184945`, 1,016 bytes, digest `sha256:248f14c9872085aceaa1ecb313c0c7e4e5d3be2dd6e8319b9aafecea09700d94`.
 
-These are artifact-service metadata, not a completed local content audit. The ZIP was fetched into the working file service, but the available execution environment returned errors when attempting to inspect/extract its bytes. Therefore its internal members, source file hashes, and the 11,602-row report have **not** been verified in this turn. Retrieve/materialize the artifact in a functioning local runtime, inspect its manifest and member list, validate archive integrity, and reproduce the report before relying on its contents. Do not let the artifact expire before preserving the necessary provenance evidence.
+The earlier retained report bundle is historical and reflects the 11,602-row candidate list. The latest full source-backed run #40397098709 completed and uploaded a new heavy artifact; its parent archive SHA-256 is `0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138`, and its corrected candidate count is 741,788 / 11,604 candidate-only. The latest artifact has not yet been downloaded and audited in a functioning local runtime. The dedicated report workflow should consume that immutable artifact, preserve the diagnostic sidecar because derivation failed its expected-count gate, and compare counts transparently.
 
 
 ## Product data-input boundary — clarified 2026-10-25
@@ -140,9 +140,9 @@ Two independent tracks will be evaluated side by side. Neither track is accepted
 ## Execution update — 2026-10-26
 
 - PR [#223](https://github.com/saeed92m/ztf-classifier/pull/223) was merged as commit `8c2ba057a572b1cd460c47d1e02940e1ba44e366`, refreshing vulnerable dependency pins on `main`.
-- PR [#224](https://github.com/saeed92m/ztf-classifier/pull/224) was merged as `b56c90bafe9e6e0c5630dd4b96c9843dbd26301c` after CI, tests, runtime smoke, package build, and dependency audit passed. This merges the report-building capability only; the actual 11,602-row report still requires generation and source-backed review.
-- Follow-up report bundle generated on 2026-10-26 from retained source-backed run [#38635891449](https://github.com/saeed92m/ztf-classifier/actions/runs/38635891449), artifact `11935357767`. Bundle SHA-256: `c7c678d2bf5f6a82507ab0161c3aaaafd422b78434b6873cb9f4d966e6fa6895`; it contains a 11,602-row CSV, filterable HTML, Markdown, strict JSON summary, ID TSV, and provenance manifest. All 11,602 IDs joined to parent metadata and retained audit counts reconcile. The report reuses the retained Table 4 membership audit and does not rerun the full crosswalk; source-format blanks are not equated with numeric zero. Issue #170 remains UNRESOLVED.
-- A retained-artifact report bundle was generated and checked: 11,602 unique candidate-only IDs; all 11,602 joined to one parent Table 2 row; 781,602 parent rows; CSV/JSON row counts agree; strict JSON parsing and ZIP integrity checks passed. Bundle SHA-256: `9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc`. This reuses the prior candidate-only list and does not independently rerun the complete Table 4 join.
+- PR [#224](https://github.com/saeed92m/ztf-classifier/pull/224) was merged as `b56c90bafe9e6e0c5630dd4b96c9843dbd26301c` after CI, tests, runtime smoke, package build, and dependency audit passed. This merges the report-building capability only; the actual report from the latest Seq run (currently 11,604 candidate-only rows) still requires generation and source-backed review.
+- Historical follow-up report bundle generated from run [#38635891449](https://github.com/saeed92m/ztf-classifier/actions/runs/38635891449), artifact `11935357767`, contains 11,602 rows and SHA-256 `c7c678d2bf5f6a82507ab0161c3aaaafd422b78434b6873cb9f4d966e6fa6895`. It reuses an older candidate list and is superseded for current reporting by run #40397098709 (741,788 candidates / 11,604 candidate-only). Issue #170 remains UNRESOLVED.
+- A retained-artifact report bundle was generated and checked for the earlier 11,602-ID list (SHA-256 `9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc`). It is historical only and does not cover the latest 11,604-ID candidate-only set from run #40397098709; the current report must be rebuilt and its complete crosswalk audited.
 - A deterministic stratified 100-object identity/membership spot-check and 1,000-object sample construction audit were recorded. These validate sample/crosswalk construction only; they do not prove raw per-epoch detection semantics or full-vs-batch equivalence.
 - PR [#227](https://github.com/saeed92m/ztf-classifier/pull/227) ran a real DR24 smoke test on 12 objects and the 42-feature engine. Model inference was `NOT_RUN`; the sample had g-only data and 23/42 features NaN, so this is ingestion/feature-engine smoke evidence only.
 - The previous Dependency Audit failures on PRs [#219](https://github.com/saeed92m/ztf-classifier/pull/219) and #227 were associated with stale `filelock==4.0.3` and `setuptools==84.0.0` pins. The dependency-refresh commit was merged to `main`; both dependent branches have since advanced and their current-head CI/scientific checks must complete before merge.
