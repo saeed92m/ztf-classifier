@@ -167,8 +167,8 @@ def compare_candidate_sets(
         "added_in_current_count": len(added),
         "removed_from_current_count": len(removed),
         "set_equal": previous == current,
-        "added_in_current_ids": added,
-        "removed_from_current_ids": removed,
+        "added_in_current_ids_preview": added[:100],
+        "removed_from_current_ids_preview": removed[:100],
         "change_csv": {
             "path": csv_path.name,
             "sha256": sha256_file(csv_path),
