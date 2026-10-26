@@ -168,7 +168,9 @@ def select_candidate_objects(
     """
     required = {"oid", "ngoodobsrel"}
     if not required.issubset(objects.columns):
-        raise ValueError(f"Objects table missing required columns: {sorted(required - set(objects.columns))}")
+        raise ValueError(
+            f"Objects table missing required columns: {sorted(required - set(objects.columns))}"
+        )
     frame = objects.copy()
     frame["oid"] = frame["oid"].astype(str).str.strip()
     if frame["oid"].eq("").any() or frame["oid"].duplicated().any():
@@ -176,10 +178,14 @@ def select_candidate_objects(
     frame["ngoodobsrel"] = pd.to_numeric(frame["ngoodobsrel"], errors="coerce")
     frame = frame.loc[frame["ngoodobsrel"] >= minimum_good_observations].copy()
     eligible_count = len(frame)
-    frame["_sample_rank"] = frame["oid"].map(
-        lambda oid: hashlib.sha256(f"{DR24_SMOKE_SAMPLE_SEED}:{oid}".encode("utf-8")).hexdigest()
-    )
-    frame = frame.sort_values(["_sample_rank", "oid"], kind="mergesort").head(max_objects)
+    def sample_rank(oid: str) -> str:
+        value = f"{DR24_SMOKE_SAMPLE_SEED}:{oid}".encode("utf-8")
+        return hashlib.sha256(value).hexdigest()
+
+    frame["_sample_rank"] = frame["oid"].map(sample_rank)
+    frame = frame.sort_values(
+        ["_sample_rank", "oid"], kind="mergesort"
+    ).head(max_objects)
     return frame.drop(columns=["_sample_rank"]).reset_index(drop=True), eligible_count
 
 
