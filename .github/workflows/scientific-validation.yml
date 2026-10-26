@@ -289,6 +289,7 @@ jobs:
           echo "report_generated=true" >> "$GITHUB_OUTPUT"
 
       - name: Validate source-backed CPVS discrepancy report
+        id: validate_cpvs_report
         if: always() && steps.build_cpvs_report.outputs.report_generated == 'true'
         env:
           SOURCE_REVISION: ${{ github.sha }}
@@ -397,6 +398,15 @@ jobs:
           )
           print(json.dumps(validation_summary, indent=2, sort_keys=True))
           PY
+
+      - name: Upload compact verified CPVS discrepancy report
+        if: always() && steps.build_cpvs_report.outputs.report_generated == 'true' && steps.validate_cpvs_report.outcome == 'success'
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-source-backed-discrepancy-report
+          path: reports/scientific_validation/ztf_periodic_730k/cpvs_discrepancy_report/**
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Classify CPVS reconstruction result
         if: always()
