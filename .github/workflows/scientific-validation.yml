@@ -267,12 +267,16 @@ jobs:
 
       - name: Validate source-backed CPVS discrepancy report
         if: always() && steps.derive_730k.outcome == 'success'
+        env:
+          SOURCE_REVISION: ${{ github.sha }}
+          REPORT_CODE_REVISION: ${{ github.sha }}
         run: |
           set -euo pipefail
           python - <<'PY'
           import csv
           import hashlib
           import json
+          import os
           from pathlib import Path
 
           root = Path("reports/scientific_validation/ztf_periodic_730k/cpvs_discrepancy_report")
@@ -283,6 +287,10 @@ jobs:
           counts = manifest["counts"]
           if manifest.get("report_code_revision") in (None, "", "UNRECORDED"):
               raise SystemExit("Report-builder code revision is missing")
+          if manifest.get("source_revision") != os.environ["SOURCE_REVISION"]:
+              raise SystemExit("Source revision does not match the producing workflow commit")
+          if manifest.get("report_code_revision") != os.environ["REPORT_CODE_REVISION"]:
+              raise SystemExit("Report-builder revision does not match the workflow commit")
           expected = {
               "parent_metadata_objects": 781602,
               "candidate_objects": 741786,
