@@ -39,7 +39,8 @@
       "Added fixed-width Table 2 ZIP reader using documented byte offsets and authoritative Seq.",
       "Added integration test with a synthetic fixed-width Table 2 archive and a Table 4 ZTF-name crosswalk.",
       "Added report-generation and hash/count validation steps to the source-backed heavy workflow.",
-      "CI and scientific validation on this branch have not yet completed; full source-backed report generation has not yet been observed."
+      "CI and scientific validation on this branch have not yet completed; full source-backed report generation has not yet been observed.",
+      "Added a dedicated workflow_run validator for the current CPVS Seq heavy run; it downloads the immutable scientific-validation-heavy artifact, rebuilds the report from the exact parent/candidate/published inputs, verifies counts and hashes, and uploads a 90-day report artifact. This workflow will only execute after the current PR checks are green and the workflow exists on main before the heavy run completes."
     ],
     "blocker": "Pass current-head CI, then run the source-backed heavy workflow and inspect the produced artifact. Do not mark the report complete until all 11,602 IDs, source hashes, output hashes, and crosswalk invariants are verified."
   },
@@ -62,7 +63,7 @@
     "status": "BLOCKED",
     "open_blockers": [
       "Run unit/integration tests and all required PR checks on the current head.",
-      "Run source-backed heavy workflow and verify the generated report artifact and all recorded hashes.",
+      "Wait for the current source-backed heavy run to finish, then verify the dedicated workflow-run report artifact and all recorded hashes.",
       "Keep raw-lightcurve review and external cross-match status NOT_ASSESSED unless separately evidenced.",
       "Keep Issue #170 open unless the exact historical selection semantics are independently established."
     ]
