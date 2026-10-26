@@ -15,6 +15,10 @@ REQUIRED_FEATURES = ("gmag", "rmag", "Per-g", "Per-r")
 ID_ALIASES = ("sourceid", "source_id", "seq", "id")
 
 
+def _reject_nonfinite_json_constant(value: str) -> None:
+    raise ValueError(f"non-standard JSON constant is not allowed: {value}")
+
+
 def sha256_file(path: str | Path) -> str:
     digest = hashlib.sha256()
     with Path(path).open("rb") as stream:
@@ -309,6 +313,7 @@ def build_cpvs_discrepancy_report(
     if candidate_evidence is not None and candidate_diagnostic is not None:
         raise ValueError("provide candidate evidence or candidate diagnostic, not both")
     evidence_files: dict[str, dict[str, Any]] = {}
+    evidence_metadata: dict[str, dict[str, Any]] = {}
     for name, evidence_path in (
         ("parent_evidence", parent_evidence),
         ("candidate_evidence", candidate_evidence),
@@ -319,11 +324,21 @@ def build_cpvs_discrepancy_report(
         evidence_file = Path(evidence_path)
         if not evidence_file.is_file():
             raise ValueError(f"missing source evidence sidecar for {name}: {evidence_file}")
+        try:
+            parsed_evidence = json.loads(
+                evidence_file.read_text(encoding="utf-8"),
+                parse_constant=_reject_nonfinite_json_constant,
+            )
+        except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as exc:
+            raise ValueError(f"invalid strict JSON in source sidecar {name}: {exc}") from exc
+        if not isinstance(parsed_evidence, dict):
+            raise ValueError(f"source sidecar {name} must contain a JSON object")
         evidence_files[name] = {
             "path": str(evidence_file),
             "sha256": sha256_file(evidence_file),
             "bytes": evidence_file.stat().st_size,
         }
+        evidence_metadata[name] = parsed_evidence
 
     candidates = read_ids(candidate_path)
     published = published_membership_ids(published_path, parent_rows, id_key)
@@ -414,6 +429,7 @@ def build_cpvs_discrepancy_report(
         "source_revision": source_revision,
         "report_code_revision": report_code_revision,
         "source_evidence_files": evidence_files,
+        "source_evidence_metadata": evidence_metadata,
         "source_files": {
             name: {
                 "path": str(path),
