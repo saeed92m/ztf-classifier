@@ -11,7 +11,7 @@
     "Issue #158 defines the cross-platform desktop product and GUI acceptance criteria."
   ],
   "baseline": {
-    "revision": "d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
+    "revision": "b56c90bafe9e6e0c5630dd4b96c9843dbd26301c",
     "status": "README and roadmap status were dated 2026-10-11. The immutable software release is v1.0.1 and the frozen scientific baseline is v0.2.0. The CPVS discrepancy, independent benchmark, and cross-platform desktop acceptance remain open workstreams."
   },
   "expected_improvement": [
@@ -41,11 +41,12 @@
     "status": "IN_PROGRESS",
     "scientific_gate_affected": false,
     "evidence": [
-      "Repository main ref verified at d88e54a2eb70d5e4531bc950341ef3136c29a5e2.",
-      "PR #223 merge was verified; PR #224 remains draft and its report output is not yet independently validated.",
+      "Repository main ref verified at b56c90bafe9e6e0c5630dd4b96c9843dbd26301c after PR #223 and PR #224 were merged.",
+      "PR #223 merged as 8c2ba057a572b1cd460c47d1e02940e1ba44e366; PR #224 merged as b56c90bafe9e6e0c5630dd4b96c9843dbd26301c. The report utility is merged, but current source-backed report generation remains outstanding.",
       "Issue #170, #158, and #222 were inspected and linked from the ledger.",
       "The documentation branch changes README.md, docs/HANDBOOK_UPDATED_v2.8.md, docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md, and docs/PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-10-25.md.",
-      "The first CI run exposed the required lifecycle record; this record is being added to satisfy that gate, not to bypass it."
+      "The first CI run exposed the required lifecycle record; this record is being added to satisfy that gate, not to bypass it.",
+      "Latest full source-backed run #40397098709 reports 741788 candidates, 730184 published members, 11604 candidate-only, and zero published-only. This supersedes the earlier 741786 / 11602 count for current reporting; Issue #170 remains unresolved."
     ],
     "blocker": "Re-run the complete CI, CodeQL, Product Scope Audit, and Scientific Validation workflows on the final branch head; do not treat skipped source-backed scientific jobs as validation."
   },
