@@ -36,14 +36,18 @@ def compare_candidate_sets(
     if previous_diagnostic is not None:
         diagnostic_path = Path(previous_diagnostic)
         if not diagnostic_path.is_file():
-            raise ValueError(f"previous candidate diagnostic not found: {diagnostic_path}")
+            raise ValueError(
+                f"previous candidate diagnostic not found: {diagnostic_path}"
+            )
         try:
             diagnostic_payload = json.loads(
                 diagnostic_path.read_text(encoding="utf-8"),
                 parse_constant=_reject_nonfinite_json_constant,
             )
         except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as exc:
-            raise ValueError(f"invalid previous candidate diagnostic JSON: {exc}") from exc
+            raise ValueError(
+                f"invalid previous candidate diagnostic JSON: {exc}"
+            ) from exc
         if not isinstance(diagnostic_payload, dict):
             raise ValueError("previous candidate diagnostic must be a JSON object")
         previous_diagnostic_record = {
@@ -60,8 +64,14 @@ def compare_candidate_sets(
         writer = csv.DictWriter(stream, fieldnames=["change_type", "SourceID"])
         writer.writeheader()
         writer.writerows(
-            [{"change_type": "added_in_current", "SourceID": object_id} for object_id in added]
-            + [{"change_type": "removed_from_current", "SourceID": object_id} for object_id in removed]
+            [
+                {"change_type": "added_in_current", "SourceID": object_id}
+                for object_id in added
+            ]
+            + [
+                {"change_type": "removed_from_current", "SourceID": object_id}
+                for object_id in removed
+            ]
         )
 
     result: dict[str, Any] = {
