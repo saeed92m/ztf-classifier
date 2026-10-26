@@ -323,14 +323,18 @@ def build_cpvs_discrepancy_report(
             continue
         evidence_file = Path(evidence_path)
         if not evidence_file.is_file():
-            raise ValueError(f"missing source evidence sidecar for {name}: {evidence_file}")
+            raise ValueError(
+                f"missing source evidence sidecar for {name}: {evidence_file}"
+            )
         try:
             parsed_evidence = json.loads(
                 evidence_file.read_text(encoding="utf-8"),
                 parse_constant=_reject_nonfinite_json_constant,
             )
         except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as exc:
-            raise ValueError(f"invalid strict JSON in source sidecar {name}: {exc}") from exc
+            raise ValueError(
+                f"invalid strict JSON in source sidecar {name}: {exc}"
+            ) from exc
         if not isinstance(parsed_evidence, dict):
             raise ValueError(f"source sidecar {name} must contain a JSON object")
         evidence_files[name] = {
