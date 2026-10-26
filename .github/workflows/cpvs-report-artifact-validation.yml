@@ -67,6 +67,7 @@ jobs:
             --published-ids "${{ steps.inputs.outputs.published }}" \
             --output-dir reports/cpvs_report_validation/cpvs_discrepancy_report \
             --source-revision "${{ github.event.workflow_run.head_sha }}" \
+            --report-code-revision "${{ github.sha }}" \
             --expected-parent-count 781602
 
       - name: Verify report counts and provenance hashes
