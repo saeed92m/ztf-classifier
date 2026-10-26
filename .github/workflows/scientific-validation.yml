@@ -253,22 +253,43 @@ jobs:
             --output reports/scientific_validation/ztf_periodic_730k/membership_audit.json
 
       - name: Build source-backed CPVS candidate-only report
-        if: always() && steps.derive_730k.outcome == 'success'
+        id: build_cpvs_report
+        if: always()
         run: |
           set -euo pipefail
-          python scripts/build_cpvs_discrepancy_report.py \
-            --parent-metadata reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
-            --candidate-ids reports/scientific_validation/ztf_periodic_730k/selected.tsv \
-            --published-ids reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
-            --output-dir reports/scientific_validation/ztf_periodic_730k/cpvs_discrepancy_report \
-            --source-revision "${GITHUB_SHA}" \
-            --report-code-revision "${GITHUB_SHA}" \
-            --parent-evidence reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip.evidence.json \
-            --candidate-evidence reports/scientific_validation/ztf_periodic_730k/selected.tsv.evidence.json \
+          root="reports/scientific_validation/ztf_periodic_730k"
+          candidate="$root/selected.tsv"
+          parent="reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip"
+          published="$root/published_table4.dat"
+          if [[ ! -s "$candidate" ]]; then
+            echo "No candidate list was produced; source-backed report skipped."
+            echo "report_generated=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          test -s "$parent" && test -s "$published"
+          args=(
+            --parent-metadata "$parent"
+            --candidate-ids "$candidate"
+            --published-ids "$published"
+            --output-dir "$root/cpvs_discrepancy_report"
+            --source-revision "${GITHUB_SHA}"
+            --report-code-revision "${GITHUB_SHA}"
+            --parent-evidence "$parent.evidence.json"
             --expected-parent-count 781602
+          )
+          if [[ -s "$candidate.evidence.json" ]]; then
+            args+=(--candidate-evidence "$candidate.evidence.json")
+          elif [[ -s "$candidate.diagnostic.json" ]]; then
+            args+=(--candidate-diagnostic "$candidate.diagnostic.json")
+          else
+            echo "Candidate list has neither evidence nor diagnostic sidecar." >&2
+            exit 1
+          fi
+          python scripts/build_cpvs_discrepancy_report.py "${args[@]}"
+          echo "report_generated=true" >> "$GITHUB_OUTPUT"
 
       - name: Validate source-backed CPVS discrepancy report
-        if: always() && steps.derive_730k.outcome == 'success'
+        if: always() && steps.build_cpvs_report.outputs.report_generated == 'true'
         env:
           SOURCE_REVISION: ${{ github.sha }}
           REPORT_CODE_REVISION: ${{ github.sha }}
@@ -339,8 +360,11 @@ jobs:
               digest = hashlib.sha256(source.read_bytes()).hexdigest()
               if digest != record["sha256"]:
                   raise SystemExit(f"Source hash mismatch for {name}")
-          if set(manifest["source_evidence_files"]) != {"parent_evidence", "candidate_evidence"}:
-              raise SystemExit("Parent and candidate evidence sidecars must be recorded")
+          sidecars = set(manifest["source_evidence_files"])
+          if "parent_evidence" not in sidecars or not (
+              "candidate_evidence" in sidecars or "candidate_diagnostic" in sidecars
+          ):
+              raise SystemExit("Parent evidence and candidate evidence/diagnostic sidecar must be recorded")
           for name, record in manifest["source_evidence_files"].items():
               source = Path(record["path"])
               if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != record["sha256"]:
