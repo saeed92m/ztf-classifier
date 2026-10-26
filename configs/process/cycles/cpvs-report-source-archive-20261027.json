@@ -33,7 +33,7 @@
     }
   },
   "validation": {
-    "status": "IN_PROGRESS",
+    "status": "BLOCKED",
     "scientific_gate_affected": true,
     "evidence": [
       "Added fixed-width Table 2 ZIP reader using documented byte offsets and authoritative Seq.",
@@ -71,7 +71,7 @@
       "Keep Issue #170 open unless the exact historical selection semantics are independently established."
     ]
   },
-  "decision": "REVISE",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not weaken the fail-closed scientific gate or change the four-field diagnostic into a production rule.",
     "Do not claim candidate-only objects are new discoveries.",
