@@ -62,6 +62,8 @@ jobs:
             --output-dir reports/cpvs_report_validation/cpvs_discrepancy_report \
             --source-revision "${{ github.event.workflow_run.head_sha }}" \
             --report-code-revision "${{ github.sha }}" \
+            --parent-evidence "${{ steps.inputs.outputs.parent }}.evidence.json" \
+            --candidate-evidence "${{ steps.inputs.outputs.candidate }}.evidence.json" \
             --expected-parent-count 781602
 
       - name: Verify report counts and provenance hashes
