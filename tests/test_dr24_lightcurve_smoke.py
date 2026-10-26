@@ -47,3 +47,29 @@ def test_normalize_dr24_fails_closed_on_missing_required_columns() -> None:
     source = pd.DataFrame({"HMJD": [60000.0], "mag": [18.0]})
     with pytest.raises(ValueError, match="missing"):
         normalize_api_frame(source)
+
+
+
+def test_dr24_candidate_selection_is_deterministic_and_not_sorted_by_count() -> None:
+    from scripts.smoke_dr24_lightcurve_pipeline import select_candidate_objects
+
+    source = pd.DataFrame(
+        {
+            "oid": [f"ZTF{i:04d}" for i in range(20)],
+            "ngoodobsrel": list(range(100, 80, -1)),
+        }
+    )
+    first, eligible = select_candidate_objects(source, max_objects=5)
+    second, eligible_again = select_candidate_objects(source.sample(frac=1, random_state=7), max_objects=5)
+
+    assert eligible == eligible_again == 20
+    assert first["oid"].tolist() == second["oid"].tolist()
+    assert first["oid"].tolist() != source.sort_values("ngoodobsrel", ascending=False).head(5)["oid"].tolist()
+
+
+def test_dr24_candidate_selection_rejects_duplicate_oids() -> None:
+    from scripts.smoke_dr24_lightcurve_pipeline import select_candidate_objects
+
+    source = pd.DataFrame({"oid": ["ZTF1", "ZTF1"], "ngoodobsrel": [40, 50]})
+    with pytest.raises(ValueError, match="duplicate OIDs"):
+        select_candidate_objects(source, max_objects=1)
