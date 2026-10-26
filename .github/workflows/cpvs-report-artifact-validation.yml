@@ -77,10 +77,12 @@ jobs:
           candidate="$(find source-artifact -type f -path '*/ztf_periodic_730k/selected.tsv' -print -quit)"
           published="$(find source-artifact -type f -path '*/ztf_periodic_730k/published_table4.dat' -print -quit)"
           previous_candidate="$(find previous-artifact -type f -path '*/ztf_periodic_730k/selected.tsv' -print -quit)"
+          previous_diagnostic="$(find previous-artifact -type f -path '*/ztf_periodic_730k/selected.tsv.diagnostic.json' -print -quit)"
           test -n "$parent" && test -s "$parent"
           test -n "$candidate" && test -s "$candidate"
           test -n "$published" && test -s "$published"
           test -n "$previous_candidate" && test -s "$previous_candidate"
+          test -n "$previous_diagnostic" && test -s "$previous_diagnostic"
           test -s "$parent.evidence.json"
           candidate_evidence="$candidate.evidence.json"
           candidate_diagnostic="$candidate.diagnostic.json"
@@ -98,9 +100,10 @@ jobs:
           printf 'candidate=%s\n' "$candidate" >> "$GITHUB_OUTPUT"
           printf 'published=%s\n' "$published" >> "$GITHUB_OUTPUT"
           printf 'previous_candidate=%s\n' "$previous_candidate" >> "$GITHUB_OUTPUT"
+          printf 'previous_diagnostic=%s\n' "$previous_diagnostic" >> "$GITHUB_OUTPUT"
           printf 'candidate_sidecar=%s\n' "$sidecar" >> "$GITHUB_OUTPUT"
           printf 'candidate_sidecar_kind=%s\n' "$sidecar_kind" >> "$GITHUB_OUTPUT"
-          sha256sum "$parent" "$parent.evidence.json" "$candidate" "$sidecar" "$published" "$previous_candidate"
+          sha256sum "$parent" "$parent.evidence.json" "$candidate" "$sidecar" "$published" "$previous_candidate" "$previous_diagnostic"
 
       - name: Generate source-backed CPVS discrepancy report
         shell: bash
@@ -132,6 +135,7 @@ jobs:
             --current-candidate-ids "${{ steps.inputs.outputs.candidate }}" \
             --previous-source-run-id 38635891449 \
             --current-source-run-id "${{ steps.source.outputs.run_id }}" \
+            --previous-diagnostic "${{ steps.inputs.outputs.previous_diagnostic }}" \
             --output-dir reports/cpvs_report_validation/cpvs_discrepancy_report
 
       - name: Verify report counts and provenance hashes
