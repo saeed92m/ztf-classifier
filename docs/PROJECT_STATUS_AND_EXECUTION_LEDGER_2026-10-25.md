@@ -1,4 +1,4 @@
-# Project Status & Execution Ledger — 2026-10-25
+# Project Status & Execution Ledger — 2026-10-26 (updated)
 
 ## Purpose
 
@@ -9,8 +9,8 @@ This document is the dated, evidence-conscious coordination point for the ZTF Cl
 - Default branch: `main`, at `d88e54a2eb70d5e4531bc950341ef3136c29a5e2`.
 - Current immutable software release documented by the repository: `v1.0.1`.
 - Frozen scientific baseline: `v0.2.0`; production model: `baseline_v0.2`; preserve the 42-feature `final_feature_set_v0.2`, frozen class order, historical cutoff `59447.224132`, diagnostics schema 1.1, and fail-closed scientific gate.
-- Security PR [#223](https://github.com/saeed92m/ztf-classifier/pull/223) is open and unmerged. Its latest recorded CI, Product Scope Audit, Scientific Validation workflow, and CodeQL runs succeeded. A successful workflow is not authorization to merge; inspect the current checks again before any merge.
-- CPVS report PR [#224](https://github.com/saeed92m/ztf-classifier/pull/224) is open and draft. Its latest recorded CI failed at Dependency Audit while the base branch still had vulnerable dependency pins. The report implementation/tests are not equivalent to a generated, source-backed 11,602-row deliverable.
+- Security PR [#223](https://github.com/saeed92m/ztf-classifier/pull/223) merged on 2026-10-26 as `8c2ba057a572b1cd460c47d1e02940e1ba44e366`. The merge refreshed dependency pins; dependent PRs still require current-head CI and dependency-audit verification.
+- CPVS report PR [#224](https://github.com/saeed92m/ztf-classifier/pull/224) remains open and draft. Its implementation/tests are not equivalent to a generated, source-backed 11,602-row deliverable; verify current-head checks and independently audit the actual outputs before merge.
 - [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170) remains the scientific membership-reconstruction blocker.
 - [Issue #222](https://github.com/saeed92m/ztf-classifier/issues/222) defines a bounded operational behavior test on 100 random object-level inputs; it is not an independent scientific benchmark.
 
@@ -83,8 +83,8 @@ This is a bounded test of how the current program behaves on 100 random object-l
 
 ### G. Security, lifecycle and documentation
 
-- Re-check PR #223's current CI and dependency audit; do not bypass the audit.
-- Rebase/re-run PR #224 after the security dependency fix is accepted through the repository's normal review process; do not merge either PR automatically.
+- PR #223 is merged. Re-check dependent PRs' current CI and dependency audits; do not bypass the audit.
+- Re-run PR #224 against the current main base after the dependency refresh and independently verify its generated outputs; do not merge automatically.
 - Update README, handbook, roadmap, issue records, and release notes from verified evidence. Do not report workflow success as scientific validation when scientific jobs are skipped.
 - Preserve raw scientific data outside Git unless explicitly approved and licensed. Store manifests and small provenance metadata, not large catalogs or credentials.
 - Treat GitHub wiki and repository description updates separately from source-doc updates; do not claim they changed unless a write is verified.
@@ -96,7 +96,7 @@ This is a bounded test of how the current program behaves on 100 random object-l
 3. Raw light-curve inspection and a full external-catalog cross-match have not been established for all 11,602 objects.
 4. The 100-random-object operational test has not yet been run and audited; no results are claimed.
 5. Windows/macOS clean-machine packaging and a user-ready GUI have not been verified by this review.
-6. PR #223 and #224 remain unmerged at the time of this record.
+6. PR #223 is merged; PR #224 remains open/draft pending current-head CI and source-backed output validation.
 
 ## Next execution sequence
 
@@ -143,5 +143,5 @@ Two independent tracks will be evaluated side by side. Neither track is accepted
 - A retained-artifact report bundle was generated and checked: 11,602 unique candidate-only IDs; all 11,602 joined to one parent Table 2 row; 781,602 parent rows; CSV/JSON row counts agree; strict JSON parsing and ZIP integrity checks passed. Bundle SHA-256: `9ed3c52555f5ef892bf574f77f981c4955decbae7f134c7b542e2f0434e653bc`. This reuses the prior candidate-only list and does not independently rerun the complete Table 4 join.
 - A deterministic stratified 100-object identity/membership spot-check and 1,000-object sample construction audit were recorded. These validate sample/crosswalk construction only; they do not prove raw per-epoch detection semantics or full-vs-batch equivalence.
 - PR [#227](https://github.com/saeed92m/ztf-classifier/pull/227) ran a real DR24 smoke test on 12 objects and the 42-feature engine. Model inference was `NOT_RUN`; the sample had g-only data and 23/42 features NaN, so this is ingestion/feature-engine smoke evidence only.
-- The previous Dependency Audit failures on PRs [#219](https://github.com/saeed92m/ztf-classifier/pull/219) and #227 were traced to stale `filelock==4.0.3` and `setuptools==84.0.0` pins. Those branches have now been updated to `filelock==4.2.1` and `setuptools==84.1.0`; current-head CI and scientific checks must complete before merge.
+- The previous Dependency Audit failures on PRs [#219](https://github.com/saeed92m/ztf-classifier/pull/219) and #227 were associated with stale `filelock==4.0.3` and `setuptools==84.0.0` pins. The dependency-refresh commit was merged to `main`; both dependent branches have since advanced and their current-head CI/scientific checks must complete before merge.
 - **Still blocked:** the historical CPVS selection rule; fresh independent full Table 4 membership comparison; source-backed 1,000-object raw-photometry review and full-vs-batch test; independent Gaia/TESS validation; and supported-OS desktop packaging. Keep Issue #170 open and the scientific gate fail-closed.
