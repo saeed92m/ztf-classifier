@@ -1,0 +1,125 @@
+name: CPVS Source-Backed Report Validation
+
+on:
+  workflow_run:
+    workflows: ["Scientific Validation"]
+    types: [completed]
+    branches:
+      - "ci/heavy/cpvs-seq-authoritative-ids-20261026"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  build-and-verify-report:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'ci/heavy/cpvs-seq-authoritative-ids-20261026'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: pip
+
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip==26.2 setuptools==84.1.0 wheel==0.48.0
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Download source-backed scientific-validation artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: scientific-validation-heavy
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          path: source-artifact
+
+      - name: Locate and verify required source inputs
+        id: inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          parent="$(find source-artifact -type f -path '*/ztf_periodic_781k/Table2.txt.zip' -print -quit)"
+          candidate="$(find source-artifact -type f -path '*/ztf_periodic_730k/selected.tsv' -print -quit)"
+          published="$(find source-artifact -type f -path '*/ztf_periodic_730k/published_table4.dat' -print -quit)"
+          test -n "$parent" && test -s "$parent"
+          test -n "$candidate" && test -s "$candidate"
+          test -n "$published" && test -s "$published"
+          test -s "$parent.evidence.json"
+          test -s "$candidate.evidence.json"
+          printf 'parent=%s\n' "$parent" >> "$GITHUB_OUTPUT"
+          printf 'candidate=%s\n' "$candidate" >> "$GITHUB_OUTPUT"
+          printf 'published=%s\n' "$published" >> "$GITHUB_OUTPUT"
+          sha256sum "$parent" "$parent.evidence.json" "$candidate" "$candidate.evidence.json" "$published"
+
+      - name: Generate source-backed CPVS discrepancy report
+        run: |
+          set -euo pipefail
+          python scripts/build_cpvs_discrepancy_report.py \
+            --parent-metadata "${{ steps.inputs.outputs.parent }}" \
+            --candidate-ids "${{ steps.inputs.outputs.candidate }}" \
+            --published-ids "${{ steps.inputs.outputs.published }}" \
+            --output-dir reports/cpvs_report_validation/cpvs_discrepancy_report \
+            --source-revision "${{ github.event.workflow_run.head_sha }}" \
+            --expected-parent-count 781602
+
+      - name: Verify report counts and provenance hashes
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv
+          import hashlib
+          import json
+          from pathlib import Path
+
+          root = Path("reports/cpvs_report_validation/cpvs_discrepancy_report")
+          manifest = json.loads((root / "cpvs_discrepancy_manifest.json").read_text(encoding="utf-8"))
+          expected = {
+              "parent_metadata_objects": 781602,
+              "candidate_objects": 741786,
+              "published_reference_objects": 730184,
+              "intersection_objects": 730184,
+              "candidate_only_objects": 11602,
+              "published_only_objects": 0,
+              "candidate_only_missing_parent_provenance": 0,
+          }
+          if manifest["counts"] != expected:
+              raise SystemExit(json.dumps({"expected": expected, "actual": manifest["counts"]}, sort_keys=True))
+          with (root / "cpvs_candidate_only_objects.csv").open(encoding="utf-8", newline="") as stream:
+              rows = list(csv.DictReader(stream))
+          ids = [row.get("SourceID", "") for row in rows]
+          if len(ids) != 11602 or len(set(ids)) != 11602:
+              raise SystemExit("Expected exactly 11,602 unique candidate-only object IDs")
+          for name, record in manifest["source_files"].items():
+              source = Path(record["path"])
+              if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != record["sha256"]:
+                  raise SystemExit(f"Source hash verification failed: {name}")
+          for name, record in manifest["outputs"].items():
+              output = root / record["path"]
+              if not output.is_file() or hashlib.sha256(output.read_bytes()).hexdigest() != record["sha256"]:
+                  raise SystemExit(f"Output hash verification failed: {name}")
+          if manifest["interpretation"]["historical_publisher_rule"] != "UNRESOLVED":
+              raise SystemExit("Report must preserve unresolved historical publisher rule")
+          print(json.dumps({
+              "status": "REPORT_VERIFIED",
+              "counts": manifest["counts"],
+              "source_hashes_verified": len(manifest["source_files"]),
+              "output_hashes_verified": len(manifest["outputs"]),
+              "historical_publisher_rule": "UNRESOLVED",
+              "discovery_claim": "none",
+          }, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload verified CPVS discrepancy report
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-source-backed-discrepancy-report
+          path: reports/cpvs_report_validation/cpvs_discrepancy_report/**
+          if-no-files-found: error
+          retention-days: 90
