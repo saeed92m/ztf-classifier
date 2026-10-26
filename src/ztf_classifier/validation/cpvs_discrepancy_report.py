@@ -169,7 +169,9 @@ def number_status(raw: str | None) -> str:
     return "positive" if value > 0 else "nonpositive"
 
 
-def read_parent_metadata(path: str | Path) -> tuple[list[str], list[dict[str, str]]]:
+def read_parent_metadata(
+    path: str | Path, *, expected_parent_count: int = 781_602
+) -> tuple[list[str], list[dict[str, str]]]:
     """Read normalized parent tables or the authoritative fixed-width CPVS Table 2 ZIP.
 
     The official Table 2 layout places the ZTF name in bytes 1–22, Seq in
@@ -232,6 +234,11 @@ def read_parent_metadata(path: str | Path) -> tuple[list[str], list[dict[str, st
                 ids = [row["Seq"] for row in rows]
                 if len(ids) != len(set(ids)):
                     raise ValueError(f"{source}:{member}: duplicate authoritative Seq values")
+                if len(rows) != expected_parent_count:
+                    raise ValueError(
+                        f"{source}:{member}: expected {expected_parent_count} Table 2 rows, "
+                        f"found {len(rows)}"
+                    )
                 return headers, rows
     raise ValueError(f"{source}: no fixed-width CPVS Table 2 rows with ZTF IDs were found")
 
@@ -243,6 +250,7 @@ def build_cpvs_discrepancy_report(
     published_ids: str | Path,
     output_dir: str | Path,
     source_revision: str,
+    expected_parent_count: int = 781_602,
 ) -> dict[str, Any]:
     """Write CSV, strict JSON manifest, searchable HTML and Markdown summary."""
     if (
@@ -255,7 +263,9 @@ def build_cpvs_discrepancy_report(
     parent_path, candidate_path, published_path = map(
         Path, (parent_metadata, candidate_ids, published_ids)
     )
-    headers, parent_rows = read_parent_metadata(parent_path)
+    headers, parent_rows = read_parent_metadata(
+        parent_path, expected_parent_count=expected_parent_count
+    )
     id_key = id_column(headers)
     normalized = {header.lower(): header for header in headers}
     absent = [
