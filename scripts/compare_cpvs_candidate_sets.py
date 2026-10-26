@@ -157,8 +157,8 @@ def compare_candidate_sets(
             "published_member": object_id in published_members,
             "gmag": values.get("gmag", ""),
             "rmag": values.get("rmag", ""),
-            "Per_g": values.get("per_g", ""),
-            "Per_r": values.get("per_r", ""),
+            "Per_g": values.get("per_g", values.get("per-g", "")),
+            "Per_r": values.get("per_r", values.get("per-r", "")),
         }
 
     change_rows = [
