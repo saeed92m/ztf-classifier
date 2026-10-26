@@ -169,6 +169,73 @@ def number_status(raw: str | None) -> str:
     return "positive" if value > 0 else "nonpositive"
 
 
+def read_parent_metadata(path: str | Path) -> tuple[list[str], list[dict[str, str]]]:
+    """Read normalized parent tables or the authoritative fixed-width CPVS Table 2 ZIP.
+
+    The official Table 2 layout places the ZTF name in bytes 1–22, Seq in
+    bytes 24–29, gmag in 90–95, rmag in 97–102, Per-g in 104–116, and Per-r
+    in 118–130. Seq is the source identifier; the row ordinal is never used.
+    """
+    import zipfile
+
+    source = Path(path)
+    if not zipfile.is_zipfile(source):
+        # Preserve support for already-normalized CSV/TSV metadata inputs.
+        try:
+            headers, rows = read_table(source)
+            normalized = {header.lower() for header in headers}
+            if {"gmag", "rmag", "per-g", "per-r"}.issubset(normalized):
+                id_column(headers)
+                return headers, rows
+        except (UnicodeDecodeError, csv.Error):
+            pass
+        raise ValueError(
+            "parent metadata must be a normalized CSV/TSV table or the official "
+            "fixed-width CPVS Table 2 ZIP archive"
+        )
+
+    headers = ["ID", "Seq", "gmag", "rmag", "Per-g", "Per-r"]
+    with zipfile.ZipFile(source) as archive:
+        members = [name for name in archive.namelist() if not name.endswith("/")]
+        members.sort(key=lambda name: (0 if "table2" in Path(name).name.lower() else 1, name.lower()))
+        for member in members:
+            rows: list[dict[str, str]] = []
+            try:
+                with archive.open(member) as stream:
+                    for line_number, raw in enumerate(stream, start=1):
+                        line = raw.decode("utf-8", errors="strict").rstrip("\r\n")
+                        if not line[:22].strip().upper().startswith("ZTF"):
+                            continue
+                        if len(line) < 130:
+                            raise ValueError(
+                                f"{source}:{member}:{line_number}: truncated Table 2 row "
+                                f"({len(line)} characters; expected at least 130)"
+                            )
+                        seq = line[23:29].strip()
+                        if not seq.isascii() or not seq.isdecimal():
+                            raise ValueError(
+                                f"{source}:{member}:{line_number}: invalid authoritative Seq {seq!r}"
+                            )
+                        rows.append(
+                            {
+                                "ID": line[:22].strip(),
+                                "Seq": str(int(seq)),
+                                "gmag": line[89:95].strip(),
+                                "rmag": line[96:102].strip(),
+                                "Per-g": line[103:116].strip(),
+                                "Per-r": line[117:130].strip(),
+                            }
+                        )
+            except UnicodeDecodeError:
+                continue
+            if rows:
+                ids = [row["Seq"] for row in rows]
+                if len(ids) != len(set(ids)):
+                    raise ValueError(f"{source}:{member}: duplicate authoritative Seq values")
+                return headers, rows
+    raise ValueError(f"{source}: no fixed-width CPVS Table 2 rows with ZTF IDs were found")
+
+
 def build_cpvs_discrepancy_report(
     *,
     parent_metadata: str | Path,
@@ -188,7 +255,7 @@ def build_cpvs_discrepancy_report(
     parent_path, candidate_path, published_path = map(
         Path, (parent_metadata, candidate_ids, published_ids)
     )
-    headers, parent_rows = read_table(parent_path)
+    headers, parent_rows = read_parent_metadata(parent_path)
     id_key = id_column(headers)
     normalized = {header.lower(): header for header in headers}
     absent = [
