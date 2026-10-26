@@ -253,7 +253,7 @@ jobs:
             --output reports/scientific_validation/ztf_periodic_730k/membership_audit.json
 
       - name: Build source-backed CPVS candidate-only report
-        if: always() && steps.derive_730k.outcome == 'success' && steps.audit_730k.outcome == 'success'
+        if: always() && steps.derive_730k.outcome == 'success'
         run: |
           set -euo pipefail
           python scripts/build_cpvs_discrepancy_report.py \
@@ -265,7 +265,7 @@ jobs:
             --expected-parent-count 781602
 
       - name: Validate source-backed CPVS discrepancy report
-        if: always() && steps.derive_730k.outcome == 'success' && steps.audit_730k.outcome == 'success'
+        if: always() && steps.derive_730k.outcome == 'success'
         run: |
           set -euo pipefail
           python - <<'PY'
