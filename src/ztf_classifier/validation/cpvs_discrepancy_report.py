@@ -395,6 +395,23 @@ def build_cpvs_discrepancy_report(
                 ("published_ids", published_path),
             )
         },
+        "source_context": {
+            "parent_metadata": {
+                "catalogue": "ZTF Catalog of Periodic Variable Stars, Table 2",
+                "source_url": "https://zenodo.org/records/3886372",
+                "identifier_field": "Seq",
+            },
+            "candidate_ids": {
+                "method": "source-backed reconstruction output; see scientific-validation workflow diagnostics",
+                "source_revision": source_revision,
+                "photometry_source_url": "https://zenodo.org/records/3886372",
+            },
+            "published_ids": {
+                "catalogue": "Chan et al. (2022), J/ApJ/932/118, Table 4",
+                "source_url": "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/932/118/",
+                "membership_join": "normalized ZTF object name crosswalk to Table 2 Seq",
+            },
+        },
         "counts": {
             "parent_metadata_objects": len(parent),
             "candidate_objects": len(candidates),
