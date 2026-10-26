@@ -281,6 +281,8 @@ jobs:
               raise SystemExit("Missing source-backed CPVS discrepancy manifest")
           manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
           counts = manifest["counts"]
+          if manifest.get("report_code_revision") in (None, "", "UNRECORDED"):
+              raise SystemExit("Report-builder code revision is missing")
           expected = {
               "parent_metadata_objects": 781602,
               "candidate_objects": 741786,
