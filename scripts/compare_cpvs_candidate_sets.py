@@ -55,12 +55,15 @@ def compare_candidate_sets(
             (
                 key
                 for key in parent_rows[0]
-                if key.lower() in {"id", "ztf", "ztfname", "ztf_name", "name", "object_name"}
+                if key.lower()
+                in {"id", "ztf", "ztfname", "ztf_name", "name", "object_name"}
             ),
             None,
         )
         if parent_name_key is None:
-            raise ValueError("parent metadata has no ZTF object-name field for crosswalk")
+            raise ValueError(
+                "parent metadata has no ZTF object-name field for crosswalk"
+            )
         published_members = published_membership_ids(
             published_path,
             parent_rows,
@@ -118,7 +121,9 @@ def compare_candidate_sets(
             "change_type": change_type,
             "SourceID": object_id,
             "parent_record_found": bool(parent_row),
-            "parent_ZTF_name": parent_row.get(parent_name_key, "") if parent_name_key else "",
+            "parent_ZTF_name": (
+                parent_row.get(parent_name_key, "") if parent_name_key else ""
+            ),
             "published_member": object_id in published_members,
             "gmag": values.get("gmag", ""),
             "rmag": values.get("rmag", ""),
