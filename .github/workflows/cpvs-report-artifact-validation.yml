@@ -230,6 +230,10 @@ jobs:
               raise SystemExit("Current candidate-set source hash mismatch")
           if comparison["current_candidate_ids"]["sha256"] != manifest["source_files"]["candidate_ids"]["sha256"]:
               raise SystemExit("Candidate-set diff does not use the report's candidate input")
+          if comparison["parent_metadata"]["sha256"] != manifest["source_files"]["parent_metadata"]["sha256"]:
+              raise SystemExit("Candidate-set diff parent metadata hash differs from the report input")
+          if comparison["published_reference"]["sha256"] != manifest["source_files"]["published_ids"]["sha256"]:
+              raise SystemExit("Candidate-set diff published reference hash differs from the report input")
           if hashlib.sha256(comparison_csv.read_bytes()).hexdigest() != comparison["change_csv"]["sha256"]:
               raise SystemExit("Candidate-set change CSV hash mismatch")
           with comparison_csv.open(encoding="utf-8", newline="") as stream:
@@ -240,6 +244,8 @@ jobs:
               comparison["added_in_current_count"] + comparison["removed_from_current_count"]
           ):
               raise SystemExit("Candidate-set change counts are inconsistent")
+          if any(row.get("parent_record_found") != "True" for row in change_rows):
+              raise SystemExit("A changed candidate ID lacks parent-record provenance")
           if manifest["interpretation"]["historical_publisher_rule"] != "UNRESOLVED":
               raise SystemExit("Report must preserve unresolved historical publisher rule")
           validation_summary = {
