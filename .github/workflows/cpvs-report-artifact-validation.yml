@@ -130,6 +130,12 @@ jobs:
               source = Path(record["path"])
               if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != record["sha256"]:
                   raise SystemExit(f"Source hash verification failed: {name}")
+          if set(manifest["source_evidence_files"]) != {"parent_evidence", "candidate_evidence"}:
+              raise SystemExit("Parent and candidate evidence sidecars must be recorded")
+          for name, record in manifest["source_evidence_files"].items():
+              source = Path(record["path"])
+              if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != record["sha256"]:
+                  raise SystemExit(f"Evidence sidecar hash verification failed: {name}")
           for name, record in manifest["outputs"].items():
               output = root / record["path"]
               if not output.is_file() or hashlib.sha256(output.read_bytes()).hexdigest() != record["sha256"]:
@@ -144,6 +150,7 @@ jobs:
               ),
               "baseline_comparison": baseline_comparison,
               "source_hashes_verified": len(manifest["source_files"]),
+              "source_evidence_hashes_verified": len(manifest["source_evidence_files"]),
               "output_hashes_verified": len(manifest["outputs"]),
               "historical_publisher_rule": "UNRESOLVED",
               "discovery_claim": "none",
