@@ -285,6 +285,7 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
     }
     assert result["report_code_revision"] == "report-code-test-revision"
     assert set(result["source_evidence_files"]) == {"parent_evidence", "candidate_evidence"}
+    assert result["source_evidence_metadata"]["candidate_evidence"]["sha256"] == "fixture-candidate"
     assert result["source_evidence_files"]["parent_evidence"]["sha256"] == hashlib.sha256(
         parent_evidence.read_bytes()
     ).hexdigest()
@@ -333,3 +334,7 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
     )
     assert diagnostic_result["source_context"]["candidate_ids"]["evidence_kind"] == "diagnostic"
     assert "candidate_diagnostic" in diagnostic_result["source_evidence_files"]
+    assert (
+        diagnostic_result["source_evidence_metadata"]["candidate_diagnostic"]["status"]
+        == "count_mismatch"
+    )
