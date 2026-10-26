@@ -23,6 +23,21 @@ def test_candidate_set_comparison_records_added_removed_ids_and_hashes(
         '{"code_version":"previous-code-sha","candidate_count":3}\n',
         encoding="utf-8",
     )
+    parent = tmp_path / "parent.csv"
+    parent.write_text(
+        "SourceID,ID,gmag,rmag,Per_g,Per_r\n"
+        "1,ZTF1,15.0,16.0,0.5,0.6\n"
+        "2,ZTF2,15.1,16.1,0.7,0.8\n"
+        "3,ZTF3,15.2,16.2,0.9,1.0\n"
+        "4,ZTF4,15.3,16.3,1.1,1.2\n"
+        "5,ZTF5,15.4,16.4,1.3,1.4\n",
+        encoding="utf-8",
+    )
+    published = tmp_path / "published.tsv"
+    published.write_text(
+        "ID\tZTF\n1001\tZTF1\n1002\tZTF2\n",
+        encoding="utf-8",
+    )
     output = tmp_path / "comparison"
     result = compare_candidate_sets(
         previous_candidate_ids=previous,
@@ -31,6 +46,8 @@ def test_candidate_set_comparison_records_added_removed_ids_and_hashes(
         current_source_run_id="40397098709",
         output_dir=output,
         previous_diagnostic=previous_diagnostic,
+        parent_metadata=parent,
+        published_ids=published,
     )
 
     assert result["previous_candidate_ids"]["objects"] == 3
@@ -52,11 +69,15 @@ def test_candidate_set_comparison_records_added_removed_ids_and_hashes(
         encoding="utf-8", newline=""
     ) as stream:
         rows = list(csv.DictReader(stream))
-    assert rows == [
-        {"change_type": "added_in_current", "SourceID": "4"},
-        {"change_type": "added_in_current", "SourceID": "5"},
-        {"change_type": "removed_from_current", "SourceID": "1"},
-    ]
+    assert [row["SourceID"] for row in rows] == ["4", "5", "1"]
+    removed = rows[-1]
+    assert removed["change_type"] == "removed_from_current"
+    assert removed["parent_record_found"] == "True"
+    assert removed["parent_ZTF_name"] == "ZTF1"
+    assert removed["published_member"] == "True"
+    assert rows[0]["published_member"] == "False"
+    assert result["parent_metadata"]["objects"] == 5
+    assert result["published_reference"]["objects"] == 2
     summary = json.loads(
         (output / "cpvs_candidate_set_change.json").read_text(encoding="utf-8")
     )
