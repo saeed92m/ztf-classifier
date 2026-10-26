@@ -274,6 +274,10 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
     assert result["diagnostic_group_counts"] == {
         "valid_periods_gmag_incomplete": 1
     }
+    assert result["source_context"]["parent_metadata"]["identifier_field"] == "Seq"
+    assert result["source_context"]["published_ids"]["membership_join"] == (
+        "normalized ZTF object name crosswalk to Table 2 Seq"
+    )
     assert result["source_files"]["parent_metadata"]["sha256"] == hashlib.sha256(
         parent_archive.read_bytes()
     ).hexdigest()
