@@ -408,7 +408,7 @@ def build_cpvs_discrepancy_report(
             },
             "published_ids": {
                 "catalogue": "Chan et al. (2022), J/ApJ/932/118, Table 4",
-                "source_url": "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/932/118/",
+                "source_url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000",
                 "membership_join": "normalized ZTF object name crosswalk to Table 2 Seq",
             },
         },
