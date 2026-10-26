@@ -44,7 +44,7 @@ def compare_candidate_sets(
                 diagnostic_path.read_text(encoding="utf-8"),
                 parse_constant=_reject_nonfinite_json_constant,
             )
-        except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as exc:
+        except (UnicodeDecodeError, ValueError) as exc:
             raise ValueError(
                 f"invalid previous candidate diagnostic JSON: {exc}"
             ) from exc
