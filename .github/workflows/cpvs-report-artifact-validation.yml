@@ -71,18 +71,26 @@ jobs:
             --expected-parent-count 781602
 
       - name: Verify report counts and provenance hashes
+        env:
+          SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}
+          REPORT_CODE_REVISION: ${{ github.sha }}
         run: |
           set -euo pipefail
           python - <<'PY'
           import csv
           import hashlib
           import json
+          import os
           from pathlib import Path
 
           root = Path("reports/cpvs_report_validation/cpvs_discrepancy_report")
           manifest = json.loads((root / "cpvs_discrepancy_manifest.json").read_text(encoding="utf-8"))
           if manifest.get("report_code_revision") in (None, "", "UNRECORDED"):
               raise SystemExit("Report-builder code revision is missing")
+          if manifest.get("source_revision") != os.environ["SOURCE_REVISION"]:
+              raise SystemExit("Source revision does not match the producing workflow commit")
+          if manifest.get("report_code_revision") != os.environ["REPORT_CODE_REVISION"]:
+              raise SystemExit("Report-builder revision does not match the workflow commit")
           expected = {
               "parent_metadata_objects": 781602,
               "candidate_objects": 741786,
