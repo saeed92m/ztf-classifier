@@ -4,8 +4,8 @@
   "objective": "Synchronize README, continuity handbook, platform roadmap, and the evidence-based execution ledger with verified repository state while preserving scientific blockers and the immutable baseline.",
   "previous_knowledge_consumed": [
     "CI run 40139324754 failed the cumulative lifecycle gate because meaningful documentation changes lacked a cycle record.",
-    "PR #223 dependency refresh has successful CI and Dependency Audit evidence but remains open and unmerged.",
-    "PR #224 adds a CPVS discrepancy-report builder but is open/draft; its latest CI failed at Dependency Audit on the unchanged main base.",
+    "PR #223 dependency refresh merged on 2026-10-26 as 8c2ba057a572b1cd460c47d1e02940e1ba44e366; dependent PRs still require current-head CI and dependency-audit verification.",
+    "PR #224 adds a CPVS discrepancy-report builder and remains open/draft; its current-head CI and source-backed output audit must be verified before merge.",
     "Issue #170 records 781602 parent objects, 730184 published members, 741786 Seq-based candidates, 11602 candidate-only IDs, zero published-only IDs, and an unresolved historical selection rule.",
     "Issue #222 defines a separate 100-object source-level external benchmark.",
     "Issue #158 defines the cross-platform desktop product and GUI acceptance criteria."
@@ -42,7 +42,7 @@
     "scientific_gate_affected": false,
     "evidence": [
       "Repository main ref verified at d88e54a2eb70d5e4531bc950341ef3136c29a5e2.",
-      "PR #223 and #224 states and their recorded workflow results were re-fetched.",
+      "PR #223 merge was verified; PR #224 remains draft and its report output is not yet independently validated.",
       "Issue #170, #158, and #222 were inspected and linked from the ledger.",
       "The documentation branch changes README.md, docs/HANDBOOK_UPDATED_v2.8.md, docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md, and docs/PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-10-25.md.",
       "The first CI run exposed the required lifecycle record; this record is being added to satisfy that gate, not to bypass it."
