@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ztf_classifier.validation.cpvs_discrepancy_report import (
+    id_column,
     published_membership_ids,
     read_ids,
     read_parent_metadata,
@@ -50,7 +51,8 @@ def compare_candidate_sets(
     if parent_metadata is not None and published_ids is not None:
         parent_path = Path(parent_metadata)
         published_path = Path(published_ids)
-        parent_rows, parent_id_key = read_parent_metadata(parent_path)
+        parent_headers, parent_rows = read_parent_metadata(parent_path)
+        parent_id_key = id_column(parent_headers)
         parent_name_aliases = {
             "id",
             "ztf",
