@@ -18,6 +18,11 @@ def test_candidate_set_comparison_records_added_removed_ids_and_hashes(
     previous.write_text("SourceID\n1\n2\n3\n", encoding="utf-8")
     current.write_text("SourceID\n2\n3\n4\n5\n", encoding="utf-8")
 
+    previous_diagnostic = tmp_path / "previous.diagnostic.json"
+    previous_diagnostic.write_text(
+        '{"code_version":"previous-code-sha","candidate_count":3}\n',
+        encoding="utf-8",
+    )
     output = tmp_path / "comparison"
     result = compare_candidate_sets(
         previous_candidate_ids=previous,
@@ -25,6 +30,7 @@ def test_candidate_set_comparison_records_added_removed_ids_and_hashes(
         previous_source_run_id="38635891449",
         current_source_run_id="40397098709",
         output_dir=output,
+        previous_diagnostic=previous_diagnostic,
     )
 
     assert result["previous_candidate_ids"]["objects"] == 3
@@ -35,6 +41,12 @@ def test_candidate_set_comparison_records_added_removed_ids_and_hashes(
     assert result["set_equal"] is False
     assert result["previous_candidate_ids"]["sha256"] == hashlib.sha256(
         previous.read_bytes()
+    ).hexdigest()
+    assert result["previous_candidate_diagnostic"]["metadata"]["code_version"] == (
+        "previous-code-sha"
+    )
+    assert result["previous_candidate_diagnostic"]["sha256"] == hashlib.sha256(
+        previous_diagnostic.read_bytes()
     ).hexdigest()
     with (output / "cpvs_candidate_set_change.csv").open(
         encoding="utf-8", newline=""
