@@ -100,6 +100,12 @@ def compare_candidate_sets(
             ) from exc
         if not isinstance(diagnostic_payload, dict):
             raise ValueError("previous candidate diagnostic must be a JSON object")
+        if diagnostic_payload.get("status") != "COUNT_MISMATCH":
+            raise ValueError("previous candidate diagnostic is not a COUNT_MISMATCH record")
+        if diagnostic_payload.get("observed_selected_rows") != len(previous):
+            raise ValueError("previous diagnostic count does not match its candidate ID file")
+        if diagnostic_payload.get("candidate_sha256") != sha256_file(previous_path):
+            raise ValueError("previous diagnostic SHA-256 does not match its candidate ID file")
         previous_diagnostic_record = {
             "path": str(diagnostic_path),
             "sha256": sha256_file(diagnostic_path),
