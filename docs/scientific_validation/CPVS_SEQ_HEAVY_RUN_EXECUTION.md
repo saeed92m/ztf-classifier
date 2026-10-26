@@ -1,0 +1,3 @@
+# Execution-only CPVS Seq validation
+
+This file exists only to create a new commit on the `ci/heavy/` branch family so the repository's branch-gated full source-backed Scientific Validation workflow runs against the PR #219 parser changes. It is not intended to merge. The run must be inspected for actual source acquisition, official Table 2 row/Seq integrity, derivation, independent Table 4 crosswalk, object-level membership, hashes, and explicit unresolved status. Keep Issue #170 open unless the evidence supports a scientific conclusion. Remove this execution-only PR after reviewing the run; do not merge this file or the duplicate code diff.
