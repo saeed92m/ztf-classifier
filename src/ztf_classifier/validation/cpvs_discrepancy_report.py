@@ -255,6 +255,7 @@ def build_cpvs_discrepancy_report(
     published_ids: str | Path,
     output_dir: str | Path,
     source_revision: str,
+    report_code_revision: str = "UNRECORDED",
     expected_parent_count: int = 781_602,
 ) -> dict[str, Any]:
     """Write CSV, strict JSON manifest, searchable HTML and Markdown summary."""
@@ -383,6 +384,7 @@ def build_cpvs_discrepancy_report(
         "report_schema": "cpvs-discrepancy-report/1.0",
         "generated_at_utc": datetime.now(UTC).isoformat(),
         "source_revision": source_revision,
+        "report_code_revision": report_code_revision,
         "source_files": {
             name: {
                 "path": str(path),
