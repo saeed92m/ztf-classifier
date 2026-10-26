@@ -39,10 +39,10 @@
       "Added fixed-width Table 2 ZIP reader using documented byte offsets and authoritative Seq.",
       "Added integration test with a synthetic fixed-width Table 2 archive and a Table 4 ZTF-name crosswalk.",
       "Added report-generation and hash/count validation steps to the source-backed heavy workflow.",
-      "CI and scientific validation on this branch have not yet completed; full source-backed report generation has not yet been observed.",
+      "The full source-backed heavy run 40397098709 completed on the authoritative Seq parser. Parent Table 2 had 781602 rows; archive SHA-256 0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138; evidence sidecar SHA-256 640a048fc9e40df6e1bdfc1bfcd58ac13ee00ca6aee68ca90e7c5992dbdf7944. It produced 741788 candidates / 11604 candidate-only / 0 published-only; exact membership remained UNRESOLVED.",
       "Added a dedicated workflow_run validator for the current CPVS Seq heavy run; it downloads the immutable scientific-validation-heavy artifact, rebuilds the report from the exact parent/candidate/published inputs, verifies counts and hashes, and uploads a 90-day report artifact. This workflow will only execute after the current PR checks are green and the workflow exists on main before the heavy run completes."
     ],
-    "blocker": "Pass current-head CI, then verify the source-backed report artifact, all computed candidate-only IDs, source hashes, output hashes, and a transparent comparison against the historical 11,602-row baseline. If counts change, investigate the difference rather than forcing the prior counts."
+    "blocker": "Generate and audit the report from the completed heavy artifact for run 40397098709. The report must include all computed candidate-only IDs (latest count 11,604), preserve the two-ID shift from prior run #38121913146, and verify input/evidence/output hashes. If the workflow_run consumer was not installed on main before the heavy run completed, provide a safe artifact-reuse execution path without redownloading raw data."
   },
   "failure_analysis": {
     "status": "SUPPORTED",
@@ -63,7 +63,7 @@
     "status": "BLOCKED",
     "open_blockers": [
       "Run unit/integration tests and all required PR checks on the current head.",
-      "Wait for the current source-backed heavy run to finish, then verify the dedicated workflow-run report artifact and all recorded hashes.",
+      "Verify the report artifact built from heavy run 40397098709, including all candidate-only IDs and source/evidence/output hashes.",
       "Keep raw-lightcurve review and external cross-match status NOT_ASSESSED unless separately evidenced.",
       "Keep Issue #170 open unless the exact historical selection semantics are independently established."
     ]
