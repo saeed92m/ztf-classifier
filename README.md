@@ -350,13 +350,13 @@ A benchmark is evidence about this system; it is not the system's architecture.
 |---|---:|
 | CPVS parent | 781,602 rows |
 | Published membership | 730,184 |
-| Current Seq-based candidates | 741,786 |
+| Latest source-backed Seq-based candidates (run #40397098709) | 741,788 |
 | Published ∩ candidate | 730,184 |
 | Published-only | 0 |
-| Candidate-only | 11,602 |
+| Candidate-only in latest Seq-based run | 11,604 |
 | Duplicate / unmapped published names | 0 / 0 |
 
-The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) has completed derivation and an independent membership audit. All 730,184 published names map to actual Table2 Seq/SourceID values; the candidate set contains all published objects but 11,602 additional objects, so exact reconstruction remains **UNRESOLVED**. Earlier metrics 725,101 / 16,686 / 5,083 were invalid because they mapped names to row ordinals. The official CPVS ReadMe defines Table2 `Seq` at bytes 24–29 as the internal source identifier used by the lightcurve attachments. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
+The latest source-backed heavy run [#40397098709](https://github.com/saeed92m/ztf-classifier/actions/runs/40397098709) validated 781,602 parent rows and used the authoritative Table 2 `Seq` field. It produced 741,788 candidates; all 730,184 published members were present, with 11,604 candidate-only and zero published-only IDs. The derivation and independent membership audit both returned non-pass outcomes, and the workflow classified the exact historical reconstruction as **UNRESOLVED**. The earlier run #38121913146 reported 741,786 / 11,602; those counts are superseded for the latest run, and the two-ID difference between runs still needs reconciliation. Parent Table 2 SHA-256: `0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138`. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
 
 No threshold or predicate is to be introduced solely to force the candidate cardinality to 730,184 without independent scientific evidence.
 
@@ -375,7 +375,7 @@ An unresolved external reproduction claim must not silently become a product fai
 - Release infrastructure is event-driven from successful Scientific Validation and no longer depends on manual dispatch.
 - Curated release notes are mandatory for every future release.
 - The frozen scientific baseline remains v0.2.0 and the production model remains baseline_v0.2.
-- Exact CPVS reconstruction remains UNRESOLVED: the current Seq-based run finds 741,786 candidates, all 730,184 published objects, and 11,602 candidate-only objects with zero published-only or unmapped names. Selection semantics for the extra candidates remain under investigation; no threshold or flag rule may be tuned solely to force the published cardinality.
+- Exact CPVS reconstruction remains UNRESOLVED: the latest source-backed Seq run reports 741,788 candidates, all 730,184 published objects, 11,604 candidate-only objects, and zero published-only IDs. The previous run's 741,786 / 11,602 result is superseded for current reporting; the two-ID shift and remaining selection semantics are under investigation. Do not tune thresholds or flags solely to force published cardinality.
 - This reconstruction discrepancy is not an ML or production failure and must not be hidden or forced away by threshold tuning.
 
 The v1.0.1 software release is published and immutable. The broader discovery platform continues through documented product expansion and independent scientific benchmarking.
@@ -429,8 +429,8 @@ The current production model explicitly does **not** claim a scientific-anomaly 
 
 The latest verified project state and acceptance criteria are maintained in [the Project Status & Execution Ledger](docs/PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-10-25.md). Key boundaries:
 
-- CPVS exact historical reconstruction remains unresolved ([Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170)); 11,602 candidate-only IDs are a catalog-membership discrepancy, not automatically discoveries.
-- [PR #223](https://github.com/saeed92m/ztf-classifier/pull/223) merged on 2026-10-26 (`8c2ba057a572b1cd460c47d1e02940e1ba44e366`). [PR #224](https://github.com/saeed92m/ztf-classifier/pull/224) merged as `b56c90bafe9e6e0c5630dd4b96c9843dbd26301c`, adding the traceable discrepancy-report utility. The actual 11,602-row report still requires regeneration from authoritative source artifacts and review.
+- CPVS exact historical reconstruction remains unresolved ([Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170)); the latest source-backed run has 11,604 candidate-only IDs. Candidate-only membership is not astrophysical ground truth or evidence of a new discovery.
+- [PR #223](https://github.com/saeed92m/ztf-classifier/pull/223) merged on 2026-10-26 (`8c2ba057a572b1cd460c47d1e02940e1ba44e366`). [PR #224](https://github.com/saeed92m/ztf-classifier/pull/224) merged as `b56c90bafe9e6e0c5630dd4b96c9843dbd26301c`, adding the traceable discrepancy-report utility. The actual report from the latest Seq-based run (currently 11,604 candidate-only IDs) still requires generation from its authoritative artifact and review.
 - The 100-object independent raw-data benchmark is tracked separately in [Issue #222](https://github.com/saeed92m/ztf-classifier/issues/222).
 - Windows, Ubuntu, macOS packaging and a user-ready GUI require clean-machine/end-to-end evidence; existing API/Workbench code is not by itself proof of a finished cross-platform desktop product.
 - Company-Platform integration remains optional and must not become a hard dependency.
