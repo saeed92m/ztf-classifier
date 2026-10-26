@@ -1,11 +1,6 @@
 name: CPVS Source-Backed Report Validation
 
 on:
-  workflow_run:
-    workflows: ["Scientific Validation"]
-    types: [completed]
-    branches:
-      - "ci/heavy/cpvs-seq-authoritative-ids-20261026"
   push:
     branches:
       - "ci/report-reuse/**"
@@ -16,11 +11,7 @@ permissions:
 
 jobs:
   build-and-verify-report:
-    if: >-
-      (github.event_name == 'workflow_run' &&
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'ci/heavy/cpvs-seq-authoritative-ids-20261026') ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/report-reuse/'))
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/report-reuse/')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -36,15 +27,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "$GITHUB_EVENT_NAME" == "workflow_run" ]]; then
-            run_id="$(python -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["workflow_run"]["id"])')"
-            source_revision="$(python -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["workflow_run"]["head_sha"])')"
-            artifact_name="cpvs-report-source-inputs"
-          else
-            run_id="$(python -c 'import json; print(json.load(open("configs/process/cycles/cpvs-report-source-archive-20261027.json"))["source_run_id"])')"
-            source_revision="$(python -c 'import json; print(json.load(open("configs/process/cycles/cpvs-report-source-archive-20261027.json"))["source_run_commit"])')"
-            artifact_name="scientific-validation-heavy"
-          fi
+          run_id="$(python -c 'import json; print(json.load(open("configs/process/cycles/cpvs-report-source-archive-20261027.json"))["source_run_id"])')"
+          source_revision="$(python -c 'import json; print(json.load(open("configs/process/cycles/cpvs-report-source-archive-20261027.json"))["source_run_commit"])')"
+          artifact_name="scientific-validation-heavy"
           [[ "$run_id" =~ ^[0-9]+$ ]]
           [[ "$source_revision" =~ ^[0-9a-f]{40}$ ]]
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
