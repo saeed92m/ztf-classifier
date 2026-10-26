@@ -175,15 +175,15 @@ The CPVS 730k reconstruction is now explicitly split from the product gate.
 Latest recorded Seq-based diagnostic evidence (revalidate primary artifacts before new claims):
 - parent CPVS table: 781,602 rows
 - published membership reference: 730,184 objects
-- candidate set: 741,786 objects
+- latest source-backed candidate set (run #40397098709): 741,788 objects
 - intersection: 730,184 objects
 - published-only: 0
-- candidate-only: 11,602 objects
+- candidate-only in latest run: 11,604 objects
 - duplicate/unmapped published names: 0 / 0
 
-Source record: [heavy run #38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) and [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). The older 741,788 / 11,604 figures are superseded by the recorded Seq-based diagnostic result; they must not be presented as current. The source-backed artifact still needs renewed integrity/content audit before relying on it for a new scientific claim.
+Source record: [latest heavy run #40397098709](https://github.com/saeed92m/ztf-classifier/actions/runs/40397098709) and [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). This run reports 741,788 candidates, 730,184 intersection, 11,604 candidate-only, and zero published-only IDs. The prior #38121913146 result of 741,786 / 11,602 is superseded for current reporting; the two-ID shift between runs remains unexplained and the current artifact still requires report generation/content audit.
 
-Interpretation: the recorded candidate set contains all published members and 11,602 candidate-only objects. The four-field predicate can reproduce the reference set diagnostically, but its identity with the historical publisher selection rule remains unproven. This is an unresolved external-method reproduction question, not an ML error.
+Interpretation: the latest candidate set contains all published members and 11,604 candidate-only objects. The four-field predicate may reproduce a prior reference set diagnostically, but its identity with the historical publisher selection rule remains unproven. This is an unresolved external-method reproduction question, not an ML error.
 
 Policy:
 1. Do not introduce a threshold solely to force the candidate count to 730,184.
