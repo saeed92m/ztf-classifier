@@ -107,3 +107,29 @@ def test_hats_hash_rank_is_stable_under_input_reordering() -> None:
     second = _rank_index_rows(shuffled, "oid", 7)["oid"].to_pylist()
 
     assert first == second
+
+
+def test_hats_source_ids_are_normalized_before_deterministic_sorting() -> None:
+    from scripts.acquire_external_source_evidence import (
+        SourceQueryError,
+        _normalize_and_sort_source_ids,
+        _validate,
+    )
+
+    source = pd.DataFrame(
+        {
+            "oid": [b" ZTF2 ", b"ZTF1"],
+            "ra": [2.0, 1.0],
+        }
+    )
+    result = _normalize_and_sort_source_ids(source, "oid")
+    _validate(result, ["oid", "ra"], "oid", 2)
+
+    assert result["oid"].tolist() == ["ZTF1", "ZTF2"]
+    assert result["ra"].tolist() == [1.0, 2.0]
+
+    with pytest.raises(SourceQueryError, match="null values"):
+        _normalize_and_sort_source_ids(
+            pd.DataFrame({"oid": ["ZTF1", None], "ra": [1.0, 2.0]}),
+            "oid",
+        )
