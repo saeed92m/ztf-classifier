@@ -225,7 +225,7 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
         row[96:102] = list(rmag.rjust(6)[:6])
         row[103:116] = list(per_g.rjust(13)[:13])
         row[117:130] = list(per_r.rjust(13)[:13])
-        return "".join(row) + "\\n"
+        return "".join(row) + "\n"
 
     names = [
         "ZTFJ000000.00+000000.0",
@@ -233,7 +233,7 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
         "ZTFJ000002.00+000002.0",
     ]
     parent_archive = tmp_path / "Table2.txt.zip"
-    table_text = "Table 2 metadata\\n" + "".join(
+    table_text = "Table 2 metadata\n" + "".join(
         [
             fixed_row(names[0], 1, "15.0", "16.0", "0.5", "0.6"),
             fixed_row(names[1], 2, "15.1", "16.1", "0.7", "0.8"),
@@ -243,12 +243,12 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
     with zipfile.ZipFile(parent_archive, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("Table2.txt", table_text)
 
-    candidates = write_file(tmp_path / "candidates.tsv", "SourceID\\n1\\n2\\n4\\n")
+    candidates = write_file(tmp_path / "candidates.tsv", "SourceID\n1\n2\n4\n")
     # Table 4 internal IDs are intentionally unrelated; join by the ZTF name.
     published = write_file(
         tmp_path / "table4.tsv",
-        "ID\\tZTF\\n9001\\tZTFJ000000.00+000000.0\\n"
-        "9002\\tZTFJ000001.00+000001.0\\n",
+        "ID\\tZTF\n9001\\tZTFJ000000.00+000000.0\n"
+        "9002\\tZTFJ000001.00+000001.0\n",
     )
     output = tmp_path / "report"
     result = build_cpvs_discrepancy_report(
