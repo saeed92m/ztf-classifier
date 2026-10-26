@@ -75,3 +75,35 @@ def test_dr24_candidate_selection_rejects_duplicate_oids() -> None:
     source = pd.DataFrame({"oid": ["ZTF1", "ZTF1"], "ngoodobsrel": [40, 50]})
     with pytest.raises(ValueError, match="duplicate OIDs"):
         select_candidate_objects(source, max_objects=1)
+
+
+
+def test_hats_fragment_sample_spans_index_range_deterministically() -> None:
+    from scripts.acquire_external_source_evidence import _spread_fragment_indices
+
+    indices = _spread_fragment_indices(fragment_count=101, sample_count=5)
+
+    assert indices == sorted(set(indices))
+    assert indices[0] == 0
+    assert indices[-1] == 100
+    assert len(indices) == 5
+
+
+def test_hats_hash_rank_is_stable_under_input_reordering() -> None:
+    import pyarrow as pa
+
+    from scripts.acquire_external_source_evidence import _rank_index_rows
+
+    table = pa.table(
+        {
+            "oid": [f"oid-{index:03d}" for index in range(20)],
+            "Norder": [3] * 20,
+            "Npix": list(range(20)),
+        }
+    )
+    shuffled = table.take(pa.array(list(reversed(range(20))), type=pa.int64()))
+
+    first = _rank_index_rows(table, "oid", 7)["oid"].to_pylist()
+    second = _rank_index_rows(shuffled, "oid", 7)["oid"].to_pylist()
+
+    assert first == second
