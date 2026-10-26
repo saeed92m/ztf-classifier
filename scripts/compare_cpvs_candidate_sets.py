@@ -10,6 +10,10 @@ from typing import Any
 from ztf_classifier.validation.cpvs_discrepancy_report import read_ids, sha256_file
 
 
+def _reject_nonfinite_json_constant(value: str) -> None:
+    raise ValueError(f"non-standard JSON constant is not allowed: {value}")
+
+
 def compare_candidate_sets(
     *,
     previous_candidate_ids: str | Path,
@@ -36,9 +40,7 @@ def compare_candidate_sets(
         try:
             diagnostic_payload = json.loads(
                 diagnostic_path.read_text(encoding="utf-8"),
-                parse_constant=lambda value: (_ for _ in ()).throw(
-                    ValueError(f"non-standard JSON constant: {value}")
-                ),
+                parse_constant=_reject_nonfinite_json_constant,
             )
         except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as exc:
             raise ValueError(f"invalid previous candidate diagnostic JSON: {exc}") from exc
