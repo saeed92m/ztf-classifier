@@ -229,6 +229,14 @@ jobs:
               previous_candidate_path.read_bytes()
           ).hexdigest() != comparison["previous_candidate_ids"]["sha256"]:
               raise SystemExit("Previous candidate-set source hash mismatch")
+          previous_diagnostic_record = comparison.get("previous_candidate_diagnostic")
+          if not previous_diagnostic_record:
+              raise SystemExit("Previous candidate diagnostic provenance is missing")
+          previous_diagnostic_path = Path(previous_diagnostic_record["path"])
+          if not previous_diagnostic_path.is_file() or hashlib.sha256(
+              previous_diagnostic_path.read_bytes()
+          ).hexdigest() != previous_diagnostic_record["sha256"]:
+              raise SystemExit("Previous candidate diagnostic hash mismatch")
           if not current_candidate_path.is_file() or hashlib.sha256(
               current_candidate_path.read_bytes()
           ).hexdigest() != comparison["current_candidate_ids"]["sha256"]:
