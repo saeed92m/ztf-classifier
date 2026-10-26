@@ -257,6 +257,7 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
         published_ids=published,
         output_dir=output,
         source_revision="fixed-width-test-revision",
+        expected_parent_count=3,
     )
 
     assert result["counts"] == {
