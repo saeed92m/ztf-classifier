@@ -33,7 +33,7 @@ jobs:
           python -m pip install -e .
 
       - name: Download source-backed scientific-validation artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: scientific-validation-heavy
           run-id: ${{ github.event.workflow_run.id }}
