@@ -283,3 +283,24 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
     assert result["source_files"]["parent_metadata"]["sha256"] == hashlib.sha256(
         parent_archive.read_bytes()
     ).hexdigest()
+
+    from ztf_classifier.validation.cpvs_discrepancy_report import read_parent_metadata
+
+    invalid_seq_archive = tmp_path / "invalid-seq.zip"
+    with zipfile.ZipFile(invalid_seq_archive, "w") as archive:
+        archive.writestr(
+            "Table2.txt",
+            fixed_row(names[0], 781605, "15.0", "16.0", "0.5", "0.6"),
+        )
+    with pytest.raises(ValueError, match="outside the documented range"):
+        read_parent_metadata(invalid_seq_archive, expected_parent_count=1)
+
+    duplicate_seq_archive = tmp_path / "duplicate-seq.zip"
+    with zipfile.ZipFile(duplicate_seq_archive, "w") as archive:
+        archive.writestr(
+            "Table2.txt",
+            fixed_row(names[0], 1, "15.0", "16.0", "0.5", "0.6")
+            + fixed_row(names[1], 1, "15.1", "16.1", "0.7", "0.8"),
+        )
+    with pytest.raises(ValueError, match="duplicate authoritative Seq"):
+        read_parent_metadata(duplicate_seq_archive, expected_parent_count=2)
