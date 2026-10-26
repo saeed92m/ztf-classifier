@@ -132,8 +132,9 @@ jobs:
 
       - name: Verify report counts and provenance hashes
         env:
-          SOURCE_REVISION: ${{ github.event.workflow_run.head_sha }}
+          SOURCE_REVISION: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '4674d3ad69ff7148a246ccf34f5aa216c3e791fd' }}
           REPORT_CODE_REVISION: ${{ github.sha }}
+          CURRENT_SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -207,6 +208,35 @@ jobs:
               output = root / record["path"]
               if not output.is_file() or hashlib.sha256(output.read_bytes()).hexdigest() != record["sha256"]:
                   raise SystemExit(f"Output hash verification failed: {name}")
+          comparison_path = root / "cpvs_candidate_set_change.json"
+          comparison_csv = root / "cpvs_candidate_set_change.csv"
+          comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
+          if comparison["previous_source_run_id"] != "38635891449":
+              raise SystemExit("Candidate-set diff references an unexpected previous run")
+          if comparison["current_source_run_id"] != os.environ["CURRENT_SOURCE_RUN_ID"]:
+              raise SystemExit("Candidate-set diff current run ID mismatch")
+          previous_candidate_path = Path(comparison["previous_candidate_ids"]["path"])
+          current_candidate_path = Path(comparison["current_candidate_ids"]["path"])
+          if not previous_candidate_path.is_file() or hashlib.sha256(
+              previous_candidate_path.read_bytes()
+          ).hexdigest() != comparison["previous_candidate_ids"]["sha256"]:
+              raise SystemExit("Previous candidate-set source hash mismatch")
+          if not current_candidate_path.is_file() or hashlib.sha256(
+              current_candidate_path.read_bytes()
+          ).hexdigest() != comparison["current_candidate_ids"]["sha256"]:
+              raise SystemExit("Current candidate-set source hash mismatch")
+          if comparison["current_candidate_ids"]["sha256"] != manifest["source_files"]["candidate_ids"]["sha256"]:
+              raise SystemExit("Candidate-set diff does not use the report's candidate input")
+          if hashlib.sha256(comparison_csv.read_bytes()).hexdigest() != comparison["change_csv"]["sha256"]:
+              raise SystemExit("Candidate-set change CSV hash mismatch")
+          with comparison_csv.open(encoding="utf-8", newline="") as stream:
+              change_rows = list(csv.DictReader(stream))
+          if len(change_rows) != comparison["change_csv"]["rows"]:
+              raise SystemExit("Candidate-set change CSV row count mismatch")
+          if comparison["change_csv"]["rows"] != (
+              comparison["added_in_current_count"] + comparison["removed_from_current_count"]
+          ):
+              raise SystemExit("Candidate-set change counts are inconsistent")
           if manifest["interpretation"]["historical_publisher_rule"] != "UNRESOLVED":
               raise SystemExit("Report must preserve unresolved historical publisher rule")
           validation_summary = {
@@ -219,6 +249,9 @@ jobs:
               "source_hashes_verified": len(manifest["source_files"]),
               "source_evidence_hashes_verified": len(manifest["source_evidence_files"]),
               "output_hashes_verified": len(manifest["outputs"]),
+              "candidate_set_change": comparison,
+              "candidate_set_change_csv_sha256": comparison["change_csv"]["sha256"],
+              "candidate_set_change_json_sha256": hashlib.sha256(comparison_path.read_bytes()).hexdigest(),
               "historical_publisher_rule": "UNRESOLVED",
               "discovery_claim": "none",
           }
