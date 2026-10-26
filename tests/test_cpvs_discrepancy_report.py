@@ -247,8 +247,8 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
     # Table 4 internal IDs are intentionally unrelated; join by the ZTF name.
     published = write_file(
         tmp_path / "table4.tsv",
-        "ID\\tZTF\n9001\\tZTFJ000000.00+000000.0\n"
-        "9002\\tZTFJ000001.00+000001.0\n",
+        "ID\tZTF\n9001\tZTFJ000000.00+000000.0\n"
+        "9002\tZTFJ000001.00+000001.0\n",
     )
     output = tmp_path / "report"
     result = build_cpvs_discrepancy_report(
