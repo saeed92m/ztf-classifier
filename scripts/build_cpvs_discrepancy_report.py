@@ -18,6 +18,7 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--parent-evidence", type=Path)
     parser.add_argument("--candidate-evidence", type=Path)
+    parser.add_argument("--candidate-diagnostic", type=Path)
     parser.add_argument(
         "--report-code-revision",
         required=True,
@@ -44,6 +45,7 @@ def main() -> int:
         report_code_revision=args.report_code_revision,
         parent_evidence=args.parent_evidence,
         candidate_evidence=args.candidate_evidence,
+        candidate_diagnostic=args.candidate_diagnostic,
         expected_parent_count=args.expected_parent_count,
     )
     print(json.dumps(summary["counts"], indent=2, sort_keys=True))
