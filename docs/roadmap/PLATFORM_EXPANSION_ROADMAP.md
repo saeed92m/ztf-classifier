@@ -1,6 +1,6 @@
 # Astronomical Data Analysis & Discovery Platform — Product Roadmap
 
-Status date: 2026-10-25  
+Status date: 2026-10-26 (refreshed)  
 Current immutable software release: v1.0.1  
 Product implementation tracker: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158)  
 Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170)
@@ -17,11 +17,11 @@ Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issu
 
 ### A1. CPVS exact-reproduction investigation — OPEN / UNRESOLVED
 - [ ] Trigger heavy workflow on an intended ci/heavy/* ref and verify source-provenance/scientific-gate-readiness executes.
-- [ ] Re-run CPVS derivation after PR #173's finite/non-zero magnitude correction.
+- [ ] Re-run CPVS derivation against current source-backed artifacts and verify the Seq-to-lightcurve SourceID mapping after the authoritative identifier fix.
 - [ ] Inspect acquisition report, derived membership, independent VizieR table, and hashes.
 - [x] Verify the robust parser reads all 730,184 published ZTF names without duplicates.
 - [x] Identify and correct the audit's invalid row-ordinal substitution: official CPVS lightcurve membership uses Table2 `Seq` (bytes 24–29), not physical row order.
-- [ ] Rerun derivation and independent membership audit using actual Seq values; previous membership metrics are invalid and superseded.
+- [x] Rerun derivation and independent membership audit using actual Seq values; the recorded comparison remains 741,786 candidates / 730,184 reference members / 11,602 candidate-only / 0 reference-only. Exact selection semantics remain unresolved and must be revalidated against source hashes.
 - [ ] Explain the residual candidate/published membership difference from valid Seq-based evidence and source-backed selection semantics, not tuned thresholds.
 - [ ] Require exact independent membership audit before claiming exact reconstruction.
 - [ ] Keep Issue #170 open until evidence-based disposition.
@@ -97,7 +97,7 @@ The following items are explicit current workstreams; this refresh does not chan
 
 - **CPVS discrepancy:** Issue [#170](https://github.com/saeed92m/ztf-classifier/issues/170) remains open. The recorded Seq-based comparison is 781,602 parent objects, 730,184 published members, 741,786 reconstructed candidates, 11,602 candidate-only IDs, and zero published-only IDs. The four-field diagnostic predicate matches the recorded membership artifacts, but the publisher's historical selection semantics remain unproven. Do not tune thresholds merely to force cardinality.
 - **Object-level discrepancy report:** [PR #224](https://github.com/saeed92m/ztf-classifier/pull/224) is open/draft. The implementation must be run against hash-identified authoritative source files and its 11,602-row output verified before calling the deliverable complete. Raw-light-curve review and external cross-match remain unassessed unless separately evidenced.
-- **Dependency security:** [PR #223](https://github.com/saeed92m/ztf-classifier/pull/223) is open/unmerged. Its last recorded CI and dependency audit succeeded. Re-check current runs and follow normal review; do not auto-merge.
+- **Dependency security:** [PR #223](https://github.com/saeed92m/ztf-classifier/pull/223) merged on 2026-10-26 as `8c2ba057a572b1cd460c47d1e02940e1ba44e366`. Dependent PRs still need their own current-head CI and dependency-audit verification.
 - **Independent benchmark:** Issue [#222](https://github.com/saeed92m/ztf-classifier/issues/222) tracks a separate 100-object benchmark with raw/source-level data, independent reference analyses, provenance, and leakage checks. It must not be conflated with the ALeRCE benchmark or CPVS reconstruction.
 - **Cross-platform product:** target Windows, Ubuntu, and macOS on a CPU-first basis. The declared Python constraint is currently `>=3.11,<3.12`; supported OS/Python claims require clean-machine build and end-to-end test evidence for each target.
 - **GUI and integration:** audit and extend the documented FastAPI/`/workbench/` interface before creating duplicate scientific logic. Company-Platform integration remains optional and must use a versioned API/export contract; it must not become a hard runtime dependency.
