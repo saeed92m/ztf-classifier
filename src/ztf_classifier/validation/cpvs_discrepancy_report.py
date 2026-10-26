@@ -262,6 +262,8 @@ def build_cpvs_discrepancy_report(
     output_dir: str | Path,
     source_revision: str,
     report_code_revision: str = "UNRECORDED",
+    parent_evidence: str | Path | None = None,
+    candidate_evidence: str | Path | None = None,
     expected_parent_count: int = 781_602,
 ) -> dict[str, Any]:
     """Write CSV, strict JSON manifest, searchable HTML and Markdown summary."""
@@ -302,6 +304,22 @@ def build_cpvs_discrepancy_report(
                 f"{parent_path}:{line_number}: duplicate authoritative ID {object_id}"
             )
         parent[object_id] = row
+
+    evidence_files: dict[str, dict[str, Any]] = {}
+    for name, evidence_path in (
+        ("parent_evidence", parent_evidence),
+        ("candidate_evidence", candidate_evidence),
+    ):
+        if evidence_path is None:
+            continue
+        evidence_file = Path(evidence_path)
+        if not evidence_file.is_file():
+            raise ValueError(f"missing source evidence sidecar for {name}: {evidence_file}")
+        evidence_files[name] = {
+            "path": str(evidence_file),
+            "sha256": sha256_file(evidence_file),
+            "bytes": evidence_file.stat().st_size,
+        }
 
     candidates = read_ids(candidate_path)
     published = published_membership_ids(published_path, parent_rows, id_key)
@@ -391,6 +409,7 @@ def build_cpvs_discrepancy_report(
         "generated_at_utc": datetime.now(UTC).isoformat(),
         "source_revision": source_revision,
         "report_code_revision": report_code_revision,
+        "source_evidence_files": evidence_files,
         "source_files": {
             name: {
                 "path": str(path),
