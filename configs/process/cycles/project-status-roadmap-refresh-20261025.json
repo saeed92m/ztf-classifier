@@ -5,7 +5,7 @@
   "previous_knowledge_consumed": [
     "CI run 40139324754 failed the cumulative lifecycle gate because meaningful documentation changes lacked a cycle record.",
     "PR #223 dependency refresh merged on 2026-10-26 as 8c2ba057a572b1cd460c47d1e02940e1ba44e366; dependent PRs still require current-head CI and dependency-audit verification.",
-    "PR #224 adds a CPVS discrepancy-report builder and remains open/draft; its current-head CI and source-backed output audit must be verified before merge.",
+    "PR #224 merged as b56c90bafe9e6e0c5630dd4b96c9843dbd26301c with successful CI, CodeQL, Product Scope Audit, and Scientific Validation workflow checks; actual source-backed report generation and audit remain outstanding.",
     "Issue #170 records 781602 parent objects, 730184 published members, 741786 Seq-based candidates, 11602 candidate-only IDs, zero published-only IDs, and an unresolved historical selection rule.",
     "Issue #222 defines a separate 100-object source-level external benchmark.",
     "Issue #158 defines the cross-platform desktop product and GUI acceptance criteria."
