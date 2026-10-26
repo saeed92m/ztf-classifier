@@ -134,7 +134,7 @@ jobs:
                   raise SystemExit(f"Output hash verification failed: {name}")
           if manifest["interpretation"]["historical_publisher_rule"] != "UNRESOLVED":
               raise SystemExit("Report must preserve unresolved historical publisher rule")
-          print(json.dumps({
+          validation_summary = {
               "status": "REPORT_VERIFIED",
               "counts": counts,
               "historical_count_baseline_match": all(
@@ -145,7 +145,12 @@ jobs:
               "output_hashes_verified": len(manifest["outputs"]),
               "historical_publisher_rule": "UNRESOLVED",
               "discovery_claim": "none",
-          }, indent=2, sort_keys=True))
+          }
+          (root / "report_validation_summary.json").write_text(
+              json.dumps(validation_summary, indent=2, sort_keys=True) + "\\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(validation_summary, indent=2, sort_keys=True))
           PY
 
       - name: Upload verified CPVS discrepancy report
