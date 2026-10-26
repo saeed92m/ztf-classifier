@@ -6,6 +6,9 @@ on:
     types: [completed]
     branches:
       - "ci/heavy/cpvs-seq-authoritative-ids-20261026"
+  push:
+    branches:
+      - "ci/report-reuse/**"
 
 permissions:
   actions: read
@@ -14,8 +17,10 @@ permissions:
 jobs:
   build-and-verify-report:
     if: >-
+      (github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'ci/heavy/cpvs-seq-authoritative-ids-20261026'
+      github.event.workflow_run.head_branch == 'ci/heavy/cpvs-seq-authoritative-ids-20261026') ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/report-reuse/'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -26,11 +31,25 @@ jobs:
           python-version: "3.11.16"
           cache: pip
 
+      - name: Resolve source workflow run ID
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_run" ]]; then
+            run_id="$(python -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["workflow_run"]["id"])')"
+          else
+            run_id="$(python -c 'import json; print(json.load(open("configs/process/cycles/cpvs-report-source-archive-20261027.json"))["source_run_id"])')"
+          fi
+          [[ "$run_id" =~ ^[0-9]+$ ]]
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Using source-backed workflow run $run_id"
+
       - name: Download source-backed scientific-validation artifact
         uses: actions/download-artifact@v8
         with:
           name: scientific-validation-heavy
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ steps.source.outputs.run_id }}
           github-token: ${{ github.token }}
           path: source-artifact
 
