@@ -245,7 +245,13 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
     ) as archive:
         archive.writestr("Table2.txt", table_text)
 
+    parent_evidence = write_file(
+        tmp_path / "Table2.txt.zip.evidence.json", '{"sha256":"fixture-parent"}\n'
+    )
     candidates = write_file(tmp_path / "candidates.tsv", "SourceID\n1\n2\n4\n")
+    candidate_evidence = write_file(
+        tmp_path / "candidates.tsv.evidence.json", '{"sha256":"fixture-candidate"}\n'
+    )
     # Table 4 internal IDs are intentionally unrelated; join by the ZTF name.
     published = write_file(
         tmp_path / "table4.tsv",
@@ -260,6 +266,8 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
         output_dir=output,
         source_revision="fixed-width-test-revision",
         report_code_revision="report-code-test-revision",
+        parent_evidence=parent_evidence,
+        candidate_evidence=candidate_evidence,
         expected_parent_count=3,
     )
 
@@ -276,6 +284,10 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
         "valid_periods_gmag_incomplete": 1
     }
     assert result["report_code_revision"] == "report-code-test-revision"
+    assert set(result["source_evidence_files"]) == {"parent_evidence", "candidate_evidence"}
+    assert result["source_evidence_files"]["parent_evidence"]["sha256"] == hashlib.sha256(
+        parent_evidence.read_bytes()
+    ).hexdigest()
     assert result["source_context"]["parent_metadata"]["identifier_field"] == "Seq"
     assert result["source_context"]["published_ids"]["membership_join"] == (
         "normalized ZTF object name crosswalk to Table 2 Seq"
