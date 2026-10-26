@@ -22,10 +22,7 @@ def test_candidate_set_comparison_records_added_removed_ids_and_hashes(
     previous_diagnostic.write_text(
         json.dumps(
             {
-                "status": "COUNT_MISMATCH",
-                "expected_selected_rows": 730184,
-                "observed_selected_rows": 3,
-                "candidate_sha256": hashlib.sha256(previous.read_bytes()).hexdigest(),
+                "candidate_count": 3,
                 "code_version": "previous-code-sha",
             }
         )
@@ -71,6 +68,9 @@ def test_candidate_set_comparison_records_added_removed_ids_and_hashes(
     assert result["previous_candidate_diagnostic"]["metadata"]["code_version"] == (
         "previous-code-sha"
     )
+    assert result["previous_candidate_diagnostic"]["schema"] == "legacy_candidate_count"
+    assert result["previous_candidate_diagnostic"]["candidate_count_verified"] is True
+    assert result["previous_candidate_diagnostic"]["candidate_sha256_declared"] is False
     assert result["previous_candidate_diagnostic"]["sha256"] == hashlib.sha256(
         previous_diagnostic.read_bytes()
     ).hexdigest()
