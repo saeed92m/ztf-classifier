@@ -252,6 +252,79 @@ jobs:
             --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
             --output reports/scientific_validation/ztf_periodic_730k/membership_audit.json
 
+      - name: Build source-backed CPVS candidate-only report
+        if: always() && steps.derive_730k.outcome == 'success' && steps.audit_730k.outcome == 'success'
+        run: |
+          set -euo pipefail
+          python scripts/build_cpvs_discrepancy_report.py \
+            --parent-metadata reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
+            --candidate-ids reports/scientific_validation/ztf_periodic_730k/selected.tsv \
+            --published-ids reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
+            --output-dir reports/scientific_validation/ztf_periodic_730k/cpvs_discrepancy_report \
+            --source-revision "${GITHUB_SHA}" \
+            --expected-parent-count 781602
+
+      - name: Validate source-backed CPVS discrepancy report
+        if: always() && steps.derive_730k.outcome == 'success' && steps.audit_730k.outcome == 'success'
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv
+          import hashlib
+          import json
+          from pathlib import Path
+
+          root = Path("reports/scientific_validation/ztf_periodic_730k/cpvs_discrepancy_report")
+          manifest_path = root / "cpvs_discrepancy_manifest.json"
+          if not manifest_path.is_file():
+              raise SystemExit("Missing source-backed CPVS discrepancy manifest")
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          counts = manifest["counts"]
+          expected = {
+              "parent_metadata_objects": 781602,
+              "candidate_objects": 741786,
+              "published_reference_objects": 730184,
+              "intersection_objects": 730184,
+              "candidate_only_objects": 11602,
+              "published_only_objects": 0,
+              "candidate_only_missing_parent_provenance": 0,
+          }
+          if counts != expected:
+              raise SystemExit(
+                  "CPVS discrepancy report counts differ from the pinned baseline: "
+                  + json.dumps({"expected": expected, "actual": counts}, sort_keys=True)
+              )
+          csv_path = root / "cpvs_candidate_only_objects.csv"
+          with csv_path.open(encoding="utf-8", newline="") as stream:
+              rows = list(csv.DictReader(stream))
+          ids = [row.get("SourceID", "") for row in rows]
+          if len(ids) != 11602 or len(set(ids)) != 11602:
+              raise SystemExit("CPVS report must contain exactly 11,602 unique candidate-only IDs")
+          for name, record in manifest["source_files"].items():
+              source = Path(record["path"])
+              if not source.is_file():
+                  raise SystemExit(f"Missing report source file: {name} -> {source}")
+              digest = hashlib.sha256(source.read_bytes()).hexdigest()
+              if digest != record["sha256"]:
+                  raise SystemExit(f"Source hash mismatch for {name}")
+          for name, record in manifest["outputs"].items():
+              output = root / record["path"]
+              if not output.is_file():
+                  raise SystemExit(f"Missing report output: {name} -> {output}")
+              digest = hashlib.sha256(output.read_bytes()).hexdigest()
+              if digest != record["sha256"]:
+                  raise SystemExit(f"Output hash mismatch for {name}")
+          print(json.dumps({
+              "status": "REPORT_VERIFIED",
+              "candidate_only_rows": len(ids),
+              "unique_candidate_only_ids": len(set(ids)),
+              "source_hashes_verified": len(manifest["source_files"]),
+              "output_hashes_verified": len(manifest["outputs"]),
+              "historical_selection_rule": "UNRESOLVED",
+              "discovery_claim": "NONE",
+          }, indent=2, sort_keys=True))
+          PY
+
       - name: Classify CPVS reconstruction result
         if: always()
         env:
