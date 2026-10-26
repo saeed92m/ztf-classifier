@@ -121,6 +121,8 @@ jobs:
             --previous-source-run-id 38635891449 \
             --current-source-run-id "${{ steps.source.outputs.run_id }}" \
             --previous-diagnostic "${{ steps.inputs.outputs.previous_diagnostic }}" \
+            --parent-metadata "${{ steps.inputs.outputs.parent }}" \
+            --published-ids "${{ steps.inputs.outputs.published }}" \
             --output-dir reports/cpvs_report_validation/cpvs_discrepancy_report
 
       - name: Verify report counts and provenance hashes
