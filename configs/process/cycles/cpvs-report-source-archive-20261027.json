@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-report-source-archive-20261027",
+  "objective": "Make the merged CPVS discrepancy-report utility consume the authoritative fixed-width Table 2 archive, generate a hash-verifiable report in the source-backed heavy workflow, and preserve the unresolved historical selection-rule claim.",
+  "previous_knowledge_consumed": [
+    "PR #224 merged the report builder but its actual 11,602-row output had not yet been generated from the authoritative Table 2 ZIP, selected candidate IDs, and published Table 4 source.",
+    "Official CDS ReadMe J/ApJS/249/18 documents Table 2 ID, Seq, gmag, rmag, Per-g, and Per-r fixed-width fields; Seq is not a row ordinal.",
+    "Issue #170 remains blocked: 741,786 reconstructed candidates, 730,184 published members, 11,602 candidate-only IDs, zero published-only IDs; the four-field predicate is diagnostic only."
+  ],
+  "baseline": {
+    "revision": "b56c90bafe9e6e0c5630dd4b96c9843dbd26301c",
+    "status": "Preserve software release v1.0.1 and frozen scientific baseline v0.2.0. This work adds source archive ingestion/report verification only; it does not change model artifacts, feature schema, or candidate-selection criteria."
+  },
+  "expected_improvement": [
+    "Parse the official fixed-width Table 2 ZIP using authoritative Seq and documented field offsets.",
+    "Fail closed on malformed rows, duplicate Seq values, or an unexpected parent row count.",
+    "Generate the candidate-only CSV, JSON, HTML, Markdown, and manifest from pinned source artifacts in the heavy validation workflow.",
+    "Verify source/output hashes and the expected 11,602-row discrepancy report without treating it as scientific ground truth or a discovery claim."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The report utility accepted normalized CSV/TSV metadata but could not directly parse the official fixed-width Table 2 ZIP used by the scientific workflow.",
+        "after": "Fixed-width Table 2 archive parsing and an integration regression test have been added; source-backed heavy execution is still pending."
+      },
+      "reproducibility": {
+        "before": "The report utility was not wired to generate and verify its report in the source-backed heavy workflow.",
+        "after": "The heavy workflow now invokes the report builder and validates source/output hashes and membership counts when derivation succeeds."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Added fixed-width Table 2 ZIP reader using documented byte offsets and authoritative Seq.",
+      "Added integration test with a synthetic fixed-width Table 2 archive and a Table 4 ZTF-name crosswalk.",
+      "Added report-generation and hash/count validation steps to the source-backed heavy workflow.",
+      "CI and scientific validation on this branch have not yet completed; full source-backed report generation has not yet been observed."
+    ],
+    "blocker": "Pass current-head CI, then run the source-backed heavy workflow and inspect the produced artifact. Do not mark the report complete until all 11,602 IDs, source hashes, output hashes, and crosswalk invariants are verified."
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "root_causes": [
+      "The report builder's generic delimited-table reader cannot interpret a zipped fixed-width CDS Table 2 source.",
+      "The report builder had not been integrated into the heavy workflow, so source-backed report outputs were not automatically generated and audited."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A report-generation utility is not a completed report deliverable; source-backed invocation and output verification are required.",
+      "Table 4 membership must be joined by ZTF object name mapped to authoritative Table 2 Seq, not by Table 4's internal numeric ID.",
+      "Matching membership counts does not prove the publisher's historical selection semantics; Issue #170 remains open."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Run unit/integration tests and all required PR checks on the current head.",
+      "Run source-backed heavy workflow and verify the generated report artifact and all recorded hashes.",
+      "Keep raw-lightcurve review and external cross-match status NOT_ASSESSED unless separately evidenced.",
+      "Keep Issue #170 open unless the exact historical selection semantics are independently established."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not weaken the fail-closed scientific gate or change the four-field diagnostic into a production rule.",
+    "Do not claim candidate-only objects are new discoveries.",
+    "Keep all raw data out of Git; retain only bounded reports, manifests, hashes, and provenance evidence.",
+    "Do not mark this lifecycle cycle complete before source-backed artifact verification."
+  ]
+}
