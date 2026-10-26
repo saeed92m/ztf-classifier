@@ -39,13 +39,16 @@
     }
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "VERIFIED",
     "scientific_gate_affected": true,
-    "blocker": "Full source-backed validation of the official Table 2 artifact is still required to verify row count, actual Seq gaps, duplicates, and correspondence with the published membership table.",
+    "blocker": "The Seq parser has now completed full source-backed execution against the official Table 2 artifact with 781,602 parent rows and no malformed, duplicate, or out-of-range Seq failure. Exact historical membership remains unresolved: the corrected Seq-based derivation produced 741,788 candidates versus 730,184 published members (11,604 candidate-only, zero published-only).",
     "evidence": [
       "Synthetic fixed-width parser tests cover valid rows, legitimate Seq gaps, out-of-range values, duplicate Seq, malformed Seq, and truncation.",
       "The previous CI run exposed a missing cycle record; the record has been added and the new head's CI is pending.",
-      "Source-backed heavy validation is not established by ordinary PR checks."
+      "Source-backed heavy validation is not established by ordinary PR checks.",
+      "Full source-backed Scientific Validation run 40397098709 completed successfully; CPVS derivation job 121832893823 used this Seq parser implementation.",
+      "The heavy run validated 781602 parent rows; Table2.txt.zip SHA-256 0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138; evidence sidecar SHA-256 640a048fc9e40df6e1bdfc1bfcd58ac13ee00ca6aee68ca90e7c5992dbdf7944.",
+      "The Seq-based SNR reconstruction produced 741788 candidates; independent VizieR Table 4 membership has 730184 objects, intersection 730184, candidate-only 11604, published-only 0. Exact membership audit returned false and the workflow classified the scientific status UNRESOLVED."
     ]
   },
   "failure_analysis": {
@@ -66,9 +69,9 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Rerun and inspect CI on the latest PR head.",
-      "Run source-backed validation against the official full Table 2 artifact and verify actual Seq range, row count, gaps, and duplicates.",
-      "Keep Issue #170 open until the 11602 candidate-only discrepancy and historical selection semantics have reproducible, source-supported disposition."
+      "Investigate the 11,604 candidate-only IDs from the corrected Seq-based full-dataset result; the prior 11,602 count used a row-ordinal mapping and is superseded.",
+      "Generate and hash-verify an object-level report from the immutable heavy-run artifact; inspect the two-ID count shift and per-object provenance.",
+      "Do not treat the four-field positivity predicate as a proven historical publisher rule or change production selection criteria until independent evidence supports it."
     ]
   },
   "decision": "BLOCKED",
