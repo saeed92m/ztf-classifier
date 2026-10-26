@@ -360,8 +360,9 @@ def _source_ids(parent_path: Path, member: str | None) -> set[str]:
             owner.close()
 
     if saw_catalog_row:
-        # CPVS Table2 uses ZTF names as row identifiers; SourceID is the
-        # published ordinal. Metadata/header sections must not terminate scan.
+        # CPVS Table2 contains an explicit Seq identifier. Preserve that
+        # authoritative identifier; never substitute the catalog row ordinal.
+        # Metadata/header sections must not terminate the scan.
         return _source_ids_from_catalog(parent_path, member)
 
     rows = _iter_rows(parent_path, member, required_columns=("SourceID",))
