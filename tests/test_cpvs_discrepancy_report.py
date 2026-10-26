@@ -3,8 +3,8 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
-from pathlib import Path
 import zipfile
+from pathlib import Path
 
 import pytest
 
@@ -240,7 +240,9 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
             fixed_row(names[2], 4, "", "17.0", "0.9", "1.0"),
         ]
     )
-    with zipfile.ZipFile(parent_archive, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    with zipfile.ZipFile(
+        parent_archive, "w", compression=zipfile.ZIP_DEFLATED
+    ) as archive:
         archive.writestr("Table2.txt", table_text)
 
     candidates = write_file(tmp_path / "candidates.tsv", "SourceID\n1\n2\n4\n")
