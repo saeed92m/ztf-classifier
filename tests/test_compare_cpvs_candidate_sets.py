@@ -31,7 +31,7 @@ def test_candidate_set_comparison_records_added_removed_ids_and_hashes(
     )
     parent = tmp_path / "parent.csv"
     parent.write_text(
-        "SourceID,ID,gmag,rmag,Per_g,Per_r\n"
+        "SourceID,ID,gmag,rmag,Per-g,Per-r\n"
         "1,ZTF1,15.0,16.0,0.5,0.6\n"
         "2,ZTF2,15.1,16.1,0.7,0.8\n"
         "3,ZTF3,15.2,16.2,0.9,1.0\n"
