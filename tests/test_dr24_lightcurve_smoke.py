@@ -60,11 +60,13 @@ def test_dr24_candidate_selection_is_deterministic_and_not_sorted_by_count() -> 
         }
     )
     first, eligible = select_candidate_objects(source, max_objects=5)
-    second, eligible_again = select_candidate_objects(source.sample(frac=1, random_state=7), max_objects=5)
+    shuffled = source.sample(frac=1, random_state=7)
+    second, eligible_again = select_candidate_objects(shuffled, max_objects=5)
 
     assert eligible == eligible_again == 20
     assert first["oid"].tolist() == second["oid"].tolist()
-    assert first["oid"].tolist() != source.sort_values("ngoodobsrel", ascending=False).head(5)["oid"].tolist()
+    highest_counts = source.sort_values("ngoodobsrel", ascending=False).head(5)["oid"].tolist()
+    assert first["oid"].tolist() != highest_counts
 
 
 def test_dr24_candidate_selection_rejects_duplicate_oids() -> None:
