@@ -150,6 +150,39 @@ def valid_band_counts(observations: pd.DataFrame) -> dict[str, int]:
     }
 
 
+
+DR24_SMOKE_SAMPLE_SEED = "DR24-LIGHTCURVE-SMOKE-v1"
+
+
+def select_candidate_objects(
+    objects: pd.DataFrame,
+    max_objects: int,
+    minimum_good_observations: int = 30,
+) -> tuple[pd.DataFrame, int]:
+    """Choose a deterministic hash-ranked sample from the pinned object subset.
+
+    Ranking by ngoodobsrel alone repeatedly selected the same top objects and
+    could hide input diversity. This stable hash ranking is reproducible across
+    Python/pandas versions; the eligible-pool size is returned for provenance.
+    It does not make the upstream 150-row DR24 source subset representative.
+    """
+    required = {"oid", "ngoodobsrel"}
+    if not required.issubset(objects.columns):
+        raise ValueError(f"Objects table missing required columns: {sorted(required - set(objects.columns))}")
+    frame = objects.copy()
+    frame["oid"] = frame["oid"].astype(str).str.strip()
+    if frame["oid"].eq("").any() or frame["oid"].duplicated().any():
+        raise ValueError("Objects table contains blank or duplicate OIDs")
+    frame["ngoodobsrel"] = pd.to_numeric(frame["ngoodobsrel"], errors="coerce")
+    frame = frame.loc[frame["ngoodobsrel"] >= minimum_good_observations].copy()
+    eligible_count = len(frame)
+    frame["_sample_rank"] = frame["oid"].map(
+        lambda oid: hashlib.sha256(f"{DR24_SMOKE_SAMPLE_SEED}:{oid}".encode("utf-8")).hexdigest()
+    )
+    frame = frame.sort_values(["_sample_rank", "oid"], kind="mergesort").head(max_objects)
+    return frame.drop(columns=["_sample_rank"]).reset_index(drop=True), eligible_count
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--objects-tsv", type=Path, required=True)
@@ -166,12 +199,12 @@ def main() -> int:
     required = {"oid", "ngoodobsrel"}
     if not required.issubset(objects.columns):
         raise SystemExit(f"Objects TSV missing {sorted(required - set(objects.columns))}")
-    objects["oid"] = objects["oid"].astype(str).str.strip()
-    objects["ngoodobsrel"] = pd.to_numeric(objects["ngoodobsrel"], errors="coerce")
-    objects = objects.loc[objects["ngoodobsrel"] >= 30].copy()
-    objects = objects.sort_values(
-        ["ngoodobsrel", "oid"], ascending=[False, True], kind="mergesort"
-    ).head(args.max_objects)
+    try:
+        objects, eligible_pool_objects = select_candidate_objects(
+            objects, args.max_objects, minimum_good_observations=30
+        )
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     if objects.empty:
         raise SystemExit("No deterministic DR24 object candidates have ngoodobsrel >= 30.")
 
@@ -262,6 +295,13 @@ def main() -> int:
         "objects_tsv_sha256": sha256_bytes(payload),
         "objects_tsv_rows": int(len(pd.read_csv(io.BytesIO(payload), sep="\t"))),
         "candidate_objects": int(len(objects)),
+        "candidate_selection": {
+            "method": "sha256_ranked_within_pinned_objects_table_subset",
+            "seed": DR24_SMOKE_SAMPLE_SEED,
+            "minimum_ngoodobsrel": 30,
+            "eligible_pool_objects": int(eligible_pool_objects),
+            "scope_note": "Selection is from the pinned 150-row DR24 object subset, not a representative survey-wide sample.",
+        },
         "successful_objects": len(feature_rows),
         "failed_objects": failures,
         "objects": records,
