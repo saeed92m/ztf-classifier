@@ -199,7 +199,12 @@ def read_parent_metadata(
     headers = ["ID", "Seq", "gmag", "rmag", "Per-g", "Per-r"]
     with zipfile.ZipFile(source) as archive:
         members = [name for name in archive.namelist() if not name.endswith("/")]
-        members.sort(key=lambda name: (0 if "table2" in Path(name).name.lower() else 1, name.lower()))
+        members.sort(
+            key=lambda name: (
+                0 if "table2" in Path(name).name.lower() else 1,
+                name.lower(),
+            )
+        )
         for member in members:
             rows: list[dict[str, str]] = []
             try:
