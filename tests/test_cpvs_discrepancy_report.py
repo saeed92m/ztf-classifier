@@ -259,6 +259,7 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
         published_ids=published,
         output_dir=output,
         source_revision="fixed-width-test-revision",
+        report_code_revision="report-code-test-revision",
         expected_parent_count=3,
     )
 
@@ -274,6 +275,7 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
     assert result["diagnostic_group_counts"] == {
         "valid_periods_gmag_incomplete": 1
     }
+    assert result["report_code_revision"] == "report-code-test-revision"
     assert result["source_context"]["parent_metadata"]["identifier_field"] == "Seq"
     assert result["source_context"]["published_ids"]["membership_join"] == (
         "normalized ZTF object name crosswalk to Table 2 Seq"
