@@ -38,15 +38,19 @@ jobs:
           set -euo pipefail
           if [[ "$GITHUB_EVENT_NAME" == "workflow_run" ]]; then
             run_id="$(python -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["workflow_run"]["id"])')"
+            source_revision="$(python -c 'import json, os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"]))["workflow_run"]["head_sha"])')"
             artifact_name="cpvs-report-source-inputs"
           else
             run_id="$(python -c 'import json; print(json.load(open("configs/process/cycles/cpvs-report-source-archive-20261027.json"))["source_run_id"])')"
+            source_revision="$(python -c 'import json; print(json.load(open("configs/process/cycles/cpvs-report-source-archive-20261027.json"))["source_run_commit"])')"
             artifact_name="scientific-validation-heavy"
           fi
           [[ "$run_id" =~ ^[0-9]+$ ]]
+          [[ "$source_revision" =~ ^[0-9a-f]{40}$ ]]
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "source_revision=$source_revision" >> "$GITHUB_OUTPUT"
           echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
-          echo "Using source-backed workflow run $run_id artifact $artifact_name"
+          echo "Using source-backed workflow run $run_id at $source_revision, artifact $artifact_name"
 
       - name: Download source-backed scientific-validation artifact
         uses: actions/download-artifact@v8
@@ -132,7 +136,7 @@ jobs:
 
       - name: Verify report counts and provenance hashes
         env:
-          SOURCE_REVISION: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '4674d3ad69ff7148a246ccf34f5aa216c3e791fd' }}
+          SOURCE_REVISION: ${{ steps.source.outputs.source_revision }}
           REPORT_CODE_REVISION: ${{ github.sha }}
           CURRENT_SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
         run: |
