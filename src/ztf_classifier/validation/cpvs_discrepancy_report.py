@@ -345,6 +345,20 @@ def build_cpvs_discrepancy_report(
         evidence_metadata[name] = parsed_evidence
 
     candidates = read_ids(candidate_path)
+    if candidate_diagnostic is not None:
+        diagnostic = evidence_metadata["candidate_diagnostic"]
+        observed_count = diagnostic.get("observed_selected_rows")
+        candidate_digest = diagnostic.get("candidate_sha256")
+        if diagnostic.get("status") != "COUNT_MISMATCH":
+            raise ValueError("candidate diagnostic status is not COUNT_MISMATCH")
+        if observed_count != len(candidates):
+            raise ValueError(
+                "candidate diagnostic count does not match the candidate ID file"
+            )
+        if candidate_digest != sha256_file(candidate_path):
+            raise ValueError(
+                "candidate diagnostic SHA-256 does not match the candidate ID file"
+            )
     published = published_membership_ids(published_path, parent_rows, id_key)
     extras = sorted(candidates - published, key=int)
     if not extras:
