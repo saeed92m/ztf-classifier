@@ -17,6 +17,12 @@ def main() -> int:
     parser.add_argument("--published-ids", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument(
+        "--expected-parent-count",
+        type=int,
+        default=781_602,
+        help="expected row count for fixed-width CPVS Table 2 ZIP inputs (default: 781602)",
+    )
+    parser.add_argument(
         "--source-revision",
         required=True,
         help="revision that produced the input artifacts",
@@ -28,6 +34,7 @@ def main() -> int:
         published_ids=args.published_ids,
         output_dir=args.output_dir,
         source_revision=args.source_revision,
+        expected_parent_count=args.expected_parent_count,
     )
     print(json.dumps(summary["counts"], indent=2, sort_keys=True))
     print(f"Report written to {args.output_dir}")
