@@ -262,6 +262,7 @@ jobs:
             --published-ids reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
             --output-dir reports/scientific_validation/ztf_periodic_730k/cpvs_discrepancy_report \
             --source-revision "${GITHUB_SHA}" \
+            --report-code-revision "${GITHUB_SHA}" \
             --expected-parent-count 781602
 
       - name: Validate source-backed CPVS discrepancy report
