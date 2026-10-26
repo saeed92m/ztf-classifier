@@ -4,6 +4,7 @@ import csv
 import hashlib
 import json
 from pathlib import Path
+import zipfile
 
 import pytest
 
@@ -210,3 +211,66 @@ def test_table4_ztf_names_fail_closed_without_parent_name_crosswalk(
             output_dir=tmp_path / "out",
             source_revision="test-sha",
         )
+
+
+
+def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> None:
+    def fixed_row(
+        name: str, seq: int, gmag: str, rmag: str, per_g: str, per_r: str
+    ) -> str:
+        row = [" "] * 130
+        row[0:22] = list(name.ljust(22)[:22])
+        row[23:29] = list(str(seq).rjust(6))
+        row[89:95] = list(gmag.rjust(6)[:6])
+        row[96:102] = list(rmag.rjust(6)[:6])
+        row[103:116] = list(per_g.rjust(13)[:13])
+        row[117:130] = list(per_r.rjust(13)[:13])
+        return "".join(row) + "\\n"
+
+    names = [
+        "ZTFJ000000.00+000000.0",
+        "ZTFJ000001.00+000001.0",
+        "ZTFJ000002.00+000002.0",
+    ]
+    parent_archive = tmp_path / "Table2.txt.zip"
+    table_text = "Table 2 metadata\\n" + "".join(
+        [
+            fixed_row(names[0], 1, "15.0", "16.0", "0.5", "0.6"),
+            fixed_row(names[1], 2, "15.1", "16.1", "0.7", "0.8"),
+            fixed_row(names[2], 4, "", "17.0", "0.9", "1.0"),
+        ]
+    )
+    with zipfile.ZipFile(parent_archive, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("Table2.txt", table_text)
+
+    candidates = write_file(tmp_path / "candidates.tsv", "SourceID\\n1\\n2\\n4\\n")
+    # Table 4 internal IDs are intentionally unrelated; join by the ZTF name.
+    published = write_file(
+        tmp_path / "table4.tsv",
+        "ID\\tZTF\\n9001\\tZTFJ000000.00+000000.0\\n"
+        "9002\\tZTFJ000001.00+000001.0\\n",
+    )
+    output = tmp_path / "report"
+    result = build_cpvs_discrepancy_report(
+        parent_metadata=parent_archive,
+        candidate_ids=candidates,
+        published_ids=published,
+        output_dir=output,
+        source_revision="fixed-width-test-revision",
+    )
+
+    assert result["counts"] == {
+        "parent_metadata_objects": 3,
+        "candidate_objects": 3,
+        "published_reference_objects": 2,
+        "intersection_objects": 2,
+        "candidate_only_objects": 1,
+        "published_only_objects": 0,
+        "candidate_only_missing_parent_provenance": 0,
+    }
+    assert result["diagnostic_group_counts"] == {
+        "valid_periods_gmag_incomplete": 1
+    }
+    assert result["source_files"]["parent_metadata"]["sha256"] == hashlib.sha256(
+        parent_archive.read_bytes()
+    ).hexdigest()
