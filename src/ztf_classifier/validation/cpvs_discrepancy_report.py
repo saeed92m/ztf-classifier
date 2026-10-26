@@ -223,10 +223,16 @@ def read_parent_metadata(
                             raise ValueError(
                                 f"{source}:{member}:{line_number}: invalid authoritative Seq {seq!r}"
                             )
+                        seq_value = int(seq)
+                        if not 1 <= seq_value <= 781_604:
+                            raise ValueError(
+                                f"{source}:{member}:{line_number}: authoritative Seq "
+                                f"{seq_value} is outside the documented range 1..781604"
+                            )
                         rows.append(
                             {
                                 "ID": line[:22].strip(),
-                                "Seq": str(int(seq)),
+                                "Seq": str(seq_value),
                                 "gmag": line[89:95].strip(),
                                 "rmag": line[96:102].strip(),
                                 "Per-g": line[103:116].strip(),
