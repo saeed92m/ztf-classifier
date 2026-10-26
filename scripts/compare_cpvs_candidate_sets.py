@@ -51,13 +51,16 @@ def compare_candidate_sets(
         parent_path = Path(parent_metadata)
         published_path = Path(published_ids)
         parent_rows, parent_id_key = read_parent_metadata(parent_path)
+        parent_name_aliases = {
+            "id",
+            "ztf",
+            "ztfname",
+            "ztf_name",
+            "name",
+            "object_name",
+        }
         parent_name_key = next(
-            (
-                key
-                for key in parent_rows[0]
-                if key.lower()
-                in {"id", "ztf", "ztfname", "ztf_name", "name", "object_name"}
-            ),
+            (key for key in parent_rows[0] if key.lower() in parent_name_aliases),
             None,
         )
         if parent_name_key is None:
