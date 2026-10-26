@@ -39,16 +39,17 @@
     }
   },
   "validation": {
-    "status": "VERIFIED",
+    "status": "BLOCKED",
     "scientific_gate_affected": true,
-    "blocker": "The Seq parser has now completed full source-backed execution against the official Table 2 artifact with 781,602 parent rows and no malformed, duplicate, or out-of-range Seq failure. Exact historical membership remains unresolved: the corrected Seq-based derivation produced 741,788 candidates versus 730,184 published members (11,604 candidate-only, zero published-only).",
+    "blocker": "Identifier parser behavior is verified by full source-backed execution, but the scientific stage remains blocked because the corrected derivation produced 741,788 candidates versus 730,184 published members (11,604 candidate-only, zero published-only). Exact historical membership and the two-ID shift between runs remain unresolved.",
     "evidence": [
       "Synthetic fixed-width parser tests cover valid rows, legitimate Seq gaps, out-of-range values, duplicate Seq, malformed Seq, and truncation.",
       "The previous CI run exposed a missing cycle record; the record has been added and the new head's CI is pending.",
       "Source-backed heavy validation is not established by ordinary PR checks.",
       "Full source-backed Scientific Validation run 40397098709 completed successfully; CPVS derivation job 121832893823 used this Seq parser implementation.",
       "The heavy run validated 781602 parent rows; Table2.txt.zip SHA-256 0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138; evidence sidecar SHA-256 640a048fc9e40df6e1bdfc1bfcd58ac13ee00ca6aee68ca90e7c5992dbdf7944.",
-      "The Seq-based SNR reconstruction produced 741788 candidates; independent VizieR Table 4 membership has 730184 objects, intersection 730184, candidate-only 11604, published-only 0. Exact membership audit returned false and the workflow classified the scientific status UNRESOLVED."
+      "The Seq-based SNR reconstruction produced 741788 candidates; independent VizieR Table 4 membership has 730184 objects, intersection 730184, candidate-only 11604, published-only 0. Exact membership audit returned false and the workflow classified the scientific status UNRESOLVED.",
+      "Lifecycle status is BLOCKED intentionally: parser correctness is supported by source-backed evidence, but the scientific acceptance criterion (exact membership reproduction) has not passed."
     ]
   },
   "failure_analysis": {
