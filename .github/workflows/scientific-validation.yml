@@ -344,7 +344,7 @@ jobs:
               digest = hashlib.sha256(output.read_bytes()).hexdigest()
               if digest != record["sha256"]:
                   raise SystemExit(f"Output hash mismatch for {name}")
-          print(json.dumps({
+          validation_summary = {
               "status": "REPORT_VERIFIED",
               "counts": counts,
               "historical_count_baseline_match": all(
@@ -357,7 +357,12 @@ jobs:
               "output_hashes_verified": len(manifest["outputs"]),
               "historical_selection_rule": "UNRESOLVED",
               "discovery_claim": "NONE",
-          }, indent=2, sort_keys=True))
+          }
+          (root / "report_validation_summary.json").write_text(
+              json.dumps(validation_summary, indent=2, sort_keys=True) + "\\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(validation_summary, indent=2, sort_keys=True))
           PY
 
       - name: Classify CPVS reconstruction result
