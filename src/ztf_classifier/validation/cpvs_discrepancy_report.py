@@ -264,6 +264,7 @@ def build_cpvs_discrepancy_report(
     report_code_revision: str = "UNRECORDED",
     parent_evidence: str | Path | None = None,
     candidate_evidence: str | Path | None = None,
+    candidate_diagnostic: str | Path | None = None,
     expected_parent_count: int = 781_602,
 ) -> dict[str, Any]:
     """Write CSV, strict JSON manifest, searchable HTML and Markdown summary."""
@@ -305,10 +306,13 @@ def build_cpvs_discrepancy_report(
             )
         parent[object_id] = row
 
+    if candidate_evidence is not None and candidate_diagnostic is not None:
+        raise ValueError("provide candidate evidence or candidate diagnostic, not both")
     evidence_files: dict[str, dict[str, Any]] = {}
     for name, evidence_path in (
         ("parent_evidence", parent_evidence),
         ("candidate_evidence", candidate_evidence),
+        ("candidate_diagnostic", candidate_diagnostic),
     ):
         if evidence_path is None:
             continue
@@ -431,6 +435,13 @@ def build_cpvs_discrepancy_report(
             "candidate_ids": {
                 "method": "source-backed reconstruction output; see scientific-validation workflow diagnostics",
                 "source_revision": source_revision,
+                "evidence_kind": (
+                    "diagnostic"
+                    if candidate_diagnostic is not None
+                    else "successful_derivation"
+                    if candidate_evidence is not None
+                    else "not_provided"
+                ),
                 "photometry_source_url": "https://zenodo.org/records/3886372",
             },
             "published_ids": {
