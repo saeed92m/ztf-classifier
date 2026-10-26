@@ -81,6 +81,8 @@ jobs:
 
           root = Path("reports/cpvs_report_validation/cpvs_discrepancy_report")
           manifest = json.loads((root / "cpvs_discrepancy_manifest.json").read_text(encoding="utf-8"))
+          if manifest.get("report_code_revision") in (None, "", "UNRECORDED"):
+              raise SystemExit("Report-builder code revision is missing")
           expected = {
               "parent_metadata_objects": 781602,
               "candidate_objects": 741786,
