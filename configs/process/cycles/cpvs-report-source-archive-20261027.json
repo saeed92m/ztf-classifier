@@ -40,7 +40,8 @@
       "Added integration test with a synthetic fixed-width Table 2 archive and a Table 4 ZTF-name crosswalk.",
       "Added report-generation and hash/count validation steps to the source-backed heavy workflow.",
       "The full source-backed heavy run 40397098709 completed on the authoritative Seq parser. Parent Table 2 had 781602 rows; archive SHA-256 0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138; evidence sidecar SHA-256 640a048fc9e40df6e1bdfc1bfcd58ac13ee00ca6aee68ca90e7c5992dbdf7944. It produced 741788 candidates / 11604 candidate-only / 0 published-only; exact membership remained UNRESOLVED.",
-      "Added a dedicated workflow_run validator for the current CPVS Seq heavy run; it downloads the immutable scientific-validation-heavy artifact, rebuilds the report from the exact parent/candidate/published inputs, verifies counts and hashes, and uploads a 90-day report artifact. This workflow will only execute after the current PR checks are green and the workflow exists on main before the heavy run completes."
+      "Added a dedicated workflow_run validator for the current CPVS Seq heavy run; it downloads the immutable scientific-validation-heavy artifact, rebuilds the report from the exact parent/candidate/published inputs, verifies counts and hashes, and uploads a 90-day report artifact. This workflow will only execute after the current PR checks are green and the workflow exists on main before the heavy run completes.",
+      "Source artifact metadata verified from completed workflow 40397098709: artifact scientific-validation-heavy SHA-256 212f4192de530212bafe597d589c67c0778363e0dadc1f64c1b44e8f170eb426. The report-reuse workflow can be triggered from ci/report-reuse/* using this recorded run ID if the workflow_run event is missed."
     ],
     "blocker": "Generate and audit the report from the completed heavy artifact for run 40397098709. The report must include all computed candidate-only IDs (latest count 11,604), preserve the two-ID shift from prior run #38121913146, and verify input/evidence/output hashes. If the workflow_run consumer was not installed on main before the heavy run completed, provide a safe artifact-reuse execution path without redownloading raw data."
   },
@@ -74,5 +75,11 @@
     "Do not claim candidate-only objects are new discoveries.",
     "Keep all raw data out of Git; retain only bounded reports, manifests, hashes, and provenance evidence.",
     "Do not mark this lifecycle cycle complete before source-backed artifact verification."
-  ]
+  ],
+  "source_run_id": 40397098709,
+  "source_run_commit": "4674d3ad69ff7148a246ccf34f5aa216c3e791fd",
+  "source_artifact_name": "scientific-validation-heavy",
+  "source_artifact_sha256": "212f4192de530212bafe597d589c67c0778363e0dadc1f64c1b44e8f170eb426",
+  "source_parent_sha256": "0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138",
+  "source_parent_evidence_sha256": "640a048fc9e40df6e1bdfc1bfcd58ac13ee00ca6aee68ca90e7c5992dbdf7944"
 }
