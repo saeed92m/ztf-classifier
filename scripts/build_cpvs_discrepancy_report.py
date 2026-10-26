@@ -16,6 +16,8 @@ def main() -> int:
     parser.add_argument("--candidate-ids", type=Path, required=True)
     parser.add_argument("--published-ids", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--parent-evidence", type=Path)
+    parser.add_argument("--candidate-evidence", type=Path)
     parser.add_argument(
         "--report-code-revision",
         required=True,
@@ -40,6 +42,8 @@ def main() -> int:
         output_dir=args.output_dir,
         source_revision=args.source_revision,
         report_code_revision=args.report_code_revision,
+        parent_evidence=args.parent_evidence,
+        candidate_evidence=args.candidate_evidence,
         expected_parent_count=args.expected_parent_count,
     )
     print(json.dumps(summary["counts"], indent=2, sort_keys=True))
