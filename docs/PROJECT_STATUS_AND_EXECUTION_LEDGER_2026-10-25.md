@@ -96,13 +96,13 @@ This is a bounded test of how the current program behaves on 100 random object-l
 3. Raw light-curve inspection and a full external-catalog cross-match have not been established for all 11,602 objects.
 4. The 100-random-object operational test has not yet been run and audited; no results are claimed.
 5. Windows/macOS clean-machine packaging and a user-ready GUI have not been verified by this review.
-6. PR #223 is merged; PR #224 remains open/draft pending current-head CI and source-backed output validation.
+6. PR #223 is merged; PR #224 merged as `b56c90bafe9e6e0c5630dd4b96c9843dbd26301c`. The report utility is now in main, but the actual 11,602-row report still requires regeneration from authoritative source artifacts and audit.
 
 ## Next execution sequence
 
 1. Verify current branch/PR/workflow state and security audit.
 2. Use authoritative source-backed artifacts to generate and audit the CPVS report.
-3. Re-run CPVS reporting CI on a base that contains the reviewed dependency remediation.
+3. Run the merged CPVS report utility against hash-identified authoritative artifacts and audit the generated report; keep Issue #170 open.
 4. Execute the 100-random-object operational test with a fixed seed, complete per-object accounting, and a reproducible manifest.
 5. Implement and test cross-platform packaging and GUI incrementally.
 6. Define Company-Platform API integration after the independent product workflows are stable.
