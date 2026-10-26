@@ -100,6 +100,33 @@ def _validate(frame: pd.DataFrame, expected: list[str], object_id: str, limit: i
         raise SourceQueryError(f"{object_id} is not deterministically sorted")
 
 
+def _normalize_and_sort_source_ids(
+    frame: pd.DataFrame,
+    object_id: str,
+) -> pd.DataFrame:
+    if object_id not in frame.columns:
+        raise SourceQueryError(f"source response missing object ID column: {object_id}")
+    if frame[object_id].isna().any():
+        raise SourceQueryError(f"{object_id} contains null values")
+
+    def normalize(value: object) -> str:
+        if isinstance(value, bytes):
+            try:
+                value = value.decode("utf-8", errors="strict")
+            except UnicodeDecodeError as exc:
+                raise SourceQueryError(
+                    f"{object_id} contains a non-UTF-8 byte identifier"
+                ) from exc
+        normalized = str(value).strip()
+        if not normalized:
+            raise SourceQueryError(f"{object_id} contains a blank identifier")
+        return normalized
+
+    normalized = frame.copy()
+    normalized[object_id] = normalized[object_id].map(normalize)
+    return normalized.sort_values(object_id, kind="mergesort").reset_index(drop=True)
+
+
 def _write_result(
     root: Path,
     benchmark_id: str,
@@ -336,7 +363,7 @@ def _read_hats_objects(
     frame = pd.concat(frames, ignore_index=True)
     frame.columns = [str(column).lower() for column in frame.columns]
     frame = frame.rename(columns={"oid": "oid", "ra": "ra", "dec": "dec"})
-    frame = frame.sort_values(object_id, kind="mergesort").reset_index(drop=True)
+    frame = _normalize_and_sort_source_ids(frame, object_id)
     _validate(frame, expected_columns, object_id, len(ids))
     frame.attrs["source_rows"] = source_rows
     return frame
