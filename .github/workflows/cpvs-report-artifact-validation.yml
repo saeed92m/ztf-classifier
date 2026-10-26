@@ -99,7 +99,7 @@ jobs:
             --candidate-ids "${{ steps.inputs.outputs.candidate }}"
             --published-ids "${{ steps.inputs.outputs.published }}"
             --output-dir reports/cpvs_report_validation/cpvs_discrepancy_report
-            --source-revision "${{ github.event.workflow_run.head_sha }}"
+            --source-revision "${{ steps.source.outputs.source_revision }}"
             --report-code-revision "${{ github.sha }}"
             --parent-evidence "${{ steps.inputs.outputs.parent }}.evidence.json"
             --expected-parent-count 781602
