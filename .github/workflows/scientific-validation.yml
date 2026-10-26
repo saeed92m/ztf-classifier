@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - "ci/heavy/**"
+      - "ci/dr24/**"
     tags:
       - "v*.*.*"
   schedule:
@@ -54,9 +55,9 @@ jobs:
     if: >-
       github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) ||
-      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/ci/heavy/'))) ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/ci/heavy/') || startsWith(github.ref, 'refs/heads/ci/dr24/'))) ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
-      (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
+      (github.event_name == 'pull_request' && (startsWith(github.head_ref, 'ci/heavy/') || startsWith(github.head_ref, 'ci/dr24/')))
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -402,6 +403,14 @@ jobs:
           set -euo pipefail
           mkdir -p reports/scientific_validation/external_source_evidence
           python scripts/acquire_external_source_evidence.py --output-root reports/scientific_validation/external_source_evidence --code-version "${GITHUB_SHA}"
+
+      - name: Run real DR24 lightcurve through the native feature engine
+        run: |
+          set -euo pipefail
+          python scripts/smoke_dr24_lightcurve_pipeline.py \
+            --objects-tsv reports/scientific_validation/external_source_evidence/ztf_dr24_source_subset/response.tsv \
+            --output-dir reports/scientific_validation/external_source_evidence/ztf_dr24_source_subset/lightcurve-smoke \
+            --max-objects 12
 
       - name: Validate external evidence contract
         run: |

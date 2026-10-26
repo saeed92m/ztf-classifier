@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-lightcurve-engine-smoke-20261026",
+  "objective": "Exercise real ZTF DR24 lightcurve retrieval and the existing native v0.2 feature engine on a deterministic bounded subset, independently of CPVS membership reconstruction.",
+  "previous_knowledge_consumed": [
+    "Scientific Validation run 40296581372 on 2026-10-26 successfully acquired a 150-object DR24 Objects Table subset and ALeRCE evidence, but did not retrieve DR24 lightcurve epochs or invoke the feature engine on DR24 observations.",
+    "The existing feature engine requires normalized observations with mjd, fid, mag, and magerr and emits the frozen 42-feature v0.2 schema with input hash provenance."
+  ],
+  "baseline": {
+    "revision": "d88e54a2eb70d5e4531bc950341ef3136c29a5e2",
+    "description": "Keep v0.2.0/v1.0.1 model, feature schema, class order, and scientific acceptance criteria unchanged. This smoke test does not alter training or inference artifacts."
+  },
+  "expected_improvement": [
+    "Retrieve real DR24 lightcurves for a deterministic bounded subset of the existing 150-object DR24 metadata sample.",
+    "Normalize documented DR24 HMJD, filter IDs, magnitude, magnitude uncertainty, and quality flags without fabricating measurements.",
+    "Run the existing native feature engine and retain per-object source hashes, normalized-observation hashes, feature eligibility counts, and failures.",
+    "Separate successful ingestion/feature execution from model inference and scientific validation claims."
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "DR24 evidence job checked Objects Table response schema and provenance only; no lightcurve-to-feature execution was verified.",
+        "after": "Pending targeted DR24 lightcurve smoke workflow.",
+        "evidence": "Scientific Validation run 40296581372, job 121483996063."
+      },
+      "correctness": {
+        "before": "No verified real-DR24 feature-engine result in the scheduled workflow.",
+        "after": "Pending real-data retrieval, 42-feature contract, hashes, and output report.",
+        "evidence": "New script scripts/smoke_dr24_lightcurve_pipeline.py and report dr24_lightcurve_smoke_report.json."
+      }
+    }
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The workflow is restricted to the ci/dr24 branch family to avoid rerunning the full CPVS/StarEmbed heavy job.",
+      "The smoke test uses public DR24 lightcurves and the existing feature engine; it does not tune thresholds or modify model artifacts.",
+      "The live-data result and integration test status must be reviewed before this record can be finalized."
+    ]
+  },
+  "failure_analysis": {
+    "status": "identified",
+    "root_causes": [
+      "The existing DR24 acquisition adapter retrieved object metadata only; it did not retrieve per-epoch lightcurve data or pass it to the feature engine."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A successful metadata fetch is not evidence that the time-series ingestion and feature-generation path works on DR24.",
+      "Real-source integration checks must record source schema, raw-response hashes, normalized-observation hashes, eligibility counts, and explicit NOT_RUN states for downstream stages."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the targeted live DR24 lightcurve smoke workflow and inspect its artifact.",
+      "Model inference remains NOT_RUN until the frozen model artifact is made available through an authorized, traceable artifact source."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not use DR24 labels or metadata as independent ground truth unless a source-specific reference definition is documented.",
+    "Do not claim model accuracy, scientific validation, or CPVS resolution from a feature-engine smoke run.",
+    "Keep the immutable v0.2.0 baseline and v1.0.1 release artifacts unchanged."
+  ]
+}
