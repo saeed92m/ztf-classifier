@@ -1,5 +1,10 @@
 # ZTF Classifier — Project Continuity Handbook v2.8
 
+## Current status snapshot — 2026-10-27
+
+PR #231 is open/draft/unmerged at `4a6ddd786ebb37551253349ef483ca968a8f00ac`. CI, CodeQL, Product Scope Audit, and Scientific Validation completed successfully, but four source-backed scientific jobs were skipped. This is not full scientific validation. The local lab artifact is not a release artifact; local test skip reasons are still being verified. The explicit `fallback_on_empty` acquisition and CPVS exact reconstruction remain open. See [the current execution ledger](PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-10-27.md).
+
+
 Status date: 2026-10-11
 Software release: v1.0.1
 Scientific baseline: v0.2.0 (immutable)
