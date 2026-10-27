@@ -1,0 +1,97 @@
+{
+  "record_type": "lab_smoke_integrity_audit",
+  "record_version": "1.0",
+  "observed_at_utc_date": "2026-10-27",
+  "run_id": "lab-smoke-20261027T104951Z",
+  "source_checkout_commit": "a5fca3ac2f7b69b5469bd03c17bdc87ebecd9e69",
+  "source_checkout_dirty": false,
+  "evidence_scope": "Read-only audit of user-provided terminal output; this record does not contain the underlying parquet files or independently rerun the audit.",
+  "dataset": {
+    "path": "data/processed/features_v0.2.parquet",
+    "sha256": "d08543cffe5db141d6a7e4ee429264acdaa50c6e4fd01f1b0fa2a36aa42a6a85",
+    "rows": 150,
+    "columns": 56,
+    "unique_oid": 150,
+    "null_oid": 0,
+    "classes": 15,
+    "rows_per_class": 10
+  },
+  "oof_integrity": {
+    "rows": 150,
+    "row_index_unique": 150,
+    "row_index_range": [
+      0,
+      149
+    ],
+    "fold_counts": {
+      "1": 30,
+      "2": 30,
+      "3": 30,
+      "4": 30,
+      "5": 30
+    },
+    "probability_columns": 15,
+    "nonfinite_probabilities": 0,
+    "probabilities_outside_0_1": 0,
+    "row_probability_sum_min": 0.9999999378342181,
+    "row_probability_sum_max": 1.0000000773579814,
+    "fold_assignment_missing_rows": 0,
+    "fold_mismatches": 0,
+    "class_label_mismatches": 0,
+    "dataset_label_mismatches": 0,
+    "duplicate_oof_row_index": 0,
+    "duplicate_fold_row_index": 0
+  },
+  "batch_output": {
+    "rows": 150,
+    "unique_oid": 150,
+    "null_oid": 0,
+    "predicted_class_counts": {
+      "AGN": 10,
+      "Blazar": 10,
+      "CEP": 10,
+      "CV/Nova": 10,
+      "DSCT": 10,
+      "E": 10,
+      "LPV": 10,
+      "Periodic-Other": 10,
+      "QSO": 10,
+      "RRL": 10,
+      "SLSN": 10,
+      "SNII": 10,
+      "SNIa": 10,
+      "SNIbc": 10,
+      "YSO": 10
+    },
+    "probability_columns": 15,
+    "nonfinite_probabilities": 0,
+    "row_probability_sum_min": 0.9999999999999996,
+    "row_probability_sum_max": 1.0000000000000004,
+    "batch_oids_found_in_dataset": 150,
+    "dataset_identifier_duplicates": 0
+  },
+  "artifact_integrity_evidence": {
+    "artifact_manifest_files_checked": 8,
+    "artifact_manifest_file_hashes_matched": 8,
+    "provenance_input_hashes_matched": 6,
+    "note": "These matches establish byte-level integrity relative to recorded hashes, not scientific validity."
+  },
+  "findings": [
+    "The reported run passed the structural and numerical integrity checks listed above.",
+    "OOF row indices, fold assignments, class labels, and dataset row order were consistent in the supplied audit output.",
+    "The audit was read-only and wrote no local files."
+  ],
+  "unresolved_scientific_questions": [
+    "Inspect preprocessing and feature-generation boundaries for leakage across CV folds.",
+    "Temperature scaling is fitted to all 150 OOF predictions; assess whether the reported calibration claim is appropriately diagnostic or requires an independent calibration set.",
+    "Conformal thresholds are fitted to the same 150 OOF predictions used to summarize coverage; do not claim split-conformal finite-sample coverage for the final full-data model without a justified protocol.",
+    "Validate OOD threshold interpretation and deployment behavior independently.",
+    "This record does not resolve the CPVS publisher-rule justification blocker tracked separately."
+  ],
+  "disposition": {
+    "lab_smoke_integrity": "PASS_FOR_STRUCTURAL_CHECKS_ONLY",
+    "scientific_validation": "NOT_ESTABLISHED",
+    "release_readiness": "NOT_ESTABLISHED",
+    "baseline_v0_2_0_changed": false
+  }
+}
