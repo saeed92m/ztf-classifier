@@ -43,6 +43,17 @@ class AlerceObjectBackend(ObjectAcquisitionBackend):
             "probability",
         }
         missing = sorted(required_api_columns - set(objects.columns))
+        if objects.empty and missing:
+            # ALeRCE can represent a legitimate zero-result response as an
+            # empty DataFrame with no columns. Preserve the empty result so
+            # the configured selection policy can decide whether to fallback.
+            empty_columns = list(
+                dict.fromkeys([*REQUIRED_OBJECT_COLUMNS, *sorted(required_api_columns)])
+            )
+            return ObjectAcquisitionResult(
+                request=request,
+                objects=(pd.DataFrame(columns=empty_columns),),
+            )
         if missing:
             raise ValueError(
                 "ALeRCE object response is missing required columns: "
