@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-231-alerce-empty-response-fallback-20261027",
+  "objective": "Treat a genuinely empty ALeRCE object-query DataFrame with no columns as a zero-result response so the configured selection policy can apply fallback, while preserving fail-closed validation for non-empty malformed responses.",
+  "previous_knowledge_consumed": [
+    "Live ALeRCE smoke run 2026-10-27 returned an empty DataFrame with shape (0, 0) for some class/probability queries.",
+    "ObjectSelectionPolicy fallback_on_empty can retry empty classes, but AlerceObjectBackend raised before the policy could observe the empty result.",
+    "The live experiment used strict_primary, which intentionally does not fall back."
+  ],
+  "baseline": {
+    "revision": "b56c90bafe9e6e0c5630dd4b96c9843dbd26301c",
+    "description": "Frozen v0.2.0 benchmark/model/features/class order remain unchanged. The live 45-object acquisition is not complete."
+  },
+  "expected_improvement": [
+    "Correct handling of valid zero-result API responses.",
+    "Regression protection for empty DataFrames without columns.",
+    "Allow explicit fallback_on_empty experiments without weakening malformed non-empty payload validation."
+  ],
+  "measurement": {
+    "metrics": {
+      "regression_test_added": {
+        "before": 0,
+        "after": 1,
+        "unit": "focused regression tests",
+        "status": "MEASURED"
+      },
+      "scientific_validity": {
+        "before": "NOT_VERIFIED",
+        "after": "NOT_VERIFIED",
+        "status": "NOT_MEASURED",
+        "reason": "This backend contract fix does not establish external scientific validity or prove 45 live objects can be acquired."
+      }
+    },
+    "trade_off": "The live experiment must explicitly configure fallback_on_empty to test fallback. No default strategy, probability threshold, benchmark data, model, or acceptance criterion is changed."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "evidence": [
+      "PR #231 adds the empty-response handling and a focused regression test.",
+      "GitHub Actions run 40495021833: Format Check PASS; Lint PASS; Cumulative Lifecycle Gate FAIL because the PR lacked a machine-readable cycle record; runtime tests, full test suite, dependency audit, and package build were skipped by the CI gate.",
+      "The code regression test has not yet been confirmed passing by CI."
+    ],
+    "scientific_gate_affected": false
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "AlerceObjectBackend validated required columns before checking whether the DataFrame was empty; an empty (0, 0) frame was therefore treated as malformed.",
+      "The initial live config used strict_primary, so it would not trigger fallback even after empty-response normalization."
+    ],
+    "unresolved": [
+      "Whether a rerun with the fix and fallback_on_empty can acquire all 45 requested objects.",
+      "Whether all 15 classes can supply three objects under the declared primary/fallback thresholds at retrieval time."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A zero-row response is distinct from a non-empty malformed response and should be represented explicitly.",
+      "Fallback behavior must be opt-in in the experiment configuration and recorded in the manifest.",
+      "A passing unit test is not evidence that the live catalog can supply the target sample."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Await CI rerun and focused regression result.",
+      "Rerun live acquisition with fallback_on_empty and preserve per-class counts, IDs, provenance, and hashes.",
+      "Do not report the 45-object live experiment as complete until the manifest and output dataset are inspected."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep v0.2.0 immutable.",
+    "Keep scientific validation fail-closed.",
+    "Do not tune thresholds solely to fill the target sample.",
+    "Do not claim 45 live objects were acquired until verified from output artifacts."
+  ]
+}
