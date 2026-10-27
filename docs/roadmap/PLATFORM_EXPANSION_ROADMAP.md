@@ -7,6 +7,13 @@ The latest inspected heavy source-backed run is [40397098709](https://github.com
 **Scientific status remains UNRESOLVED and release-blocking.** This latest 741,788 / 11,604 result supersedes older counts only for this run; it does not explain their difference. PR #182 sampling code currently emits only 100- and 1,000-object samples; the agreed 50-object quick sample, separate 100-object targeted edge-case sample, and 10,000-object parent-population sample have not yet been implemented or run against this pinned evidence. Keep the probability sample separate from targeted edge-case diagnostics. Do not alter selection rules, thresholds, acceptance criteria, or frozen v0.2.0 / v1.0.1 artifacts to force equality. See [Issue #180](https://github.com/saeed92m/ztf-classifier/issues/180) for the verified checkpoint and next actions.
 
 
+## Verified source-code finding — non-finite SNR predicate (2026-10-27)
+
+The exact heavy-workflow checkout is merge commit `3c91da4` (PR head `4674d3ad69ff7148a246ccf34f5aa216c3e791fd`, base `8c2ba057a572b1cd460c47d1e02940e1ba44e366`). In `src/ztf_classifier/validation/derivation.py` at that revision, the predicate is `if oid not in parent_ids or _snr_from_mag_error(row.get(error_key, "")) < sigma:`. A non-finite SNR can pass this check because `NaN < sigma` is false. The later diagnostic branch `science/cpvs-samples-clean-20261012` explicitly rejects non-finite SNR using `math.isfinite(snr)`.
+
+This confirms a real defect in the executed predicate, but does **not** establish that it explains all 11,604 candidate-only IDs. The same run logged 781,602 parent SourceIDs, 741,788 derived candidates versus 730,184 expected, 11,604 candidate-only and zero published-only. The scientific status remains **UNRESOLVED / release-blocking** until per-object provenance quantifies this predicate's effect and an exact, reproducible membership comparison is produced. Do not change thresholds, use the four-field diagnostic as an assumed publisher rule, or modify the frozen v0.2.0 baseline / v1.0.1 release to force a match. Evidence is tracked in [Issue #180](https://github.com/saeed92m/ztf-classifier/issues/180).
+
+
 ## Current implementation status — 2026-10-27
 
 - ALeRCE empty-response fix: PR #231 is open/draft/unmerged; ordinary CI passed, but source-backed scientific jobs were skipped.
