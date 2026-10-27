@@ -44,6 +44,10 @@ The last recorded Seq-based reconstruction reported 781,602 parent IDs, 730,184 
 - Required evidence: verify source versions/hashes/schema; trace every candidate to original Table 2 `Seq` and source record; compare full object-level membership; run reproducible 100-object diagnostics and a fixed 1,000-object sample containing reference members and non-members; calculate explicit false positives/false negatives; record discrepant IDs, commands, provenance, and intermediate hashes; perform full comparison where feasible.
 - Keep [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170) open until a reproducible root cause or evidence-based disposition exists. Do not tune thresholds to force cardinality equality.
 
+## Application proposal files reviewed
+
+Two attached Persian application documents were inspected as source materials: the 13-page Science & Technology Park presentation and the 21-page project proposal (version 1.0, September 2026). Both frame the deliverable as a demonstrable prototype and describe a planned end-to-end pipeline. They are proposal artifacts, not execution evidence. Before reissuing or replacing them, reconcile every present-tense claim about demo readiness, validation, performance, and reproducibility against the verified lab acceptance record. Preserve the original submitted PDFs; create a clearly versioned revision rather than silently overwriting them. No PDF was edited in this pass.
+
 ## Acceptance sequence
 
 1. Inspect the local diff and run `pytest -rs`; classify every skipped test and confirm whether 1.1 artifact tests execute.
