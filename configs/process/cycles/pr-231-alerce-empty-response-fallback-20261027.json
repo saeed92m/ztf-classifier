@@ -5,7 +5,7 @@
   "previous_knowledge_consumed": [
     "Live ALeRCE smoke run 2026-10-27 returned an empty DataFrame with shape (0, 0) for some class/probability queries.",
     "ObjectSelectionPolicy fallback_on_empty can retry empty classes, but AlerceObjectBackend raised before the policy could observe the empty result.",
-    "The live experiment used strict_primary, which intentionally does not fall back."
+    "The live experiment used strict_primary, which intentionally does not fallback."
   ],
   "baseline": {
     "revision": "b56c90bafe9e6e0c5630dd4b96c9843dbd26301c",
@@ -18,17 +18,17 @@
   ],
   "measurement": {
     "metrics": {
-      "regression_test_added": {
-        "before": 0,
-        "after": 1,
-        "unit": "focused regression tests",
-        "status": "MEASURED"
+      "correctness": {
+        "before": "An empty (0, 0) API response was incorrectly rejected as malformed.",
+        "after": "A genuinely empty response is normalized to a zero-row canonical frame; non-empty malformed responses still fail closed."
       },
-      "scientific_validity": {
-        "before": "NOT_VERIFIED",
-        "after": "NOT_VERIFIED",
-        "status": "NOT_MEASURED",
-        "reason": "This backend contract fix does not establish external scientific validity or prove 45 live objects can be acquired."
+      "reliability": {
+        "before": "Fallback policy could not observe an empty API response because the backend raised first.",
+        "after": "A focused regression test covers the empty/no-columns case; CI validation remains pending."
+      },
+      "reproducibility": {
+        "before": "The live 45-object attempt stopped before producing a complete dataset.",
+        "after": "The fix, test, configuration constraint, and outstanding live acquisition requirement are recorded in this versioned cycle."
       }
     },
     "trade_off": "The live experiment must explicitly configure fallback_on_empty to test fallback. No default strategy, probability threshold, benchmark data, model, or acceptance criterion is changed."
@@ -37,8 +37,9 @@
     "status": "NOT_VERIFIED",
     "evidence": [
       "PR #231 adds the empty-response handling and a focused regression test.",
-      "GitHub Actions run 40495021833: Format Check PASS; Lint PASS; Cumulative Lifecycle Gate FAIL because the PR lacked a machine-readable cycle record; runtime tests, full test suite, dependency audit, and package build were skipped by the CI gate.",
-      "The code regression test has not yet been confirmed passing by CI."
+      "GitHub Actions run 40496445673: Format Check PASS; Lint PASS; Cumulative Lifecycle Gate failed because metric name regression_test_added is unsupported; runtime tests, full test suite, dependency audit, and package build were skipped by the CI gate.",
+      "This cycle record is being corrected to use supported lifecycle metric categories; a new CI result is required.",
+      "Scientific validation is not established by this backend fix."
     ],
     "scientific_gate_affected": false
   },
@@ -46,7 +47,8 @@
     "status": "PARTIALLY_DIAGNOSED",
     "root_causes": [
       "AlerceObjectBackend validated required columns before checking whether the DataFrame was empty; an empty (0, 0) frame was therefore treated as malformed.",
-      "The initial live config used strict_primary, so it would not trigger fallback even after empty-response normalization."
+      "The initial live config used strict_primary, so it would not trigger fallback even after empty-response normalization.",
+      "The first lifecycle record used an unsupported metric name and was rejected by the cumulative lifecycle validator."
     ],
     "unresolved": [
       "Whether a rerun with the fix and fallback_on_empty can acquire all 45 requested objects.",
@@ -64,7 +66,7 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Await CI rerun and focused regression result.",
+      "Re-run lifecycle validation and the full CI matrix after correcting this cycle record.",
       "Rerun live acquisition with fallback_on_empty and preserve per-class counts, IDs, provenance, and hashes.",
       "Do not report the 45-object live experiment as complete until the manifest and output dataset are inspected."
     ]
