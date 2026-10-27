@@ -9,6 +9,13 @@ The latest inspected heavy source-backed run is [40397098709](https://github.com
 
 **Purpose:** current, evidence-based execution state. This file supersedes older status snapshots only where dates and evidence explicitly overlap; it does not erase historical records.
 
+## Verified source-code finding — non-finite SNR predicate (2026-10-27)
+
+The exact heavy-workflow checkout is merge commit `3c91da4` (PR head `4674d3ad69ff7148a246ccf34f5aa216c3e791fd`, base `8c2ba057a572b1cd460c47d1e02940e1ba44e366`). In `src/ztf_classifier/validation/derivation.py` at that revision, the predicate is `if oid not in parent_ids or _snr_from_mag_error(row.get(error_key, "")) < sigma:`. A non-finite SNR can pass this check because `NaN < sigma` is false. The later diagnostic branch `science/cpvs-samples-clean-20261012` explicitly rejects non-finite SNR using `math.isfinite(snr)`.
+
+This confirms a real defect in the executed predicate, but does **not** establish that it explains all 11,604 candidate-only IDs. The same run logged 781,602 parent SourceIDs, 741,788 derived candidates versus 730,184 expected, 11,604 candidate-only and zero published-only. The scientific status remains **UNRESOLVED / release-blocking** until per-object provenance quantifies this predicate's effect and an exact, reproducible membership comparison is produced. Do not change thresholds, use the four-field diagnostic as an assumed publisher rule, or modify the frozen v0.2.0 baseline / v1.0.1 release to force a match. Evidence is tracked in [Issue #180](https://github.com/saeed92m/ztf-classifier/issues/180).
+
+
 ## Source revisions and workflow evidence
 
 - Repository default branch `main`: `b56c90bafe9e6e0c5630dd4b96c9843dbd26301c` at time of this update.
