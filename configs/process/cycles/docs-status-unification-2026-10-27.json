@@ -88,6 +88,40 @@
     "heavy_artifact_sha256": "212f4192de530212bafe597d589c67c0778363e0dadc1f64c1b44e8f170eb426",
     "sample_protocol_status": "INCOMPLETE; existing PR #182 tool emits 100 and 1000 stratified samples only; 50 quick, separate 100 targeted edge-case, and 10000 parent-population sample not yet implemented/executed",
     "scientific_gate": "BLOCKED",
-    "selection_policy_changed": false
+    "selection_policy_changed": false,
+    "source_revision_follow_up": {
+      "checked_out_ref": "refs/remotes/pull/228/merge",
+      "inspected_pr_head_branch": "ci/heavy/cpvs-seq-authoritative-ids-20261026",
+      "finding": "negative-only SNR guard can admit non-finite SNR because NaN < threshold is false",
+      "status": "CODE_DEFECT_CONFIRMED_IN_INSPECTED_BRANCH; CONTRIBUTION_TO_11604_CANDIDATE_ONLY_IDS_NOT_QUANTIFIED; ROOT_CAUSE_UNPROVEN",
+      "intermediate_comparisons": [
+        {
+          "candidate_only": 11602,
+          "published_only": 0,
+          "disposition": "distinct intermediate audit; not final membership result"
+        },
+        {
+          "candidate_only": 11600,
+          "published_only": 0,
+          "disposition": "distinct intermediate audit; not final membership result"
+        },
+        {
+          "candidate_only": 1120,
+          "published_only": 18865,
+          "disposition": "distinct comparator; not final membership result"
+        }
+      ],
+      "next_evidence": [
+        "pin exact checked-out merge SHA from workflow metadata",
+        "emit compact per-ID candidate-only provenance",
+        "quantify non-finite SNR contribution by band",
+        "reproduce using pinned source and inputs",
+        "object-level full-vs-batch comparison",
+        "deterministic 50/100/1000/10000 samples",
+        "regression tests"
+      ],
+      "selection_policy_changed": false,
+      "scientific_gate": "BLOCKED"
+    }
   }
 }
