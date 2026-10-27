@@ -126,6 +126,26 @@
         "4674d3ad69ff7148a246ccf34f5aa216c3e791fd",
         "8c2ba057a572b1cd460c47d1e02940e1ba44e366"
       ]
+    },
+    "nonfinite_snr_followup": {
+      "pr": 234,
+      "url": "https://github.com/saeed92m/ztf-classifier/pull/234",
+      "branch": "fix/cpvs-nonfinite-snr-guard-20261027",
+      "status": "DRAFT_OPEN_CI_IN_PROGRESS_AT_CHECKPOINT",
+      "change": "Require math.isfinite(snr) before per-band sigma comparison",
+      "tests_added": [
+        "NaN",
+        "positive infinity",
+        "zero error",
+        "negative error",
+        "unparseable error",
+        "valid SNR"
+      ],
+      "test_status": "NOT_YET_VERIFIED",
+      "source_backed_validation": "SKIPPED_IN_ORDINARY_PR_CONTEXT",
+      "scientific_gate": "BLOCKED",
+      "membership_root_cause": "UNPROVEN",
+      "acceptance_criteria_changed": false
     }
   }
 }
