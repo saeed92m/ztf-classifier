@@ -46,7 +46,7 @@ def trace(path, parent_ids, sigma, band, member):
             legacy.add(oid)
             finite.add(oid)
     return {
-        "legacy_ids": legacy, "finite_ids": finite, "nonfinite_ids": nonfinite,
+        "legacy_ids": legacy, "finite_ids": finite, "nonfinite_ids": nonfinite,\n        "nonfinite_only_ids": nonfinite - finite,
         "invalid_magnitude_ids": invalid_mag, "nonfinite_snr_rows": nonfinite_rows,
         "finite_qualifying_rows": qualifying_rows, "sigma": sigma, "input": str(path),
     }
@@ -74,7 +74,7 @@ def main():
     cand_only = candidate - published
     g_old, r_old = g["legacy_ids"], r["legacy_ids"]
     g_finite, r_finite = g["finite_ids"], r["finite_ids"]
-    g_bad, r_bad = g["nonfinite_ids"], r["nonfinite_ids"]
+    g_bad, r_bad = g["nonfinite_only_ids"], r["nonfinite_only_ids"]
     legacy_intersection, finite_intersection = g_old & r_old, g_finite & r_finite
     report = {
         "diagnostic_only": True, "selection_rule_changed": False,
@@ -82,8 +82,8 @@ def main():
         "published_id_count": len(published), "candidate_only_count": len(cand_only),
         "published_only_count": len(published - candidate),
         "candidate_only_ids": sorted(cand_only),
-        "g_band": {"nonfinite_snr_rows": g["nonfinite_snr_rows"], "finite_qualifying_rows": g["finite_qualifying_rows"], "nonfinite_admitted_id_count": len(g_bad)},
-        "r_band": {"nonfinite_snr_rows": r["nonfinite_snr_rows"], "finite_qualifying_rows": r["finite_qualifying_rows"], "nonfinite_admitted_id_count": len(r_bad)},
+        "g_band": {"nonfinite_snr_rows": g["nonfinite_snr_rows"], "finite_qualifying_rows": g["finite_qualifying_rows"], "nonfinite_admitted_id_count": len(g["nonfinite_ids"]), "nonfinite_only_id_count": len(g_bad)},
+        "r_band": {"nonfinite_snr_rows": r["nonfinite_snr_rows"], "finite_qualifying_rows": r["finite_qualifying_rows"], "nonfinite_admitted_id_count": len(r["nonfinite_ids"]), "nonfinite_only_id_count": len(r_bad)},
         "legacy_snr_intersection_count": len(legacy_intersection),
         "finite_snr_intersection_count": len(finite_intersection),
         "legacy_intersection_removed_by_finite_guard": sorted(legacy_intersection - finite_intersection),
