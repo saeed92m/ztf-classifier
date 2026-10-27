@@ -73,3 +73,14 @@ Two attached Persian application documents were inspected as source materials: t
 ## Scope and limitations
 
 This ledger is a status/control document, not a claim that the product is release-ready. No main-branch merge, release publication, scientific baseline mutation, or production-data mutation is performed by this documentation change.
+
+
+## CPVS source-revision follow-up — 2026-10-27 (verified; unresolved)
+
+The heavy run log for [run 40397098709](https://github.com/saeed92m/ztf-classifier/actions/runs/40397098709) shows the source-backed derivation job checked out `refs/remotes/pull/228/merge`. Therefore the run's effective source must be pinned to the PR #228 merge revision from workflow metadata; the run's associated commit SHA alone is not sufficient to assume which branch's implementation executed.
+
+Inspection of PR #228 head branch `ci/heavy/cpvs-seq-authoritative-ids-20261026` found `_qualified_ids` uses a negative-only SNR condition (`snr < sigma`). Python comparisons with NaN make this predicate capable of admitting non-finite SNR. This is a verified code-level defect in the inspected branch, but **its contribution to the 11,604 candidate-only IDs is not quantified and it is not yet the proven root cause**.
+
+The same run reports 741,788 derived candidates (expected 730,184) and an independent final audit of 11,604 candidate-only / 0 published-only. The derivation count gate failed, despite successful workflow artifact upload. Intermediate comparator diagnostics show other count pairs (11,602/0, 11,600/0, and 1,120/18,865); treat these as distinct comparisons, not interchangeable final membership results.
+
+Next evidence required: exact checked-out merge SHA; compact per-ID candidate-only provenance; counts and IDs admitted by non-finite SNR by band; pinned-input reproduction; object-level full-vs-batch comparison; deterministic 50/100/1,000/10,000 samples; regression tests. No threshold, released baseline, or acceptance criterion was changed. Issue #180 and the Notion handbook page were updated with this finding.
