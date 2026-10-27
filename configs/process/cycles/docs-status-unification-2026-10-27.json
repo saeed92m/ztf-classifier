@@ -154,37 +154,9 @@
       "changed_files": [
         "scripts/audit_cpvs_nonfinite_snr.py"
       ],
-      "purpose": "diagnostic-only per-ID attribution of non-finite SNR evidence versus candidate-only membership",
       "status": "DRAFT; NOT RUN ON PINNED FULL INPUTS; ROOT CAUSE UNPROVEN",
-      "workflow_runs_at_first_inspection": [
-        {
-          "id": 40542811183,
-          "name": "CodeQL",
-          "status": "queued"
-        },
-        {
-          "id": 40542811235,
-          "name": "Product Scope Audit",
-          "status": "queued"
-        },
-        {
-          "id": 40542811196,
-          "name": "CI",
-          "status": "queued"
-        },
-        {
-          "id": 40542811336,
-          "name": "Scientific Validation",
-          "status": "queued"
-        }
-      ],
-      "prior_exploratory_pr": {
-        "number": 233,
-        "status": "closed_unmerged",
-        "reason": "inherited unrelated changes from non-main base"
-      },
       "production_selection_changed": false,
-      "next_step": "review CI, validate script, then execute on exact pinned source-backed inputs and replay final magnitude predicate"
+      "next_step": "review CI, execute against exact pinned source-backed inputs, and replay final magnitude predicate"
     }
   }
 }
