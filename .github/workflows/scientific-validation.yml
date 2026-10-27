@@ -315,6 +315,7 @@ jobs:
               raise SystemExit("Source revision does not match the producing workflow commit")
           if manifest.get("report_code_revision") != os.environ["REPORT_CODE_REVISION"]:
               raise SystemExit("Report-builder revision does not match the workflow commit")
+          # Historical counts are comparison evidence, not acceptance criteria; validate current set invariants below.
           previous_recorded_baseline = {
               "parent_metadata_objects": 781602,
               "candidate_objects": 741786,
