@@ -1,5 +1,15 @@
 # ZTF Classifier
 
+## Status snapshot — 2026-10-27
+
+- Active ALeRCE fix: [PR #231](https://github.com/saeed92m/ztf-classifier/pull/231), open/draft/unmerged, head `4a6ddd786ebb37551253349ef483ca968a8f00ac`.
+- Current-head CI, CodeQL, Product Scope Audit, and Scientific Validation workflows completed successfully. Four source-backed/heavy scientific jobs were skipped; this is not full scientific validation.
+- The lab artifact is local diagnostic output, not a published release asset. Frozen scientific baseline `v0.2.0` and immutable software release `v1.0.1` remain unchanged.
+- The 45-object diagnostic acquisition is distinct from the still-required explicit `fallback_on_empty` selection-policy experiment.
+- CPVS exact reconstruction remains **UNRESOLVED**; see [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Do not tune selection rules to force published cardinality.
+- Current execution evidence and acceptance steps: [Project Status & Execution Ledger](docs/PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-10-27.md).
+
+
 A CPU-first Astronomical Data Analysis & Discovery Platform for Zwicky Transient Facility (ZTF) data, scientific feature generation, machine-learning and statistical analysis, uncertainty/OOD diagnostics, provenance, and discovery-oriented workflows.
 
 ## Project status
