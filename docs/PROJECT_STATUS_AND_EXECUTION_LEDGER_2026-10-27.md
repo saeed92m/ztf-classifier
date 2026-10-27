@@ -89,3 +89,10 @@ Next evidence required: compact per-ID candidate-only provenance; counts and IDs
 ## Non-finite SNR regression follow-up — 2026-10-27
 
 Draft stacked [PR #234](https://github.com/saeed92m/ztf-classifier/pull/234) proposes an explicit `math.isfinite(snr)` guard and regression coverage for NaN, infinity, zero/negative errors, malformed text, and a valid row. At the latest checkpoint, CI, CodeQL, and Product Scope Audit were in progress; source-backed jobs in Scientific Validation were skipped in the ordinary PR context. No tests are claimed as passing. The guard addresses a confirmed code defect but does not establish the cause of the 11,604 candidate-only IDs. Scientific validation remains BLOCKED pending pinned-input reproduction, per-ID attribution, and object-level comparisons/samples. No thresholds, model baseline, or acceptance criteria changed.
+
+
+## Diagnostic implementation checkpoint — 2026-10-27
+
+Draft [PR #235](https://github.com/saeed92m/ztf-classifier/pull/235) adds the single-file diagnostic `scripts/audit_cpvs_nonfinite_snr.py` on a clean branch from `main`. It does not alter the production selection predicate. It reports non-finite-SNR rows and ID-level overlap between candidate-only membership and IDs with non-finite SNR evidence, distinguishing IDs without any finite qualifying row. This is an SNR-stage diagnostic only; the final magnitude eligibility rule must be replayed before causal claims.
+
+At first inspection, PR #235 runs CodeQL 40542811183, Product Scope Audit 40542811235, CI 40542811196, and Scientific Validation 40542811336 were queued. The script has not yet run on exact pinned full inputs; do not claim tests or scientific gates passed. PR #233 was closed unmerged because its base inherited unrelated changes; PR #235 is the clean one-file replacement. No production logic, thresholds, baseline, or acceptance criteria changed.
