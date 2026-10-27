@@ -336,7 +336,7 @@ def build_cpvs_discrepancy_report(
                 f"invalid strict JSON in source sidecar {name}: {exc}"
             ) from exc
         if not isinstance(parsed_evidence, dict):
-            raise ValueError(f"source sidecar {name} must contain a JSON object")
+            raise TypeError(f"source sidecar {name} must contain a JSON object")
         evidence_files[name] = {
             "path": str(evidence_file),
             "sha256": sha256_file(evidence_file),
