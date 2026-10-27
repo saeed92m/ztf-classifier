@@ -398,7 +398,10 @@ def _qualified_ids(
 
     for row in chain((first,), rows):
         oid = row.get(id_key, "").strip()
-        if oid not in parent_ids or _snr_from_mag_error(row.get(error_key, "")) < sigma:
+        snr = _snr_from_mag_error(row.get(error_key, ""))
+        # NaN compares false to the threshold-only check and would otherwise be
+        # admitted. Require a finite SNR explicitly before applying threshold.
+        if oid not in parent_ids or not math.isfinite(snr) or snr < sigma:
             continue
         try:
             magnitude = float(row.get(mag_key, ""))
