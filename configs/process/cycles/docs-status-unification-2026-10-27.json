@@ -6,16 +6,18 @@
     "PR #231: ALeRCE empty-response fallback fix and its validation guardrails",
     "PR #232: README, handbook, roadmap, and dated execution ledger updates",
     "configs/process/cycles/cpvs-discrepancy-report-20261024.json",
-    "Local WSL diagnostic test output supplied on 2026-10-27"
+    "Local WSL diagnostic test output supplied on 2026-10-27",
+    "Latest source-backed CPVS run 40397098709 at 4674d3ad69ff7148a246ccf34f5aa216c3e791fd: 781602 parent IDs, 741788 candidates, 730184 published reference members, 11604 candidate-only, 0 published-only; parent SHA-256 0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138."
   ],
   "baseline": {
     "status": "VERIFIED",
-    "description": "The repository has a frozen v0.2.0 scientific baseline and cumulative lifecycle validation. Documentation synchronization changes are present in PR #232, but direct artifact-manifest output remains pending and CPVS object-membership reconciliation remains unresolved."
+    "description": "Documentation synchronization is in PR #232 and now records the latest CPVS source-backed checkpoint. Scientific exact-membership reconciliation remains unresolved; the 741788 / 11604 candidate-only result is not a successful reproduction."
   },
   "expected_improvement": [
     "Keep README, handbook, roadmap, and execution ledger consistent with the latest verified engineering and scientific-validation evidence.",
     "Distinguish successful contract and engineering checks from source-backed scientific validation.",
-    "Preserve the CPVS discrepancy as an explicit scientific blocker until object-level provenance and reproducible comparison establish a root cause."
+    "Preserve the CPVS discrepancy as an explicit scientific blocker until object-level provenance and reproducible comparison establish a root cause.",
+    "Synchronize the dated execution ledger, README, handbook, and both roadmaps with the latest source-backed CPVS counts without erasing older run history."
   ],
   "measurement": {
     "metrics": {
@@ -72,5 +74,20 @@
     "Keep the v0.2.0 baseline immutable.",
     "Do not claim scientific validation while source-backed jobs are skipped or CPVS membership remains unresolved.",
     "Reconcile submitted project-presentation and proposal claims only after artifact and acquisition evidence is verified."
-  ]
+  ],
+  "current_cpvs_checkpoint": {
+    "status": "UNRESOLVED",
+    "workflow_run": 40397098709,
+    "commit": "4674d3ad69ff7148a246ccf34f5aa216c3e791fd",
+    "parent_source_ids": 781602,
+    "parent_sha256": "0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138",
+    "candidate_ids": 741788,
+    "published_reference_ids": 730184,
+    "candidate_only_ids": 11604,
+    "published_only_ids": 0,
+    "heavy_artifact_sha256": "212f4192de530212bafe597d589c67c0778363e0dadc1f64c1b44e8f170eb426",
+    "sample_protocol_status": "INCOMPLETE; existing PR #182 tool emits 100 and 1000 stratified samples only; 50 quick, separate 100 targeted edge-case, and 10000 parent-population sample not yet implemented/executed",
+    "scientific_gate": "BLOCKED",
+    "selection_policy_changed": false
+  }
 }
