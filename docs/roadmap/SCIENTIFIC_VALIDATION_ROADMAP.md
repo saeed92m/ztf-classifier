@@ -1,5 +1,10 @@
 # Scientific Validation Roadmap
 
+## Current gate status — 2026-10-27
+
+Ordinary PR checks validate registry/lifecycle contracts, not necessarily source-backed scientific execution. At PR #231 head `4a6ddd786ebb37551253349ef483ca968a8f00ac`, the contract job passed but four source-backed/heavy jobs were skipped. Product-level scientific validation remains release-blocking when required evidence is absent. CPVS exact reconstruction is a separate unresolved external-reference claim and remains fail-closed. See [current execution ledger](../PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-10-27.md).
+
+
 Scientific validation is a permanent Product-Level Gate for the final Astronomical Data Analysis & Discovery Platform. Historical external-benchmark reconstruction is a separate evidence scope and must not be conflated with the product execution path.
 
 ## Stage V0 — Registry foundation
