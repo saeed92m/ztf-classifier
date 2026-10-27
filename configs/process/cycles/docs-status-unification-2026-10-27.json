@@ -132,7 +132,7 @@
       "url": "https://github.com/saeed92m/ztf-classifier/pull/234",
       "branch": "fix/cpvs-nonfinite-snr-guard-20261027",
       "status": "DRAFT_OPEN_CI_IN_PROGRESS_AT_CHECKPOINT",
-      "change": "Require math.isfinite(snr) before per-band sigma comparison",
+      "change": "Explicit math.isfinite(snr) guard before sigma threshold",
       "tests_added": [
         "NaN",
         "positive infinity",
