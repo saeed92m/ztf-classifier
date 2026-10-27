@@ -67,7 +67,7 @@ def main():
     p.add_argument("--r-sigma", type=float, default=3.0)
     a = p.parse_args()
     parent = _source_ids(a.parent, a.parent_member)
-    candidate, published = read_selected(a.candidate), read_vizier(a.published)
+    candidate = {str(value) for value in read_selected(a.candidate)}\n    published = {str(value) for value in read_vizier(a.published)}
     g = trace(a.g_lightcurve, parent, a.g_sigma, "g", a.g_member)
     r = trace(a.r_lightcurve, parent, a.r_sigma, "r", a.r_member)
     cand_only = candidate - published
