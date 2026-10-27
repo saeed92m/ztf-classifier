@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "docs-status-unification-2026-10-27",
+  "objective": "Synchronize project status documentation with verified repository workflow evidence while preserving the frozen scientific baseline and explicitly recording unresolved validation blockers.",
+  "previous_knowledge_consumed": [
+    "PR #231: ALeRCE empty-response fallback fix and its validation guardrails",
+    "PR #232: README, handbook, roadmap, and dated execution ledger updates",
+    "configs/process/cycles/cpvs-discrepancy-report-20261024.json",
+    "Local WSL diagnostic test output supplied on 2026-10-27"
+  ],
+  "baseline": {
+    "status": "VERIFIED",
+    "description": "The repository has a frozen v0.2.0 scientific baseline and cumulative lifecycle validation. Documentation synchronization changes are present in PR #232, but direct artifact-manifest output remains pending and CPVS object-membership reconciliation remains unresolved."
+  },
+  "expected_improvement": [
+    "Keep README, handbook, roadmap, and execution ledger consistent with the latest verified engineering and scientific-validation evidence.",
+    "Distinguish successful contract and engineering checks from source-backed scientific validation.",
+    "Preserve the CPVS discrepancy as an explicit scientific blocker until object-level provenance and reproducible comparison establish a root cause."
+  ],
+  "measurement": {
+    "metrics": {
+      "lifecycle_contract_coverage": {
+        "before": "distributed status statements",
+        "after": "dated execution ledger linked from core project documentation"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "This documentation-only cycle does not provide new source-backed scientific validation or resolve the CPVS discrepancy."
+      }
+    },
+    "trade_off": "Documentation consistency improves, but the strict cumulative lifecycle gate requires this record and scientific acceptance remains unchanged."
+  },
+  "validation": {
+    "status": "BLOCKED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "GitHub workflow run 40513688069: Format Check and Lint passed; Cumulative Lifecycle Gate failed because the PR had no cycle record.",
+      "GitHub workflow run 40513687718: CodeQL passed.",
+      "GitHub workflow run 40513687951: Product Scope Audit passed.",
+      "GitHub workflow run 40513687664: Scientific Validation workflow concluded successfully, but source-backed scientific jobs remain conditionally skipped on this feature branch.",
+      "User-provided local diagnostic test output: 8 passed, 1 skipped, 7 deselected; direct artifact manifest output is still pending."
+    ],
+    "blocker": "The new lifecycle record must be validated by CI. Direct artifact-manifest verification, the explicit fallback_on_empty acquisition experiment, and source-backed CPVS reconciliation remain outstanding."
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "findings": [
+      "The immediate CI failure is a process-contract failure: the meaningful documentation PR lacks a machine-readable cycle record under configs/process/cycles/.",
+      "This failure does not demonstrate a code or scientific regression and must not be bypassed by weakening the gate.",
+      "A successful lifecycle record check will not establish scientific validity or resolve CPVS membership differences."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Documentation-only changes are still required to carry explicit cumulative lifecycle evidence under the current CI contract.",
+      "Cycle records must report NOT_MEASURED or BLOCKED where evidence is absent instead of asserting unverified acceptance.",
+      "Passing CodeQL, Product Scope Audit, or contract-level scientific workflows is not equivalent to source-backed scientific validation."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Await CI validation of this cycle record and the updated PR head.",
+      "Directly verify the lab artifact manifest and file inventory from the user's WSL checkout.",
+      "Run and record the explicit ALeRCE fallback_on_empty acquisition experiment with per-class counts, selected IDs, provenance, and hashes.",
+      "Resolve the CPVS candidate/reference membership discrepancy through reproducible object-level comparison."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Keep the v0.2.0 baseline immutable.",
+    "Do not claim scientific validation while source-backed jobs are skipped or CPVS membership remains unresolved.",
+    "Reconcile submitted project-presentation and proposal claims only after artifact and acquisition evidence is verified."
+  ]
+}
