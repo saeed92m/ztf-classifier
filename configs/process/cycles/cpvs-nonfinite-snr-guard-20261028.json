@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-nonfinite-snr-guard-20261028",
+  "objective": "Reject non-finite signal-to-noise ratios during CPVS diagnostic derivation and prevent invalid magnitude-error rows from entering candidate membership.",
+  "previous_knowledge_consumed": [
+    "main@b56c90bafe9e6e0c5630dd4b96c9843dbd26301c uses a negative-only threshold predicate in _qualified_ids; because NaN < sigma is false, non-finite SNR can pass the guard.",
+    "PR #237 adds an explicit math.isfinite(snr) guard and a synthetic regression test.",
+    "The CPVS exact-membership discrepancy remains independently unresolved; this guard does not establish the publisher's full selection semantics."
+  ],
+  "baseline": {
+    "revision": "main@b56c90bafe9e6e0c5630dd4b96c9843dbd26301c",
+    "status": "The current predicate can admit rows whose magnitude error is missing, malformed, zero, negative, or otherwise produces a non-finite SNR. The proposed fix is limited to rejecting invalid SNR values."
+  },
+  "expected_improvement": [
+    "Reject non-finite SNR values before comparing with the per-band threshold.",
+    "Retain valid finite SNR rows that meet the configured threshold.",
+    "Add regression coverage for NaN and other invalid magnitude-error inputs without changing thresholds or scientific acceptance criteria."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "A NaN SNR could pass the threshold-only predicate because NaN < sigma evaluates false.",
+        "after": "The proposed guard explicitly rejects non-finite SNR values; real source-backed impact on candidate IDs has not been measured.",
+        "status": "NOT_MEASURED"
+      },
+      "regression_protection_count": {
+        "before": 0,
+        "after": 1,
+        "status": "NOT_VERIFIED"
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "PR #237 adds an explicit finite-SNR guard and a focused synthetic regression test.",
+      "CI run 40592880873 failed at the cumulative lifecycle gate because this change lacked its required cycle record; the test suite was skipped, so test behavior is not yet verified."
+    ],
+    "blocker": "Run fresh CI after adding this cycle record; inspect the full test suite and package verification. Separately measure non-finite-SNR contribution against hash-pinned source artifacts before claiming any change to CPVS counts."
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The negative-only comparison does not reject NaN values.",
+      "The first CI attempt was blocked by the repository's required cumulative lifecycle record being absent."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Scientific threshold predicates must validate finiteness explicitly before applying numeric comparisons.",
+      "A successful syntax/lint check does not establish regression coverage when the test suite is skipped.",
+      "This guard does not resolve the separate 11,602-object CPVS membership discrepancy."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Fresh CI must complete the test suite and package/runtime checks.",
+      "Source-backed attribution must identify whether any candidate-only IDs depended on non-finite SNR rows."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not merge this change until fresh required CI checks pass.",
+    "Do not claim CPVS exact reconstruction from a matching count alone.",
+    "Keep the immutable v0.2.0 scientific baseline and v1.0.1 release artifacts unchanged."
+  ]
+}
