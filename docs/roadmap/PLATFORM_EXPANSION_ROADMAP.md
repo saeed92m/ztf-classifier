@@ -1,5 +1,14 @@
 # Astronomical Data Analysis & Discovery Platform — Product Roadmap
 
+## Current implementation status — 2026-10-27
+
+- ALeRCE empty-response fix: PR #231 is open/draft/unmerged; ordinary CI passed, but source-backed scientific jobs were skipped.
+- Explicit `fallback_on_empty` acquisition still requires an output dataset, effective configuration, per-class counts, selected IDs, manifest, and hashes.
+- CPVS exact reconstruction remains **OPEN / UNRESOLVED**; no threshold tuning to force membership counts is allowed.
+- Frozen baseline `v0.2.0` and release `v1.0.1` remain unchanged.
+- See [current execution ledger](../PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-10-27.md) for exact workflow IDs, evidence boundaries, and acceptance steps.
+
+
 Status date: 2026-10-11  
 Current immutable software release: v1.0.1  
 Product implementation tracker: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158)  
