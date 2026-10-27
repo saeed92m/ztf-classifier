@@ -17,7 +17,7 @@
 ## Laboratory version
 
 - A local lab artifact was reported at `runs/lab-smoke-20261027T104951Z/artifact`.
-- Its manifest declares artifact schema `1.1`, model version `baseline_v0.2`, model family XGBoost, the frozen feature-set/dataset hashes, and source revision `b56c90bafe9e6e0c5630dd4b96c9843dbd26301c`.
+- Its manifest declares artifact schema `1.1`, model version `baseline_v0.2`, model family XGBoost, the frozen feature-set/dataset hashes, and source revision `a5fca3ac2f7b69b5469bd03c17bdc87ebecd9e69` (the lab artifact's recorded build commit; distinct from the current GitHub `main` base).
 - The artifact is local diagnostic output, not a published release asset. The user's local uncommitted working-tree state is not observable from GitHub and remains subject to terminal verification.
 - Local test output reported in the conversation: `tests/test_model_production_inference.py` — 9 passed, 7 skipped; two focused ALeRCE/backend modules — 7 passed. Exact skip reasons and the latest local diff are pending the user's terminal output. These are not new GitHub workflow results.
 
