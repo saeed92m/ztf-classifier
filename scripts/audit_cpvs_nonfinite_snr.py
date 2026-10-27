@@ -38,9 +38,11 @@ def trace(path, parent_ids, sigma, band, member):
             invalid_mag.add(oid)
         if not math.isfinite(snr):
             nonfinite_rows += 1
-            # Historical negative-only predicate admits NaN because NaN < sigma is false.
-            legacy.add(oid)
-            nonfinite.add(oid)
+            # Match the historical predicate exactly: not (snr < sigma).
+            # This admits NaN and +inf, but rejects -inf.
+            if not (snr < sigma):
+                legacy.add(oid)
+                nonfinite.add(oid)
         elif snr >= sigma:
             qualifying_rows += 1
             legacy.add(oid)
