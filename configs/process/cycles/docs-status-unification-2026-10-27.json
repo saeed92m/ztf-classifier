@@ -112,7 +112,6 @@
         }
       ],
       "next_evidence": [
-        "pin exact checked-out merge SHA from workflow metadata",
         "emit compact per-ID candidate-only provenance",
         "quantify non-finite SNR contribution by band",
         "reproduce using pinned source and inputs",
@@ -121,7 +120,12 @@
         "regression tests"
       ],
       "selection_policy_changed": false,
-      "scientific_gate": "BLOCKED"
+      "scientific_gate": "BLOCKED",
+      "checked_out_merge_sha": "3c91da40a224a400b9ed44e27e26c0d9d87d61df",
+      "merge_parents": [
+        "4674d3ad69ff7148a246ccf34f5aa216c3e791fd",
+        "8c2ba057a572b1cd460c47d1e02940e1ba44e366"
+      ]
     }
   }
 }
