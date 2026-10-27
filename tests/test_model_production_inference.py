@@ -207,11 +207,7 @@ def test_service_does_not_include_diagnostic_outputs() -> None:
     assert result.ood is None
 
 
-@pytest.mark.skipif(
-    not _LEGACY_TEST_INPUTS_AVAILABLE,
-    reason="legacy v1.0 artifact or shared model inputs are unavailable",
-)
-def test_service_rejects_missing_artifact() -> None:
+def test_service_rejects_missing_artifact() -> None
     missing = Path("runs/model_baseline_v0.2_production/missing-artifact")
 
     try:
