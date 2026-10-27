@@ -84,3 +84,8 @@ Inspection of PR #228 head branch `ci/heavy/cpvs-seq-authoritative-ids-20261026`
 The same run reports 741,788 derived candidates (expected 730,184) and an independent final audit of 11,604 candidate-only / 0 published-only. The derivation count gate failed, despite successful workflow artifact upload. Intermediate comparator diagnostics show other count pairs (11,602/0, 11,600/0, and 1,120/18,865); treat these as distinct comparisons, not interchangeable final membership results.
 
 Next evidence required: compact per-ID candidate-only provenance; counts and IDs admitted by non-finite SNR by band; pinned-input reproduction; object-level full-vs-batch comparison; deterministic 50/100/1,000/10,000 samples; regression tests. No threshold, released baseline, or acceptance criterion was changed. Issue #180 and the Notion handbook page were updated with this finding.
+
+
+## Non-finite SNR regression follow-up — 2026-10-27
+
+Draft stacked [PR #234](https://github.com/saeed92m/ztf-classifier/pull/234) proposes an explicit `math.isfinite(snr)` guard and regression coverage for NaN, infinity, zero/negative errors, malformed text, and a valid row. At the latest checkpoint, CI, CodeQL, and Product Scope Audit were in progress; source-backed jobs in Scientific Validation were skipped in the ordinary PR context. No tests are claimed as passing. The guard addresses a confirmed code defect but does not establish the cause of the 11,604 candidate-only IDs. Scientific validation remains BLOCKED pending pinned-input reproduction, per-ID attribution, and object-level comparisons/samples. No thresholds, model baseline, or acceptance criteria changed.
