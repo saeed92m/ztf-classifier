@@ -189,10 +189,10 @@ def read_parent_metadata(
         # Preserve support for already-normalized CSV/TSV metadata inputs.
         try:
             headers, rows = read_table(source)
-            normalized = {header.lower() for header in headers}
-            if {"gmag", "rmag", "per-g", "per-r"}.issubset(normalized):
-                id_column(headers)
-                return headers, rows
+            # Let the report builder issue the precise missing-feature error
+            # after parsing a table that has a recognized object-ID column.
+            id_column(headers)
+            return headers, rows
         except (UnicodeDecodeError, csv.Error):
             pass
         raise ValueError(
