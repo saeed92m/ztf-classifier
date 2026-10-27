@@ -48,7 +48,8 @@ def trace(path, parent_ids, sigma, band, member):
             legacy.add(oid)
             finite.add(oid)
     return {
-        "legacy_ids": legacy, "finite_ids": finite, "nonfinite_ids": nonfinite,\n        "nonfinite_only_ids": nonfinite - finite,
+        "legacy_ids": legacy, "finite_ids": finite, "nonfinite_ids": nonfinite,
+        "nonfinite_only_ids": nonfinite - finite,
         "invalid_magnitude_ids": invalid_mag, "nonfinite_snr_rows": nonfinite_rows,
         "finite_qualifying_rows": qualifying_rows, "sigma": sigma, "input": str(path),
     }
