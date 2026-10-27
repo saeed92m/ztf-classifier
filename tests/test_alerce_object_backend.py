@@ -63,6 +63,26 @@ def test_alerce_object_backend_normalizes_label_provenance() -> None:
     assert frame["survey"].tolist() == ["ZTF", "ZTF"]
 
 
+
+def test_alerce_object_backend_accepts_empty_response_without_columns() -> None:
+    client = FakeAlerceClient(pd.DataFrame())
+
+    request = ObjectSelectionRequest(
+        survey="ZTF",
+        classifier="lc_classifier",
+        class_name="SNIa",
+        probability=0.90,
+        page_size=10,
+        classifier_version="hierarchical_random_forest_1.0.0",
+    )
+
+    result = AlerceObjectBackend(client).acquire(request)
+    frame = result.objects[0]
+
+    assert frame.empty
+    assert {"oid", "probability"}.issubset(frame.columns)
+
+
 def test_alerce_object_backend_rejects_missing_api_columns() -> None:
     client = FakeAlerceClient(
         pd.DataFrame(
