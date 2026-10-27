@@ -1,5 +1,12 @@
 # Astronomical Data Analysis & Discovery Platform — Product Roadmap
 
+## Latest CPVS source-backed checkpoint — 2026-10-27
+
+The latest inspected heavy source-backed run is [40397098709](https://github.com/saeed92m/ztf-classifier/actions/runs/40397098709), commit `4674d3ad69ff7148a246ccf34f5aa216c3e791fd`. The parent catalog contains 781,602 SourceIDs (SHA-256 `0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138`). The derivation logged 741,788 candidates against the expected 730,184 and failed the expected-count check; the independent membership audit recorded 11,604 candidate-only and 0 published-only IDs. The 3.77 GB heavy artifact SHA-256 is `212f4192de530212bafe597d589c67c0778363e0dadc1f64c1b44e8f170eb426`.
+
+**Scientific status remains UNRESOLVED and release-blocking.** This latest 741,788 / 11,604 result supersedes older counts only for this run; it does not explain their difference. PR #182 sampling code currently emits only 100- and 1,000-object samples; the agreed 50-object quick sample, separate 100-object targeted edge-case sample, and 10,000-object parent-population sample have not yet been implemented or run against this pinned evidence. Keep the probability sample separate from targeted edge-case diagnostics. Do not alter selection rules, thresholds, acceptance criteria, or frozen v0.2.0 / v1.0.1 artifacts to force equality. See [Issue #180](https://github.com/saeed92m/ztf-classifier/issues/180) for the verified checkpoint and next actions.
+
+
 ## Current implementation status — 2026-10-27
 
 - ALeRCE empty-response fix: PR #231 is open/draft/unmerged; ordinary CI passed, but source-backed scientific jobs were skipped.
