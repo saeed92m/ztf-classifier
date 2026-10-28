@@ -23,7 +23,7 @@ The existing validate_v0_2_feature_vector checks feature names/order but does no
 ## Implemented diagnostic helper
 
 diagnose_v0_2_feature_eligibility provides a JSON-safe, non-mutating report with:
-- raw and valid observation counts per band;
+- raw and valid observation counts per band, with optional support for the same historical `cutoff_mjd` used by the canonical feature pipeline;
 - rejected-row counts under the existing canonical validity function;
 - basic-feature (>=10), periodicity-feature (>=30), and sample-standard-deviation (>=2) eligibility;
 - cross-band color and per-band variability-ratio eligibility;
