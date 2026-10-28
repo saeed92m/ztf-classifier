@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-report-reuse-execution-20261028",
+  "objective": "Execute the already-reviewed source-backed CPVS discrepancy report and candidate-set diff against the pinned heavy-run artifacts, then inspect exact object-level changes without altering scientific selection criteria.",
+  "previous_knowledge_consumed": [
+    "PR #230 adds a push-triggered report-reuse workflow for ci/report-reuse/* and pins source run 40397098709 plus prior run 38635891449.",
+    "Source run 40397098709 reports 741788 candidates, 730184 published members, 11604 candidate-only, and zero published-only IDs; exact CPVS reproduction remains unresolved.",
+    "Prior run 38635891449 reports 741786 candidates and 11602 candidate-only IDs on the same Table 2 and raw g/r archive bytes.",
+    "The proposed non-finite-SNR guard is a code-backed regression hypothesis; exact added/removed IDs and raw-row attribution remain unverified."
+  ],
+  "baseline": {
+    "revision": "ci/report-reuse/cpvs-id-diff-20261028",
+    "status": "Rebuild the report from pinned artifacts, verify every source/evidence/output hash, and preserve the unresolved historical publisher selection rule."
+  },
+  "expected_improvement": [
+    "Generate an auditable CPVS discrepancy report from the source run's authoritative Table 2 Seq IDs, candidate list, published Table 4 membership, and evidence sidecars.",
+    "Compute exact added and removed candidate IDs between source runs 38635891449 and 40397098709.",
+    "Retain per-ID parent provenance, hashes, count invariants, and explicit unresolved semantics without changing production selection rules."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_EXECUTION",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Workflow and source-run IDs are pinned in configs/process/cycles/cpvs-report-source-archive-20261027.json.",
+      "Source run 40397098709 used parent Table 2 SHA-256 0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138 and raw g/r archive MD5s 850fcef561dd7407fbe8e19e99100d7a / daa7bc45c67579253eebe6b1c09dfbd9.",
+      "This branch push is intended to execute the bounded report-reuse workflow, not rerun the full 180-minute data acquisition job."
+    ],
+    "blocker": "Wait for the report-reuse workflow; independently inspect its artifact and exact changed IDs. Do not infer the publisher's selection rule from counts alone."
+  },
+  "failure_analysis": {
+    "status": "PENDING_EXECUTION",
+    "root_causes": [
+      "The exact two-ID cross-run difference and its raw-row cause have not yet been verified from the two pinned artifacts.",
+      "The historical CPVS selection semantics for the 11604 candidate-only objects remain unresolved."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "UNRESOLVED",
+    "findings": [
+      "A source-backed report is not complete until generated outputs and provenance hashes are verified.",
+      "The candidate-set diff must identify exact IDs and must not silently normalize a membership mismatch away."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Report-reuse workflow and source/output hash verification have not yet completed.",
+      "Exact two-ID attribution to non-finite SNR or another code-path change remains unverified.",
+      "The separate 11604-object CPVS membership discrepancy and historical publisher rule remain unresolved."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not merge a scientific selection change solely because a synthetic regression test passes.",
+    "Do not change thresholds or acceptance criteria to force a 730184 count.",
+    "Keep CPVS exact reproduction fail-closed until exact membership and the publisher's selection semantics are independently justified."
+  ],
+  "source_run_id": 40397098709,
+  "source_run_commit": "4674d3ad69ff7148a246ccf34f5aa216c3e791fd",
+  "source_artifact_name": "scientific-validation-heavy",
+  "previous_source_run_id": 38635891449,
+  "previous_source_artifact_id": 11935357767
+}
