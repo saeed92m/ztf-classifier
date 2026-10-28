@@ -252,6 +252,162 @@ jobs:
             --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
             --output reports/scientific_validation/ztf_periodic_730k/membership_audit.json
 
+      - name: Build source-backed CPVS candidate-only report
+        id: build_cpvs_report
+        if: always()
+        run: |
+          set -euo pipefail
+          root="reports/scientific_validation/ztf_periodic_730k"
+          candidate="$root/selected.tsv"
+          parent="reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip"
+          published="$root/published_table4.dat"
+          if [[ ! -s "$candidate" ]]; then
+            echo "No candidate list was produced; source-backed report skipped."
+            echo "report_generated=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          test -s "$parent" && test -s "$published"
+          args=(
+            --parent-metadata "$parent"
+            --candidate-ids "$candidate"
+            --published-ids "$published"
+            --output-dir "$root/cpvs_discrepancy_report"
+            --source-revision "${GITHUB_SHA}"
+            --report-code-revision "${GITHUB_SHA}"
+            --parent-evidence "$parent.evidence.json"
+            --expected-parent-count 781602
+          )
+          if [[ -s "$candidate.evidence.json" ]]; then
+            args+=(--candidate-evidence "$candidate.evidence.json")
+          elif [[ -s "$candidate.diagnostic.json" ]]; then
+            args+=(--candidate-diagnostic "$candidate.diagnostic.json")
+          else
+            echo "Candidate list has neither evidence nor diagnostic sidecar." >&2
+            exit 1
+          fi
+          python scripts/build_cpvs_discrepancy_report.py "${args[@]}"
+          echo "report_generated=true" >> "$GITHUB_OUTPUT"
+
+      - name: Validate source-backed CPVS discrepancy report
+        id: validate_cpvs_report
+        if: always() && steps.build_cpvs_report.outputs.report_generated == 'true'
+        env:
+          SOURCE_REVISION: ${{ github.sha }}
+          REPORT_CODE_REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path("reports/scientific_validation/ztf_periodic_730k/cpvs_discrepancy_report")
+          manifest_path = root / "cpvs_discrepancy_manifest.json"
+          if not manifest_path.is_file():
+              raise SystemExit("Missing source-backed CPVS discrepancy manifest")
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          counts = manifest["counts"]
+          if manifest.get("report_code_revision") in (None, "", "UNRECORDED"):
+              raise SystemExit("Report-builder code revision is missing")
+          if manifest.get("source_revision") != os.environ["SOURCE_REVISION"]:
+              raise SystemExit("Source revision does not match the producing workflow commit")
+          if manifest.get("report_code_revision") != os.environ["REPORT_CODE_REVISION"]:
+              raise SystemExit("Report-builder revision does not match the workflow commit")
+          previous_recorded_baseline = {
+              "parent_metadata_objects": 781602,
+              "candidate_objects": 741786,
+              "published_reference_objects": 730184,
+              "intersection_objects": 730184,
+              "candidate_only_objects": 11602,
+              "published_only_objects": 0,
+          }
+          previous_run_comparison = {
+              key: {
+                  "expected": expected,
+                  "observed": counts.get(key),
+                  "matches": counts.get(key) == expected,
+              }
+              for key, expected in previous_recorded_baseline.items()
+          }
+          if counts.get("parent_metadata_objects") != 781602:
+              raise SystemExit("Authoritative CPVS Table 2 parent row count changed")
+          if counts.get("intersection_objects", -1) > min(
+              counts.get("candidate_objects", 0),
+              counts.get("published_reference_objects", 0),
+          ):
+              raise SystemExit("Impossible CPVS membership intersection count")
+          if counts.get("candidate_only_objects") != (
+              counts.get("candidate_objects") - counts.get("intersection_objects")
+          ):
+              raise SystemExit("Candidate-only count is inconsistent with set counts")
+          if counts.get("published_only_objects") != (
+              counts.get("published_reference_objects") - counts.get("intersection_objects")
+          ):
+              raise SystemExit("Published-only count is inconsistent with set counts")
+          if counts.get("candidate_only_missing_parent_provenance") != 0:
+              raise SystemExit("Some candidate-only IDs lack parent provenance")
+          csv_path = root / "cpvs_candidate_only_objects.csv"
+          with csv_path.open(encoding="utf-8", newline="") as stream:
+              rows = list(csv.DictReader(stream))
+          ids = [row.get("SourceID", "") for row in rows]
+          if len(ids) != counts.get("candidate_only_objects") or len(set(ids)) != len(ids):
+              raise SystemExit("Report CSV row count/uniqueness disagrees with the computed candidate-only set")
+          for name, record in manifest["source_files"].items():
+              source = Path(record["path"])
+              if not source.is_file():
+                  raise SystemExit(f"Missing report source file: {name} -> {source}")
+              digest = hashlib.sha256(source.read_bytes()).hexdigest()
+              if digest != record["sha256"]:
+                  raise SystemExit(f"Source hash mismatch for {name}")
+          sidecars = set(manifest["source_evidence_files"])
+          if "parent_evidence" not in sidecars or not (
+              "candidate_evidence" in sidecars or "candidate_diagnostic" in sidecars
+          ):
+              raise SystemExit("Parent evidence and candidate evidence/diagnostic sidecar must be recorded")
+          for name, record in manifest["source_evidence_files"].items():
+              source = Path(record["path"])
+              if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != record["sha256"]:
+                  raise SystemExit(f"Evidence sidecar hash verification failed: {name}")
+          for name, record in manifest["outputs"].items():
+              output = root / record["path"]
+              if not output.is_file():
+                  raise SystemExit(f"Missing report output: {name} -> {output}")
+              digest = hashlib.sha256(output.read_bytes()).hexdigest()
+              if digest != record["sha256"]:
+                  raise SystemExit(f"Output hash mismatch for {name}")
+          validation_summary = {
+              "status": "REPORT_VERIFIED",
+              "counts": counts,
+              "matches_previous_recorded_baseline": all(
+                  item["matches"] for item in previous_run_comparison.values()
+              ),
+              "previous_run_comparison": previous_run_comparison,
+              "candidate_only_rows": len(ids),
+              "unique_candidate_only_ids": len(set(ids)),
+              "source_hashes_verified": len(manifest["source_files"]),
+              "source_evidence_hashes_verified": len(manifest["source_evidence_files"]),
+              "output_hashes_verified": len(manifest["outputs"]),
+              "historical_selection_rule": "UNRESOLVED",
+              "discovery_claim": "NONE",
+          }
+          (root / "report_validation_summary.json").write_text(
+              json.dumps(validation_summary, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(validation_summary, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload compact verified CPVS discrepancy report
+        if: always() && steps.build_cpvs_report.outputs.report_generated == 'true' && steps.validate_cpvs_report.outcome == 'success'
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-source-backed-discrepancy-report
+          path: reports/scientific_validation/ztf_periodic_730k/cpvs_discrepancy_report/**
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Classify CPVS reconstruction result
         if: always()
         env:
@@ -365,6 +521,21 @@ jobs:
               encoding="utf-8",
           )
           PY
+      - name: Upload bounded CPVS report source inputs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-report-source-inputs
+          path: |
+            reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip
+            reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip.evidence.json
+            reports/scientific_validation/ztf_periodic_730k/selected.tsv
+            reports/scientific_validation/ztf_periodic_730k/selected.tsv.evidence.json
+            reports/scientific_validation/ztf_periodic_730k/selected.tsv.diagnostic.json
+            reports/scientific_validation/ztf_periodic_730k/published_table4.dat
+          if-no-files-found: warn
+          retention-days: 90
+
       - name: Upload heavy scientific evidence
         if: always()
         uses: actions/upload-artifact@v6

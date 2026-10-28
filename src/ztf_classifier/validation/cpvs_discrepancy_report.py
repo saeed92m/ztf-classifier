@@ -15,6 +15,10 @@ REQUIRED_FEATURES = ("gmag", "rmag", "Per-g", "Per-r")
 ID_ALIASES = ("sourceid", "source_id", "seq", "id")
 
 
+def _reject_nonfinite_json_constant(value: str) -> None:
+    raise ValueError(f"non-standard JSON constant is not allowed: {value}")
+
+
 def sha256_file(path: str | Path) -> str:
     digest = hashlib.sha256()
     with Path(path).open("rb") as stream:
@@ -169,6 +173,91 @@ def number_status(raw: str | None) -> str:
     return "positive" if value > 0 else "nonpositive"
 
 
+def read_parent_metadata(
+    path: str | Path, *, expected_parent_count: int = 781_602
+) -> tuple[list[str], list[dict[str, str]]]:
+    """Read normalized parent tables or the authoritative fixed-width CPVS Table 2 ZIP.
+
+    The official Table 2 layout places the ZTF name in bytes 1–22, Seq in
+    bytes 24–29, gmag in 90–95, rmag in 97–102, Per-g in 104–116, and Per-r
+    in 118–130. Seq is the source identifier; the row ordinal is never used.
+    """
+    import zipfile
+
+    source = Path(path)
+    if not zipfile.is_zipfile(source):
+        # Preserve support for already-normalized CSV/TSV metadata inputs.
+        try:
+            headers, rows = read_table(source)
+            # Let the report builder issue the precise missing-feature error
+            # after parsing a table that has a recognized object-ID column.
+            id_column(headers)
+            return headers, rows
+        except (UnicodeDecodeError, csv.Error):
+            pass
+        raise ValueError(
+            "parent metadata must be a normalized CSV/TSV table or the official "
+            "fixed-width CPVS Table 2 ZIP archive"
+        )
+
+    headers = ["ID", "Seq", "gmag", "rmag", "Per-g", "Per-r"]
+    with zipfile.ZipFile(source) as archive:
+        members = [name for name in archive.namelist() if not name.endswith("/")]
+        members.sort(
+            key=lambda name: (
+                0 if "table2" in Path(name).name.lower() else 1,
+                name.lower(),
+            )
+        )
+        for member in members:
+            rows: list[dict[str, str]] = []
+            try:
+                with archive.open(member) as stream:
+                    for line_number, raw in enumerate(stream, start=1):
+                        line = raw.decode("utf-8", errors="strict").rstrip("\r\n")
+                        if not line[:22].strip().upper().startswith("ZTF"):
+                            continue
+                        if len(line) < 130:
+                            raise ValueError(
+                                f"{source}:{member}:{line_number}: truncated Table 2 row "
+                                f"({len(line)} characters; expected at least 130)"
+                            )
+                        seq = line[23:29].strip()
+                        if not seq.isascii() or not seq.isdecimal():
+                            raise ValueError(
+                                f"{source}:{member}:{line_number}: invalid authoritative Seq {seq!r}"
+                            )
+                        seq_value = int(seq)
+                        if not 1 <= seq_value <= 781_604:
+                            raise ValueError(
+                                f"{source}:{member}:{line_number}: authoritative Seq "
+                                f"{seq_value} is outside the documented range 1..781604"
+                            )
+                        rows.append(
+                            {
+                                "ID": line[:22].strip(),
+                                "Seq": str(seq_value),
+                                "gmag": line[89:95].strip(),
+                                "rmag": line[96:102].strip(),
+                                "Per-g": line[103:116].strip(),
+                                "Per-r": line[117:130].strip(),
+                            }
+                        )
+            except UnicodeDecodeError:
+                continue
+            if rows:
+                ids = [row["Seq"] for row in rows]
+                if len(ids) != len(set(ids)):
+                    raise ValueError(f"{source}:{member}: duplicate authoritative Seq values")
+                if len(rows) != expected_parent_count:
+                    raise ValueError(
+                        f"{source}:{member}: expected {expected_parent_count} Table 2 rows, "
+                        f"found {len(rows)}"
+                    )
+                return headers, rows
+    raise ValueError(f"{source}: no fixed-width CPVS Table 2 rows with ZTF IDs were found")
+
+
 def build_cpvs_discrepancy_report(
     *,
     parent_metadata: str | Path,
@@ -176,6 +265,11 @@ def build_cpvs_discrepancy_report(
     published_ids: str | Path,
     output_dir: str | Path,
     source_revision: str,
+    report_code_revision: str = "UNRECORDED",
+    parent_evidence: str | Path | None = None,
+    candidate_evidence: str | Path | None = None,
+    candidate_diagnostic: str | Path | None = None,
+    expected_parent_count: int = 781_602,
 ) -> dict[str, Any]:
     """Write CSV, strict JSON manifest, searchable HTML and Markdown summary."""
     if (
@@ -188,7 +282,9 @@ def build_cpvs_discrepancy_report(
     parent_path, candidate_path, published_path = map(
         Path, (parent_metadata, candidate_ids, published_ids)
     )
-    headers, parent_rows = read_table(parent_path)
+    headers, parent_rows = read_parent_metadata(
+        parent_path, expected_parent_count=expected_parent_count
+    )
     id_key = id_column(headers)
     normalized = {header.lower(): header for header in headers}
     absent = [
@@ -214,7 +310,55 @@ def build_cpvs_discrepancy_report(
             )
         parent[object_id] = row
 
+    if candidate_evidence is not None and candidate_diagnostic is not None:
+        raise ValueError("provide candidate evidence or candidate diagnostic, not both")
+    evidence_files: dict[str, dict[str, Any]] = {}
+    evidence_metadata: dict[str, dict[str, Any]] = {}
+    for name, evidence_path in (
+        ("parent_evidence", parent_evidence),
+        ("candidate_evidence", candidate_evidence),
+        ("candidate_diagnostic", candidate_diagnostic),
+    ):
+        if evidence_path is None:
+            continue
+        evidence_file = Path(evidence_path)
+        if not evidence_file.is_file():
+            raise ValueError(
+                f"missing source evidence sidecar for {name}: {evidence_file}"
+            )
+        try:
+            parsed_evidence = json.loads(
+                evidence_file.read_text(encoding="utf-8"),
+                parse_constant=_reject_nonfinite_json_constant,
+            )
+        except (UnicodeDecodeError, ValueError) as exc:
+            raise ValueError(
+                f"invalid strict JSON in source sidecar {name}: {exc}"
+            ) from exc
+        if not isinstance(parsed_evidence, dict):
+            raise TypeError(f"source sidecar {name} must contain a JSON object")
+        evidence_files[name] = {
+            "path": str(evidence_file),
+            "sha256": sha256_file(evidence_file),
+            "bytes": evidence_file.stat().st_size,
+        }
+        evidence_metadata[name] = parsed_evidence
+
     candidates = read_ids(candidate_path)
+    if candidate_diagnostic is not None:
+        diagnostic = evidence_metadata["candidate_diagnostic"]
+        observed_count = diagnostic.get("observed_selected_rows")
+        candidate_digest = diagnostic.get("candidate_sha256")
+        if diagnostic.get("status") != "COUNT_MISMATCH":
+            raise ValueError("candidate diagnostic status is not COUNT_MISMATCH")
+        if observed_count != len(candidates):
+            raise ValueError(
+                "candidate diagnostic count does not match the candidate ID file"
+            )
+        if candidate_digest != sha256_file(candidate_path):
+            raise ValueError(
+                "candidate diagnostic SHA-256 does not match the candidate ID file"
+            )
     published = published_membership_ids(published_path, parent_rows, id_key)
     extras = sorted(candidates - published, key=int)
     if not extras:
@@ -301,6 +445,9 @@ def build_cpvs_discrepancy_report(
         "report_schema": "cpvs-discrepancy-report/1.0",
         "generated_at_utc": datetime.now(UTC).isoformat(),
         "source_revision": source_revision,
+        "report_code_revision": report_code_revision,
+        "source_evidence_files": evidence_files,
+        "source_evidence_metadata": evidence_metadata,
         "source_files": {
             name: {
                 "path": str(path),
@@ -312,6 +459,30 @@ def build_cpvs_discrepancy_report(
                 ("candidate_ids", candidate_path),
                 ("published_ids", published_path),
             )
+        },
+        "source_context": {
+            "parent_metadata": {
+                "catalogue": "ZTF Catalog of Periodic Variable Stars, Table 2",
+                "source_url": "https://zenodo.org/records/3886372",
+                "identifier_field": "Seq",
+            },
+            "candidate_ids": {
+                "method": "source-backed reconstruction output; see scientific-validation workflow diagnostics",
+                "source_revision": source_revision,
+                "evidence_kind": (
+                    "diagnostic"
+                    if candidate_diagnostic is not None
+                    else "successful_derivation"
+                    if candidate_evidence is not None
+                    else "not_provided"
+                ),
+                "photometry_source_url": "https://zenodo.org/records/3886372",
+            },
+            "published_ids": {
+                "catalogue": "Chan et al. (2022), J/ApJ/932/118, Table 4",
+                "source_url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000",
+                "membership_join": "normalized ZTF object name crosswalk to Table 2 Seq",
+            },
         },
         "counts": {
             "parent_metadata_objects": len(parent),

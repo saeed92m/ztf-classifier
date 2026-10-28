@@ -1,0 +1,341 @@
+name: CPVS Source-Backed Report Validation
+
+on:
+  push:
+    branches:
+      - "ci/report-reuse/**"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  build-and-verify-report:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/report-reuse/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: pip
+
+      - name: Install locked dependencies and package
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip==26.2 setuptools==84.1.0 wheel==0.48.0
+          python -m pip install -r requirements.lock
+          python -m pip install -e . --no-deps
+
+      - name: Resolve source workflow run ID
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_id="$(python -c 'import json; print(json.load(open("configs/process/cycles/cpvs-report-source-archive-20261027.json"))["source_run_id"])')"
+          source_revision="$(python -c 'import json; print(json.load(open("configs/process/cycles/cpvs-report-source-archive-20261027.json"))["source_run_commit"])')"
+          artifact_name="scientific-validation-heavy"
+          [[ "$run_id" =~ ^[0-9]+$ ]]
+          [[ "$source_revision" =~ ^[0-9a-f]{40}$ ]]
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "source_revision=$source_revision" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
+          echo "Using source-backed workflow run $run_id at $source_revision, artifact $artifact_name"
+
+      - name: Download source-backed scientific-validation artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ steps.source.outputs.artifact_name }}
+          run-id: ${{ steps.source.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: source-artifact
+
+      - name: Download previous candidate-set artifact for run-to-run diff
+        uses: actions/download-artifact@v8
+        with:
+          name: scientific-validation-heavy
+          run-id: 38635891449
+          github-token: ${{ github.token }}
+          path: previous-artifact
+
+      - name: Locate and verify required source inputs
+        id: inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          parent="$(find source-artifact -type f -path '*/ztf_periodic_781k/Table2.txt.zip' -print -quit)"
+          candidate="$(find source-artifact -type f -path '*/ztf_periodic_730k/selected.tsv' -print -quit)"
+          published="$(find source-artifact -type f -path '*/ztf_periodic_730k/published_table4.dat' -print -quit)"
+          previous_candidate="$(find previous-artifact -type f -path '*/ztf_periodic_730k/selected.tsv' -print -quit)"
+          previous_diagnostic="$(find previous-artifact -type f -path '*/ztf_periodic_730k/selected.tsv.diagnostic.json' -print -quit)"
+          test -n "$parent" && test -s "$parent"
+          test -n "$candidate" && test -s "$candidate"
+          test -n "$published" && test -s "$published"
+          test -n "$previous_candidate" && test -s "$previous_candidate"
+          test -n "$previous_diagnostic" && test -s "$previous_diagnostic"
+          test -s "$parent.evidence.json"
+          candidate_evidence="$candidate.evidence.json"
+          candidate_diagnostic="$candidate.diagnostic.json"
+          if [[ -s "$candidate_evidence" ]]; then
+            sidecar="$candidate_evidence"
+            sidecar_kind="evidence"
+          elif [[ -s "$candidate_diagnostic" ]]; then
+            sidecar="$candidate_diagnostic"
+            sidecar_kind="diagnostic"
+          else
+            echo "Candidate list has neither evidence nor diagnostic sidecar." >&2
+            exit 1
+          fi
+          printf 'parent=%s\n' "$parent" >> "$GITHUB_OUTPUT"
+          printf 'candidate=%s\n' "$candidate" >> "$GITHUB_OUTPUT"
+          printf 'published=%s\n' "$published" >> "$GITHUB_OUTPUT"
+          printf 'previous_candidate=%s\n' "$previous_candidate" >> "$GITHUB_OUTPUT"
+          printf 'previous_diagnostic=%s\n' "$previous_diagnostic" >> "$GITHUB_OUTPUT"
+          printf 'candidate_sidecar=%s\n' "$sidecar" >> "$GITHUB_OUTPUT"
+          printf 'candidate_sidecar_kind=%s\n' "$sidecar_kind" >> "$GITHUB_OUTPUT"
+          sha256sum "$parent" "$parent.evidence.json" "$candidate" "$sidecar" "$published" "$previous_candidate" "$previous_diagnostic"
+
+      - name: Generate source-backed CPVS discrepancy report
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(
+            --parent-metadata "${{ steps.inputs.outputs.parent }}"
+            --candidate-ids "${{ steps.inputs.outputs.candidate }}"
+            --published-ids "${{ steps.inputs.outputs.published }}"
+            --output-dir reports/cpvs_report_validation/cpvs_discrepancy_report
+            --source-revision "${{ steps.source.outputs.source_revision }}"
+            --report-code-revision "${{ github.sha }}"
+            --parent-evidence "${{ steps.inputs.outputs.parent }}.evidence.json"
+            --expected-parent-count 781602
+          )
+          if [[ "${{ steps.inputs.outputs.candidate_sidecar_kind }}" == "evidence" ]]; then
+            args+=(--candidate-evidence "${{ steps.inputs.outputs.candidate_sidecar }}")
+          else
+            args+=(--candidate-diagnostic "${{ steps.inputs.outputs.candidate_sidecar }}")
+          fi
+          PYTHONPATH=src python scripts/build_cpvs_discrepancy_report.py "${args[@]}"
+
+      - name: Compare current candidate IDs with previous source-backed run
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python scripts/compare_cpvs_candidate_sets.py \
+            --previous-candidate-ids "${{ steps.inputs.outputs.previous_candidate }}" \
+            --current-candidate-ids "${{ steps.inputs.outputs.candidate }}" \
+            --previous-source-run-id 38635891449 \
+            --current-source-run-id "${{ steps.source.outputs.run_id }}" \
+            --previous-diagnostic "${{ steps.inputs.outputs.previous_diagnostic }}" \
+            --parent-metadata "${{ steps.inputs.outputs.parent }}" \
+            --published-ids "${{ steps.inputs.outputs.published }}" \
+            --output-dir reports/cpvs_report_validation/cpvs_discrepancy_report
+
+      - name: Attribute changed IDs to raw SNR guard behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=reports/cpvs_report_validation/cpvs_discrepancy_report
+          python scripts/audit_cpvs_snr_guard_impact.py \
+            --g-dir source-artifact/ztf_periodic_730k/g \
+            --r-dir source-artifact/ztf_periodic_730k/r \
+            --changes "$root/cpvs_candidate_set_change.csv" \
+            --current-candidates "${{ steps.inputs.outputs.candidate }}" \
+            --previous-candidates "${{ steps.inputs.outputs.previous_candidate }}" \
+            --parent-table2 "${{ steps.inputs.outputs.parent }}" \
+            --output "$root/cpvs_snr_guard_attribution.json" \
+            --source-run-id "${{ steps.source.outputs.run_id }}" \
+            --previous-run-id 38635891449 \
+            --raw-g-md5 850fcef561dd7407fbe8e19e99100d7a \
+            --raw-r-md5 daa7bc45c67579253eebe6b1c09dfbd9
+
+      - name: Verify report counts and provenance hashes
+        env:
+          SOURCE_REVISION: ${{ steps.source.outputs.source_revision }}
+          REPORT_CODE_REVISION: ${{ github.sha }}
+          CURRENT_SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path("reports/cpvs_report_validation/cpvs_discrepancy_report")
+          manifest = json.loads((root / "cpvs_discrepancy_manifest.json").read_text(encoding="utf-8"))
+          if manifest.get("report_code_revision") in (None, "", "UNRECORDED"):
+              raise SystemExit("Report-builder code revision is missing")
+          if manifest.get("source_revision") != os.environ["SOURCE_REVISION"]:
+              raise SystemExit("Source revision does not match the producing workflow commit")
+          if manifest.get("report_code_revision") != os.environ["REPORT_CODE_REVISION"]:
+              raise SystemExit("Report-builder revision does not match the workflow commit")
+          counts = manifest["counts"]
+          previous_recorded_baseline = {
+              "parent_metadata_objects": 781602,
+              "candidate_objects": 741786,
+              "published_reference_objects": 730184,
+              "intersection_objects": 730184,
+              "candidate_only_objects": 11602,
+              "published_only_objects": 0,
+          }
+          previous_run_comparison = {
+              key: {
+                  "expected": expected,
+                  "observed": counts.get(key),
+                  "matches": counts.get(key) == expected,
+              }
+              for key, expected in previous_recorded_baseline.items()
+          }
+          if counts.get("parent_metadata_objects") != 781602:
+              raise SystemExit("Authoritative CPVS Table 2 parent row count changed")
+          if counts.get("intersection_objects", -1) > min(
+              counts.get("candidate_objects", 0),
+              counts.get("published_reference_objects", 0),
+          ):
+              raise SystemExit("Impossible CPVS membership intersection count")
+          if counts.get("candidate_only_objects") != (
+              counts.get("candidate_objects") - counts.get("intersection_objects")
+          ):
+              raise SystemExit("Candidate-only count is inconsistent with set counts")
+          if counts.get("published_only_objects") != (
+              counts.get("published_reference_objects") - counts.get("intersection_objects")
+          ):
+              raise SystemExit("Published-only count is inconsistent with set counts")
+          if counts.get("candidate_only_missing_parent_provenance") != 0:
+              raise SystemExit("Some candidate-only IDs lack parent provenance")
+          with (root / "cpvs_candidate_only_objects.csv").open(encoding="utf-8", newline="") as stream:
+              rows = list(csv.DictReader(stream))
+          ids = [row.get("SourceID", "") for row in rows]
+          if len(ids) != counts.get("candidate_only_objects") or len(set(ids)) != len(ids):
+              raise SystemExit("Report CSV row count/uniqueness disagrees with the computed candidate-only set")
+          for name, record in manifest["source_files"].items():
+              source = Path(record["path"])
+              if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != record["sha256"]:
+                  raise SystemExit(f"Source hash verification failed: {name}")
+          sidecars = set(manifest["source_evidence_files"])
+          if "parent_evidence" not in sidecars or not (
+              "candidate_evidence" in sidecars or "candidate_diagnostic" in sidecars
+          ):
+              raise SystemExit("Parent evidence and candidate evidence/diagnostic sidecar must be recorded")
+          for name, record in manifest["source_evidence_files"].items():
+              source = Path(record["path"])
+              if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != record["sha256"]:
+                  raise SystemExit(f"Evidence sidecar hash verification failed: {name}")
+          for name, record in manifest["outputs"].items():
+              output = root / record["path"]
+              if not output.is_file() or hashlib.sha256(output.read_bytes()).hexdigest() != record["sha256"]:
+                  raise SystemExit(f"Output hash verification failed: {name}")
+          comparison_path = root / "cpvs_candidate_set_change.json"
+          comparison_csv = root / "cpvs_candidate_set_change.csv"
+          comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
+          if comparison["previous_source_run_id"] != "38635891449":
+              raise SystemExit("Candidate-set diff references an unexpected previous run")
+          if comparison["current_source_run_id"] != os.environ["CURRENT_SOURCE_RUN_ID"]:
+              raise SystemExit("Candidate-set diff current run ID mismatch")
+          previous_candidate_path = Path(comparison["previous_candidate_ids"]["path"])
+          current_candidate_path = Path(comparison["current_candidate_ids"]["path"])
+          if not previous_candidate_path.is_file() or hashlib.sha256(
+              previous_candidate_path.read_bytes()
+          ).hexdigest() != comparison["previous_candidate_ids"]["sha256"]:
+              raise SystemExit("Previous candidate-set source hash mismatch")
+          previous_diagnostic_record = comparison.get("previous_candidate_diagnostic")
+          if not previous_diagnostic_record:
+              raise SystemExit("Previous candidate diagnostic provenance is missing")
+          previous_diagnostic_path = Path(previous_diagnostic_record["path"])
+          if not previous_diagnostic_path.is_file() or hashlib.sha256(
+              previous_diagnostic_path.read_bytes()
+          ).hexdigest() != previous_diagnostic_record["sha256"]:
+              raise SystemExit("Previous candidate diagnostic hash mismatch")
+          if not current_candidate_path.is_file() or hashlib.sha256(
+              current_candidate_path.read_bytes()
+          ).hexdigest() != comparison["current_candidate_ids"]["sha256"]:
+              raise SystemExit("Current candidate-set source hash mismatch")
+          if comparison["current_candidate_ids"]["sha256"] != manifest["source_files"]["candidate_ids"]["sha256"]:
+              raise SystemExit("Candidate-set diff does not use the report's candidate input")
+          if comparison["parent_metadata"]["sha256"] != manifest["source_files"]["parent_metadata"]["sha256"]:
+              raise SystemExit("Candidate-set diff parent metadata hash differs from the report input")
+          if comparison["published_reference"]["sha256"] != manifest["source_files"]["published_ids"]["sha256"]:
+              raise SystemExit("Candidate-set diff published reference hash differs from the report input")
+          if hashlib.sha256(comparison_csv.read_bytes()).hexdigest() != comparison["change_csv"]["sha256"]:
+              raise SystemExit("Candidate-set change CSV hash mismatch")
+          with comparison_csv.open(encoding="utf-8", newline="") as stream:
+              change_rows = list(csv.DictReader(stream))
+          if len(change_rows) != comparison["change_csv"]["rows"]:
+              raise SystemExit("Candidate-set change CSV row count mismatch")
+          if comparison["change_csv"]["rows"] != (
+              comparison["added_in_current_count"] + comparison["removed_from_current_count"]
+          ):
+              raise SystemExit("Candidate-set change counts are inconsistent")
+          if any(row.get("parent_record_found") != "True" for row in change_rows):
+              raise SystemExit("A changed candidate ID lacks parent-record provenance")
+          if manifest["interpretation"]["historical_publisher_rule"] != "UNRESOLVED":
+              raise SystemExit("Report must preserve unresolved historical publisher rule")
+          attribution_path = root / "cpvs_snr_guard_attribution.json"
+          if not attribution_path.is_file():
+              raise SystemExit("Raw SNR guard attribution artifact is missing")
+          attribution = json.loads(attribution_path.read_text(encoding="utf-8"))
+          if attribution.get("schema") != "cpvs-snr-guard-attribution/1.0":
+              raise SystemExit("Unexpected raw SNR guard attribution schema")
+          if attribution.get("source_run_id") != os.environ["CURRENT_SOURCE_RUN_ID"]:
+              raise SystemExit("Raw SNR guard attribution source run ID mismatch")
+          if attribution.get("previous_source_run_id") != "38635891449":
+              raise SystemExit("Raw SNR guard attribution previous run ID mismatch")
+          if attribution.get("parent_table2_sha256") != manifest["source_files"]["parent_metadata"]["sha256"]:
+              raise SystemExit("Raw SNR guard attribution parent hash mismatch")
+          if attribution.get("current_candidate_ids_sha256") != comparison["current_candidate_ids"]["sha256"]:
+              raise SystemExit("Raw SNR guard attribution current candidate hash mismatch")
+          if attribution.get("previous_candidate_ids_sha256") != comparison["previous_candidate_ids"]["sha256"]:
+              raise SystemExit("Raw SNR guard attribution previous candidate hash mismatch")
+          if attribution.get("changed_ids_csv_sha256") != comparison["change_csv"]["sha256"]:
+              raise SystemExit("Raw SNR guard attribution changed-ID CSV hash mismatch")
+          if attribution.get("changed_object_count") != comparison["change_csv"]["rows"]:
+              raise SystemExit("Raw SNR guard attribution object count mismatch")
+          for item in attribution.get("objects", []):
+              if item["change_type"] == "added_in_current" and not (
+                  item["current_candidate_list_member"] and not item["previous_candidate_list_member"]
+              ):
+                  raise SystemExit(f"Added candidate membership mismatch for {item['SourceID']}")
+              if item["change_type"] == "removed_from_current" and not (
+                  not item["current_candidate_list_member"] and item["previous_candidate_list_member"]
+              ):
+                  raise SystemExit(f"Removed candidate membership mismatch for {item['SourceID']}")
+          attribution_sha256 = hashlib.sha256(attribution_path.read_bytes()).hexdigest()
+          validation_summary = {
+              "status": "REPORT_VERIFIED",
+              "counts": counts,
+              "matches_previous_recorded_baseline": all(
+                  item["matches"] for item in previous_run_comparison.values()
+              ),
+              "previous_run_comparison": previous_run_comparison,
+              "source_hashes_verified": len(manifest["source_files"]),
+              "source_evidence_hashes_verified": len(manifest["source_evidence_files"]),
+              "output_hashes_verified": len(manifest["outputs"]),
+              "candidate_set_change": comparison,
+              "candidate_set_change_csv_sha256": comparison["change_csv"]["sha256"],
+              "candidate_set_change_json_sha256": hashlib.sha256(comparison_path.read_bytes()).hexdigest(),
+              "snr_guard_attribution": {
+                  "status": attribution["status"],
+                  "sha256": attribution_sha256,
+                  "changed_object_count": attribution["changed_object_count"],
+                  "all_changed_membership_effects_attributed": attribution["status"] == "CONFIRMED_NONFINITE_SNR_GUARD",
+              },
+              "historical_publisher_rule": "UNRESOLVED",
+              "discovery_claim": "none",
+          }
+          (root / "report_validation_summary.json").write_text(
+              json.dumps(validation_summary, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(validation_summary, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload verified CPVS discrepancy report
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-source-backed-discrepancy-report
+          path: reports/cpvs_report_validation/cpvs_discrepancy_report/**
+          if-no-files-found: error
+          retention-days: 90

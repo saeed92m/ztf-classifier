@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-report-source-archive-20261027",
+  "objective": "Make the merged CPVS discrepancy-report utility consume the authoritative fixed-width Table 2 archive, generate a hash-verifiable report in the source-backed heavy workflow, and preserve the unresolved historical selection-rule claim.",
+  "previous_knowledge_consumed": [
+    "PR #224 merged the report builder but its actual 11,602-row output had not yet been generated from the authoritative Table 2 ZIP, selected candidate IDs, and published Table 4 source.",
+    "Official CDS ReadMe J/ApJS/249/18 documents Table 2 ID, Seq, gmag, rmag, Per-g, and Per-r fixed-width fields; Seq is not a row ordinal.",
+    "Issue #170 remains blocked: 741,786 reconstructed candidates, 730,184 published members, 11,602 candidate-only IDs, zero published-only IDs; the four-field predicate is diagnostic only.",
+    "Source-backed report-reuse run 40659525128 succeeded and verified the exact set diff: two IDs (194424 and 195452) added in run 40397098709, zero removed; parent Table 2 and raw archive hashes match the previous run."
+  ],
+  "baseline": {
+    "revision": "b56c90bafe9e6e0c5630dd4b96c9843dbd26301c",
+    "status": "Preserve software release v1.0.1 and frozen scientific baseline v0.2.0. This work adds source archive ingestion/report verification only; it does not change model artifacts, feature schema, or candidate-selection criteria."
+  },
+  "expected_improvement": [
+    "Parse the official fixed-width Table 2 ZIP using authoritative Seq and documented field offsets.",
+    "Fail closed on malformed rows, duplicate Seq values, or an unexpected parent row count.",
+    "Generate a hash-verifiable candidate-only report from pinned source artifacts.",
+    "Compare exact object-level candidate membership across source-backed runs without forcing historical counts.",
+    "Trace the two changed IDs to raw g/r light-curve rows and compare finite-SNR versus regression-prone guard behavior."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The report utility accepted normalized CSV/TSV metadata but could not directly parse the official fixed-width Table 2 ZIP used by the scientific workflow.",
+        "after": "The report-reuse workflow generated the report and exact candidate-set diff from pinned source artifacts; the two changed IDs are identified. Raw-row SNR attribution remains pending."
+      },
+      "reproducibility": {
+        "before": "The report utility was not wired to generate and verify its report in the source-backed heavy workflow.",
+        "after": "Report reuse run 40659525128 completed successfully; source hashes, evidence-sidecar hashes, output hashes, and set-count invariants were verified."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "BLOCKED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Added fixed-width Table 2 ZIP reader using documented byte offsets and authoritative Seq.",
+      "Added integration test with a synthetic fixed-width Table 2 archive and a Table 4 ZTF-name crosswalk.",
+      "Added report-generation and hash/count validation steps to the source-backed heavy workflow.",
+      "The full source-backed heavy run 40397098709 completed on the authoritative Seq parser. Parent Table 2 had 781602 rows; archive SHA-256 0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138; evidence sidecar SHA-256 640a048fc9e40df6e1bdfc1bfcd58ac13ee00ca6aee68ca90e7c5992dbdf7944. It produced 741788 candidates / 11604 candidate-only / 0 published-only; exact membership remained UNRESOLVED.",
+      "Added a push-triggered report-reuse workflow that downloads the pinned heavy artifact, rebuilds the report from parent/candidate/published inputs and evidence sidecars, compares the candidate sets against the prior run, verifies hashes, and uploads a compact 90-day report artifact. The source heavy run had already completed before this workflow could be merged, so an execution-only branch is required.",
+      "A push-triggered report-reuse workflow on `ci/report-reuse/*` reads the pinned source run and artifact ID; this avoids depending on a workflow_run event that occurred before the workflow was merged.",
+      "The heavy workflow now uploads a separate compact `cpvs-report-source-inputs` artifact (Table 2 archive/evidence, selected TSV plus evidence-or-diagnostic sidecar, and published Table 4) so future report validation does not download the full multi-gigabyte heavy artifact.",
+      "The previous source-backed run 38635891449 used the same raw epoch archive MD5s (ztf2g 850fcef561dd7407fbe8e19e99100d7a; ztf2r daa7bc45c67579253eebe6b1c09dfbd9) and the same parent Table 2 SHA-256 0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138, but reported 741786 candidates. The current run reports 741788. A run-to-run set diff plus previous diagnostic metadata is now part of the report workflow so the exact two-ID change can be identified; do not attribute it to data version without evidence.",
+      "Report-reuse workflow run 40659525128 completed successfully and uploaded artifact cpvs-source-backed-discrepancy-report (artifact ID 12803303216). Validation status REPORT_VERIFIED; three source hashes, two evidence hashes, and five report-output hashes verified.",
+      "The report confirms 781602 parent IDs, 741788 current candidates, 730184 published members, 730184 intersection, 11604 candidate-only IDs, zero published-only IDs, and zero candidate-only IDs lacking parent provenance.",
+      "Exact cross-run set diff: IDs 194424 (ZTFJ111832.86+125702.8) and 195452 (ZTFJ114217.06+145351.4) were added in current run 40397098709; no IDs were removed. Both parent records have rmag=0.000 and Per-r=0.0000000. This parent metadata alone does not establish the raw-row admission cause.",
+      "A row-level finite-SNR guard attribution audit has been added to the report-reuse workflow and is pending execution."
+    ],
+    "blocker": "Inspect the row-level raw g/r audit for IDs 194424 and 195452 to determine whether non-finite SNR rows explain the exact two-ID shift. Separately establish the historical publisher selection semantics for the 11604 candidate-only IDs; matching counts or metadata diagnostics are not sufficient."
+  },
+  "failure_analysis": {
+    "status": "REPORT_DELIVERY_ROOT_CAUSE_FIXED_SCIENTIFIC_CAUSE_PENDING",
+    "root_causes": [
+      "The report builder initially could not parse the authoritative fixed-width Table 2 ZIP; the parser and source-backed report reuse path now work and have verified output hashes.",
+      "The two-ID candidate drift is now localized to IDs 194424 and 195452, but raw light-curve row-level attribution to the non-finite-SNR guard remains pending.",
+      "The full historical publisher selection rule for the 11604 candidate-only objects remains unresolved."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A report-generation utility is not a completed report deliverable; source-backed invocation and output verification are required.",
+      "Table 4 membership must be joined by ZTF object name mapped to authoritative Table 2 Seq, not by Table 4's internal numeric ID.",
+      "Matching membership counts does not prove the publisher's historical selection semantics; Issue #170 remains open."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "The raw-row SNR guard attribution workflow has not yet completed; do not merge PR #237 until its result is reviewed.",
+      "The 11604-object CPVS membership discrepancy and historical publisher selection rule remain unresolved.",
+      "Raw-lightcurve review and external cross-match for the full candidate-only set remain NOT_ASSESSED unless separate evidence is recorded."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "The report artifact is verified and must preserve the 11604 candidate-only mismatch rather than force the historical 11602 count.",
+    "The exact added IDs are 194424 and 195452; no removed IDs were observed between source runs 38635891449 and 40397098709.",
+    "Do not merge a scientific selection change until raw-row replay confirms its exact ID-level effect.",
+    "Do not weaken the fail-closed scientific gate or turn the four-field diagnostic into a production rule.",
+    "Keep all raw data out of Git; retain bounded reports, manifests, hashes, and provenance evidence.",
+    "Keep Issue #170 open until the historical publisher rule is independently established."
+  ],
+  "source_run_id": 40397098709,
+  "source_run_commit": "4674d3ad69ff7148a246ccf34f5aa216c3e791fd",
+  "source_artifact_name": "scientific-validation-heavy",
+  "source_artifact_sha256": "212f4192de530212bafe597d589c67c0778363e0dadc1f64c1b44e8f170eb426",
+  "source_parent_sha256": "0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138",
+  "source_parent_evidence_sha256": "640a048fc9e40df6e1bdfc1bfcd58ac13ee00ca6aee68ca90e7c5992dbdf7944",
+  "previous_source_run_id": 38635891449,
+  "previous_source_artifact_id": 11935357767,
+  "previous_source_artifact_sha256": "346cd0a22d1490c9d3c5f6ff290ca2377e1c5458895c0c0d4b616b0708630c36",
+  "previous_parent_evidence_sha256": "7c76854b047d3a8c3176dfaced1e783c5b09edc55402f64ef7844901215fde54",
+  "raw_epoch_archive_md5": {
+    "ztf2g": "850fcef561dd7407fbe8e19e99100d7a",
+    "ztf2r": "daa7bc45c67579253eebe6b1c09dfbd9"
+  }
+}

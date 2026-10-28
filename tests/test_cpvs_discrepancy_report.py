@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -209,4 +210,167 @@ def test_table4_ztf_names_fail_closed_without_parent_name_crosswalk(
             published_ids=published,
             output_dir=tmp_path / "out",
             source_revision="test-sha",
+        )
+
+
+
+def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> None:
+    def fixed_row(
+        name: str, seq: int, gmag: str, rmag: str, per_g: str, per_r: str
+    ) -> str:
+        row = [" "] * 130
+        row[0:22] = list(name.ljust(22)[:22])
+        row[23:29] = list(str(seq).rjust(6))
+        row[89:95] = list(gmag.rjust(6)[:6])
+        row[96:102] = list(rmag.rjust(6)[:6])
+        row[103:116] = list(per_g.rjust(13)[:13])
+        row[117:130] = list(per_r.rjust(13)[:13])
+        return "".join(row) + "\n"
+
+    names = [
+        "ZTFJ000000.00+000000.0",
+        "ZTFJ000001.00+000001.0",
+        "ZTFJ000002.00+000002.0",
+    ]
+    parent_archive = tmp_path / "Table2.txt.zip"
+    table_text = "Table 2 metadata\n" + "".join(
+        [
+            fixed_row(names[0], 1, "15.0", "16.0", "0.5", "0.6"),
+            fixed_row(names[1], 2, "15.1", "16.1", "0.7", "0.8"),
+            fixed_row(names[2], 4, "", "17.0", "0.9", "1.0"),
+        ]
+    )
+    with zipfile.ZipFile(
+        parent_archive, "w", compression=zipfile.ZIP_DEFLATED
+    ) as archive:
+        archive.writestr("Table2.txt", table_text)
+
+    parent_evidence = write_file(
+        tmp_path / "Table2.txt.zip.evidence.json", '{"sha256":"fixture-parent"}\n'
+    )
+    candidates = write_file(tmp_path / "candidates.tsv", "SourceID\n1\n2\n4\n")
+    candidate_evidence = write_file(
+        tmp_path / "candidates.tsv.evidence.json", '{"sha256":"fixture-candidate"}\n'
+    )
+    # Table 4 internal IDs are intentionally unrelated; join by the ZTF name.
+    published = write_file(
+        tmp_path / "table4.tsv",
+        "ID\tZTF\n9001\tZTFJ000000.00+000000.0\n"
+        "9002\tZTFJ000001.00+000001.0\n",
+    )
+    output = tmp_path / "report"
+    result = build_cpvs_discrepancy_report(
+        parent_metadata=parent_archive,
+        candidate_ids=candidates,
+        published_ids=published,
+        output_dir=output,
+        source_revision="fixed-width-test-revision",
+        report_code_revision="report-code-test-revision",
+        parent_evidence=parent_evidence,
+        candidate_evidence=candidate_evidence,
+        expected_parent_count=3,
+    )
+
+    assert result["counts"] == {
+        "parent_metadata_objects": 3,
+        "candidate_objects": 3,
+        "published_reference_objects": 2,
+        "intersection_objects": 2,
+        "candidate_only_objects": 1,
+        "published_only_objects": 0,
+        "candidate_only_missing_parent_provenance": 0,
+    }
+    assert result["diagnostic_group_counts"] == {
+        "valid_periods_gmag_incomplete": 1
+    }
+    assert result["report_code_revision"] == "report-code-test-revision"
+    assert set(result["source_evidence_files"]) == {
+        "parent_evidence",
+        "candidate_evidence",
+    }
+    assert (
+        result["source_evidence_metadata"]["candidate_evidence"]["sha256"]
+        == "fixture-candidate"
+    )
+    assert (
+        result["source_evidence_files"]["parent_evidence"]["sha256"]
+        == hashlib.sha256(
+            parent_evidence.read_bytes()
+        ).hexdigest()
+    )
+    assert result["source_context"]["parent_metadata"]["identifier_field"] == "Seq"
+    assert result["source_context"]["published_ids"]["membership_join"] == (
+        "normalized ZTF object name crosswalk to Table 2 Seq"
+    )
+    assert result["source_files"]["parent_metadata"]["sha256"] == hashlib.sha256(
+        parent_archive.read_bytes()
+    ).hexdigest()
+
+    from ztf_classifier.validation.cpvs_discrepancy_report import read_parent_metadata
+
+    invalid_seq_archive = tmp_path / "invalid-seq.zip"
+    with zipfile.ZipFile(invalid_seq_archive, "w") as archive:
+        archive.writestr(
+            "Table2.txt",
+            fixed_row(names[0], 781605, "15.0", "16.0", "0.5", "0.6"),
+        )
+    with pytest.raises(ValueError, match="outside the documented range"):
+        read_parent_metadata(invalid_seq_archive, expected_parent_count=1)
+
+    duplicate_seq_archive = tmp_path / "duplicate-seq.zip"
+    with zipfile.ZipFile(duplicate_seq_archive, "w") as archive:
+        archive.writestr(
+            "Table2.txt",
+            fixed_row(names[0], 1, "15.0", "16.0", "0.5", "0.6")
+            + fixed_row(names[1], 1, "15.1", "16.1", "0.7", "0.8"),
+        )
+    with pytest.raises(ValueError, match="duplicate authoritative Seq"):
+        read_parent_metadata(duplicate_seq_archive, expected_parent_count=2)
+
+    candidate_diagnostic = tmp_path / "candidates.tsv.diagnostic.json"
+    candidate_diagnostic.write_text(
+        json.dumps(
+            {
+                "status": "COUNT_MISMATCH",
+                "expected_selected_rows": 3,
+                "observed_selected_rows": 3,
+                "candidate_sha256": hashlib.sha256(candidates.read_bytes()).hexdigest(),
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    diagnostic_result = build_cpvs_discrepancy_report(
+        parent_metadata=parent_archive,
+        candidate_ids=candidates,
+        published_ids=published,
+        output_dir=tmp_path / "report-diagnostic",
+        source_revision="failed-derivation-revision",
+        report_code_revision="report-code-test-revision",
+        parent_evidence=parent_evidence,
+        candidate_diagnostic=candidate_diagnostic,
+        expected_parent_count=3,
+    )
+    assert (
+        diagnostic_result["source_context"]["candidate_ids"]["evidence_kind"]
+        == "diagnostic"
+    )
+    assert "candidate_diagnostic" in diagnostic_result["source_evidence_files"]
+    assert (
+        diagnostic_result["source_evidence_metadata"]["candidate_diagnostic"]["status"]
+        == "COUNT_MISMATCH"
+    )
+
+
+def test_source_evidence_sidecar_must_be_json_object(tmp_path: Path) -> None:
+    parent, candidates, published = make_inputs(tmp_path)
+    sidecar = write_file(tmp_path / "parent-evidence.json", "[]\n")
+    with pytest.raises(TypeError, match="source sidecar parent_evidence must contain a JSON object"):
+        build_cpvs_discrepancy_report(
+            parent_metadata=parent,
+            candidate_ids=candidates,
+            published_ids=published,
+            output_dir=tmp_path / "out",
+            source_revision="test-sha",
+            parent_evidence=sidecar,
         )
