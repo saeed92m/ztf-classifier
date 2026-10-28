@@ -35,7 +35,7 @@
   ],
   "measurement": {
     "metrics": {
-      "traceability": {
+      "reproducibility": {
         "before": "Non-finite feature values could be emitted without a structured per-feature eligibility reason.",
         "after": "An opt-in JSON-safe diagnostic report records per-band counts, thresholds, and conservative reasons for non-finite values.",
         "evidence": "PR #239; tests/test_feature_diagnostics.py"
