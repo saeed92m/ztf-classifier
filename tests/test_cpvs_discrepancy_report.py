@@ -364,7 +364,7 @@ def test_report_reads_authoritative_fixed_width_table2_zip(tmp_path: Path) -> No
 
 def test_source_evidence_sidecar_must_be_json_object(tmp_path: Path) -> None:
     parent, candidates, published = make_inputs(tmp_path)
-    sidecar = write_file(tmp_path / "parent-evidence.json", "[]\\n")
+    sidecar = write_file(tmp_path / "parent-evidence.json", "[]\n")
     with pytest.raises(TypeError, match="source sidecar parent_evidence must contain a JSON object"):
         build_cpvs_discrepancy_report(
             parent_metadata=parent,
