@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "missing-data-policy-audit-20261028",
+  "objective": "Implement a non-mutating, traceable missing-data and feature-eligibility diagnostic layer without changing the frozen scientific baseline or inventing measurements.",
+  "previous_knowledge_consumed": [
+    "Project baseline v0.2.0 must preserve the 42-feature schema, model artifact, class order, and historical cutoff.",
+    "CPVS issue #170 remains unresolved: 781602 parent objects, 741786 reconstructed candidates, 730184 published reference members, 11602 candidate-only, and zero published-only on the pinned finite-SNR run.",
+    "The native feature pipeline filters invalid observations, uses 10-observation and 30-observation eligibility thresholds for basic and Lomb–Scargle features, and intentionally returns NaN for ineligible features.",
+    "Cross-band color can be defined from one valid observation per band, while a sample-standard-deviation variability ratio requires at least two observations.",
+    "The first CI run on this PR found lint-only issues in the new diagnostic helper; those were corrected in commit f40ed855f1b64005696fd210a03fb3b52bb9fb45."
+  ],
+  "baseline": {
+    "revision": "main@e181b69e6119dd513760035ff1abeaa77f69155a",
+    "scientific_baseline": "v0.2.0",
+    "feature_schema": "42 features; frozen order",
+    "cpvs_membership_gate": "UNRESOLVED",
+    "scope": "Feature eligibility diagnostics only; no feature values, model artifacts, thresholds, training data, class order, or CPVS selection rules changed."
+  },
+  "change": {
+    "branch": "science/missing-data-policy-audit-20261028",
+    "pull_request": "https://github.com/saeed92m/ztf-classifier/pull/239",
+    "files": [
+      "src/ztf_classifier/features/diagnostics.py",
+      "tests/test_feature_diagnostics.py",
+      "docs/scientific_validation/MISSING_DATA_POLICY_AND_FEATURE_ELIGIBILITY_2026-10-28.md",
+      "configs/process/cycles/missing-data-policy-audit-20261028.json"
+    ],
+    "rationale": "Report why a feature is unavailable without fabricating source measurements, imputing in the extraction layer, or rejecting an entire object when only one analysis is ineligible."
+  },
+  "expected_improvement": [
+    "Expose raw and valid observation counts by band and the current feature-group eligibility thresholds.",
+    "Differentiate mathematically undefined sample-standard-deviation ratios from unavailable cross-band colors.",
+    "Provide regression tests for missingness reasons, invalid-row filtering, JSON serialization, input immutability, and missing schema columns.",
+    "Preserve the frozen v0.2.0 feature vector and keep exact CPVS membership reproduction as a separate gate."
+  ],
+  "measurement": {
+    "metrics": {
+      "traceability": {
+        "before": "Non-finite feature values could be emitted without a structured per-feature eligibility reason.",
+        "after": "An opt-in JSON-safe diagnostic report records per-band counts, thresholds, and conservative reasons for non-finite values.",
+        "evidence": "PR #239; tests/test_feature_diagnostics.py"
+      },
+      "reliability": {
+        "before": "A one-observation band could yield an undefined ddof=1 variability ratio with no explicit explanation.",
+        "after": "The diagnostic reports that sample standard deviation requires at least two observations without altering the feature value.",
+        "evidence": "PR #239; workflow run 40695490160"
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "On the previous head, formatting passed and lint identified four auto-fixable issues; these were corrected.",
+      "On commit f40ed855f1b64005696fd210a03fb3b52bb9fb45, format check and lint passed.",
+      "CodeQL, Product Scope Audit, and the scientific-validation contract job passed on the current PR head; the source-backed acquisition jobs were skipped by workflow conditions.",
+      "The current CI run still needs to complete the cumulative lifecycle gate, test suite, runtime smoke tests, package build, and dependency audit."
+    ],
+    "blocker": "Do not merge until all required CI jobs pass and the new feature-diagnostic tests are confirmed in the complete test-suite run."
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The original feature output intentionally represented ineligible numerical features as NaN but did not expose a structured reason diagnostic.",
+      "The first PR lint failure was caused by redundant int conversion and Ruff SIM114 branch-combination rules; both were corrected before the current CI run."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Missing measurement, unavailable derived feature, and invalid astronomical object are distinct states.",
+      "A derived estimate from raw observations must not be silently substituted for a catalog's fit-derived value; any alternative estimator needs a distinct definition, quality policy, uncertainty, provenance, and validation.",
+      "A successful schema/order check is not proof that every feature is numerically computable.",
+      "The diagnostic helper is opt-in; integration into every API/UI response remains a separate compatibility-reviewed task.",
+      "This change does not resolve the CPVS published-membership discrepancy or establish full scientific model validity."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Current-head full test suite and downstream CI must pass.",
+      "The helper remains opt-in until API/UI integration is separately designed and tested.",
+      "CPVS exact membership remains an independent unresolved scientific validation blocker."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not impute or fabricate measurements in the feature-extraction layer.",
+    "Do not alter the frozen v0.2.0 model, feature order, or CPVS selection predicate in this PR.",
+    "Do not merge before all current-head CI jobs pass.",
+    "Keep product missing-data policy and historical CPVS membership reproduction as separate workstreams."
+  ]
+}
