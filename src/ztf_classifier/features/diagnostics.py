@@ -44,7 +44,7 @@ def diagnose_v0_2_feature_eligibility(
     for band_name, fid in (("g", 1), ("r", 2)):
         raw_count = int((observations["fid"] == fid).sum())
         valid = prepare_band_lightcurve(observations, fid=fid)
-        valid_count = int(len(valid))
+        valid_count = len(valid)
         band_data[band_name] = {
             "fid": fid,
             "input_rows": raw_count,
@@ -74,17 +74,23 @@ def diagnose_v0_2_feature_eligibility(
                     reason = "missing_valid_observations_in_one_or_both_bands"
                 else:
                     reason = "non_finite_despite_valid_observations"
-            elif name == "g_variability_ratio" and g_count < 2:
+            elif (
+                name == "g_variability_ratio" and g_count < 2
+            ) or (
+                name == "r_variability_ratio" and r_count < 2
+            ):
                 reason = "insufficient_observations_for_sample_std"
-            elif name == "r_variability_ratio" and r_count < 2:
-                reason = "insufficient_observations_for_sample_std"
-            elif name.startswith("g_ls_") and g_count < LS_MIN_OBSERVATIONS:
+            elif (
+                name.startswith("g_ls_") and g_count < LS_MIN_OBSERVATIONS
+            ) or (
+                name.startswith("r_ls_") and r_count < LS_MIN_OBSERVATIONS
+            ):
                 reason = "insufficient_observations_for_periodicity_features"
-            elif name.startswith("r_ls_") and r_count < LS_MIN_OBSERVATIONS:
-                reason = "insufficient_observations_for_periodicity_features"
-            elif name.startswith("g_") and g_count < BASIC_MIN_OBSERVATIONS:
-                reason = "insufficient_observations_for_basic_features"
-            elif name.startswith("r_") and r_count < BASIC_MIN_OBSERVATIONS:
+            elif (
+                name.startswith("g_") and g_count < BASIC_MIN_OBSERVATIONS
+            ) or (
+                name.startswith("r_") and r_count < BASIC_MIN_OBSERVATIONS
+            ):
                 reason = "insufficient_observations_for_basic_features"
             feature_reasons[name] = reason
 
