@@ -49,7 +49,7 @@
     }
   },
   "validation": {
-    "status": "CI_PASS_CURRENT_HEAD",
+    "status": "PASS_WITH_SCIENTIFIC_BLOCKER",
     "scientific_gate_affected": false,
     "evidence": [
       "Current PR head 90b08c868959f33932069752c6083f70b3910fe9: Format Check passed.",
@@ -61,9 +61,11 @@
       "Current PR head 90b08c868959f33932069752c6083f70b3910fe9: Dependency Audit passed and CI Gate passed.",
       "Current PR head CodeQL and Product Scope Audit passed.",
       "Scientific Validation contract job passed, but source provenance acquisition, DR24/ALeRCE evidence execution, immutable historical reference verification, and source-backed benchmark derivation jobs were skipped by workflow conditions. This is not full scientific validation and does not resolve CPVS issue #170.",
-      "The cutoff-aware regression test is included in the six-test focused suite and passed in CI. No local test run is claimed."
+      "The cutoff-aware regression test is included in the six-test focused suite and passed in CI. No local test run is claimed.",
+      "Follow-up CI run 40748322536 on the documentation-update head exposed a lifecycle-record contract failure: regression.status and decision used values outside the accepted enums. Format Check and Lint passed; the lifecycle gate failed before the full test suite and downstream gates could run.",
+      "The failure was caused by this record's enum values, not by a scientific test failure. The record is being corrected to use the repository's accepted lifecycle values; rerun CI is required before claiming the current head passes."
     ],
-    "blocker": "CPVS membership reproduction remains an independent scientific blocker. Diagnostics remain opt-in; no full source-backed scientific validation is claimed."
+    "blocker": "CPVS membership reproduction remains an independent scientific blocker. The current PR head also requires a fresh CI pass after correcting lifecycle enum values."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED",
@@ -83,14 +85,14 @@
     ]
   },
   "regression": {
-    "status": "TESTED_CI_CURRENT_HEAD",
+    "status": "PASS",
     "open_blockers": [
       "The helper remains opt-in until API/UI integration is separately designed and compatibility-tested.",
       "CPVS exact membership remains an independent unresolved scientific validation blocker.",
       "Callers must pass the same cutoff_mjd used to generate the supplied feature mapping."
     ]
   },
-  "decision": "READY_FOR_REVIEW",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Eligibility counts and reasons must use the same historical cutoff as the feature vector being diagnosed.",
     "Do not impute or fabricate measurements in the feature-extraction layer.",
