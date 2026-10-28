@@ -132,6 +132,24 @@ jobs:
             --published-ids "${{ steps.inputs.outputs.published }}" \
             --output-dir reports/cpvs_report_validation/cpvs_discrepancy_report
 
+      - name: Attribute changed IDs to raw SNR guard behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=reports/cpvs_report_validation/cpvs_discrepancy_report
+          python scripts/audit_cpvs_snr_guard_impact.py \
+            --g-dir source-artifact/ztf_periodic_730k/g \
+            --r-dir source-artifact/ztf_periodic_730k/r \
+            --changes "$root/cpvs_candidate_set_change.csv" \
+            --current-candidates "${{ steps.inputs.outputs.candidate }}" \
+            --previous-candidates "${{ steps.inputs.outputs.previous_candidate }}" \
+            --parent-table2 "${{ steps.inputs.outputs.parent }}" \
+            --output "$root/cpvs_snr_guard_attribution.json" \
+            --source-run-id "${{ steps.source.outputs.run_id }}" \
+            --previous-run-id 38635891449 \
+            --raw-g-md5 850fcef561dd7407fbe8e19e99100d7a \
+            --raw-r-md5 daa7bc45c67579253eebe6b1c09dfbd9
+
       - name: Verify report counts and provenance hashes
         env:
           SOURCE_REVISION: ${{ steps.source.outputs.source_revision }}
@@ -255,6 +273,36 @@ jobs:
               raise SystemExit("A changed candidate ID lacks parent-record provenance")
           if manifest["interpretation"]["historical_publisher_rule"] != "UNRESOLVED":
               raise SystemExit("Report must preserve unresolved historical publisher rule")
+          attribution_path = root / "cpvs_snr_guard_attribution.json"
+          if not attribution_path.is_file():
+              raise SystemExit("Raw SNR guard attribution artifact is missing")
+          attribution = json.loads(attribution_path.read_text(encoding="utf-8"))
+          if attribution.get("schema") != "cpvs-snr-guard-attribution/1.0":
+              raise SystemExit("Unexpected raw SNR guard attribution schema")
+          if attribution.get("source_run_id") != os.environ["CURRENT_SOURCE_RUN_ID"]:
+              raise SystemExit("Raw SNR guard attribution source run ID mismatch")
+          if attribution.get("previous_source_run_id") != "38635891449":
+              raise SystemExit("Raw SNR guard attribution previous run ID mismatch")
+          if attribution.get("parent_table2_sha256") != manifest["source_files"]["parent_metadata"]["sha256"]:
+              raise SystemExit("Raw SNR guard attribution parent hash mismatch")
+          if attribution.get("current_candidate_ids_sha256") != comparison["current_candidate_ids"]["sha256"]:
+              raise SystemExit("Raw SNR guard attribution current candidate hash mismatch")
+          if attribution.get("previous_candidate_ids_sha256") != comparison["previous_candidate_ids"]["sha256"]:
+              raise SystemExit("Raw SNR guard attribution previous candidate hash mismatch")
+          if attribution.get("changed_ids_csv_sha256") != comparison["change_csv"]["sha256"]:
+              raise SystemExit("Raw SNR guard attribution changed-ID CSV hash mismatch")
+          if attribution.get("changed_object_count") != comparison["change_csv"]["rows"]:
+              raise SystemExit("Raw SNR guard attribution object count mismatch")
+          for item in attribution.get("objects", []):
+              if item["change_type"] == "added_in_current" and not (
+                  item["current_candidate_list_member"] and not item["previous_candidate_list_member"]
+              ):
+                  raise SystemExit(f"Added candidate membership mismatch for {item['SourceID']}")
+              if item["change_type"] == "removed_from_current" and not (
+                  not item["current_candidate_list_member"] and item["previous_candidate_list_member"]
+              ):
+                  raise SystemExit(f"Removed candidate membership mismatch for {item['SourceID']}")
+          attribution_sha256 = hashlib.sha256(attribution_path.read_bytes()).hexdigest()
           validation_summary = {
               "status": "REPORT_VERIFIED",
               "counts": counts,
@@ -268,6 +316,12 @@ jobs:
               "candidate_set_change": comparison,
               "candidate_set_change_csv_sha256": comparison["change_csv"]["sha256"],
               "candidate_set_change_json_sha256": hashlib.sha256(comparison_path.read_bytes()).hexdigest(),
+              "snr_guard_attribution": {
+                  "status": attribution["status"],
+                  "sha256": attribution_sha256,
+                  "changed_object_count": attribution["changed_object_count"],
+                  "all_changed_membership_effects_attributed": attribution["status"] == "CONFIRMED_NONFINITE_SNR_GUARD",
+              },
               "historical_publisher_rule": "UNRESOLVED",
               "discovery_claim": "none",
           }
