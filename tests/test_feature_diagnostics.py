@@ -97,3 +97,30 @@ def test_diagnostic_is_json_serializable_and_does_not_mutate_input() -> None:
 def test_diagnostic_rejects_missing_schema_columns() -> None:
     with pytest.raises(ValueError, match="Missing required columns"):
         diagnose_v0_2_feature_eligibility(pd.DataFrame({"mjd": [1.0]}))
+
+
+def test_diagnostic_honors_historical_cutoff_when_explaining_features() -> None:
+    observations = pd.DataFrame(
+        {
+            "mjd": [60000.0 + index for index in range(10)],
+            "fid": [1] * 10,
+            "mag": [19.0 + index * 0.01 for index in range(10)],
+            "magerr": [0.1] * 10,
+        }
+    )
+    original = observations.copy(deep=True)
+    cutoff = 60004.5
+    features = extract_v0_2_features(observations, cutoff_mjd=cutoff)
+    report = diagnose_v0_2_feature_eligibility(
+        observations, features, cutoff_mjd=cutoff
+    )
+
+    assert report["cutoff_mjd"] == cutoff
+    assert report["bands"]["g"]["input_rows_before_cutoff"] == 10
+    assert report["bands"]["g"]["rows_excluded_by_cutoff"] == 5
+    assert report["bands"]["g"]["input_rows"] == 5
+    assert report["bands"]["g"]["valid_observations"] == 5
+    assert report["non_finite_feature_reasons"]["g_mean_mag"] == (
+        "insufficient_observations_for_basic_features"
+    )
+    pd.testing.assert_frame_equal(observations, original)
