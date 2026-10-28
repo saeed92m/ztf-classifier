@@ -35,7 +35,7 @@
     }
   },
   "validation": {
-    "status": "PARTIAL_REPORT_VERIFIED",
+    "status": "BLOCKED",
     "scientific_gate_affected": true,
     "evidence": [
       "Added fixed-width Table 2 ZIP reader using documented byte offsets and authoritative Seq.",
