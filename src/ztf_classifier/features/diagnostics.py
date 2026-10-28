@@ -22,15 +22,16 @@ V0_2_SCHEMA_VERSION = "v0.2"
 def diagnose_v0_2_feature_eligibility(
     observations: pd.DataFrame,
     features: dict[str, Any] | None = None,
+    cutoff_mjd: float | None = None,
 ) -> dict[str, Any]:
     """Return JSON-safe counts and reasons for unavailable v0.2 features.
 
-    The returned counts use the same band identifiers and observation-validity
-    function as the v0.2 feature pipeline. The input frame and feature mapping
-    are not mutated. If features are supplied, each non-finite feature receives
-    a conservative reason based on known eligibility rules. Any non-finite
-    value not explained by those rules is reported as
-    non_finite_despite_eligibility_or_backend_issue rather than imputed.
+    cutoff_mjd mirrors the canonical feature pipeline's historical cutoff.
+    Counts and reasons use rows at or before the cutoff, while
+    input_rows_before_cutoff and rows_excluded_by_cutoff preserve the amount
+    of input data excluded from this analysis. Inputs are never mutated.
+    Non-finite values not explained by known eligibility rules are reported
+    conservatively rather than imputed.
     """
     if not isinstance(observations, pd.DataFrame):
         raise TypeError("observations must be a pandas DataFrame.")
@@ -40,16 +41,27 @@ def diagnose_v0_2_feature_eligibility(
     if missing:
         raise ValueError(f"Missing required columns: {sorted(missing)}")
 
+    working = observations
+    if cutoff_mjd is not None:
+        cutoff_mjd = float(cutoff_mjd)
+        if not np.isfinite(cutoff_mjd):
+            raise ValueError("cutoff_mjd must be finite.")
+        mjd = pd.to_numeric(observations["mjd"], errors="coerce")
+        working = observations.loc[mjd <= cutoff_mjd].copy()
+
     band_data: dict[str, dict[str, int | bool]] = {}
     for band_name, fid in (("g", 1), ("r", 2)):
-        raw_count = int((observations["fid"] == fid).sum())
-        valid = prepare_band_lightcurve(observations, fid=fid)
+        before_cutoff = int((observations["fid"] == fid).sum())
+        input_count = int((working["fid"] == fid).sum())
+        valid = prepare_band_lightcurve(working, fid=fid)
         valid_count = len(valid)
         band_data[band_name] = {
             "fid": fid,
-            "input_rows": raw_count,
+            "input_rows_before_cutoff": before_cutoff,
+            "rows_excluded_by_cutoff": before_cutoff - input_count,
+            "input_rows": input_count,
             "valid_observations": valid_count,
-            "rejected_rows": raw_count - valid_count,
+            "rejected_rows": input_count - valid_count,
             "basic_features_eligible": valid_count >= BASIC_MIN_OBSERVATIONS,
             "periodicity_features_eligible": valid_count >= LS_MIN_OBSERVATIONS,
             "sample_std_eligible": valid_count >= 2,
@@ -98,6 +110,7 @@ def diagnose_v0_2_feature_eligibility(
         "diagnostic_schema_version": "1.0",
         "feature_schema_version": V0_2_SCHEMA_VERSION,
         "policy": "report_missingness_without_imputation",
+        "cutoff_mjd": cutoff_mjd,
         "thresholds": {
             "basic_features_min_observations_per_band": BASIC_MIN_OBSERVATIONS,
             "periodicity_features_min_observations_per_band": LS_MIN_OBSERVATIONS,
