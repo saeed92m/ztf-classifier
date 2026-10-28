@@ -49,16 +49,21 @@
     }
   },
   "validation": {
-    "status": "PENDING_CURRENT_HEAD_CI",
+    "status": "CI_PASS_CURRENT_HEAD",
     "scientific_gate_affected": false,
     "evidence": [
-      "On the previous head, formatting passed and lint identified four auto-fixable issues; these were corrected.",
-      "On commit f40ed855f1b64005696fd210a03fb3b52bb9fb45, format check and lint passed.",
-      "CodeQL, Product Scope Audit, and the scientific-validation contract job passed on the current PR head; the source-backed acquisition jobs were skipped by workflow conditions.",
-      "The current CI run still needs to complete the cumulative lifecycle gate, test suite, runtime smoke tests, package build, and dependency audit.",
-      "A follow-up regression test now verifies that cutoff_mjd is applied consistently between canonical feature extraction and eligibility diagnostics; current-head CI must confirm it."
+      "Current PR head 90b08c868959f33932069752c6083f70b3910fe9: Format Check passed.",
+      "Current PR head 90b08c868959f33932069752c6083f70b3910fe9: Lint passed.",
+      "Current PR head 90b08c868959f33932069752c6083f70b3910fe9: Cumulative Lifecycle Gate passed; GitHub Actions log reports 'Cumulative cycle-record requirement satisfied.'",
+      "Current PR head 90b08c868959f33932069752c6083f70b3910fe9: Test Suite passed; the scientific-validation focused job reports 6 passed in 0.02s for tests/test_feature_diagnostics.py.",
+      "Current PR head 90b08c868959f33932069752c6083f70b3910fe9: Runtime Smoke Tests passed.",
+      "Current PR head 90b08c868959f33932069752c6083f70b3910fe9: Build & Verify Package passed.",
+      "Current PR head 90b08c868959f33932069752c6083f70b3910fe9: Dependency Audit passed and CI Gate passed.",
+      "Current PR head CodeQL and Product Scope Audit passed.",
+      "Scientific Validation contract job passed, but source provenance acquisition, DR24/ALeRCE evidence execution, immutable historical reference verification, and source-backed benchmark derivation jobs were skipped by workflow conditions. This is not full scientific validation and does not resolve CPVS issue #170.",
+      "The cutoff-aware regression test is included in the six-test focused suite and passed in CI. No local test run is claimed."
     ],
-    "blocker": "Do not merge until all current-head CI jobs pass, including the new cutoff regression test; CPVS membership remains a separate scientific blocker."
+    "blocker": "CPVS membership reproduction remains an independent scientific blocker. Diagnostics remain opt-in; no full source-backed scientific validation is claimed."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED",
@@ -78,15 +83,14 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "TESTED_CI_CURRENT_HEAD",
     "open_blockers": [
-      "Current-head full test suite and downstream CI must pass, including the cutoff-aware regression test.",
-      "The helper remains opt-in until API/UI integration is separately designed and tested.",
+      "The helper remains opt-in until API/UI integration is separately designed and compatibility-tested.",
       "CPVS exact membership remains an independent unresolved scientific validation blocker.",
-      "The diagnostic API now accepts cutoff_mjd; callers must pass the same cutoff used to generate the supplied feature mapping."
+      "Callers must pass the same cutoff_mjd used to generate the supplied feature mapping."
     ]
   },
-  "decision": "BLOCKED",
+  "decision": "READY_FOR_REVIEW",
   "knowledge_carried_forward": [
     "Eligibility counts and reasons must use the same historical cutoff as the feature vector being diagnosed.",
     "Do not impute or fabricate measurements in the feature-extraction layer.",
