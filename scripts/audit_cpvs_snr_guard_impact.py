@@ -103,8 +103,6 @@ def _audit_band(root: Path, target_ids: set[str], band: str, threshold: float) -
             except ValueError:
                 time_key = None
             file_hits: set[str] = set()
-            for record_index, row in enumerate(iter((first,)), start=1):
-                del record_index, row
             for record_index, row in enumerate(_iter_rows(path, required_columns=("SourceID", error_key_name, mag_key_name)), start=1):
                 oid_raw = row.get(id_key, "").strip()
                 if not oid_raw.isdigit():
@@ -178,9 +176,7 @@ def audit(
     output_path: Path,
     source_run_id: str,
     previous_run_id: str,
-    parent_sha256: str,
-    current_candidate_sha256: str,
-    previous_candidate_sha256: str,
+    parent_table2_path: Path,
     raw_g_md5: str,
     raw_r_md5: str,
 ) -> dict[str, Any]:
@@ -238,9 +234,9 @@ def audit(
         "scope": "cross-run candidate-set changes only; does not resolve the full CPVS membership discrepancy",
         "source_run_id": source_run_id,
         "previous_source_run_id": previous_run_id,
-        "parent_table2_sha256": parent_sha256,
-        "current_candidate_ids_sha256": current_candidate_sha256,
-        "previous_candidate_ids_sha256": previous_candidate_sha256,
+        "parent_table2_sha256": _sha256(parent_table2_path),
+        "current_candidate_ids_sha256": _sha256(current_candidates_path),
+        "previous_candidate_ids_sha256": _sha256(previous_candidates_path),
         "changed_ids_csv_sha256": _sha256(changes_path),
         "raw_archive_md5": {"ztf2g": raw_g_md5, "ztf2r": raw_r_md5},
         "changed_object_count": len(objects),
@@ -266,9 +262,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--source-run-id", required=True)
     parser.add_argument("--previous-run-id", required=True)
-    parser.add_argument("--parent-sha256", required=True)
-    parser.add_argument("--current-candidate-sha256", required=True)
-    parser.add_argument("--previous-candidate-sha256", required=True)
+    parser.add_argument("--parent-table2", type=Path, required=True)
     parser.add_argument("--raw-g-md5", required=True)
     parser.add_argument("--raw-r-md5", required=True)
     args = parser.parse_args()
@@ -281,9 +275,7 @@ def main() -> int:
         output_path=args.output,
         source_run_id=args.source_run_id,
         previous_run_id=args.previous_run_id,
-        parent_sha256=args.parent_sha256,
-        current_candidate_sha256=args.current_candidate_sha256,
-        previous_candidate_sha256=args.previous_candidate_sha256,
+        parent_table2_path=args.parent_table2,
         raw_g_md5=args.raw_g_md5,
         raw_r_md5=args.raw_r_md5,
     )
