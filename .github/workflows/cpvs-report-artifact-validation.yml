@@ -22,6 +22,13 @@ jobs:
           python-version: "3.11.16"
           cache: pip
 
+      - name: Install locked dependencies and package
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip==26.2 setuptools==84.1.0 wheel==0.48.0
+          python -m pip install -r requirements.lock
+          python -m pip install -e . --no-deps
+
       - name: Resolve source workflow run ID
         id: source
         shell: bash
