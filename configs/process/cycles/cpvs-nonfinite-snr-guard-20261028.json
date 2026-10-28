@@ -26,21 +26,24 @@
       "regression_protection_count": {
         "before": 0,
         "after": 1,
-        "status": "NOT_VERIFIED"
+        "status": "MEASURED"
       }
     }
   },
   "validation": {
-    "status": "PENDING_CI",
+    "status": "CI_PASS_SCIENTIFIC_ATTRIBUTION_PENDING",
     "scientific_gate_affected": false,
     "evidence": [
-      "PR #237 adds an explicit finite-SNR guard and a focused synthetic regression test.",
-      "CI run 40592880873 failed at the cumulative lifecycle gate because this change lacked its required cycle record; the test suite was skipped, so test behavior is not yet verified."
+      "Latest PR-head CI run 40657313692 passed Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate.",
+      "CodeQL run 40657313727 passed.",
+      "Product Scope Audit run 40657313695 passed.",
+      "Scientific Validation run 40657313694 passed only the benchmark/lifecycle contract stage; source-backed DR24, ALeRCE, and CPVS derivation stages were skipped because this is not a ci/heavy/* branch.",
+      "The explicit finite-SNR guard and focused synthetic regression test are present, but source-backed attribution of the two-candidate count drift has not been established."
     ],
-    "blocker": "Run fresh CI after adding this cycle record; inspect the full test suite and package verification. Separately measure non-finite-SNR contribution against hash-pinned source artifacts before claiming any change to CPVS counts."
+    "blocker": "Keep this PR unmerged until a source-backed replay identifies the exact object IDs affected by non-finite SNR and verifies no unintended membership changes; separately resolve the 11,604 candidate-only CPVS discrepancy and publisher selection semantics."
   },
   "failure_analysis": {
-    "status": "ROOT_CAUSE_IDENTIFIED",
+    "status": "CODE_PATH_CONFIRMED_SOURCE_IMPACT_UNMEASURED",
     "root_causes": [
       "The negative-only comparison does not reject NaN values.",
       "The first CI attempt was blocked by the repository's required cumulative lifecycle record being absent."
@@ -55,15 +58,16 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "BLOCKED",
     "open_blockers": [
-      "Fresh CI must complete the test suite and package/runtime checks.",
-      "Source-backed attribution must identify whether any candidate-only IDs depended on non-finite SNR rows."
+      "Source-backed attribution must identify whether any candidate-only IDs depended on non-finite SNR rows.",
+      "The separate 11,604-object CPVS membership discrepancy and full publisher selection semantics remain unresolved."
     ]
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
-    "Do not merge this change until fresh required CI checks pass.",
+    "CI on PR head be2e43c233897f422ad2241ff42639f732b2d712 passed all required CI jobs, including test suite, runtime smoke tests, package verification, and dependency audit.",
+    "Do not merge this change until source-backed attribution establishes the exact effect of the finite-SNR guard on object-level candidate IDs.",
     "Do not claim CPVS exact reconstruction from a matching count alone.",
     "Keep the immutable v0.2.0 scientific baseline and v1.0.1 release artifacts unchanged."
   ]
