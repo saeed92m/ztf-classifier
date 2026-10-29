@@ -44,7 +44,11 @@ These tests are regression coverage for the diagnostic helper, not a claim of a 
 
 ## CPVS remains a separate reference-reproduction track
 
-The current CPVS comparison is still a reference-membership result, not independent astrophysical truth. Current source-backed counts are 781,602 parent objects, 741,786 candidates, 730,184 published members, 11,602 candidate-only and zero published-only. The four-field diagnostic condition matches the published set on the pinned artifact, but is not proven to be the historical publisher's exact rule. No production CPVS selection rule is changed by this policy work.
+The historical pinned source-backed run [39009787627](https://github.com/saeed92m/ztf-classifier/actions/runs/39009787627) recorded 781,602 parent objects, 741,786 reconstructed candidates, 730,184 published members, 11,602 candidate-only, and zero published-only. Those counts describe that exact source/code revision, not a current validated candidate set.
+
+The later run [40785255949](https://github.com/saeed92m/ztf-classifier/actions/runs/40785255949) returned 741,787 candidates, but the independent Table 4 acquisition failed and no current candidate/reference difference was computed. That run also used the then-current `main` derivation, which still interpreted SourceID by row ordinal; it does not validate the authoritative Table 2 Seq parser proposed in PR #219. Therefore the 741,787 count is a run-specific diagnostic, not a confirmed Seq-based result.
+
+The four-field diagnostic condition is not proven to be the historical publisher's exact rule. Issue #170 remains **UNRESOLVED**; no production CPVS selection rule is changed by this missing-data policy work.
 
 ## External method references
 
