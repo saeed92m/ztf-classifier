@@ -253,9 +253,9 @@ def run(table2: Path, table4: Path | None, zenodo_csv: Path | None) -> dict:
     report["counts"]["table2_unique_seq"] = len(seq_to_name)
     report["counts"]["seq_min"] = min(seq_to_name)
     report["counts"]["seq_max"] = max(seq_to_name)
-    report["counts"]["seq_gaps"] = len(seq_to_name) - (
+    report["counts"]["seq_gaps"] = (
         max(seq_to_name) - min(seq_to_name) + 1
-    )
+    ) - len(seq_to_name)
     report["counts"]["four_field_count"] = len(four_field)
     report["counts"]["null_per_field"] = per_field_null
     report["counts"]["nonpositive_nonnull_per_field"] = per_field_nonpositive
