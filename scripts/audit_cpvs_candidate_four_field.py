@@ -55,10 +55,13 @@ def ids_hash(ids: set[int]) -> str:
     return hashlib.sha256("".join(f"{x}\n" for x in sorted(ids)).encode()).hexdigest()
 
 
-def audit(table2: Path, table4: Path, candidates_file: Path,
-          expected_parent: int | None = 781602, expected_published: int | None = 730184) -> dict:
+def audit(table2: Path, table4: Path | None, candidates_file: Path,
+          expected_parent: int | None = 781602, expected_published: int | None = 730184,
+          zenodo_csv: Path | None = None) -> dict:
+    if (table4 is None) == (zenodo_csv is None):
+        raise ValueError("supply exactly one of table4 or zenodo_csv")
     t2 = read_vizier(table2, ("ID", "Seq", "gmag", "rmag", "Per-g", "Per-r"))
-    t4 = read_vizier(table4, ("ZTF", "ID"))
+    t4 = read_vizier(table4, ("ZTF", "ID")) if table4 is not None else None
     name_to_seq, seq_to_name, four = {}, {}, set()
     for row in t2:
         name, seq = row["ID"].strip(), int(row["Seq"])
@@ -73,14 +76,30 @@ def audit(table2: Path, table4: Path, candidates_file: Path,
         if all(v > 0 for v in vals):
             four.add(seq)
     published, seen_names = set(), set()
-    for row in t4:
-        name = row["ZTF"].strip()
-        if name in seen_names:
-            raise ValueError(f"duplicate Table 4 ZTF name: {name}")
-        seen_names.add(name)
-        if name not in name_to_seq:
-            raise ValueError(f"Table 4 name not mapped to Table 2: {name}")
-        published.add(name_to_seq[name])  # crosswalk by name; never assume Table4.ID == Seq
+    if t4 is not None:
+        for row in t4:
+            name = row["ZTF"].strip()
+            if name in seen_names:
+                raise ValueError(f"duplicate Table 4 ZTF name: {name}")
+            seen_names.add(name)
+            if name not in name_to_seq:
+                raise ValueError(f"Table 4 name not mapped to Table 2: {name}")
+            published.add(name_to_seq[name])  # crosswalk by name; never assume Table4.ID == Seq
+    else:
+        with zenodo_csv.open(encoding="utf-8", newline="") as stream:
+            reader = csv.DictReader(stream)
+            if not reader.fieldnames or "ID" not in reader.fieldnames:
+                raise ValueError(f"Zenodo CSV must contain ID column; found {reader.fieldnames!r}")
+            for row in reader:
+                name = (row.get("ID") or "").strip()
+                if not name:
+                    continue
+                if name in seen_names:
+                    raise ValueError(f"duplicate Zenodo ZTF name: {name}")
+                seen_names.add(name)
+                if name not in name_to_seq:
+                    raise ValueError(f"Zenodo name not mapped to Table 2: {name}")
+                published.add(name_to_seq[name])
     candidates = read_candidates(candidates_file)
     parent = set(seq_to_name)
     if candidates - parent:
@@ -115,7 +134,9 @@ def audit(table2: Path, table4: Path, candidates_file: Path,
       },
       "inputs": {
         "table2":{"path":str(table2),"bytes":table2.stat().st_size,"sha256":hashlib.sha256(table2.read_bytes()).hexdigest()},
-        "table4":{"path":str(table4),"bytes":table4.stat().st_size,"sha256":hashlib.sha256(table4.read_bytes()).hexdigest()},
+        **({"table4":{"path":str(table4),"bytes":table4.stat().st_size,"sha256":hashlib.sha256(table4.read_bytes()).hexdigest()}} if table4 is not None else {}),
+        **({"zenodo_csv":{"path":str(zenodo_csv),"bytes":zenodo_csv.stat().st_size,"sha256":hashlib.sha256(zenodo_csv.read_bytes()).hexdigest()}} if zenodo_csv is not None else {}),
+        "published_membership_source": "VizieR J/ApJ/932/118 table4" if table4 is not None else "Zenodo DOI 10.5281/zenodo.5764899 1st_layer.csv",
         "candidates":{"path":str(candidates_file),"bytes":candidates_file.stat().st_size,"sha256":hashlib.sha256(candidates_file.read_bytes()).hexdigest()}
       }
     }
@@ -124,11 +145,12 @@ def audit(table2: Path, table4: Path, candidates_file: Path,
 def main() -> int:
     p=argparse.ArgumentParser()
     p.add_argument("--table2",type=Path,required=True)
-    p.add_argument("--table4",type=Path,required=True)
+    p.add_argument("--table4",type=Path)
+    p.add_argument("--zenodo-csv",type=Path)
     p.add_argument("--candidates",type=Path,required=True)
     p.add_argument("--out",type=Path,required=True)
     a=p.parse_args()
-    report=audit(a.table2,a.table4,a.candidates)
+    report=audit(a.table2,a.table4,a.candidates,zenodo_csv=a.zenodo_csv)
     a.out.parent.mkdir(parents=True,exist_ok=True)
     a.out.write_text(json.dumps(report,indent=2,sort_keys=True)+"\n",encoding="utf-8")
     print(json.dumps(report,indent=2,sort_keys=True))
