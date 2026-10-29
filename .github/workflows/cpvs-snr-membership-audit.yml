@@ -94,7 +94,7 @@ jobs:
         with:
           name: cpvs-independent-two-table-audit
           path: |
-${{ runner.temp }}/cpvs-two-table/cpvs_two_table_audit.json
+            ${{ runner.temp }}/cpvs-two-table/cpvs_two_table_audit.json
             ${{ runner.temp }}/cpvs-two-table/cpvs_four_field_only_ids.txt
             ${{ runner.temp }}/cpvs-two-table/cpvs_published_only_ids.txt
             ${{ runner.temp }}/cpvs-two-table/source-tables.sha256
