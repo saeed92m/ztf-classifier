@@ -47,3 +47,29 @@ def test_candidate_intersection_crosswalks_table4_by_ztf_name(tmp_path: Path) ->
     }
     assert report["verdict"]["four_field_intersection_exact_match"] is True
     assert report["verdict"]["candidate_excess_equals_four_field_failures"] is True
+
+
+def test_zenodo_membership_fallback_joins_by_ztf_name(tmp_path: Path) -> None:
+    table2 = _write(
+        tmp_path / "table2.tsv",
+        "ID\\tSeq\\tgmag\\trmag\\tPer-g\\tPer-r\\n"
+        "ZTF1\\t1\\t18.1\\t17.9\\t0.4\\t0.5\\n"
+        "ZTF2\\t2\\t19.1\\t18.9\\t0.6\\t0.7\\n"
+        "ZTF3\\t3\\t0\\t18.0\\t0.8\\t0.9\\n"
+        "ZTF4\\t4\\t17.1\\t16.9\\t0.2\\t0.3\\n",
+    )
+    zenodo = _write(
+        tmp_path / "1st_layer.csv",
+        "ID,class\\nZTF1,RR\\nZTF2,EW\\n",
+    )
+    candidates = _write(tmp_path / "selected.tsv", "SourceID\\n1\\n2\\n3\\n")
+
+    report = audit(
+        table2, None, candidates, expected_parent=None, expected_published=None,
+        zenodo_csv=zenodo,
+    )
+
+    assert report["counts"]["published"] == 2
+    assert report["counts"]["filtered_candidate_only"] == 0
+    assert report["verdict"]["four_field_intersection_exact_match"] is True
+    assert report["inputs"]["published_membership_source"].startswith("Zenodo DOI")
