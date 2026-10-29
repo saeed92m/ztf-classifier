@@ -1,0 +1,77 @@
+{
+  "stage_id": "CPVS-2026-10-30-residual-membership-audit",
+  "objective": "Diagnose the 11,602-object CPVS candidate excess with source-backed object-level evidence while preserving the v0.2.0 scientific baseline.",
+  "previous_knowledge_consumed": [
+    "CPVS-781602-parent-object-count",
+    "CPVS-730184-published-membership-count",
+    "CPVS-741786-reconstructed-candidate-count",
+    "CPVS-11602-candidate-only-excess"
+  ],
+  "baseline": {
+    "revision": "8e9834626c3ca7b7107ca767d756531363310184",
+    "parent_objects_reported": 781602,
+    "published_reference_objects_reported": 730184,
+    "reconstructed_candidates_reported": 741786,
+    "candidate_only_excess_reported": 11602,
+    "production_selector_changed": false
+  },
+  "expected_improvement": [
+    "Obtain a reproducible, source-backed explanation for the CPVS membership discrepancy without weakening scientific acceptance criteria."
+  ],
+  "measurement": {
+    "metrics": {
+      "reconstructed_candidate_count": {
+        "before": 741786,
+        "after": 730184,
+        "status": "MEASURED",
+        "note": "Historical empirical filtering result only; not yet established as the authors' intended rule."
+      },
+      "published_reference_count": {
+        "before": 730184,
+        "after": 730184,
+        "status": "MEASURED",
+        "note": "Reference catalogue count; membership semantics remain under validation."
+      }
+    }
+  },
+  "validation": {
+    "evidence": [
+      "GitHub Actions run 40966809678: Format Check and Lint passed.",
+      "GitHub Actions run 40966809678: direct 17-object audit downloaded Zenodo 10.5281/zenodo.5764899 and verified the published MD5.",
+      "GitHub Actions run 40966809678: direct audit failed before membership comparison because its VizieR parser never recognized the data header; all 17 IDs reported missing are therefore not membership results.",
+      "CPVS residual report docs/scientific_validation/CPVS_RESIDUAL_17_AUDIT_2026-10-30.md"
+    ],
+    "scientific_gate_affected": true,
+    "status": "BLOCKED",
+    "blocker": "The corrected VizieR header parser must be executed and the 17-object SourceID-to-reference membership result verified. The full 11,602-object discrepancy remains unresolved."
+  },
+  "failure_analysis": {
+    "status": "root-cause-partially-identified",
+    "root_causes": [
+      "The targeted CI script incorrectly expected a single #Column metadata line to contain both ID and Seq; VizieR emits one metadata line per column followed by a separate tab-delimited data header.",
+      "The prior failure to map all 17 IDs is an audit-script parsing failure and must not be interpreted as evidence of reference non-membership.",
+      "The scientific cause of the 11,602 candidate excess is not yet proven."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "A failed ID crosswalk can arise before any membership comparison; the audit must validate its parsed schema before reporting per-object membership.",
+      "A successful Zenodo checksum verifies downloaded bytes, not the correctness of the object-level crosswalk or scientific interpretation.",
+      "The reconstruction and production scientific gates must remain blocked until full membership and provenance evidence are independently verified."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Re-run the corrected direct 17-object audit and inspect the uploaded per-object JSON.",
+      "Reproduce the comparison for all 11,602 candidate-only IDs and establish the root cause."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "CPVS-2026-10-30-residual-membership-audit",
+    "Do not interpret a parser failure as membership evidence.",
+    "Do not alter the production selector, thresholds, model, or acceptance criteria to force a match."
+  ]
+}
