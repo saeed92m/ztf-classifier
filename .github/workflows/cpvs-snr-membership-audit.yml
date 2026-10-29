@@ -56,7 +56,7 @@ jobs:
           curl --location --fail --show-error --silent \
             --retry 4 --retry-all-errors --retry-delay 3 \
             --connect-timeout 30 --max-time 1800 --speed-time 120 --speed-limit 1024 \
-            "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" \
+            "https://zenodo.org/api/records/3886372/files/ztf2r.zip/content" \
             -o ztf2r.zip
           echo "daa7bc45c67579253eebe1b6c09dfbd9  ztf2r.zip" | md5sum --check -
 
