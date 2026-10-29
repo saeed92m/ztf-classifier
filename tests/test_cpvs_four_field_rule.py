@@ -240,6 +240,21 @@ def test_set_digests_are_present_for_out_of_band_verification(tmp_path, small_co
         assert isinstance(digest, str) and len(digest) == 64
 
 
+def test_seq_gaps_counts_missing_ids_as_positive(tmp_path, small_contract):
+    t2, t4 = _write(
+        tmp_path,
+        [
+            vfr._make_t2_row("ZTF1aaa", 1, 18.5, 17.2, 12.34, 12.35),
+            vfr._make_t2_row("ZTF2bbb", 2, 19.1, 17.9, 5.5, 5.51),
+            vfr._make_t2_row("ZTF4ddd", 4, 20.0, 19.0, 8.0, 8.01),
+            vfr._make_t2_row("ZTF5eee", 5, 20.0, 19.0, 8.0, 8.01),
+        ],
+        [vfr._make_t4_row("ZTF1aaa", 1), vfr._make_t4_row("ZTF2bbb", 2)],
+    )
+    report = vfr.run(t2, t4, None)
+    assert report["counts"]["seq_gaps"] == 1
+
+
 def test_cli_self_test_passes(capsys):
     assert vfr.main(["--self-test"]) == 0
     out = capsys.readouterr().out
