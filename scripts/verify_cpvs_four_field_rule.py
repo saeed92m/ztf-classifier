@@ -31,7 +31,7 @@ Byte layout (1-based inclusive, from CDS ReadMe `J/ApJS/249/18`):
 
     table2.dat   ID 1-22 A22 | Seq 24-29 I6 | gmag 90-95 F6.3 ?
                  rmag 97-102 F6.3 ? | Per-g 104-116 F13.7 ? | Per-r 118-130 F13.7 ?
-    table4.dat   ZTF 1-22 A22 | ID 24-29 I6
+    table4.dat   ZTF 1-22 A22 | ID 24-29 I6 (catalogue ID; not assumed equal to Seq)
 
 `?=0` is CDS notation for "nullable, null encoded as 0". Those fields are read
 as None, never as 0.0.
@@ -227,6 +227,7 @@ def run(table2: Path, table4: Path | None, zenodo_csv: Path | None) -> dict:
     # ---- table2 ---------------------------------------------------------
     print("[2/4] parsing table2.dat ...", file=sys.stderr)
     seq_to_name: dict[int, str] = {}
+    name_to_seq: dict[str, int] = {}
     four_field: set[int] = set()
     per_field_null = {f: 0 for f in FIELDS}
     per_field_nonpositive = {f: 0 for f in FIELDS}
@@ -235,7 +236,10 @@ def run(table2: Path, table4: Path | None, zenodo_csv: Path | None) -> dict:
         rows += 1
         if seq in seq_to_name:
             raise ContractError(f"{table2}:{row_no}: duplicate Seq {seq}")
+        if name in name_to_seq:
+            raise ContractError(f"{table2}:{row_no}: duplicate object name {name!r}")
         seq_to_name[seq] = name
+        name_to_seq[name] = seq
         for field, value in zip(FIELDS, values):
             if value is None:
                 per_field_null[field] += 1
@@ -264,45 +268,35 @@ def run(table2: Path, table4: Path | None, zenodo_csv: Path | None) -> dict:
     if table4 is not None:
         print("[3/4] parsing table4.dat ...", file=sys.stderr)
         published: set[int] = set()
-        mismatched = 0
-        examples: list[dict] = []
+        seen_table4_ids: set[int] = set()
         rows4 = 0
+        unmapped_names: list[dict] = []
         for row_no, name, ident in _iter_table4(table4):
             rows4 += 1
-            if ident in published:
-                raise ContractError(f"{table4}:{row_no}: duplicate ID {ident}")
-            published.add(ident)
-            expected = seq_to_name.get(ident)
-            if expected is None:
-                raise ContractError(
-                    f"{table4}:{row_no}: ID {ident} absent from table2.dat Seq set"
-                )
-            if expected != name:
-                mismatched += 1
-                if len(examples) < 5:
-                    examples.append(
-                        {
-                            "row": row_no,
-                            "table4_name": name,
-                            "table2_name": expected,
-                            "seq": ident,
-                        }
-                    )
+            if ident in seen_table4_ids:
+                raise ContractError(f"{table4}:{row_no}: duplicate catalogue ID {ident}")
+            seen_table4_ids.add(ident)
+            seq = name_to_seq.get(name)
+            if seq is None:
+                if len(unmapped_names) < 10:
+                    unmapped_names.append({"row": row_no, "name": name, "catalogue_id": ident})
+                continue
+            published.add(seq)
         if rows4 != TABLE4_REQUIRED_ROWS:
             raise ContractError(
                 f"table4.dat row count mismatch: expected {TABLE4_REQUIRED_ROWS}, got {rows4}"
             )
         report["counts"]["table4_rows"] = rows4
-        report["counts"]["table4_name_seq_mismatches"] = mismatched
-        report["counts"]["table4_mismatch_examples"] = examples
-        if mismatched:
+        report["counts"]["table4_unique_catalogue_ids"] = len(seen_table4_ids)
+        report["counts"]["table4_unmapped_names_count"] = rows4 - len(published)
+        report["counts"]["table4_unmapped_name_examples"] = unmapped_names
+        if rows4 - len(published):
             raise ContractError(
-                f"{mismatched} table4 rows carry a ZTF name that does not match "
-                "table2.dat at the same Seq: the ID<->Seq namespace assumption is "
-                "refuted; refusing to compare sets."
+                f"{rows4 - len(published)} published Table 4 names could not be mapped "
+                "to Table 2 object names; refusing to compare sets."
             )
         report["counts"]["identifier_crosscheck"] = (
-            "PASS (table4.ID == table2.Seq, names agree)"
+            "PASS (published ZTF names mapped to Table 2 Seq; Table4.ID not equated to Seq)"
         )
     elif zenodo_csv is not None:
         print("[3/4] reading Zenodo 1st_layer.csv ...", file=sys.stderr)
@@ -446,7 +440,7 @@ def self_test() -> int:
                 "verdict"
             ]
 
-            # A name/Seq mismatch must abort rather than compare sets.
+            # An unknown published object name must abort rather than compare sets.
             t4.write_text(
                 "\n".join([_make_t4_row("ZTF9zzz", 1), _make_t4_row("ZTF3ccc", 3)])
                 + "\n"
@@ -454,7 +448,7 @@ def self_test() -> int:
             try:
                 run(t2, t4, None)
             except ContractError as exc:
-                assert "namespace assumption is refuted" in str(exc), exc
+                assert "published Table 4 names could not be mapped" in str(exc), exc
             else:
                 raise AssertionError("name/Seq mismatch did not abort")
 
