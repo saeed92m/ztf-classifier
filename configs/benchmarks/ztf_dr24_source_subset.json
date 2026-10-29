@@ -38,12 +38,14 @@
       "objects_prefix": "ztf/enhanced/dr24/objects/hats/ztf_dr24_objects-hats",
       "object_id_column": "oid",
       "selection": {
-        "method": "deterministic_lexicographic",
+        "method": "sha256_ranked_across_evenly_spaced_hats_index_fragments",
         "order_by": [
           "oid"
         ],
         "limit": 150,
-        "source": "HATS secondary index over the DR24 Objects Table"
+        "source": "HATS secondary index; evenly spaced ordered fragments and deterministic SHA-256 ranking within each fragment",
+        "seed": "DR24-HATS-INDEX-SAMPLE-v1",
+        "fragment_sample_count": 15
       },
       "observation_cutoff": "DR24 release boundary; source catalog is the DR24 Objects Table HATS collection",
       "expected_columns": [

@@ -403,6 +403,14 @@ jobs:
           mkdir -p reports/scientific_validation/external_source_evidence
           python scripts/acquire_external_source_evidence.py --output-root reports/scientific_validation/external_source_evidence --code-version "${GITHUB_SHA}"
 
+      - name: Run real DR24 lightcurve through the native feature engine
+        run: |
+          set -euo pipefail
+          python scripts/smoke_dr24_lightcurve_pipeline.py \
+            --objects-tsv reports/scientific_validation/external_source_evidence/ztf_dr24_source_subset/response.tsv \
+            --output-dir reports/scientific_validation/external_source_evidence/ztf_dr24_source_subset/lightcurve-smoke \
+            --max-objects 12
+
       - name: Validate external evidence contract
         run: |
           set -euo pipefail

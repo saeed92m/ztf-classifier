@@ -186,10 +186,27 @@ def _dr24_plan(manifest: BenchmarkManifest) -> AdapterPlan:
     selection = query["selection"]
     if not isinstance(selection, dict):
         raise AdapterContractError("DR24 selection contract must be an object")
-    if selection.get("method") != "deterministic_lexicographic":
-        raise AdapterContractError("DR24 selection must be deterministic_lexicographic")
+    method = selection.get("method")
+    supported_methods = {
+        "deterministic_lexicographic",
+        "sha256_ranked_across_evenly_spaced_hats_index_fragments",
+    }
+    if method not in supported_methods:
+        raise AdapterContractError(
+            "DR24 selection method must be one of "
+            + ", ".join(sorted(supported_methods))
+        )
     if selection.get("order_by") != ["oid"]:
         raise AdapterContractError("DR24 selection must order by oid")
+    if method == "sha256_ranked_across_evenly_spaced_hats_index_fragments":
+        seed = selection.get("seed")
+        fragment_count = selection.get("fragment_sample_count")
+        if not isinstance(seed, str) or not seed.strip():
+            raise AdapterContractError("DR24 fragment selection requires a non-empty seed")
+        if isinstance(fragment_count, bool) or not isinstance(fragment_count, int) or fragment_count < 1:
+            raise AdapterContractError(
+                "DR24 fragment selection requires positive fragment_sample_count"
+            )
     if selection.get("limit") != 150:
         raise AdapterContractError(
             "DR24 benchmark subset must contain exactly 150 requested objects"
