@@ -37,7 +37,7 @@ Byte layout (1-based inclusive, from CDS ReadMe `J/ApJS/249/18`):
 as None, never as 0.0.
 
 Fail-closed by design: a short line, a non-numeric field, an unexpected row
-count, a duplicate or out-of-range Seq, or a Table4 name/Seq mismatch aborts
+count, a duplicate or out-of-range Seq, or an unmappable Table 4 object name aborts
 with a non-zero exit code. It cannot silently emit a plausible empty result.
 
 Standard library only -- no pip install required.
@@ -99,7 +99,7 @@ def _sha256(path: Path, chunk: int = 1 << 20) -> str:
 def _nullable_float(raw: str) -> float | None:
     """Parse a CDS `?=0` field. Blank and 0 are null, not 0.0."""
     text = raw.strip()
-    if not text:
+    if not text or text in {"?", "--", "null", "NULL"}:
         return None
     try:
         value = float(text.replace("D", "E").replace("d", "e"))
@@ -111,15 +111,46 @@ def _nullable_float(raw: str) -> float | None:
 
 
 def _iter_table2(path: Path):
-    """Yield (row_no, name, seq, four_values). Fails closed on any deviation."""
+    """Yield Table 2 records from CDS fixed-width or VizieR ASU-TSV output."""
     with path.open("rb") as handle:
+        columns: dict[str, int] | None = None
         for row_no, raw in enumerate(handle, start=1):
             line = raw.decode("utf-8", errors="strict").rstrip("\r\n")
-            if not line:
-                raise ContractError(f"{path}:{row_no}: blank line inside table2.dat")
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            if "\t" in line:
+                fields = [value.strip() for value in line.split("\t")]
+                header = {value: i for i, value in enumerate(fields)}
+                required = {"ID", "Seq", "gmag", "rmag", "Per-g", "Per-r"}
+                if required.issubset(header):
+                    columns = header
+                    continue
+                if columns is None:
+                    raise ContractError(
+                        f"{path}:{row_no}: tabular input has no recognizable ID/Seq header"
+                    )
+                if max(columns[name] for name in required) >= len(fields):
+                    raise ContractError(f"{path}:{row_no}: truncated VizieR TSV row")
+                name = fields[columns["ID"]].strip()
+                seq_text = fields[columns["Seq"]].strip()
+                if not name.upper().startswith("ZTF") or not seq_text.isdecimal():
+                    raise ContractError(
+                        f"{path}:{row_no}: invalid VizieR ID/Seq values {name!r}, {seq_text!r}"
+                    )
+                values = []
+                for label in ("gmag", "rmag", "Per-g", "Per-r"):
+                    try:
+                        values.append(_nullable_float(fields[columns[label]]))
+                    except ValueError:
+                        raise ContractError(
+                            f"{path}:{row_no}: non-numeric {label}: {fields[columns[label]]!r}"
+                        ) from None
+                yield row_no, name, int(seq_text), tuple(values)
+                continue
+
             if len(line) < MIN_T2_LEN:
                 raise ContractError(
-                    f"{path}:{row_no}: truncated row ({len(line)} chars; "
+                    f"{path}:{row_no}: truncated fixed-width row ({len(line)} chars; "
                     f"need >= {MIN_T2_LEN} to reach Per-r at bytes 118-130)"
                 )
             name = _span(line, S2_NAME)
@@ -153,16 +184,37 @@ def _iter_table2(path: Path):
                     ) from None
             yield row_no, name.strip(), seq, tuple(values)
 
-
 def _iter_table4(path: Path):
+    """Yield published Table 4 names and catalogue IDs from CDS or VizieR TSV."""
     with path.open("rb") as handle:
+        columns: dict[str, int] | None = None
         for row_no, raw in enumerate(handle, start=1):
             line = raw.decode("utf-8", errors="strict").rstrip("\r\n")
-            if not line:
-                raise ContractError(f"{path}:{row_no}: blank line inside table4.dat")
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            if "\t" in line:
+                fields = [value.strip() for value in line.split("\t")]
+                header = {value: i for i, value in enumerate(fields)}
+                if {"ZTF", "ID"}.issubset(header):
+                    columns = header
+                    continue
+                if columns is None:
+                    raise ContractError(
+                        f"{path}:{row_no}: tabular input has no recognizable ZTF/ID header"
+                    )
+                if max(columns["ZTF"], columns["ID"]) >= len(fields):
+                    raise ContractError(f"{path}:{row_no}: truncated VizieR TSV row")
+                name = fields[columns["ZTF"]].strip()
+                id_text = fields[columns["ID"]].strip()
+                if not name.upper().startswith("ZTF") or not id_text.isdecimal():
+                    raise ContractError(
+                        f"{path}:{row_no}: invalid VizieR ZTF/ID values {name!r}, {id_text!r}"
+                    )
+                yield row_no, name, int(id_text)
+                continue
             if len(line) < MIN_T4_LEN:
                 raise ContractError(
-                    f"{path}:{row_no}: truncated row ({len(line)} chars; "
+                    f"{path}:{row_no}: truncated fixed-width row ({len(line)} chars; "
                     f"need >= {MIN_T4_LEN} to reach ID at bytes 24-29)"
                 )
             id_text = _span(line, S4_ID).strip()
@@ -171,7 +223,6 @@ def _iter_table4(path: Path):
                     f"{path}:{row_no}: ID at bytes 24-29 is {id_text!r}"
                 )
             yield row_no, _span(line, S4_NAME).strip(), int(id_text)
-
 
 def _zenodo_names(path: Path) -> set[str]:
     """Read the `ID` column (ZTF catalog name) from Zenodo 1st_layer.csv."""
@@ -450,7 +501,7 @@ def self_test() -> int:
             except ContractError as exc:
                 assert "published Table 4 names could not be mapped" in str(exc), exc
             else:
-                raise AssertionError("name/Seq mismatch did not abort")
+                raise AssertionError("unknown published name did not abort")
 
             # Truncation must abort rather than be skipped.
             (tmpdir / "short.dat").write_text(
