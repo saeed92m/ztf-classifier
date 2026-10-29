@@ -378,39 +378,7 @@ jobs:
             "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000"; do
             rm -f "$tmp"
             if curl -L --fail --show-error --silent --connect-timeout 20 --max-time 180 --retry 1 "$url" -o "$tmp" &&
-               grep -Fq     name: CI Gate
-    if: ${{ always() }}
-    needs:
-      - audit
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Require all gated stages to pass
-        env:
-          AUDIT_RESULT: ${{ needs.audit.result }}
-        run: |
-          if [ "$AUDIT_RESULT" != "success" ]; then
-            echo "Final gated CI stage failed or was cancelled: $AUDIT_RESULT"
-            exit 1
-          fi
-          echo "All gated CI stages passed."
-#Column\tPer-r' "$tmp" && grep -Fq     name: CI Gate
-    if: ${{ always() }}
-    needs:
-      - audit
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Require all gated stages to pass
-        env:
-          AUDIT_RESULT: ${{ needs.audit.result }}
-        run: |
-          if [ "$AUDIT_RESULT" != "success" ]; then
-            echo "Final gated CI stage failed or was cancelled: $AUDIT_RESULT"
-            exit 1
-          fi
-          echo "All gated CI stages passed."
-#Column\tSeq' "$tmp"; then
+               grep -Fq $'#Column\tPer-r' "$tmp" && grep -Fq $'#Column\tSeq' "$tmp"; then
               mv "$tmp" "$RUNNER_TEMP/cpvs/table2.tsv"
               ok=1
               break
