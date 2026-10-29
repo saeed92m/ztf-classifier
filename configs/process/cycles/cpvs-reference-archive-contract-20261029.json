@@ -22,27 +22,24 @@
   ],
   "measurement": {
     "metrics": {
-      "archive_contract": {
-        "before": "CPVS required_members was empty; only archive checksum and archive readability were checked.",
-        "after": "The source contract explicitly requires 1st_layer.csv, 2nd_layer.csv, and SIMBAD_ZTF_crossmatch.csv; current-head CI pending.",
-        "status": "PARTIAL",
-        "evidence": "Pinned source definition and artifact evidence manifest from scientific validation run 40834565686."
+      "correctness": {
+        "before": "The CPVS archive source contract declared no required member names; the lifecycle validator accepted the record only after its metric schema is corrected.",
+        "after": "The source contract requires 1st_layer.csv, 2nd_layer.csv, and SIMBAD_ZTF_crossmatch.csv; current-head CI and archive-contract tests remain pending."
       },
-      "membership_reproduction": {
-        "before": "Candidate set 741,787 versus expected 730,184; independent object-level comparison unavailable in the failed run.",
-        "after": "Unchanged; this patch does not claim membership comparison or explain the 11,603 excess.",
-        "status": "BLOCKED",
-        "evidence": "Scientific Validation run 40834565686; Issue #170 remains open."
+      "reproducibility": {
+        "before": "The latest source-backed run derived 741,787 candidates against an expected 730,184 reference members, but independent object-level comparison did not complete.",
+        "after": "Unchanged: this patch only hardens archive member validation; the 11,603 run-specific excess remains unexplained."
       }
     },
     "trade_off": "Fail earlier if a published archive's expected file layout changes; require explicit review before accepting a new archive contract."
   },
   "validation": {
-    "status": "PENDING",
+    "status": "NOT_VERIFIED",
     "scientific_gate_affected": true,
     "evidence": [
       "Regression tests added; awaiting current-head CI and source-backed workflow verification."
-    ]
+    ],
+    "blocker": "Current-head CI must pass. The published 730,184 SourceID set has not been extracted and compared object-by-object, and the 11,603 candidate excess remains unexplained."
   },
   "failure_analysis": {
     "status": "known-gap",
@@ -58,14 +55,14 @@
     ]
   },
   "regression": {
-    "status": "PENDING",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
       "Current-head CI not yet observed.",
       "The published 730,184 SourceID set has not been extracted and compared object-by-object.",
       "The root cause of the 11,603 run-specific candidate excess remains unknown."
     ]
   },
-  "decision": "PROPOSED",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Keep CPVS membership discrepancy explicitly blocked until full IDs, source provenance, and FP/FN are independently computed.",
     "Do not infer canonical membership from row count alone.",
