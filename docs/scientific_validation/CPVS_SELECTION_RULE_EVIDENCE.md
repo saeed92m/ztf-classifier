@@ -66,3 +66,8 @@ The isolated branch fix/cpvs-seq-authoritative-ids-20261024 reads bytes 24–29 
 ## Guardrails
 
 No production membership rule, threshold, model baseline, acceptance criterion, release artifact, or issue status is changed by this investigation. A matching count is not a scientific validation result by itself.
+
+
+## Non-finite SNR guard regression
+
+The derivation must explicitly reject non-finite SNR before comparing it to the per-band threshold. In Python, `NaN < threshold` is false, so a negative-only threshold predicate can admit invalid errors. A focused regression test now covers NaN, positive infinity, zero and negative errors, unparseable error text, and one valid row. This guard fixes a demonstrated predicate defect; it does not by itself establish the root cause or resolve the full CPVS membership discrepancy.

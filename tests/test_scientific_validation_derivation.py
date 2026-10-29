@@ -333,3 +333,37 @@ def test_lightcurve_zip_accepts_whitespace_delimited_header(tmp_path: Path):
             "g_flag": "0",
         }
     ]
+
+
+def test_qualified_ids_reject_nonfinite_snr_even_when_magnitude_is_finite(tmp_path: Path):
+    from ztf_classifier.validation.derivation import _qualified_ids
+
+    lightcurve = tmp_path / "g.tsv"
+    lightcurve.write_text(
+        "SourceID\tgmag\te_gmag\n"
+        "BAD_NAN\t15.0\tNaN\n"
+        "BAD_INF\t15.1\tinf\n"
+        "BAD_ZERO_ERROR\t15.2\t0\n"
+        "BAD_NEG_ERROR\t15.3\t-0.1\n"
+        "BAD_TEXT\t15.4\tnot-a-number\n"
+        "GOOD\t15.5\t0.1\n",
+        encoding="utf-8",
+    )
+
+    selected, valid_magnitude = _qualified_ids(
+        lightcurve,
+        sigma=2.5,
+        parent_ids={
+            "BAD_NAN",
+            "BAD_INF",
+            "BAD_ZERO_ERROR",
+            "BAD_NEG_ERROR",
+            "BAD_TEXT",
+            "GOOD",
+        },
+        member=None,
+        error_columns=("e_gmag",),
+    )
+
+    assert selected == {"GOOD"}
+    assert valid_magnitude == {"GOOD"}

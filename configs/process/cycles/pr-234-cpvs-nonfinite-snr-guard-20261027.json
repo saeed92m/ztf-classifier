@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-234-cpvs-nonfinite-snr-guard-20261027",
+  "objective": "Add explicit finite-SNR validation to the authoritative-Seq CPVS derivation path, with regression coverage, without claiming that this guard alone explains the full membership discrepancy.",
+  "previous_knowledge_consumed": [
+    "PR #219 defines the authoritative CPVS Table2 Seq identifier parser; the guard must be validated on top of that branch rather than against the obsolete row-ordinal interpretation.",
+    "Issue #170 remains open: published membership is 730184 objects; candidate-only objects remain unexplained and the four-field metadata predicate is diagnostic only.",
+    "Code inspection established that NaN < sigma is false, so a negative-only SNR comparison can admit invalid magnitude-error rows."
+  ],
+  "baseline": {
+    "revision": "main@985cba03d3f9827ba249f031e25bf1b4b05f453a",
+    "description": "PR #219's authoritative Seq parser is merged into main at 985cba03d3f9827ba249f031e25bf1b4b05f453a. This change adds only the explicit finite-SNR guard and its regression coverage; the full-data membership impact and publisher selection semantics remain unresolved."
+  },
+  "change": {
+    "scope": "Explicitly require finite SNR before applying the per-band threshold; add regression coverage for NaN, infinity, zero/negative errors, malformed text, and a valid qualifying row; document scientific limitations.",
+    "rationale": "Python's NaN comparison behavior allows invalid errors to bypass a negative-only threshold guard."
+  },
+  "expected_improvement": [
+    "correctness",
+    "robustness",
+    "scientific_validity"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "A non-finite SNR could pass the threshold-only predicate because NaN < sigma evaluates false.",
+        "after": "The proposed code rejects non-finite SNR values; full-data membership impact is not yet measured.",
+        "status": "PARTIAL",
+        "evidence": "PR #234 code diff and synthetic regression test."
+      },
+      "regression_protection_count": {
+        "before": 0,
+        "after": 1,
+        "status": "MEASURED",
+        "evidence": "Focused test covers invalid and valid magnitude-error cases."
+      }
+    },
+    "trade_off": "Rejecting invalid SNR is a correctness guard; it does not establish the publisher's full selection rule or prove how many candidate-only IDs it explains."
+  },
+  "validation": {
+    "status": "BLOCKED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "PR #219's authoritative Seq parser is merged into main at 985cba03d3f9827ba249f031e25bf1b4b05f453a.",
+      "The previous stacked head's Scientific Validation contract passed in run 40873097512, but source-backed jobs were skipped and therefore do not establish CPVS membership validity.",
+      "A clean main-based head must pass current CI, package, dependency, CodeQL, Product Scope, and lifecycle checks."
+    ],
+    "blocker": "Fresh current-head engineering checks must pass; source-backed replay must quantify IDs admitted by non-finite SNR and IDs removed by the guard against pinned CPVS inputs. Published selection semantics and full candidate/reference membership remain unresolved."
+  },
+  "failure_analysis": {
+    "status": "known-failure",
+    "root_causes": [
+      "A negative-only numeric threshold does not reject NaN values.",
+      "The current full-dataset contribution of non-finite-SNR rows to the candidate-only set has not been quantified.",
+      "The independent 11602/11604 candidate-only CPVS membership discrepancy remains unresolved."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Scientific numeric predicates must check finiteness before threshold comparisons.",
+      "Regression tests on synthetic inputs prove the guard behavior only; they do not quantify full-data membership impact.",
+      "Seq identifier correctness and finite-SNR correctness are separate requirements and should be validated together on the exact source artifacts."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Fresh current-head CI and security checks must pass after the branch is based directly on main.",
+      "A source-backed replay must report IDs admitted by non-finite SNR, IDs removed by the guard, and intersection with candidate-only IDs.",
+      "Exact CPVS selection semantics and the full candidate/reference membership discrepancy remain unresolved."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "PR #219 is merged into main at 985cba03d3f9827ba249f031e25bf1b4b05f453a; this guard is now based directly on main.",
+    "Do not tune thresholds, hardcode IDs, or use the four-field diagnostic predicate as the publisher's rule without primary-method evidence.",
+    "Preserve v0.2.0 and v1.0.1 unchanged and keep Issue #170 open."
+  ]
+}
