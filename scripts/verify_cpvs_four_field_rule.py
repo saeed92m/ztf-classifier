@@ -118,16 +118,16 @@ def _iter_table2(path: Path):
             line = raw.decode("utf-8", errors="strict").rstrip("\r\n")
             if not line.strip():
                 continue
-            if line.startswith("#Column\\t"):
-                meta = [value.strip() for value in line.split("\\t")]
+            if line.startswith("#Column\t"):
+                meta = [value.strip() for value in line.split("\t")]
                 if len(meta) >= 2:
                     columns = columns or {}
                     columns[meta[1]] = len(columns)
                 continue
             if line.lstrip().startswith("#"):
                 continue
-            if "\\t" in line:
-                fields = [value.strip() for value in line.split("\\t")]
+            if "\t" in line:
+                fields = [value.strip() for value in line.split("\t")]
                 header = {value: i for i, value in enumerate(fields)}
                 required = {"ID", "Seq", "gmag", "rmag", "Per-g", "Per-r"}
                 if required.issubset(header):
@@ -200,18 +200,28 @@ def _iter_table4(path: Path):
         columns: dict[str, int] | None = None
         for row_no, raw in enumerate(handle, start=1):
             line = raw.decode("utf-8", errors="strict").rstrip("\r\n")
-            if not line.strip() or line.lstrip().startswith("#"):
+            if not line.strip():
                 continue
-            if "\t" in line:
-                fields = [value.strip() for value in line.split("\t")]
+            if line.startswith("#Column\\t"):
+                meta = [value.strip() for value in line.split("\\t")]
+                if len(meta) >= 2:
+                    columns = columns or {}
+                    columns[meta[1]] = len(columns)
+                continue
+            if line.lstrip().startswith("#"):
+                continue
+            if "\\t" in line:
+                fields = [value.strip() for value in line.split("\\t")]
                 header = {value: i for i, value in enumerate(fields)}
                 if {"ZTF", "ID"}.issubset(header):
                     columns = header
                     continue
                 if columns is None:
                     raise ContractError(
-                        f"{path}:{row_no}: tabular input has no recognizable ZTF/ID header"
+                        f"{path}:{row_no}: tabular input has no recognizable ZTF/ID columns"
                     )
+                if fields and (set(fields[0]) <= {"-"} or fields[0] in {"d", "mag"}):
+                    continue
                 if max(columns["ZTF"], columns["ID"]) >= len(fields):
                     raise ContractError(f"{path}:{row_no}: truncated VizieR TSV row")
                 name = fields[columns["ZTF"]].strip()
