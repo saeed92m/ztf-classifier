@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import csv
 from pathlib import Path
 
 from scripts.audit_cpvs_candidate_four_field import audit
