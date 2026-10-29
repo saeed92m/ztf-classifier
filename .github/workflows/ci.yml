@@ -356,6 +356,122 @@ jobs:
           done
           exit 1
 
+  cpvs_four_field_diagnostic:
+    name: CPVS four-field real-data diagnostic (investigation only)
+    if: ${{ github.ref == 'refs/heads/investigation/cpvs-four-field-runtime-20261029' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Run synthetic self-test first
+        run: python scripts/verify_cpvs_four_field_rule.py --self-test
+
+      - name: Download and verify compact Table 2 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cpvs"
+          cd "$RUNNER_TEMP/cpvs"
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --max-time 600 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/Table2.txt.zip?download=1" \
+            -o Table2.txt.zip
+          echo "24dd4cf138a2687901d64b2d029cc624  Table2.txt.zip" | md5sum --check -
+          member="$(unzip -Z1 Table2.txt.zip | grep -E '(^|/)Table2\.txt    if: ${{ always() }}
+    needs:
+      - audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require all gated stages to pass
+        env:
+          AUDIT_RESULT: ${{ needs.audit.result }}
+        run: |
+          if [ "$AUDIT_RESULT" != "success" ]; then
+            echo "Final gated CI stage failed or was cancelled: $AUDIT_RESULT"
+            exit 1
+          fi
+          echo "All gated CI stages passed."
+ | head -n 1)"
+          test -n "$member"
+          unzip -p Table2.txt.zip "$member" > table2.dat
+          test -s table2.dat
+          printf 'Table2 archive member: %s\n' "$member"
+          wc -l table2.dat
+          sha256sum Table2.txt.zip table2.dat | tee table2.sha256
+
+      - name: Download and verify independent published membership
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs"
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --max-time 900 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/5764899/files/Zenodo.zip?download=1" \
+            -o Zenodo.zip
+          echo "7fc6562d4208cbfa97366351984810e3  Zenodo.zip" | md5sum --check -
+          member="$(unzip -Z1 Zenodo.zip | grep -E '(^|/)1st_layer\.csv    if: ${{ always() }}
+    needs:
+      - audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require all gated stages to pass
+        env:
+          AUDIT_RESULT: ${{ needs.audit.result }}
+        run: |
+          if [ "$AUDIT_RESULT" != "success" ]; then
+            echo "Final gated CI stage failed or was cancelled: $AUDIT_RESULT"
+            exit 1
+          fi
+          echo "All gated CI stages passed."
+ | head -n 1)"
+          test -n "$member"
+          unzip -p Zenodo.zip "$member" > 1st_layer.csv
+          test -s 1st_layer.csv
+          printf 'Membership archive member: %s\n' "$member"
+          wc -l 1st_layer.csv
+          sha256sum Zenodo.zip 1st_layer.csv | tee membership.sha256
+
+      - name: Compare exact object-level sets
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs"
+          python "$GITHUB_WORKSPACE/scripts/verify_cpvs_four_field_rule.py" \
+            --table2 table2.dat \
+            --zenodo-csv 1st_layer.csv \
+            --out "$GITHUB_WORKSPACE/cpvs_four_field_report.json"
+          cat "$GITHUB_WORKSPACE/cpvs_four_field_report.json" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo
+            echo "### Input checksums"
+            echo '~~~text'
+            cat table2.sha256 membership.sha256
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-four-field-real-data-report
+          path: |
+            cpvs_four_field_report.json
+            ${{ runner.temp }}/cpvs/table2.sha256
+            ${{ runner.temp }}/cpvs/membership.sha256
+          if-no-files-found: warn
+          retention-days: 30
+
   gate:
     name: CI Gate
     if: ${{ always() }}
