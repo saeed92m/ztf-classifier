@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-219-cpvs-seq-authoritative-ids-20261024",
+  "objective": "Replace synthesized CPVS identifiers with authoritative Table 2 Seq values while preserving fail-closed behavior and the unresolved scientific membership blocker.",
+  "previous_knowledge_consumed": [
+    "PR-170",
+    "PR-179",
+    "PR-201",
+    "CPVS-source-provenance-audit",
+    "cumulative-lifecycle-gate"
+  ],
+  "baseline": {
+    "revision": "8ab1b2f62bcfced39afe84558d8b5f05113d48c0",
+    "status": "CI identified a missing lifecycle record; the record is now present. Code review also found that requiring Seq to equal row ordinal would reject legitimate gaps implied by the official documented range 1..781604 for 781602 records. The parser now preserves authoritative Seq gaps and validates range/uniqueness instead."
+  },
+  "expected_improvement": [
+    "identifier provenance correctness",
+    "reproducibility",
+    "failure transparency",
+    "scientific auditability"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "SourceID may be synthesized from row ordinal in the derivation path",
+        "after": "Read explicit fixed-width Seq and reject malformed, truncated, duplicate, or out-of-range identifiers while preserving legitimate Seq gaps"
+      },
+      "reproducibility": {
+        "before": "Identifier provenance can depend on parser row counting",
+        "after": "Identifier field and fail-closed assumptions are explicit and covered by regression fixtures"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      },
+      "reliability": {
+        "before": "Potential silent identifier misalignment",
+        "after": "Unexpected identifier layouts fail explicitly without treating a valid Seq gap as an error"
+      }
+    }
+  },
+  "validation": {
+    "status": "BLOCKED",
+    "scientific_gate_affected": true,
+    "blocker": "Identifier parser behavior is verified by full source-backed execution, but the scientific stage remains blocked because the corrected derivation produced 741,788 candidates versus 730,184 published members (11,604 candidate-only, zero published-only). Exact historical membership and the two-ID shift between runs remain unresolved.",
+    "evidence": [
+      "Synthetic fixed-width parser tests cover valid rows, legitimate Seq gaps, out-of-range values, duplicate Seq, malformed Seq, and truncation.",
+      "The previous CI run exposed a missing cycle record; the record has been added and the new head's CI is pending.",
+      "Source-backed heavy validation is not established by ordinary PR checks.",
+      "Full source-backed Scientific Validation run 40397098709 completed successfully; CPVS derivation job 121832893823 used this Seq parser implementation.",
+      "The heavy run validated 781602 parent rows; Table2.txt.zip SHA-256 0f3ca5d4e71f674c38b3c08553c12cca0c32d2d31f776166ab29ce80a75cf138; evidence sidecar SHA-256 640a048fc9e40df6e1bdfc1bfcd58ac13ee00ca6aee68ca90e7c5992dbdf7944.",
+      "The Seq-based SNR reconstruction produced 741788 candidates; independent VizieR Table 4 membership has 730184 objects, intersection 730184, candidate-only 11604, published-only 0. Exact membership audit returned false and the workflow classified the scientific status UNRESOLVED.",
+      "Lifecycle status is BLOCKED intentionally: parser correctness is supported by source-backed evidence, but the scientific acceptance criterion (exact membership reproduction) has not passed."
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "The earlier parser proposal incorrectly required Seq to equal row ordinal, despite the official ReadMe's Seq range extending two above the 781602-row count; this was corrected to preserve Seq gaps.",
+      "A matching four-field diagnostic predicate does not prove the original paper's exact selection rule or resolve the 11602-object scientific discrepancy."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Every meaningful PR must include a schema-valid lifecycle record.",
+      "Seq is an authoritative identifier, not a row ordinal; legitimate gaps must be preserved and malformed, out-of-range, or duplicate identifiers rejected.",
+      "Passing parser unit tests does not establish exact CPVS membership reconstruction."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Investigate the 11,604 candidate-only IDs from the corrected Seq-based full-dataset result; the prior 11,602 count used a row-ordinal mapping and is superseded.",
+      "Generate and hash-verify an object-level report from the immutable heavy-run artifact; inspect the two-ID count shift and per-object provenance.",
+      "Do not treat the four-field positivity predicate as a proven historical publisher rule or change production selection criteria until independent evidence supports it."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "CPVS membership discrepancy remains unresolved",
+    "fail-closed scientific validation",
+    "official-source identifier provenance",
+    "frozen v0.2.0 baseline remains unchanged"
+  ]
+}
