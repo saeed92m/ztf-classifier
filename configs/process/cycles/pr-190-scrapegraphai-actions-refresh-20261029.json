@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-190-scrapegraphai-actions-refresh-20261029",
+  "objective": "Bring the manually dispatched ScrapeGraphAI probe workflow in line with the current GitHub Actions versions already used by the repository, while preserving its opt-in external scraping behavior.",
+  "previous_knowledge_consumed": [
+    "Main commit e181b69e6119dd513760035ff1abeaa77f69155a uses actions/checkout@v7 and actions/setup-python@v7 in the core CI, Product Scope Audit, Release, and Scientific Validation workflows.",
+    "PR #190 changes only .github/workflows/scrapegraphai-probe.yml and previously failed the cumulative lifecycle gate because no cycle record was included.",
+    "The probe workflow is manually dispatched; the potentially credit-consuming scrape remains opt-in with default false."
+  ],
+  "baseline": {
+    "revision": "main@e181b69e6119dd513760035ff1abeaa77f69155a",
+    "description": "The probe workflow used actions/checkout@v4 and actions/setup-python@v5, unlike the repository's current v7 workflow baseline."
+  },
+  "change": {
+    "scope": "Update actions/checkout and actions/setup-python versions in the manually dispatched probe workflow and add this lifecycle record. No credentials, secrets, scientific logic, model artifacts, or scraping defaults change.",
+    "rationale": "Align workflow dependencies with the currently used v7 action versions and make the change auditable."
+  },
+  "expected_improvement": [
+    "reliability",
+    "correctness",
+    "security"
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "The probe workflow used checkout v4 and setup-python v5; prior PR CI reached the lifecycle gate but failed before downstream tests.",
+        "after": "Pending fresh CI after the lifecycle record and action-version update.",
+        "status": "PARTIAL",
+        "evidence": "PR #190 and CI run 38889152329."
+      },
+      "correctness": {
+        "before": "CI run 38889152329: format and lint passed; cumulative lifecycle gate failed; test suite, runtime smoke, package build, and dependency audit were skipped.",
+        "after": "Pending current-head CI; no success is claimed.",
+        "status": "PENDING",
+        "evidence": "GitHub Actions run 38889152329."
+      }
+    },
+    "trade_off": "Keep the workflow manually dispatched and preserve run_scrape=false by default to avoid unintended external scraping or credit use."
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Current main already uses actions/checkout@v7 and actions/setup-python@v7 in the primary workflows.",
+      "Previous PR CI run 38889152329 passed Format Check and Lint but failed the lifecycle-record requirement; downstream gated jobs were skipped."
+    ],
+    "blocker": "Fresh CI must pass the lifecycle gate, full test suite, runtime smoke tests, package build, and dependency audit on the final PR head."
+  },
+  "failure_analysis": {
+    "status": "known-failure",
+    "root_causes": [
+      "The prior PR CI failed because a meaningful workflow change had no machine-readable configs/process/cycles/*.json record.",
+      "The probe workflow's setup-python action version had not been aligned with the repository's v7 baseline."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Workflow-only changes are subject to the cumulative lifecycle gate unless explicitly exempted.",
+      "Action versions should be aligned with the repository's tested baseline rather than merged from stale Dependabot diffs that would downgrade newer workflows.",
+      "External scraping remains opt-in and must not be triggered as part of ordinary CI."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Fresh current-head CI and all gated jobs must pass.",
+      "Confirm the manual dispatch input still defaults to false and no external scrape runs without explicit opt-in."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not merge until the lifecycle gate and all required CI checks pass.",
+    "Keep optional ScrapeGraphAI scraping disabled by default.",
+    "Do not downgrade action versions in the other primary workflows."
+  ]
+}
