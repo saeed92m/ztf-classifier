@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-reference-archive-contract-20261029",
+  "objective": "Make frozen CPVS reference acquisition fail closed if the checksum-verified archive does not contain all expected publisher CSV members.",
+  "previous_knowledge_consumed": [
+    "The immutable Zenodo 5764899 archive has a pinned MD5 and SHA-256 in the existing acquisition manifest.",
+    "The latest workflow artifact manifest listed 1st_layer.csv, 2nd_layer.csv, and SIMBAD_ZTF_crossmatch.csv, while the source definition had required_members empty.",
+    "The published membership comparison remains blocked; archive integrity alone is not object-level membership validation."
+  ],
+  "baseline": {
+    "revision": "main before cpvs-reference-archive-contract-20261029",
+    "description": "The CPVS frozen-reference source checked the archive hash but accepted any ZIP member layout because required_members was empty."
+  },
+  "change": {
+    "scope": "Require the three previously observed publisher archive member basenames and add regression tests for the declared contract and missing-member detection. No membership count, derivation predicate, model, or scientific acceptance criterion is changed.",
+    "rationale": "A matching checksum and archive listing should not silently be treated as sufficient if expected publisher files disappear or the archive layout changes."
+  },
+  "expected_improvement": [
+    "reliability",
+    "traceability",
+    "correctness"
+  ],
+  "measurement": {
+    "metrics": {
+      "archive_contract": {
+        "before": "CPVS required_members was empty; only archive checksum and archive readability were checked.",
+        "after": "The source contract explicitly requires 1st_layer.csv, 2nd_layer.csv, and SIMBAD_ZTF_crossmatch.csv; current-head CI pending.",
+        "status": "PARTIAL",
+        "evidence": "Pinned source definition and artifact evidence manifest from scientific validation run 40834565686."
+      },
+      "membership_reproduction": {
+        "before": "Candidate set 741,787 versus expected 730,184; independent object-level comparison unavailable in the failed run.",
+        "after": "Unchanged; this patch does not claim membership comparison or explain the 11,603 excess.",
+        "status": "BLOCKED",
+        "evidence": "Scientific Validation run 40834565686; Issue #170 remains open."
+      }
+    },
+    "trade_off": "Fail earlier if a published archive's expected file layout changes; require explicit review before accepting a new archive contract."
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Regression tests added; awaiting current-head CI and source-backed workflow verification."
+    ]
+  },
+  "failure_analysis": {
+    "status": "known-gap",
+    "root_causes": [
+      "The source definition declared no required members for the CPVS archive, so an unexpected/incomplete member layout could pass acquisition contract validation. This is a provenance-contract gap, not the established cause of the 11,603 membership discrepancy."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Archive checksum verification and member/schema validation are separate checks.",
+      "Passing archive acquisition does not prove membership equality or reproduce publisher selection rules."
+    ]
+  },
+  "regression": {
+    "status": "PENDING",
+    "open_blockers": [
+      "Current-head CI not yet observed.",
+      "The published 730,184 SourceID set has not been extracted and compared object-by-object.",
+      "The root cause of the 11,603 run-specific candidate excess remains unknown."
+    ]
+  },
+  "decision": "PROPOSED",
+  "knowledge_carried_forward": [
+    "Keep CPVS membership discrepancy explicitly blocked until full IDs, source provenance, and FP/FN are independently computed.",
+    "Do not infer canonical membership from row count alone.",
+    "Do not weaken scientific acceptance criteria."
+  ]
+}
