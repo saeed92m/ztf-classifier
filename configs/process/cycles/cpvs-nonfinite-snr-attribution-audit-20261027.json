@@ -5,7 +5,8 @@
   "previous_knowledge_consumed": [
     "Issue #180 tracks the unresolved CPVS membership discrepancy.",
     "Historical figures are not treated as current without reproducing them from pinned inputs.",
-    "A negative-only SNR predicate can admit NaN because NaN < threshold evaluates false; this is a hypothesis to test against source-backed inputs, not an established root cause."
+    "A negative-only SNR predicate can admit NaN because NaN < threshold evaluates false; this is a hypothesis to test against source-backed inputs, not an established root cause.",
+    "CI run 40546453273 passed format/lint/lifecycle/tests/runtime/package but failed Dependency Audit because this branch still pinned msgpack==1.2.2; current main pins msgpack==1.2.3."
   ],
   "baseline": {
     "revision": "main@b56c90bafe9e6e0c5630dd4b96c9843dbd26301c",
@@ -44,7 +45,8 @@
       "Ruff lint passed for commit dc11d15bd9a658d88861a32ab18f2e190e37ad3b.",
       "CodeQL and Product Scope Audit passed for the same commit.",
       "Scientific Validation workflow reported success, but source-backed acquisition/derivation/provenance jobs were skipped; this is not scientific validation.",
-      "CI cumulative lifecycle gate failed because this PR had no cycle record; this record is being added to satisfy process traceability, not to weaken a gate."
+      "CI cumulative lifecycle gate failed because this PR had no cycle record; this record is being added to satisfy process traceability, not to weaken a gate.",
+      "The branch requirements.lock was synchronized with current main to remove the stale msgpack==1.2.2 pin; fresh CI is required."
     ],
     "blocker": "Re-run CI after adding this cycle record; execute the audit on exact hash-pinned parent, g/r lightcurve, candidate, and published-reference inputs; replay the final magnitude predicate and compare full object IDs. No root cause is established."
   },
@@ -52,7 +54,8 @@
     "status": "VERIFIED",
     "root_causes": [
       "The current CI run failed at the cumulative lifecycle gate because meaningful changes lacked a JSON cycle record under configs/process/cycles/.",
-      "The scientific discrepancy remains unexplained; this cycle record does not resolve it."
+      "The scientific discrepancy remains unexplained; this cycle record does not resolve it.",
+      "The latest CI failure was the dependency audit rejecting the stale msgpack==1.2.2 pin, not a failure of the SNR attribution tests."
     ]
   },
   "knowledge_extraction": {
@@ -63,11 +66,11 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "BLOCKED",
     "open_blockers": [
-      "Fresh CI must execute the test suite after the lifecycle record is included.",
-      "The audit has not been run against exact pinned source-backed full inputs.",
-      "Per-ID provenance and exact final membership reproduction remain outstanding."
+      "Fresh current-head CI and dependency audit must pass.",
+      "Run the audit on exact pinned g/r inputs and report object-level IDs admitted by non-finite SNR and their overlap with the candidate-only set.",
+      "Do not infer the publisher's selection rule from the SNR guard alone."
     ]
   },
   "decision": "BLOCKED",
