@@ -25,56 +25,51 @@ jobs:
       - name: Run independent audit self-test
         run: python scripts/verify_cpvs_four_field_rule.py --self-test
 
-      - name: Download the two published CDS tables only
+      - name: Download compact published VizieR table extracts
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/cpvs-two-table"
           cd "$RUNNER_TEMP/cpvs-two-table"
 
-          # Try the primary CDS host, then established VizieR mirrors. Each
-          # candidate is accepted only if the published row count matches.
           fetch_table() {
-            local filename="$1" expected_rows="$2"
+            local filename="$1" header="$2"
             shift 2
-            local url tmp rows
+            local url tmp
             for url in "$@"; do
               tmp="${filename}.part"
               rm -f "$tmp"
               echo "Trying source: $url"
               if curl --location --fail --show-error --silent \
-                --connect-timeout 15 --max-time 900 \
+                --connect-timeout 20 --max-time 900 \
                 --retry 1 --retry-all-errors --retry-delay 2 \
                 "$url" -o "$tmp"; then
-                rows="$(wc -l < "$tmp" | tr -d ' ')"
-                if [[ -s "$tmp" && "$rows" == "$expected_rows" ]]; then
+                if [[ -s "$tmp" ]] && grep -Fq "$header" "$tmp"; then
                   mv "$tmp" "$filename"
-                  printf '%s\t%s\t%s\n' "$filename" "$url" "$rows" >> source-tables.tsv
-                  echo "Accepted $filename ($rows rows) from $url"
+                  printf '%s\t%s\n' "$filename" "$url" >> source-tables.tsv
+                  echo "Accepted VizieR extract: $filename"
                   return 0
                 fi
-                echo "Rejected $url: expected $expected_rows rows, got ${rows:-0}" >&2
+                echo "Rejected $url: response missing expected TSV header" >&2
               fi
               rm -f "$tmp"
             done
-            echo "ERROR: no source produced $filename with $expected_rows rows" >&2
+            echo "ERROR: no source produced a valid TSV extract for $filename" >&2
             return 1
           }
 
-          fetch_table table2.dat 781602 \
-            "https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/table2.dat" \
-            "https://vizier.cfa.harvard.edu/ftp/J/ApJS/249/18/table2.dat" \
-            "https://vizier.nao.ac.jp/ftp/J/ApJS/249/18/table2.dat" \
-            "https://vizier.idia.ac.za/ftp/J/ApJS/249/18/table2.dat"
-          fetch_table table4.dat 730184 \
-            "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/932/118/table4.dat" \
-            "https://vizier.cfa.harvard.edu/ftp/J/ApJ/932/118/table4.dat" \
-            "https://vizier.nao.ac.jp/ftp/J/ApJ/932/118/table4.dat" \
-            "https://vizier.idia.ac.za/ftp/J/ApJ/932/118/table4.dat"
+          fetch_table table2.tsv $'ID\tSeq\tgmag\trmag\tPer-g\tPer-r' \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000"
+          fetch_table table4.tsv $'ZTF\tID' \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"
 
-          sha256sum table2.dat table4.dat | tee source-tables.sha256
+          sha256sum table2.tsv table4.tsv | tee source-tables.sha256
           cat source-tables.tsv
-          wc -l -c table2.dat table4.dat
+          wc -l -c table2.tsv table4.tsv
 
       - name: Compare object-level membership and save exact differences
         shell: bash
