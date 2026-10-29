@@ -75,6 +75,12 @@ def _members(path: Path, archive_type: str) -> list[str]:
         return archive.getnames()
 
 
+def _missing_members(source: dict, members: list[str]) -> list[str]:
+    """Return required archive basenames absent from an archive member listing."""
+    basenames = {Path(member).name for member in members}
+    return sorted(set(source["required_members"]) - basenames)
+
+
 def _download_verified(source: dict, archive: Path, benchmark_id: str) -> str:
     """Download to a temporary file and retry once if transport bytes fail MD5."""
     if archive.exists():
@@ -114,8 +120,7 @@ def acquire(benchmark_id: str, output: Path) -> Path:
     actual_md5 = _download_verified(source, archive, benchmark_id)
 
     members = _members(archive, source["archive_type"])
-    basenames = {Path(member).name for member in members}
-    missing = sorted(set(source["required_members"]) - basenames)
+    missing = _missing_members(source, members)
     if missing:
         raise RuntimeError(
             f"{benchmark_id}: required archive members are missing: {missing}"
