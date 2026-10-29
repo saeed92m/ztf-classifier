@@ -3,7 +3,7 @@ name: CPVS four-field real-data diagnostic v3
 on:
   push:
     branches:
-      - investigation/cpvs-four-field-runtime-v3-20261029
+      - investigation/cpvs-four-field-runtime-v3-disabled
 
 permissions:
   contents: read
