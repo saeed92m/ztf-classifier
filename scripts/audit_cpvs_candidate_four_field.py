@@ -128,6 +128,7 @@ def audit(table2: Path, table4: Path | None, candidates_file: Path,
         "filtered_published_only":ids_hash(filtered_published_only)
       },
       "verdict": {
+        "exact_membership_match": not candidate_only and not published_only,
         "four_field_intersection_exact_match": not filtered_candidate_only and not filtered_published_only,
         "candidate_excess_equals_four_field_failures": candidate_only == failed_four,
         "author_intent_proven": False
