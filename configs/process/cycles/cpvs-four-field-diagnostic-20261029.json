@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-four-field-diagnostic-20261029",
+  "objective": "Add a fail-closed diagnostic to test the four-field CPVS metadata hypothesis against the published Table 4 membership without changing the production selector.",
+  "previous_knowledge_consumed": [
+    "Issue #170 remains unresolved: the authoritative-Seq reconstruction yields 741,788 candidates versus 730,184 published members in the latest full run; official VizieR/CDS endpoints timed out in that run.",
+    "The four-field positivity rule gmag>0, rmag>0, Per-g>0, Per-r>0 has been proposed as a diagnostic hypothesis but has not been established as the authors' intended selection rule.",
+    "Table 4 numeric IDs must not be assumed to share the Table 2 Seq namespace; crosswalk published ZTF names to Table 2 Seq.",
+    "Synthetic parser tests are not evidence of real-data membership equivalence."
+  ],
+  "baseline": {
+    "revision": "main@57725113ba2aec6a03bded6c17b7435921d71b2c",
+    "description": "The current main baseline preserves the authoritative Table 2 Seq parser, finite-SNR guard, strict JSON diagnostics, frozen v0.2.0 model/features/class order/cutoff, and fail-closed scientific gate."
+  },
+  "change": {
+    "scope": "Add a standard-library-only fixed-width Table 2/Table 4 diagnostic, synthetic regression tests, and a Persian runbook. Hash inputs and set differences; fail closed on malformed rows, wrong counts, duplicate/out-of-range IDs, or name/ID inconsistencies.",
+    "rationale": "The four-field hypothesis can be tested from two compact published metadata tables without re-running the 31-minute photometric derivation or transferring raw light curves."
+  },
+  "expected_improvement": [
+    "reproducibility",
+    "traceability",
+    "scientific auditability",
+    "failure transparency"
+  ],
+  "measurement": {
+    "metrics": {
+      "parser_regression_coverage": {
+        "before": "No dedicated standalone test for this two-table four-field hypothesis on current main.",
+        "after": "14 synthetic fixed-width fixture tests reported on the source branch; current-main CI and test result are pending.",
+        "status": "PARTIAL"
+      },
+      "real_data_membership": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      }
+    },
+    "trade_off": "The diagnostic does not establish author intent, alter the selector, or claim science validation. It requires real published files supplied by an operator if the CI environment cannot reach CDS/VizieR."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Source branch commit 6a82fa7daba2fa8ef97ceea26dfc43b4f48d84c7 reports 14 synthetic tests, 668 full-suite tests, and clean Ruff checks; these results have not been independently reproduced on this new main-based head.",
+      "Current-main CodeQL, format, lint, product-scope, and lifecycle checks are running; source-backed jobs are intentionally skipped on this feature PR.",
+      "Latest full CPVS run 40873746342 failed to retrieve published Table 4 from all configured public endpoints due network timeouts and retained an UNRESOLVED result."
+    ],
+    "blocker": "Fresh current-head CI must pass. Then run the diagnostic against hash-identified real Table 2 and Table 4 files; review both set differences and SHA-256 values. A zero difference would establish equivalence on those files only, not prove author intent.",
+    "regression": "BLOCKED",
+    "blockers": [
+      "Run the new tests on current main and verify all applicable CI checks.",
+      "Acquire official Table 2 and Table 4 files and record SHA-256 hashes, exact row counts, Seq gaps, and set-difference counts.",
+      "Keep Issue #170 open until the real-data output is reviewed and publication-method ambiguity is documented."
+    ]
+  },
+  "failure_analysis": {
+    "status": "known-failure",
+    "root_causes": [
+      "The latest source-backed workflow could derive 741,788 candidates but could not acquire Table 4 from configured public endpoints due connection timeouts.",
+      "The production derivation still does not reproduce the published 730,184 membership; this diagnostic is intended to test one hypothesis without tuning the production predicate."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Published Table 4 membership must be crosswalked by normalized ZTF object name to the parent Table 2 Seq namespace.",
+      "A set-equivalence result is not proof of the historical authors' intent.",
+      "Synthetic tests prove parser logic only; real-data validation requires pinned source files and hashes."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Current-main CI must complete, including the cumulative lifecycle contract.",
+      "Real-data test and source hashes are not yet available.",
+      "Issue #170 remains an explicit scientific validation blocker."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not change CPVS production membership criteria, thresholds, model artifacts, features, or scientific acceptance criteria based on this diagnostic alone.",
+    "Do not close Issue #170 or claim scientific validation before real source-backed set comparison and review.",
+    "Preserve the frozen v0.2.0 baseline and v1.0.1 release artifacts."
+  ]
+}
