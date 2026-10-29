@@ -496,16 +496,16 @@ def self_test() -> int:
             t2_tsv = tmpdir / "table2.tsv"
             t4_tsv = tmpdir / "table4.tsv"
             t2_tsv.write_text(
-                "ID\\tSeq\\tgmag\\trmag\\tPer-g\\tPer-r\\n"
-                "ZTF1aaa\\t1\\t18.5\\t17.2\\t12.34\\t12.35\\n"
-                "ZTF2bbb\\t2\\t19.1\\t17.9\\t5.5\\t5.51\\n"
-                "ZTF3ccc\\t3\\t\\t17.0\\t8.0\\t8.01\\n"
-                "ZTF4ddd\\t4\\t20.0\\t19.0\\t\\t8.01\\n"
+                "ID\tSeq\tgmag\trmag\tPer-g\tPer-r\n"
+                "ZTF1aaa\t1\t18.5\t17.2\t12.34\t12.35\n"
+                "ZTF2bbb\t2\t19.1\t17.9\t5.5\t5.51\n"
+                "ZTF3ccc\t3\t\t17.0\t8.0\t8.01\n"
+                "ZTF4ddd\t4\t20.0\t19.0\t\t8.01\n"
             )
             t4_tsv.write_text(
-                "ZTF\\tID\\n"
-                "ZTF1aaa\\t901\\n"
-                "ZTF3ccc\\t903\\n"
+                "ZTF\tID\n"
+                "ZTF1aaa\t901\n"
+                "ZTF3ccc\t903\n"
             )
             tsv_report = run(t2_tsv, t4_tsv, None)
             assert tsv_report["counts"]["table2_rows"] == 4, tsv_report["counts"]
