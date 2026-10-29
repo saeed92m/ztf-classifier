@@ -58,7 +58,117 @@ jobs:
             return 1
           }
 
-          fetch_table table2.tsv $'ID\tSeq\tgmag\trmag\tPer-g\tPer-r' \
+          fetch_table table2.tsv  \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000"
+          fetch_table table4.tsv  \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"
+
+          sha256sum table2.tsv table4.tsv | tee source-tables.sha256
+          cat source-tables.tsv
+          wc -l -c table2.tsv table4.tsv
+
+      - name: Compare object-level membership and save exact differences
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs-two-table"
+          python "$GITHUB_WORKSPACE/scripts/verify_cpvs_four_field_rule.py" \
+            --table2 table2.dat \
+            --table4 table4.dat \
+            --out "$RUNNER_TEMP/cpvs-two-table/cpvs_two_table_audit.json" \
+            --dump-ids
+          cat "$RUNNER_TEMP/cpvs-two-table/cpvs_two_table_audit.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload two-table audit evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-independent-two-table-audit
+          path: |
+            ${{ runner.temp }}/cpvs-two-table/cpvs_two_table_audit.json
+            ${{ runner.temp }}/cpvs-two-table/cpvs_four_field_only_ids.txt
+            ${{ runner.temp }}/cpvs-two-table/cpvs_published_only_ids.txt
+            ${{ runner.temp }}/cpvs-two-table/source-tables.sha256
+            ${{ runner.temp }}/cpvs-two-table/source-tables.tsv
+          if-no-files-found: warn
+          retention-days: 30
+#Column\tPer-r' \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000"
+          fetch_table table4.tsv $'ZTF\tID' \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"
+
+          sha256sum table2.tsv table4.tsv | tee source-tables.sha256
+          cat source-tables.tsv
+          wc -l -c table2.tsv table4.tsv
+
+      - name: Compare object-level membership and save exact differences
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs-two-table"
+          python "$GITHUB_WORKSPACE/scripts/verify_cpvs_four_field_rule.py" \
+            --table2 table2.dat \
+            --table4 table4.dat \
+            --out "$RUNNER_TEMP/cpvs-two-table/cpvs_two_table_audit.json" \
+            --dump-ids
+          cat "$RUNNER_TEMP/cpvs-two-table/cpvs_two_table_audit.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload two-table audit evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-independent-two-table-audit
+          path: |
+            ${{ runner.temp }}/cpvs-two-table/cpvs_two_table_audit.json
+            ${{ runner.temp }}/cpvs-two-table/cpvs_four_field_only_ids.txt
+            ${{ runner.temp }}/cpvs-two-table/cpvs_published_only_ids.txt
+            ${{ runner.temp }}/cpvs-two-table/source-tables.sha256
+            ${{ runner.temp }}/cpvs-two-table/source-tables.tsv
+          if-no-files-found: warn
+          retention-days: 30
+#Column\tZTF' \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"
+
+          sha256sum table2.tsv table4.tsv | tee source-tables.sha256
+          cat source-tables.tsv
+          wc -l -c table2.tsv table4.tsv
+
+      - name: Compare object-level membership and save exact differences
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs-two-table"
+          python "$GITHUB_WORKSPACE/scripts/verify_cpvs_four_field_rule.py" \
+            --table2 table2.dat \
+            --table4 table4.dat \
+            --out "$RUNNER_TEMP/cpvs-two-table/cpvs_two_table_audit.json" \
+            --dump-ids
+          cat "$RUNNER_TEMP/cpvs-two-table/cpvs_two_table_audit.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload two-table audit evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-independent-two-table-audit
+          path: |
+            ${{ runner.temp }}/cpvs-two-table/cpvs_two_table_audit.json
+            ${{ runner.temp }}/cpvs-two-table/cpvs_four_field_only_ids.txt
+            ${{ runner.temp }}/cpvs-two-table/cpvs_published_only_ids.txt
+            ${{ runner.temp }}/cpvs-two-table/source-tables.sha256
+            ${{ runner.temp }}/cpvs-two-table/source-tables.tsv
+          if-no-files-found: warn
+          retention-days: 30
+#Column\tPer-r' \
             "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
             "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
             "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000"
