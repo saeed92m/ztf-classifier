@@ -63,13 +63,14 @@ jobs:
                   metadata.append({"line": number, "length": len(line), "preview": line[:120]})
                   continue
 
-              # Zenodo Table2.txt declares Per-g at 104-115 and Per-r at 117-129.
-              # The diagnostic parser uses the CDS layout Per-g 104-116 and Per-r 118-130.
-              # Insert exactly one separator at byte 117; do not change any field value.
+              # The Zenodo header says Per-g 104-115, but some real rows use all 13
+              # characters through byte 116. Preserve that observed data width; Per-r
+              # starts at byte 117. Insert one separator before byte 117 to match the
+              # diagnostic parser's CDS spans without changing either numeric value.
               fields = {
                   "gmag": line[89:95],
                   "rmag": line[96:102],
-                  "per_g": line[103:115],
+                  "per_g": line[103:116],
                   "per_r": line[116:129],
               }
               for name, raw in fields.items():
@@ -96,7 +97,7 @@ jobs:
               "nonrecord_lines": metadata,
               "record_length_min_before": min((len(x) - 1 for _, x in records), default=None),
               "record_length_max_before": max((len(x) - 1 for _, x in records), default=None),
-              "normalization": "insert one separator at 1-based byte 117 to align Zenodo Per-g/Per-r fields to the diagnostic parser's documented CDS spans; assert both field values unchanged",
+              "normalization": "preserve observed Per-g bytes 104-116 and Per-r bytes 117-129; insert one separator before original byte 117 to align Per-r to the parser's CDS span; assert both values unchanged",
               "status": "PASS" if len(lines) == 781636 and len(records) == 781602 and len(metadata) == 34 else "BLOCKED",
           }
           Path("table2_normalization_report.json").write_text(json.dumps(report, indent=2) + "\n")
