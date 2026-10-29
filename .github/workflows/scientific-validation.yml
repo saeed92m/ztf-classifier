@@ -257,7 +257,33 @@ jobs:
             "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
             "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
             "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000"
-          if fetch_table table4.tsv 
+          if fetch_table table4.tsv $'#Column\tZTF' \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"; then
+            echo "Published membership source: VizieR Table 4"
+            sha256sum "$tmp/table2.tsv" "$tmp/table4.tsv"
+            python scripts/audit_cpvs_candidate_four_field.py \
+              --table2 "$tmp/table2.tsv" \
+              --table4 "$tmp/table4.tsv" \
+              --candidates "$root/selected.tsv" \
+              --out "$root/candidate_four_field_audit.json"
+          else
+            echo "VizieR Table 4 unavailable; using alternate published 730,184-object Zenodo catalogue."
+            curl --location --fail --show-error --silent \
+              --connect-timeout 20 --max-time 240 --retry 2 --retry-all-errors \
+              "https://zenodo.org/records/5764899/files/Zenodo.zip" \
+              -o "$tmp/Zenodo.zip"
+            echo "7fc6562d4208cbfa97366351984810e3  $tmp/Zenodo.zip" | md5sum --check -
+            unzip -p "$tmp/Zenodo.zip" 1st_layer.csv > "$tmp/1st_layer.csv"
+            test -s "$tmp/1st_layer.csv"
+            sha256sum "$tmp/table2.tsv" "$tmp/1st_layer.csv"
+            python scripts/audit_cpvs_candidate_four_field.py \
+              --table2 "$tmp/table2.tsv" \
+              --zenodo-csv "$tmp/1st_layer.csv" \
+              --candidates "$root/selected.tsv" \
+              --out "$root/candidate_four_field_audit.json"
+          fi
       - name: Classify CPVS reconstruction result
         if: always()
         env:
