@@ -34,7 +34,6 @@
     "status": "BLOCKED",
     "scientific_gate_affected": false,
     "evidence": [
-      "The workflow is restricted to the ci/dr24 branch family to avoid rerunning the full CPVS/StarEmbed heavy job.",
       "The smoke test uses public DR24 lightcurves and the existing feature engine; it does not tune thresholds or modify model artifacts.",
       "The live-data result and integration test status must be reviewed before this record can be finalized.",
       "First real-data smoke run 40396734263 completed successfully for 12 objects; all 12 requests and native feature-engine calls succeeded, but every object had g_valid=162 and r_valid=0, yielding 19 finite features and 23 null/NaN features per object. Model inference remained NOT_RUN.",
@@ -44,9 +43,13 @@
       "The DR24 HATS index selector has now been changed to choose up to 15 evenly spaced index fragments and SHA-256-rank OIDs within each fragment. The pinned query contract records this method and seed; unit tests cover fragment spread and order-independent ranking. Fresh CI and live-source rerun are pending.",
       "Latest Scientific Validation run 40398912969 exposed a contract mismatch: the manifest had moved to sha256_ranked_across_evenly_spaced_hats_index_fragments while the adapter still accepted only deterministic_lexicographic. The adapter now accepts the two explicit deterministic methods and validates seed/fragment_sample_count for fragment sampling; a regression assertion checks the new manifest contract. Re-run all checks on this head before considering the issue fixed.",
       "Live source-backed workflow run 40399828150 failed in job 121842383690 with `SourceQueryError: oid is not deterministically sorted` after retrieving HATS data. The failure is an ordering/normalization contract mismatch, not evidence of an astronomical data-quality result.",
-      "Added `_normalize_and_sort_source_ids`: decode byte identifiers as UTF-8, strip whitespace, reject null/blank IDs, then stable-sort normalized strings before the fail-closed validator. Added a regression test for byte/string mixed IDs and null rejection; current-head tests and live rerun remain pending."
+      "Added `_normalize_and_sort_source_ids`: decode byte identifiers as UTF-8, strip whitespace, reject null/blank IDs, then stable-sort normalized strings before the fail-closed validator. Added a regression test for byte/string mixed IDs and null rejection; current-head tests and live rerun remain pending.",
+      "Latest source-backed run 40404485906 passed acquisition, the native feature-engine smoke step, and the external-evidence contract on head eb0852d395972c975d40111f75d01cdf75032826.",
+      "The verified smoke report has 12 candidate objects, 7 successful feature-engine executions, and 5 failures (`No g/r-band rows remained after filter normalization`). Zero of the 12 had 30+ valid points in both bands; model inference was NOT_RUN. This is PASS_SMOKE_ONLY evidence, not model or survey-wide scientific validation.",
+      "The report's selection pool contains 51 objects drawn from the pinned 150-row DR24 subset; it explicitly states this is not representative of the survey-wide population.",
+      "The workflow no longer auto-triggers the heavy job for every `work/dr24/**` branch. Heavy source acquisition remains available via explicit workflow_dispatch with run_heavy=true, schedule, main, or ci/heavy branches to avoid unnecessary repeated source downloads."
     ],
-    "blocker": "The first live DR24 source-backed run failed because HATS OID values were sorted in their raw dtype but validated after string conversion, so the normalized IDs were not deterministically sorted. A fix now decodes/normalizes IDs before stable sorting and has a regression test; current-head CI and a fresh live DR24 rerun must pass before this stage can be marked verified."
+    "blocker": "The 5/12 no-g/r-row failures must be classified and reported; zero objects in this bounded sample meet 30-valid-points-per-band eligibility. This PR remains a smoke-test harness only. Do not run model inference or claim accuracy without a verified frozen artifact and eligible objects."
   },
   "failure_analysis": {
     "status": "identified",
@@ -64,15 +67,17 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Pass current-head format/lint/unit CI.",
-      "Rerun the live DR24 HATS acquisition and confirm the normalized OID contract, source hashes, feature schema, and report are emitted.",
-      "Keep model inference NOT_RUN unless the frozen model artifact is present and its hash/schema are verified; do not describe this as model accuracy validation."
+      "Fresh current-head format/lint/unit CI must pass after the workflow trigger change.",
+      "Document whether each of the five failures is expected source absence or an adapter/schema defect; retain the object IDs and raw response hashes.",
+      "Keep model inference NOT_RUN unless the frozen artifact is present and hash/schema are verified; no model accuracy or full scientific validation claim.",
+      "A larger, explicitly authorized DR24 sample is needed before any representative data-quality conclusion."
     ]
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not use DR24 labels or metadata as independent ground truth unless a source-specific reference definition is documented.",
     "Do not claim model accuracy, scientific validation, or CPVS resolution from a feature-engine smoke run.",
-    "Keep the immutable v0.2.0 baseline and v1.0.1 release artifacts unchanged."
+    "Keep the immutable v0.2.0 baseline and v1.0.1 release artifacts unchanged.",
+    "Keep heavy source acquisition opt-in for work branches to avoid repeated downloads."
   ]
 }
