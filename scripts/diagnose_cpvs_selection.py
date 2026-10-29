@@ -6,6 +6,7 @@ import argparse
 import json
 import math
 from pathlib import Path
+from typing import Any
 
 from audit_cpvs_membership import read_vizier
 from ztf_classifier.validation.derivation import _iter_rows, _source_ids
@@ -41,6 +42,22 @@ def band_metrics(path: Path, parent: set[int], error_key: str, mag_key: str):
     return metrics
 
 
+def _json_safe(value: Any) -> Any:
+    """Convert non-finite floats to JSON null without altering finite values.
+
+    Missing source metadata can be represented internally as NaN. Standard JSON
+    has no NaN/Infinity literals, so normalize only at the serialization boundary
+    and retain strict encoding as a regression guard.
+    """
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    return value
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--parent", type=Path, required=True)
@@ -74,11 +91,11 @@ def main() -> int:
             "published_only": len(published - ids),
         }
     a.output.parent.mkdir(parents=True, exist_ok=True)
-    a.output.write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+    report_json = (
+        json.dumps(_json_safe(report), indent=2, sort_keys=True, allow_nan=False) + "\n"
     )
-    print(json.dumps(report, indent=2, sort_keys=True))
+    a.output.write_text(report_json, encoding="utf-8")
+    print(report_json, end="")
     return 0
 
 

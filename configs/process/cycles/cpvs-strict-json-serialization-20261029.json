@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-strict-json-serialization-20261029",
+  "objective": "Make CPVS diagnostic artifact serialization standards-compliant and regression-tested without changing membership criteria or source measurements.",
+  "previous_knowledge_consumed": [
+    "Issue #196 documents a historical source-backed artifact containing non-standard NaN literals in selection_diagnostics.json and requires strict JSON interoperability.",
+    "Current main's diagnostic report structure is simpler than the historical candidate_only_all_objects report; this change hardens the serialization boundary rather than reintroducing historical metadata diagnostics.",
+    "The current CPVS membership and selection-rule question remains unresolved in issue #170."
+  ],
+  "baseline": {
+    "revision": "main@72036810169789d76404d2f1b352e59452bdcc1d",
+    "description": "The strict-JSON serialization hardening is prepared directly on current main after the authoritative Seq parser and finite-SNR guard merges. It changes only diagnostic serialization, its regression test, and the scientific-validation contract invocation."
+  },
+  "change": {
+    "scope": "Normalize non-finite float values to JSON null at the serialization boundary, use allow_nan=False, add strict parser regression coverage, and run the focused test in the scientific-validation contract job.",
+    "rationale": "Python's default JSON encoder can emit NaN/Infinity tokens that are rejected by strict JSON parsers."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The historical artifact from run 38635891449 contained NaN literals and failed strict JSON interoperability.",
+        "after": "Non-finite values are normalized to JSON null and strict serialization is enforced; current-head CI passed, but the next source-backed artifact still requires strict-parser verification.",
+        "status": "PARTIAL",
+        "evidence": "Issue #196; new test tests/test_cpvs_diagnostic_json.py."
+      },
+      "reproducibility": {
+        "before": "No focused strict-JSON regression test existed on main.",
+        "after": "A deterministic nested NaN/+Infinity/-Infinity fixture asserts allow_nan=False encoding and JSON round-trip.",
+        "status": "MEASURED",
+        "evidence": "Branch fix/cpvs-strict-json-main-20261029."
+      }
+    },
+    "trade_off": "Missing numeric metadata is represented as JSON null, not a fabricated finite value; scientific membership and counts are unchanged."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The prior head passed current-head CI, Scientific Validation contract, CodeQL, and Product Scope checks; the strict-JSON lifecycle decision enum was corrected from NOT_VERIFIED to BLOCKED.",
+      "The branch has been rebuilt on current main at 72036810169789d76404d2f1b352e59452bdcc1d; current-head CI and security checks must pass.",
+      "Strict JSON parsing and SHA-256 verification of a regenerated source-backed diagnostic artifact remain outstanding."
+    ],
+    "blocker": "The code-level regression fix passed current-head CI. Keep artifact-level verification open until the next source-backed CPVS diagnostic artifact is regenerated, parsed strictly, and recorded with SHA-256.",
+    "regression": "BLOCKED",
+    "blockers": [
+      "Fresh current-head CI, lifecycle, CodeQL, Product Scope, package, and dependency checks must pass.",
+      "Regenerate the diagnostic JSON from pinned source inputs, parse it with a strict JSON parser, and record SHA-256."
+    ]
+  },
+  "failure_analysis": {
+    "status": "known-failure",
+    "root_causes": [
+      "Python json.dumps defaults to allow_nan=True and can emit non-standard NaN/Infinity literals.",
+      "The historical report included non-finite parent metadata values without normalizing them at the serialization boundary.",
+      "The first regression test import failed because scripts/diagnose_cpvs_selection.py uses a sibling-script import that is available when executed directly but not when imported as scripts.diagnose_cpvs_selection from the test runner; the test import path was corrected."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Scientific missing values should serialize as JSON null rather than non-standard NaN tokens.",
+      "Strict encoding with allow_nan=False is a regression guard against unhandled non-finite values.",
+      "JSON interoperability fixes do not establish scientific validity or resolve the CPVS membership discrepancy."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "After merge, regenerate a compact source-backed diagnostic artifact and verify strict JSON parsing with allow_nan=False semantics.",
+      "Record the artifact SHA-256 and parser result; this serialization fix does not resolve CPVS selection semantics."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Keep issue #196 open until fresh CI passes and a regenerated source-backed artifact is verified as strict JSON.",
+    "Do not change CPVS membership criteria or use a matching count as proof of selection semantics.",
+    "Keep the immutable v0.2.0 baseline and v1.0.1 release artifacts unchanged."
+  ]
+}
