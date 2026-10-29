@@ -1,0 +1,162 @@
+name: CPVS four-field real-data diagnostic v3 corrected
+
+on:
+  push:
+    branches:
+      - investigation/cpvs-four-field-runtime-v3-20261029
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    name: Compare four-field predicate after verified format normalization
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Run synthetic self-test first
+        run: python scripts/verify_cpvs_four_field_rule.py --self-test
+
+      - name: Download and verify compact Table 2 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cpvs"
+          cd "$RUNNER_TEMP/cpvs"
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --max-time 600 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/Table2.txt.zip?download=1" \
+            -o Table2.txt.zip
+          echo "24dd4cf138a2687901d64b2d029cc624  Table2.txt.zip" | md5sum --check -
+          unzip -p Table2.txt.zip Table2.txt > Table2.txt
+          sha256sum Table2.txt.zip Table2.txt | tee table2-source.sha256
+
+      - name: Normalize Table 2 to the diagnostic parser's CDS byte layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs"
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          source = Path("Table2.txt")
+          target = Path("table2.dat")
+          lines = source.read_text(encoding="utf-8").splitlines()
+          records, metadata = [], []
+          for number, line in enumerate(lines, start=1):
+              is_record = (
+                  len(line) >= 129
+                  and line[:22].strip().upper().startswith("ZTF")
+                  and line[23:29].strip().isdigit()
+              )
+              if not is_record:
+                  metadata.append({"line": number, "length": len(line), "preview": line[:120]})
+                  continue
+
+              # The Zenodo header says Per-g 104-115, but some real rows use all 13
+              # characters through byte 116. Preserve that observed data width; Per-r
+              # starts at byte 117. Insert one separator before byte 117 to match the
+              # diagnostic parser's CDS spans without changing either numeric value.
+              fields = {
+                  "gmag": line[89:95],
+                  "rmag": line[96:102],
+                  "per_g": line[103:116],
+                  "per_r": line[116:129],
+              }
+              for name, raw in fields.items():
+                  value = raw.strip()
+                  if value:
+                      try:
+                          float(value.replace("D", "E").replace("d", "e"))
+                      except ValueError:
+                          raise SystemExit(f"Invalid numeric source field {name} at source line {number}: {raw!r}")
+              normalized = line[:116] + " " + line[116:]
+              assert normalized[103:116].strip() == fields["per_g"].strip(), (number, "Per-g changed")
+              assert normalized[117:130].strip() == fields["per_r"].strip(), (number, "Per-r changed")
+              records.append((number, normalized))
+
+          report = {
+              "source_file": source.name,
+              "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+              "source_line_count": len(lines),
+              "expected_source_line_count": 781636,
+              "recognized_record_count": len(records),
+              "expected_record_count": 781602,
+              "nonrecord_line_count": len(metadata),
+              "expected_nonrecord_line_count": 34,
+              "nonrecord_lines": metadata,
+              "record_length_min_before": min((len(x) - 1 for _, x in records), default=None),
+              "record_length_max_before": max((len(x) - 1 for _, x in records), default=None),
+              "normalization": "preserve observed Per-g bytes 104-116 and Per-r bytes 117-129; insert one separator before original byte 117 to align Per-r to the parser's CDS span; assert both values unchanged",
+              "status": "PASS" if len(lines) == 781636 and len(records) == 781602 and len(metadata) == 34 else "BLOCKED",
+          }
+          Path("table2_normalization_report.json").write_text(json.dumps(report, indent=2) + "\n")
+          print(json.dumps(report, indent=2))
+          if report["status"] != "PASS":
+              raise SystemExit("Table 2 normalization contract failed; refusing to continue")
+          target.write_text("\n".join(line for _, line in records) + "\n", encoding="utf-8")
+          digest = hashlib.sha256(target.read_bytes()).hexdigest()
+          Path("table2-normalized.sha256").write_text(f"{digest}  table2.dat\n")
+          print(f"Normalized Table 2: {len(records)} records; sha256={digest}")
+          PY
+
+      - name: Download and verify independent published membership
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs"
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --max-time 900 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/5764899/files/Zenodo.zip?download=1" \
+            -o Zenodo.zip
+          echo "7fc6562d4208cbfa97366351984810e3  Zenodo.zip" | md5sum --check -
+          member="$(unzip -Z1 Zenodo.zip | grep -E '(^|/)1st_layer\.csv$' | head -n 1)"
+          test -n "$member"
+          unzip -p Zenodo.zip "$member" > 1st_layer.csv
+          test -s 1st_layer.csv
+          printf 'Membership archive member: %s\n' "$member"
+          wc -l 1st_layer.csv
+          sha256sum Zenodo.zip 1st_layer.csv | tee membership.sha256
+
+      - name: Compare exact object-level sets
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs"
+          python "$GITHUB_WORKSPACE/scripts/verify_cpvs_four_field_rule.py" \
+            --table2 table2.dat \
+            --zenodo-csv 1st_layer.csv \
+            --out "$GITHUB_WORKSPACE/cpvs_four_field_report.json"
+          cat "$GITHUB_WORKSPACE/cpvs_four_field_report.json" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo
+            echo "### Input checksums"
+            echo '~~~text'
+            cat table2-source.sha256 table2-normalized.sha256 membership.sha256
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-four-field-real-data-report-v3
+          path: |
+            cpvs_four_field_report.json
+            ${{ runner.temp }}/cpvs/table2_normalization_report.json
+            ${{ runner.temp }}/cpvs/table2-source.sha256
+            ${{ runner.temp }}/cpvs/table2-normalized.sha256
+            ${{ runner.temp }}/cpvs/membership.sha256
+          if-no-files-found: warn
+          retention-days: 30
