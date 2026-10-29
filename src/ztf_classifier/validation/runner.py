@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import resource
 import sys
 import time
 from dataclasses import dataclass
@@ -27,6 +26,61 @@ from sklearn.metrics import (
 
 from ztf_classifier.validation.checks import run_scientific_checks
 from ztf_classifier.validation.manifest import BenchmarkManifest
+
+
+def _peak_rss_mb() -> float | None:
+    """Return process peak resident memory in MiB, or None if unavailable."""
+    if sys.platform == "win32":
+        import ctypes
+        from ctypes import wintypes
+
+        class ProcessMemoryCounters(ctypes.Structure):
+            _fields_ = [
+                ("cb", wintypes.DWORD),
+                ("PageFaultCount", wintypes.DWORD),
+                ("PeakWorkingSetSize", ctypes.c_size_t),
+                ("WorkingSetSize", ctypes.c_size_t),
+                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                ("PagefileUsage", ctypes.c_size_t),
+                ("PeakPagefileUsage", ctypes.c_size_t),
+            ]
+
+        try:
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+            kernel32.GetCurrentProcess.argtypes = []
+            try:
+                query = ctypes.WinDLL("psapi", use_last_error=True).GetProcessMemoryInfo
+            except (AttributeError, OSError):
+                query = ctypes.WinDLL("kernel32", use_last_error=True).K32GetProcessMemoryInfo
+            query.restype = wintypes.BOOL
+            query.argtypes = [
+                wintypes.HANDLE,
+                ctypes.POINTER(ProcessMemoryCounters),
+                wintypes.DWORD,
+            ]
+            counters = ProcessMemoryCounters()
+            counters.cb = ctypes.sizeof(counters)
+            if not query(kernel32.GetCurrentProcess(), ctypes.byref(counters), counters.cb):
+                return None
+            return float(counters.PeakWorkingSetSize) / (1024.0 * 1024.0)
+        except (AttributeError, OSError, ValueError):
+            return None
+
+    try:
+        import resource
+        peak = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+    except (ImportError, AttributeError, OSError, ValueError):
+        return None
+    # getrusage reports KiB on Linux and bytes on macOS.
+    if sys.platform == "darwin":
+        peak /= 1024.0
+    return peak / 1024.0
+
+
 
 
 @dataclass(frozen=True)
@@ -287,12 +341,13 @@ def run_table_benchmark(
         blockers.append("provenance")
     status = "PASS" if not blockers else "BLOCKED"
     elapsed = time.perf_counter() - started
-    peak_rss_mb = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) / 1024.0
-    if sys.platform == "darwin":
-        peak_rss_mb /= 1024.0
+    peak_rss_mb = _peak_rss_mb()
     metrics["performance"] = {
         "runtime_seconds": float(elapsed),
         "peak_rss_mb": peak_rss_mb,
+        "peak_rss_measurement_status": (
+            "measured" if peak_rss_mb is not None else "unavailable"
+        ),
     }
 
     result = BenchmarkRunResult(
