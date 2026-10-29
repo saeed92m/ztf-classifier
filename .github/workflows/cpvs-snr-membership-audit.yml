@@ -1,0 +1,90 @@
+name: CPVS full-source SNR membership audit
+
+on:
+  push:
+    branches:
+      - investigation/cpvs-snr-membership-audit-20261029
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Reconstruct published membership from raw g/r photometry
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Run audit parser self-test
+        run: python scripts/audit_cpvs_snr_membership.py --self-test
+
+      - name: Download and verify pinned CPVS source archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cpvs-snr"
+          cd "$RUNNER_TEMP/cpvs-snr"
+
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --max-time 1800 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/Table2.txt.zip?download=1" \
+            -o Table2.txt.zip
+          echo "24dd4cf138a2687901d64b2d029cc624  Table2.txt.zip" | md5sum --check -
+
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --max-time 1800 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/5764899/files/Zenodo.zip?download=1" \
+            -o Zenodo.zip
+          echo "7fc6562d4208cbfa97366351984810e3  Zenodo.zip" | md5sum --check -
+
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --max-time 1800 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \
+            -o ztf2g.zip
+          echo "850fcef561dd7407fbe8e19e99100d7a  ztf2g.zip" | md5sum --check -
+
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --max-time 1800 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" \
+            -o ztf2r.zip
+          echo "daa7bc45c67579253eebe1b6c09dfbd9  ztf2r.zip" | md5sum --check -
+
+          sha256sum Table2.txt.zip Zenodo.zip ztf2g.zip ztf2r.zip | tee source-archives.sha256
+          du -h Table2.txt.zip Zenodo.zip ztf2g.zip ztf2r.zip
+
+      - name: Reconstruct and compare object-level membership
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs-snr"
+          python "$GITHUB_WORKSPACE/scripts/audit_cpvs_snr_membership.py" \
+            --table2-zip Table2.txt.zip \
+            --published-zip Zenodo.zip \
+            --g-zip ztf2g.zip \
+            --r-zip ztf2r.zip \
+            --out-dir "$GITHUB_WORKSPACE/cpvs_snr_audit"
+          mkdir -p "$GITHUB_WORKSPACE/cpvs_snr_audit"
+          cp source-archives.sha256 "$GITHUB_WORKSPACE/cpvs_snr_audit/source-archives.sha256"
+          cat "$GITHUB_WORKSPACE/cpvs_snr_audit/cpvs_snr_membership_report.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full-source scientific audit
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-full-source-snr-membership-audit
+          path: |
+            cpvs_snr_audit/
+            ${{ runner.temp }}/cpvs-snr/source-archives.sha256
+          if-no-files-found: warn
+          retention-days: 30
