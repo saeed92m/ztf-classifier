@@ -38,13 +38,15 @@
     "trade_off": "Keep the workflow manually dispatched and preserve run_scrape=false by default to avoid unintended external scraping or credit use."
   },
   "validation": {
-    "status": "PENDING_CI",
+    "status": "PASS",
     "scientific_gate_affected": false,
     "evidence": [
-      "Current main already uses actions/checkout@v7 and actions/setup-python@v7 in the primary workflows.",
-      "Previous PR CI run 38889152329 passed Format Check and Lint but failed the lifecycle-record requirement; downstream gated jobs were skipped."
-    ],
-    "blocker": "Fresh CI must pass the lifecycle gate, full test suite, runtime smoke tests, package build, and dependency audit on the final PR head."
+      "Current PR head 582b9ec9fe12eebb06a1d4736857276065ecd63b: CI run 40834751603 passed Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate.",
+      "Current PR head: CodeQL run 40834751656 passed.",
+      "Current PR head: Product Scope Audit run 40834751620 passed.",
+      "Scientific Validation run 40834751655 passed the benchmark/lifecycle contract stage; source-backed heavy jobs were skipped because this workflow-only change does not affect scientific gates.",
+      "Verified .github/workflows/scrapegraphai-probe.yml uses actions/checkout@v7 and actions/setup-python@v7 and keeps run_scrape default false."
+    ]
   },
   "failure_analysis": {
     "status": "known-failure",
@@ -62,16 +64,13 @@
     ]
   },
   "regression": {
-    "status": "BLOCKED",
-    "open_blockers": [
-      "Fresh current-head CI and all gated jobs must pass.",
-      "Confirm the manual dispatch input still defaults to false and no external scrape runs without explicit opt-in."
-    ]
+    "status": "PASS",
+    "open_blockers": []
   },
-  "decision": "BLOCKED",
+  "decision": "ACCEPT",
   "knowledge_carried_forward": [
-    "Do not merge until the lifecycle gate and all required CI checks pass.",
-    "Keep optional ScrapeGraphAI scraping disabled by default.",
-    "Do not downgrade action versions in the other primary workflows."
+    "Keep optional external scraping disabled by default; manual dispatch must explicitly opt in.",
+    "Use the repository's current v7 action baseline rather than stale Dependabot patches that downgrade other workflows.",
+    "No scientific baseline, model, feature, dataset, or release artifact was changed."
   ]
 }
