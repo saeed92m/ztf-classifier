@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "missing-data-policy-audit-20261028",
+  "objective": "Implement a non-mutating, traceable missing-data and feature-eligibility diagnostic layer without changing the frozen scientific baseline or inventing measurements.",
+  "previous_knowledge_consumed": [
+    "Project baseline v0.2.0 must preserve the 42-feature schema, model artifact, class order, and historical cutoff.",
+    "CPVS issue #170 remains unresolved: 781602 parent objects, 741786 reconstructed candidates, 730184 published reference members, 11602 candidate-only, and zero published-only on the pinned finite-SNR run.",
+    "The native feature pipeline filters invalid observations, uses 10-observation and 30-observation eligibility thresholds for basic and Lomb–Scargle features, and intentionally returns NaN for ineligible features.",
+    "Cross-band color can be defined from one valid observation per band, while a sample-standard-deviation variability ratio requires at least two observations.",
+    "The first CI run on this PR found lint-only issues in the new diagnostic helper; those were corrected in commit f40ed855f1b64005696fd210a03fb3b52bb9fb45."
+  ],
+  "baseline": {
+    "revision": "main@e181b69e6119dd513760035ff1abeaa77f69155a",
+    "scientific_baseline": "v0.2.0",
+    "feature_schema": "42 features; frozen order",
+    "cpvs_membership_gate": "UNRESOLVED",
+    "scope": "Feature eligibility diagnostics only; no feature values, model artifacts, thresholds, training data, class order, or CPVS selection rules changed."
+  },
+  "change": {
+    "branch": "science/missing-data-policy-audit-20261028",
+    "pull_request": "https://github.com/saeed92m/ztf-classifier/pull/239",
+    "files": [
+      "src/ztf_classifier/features/diagnostics.py",
+      "tests/test_feature_diagnostics.py",
+      "docs/scientific_validation/MISSING_DATA_POLICY_AND_FEATURE_ELIGIBILITY_2026-10-28.md",
+      "configs/process/cycles/missing-data-policy-audit-20261028.json"
+    ],
+    "rationale": "Report why a feature is unavailable without fabricating source measurements, imputing in the extraction layer, or rejecting an entire object when only one analysis is ineligible."
+  },
+  "expected_improvement": [
+    "Expose raw and valid observation counts by band and the current feature-group eligibility thresholds.",
+    "Differentiate mathematically undefined sample-standard-deviation ratios from unavailable cross-band colors.",
+    "Provide regression tests for missingness reasons, invalid-row filtering, JSON serialization, input immutability, and missing schema columns.",
+    "Preserve the frozen v0.2.0 feature vector and keep exact CPVS membership reproduction as a separate gate.",
+    "Honor the same optional historical cutoff as the canonical feature pipeline so diagnostics do not misattribute missing features when post-cutoff observations exist."
+  ],
+  "measurement": {
+    "metrics": {
+      "reproducibility": {
+        "before": "Non-finite feature values could be emitted without a structured per-feature eligibility reason.",
+        "after": "An opt-in JSON-safe diagnostic report records per-band counts, thresholds, conservative non-finite reasons, and cutoff-aware eligibility.",
+        "evidence": "PR #239; tests/test_feature_diagnostics.py"
+      },
+      "reliability": {
+        "before": "A one-observation band could yield an undefined ddof=1 variability ratio with no explicit explanation.",
+        "after": "The diagnostic reports that sample standard deviation requires at least two observations without altering the feature value.",
+        "evidence": "PR #239; workflow run 40695490160"
+      }
+    }
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Current PR head cec2b72a94b8a7a5ab2edb62d1fb673645cd6805: CI run 40749058353 passed Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate.",
+      "Current PR head: CodeQL run 40749058417 passed.",
+      "Current PR head: Product Scope Audit run 40749058481 passed.",
+      "Scientific Validation run 40749058381 passed the benchmark/lifecycle contract stage; source-backed DR24/ALeRCE/CPVS jobs were skipped by workflow conditions. This PR does not change scientific model outputs and makes no full scientific-validation claim.",
+      "An earlier documentation-update head failed the lifecycle enum contract; the current head's cycle record has valid enums and the full CI gate passes."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The original feature output intentionally represented ineligible numerical features as NaN but did not expose a structured reason diagnostic.",
+      "The first PR lint failure was caused by redundant int conversion and Ruff SIM114 branch-combination rules; both were corrected before the current CI run."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Missing measurement, unavailable derived feature, and invalid astronomical object are distinct states.",
+      "A derived estimate from raw observations must not be silently substituted for a catalog's fit-derived value; any alternative estimator needs a distinct definition, quality policy, uncertainty, provenance, and validation.",
+      "A successful schema/order check is not proof that every feature is numerically computable.",
+      "The diagnostic helper is opt-in; integration into every API/UI response remains a separate compatibility-reviewed task.",
+      "This change does not resolve the CPVS published-membership discrepancy or establish full scientific model validity."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "The diagnostic helper is opt-in; API/UI integration remains a separate compatibility-reviewed task.",
+    "Do not impute or fabricate measurements in the source/feature-extraction layer.",
+    "Keep the immutable v0.2.0 feature schema, model artifact, feature order, and cutoff unchanged.",
+    "CPVS exact-membership reconstruction remains an independent unresolved scientific validation blocker; this PR does not resolve it."
+  ]
+}
