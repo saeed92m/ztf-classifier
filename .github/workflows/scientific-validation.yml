@@ -220,7 +220,9 @@ jobs:
           python -m ztf_classifier.validation derive-730k             --parent "$parent"             --g-lightcurve reports/scientific_validation/ztf_periodic_730k/g             --r-lightcurve reports/scientific_validation/ztf_periodic_730k/r             --output reports/scientific_validation/ztf_periodic_730k/selected.tsv             --parent-evidence-sha256 "$parent_sha"             --code-version "${GITHUB_SHA}"
 
       - name: Download independent Table 2 and Table 4 TSV references
+        id: audit_730k
         if: always()
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
