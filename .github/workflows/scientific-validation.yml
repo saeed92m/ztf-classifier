@@ -219,39 +219,52 @@ jobs:
           parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
           python -m ztf_classifier.validation derive-730k             --parent "$parent"             --g-lightcurve reports/scientific_validation/ztf_periodic_730k/g             --r-lightcurve reports/scientific_validation/ztf_periodic_730k/r             --output reports/scientific_validation/ztf_periodic_730k/selected.tsv             --parent-evidence-sha256 "$parent_sha"             --code-version "${GITHUB_SHA}"
 
-      - name: Download independent published 730k membership
+      - name: Download independent Table 2 and Table 4 TSV references
         if: always()
+        shell: bash
         run: |
           set -euo pipefail
           root=reports/scientific_validation/ztf_periodic_730k
-          curl -L --fail --retry 3 --retry-all-errors \
+          mkdir -p "$root"
+          tmp="$RUNNER_TEMP/cpvs-reference-tsv"
+          mkdir -p "$tmp"
+          fetch_table() {
+            local filename="$1" header="$2"
+            shift 2
+            local url part
+            for url in "$@"; do
+              part="$tmp/$filename.part"
+              rm -f "$part"
+              echo "Trying catalogue mirror: $url"
+              if curl --location --fail --show-error --silent \
+                --connect-timeout 20 --max-time 120 --retry 1 \
+                "$url" -o "$part"; then
+                if [[ -s "$part" ]] && grep -Fq "$header" "$part"; then
+                  mv "$part" "$tmp/$filename"
+                  echo "Accepted $filename"
+                  return 0
+                fi
+                echo "Rejected $url: expected metadata header absent" >&2
+              fi
+              rm -f "$part"
+            done
+            echo "ERROR: no VizieR mirror yielded a validated $filename" >&2
+            return 1
+          }
+          fetch_table table2.tsv $'#Column\tPer-r' \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000"
+          fetch_table table4.tsv $'#Column\tZTF' \
             "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
-            -o "$root/published_table4.dat"
-          test -s "$root/published_table4.dat"
-          echo "Published VizieR membership downloaded."
-
-      - name: Diagnose CPVS selection semantics
-        if: always()
-        run: |
-          set -euo pipefail
-          python scripts/diagnose_cpvs_selection.py \
-            --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
-            --g reports/scientific_validation/ztf_periodic_730k/g \
-            --r reports/scientific_validation/ztf_periodic_730k/r \
-            --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
-            --output reports/scientific_validation/ztf_periodic_730k/selection_diagnostics.json
-
-      - name: Audit 730k membership against independent publication
-        id: audit_730k
-        if: always()
-        continue-on-error: true
-        run: |
-          set -euo pipefail
-          python scripts/audit_cpvs_membership.py \
-            --candidate reports/scientific_validation/ztf_periodic_730k/selected.tsv \
-            --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
-            --output reports/scientific_validation/ztf_periodic_730k/membership_audit.json
-
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"
+          sha256sum "$tmp/table2.tsv" "$tmp/table4.tsv"
+          python scripts/audit_cpvs_candidate_four_field.py \
+            --table2 "$tmp/table2.tsv" \
+            --table4 "$tmp/table4.tsv" \
+            --candidates "$root/selected.tsv" \
+            --out "$root/candidate_four_field_audit.json"
       - name: Classify CPVS reconstruction result
         if: always()
         env:
