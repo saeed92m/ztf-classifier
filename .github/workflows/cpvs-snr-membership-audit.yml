@@ -58,13 +58,13 @@ jobs:
             return 1
           }
 
-          fetch_table table2.tsv  \
-            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
-            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
+          fetch_table table2.tsv $'#Column\\tPer-r' \\
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \\
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \\
             "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000"
-          fetch_table table4.tsv  \
-            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
-            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+          fetch_table table4.tsv $'#Column\\tZTF' \\
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \\
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \\
             "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"
 
           sha256sum table2.tsv table4.tsv | tee source-tables.sha256
