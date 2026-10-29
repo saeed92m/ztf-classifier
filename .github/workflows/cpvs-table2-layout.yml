@@ -1,0 +1,67 @@
+name: CPVS Table 2 byte-layout inspection
+
+on:
+  push:
+    branches:
+      - investigation/cpvs-table2-layout-20261029
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Download and verify Table 2 archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cpvs"
+          cd "$RUNNER_TEMP/cpvs"
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --max-time 600 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/Table2.txt.zip?download=1" \
+            -o Table2.txt.zip
+          echo "24dd4cf138a2687901d64b2d029cc624  Table2.txt.zip" | md5sum --check -
+          unzip -p Table2.txt.zip Table2.txt > Table2.txt
+          sha256sum Table2.txt.zip Table2.txt
+
+      - name: Print exact source layout and a representative row
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs"
+          python - <<'PY' | tee "$GITHUB_WORKSPACE/table2-layout-sample.txt"
+          from pathlib import Path
+          lines = Path("Table2.txt").read_text(encoding="utf-8").splitlines()
+          records = [line for line in lines if len(line) >= 130 and line[:22].strip().upper().startswith("ZTF") and line[23:29].strip().isdigit()]
+          print(f"total_lines={len(lines)} recognized_records={len(records)}")
+          print("=== metadata column definitions ===")
+          for i in range(4, 19):
+              print(f"line {i+1}: {lines[i]!r}")
+          print("=== representative record (record index 198, 1-based) ===")
+          line = records[197]
+          print(f"length={len(line)} repr={line!r}")
+          for label, start, end in [
+              ("ID", 1, 22), ("Seq", 24, 29), ("gmag", 90, 95),
+              ("rmag", 97, 102), ("Per-g CDS-assumed", 104, 116),
+              ("Per-g Zenodo-doc", 104, 115), ("Per-r CDS-assumed", 118, 130),
+              ("Per-r Zenodo-doc", 117, 129), ("Per-r candidate", 118, 129),
+              ("Per-r candidate2", 118, 128),
+          ]:
+              print(f"{label:22s} [{start}:{end}] = {line[start-1:end]!r} -> {line[start-1:end].strip()!r}")
+          print("=== character index ruler, positions 100-140 ===")
+          print("".join(str((i // 100) % 10) for i in range(100, 141)))
+          print("".join(str((i // 10) % 10) for i in range(100, 141)))
+          print("".join(str(i % 10) for i in range(100, 141)))
+          print("".join(line[i-1] for i in range(100, 141)))
+          PY
+
+      - name: Upload byte-layout sample
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-table2-byte-layout-sample
+          path: table2-layout-sample.txt
+          retention-days: 30
