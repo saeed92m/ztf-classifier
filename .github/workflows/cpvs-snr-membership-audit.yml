@@ -83,6 +83,57 @@ jobs:
             --dump-ids
           cat "$RUNNER_TEMP/cpvs-two-table/cpvs_two_table_audit.json" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Preserve field-level provenance for the 55 four-field-only objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs-two-table"
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+
+          wanted = {line.strip() for line in Path("cpvs_four_field_only_ids.txt").read_text().splitlines() if line.strip()}
+          if len(wanted) != 55:
+              raise SystemExit(f"Expected 55 four-field-only IDs, got {len(wanted)}")
+
+          header = None
+          rows = {}
+          with Path("table2.tsv").open(encoding="utf-8", newline="") as source:
+              for raw in source:
+                  if not raw.strip() or raw.startswith("#"):
+                      continue
+                  fields = raw.rstrip("\r\n").split("\t")
+                  if header is None:
+                      if fields[:6] == ["ID", "Seq", "gmag", "rmag", "Per-g", "Per-r"]:
+                          header = fields[:6]
+                      continue
+                  if fields and fields[0].startswith("---"):
+                      continue
+                  if len(fields) < 6:
+                      raise SystemExit(f"Malformed Table 2 TSV row: {raw[:120]!r}")
+                  seq = fields[1].strip()
+                  if seq in wanted:
+                      if seq in rows:
+                          raise SystemExit(f"Duplicate Seq in Table 2 TSV: {seq}")
+                      rows[seq] = fields[:6]
+
+          if header is None:
+              raise SystemExit("Could not locate expected Table 2 TSV data header")
+          if set(rows) != wanted:
+              raise SystemExit(f"ID coverage mismatch: missing={sorted(wanted-set(rows))[:10]}, extra={sorted(set(rows)-wanted)[:10]}")
+
+          with Path("cpvs_four_field_only_records.tsv").open("w", encoding="utf-8", newline="") as output:
+              writer = csv.writer(output, delimiter="\t", lineterminator="\n")
+              writer.writerow(header)
+              for seq in sorted(rows, key=int):
+                  writer.writerow(rows[seq])
+
+          print(f"Saved {len(rows)} exact object records with ZTF name, Seq, and all four predicate fields.")
+          PY
+
+          sha256sum cpvs_four_field_only_records.tsv | tee -a source-tables.sha256
+          cat cpvs_four_field_only_records.tsv >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload two-table audit evidence
         if: always()
         uses: actions/upload-artifact@v6
@@ -92,6 +143,7 @@ jobs:
             ${{ runner.temp }}/cpvs-two-table/cpvs_two_table_audit.json
             ${{ runner.temp }}/cpvs-two-table/cpvs_four_field_only_ids.txt
             ${{ runner.temp }}/cpvs-two-table/cpvs_published_only_ids.txt
+            ${{ runner.temp }}/cpvs-two-table/cpvs_four_field_only_records.tsv
             ${{ runner.temp }}/cpvs-two-table/source-tables.sha256
             ${{ runner.temp }}/cpvs-two-table/source-tables.tsv
           if-no-files-found: warn
