@@ -413,14 +413,15 @@ jobs:
           by_seq = {}
           with table2_path.open(encoding="utf-8", newline="") as stream:
               for raw in stream:
-                  line = raw.rstrip("\r\n")
+                  line = raw.rstrip("\\r\\n")
                   if not line.strip() or line.startswith("#"):
-                      if line.startswith("#Column\t"):
-                          fields = line[len("#Column\t"):].split("\t")
-                          if all(k.lower() in [x.lower() for x in fields] for k in ("ID", "Seq")):
-                              header = fields
                       continue
-                  fields = line.split("\t")
+                  fields = [value.strip() for value in line.split("\\t")]
+                  # VizieR emits one #Column metadata line per field, followed
+                  # by a separate tab-delimited data header.
+                  if header is None and all(k in fields for k in ("ID", "Seq")):
+                      header = fields
+                      continue
                   if header is None or len(fields) != len(header) or fields == header:
                       continue
                   row = dict(zip(header, fields))
@@ -428,12 +429,17 @@ jobs:
                       seq = int(row["Seq"])
                   except (KeyError, ValueError):
                       continue
+                  name = row.get("ID", "").strip()
+                  if not name:
+                      raise SystemExit(f"Table 2 row for Seq={seq} has an empty ID")
                   if seq in by_seq:
                       raise SystemExit(f"duplicate Table 2 Seq {seq}")
-                  by_seq[seq] = row["ID"].strip()
+                  by_seq[seq] = name
+          if header is None:
+              raise SystemExit("Table 2 response has no data header containing both ID and Seq; cannot establish SourceID-to-ZTF crosswalk")
           missing = sorted(set(target_ids) - set(by_seq))
           if missing:
-              raise SystemExit(f"Target SourceIDs absent from Table 2: {missing}")
+              raise SystemExit(f"Target SourceIDs absent from Table 2 Seq after parsing validated header {header}: {missing}")
 
           with zenodo_path.open(encoding="utf-8-sig", newline="") as stream:
               reader = csv.DictReader(stream)
