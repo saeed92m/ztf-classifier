@@ -24,12 +24,12 @@
   ],
   "measurement": {
     "metrics": {
-      "parser_regression_coverage": {
+      "regression_protection_count": {
         "before": "No dedicated standalone test for this two-table four-field hypothesis on current main.",
         "after": "14 synthetic fixed-width fixture tests reported on the source branch; current-main CI and test result are pending.",
         "status": "PARTIAL"
       },
-      "real_data_membership": {
+      "scientific_validity": {
         "before": null,
         "after": null,
         "status": "NOT_MEASURED"
@@ -38,14 +38,15 @@
     "trade_off": "The diagnostic does not establish author intent, alter the selector, or claim science validation. It requires real published files supplied by an operator if the CI environment cannot reach CDS/VizieR."
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "BLOCKED",
     "scientific_gate_affected": false,
     "evidence": [
       "Source branch commit 6a82fa7daba2fa8ef97ceea26dfc43b4f48d84c7 reports 14 synthetic tests, 668 full-suite tests, and clean Ruff checks; these results have not been independently reproduced on this new main-based head.",
       "Current-main CodeQL, format, lint, product-scope, and lifecycle checks are running; source-backed jobs are intentionally skipped on this feature PR.",
-      "Latest full CPVS run 40873746342 failed to retrieve published Table 4 from all configured public endpoints due network timeouts and retained an UNRESOLVED result."
+      "Latest full CPVS run 40873746342 failed to retrieve published Table 4 from all configured public endpoints due network timeouts and retained an UNRESOLVED result.",
+      "CI run 40881388232 rejected unsupported lifecycle metric names; corrected to contract-supported regression_protection_count and scientific_validity without changing scientific claims."
     ],
-    "blocker": "Fresh current-head CI must pass. Then run the diagnostic against hash-identified real Table 2 and Table 4 files; review both set differences and SHA-256 values. A zero difference would establish equivalence on those files only, not prove author intent.",
+    "blocker": "Fresh lifecycle validation, full test suite, runtime smoke tests, package build, dependency audit, and real-data membership check must pass. No real Table 2/Table 4 result has been produced by this PR.",
     "regression": "BLOCKED",
     "blockers": [
       "Run the new tests on current main and verify all applicable CI checks.",
