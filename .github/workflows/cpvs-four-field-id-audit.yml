@@ -158,7 +158,8 @@ jobs:
           from collections import Counter
           from pathlib import Path
 
-          report = json.loads(Path("$GITHUB_WORKSPACE/cpvs_four_field_report.json").read_text())
+          import os
+          report = json.loads((Path(os.environ["GITHUB_WORKSPACE"]) / "cpvs_four_field_report.json").read_text())
           only_ids = {int(x.strip()) for x in Path("cpvs_four_field_only_ids.txt").read_text().splitlines() if x.strip()}
           with Path("1st_layer.csv").open(encoding="utf-8", newline="") as f:
               published_names = {row["ID"].strip() for row in csv.DictReader(f) if row.get("ID")}
