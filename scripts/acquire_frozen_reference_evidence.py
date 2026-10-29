@@ -32,7 +32,14 @@ SOURCES = {
         "filename": "Zenodo.zip",
         "md5": "7fc6562d4208cbfa97366351984810e3",
         "archive_type": "zip",
-        "required_members": set(),
+        # These names are recorded in the verified publisher archive manifest.
+        # Require all three so a valid checksum for an unexpected/changed archive
+        # layout cannot silently pass as complete reference evidence.
+        "required_members": {
+            "1st_layer.csv",
+            "2nd_layer.csv",
+            "SIMBAD_ZTF_crossmatch.csv",
+        },
     },
 }
 
