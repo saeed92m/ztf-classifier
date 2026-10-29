@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-231-alerce-empty-response-fallback-20261027",
+  "objective": "Treat a genuinely empty ALeRCE object-query DataFrame with no columns as a zero-result response so the configured selection policy can apply fallback, while preserving fail-closed validation for non-empty malformed responses.",
+  "previous_knowledge_consumed": [
+    "Live ALeRCE smoke run 2026-10-27 returned an empty DataFrame with shape (0, 0) for some class/probability queries.",
+    "ObjectSelectionPolicy fallback_on_empty can retry empty classes, but AlerceObjectBackend raised before the policy could observe the empty result.",
+    "The live experiment used strict_primary, which intentionally does not fallback."
+  ],
+  "baseline": {
+    "revision": "b56c90bafe9e6e0c5630dd4b96c9843dbd26301c",
+    "description": "Frozen v0.2.0 benchmark/model/features/class order remain unchanged. The live 45-object acquisition is not complete."
+  },
+  "expected_improvement": [
+    "Correct handling of valid zero-result API responses.",
+    "Regression protection for empty DataFrames without columns.",
+    "Allow explicit fallback_on_empty experiments without weakening malformed non-empty payload validation."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "An empty (0, 0) API response was incorrectly rejected as malformed.",
+        "after": "A genuinely empty response is normalized to a zero-row canonical frame; non-empty malformed responses still fail closed."
+      },
+      "reliability": {
+        "before": "Fallback policy could not observe an empty API response because the backend raised first.",
+        "after": "The empty/no-columns regression test and full CI passed on PR head b66b7e39f70512f15572daf9a5acb8b2e830b79e; live fallback acquisition remains unmeasured.",
+        "status": "MEASURED"
+      },
+      "reproducibility": {
+        "before": "The live 45-object attempt stopped before producing a complete dataset.",
+        "after": "The fix, test, configuration constraint, and outstanding live acquisition requirement are recorded in this versioned cycle."
+      }
+    },
+    "trade_off": "The live experiment must explicitly configure fallback_on_empty to test fallback. No default strategy, probability threshold, benchmark data, model, or acceptance criterion is changed."
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "PR head b66b7e39f70512f15572daf9a5acb8b2e830b79e: CI run 40519325711 passed Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate.",
+      "Current head: CodeQL run 40519325717 passed.",
+      "Current head: Product Scope Audit run 40519325713 passed.",
+      "Scientific Validation run 40519325731 passed the benchmark/lifecycle contract stage; source-backed acquisition and heavy validation were skipped in this ordinary PR context. This code change does not establish scientific model validity.",
+      "The focused regression test confirms that an empty (0, 0) ALeRCE response is normalized to a zero-row canonical frame while non-empty malformed responses remain fail-closed."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "AlerceObjectBackend validated required columns before checking whether the DataFrame was empty; an empty (0, 0) frame was therefore treated as malformed.",
+      "The initial live config used strict_primary, so it would not trigger fallback even after empty-response normalization.",
+      "The first lifecycle record used an unsupported metric name and was rejected by the cumulative lifecycle validator."
+    ],
+    "unresolved": [
+      "Whether a rerun with the fix and fallback_on_empty can acquire all 45 requested objects.",
+      "Whether all 15 classes can supply three objects under the declared primary/fallback thresholds at retrieval time."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A zero-row response is distinct from a non-empty malformed response and should be represented explicitly.",
+      "Fallback behavior must be opt-in in the experiment configuration and recorded in the manifest.",
+      "A passing unit test is not evidence that the live catalog can supply the target sample."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "Keep the live 45-object ALeRCE acquisition experiment open until the manifest, per-class counts, IDs, provenance, and hashes are inspected.",
+    "fallback_on_empty must remain explicitly configured; the default selection strategy and probability thresholds are unchanged.",
+    "Keep the frozen v0.2.0 baseline and fail-closed scientific validation unchanged.",
+    "A passing backend regression test is not proof that all 15 classes can supply the target sample at retrieval time."
+  ]
+}

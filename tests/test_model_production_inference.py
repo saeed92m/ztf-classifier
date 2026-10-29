@@ -21,18 +21,22 @@ from ztf_classifier.pipeline.model import ModelPipeline
 LEGACY_ARTIFACT = Path("runs/model_baseline_v0.2_production/artifact")
 DATASET = Path("data/processed/features_v0.2.parquet")
 
-_MODEL_INPUTS = (
-    LEGACY_ARTIFACT,
-    DATASET,
-    Path("reports/tables/stratified_cv_fold_assignments_v0.1.parquet"),
-    Path("reports/tables/final_feature_set_v0.2.parquet"),
-    Path("reports/tables/final_model_config_v0.2.json"),
+FOLD_ASSIGNMENTS = Path(
+    "reports/tables/stratified_cv_fold_assignments_v0.1.parquet"
 )
-if not all(path.exists() for path in _MODEL_INPUTS):
-    pytest.skip(
-        "production model artifact/dataset inputs are not present in this checkout",
-        allow_module_level=True,
-    )
+FEATURE_SCHEMA = Path("reports/tables/final_feature_set_v0.2.parquet")
+MODEL_CONFIG = Path("reports/tables/final_model_config_v0.2.json")
+
+_SHARED_MODEL_INPUTS = (
+    DATASET,
+    FOLD_ASSIGNMENTS,
+    FEATURE_SCHEMA,
+    MODEL_CONFIG,
+)
+_LEGACY_TEST_INPUTS_AVAILABLE = (
+    LEGACY_ARTIFACT.is_dir()
+    and all(path.exists() for path in _SHARED_MODEL_INPUTS)
+)
 
 
 def _load_dataset() -> pd.DataFrame:
@@ -43,6 +47,9 @@ def _load_dataset() -> pd.DataFrame:
 def diagnostic_artifact(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> Iterator[Path]:
+    if not all(path.exists() for path in _SHARED_MODEL_INPUTS):
+        pytest.skip("diagnostic model inputs are unavailable")
+
     token = tmp_path_factory.mktemp("4b").name
     output_dir = Path(f"tmp-test-model-pipeline-{token}")
 
@@ -69,6 +76,10 @@ def _build_service(
     return ProductionInferenceService(artifact)
 
 
+@pytest.mark.skipif(
+    not _LEGACY_TEST_INPUTS_AVAILABLE,
+    reason="legacy v1.0 artifact or shared model inputs are unavailable",
+)
 def test_service_loads_production_artifact() -> None:
     service = _build_service()
 
@@ -78,6 +89,10 @@ def test_service_loads_production_artifact() -> None:
     assert service.loaded_artifact.artifact_schema_version == "1.0"
 
 
+@pytest.mark.skipif(
+    not _LEGACY_TEST_INPUTS_AVAILABLE,
+    reason="legacy v1.0 artifact or shared model inputs are unavailable",
+)
 def test_service_returns_prediction_result() -> None:
     service = _build_service()
     dataset = _load_dataset()
@@ -96,6 +111,10 @@ def test_service_returns_prediction_result() -> None:
     assert len(result.calibrated_predicted_labels) == 150
 
 
+@pytest.mark.skipif(
+    not _LEGACY_TEST_INPUTS_AVAILABLE,
+    reason="legacy v1.0 artifact or shared model inputs are unavailable",
+)
 def test_service_returns_valid_calibrated_probabilities() -> None:
     service = _build_service()
     dataset = _load_dataset()
@@ -116,6 +135,10 @@ def test_service_returns_valid_calibrated_probabilities() -> None:
     )
 
 
+@pytest.mark.skipif(
+    not _LEGACY_TEST_INPUTS_AVAILABLE,
+    reason="legacy v1.0 artifact or shared model inputs are unavailable",
+)
 def test_service_uses_persisted_calibration_temperature() -> None:
     service = _build_service()
     dataset = _load_dataset()
@@ -138,6 +161,10 @@ def test_service_uses_persisted_calibration_temperature() -> None:
     )
 
 
+@pytest.mark.skipif(
+    not _LEGACY_TEST_INPUTS_AVAILABLE,
+    reason="legacy v1.0 artifact or shared model inputs are unavailable",
+)
 def test_service_is_deterministic() -> None:
     service = _build_service()
     dataset = _load_dataset()
@@ -166,6 +193,10 @@ def test_service_is_deterministic() -> None:
     )
 
 
+@pytest.mark.skipif(
+    not _LEGACY_TEST_INPUTS_AVAILABLE,
+    reason="legacy v1.0 artifact or shared model inputs are unavailable",
+)
 def test_service_does_not_include_diagnostic_outputs() -> None:
     service = _build_service()
     dataset = _load_dataset()
@@ -189,6 +220,10 @@ def test_service_rejects_missing_artifact() -> None:
         )
 
 
+@pytest.mark.skipif(
+    not _LEGACY_TEST_INPUTS_AVAILABLE,
+    reason="legacy v1.0 artifact or shared model inputs are unavailable",
+)
 def test_service_matches_direct_artifact_inference() -> None:
     dataset = _load_dataset()
     service = _build_service()
