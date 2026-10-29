@@ -1,0 +1,143 @@
+name: CPVS four-field real-data diagnostic v2
+
+on:
+  push:
+    branches:
+      - investigation/cpvs-four-field-runtime-v2-20261029
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    name: Normalize pinned Table 2 and compare published membership
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Run synthetic self-test first
+        run: python scripts/verify_cpvs_four_field_rule.py --self-test
+
+      - name: Download and verify compact Table 2 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cpvs"
+          cd "$RUNNER_TEMP/cpvs"
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --max-time 600 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/Table2.txt.zip?download=1" \
+            -o Table2.txt.zip
+          echo "24dd4cf138a2687901d64b2d029cc624  Table2.txt.zip" | md5sum --check -
+          member="$(unzip -Z1 Table2.txt.zip | grep -E '(^|/)Table2\.txt$' | head -n 1)"
+          test -n "$member"
+          unzip -p Table2.txt.zip "$member" > Table2.txt
+          test -s Table2.txt
+          sha256sum Table2.txt.zip Table2.txt | tee table2-source.sha256
+          wc -l Table2.txt
+
+      - name: Validate and normalize Table 2 records (fail closed)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs"
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          source = Path("Table2.txt")
+          target = Path("table2.dat")
+          lines = source.read_text(encoding="utf-8").splitlines()
+          records, metadata = [], []
+          for number, line in enumerate(lines, start=1):
+              is_record = (
+                  len(line) >= 130
+                  and line[:22].strip().upper().startswith("ZTF")
+                  and line[23:29].strip().isdigit()
+              )
+              if is_record:
+                  records.append((number, line))
+              else:
+                  metadata.append({"line": number, "length": len(line), "preview": line[:120]})
+          report = {
+              "source_file": source.name,
+              "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+              "source_line_count": len(lines),
+              "expected_source_line_count": 781636,
+              "recognized_record_count": len(records),
+              "expected_record_count": 781602,
+              "nonrecord_line_count": len(metadata),
+              "nonrecord_lines": metadata,
+              "record_length_min": min((len(x) for _, x in records), default=None),
+              "record_length_max": max((len(x) for _, x in records), default=None),
+              "normalization": "retain only lines with ZTF name in bytes 1-22, numeric Seq in bytes 24-29, and length >=130; preserve record bytes/order",
+              "status": "PASS" if len(lines) == 781636 and len(records) == 781602 and len(metadata) == 34 else "BLOCKED"
+          }
+          Path("table2_format_report.json").write_text(json.dumps(report, indent=2) + "\n")
+          print(json.dumps(report, indent=2))
+          if report["status"] != "PASS":
+              raise SystemExit("Table 2 normalization contract failed; refusing to continue")
+          target.write_text("\n".join(line for _, line in records) + "\n", encoding="utf-8")
+          digest = hashlib.sha256(target.read_bytes()).hexdigest()
+          with Path("table2-normalized.sha256").open("w") as f:
+              f.write(f"{digest}  table2.dat\n")
+          print(f"Normalized table rows: {len(records)}; sha256={digest}")
+          PY
+
+      - name: Download and verify independent published membership
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs"
+          curl --location --fail --show-error --silent \
+            --retry 4 --retry-all-errors --retry-delay 3 \
+            --connect-timeout 30 --max-time 900 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/5764899/files/Zenodo.zip?download=1" \
+            -o Zenodo.zip
+          echo "7fc6562d4208cbfa97366351984810e3  Zenodo.zip" | md5sum --check -
+          member="$(unzip -Z1 Zenodo.zip | grep -E '(^|/)1st_layer\.csv$' | head -n 1)"
+          test -n "$member"
+          unzip -p Zenodo.zip "$member" > 1st_layer.csv
+          test -s 1st_layer.csv
+          printf 'Membership archive member: %s\n' "$member"
+          wc -l 1st_layer.csv
+          sha256sum Zenodo.zip 1st_layer.csv | tee membership.sha256
+
+      - name: Compare exact object-level sets
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cpvs"
+          python "$GITHUB_WORKSPACE/scripts/verify_cpvs_four_field_rule.py" \
+            --table2 table2.dat \
+            --zenodo-csv 1st_layer.csv \
+            --out "$GITHUB_WORKSPACE/cpvs_four_field_report.json"
+          cat "$GITHUB_WORKSPACE/cpvs_four_field_report.json" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo
+            echo "### Input checksums"
+            echo '~~~text'
+            cat table2-source.sha256 table2-normalized.sha256 membership.sha256
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-four-field-real-data-report-v2
+          path: |
+            cpvs_four_field_report.json
+            ${{ runner.temp }}/cpvs/table2_format_report.json
+            ${{ runner.temp }}/cpvs/table2-source.sha256
+            ${{ runner.temp }}/cpvs/table2-normalized.sha256
+            ${{ runner.temp }}/cpvs/membership.sha256
+          if-no-files-found: warn
+          retention-days: 30
