@@ -510,15 +510,27 @@ jobs:
     if: ${{ always() }}
     needs:
       - audit
+      - cpvs-targeted-zenodo-audit
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Require all gated stages to pass
+      - name: Require all applicable gated stages to pass
         env:
           AUDIT_RESULT: ${{ needs.audit.result }}
+          CPVS_RESULT: ${{ needs.cpvs-targeted-zenodo-audit.result }}
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
+        shell: bash
         run: |
+          set -euo pipefail
           if [ "$AUDIT_RESULT" != "success" ]; then
-            echo "Final gated CI stage failed or was cancelled: $AUDIT_RESULT"
+            echo "Dependency audit failed or was cancelled: $AUDIT_RESULT"
             exit 1
           fi
-          echo "All gated CI stages passed."
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REF" = "investigation/cpvs-candidate-field-audit-20261030" ]; then
+            if [ "$CPVS_RESULT" != "success" ]; then
+              echo "CPVS scientific membership audit is not successful: $CPVS_RESULT"
+              exit 1
+            fi
+          fi
+          echo "All applicable gated stages passed."
