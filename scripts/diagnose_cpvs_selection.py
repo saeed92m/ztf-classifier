@@ -92,7 +92,9 @@ def published_membership(
         with zenodo_csv.open(encoding="utf-8-sig", newline="") as stream:
             reader = csv.DictReader(stream)
             if not reader.fieldnames or "ID" not in reader.fieldnames:
-                raise ValueError(f"Zenodo CSV must contain ID column; found {reader.fieldnames!r}")
+                raise ValueError(
+                    f"Zenodo CSV must contain ID column; found {reader.fieldnames!r}"
+                )
             names = [(row.get("ID") or "").strip() for row in reader]
         source_name = "Zenodo 10.5281/zenodo.5764899 1st_layer.csv"
         reference_path = zenodo_csv
