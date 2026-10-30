@@ -10,7 +10,11 @@ import math
 from pathlib import Path
 from typing import Any
 
-from audit_cpvs_candidate_four_field import read_vizier
+try:
+    from .audit_cpvs_candidate_four_field import read_vizier
+except ImportError:  # direct script execution
+    from audit_cpvs_candidate_four_field import read_vizier
+
 from ztf_classifier.validation.derivation import _iter_rows, _source_ids
 
 
