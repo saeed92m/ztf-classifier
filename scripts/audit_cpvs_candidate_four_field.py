@@ -195,7 +195,8 @@ def audit(
             "filtered_published_only": len(filtered_published_only),
             "candidate_only_by_failed_field": candidate_only_by_failed_field,
             "candidate_only_without_any_failed_four_field": sum(
-                not record["failed_positive_fields"] for record in candidate_only_records
+                not record["failed_positive_fields"]
+                for record in candidate_only_records
             ),
         },
         "object_level_discrepancies": {
