@@ -115,7 +115,8 @@ def main() -> int:
     p.add_argument("--g", type=Path, required=True)
     p.add_argument("--r", type=Path, required=True)
     p.add_argument("--table2", type=Path, required=True)
-    p.add_argument("--published", type=Path)\n    p.add_argument("--zenodo-csv", type=Path)
+    p.add_argument("--published", type=Path)
+    p.add_argument("--zenodo-csv", type=Path)
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
 
