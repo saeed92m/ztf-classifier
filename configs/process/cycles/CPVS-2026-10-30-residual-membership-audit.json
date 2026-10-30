@@ -20,17 +20,9 @@
   ],
   "measurement": {
     "metrics": {
-      "reconstructed_candidate_count": {
-        "before": 741786,
-        "after": 730184,
-        "status": "MEASURED",
-        "note": "Historical empirical filtering result only; not yet established as the authors' intended rule."
-      },
-      "published_reference_count": {
-        "before": 730184,
-        "after": 730184,
-        "status": "MEASURED",
-        "note": "Reference catalogue count; membership semantics remain under validation."
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "note": "No validated membership result is available: the targeted audit failed at VizieR schema parsing before comparing any object."
       }
     }
   },
@@ -39,18 +31,20 @@
       "GitHub Actions run 40966809678: Format Check and Lint passed.",
       "GitHub Actions run 40966809678: direct 17-object audit downloaded Zenodo 10.5281/zenodo.5764899 and verified the published MD5.",
       "GitHub Actions run 40966809678: direct audit failed before membership comparison because its VizieR parser never recognized the data header; all 17 IDs reported missing are therefore not membership results.",
-      "CPVS residual report docs/scientific_validation/CPVS_RESIDUAL_17_AUDIT_2026-10-30.md"
+      "CPVS residual report docs/scientific_validation/CPVS_RESIDUAL_17_AUDIT_2026-10-30.md",
+      "GitHub Actions run 40968076286: corrected first parser still failed to recognize the VizieR data header; Zenodo download and MD5 verification passed, but no membership comparison was produced."
     ],
     "scientific_gate_affected": true,
     "status": "BLOCKED",
-    "blocker": "The corrected VizieR header parser must be executed and the 17-object SourceID-to-reference membership result verified. The full 11,602-object discrepancy remains unresolved."
+    "blocker": "The VizieR Table 2 response schema must be parsed from its actual downloaded bytes; then verify direct 17-object membership and reproduce the full 11,602-object comparison. No membership verdict exists yet."
   },
   "failure_analysis": {
     "status": "root-cause-partially-identified",
     "root_causes": [
       "The targeted CI script incorrectly expected a single #Column metadata line to contain both ID and Seq; VizieR emits one metadata line per column followed by a separate tab-delimited data header.",
       "The prior failure to map all 17 IDs is an audit-script parsing failure and must not be interpreted as evidence of reference non-membership.",
-      "The scientific cause of the 11,602 candidate excess is not yet proven."
+      "The scientific cause of the 11,602 candidate excess is not yet proven.",
+      "The first parser correction still assumed a conventional un-commented data header; the exact VizieR response header representation remains to be inspected from downloaded bytes."
     ]
   },
   "knowledge_extraction": {
@@ -64,8 +58,9 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Re-run the corrected direct 17-object audit and inspect the uploaded per-object JSON.",
-      "Reproduce the comparison for all 11,602 candidate-only IDs and establish the root cause."
+      "Inspect and robustly parse the actual VizieR Table 2 response, preserving raw header lines as diagnostic evidence.",
+      "Re-run the direct 17-object Zenodo membership comparison and inspect its uploaded JSON.",
+      "Reproduce the comparison for all 11,602 candidate-only IDs and establish the scientific root cause."
     ]
   },
   "decision": "BLOCKED",
