@@ -285,6 +285,36 @@ jobs:
               --candidates "$root/selected.tsv" \
               --out "$root/candidate_four_field_audit.json"
           fi
+      - name: Diagnose CPVS selection alternatives with object-level membership
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=reports/scientific_validation/ztf_periodic_730k
+          tmp="$RUNNER_TEMP/cpvs-reference-tsv"
+          test -s "$tmp/table2.tsv"
+          if [ -s "$tmp/table4.tsv" ]; then
+            python scripts/diagnose_cpvs_selection.py \
+              --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
+              --g "$root/g" \
+              --r "$root/r" \
+              --table2 "$tmp/table2.tsv" \
+              --published "$tmp/table4.tsv" \
+              --output "$root/selection_diagnostics.json"
+          elif [ -s "$tmp/1st_layer.csv" ]; then
+            python scripts/diagnose_cpvs_selection.py \
+              --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
+              --g "$root/g" \
+              --r "$root/r" \
+              --table2 "$tmp/table2.tsv" \
+              --zenodo-csv "$tmp/1st_layer.csv" \
+              --output "$root/selection_diagnostics.json"
+          else
+            echo "No verified published-membership file available for SNR predicate diagnostics." >&2
+            exit 1
+          fi
+
       - name: Classify CPVS reconstruction result
         if: always()
         env:
