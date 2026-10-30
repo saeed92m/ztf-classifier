@@ -44,7 +44,7 @@ The independent two-table artifact records Table 2 SHA-256 `c5422312ca470592d11f
 
 ## The 17 residual objects
 
-All have nonzero parent mean magnitudes and a positive common period `Per`. Each is missing one band-specific period field: 10 lack `Per-g`; 7 lack `Per-r`. They also have nonzero detection counts in both bands.
+All have nonzero parent mean magnitudes and a positive common period `Per`. Each is missing one band-specific period field: **11 lack `Per-g`; 6 lack `Per-r`** (counted directly from the 17 rows below). They also have nonzero detection counts in both bands.
 
 | SourceID | Type | Per (common) | gmag | rmag | Per-g | Per-r | Ng | Nr |
 |---:|---|---:|---:|---:|---:|---:|---:|---:|
@@ -72,15 +72,15 @@ SHA-256 of the sorted SourceID list, one ID per line with trailing newline: `5d3
 
 Zenodo record [10.5281/zenodo.5764899](https://zenodo.org/records/5764899) describes a CSV with 730,184 periodic transients. The existing independent audit of `1st_layer.csv` reports 730,184 unique names, zero unmapped names, all 730,184 names in the four-field Table 2 set, and 55 Table 2 four-field objects outside that reference set.
 
-A targeted, direct per-object audit was completed in GitHub Actions run [41091772746](https://github.com/saeed92m/ztf-classifier/actions/runs/41091772746), on commit `c7eec0deb36a1e066295f69b40479a4ae5db811c`. It retrieved the Table 2 crosswalk for exactly the 17 requested `Seq` values, joined each to its ZTF `ID`, and compared those names against the `ID` column of the downloaded Zenodo `1st_layer.csv`.
+A targeted, direct per-object audit was rerun in GitHub Actions run [41143515205](https://github.com/saeed92m/ztf-classifier/actions/runs/41143515205), on commit `f06cf2c9f95443c99d03b1f97dce564d10912132`. It retrieved the Table 2 crosswalk for exactly the 17 requested `Seq` values, joined each to its ZTF `ID`, and compared those names against the `ID` column of the downloaded Zenodo `1st_layer.csv`. The run completed successfully and the uploaded JSON explicitly reports **0/17 in reference, 17/17 not in reference**, and 730,184 unique names in the reference.
 
-The Zenodo archive passed the pinned MD5 check: `7fc6562d4208cbfa97366351984810e3`. The direct audit artifact reports **0/17 in reference and 17/17 not in reference**, with 730,184 unique names in the reference. The exact source-file hashes recorded in the JSON artifact are:
+The Zenodo archive passed the pinned MD5 check: `7fc6562d4208cbfa97366351984810e3`. The run recorded these exact hashes:
 
-- targeted Table 2 response SHA-256: `edd4edae61e59b0d9d6db07465f6cb120ae23d90b00ede14f8c6b947d42a67b8`
+- targeted Table 2 response SHA-256: `2a0120d43d15abf45ca930a22a50bfcfde9653130a16bc8f2fdc20ecdee54dd1`
 - extracted Zenodo `1st_layer.csv` SHA-256: `c235df101bf7a130b5dccdd95b786ac347f2b7ef24fc49ed7ae989aa8625437b`
-- uploaded audit ZIP SHA-256: `35bd613c79a5bf0d755cd29b76f3312d9a9244b6d80fc5292f4ee303fce280f1`
+- uploaded audit ZIP SHA-256: `83479e77546ff57a08157e18375561e936d568c7e2722b0831c1aa89146f7950`
 
-The artifact `cpvs-17-object-zenodo-membership-audit` is attached to that run. This is direct evidence that the 17 residual candidates are absent from the frozen Zenodo reference. It does **not** by itself prove the authors' exact intended selection logic or explain all upstream photometry/SNR semantics.
+The artifact `cpvs-17-object-zenodo-membership-audit` (artifact ID `13020293188`) is attached to that run. This independently confirms that these 17 residual candidates are absent from the frozen Zenodo reference. It does **not** by itself prove the authors' exact intended selection logic or explain the other 11,585 candidate-only objects or the full upstream photometry/SNR semantics.
 
 ## What the paper actually says
 
