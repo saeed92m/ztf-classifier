@@ -384,7 +384,7 @@ jobs:
           tmp="$RUNNER_TEMP/cpvs/table2.tsv.part"
           ok=0
           ids="9877,120746,127012,151010,191955,281946,287003,307249,378719,385223,409233,429716,440167,471637,518053,657950,732333"
-          adql="SELECT \"ID\", \"Seq\" FROM \"J/ApJS/249/18/table2\" WHERE \"Seq\" IN (${ids})"
+          adql="SELECT * FROM \"J/ApJS/249/18/table2\" WHERE \"Seq\" IN (${ids})"
 
           # Prefer TAP/ADQL; retain ASU-TSV mirrors as a fallback.
           rm -f "$tmp"
@@ -400,9 +400,9 @@ jobs:
 
           if [ "$ok" -eq 0 ]; then
             for url in \
-              "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&Seq=${ids}&-out.max=1000" \
-              "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&Seq=${ids}&-out.max=1000" \
-              "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&Seq=${ids}&-out.max=1000"; do
+              "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out.all&Seq=${ids}&-out.max=1000" \
+              "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out.all&Seq=${ids}&-out.max=1000" \
+              "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out.all&Seq=${ids}&-out.max=1000"; do
               rm -f "$tmp"
               if curl --http1.1 -L --fail --show-error --silent --connect-timeout 20 --max-time 120 --retry 3 --retry-all-errors --retry-delay 3 "$url" -o "$tmp" && test -s "$tmp"; then
                 mv "$tmp" "$RUNNER_TEMP/cpvs/table2.tsv"
@@ -475,7 +475,7 @@ jobs:
                       raise SystemExit(f"Table 2 row for Seq={seq} has an empty ID")
                   if seq in by_seq:
                       raise SystemExit(f"duplicate Table 2 Seq {seq}")
-                  by_seq[seq] = name
+                  by_seq[seq] = row
           if header is None and metadata_columns:
               header = [metadata_columns[i] for i in sorted(metadata_columns)]
           if header is None or not all(k in header for k in ("ID", "Seq")):
@@ -511,8 +511,16 @@ jobs:
 
           records = []
           for seq in target_ids:
-              name = by_seq[seq]
-              records.append({"source_id": seq, "ztf_name": name, "in_zenodo_membership": name in zenodo_names})
+              row = by_seq[seq]
+              name = row.get("ID", "").strip()
+              records.append(
+                  {
+                      "source_id": seq,
+                      "ztf_name": name,
+                      "in_zenodo_membership": name in zenodo_names,
+                      "table2_row": row,
+                  }
+              )
           matched = sum(r["in_zenodo_membership"] for r in records)
           report = {
               "status": "COMPLETED",
@@ -526,6 +534,7 @@ jobs:
                   "table2_sha256": hashlib.sha256(table2_path.read_bytes()).hexdigest(),
                   "zenodo_csv_sha256": hashlib.sha256(zenodo_path.read_bytes()).hexdigest(),
               },
+              "table2_schema": header,
               "objects": records,
           }
           output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
