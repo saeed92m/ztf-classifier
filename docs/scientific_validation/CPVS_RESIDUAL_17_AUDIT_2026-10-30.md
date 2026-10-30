@@ -2,7 +2,7 @@
 
 ## Status
 
-**Finding: strong empirical reconstruction rule; scientific root cause remains unresolved.** This report uses existing historical workflow artifacts. It does not claim the paper's authors explicitly used the metadata predicate below.
+**Finding: exact archived membership reconstruction is supported by both set-level comparison and a direct 17-object Zenodo join; author-intent/root-cause semantics remain unresolved.** No production selector or scientific acceptance criterion was changed.
 
 ## Inputs and provenance
 
@@ -72,7 +72,15 @@ SHA-256 of the sorted SourceID list, one ID per line with trailing newline: `5d3
 
 Zenodo record [10.5281/zenodo.5764899](https://zenodo.org/records/5764899) describes a CSV with 730,184 periodic transients. The existing independent audit of `1st_layer.csv` reports 730,184 unique names, zero unmapped names, all 730,184 names in the four-field Table 2 set, and 55 Table 2 four-field objects outside that reference set.
 
-Because these 17 objects each lack either `Per-g` or `Per-r`, they fail that four-field predicate. Given the audited set inclusion, the set-based result is that **none of these 17 belongs to the Zenodo reference membership**. A direct per-name join is still desirable as an explicit per-object artifact; a targeted CI job was added to the draft PR, but its execution has not yet been verified.
+A targeted, direct per-object audit was completed in GitHub Actions run [41091772746](https://github.com/saeed92m/ztf-classifier/actions/runs/41091772746), on commit `c7eec0deb36a1e066295f69b40479a4ae5db811c`. It retrieved the Table 2 crosswalk for exactly the 17 requested `Seq` values, joined each to its ZTF `ID`, and compared those names against the `ID` column of the downloaded Zenodo `1st_layer.csv`.
+
+The Zenodo archive passed the pinned MD5 check: `7fc6562d4208cbfa97366351984810e3`. The direct audit artifact reports **0/17 in reference and 17/17 not in reference**, with 730,184 unique names in the reference. The exact source-file hashes recorded in the JSON artifact are:
+
+- targeted Table 2 response SHA-256: `edd4edae61e59b0d9d6db07465f6cb120ae23d90b00ede14f8c6b947d42a67b8`
+- extracted Zenodo `1st_layer.csv` SHA-256: `c235df101bf7a130b5dccdd95b786ac347f2b7ef24fc49ed7ae989aa8625437b`
+- uploaded audit ZIP SHA-256: `35bd613c79a5bf0d755cd29b76f3312d9a9244b6d80fc5292f4ee303fce280f1`
+
+The artifact `cpvs-17-object-zenodo-membership-audit` is attached to that run. This is direct evidence that the 17 residual candidates are absent from the frozen Zenodo reference. It does **not** by itself prove the authors' exact intended selection logic or explain all upstream photometry/SNR semantics.
 
 ## What the paper actually says
 
@@ -84,4 +92,4 @@ Therefore, the 17-object pattern narrows the discrepancy but does not establish 
 
 ## Guardrail
 
-Do not change the production selector, SNR thresholds, benchmark baseline, or scientific acceptance criteria on the basis of this diagnostic alone. Keep CPVS exact reproduction marked **UNRESOLVED** until the direct Zenodo ID-level artifact and a source-supported root cause are verified.
+Do not change the production selector, SNR thresholds, benchmark baseline, or scientific acceptance criteria on the basis of this diagnostic alone. The direct 17-object membership check is now verified, but keep the authors' intended selection semantics and upstream SNR/photometry root cause marked **UNRESOLVED** until source-supported evidence establishes them.
