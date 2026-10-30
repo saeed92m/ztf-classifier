@@ -463,8 +463,14 @@ jobs:
                   "Refusing to infer a crosswalk."
               )
           missing = sorted(set(target_ids) - set(by_seq))
+          unexpected = sorted(set(by_seq) - set(target_ids))
           if missing:
               raise SystemExit(f"Target SourceIDs absent from Table 2 Seq after parsing validated header {header}: {missing}")
+          if unexpected or len(by_seq) != len(target_ids):
+              raise SystemExit(
+                  "Targeted VizieR query did not return exactly the requested SourceIDs; "
+                  f"unexpected={unexpected}, observed={len(by_seq)}, expected={len(target_ids)}"
+              )
 
           with zenodo_path.open(encoding="utf-8-sig", newline="") as stream:
               reader = csv.DictReader(stream)
