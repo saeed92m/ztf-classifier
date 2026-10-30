@@ -372,18 +372,34 @@ jobs:
           mkdir -p "$RUNNER_TEMP/cpvs"
           tmp="$RUNNER_TEMP/cpvs/table2.tsv.part"
           ok=0
-          for url in \
-            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&Seq=9877,120746,127012,151010,191955,281946,287003,307249,378719,385223,409233,429716,440167,471637,518053,657950,732333&-out.max=1000" \
-            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&Seq=9877,120746,127012,151010,191955,281946,287003,307249,378719,385223,409233,429716,440167,471637,518053,657950,732333&-out.max=1000" \
-            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&Seq=9877,120746,127012,151010,191955,281946,287003,307249,378719,385223,409233,429716,440167,471637,518053,657950,732333&-out.max=1000"; do
-            rm -f "$tmp"
-            if curl -L --fail --show-error --silent --connect-timeout 20 --max-time 120 --retry 3 --retry-all-errors --retry-delay 3 "$url" -o "$tmp" &&
-               grep -Eq '^#Column[[:space:]]+[0-9]+[[:space:]]+ID([[:space:]]|$)' "$tmp" && grep -Eq '^#Column[[:space:]]+[0-9]+[[:space:]]+Seq([[:space:]]|$)' "$tmp"; then
-              mv "$tmp" "$RUNNER_TEMP/cpvs/table2.tsv"
-              ok=1
-              break
-            fi
-          done
+          ids="9877,120746,127012,151010,191955,281946,287003,307249,378719,385223,409233,429716,440167,471637,518053,657950,732333"
+          adql="SELECT \"ID\", \"Seq\" FROM \"J/ApJS/249/18/table2\" WHERE \"Seq\" IN (${ids})"
+
+          # Prefer TAP/ADQL; retain ASU-TSV mirrors as a fallback.
+          rm -f "$tmp"
+          if curl -L --fail --show-error --silent --connect-timeout 20 --max-time 120 --retry 3 --retry-all-errors --retry-delay 3 \
+            --data-urlencode "REQUEST=doQuery" \
+            --data-urlencode "LANG=ADQL" \
+            --data-urlencode "FORMAT=tsv" \
+            --data-urlencode "QUERY=$adql" \
+            "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync" -o "$tmp" && test -s "$tmp"; then
+            mv "$tmp" "$RUNNER_TEMP/cpvs/table2.tsv"
+            ok=1
+          fi
+
+          if [ "$ok" -eq 0 ]; then
+            for url in \
+              "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&Seq=${ids}&-out.max=1000" \
+              "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&Seq=${ids}&-out.max=1000" \
+              "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&Seq=${ids}&-out.max=1000"; do
+              rm -f "$tmp"
+              if curl --http1.1 -L --fail --show-error --silent --connect-timeout 20 --max-time 120 --retry 3 --retry-all-errors --retry-delay 3 "$url" -o "$tmp" && test -s "$tmp"; then
+                mv "$tmp" "$RUNNER_TEMP/cpvs/table2.tsv"
+                ok=1
+                break
+              fi
+            done
+          fi
           test "$ok" -eq 1 || { echo "Could not acquire validated Table 2 crosswalk from any mirror" >&2; exit 1; }
           sha256sum "$RUNNER_TEMP/cpvs/table2.tsv"
 
