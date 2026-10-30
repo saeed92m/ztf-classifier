@@ -17,7 +17,9 @@ def test_candidate_intersection_crosswalks_table4_by_ztf_name(tmp_path: Path) ->
         "ZTF1\t1\t18.1\t17.9\t0.4\t0.5\n"
         "ZTF2\t2\t19.1\t18.9\t0.6\t0.7\n"
         "ZTF3\t3\t0\t18.0\t0.8\t0.9\n"
-        "ZTF4\t4\t17.1\t16.9\t0.2\t0.3\n",
+        "ZTF4\t4\t17.1\t16.9\t0.2\t0.3\n"
+        "ZTF5\t5\tinf\t16.9\t0.2\t0.3\n"
+        "ZTF6\t6\t17.1\t16.9\tnan\t0.3\n",
     )
     # Table 4 numeric IDs deliberately differ from Table 2 Seq. The join must use ZTF.
     table4 = _write(
@@ -26,21 +28,21 @@ def test_candidate_intersection_crosswalks_table4_by_ztf_name(tmp_path: Path) ->
     )
     candidates = _write(
         tmp_path / "selected.tsv",
-        "SourceID\n1\n2\n3\n",
+        "SourceID\n1\n2\n3\n5\n6\n",
     )
 
     report = audit(table2, table4, candidates, expected_parent=None, expected_published=None)
 
     assert report["counts"] == {
-        "parent": 4,
+        "parent": 6,
         "published": 2,
-        "candidates": 3,
+        "candidates": 5,
         "candidate_published_intersection": 2,
-        "candidate_only": 1,
+        "candidate_only": 3,
         "published_only": 0,
         "parent_four_field": 3,
         "candidate_pass_four_field": 2,
-        "candidate_fail_four_field": 1,
+        "candidate_fail_four_field": 3,
         "four_field_parent_only": 1,
         "filtered_candidate_only": 0,
         "filtered_published_only": 0,
