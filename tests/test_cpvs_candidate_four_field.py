@@ -101,3 +101,42 @@ def test_zenodo_membership_fallback_joins_by_ztf_name(tmp_path: Path) -> None:
     assert report["counts"]["filtered_candidate_only"] == 0
     assert report["verdict"]["four_field_intersection_exact_match"] is True
     assert report["inputs"]["published_membership_source"].startswith("Zenodo DOI")
+
+
+
+def test_selection_diagnostic_crosswalks_table4_by_ztf_name(tmp_path: Path) -> None:
+    from scripts.diagnose_cpvs_selection import published_membership
+
+    table2 = _write(
+        tmp_path / "table2.tsv",
+        "ID\tSeq\nZTF1\t1\nZTF2\t2\n",
+    )
+    table4 = _write(
+        tmp_path / "table4.tsv",
+        "ZTF\tID\nZTF1\t91\nZTF2\t92\n",
+    )
+
+    published, provenance = published_membership(table2, table4, None)
+
+    assert published == {1, 2}
+    assert provenance["join_key"] == (
+        "published ZTF name -> Table 2 ID -> Table 2 Seq (SourceID)"
+    )
+
+
+def test_selection_diagnostic_zenodo_crosswalks_by_ztf_name(tmp_path: Path) -> None:
+    from scripts.diagnose_cpvs_selection import published_membership
+
+    table2 = _write(
+        tmp_path / "table2.tsv",
+        "ID\tSeq\nZTF1\t1\nZTF2\t2\n",
+    )
+    zenodo = _write(
+        tmp_path / "1st_layer.csv",
+        "ID,class\nZTF1,RR\nZTF2,EW\n",
+    )
+
+    published, provenance = published_membership(table2, None, zenodo)
+
+    assert published == {1, 2}
+    assert provenance["source"] == "Zenodo 10.5281/zenodo.5764899 1st_layer.csv"
