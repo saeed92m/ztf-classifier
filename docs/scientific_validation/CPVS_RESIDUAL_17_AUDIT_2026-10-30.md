@@ -29,6 +29,19 @@ The existing 741,786 candidate IDs were re-evaluated against all 781,602 rows of
 
 The final 730,184 set equals the historical published membership under the audited ID crosswalk: intersection 730,184, candidate-only 0 after filtering, published-only 0. This is a reproducible set match. It is **not proof** that the authors defined membership by requiring all four metadata fields to be positive.
 
+### Set-theoretic verification of the reconstruction
+
+The independent two-table audit artifact from workflow run `40953220220` establishes:
+
+- Published membership (P): 730,184 unique names, all mapped to Table 2 `Seq`; zero unmapped and zero duplicate published names.
+- Original SNR candidate set (C): 741,786 IDs; the historical comparison reports (P \subseteq C) (published-only count 0).
+- Four-field parent-metadata set (F): 730,239 IDs; the two-table audit reports (P \subseteq F) (published count and intersection both 730,184).
+- The local recomputation above establishes (|C \cap F| = 730,184).
+
+Therefore (P \subseteq C \cap F), and (|P| = |C \cap F|); hence **(P = C \cap F)** for these archived inputs. This proves exact object-level membership reconstruction for the audited snapshot, rather than merely matching the final count. It does not establish why the authors' pipeline produced that set or whether the four-field predicate was their intended rule.
+
+The independent two-table artifact records Table 2 SHA-256 `c5422312ca470592d11f5a614ac6558b3665413d7806e55915e96007c90d71f4` and Table 4 SHA-256 `b5453a8659935c5323cab3bca73a92ba71fd3964803ccab9464ec601853f7460`. Its verdict is `HYPOTHESIS_REFUTED` for the proposition that the four-field predicate alone defines published membership: 55 objects satisfy (F) but are not in (P). The SNR candidate condition is therefore essential to the reconstructed equality.
+
 ## The 17 residual objects
 
 All have nonzero parent mean magnitudes and a positive common period `Per`. Each is missing one band-specific period field: 10 lack `Per-g`; 7 lack `Per-r`. They also have nonzero detection counts in both bands.
