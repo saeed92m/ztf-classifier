@@ -37,7 +37,7 @@
     ],
     "scientific_gate_affected": true,
     "status": "BLOCKED",
-    "blocker": "The VizieR Table 2 response schema must be parsed from its actual downloaded bytes; then verify direct 17-object membership and reproduce the full 11,602-object comparison. No membership verdict exists yet."
+    "blocker": "The 17-object residual subset is verified absent from the frozen Zenodo membership. The remaining blocker is the full object-level comparison of all 11,602 candidate-only IDs, including fixed 100-object diagnostics and a reproducible 1,000-object sample, followed by a source-supported explanation of the documented SNR/detection semantics."
   },
   "failure_analysis": {
     "status": "subset-audit-repaired; scientific-root-cause-unresolved",
