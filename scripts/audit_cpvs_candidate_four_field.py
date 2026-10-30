@@ -6,33 +6,40 @@ from pathlib import Path
 
 
 def read_vizier(path: Path, required: tuple[str, ...]) -> list[dict[str, str]]:
-    header = None
-    rows = []
-    with path.open(encoding="utf-8", newline="") as stream:
+    import re
+
+    header: list[str] | None = None
+    metadata: dict[int, str] = {}
+    rows: list[dict[str, str]] = []
+    with path.open(encoding="utf-8-sig", newline="") as stream:
         for raw in stream:
             line = raw.rstrip("\r\n")
             if not line.strip():
                 continue
-            if line.startswith("#Column\t"):
-                fields = [x.strip() for x in line[len("#Column\t"):].split("\t")]
-            elif line.startswith("#"):
+            if line.startswith("#Column"):
+                match = re.match(r"^#Column\s+(\d+)\s+(\S+)", line)
+                if match:
+                    metadata[int(match.group(1))] = match.group(2)
                 continue
-            else:
-                fields = [x.strip() for x in line.split("\t")]
-            if header is None and all(k.lower() in [x.lower() for x in fields] for k in required):
+            if line.startswith("#"):
+                continue
+            fields = [value.strip() for value in line.split("\t")]
+            if header is None and all(k.lower() in {x.lower() for x in fields} for k in required):
                 header = fields
                 continue
-            if header is None or line.startswith("#") or fields == header:
-                continue
-            if fields and fields[0].startswith("---"):
-                continue
-            if len(fields) != len(header):
+            if header is None and metadata:
+                header = [metadata[i] for i in sorted(metadata)]
+            if header is None or len(fields) != len(header) or fields == header:
                 continue
             rows.append(dict(zip(header, fields)))
     if header is None:
-        raise ValueError(f"{path}: missing header {required!r}")
+        raise ValueError(f"{path}: missing VizieR column metadata/header {required!r}")
+    missing = [key for key in required if key not in header]
+    if missing:
+        raise ValueError(f"{path}: VizieR schema missing required columns {missing!r}; found {header!r}")
+    if not rows:
+        raise ValueError(f"{path}: VizieR schema parsed but no data rows were found")
     return rows
-
 
 def read_candidates(path: Path) -> set[int]:
     with path.open(encoding="utf-8", newline="") as f:
