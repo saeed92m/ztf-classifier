@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - "ci/heavy/**"
+      - "investigation/**"
     tags:
       - "v*.*.*"
   schedule:
