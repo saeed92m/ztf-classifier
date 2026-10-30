@@ -373,9 +373,9 @@ jobs:
           tmp="$RUNNER_TEMP/cpvs/table2.tsv.part"
           ok=0
           for url in \
-            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
-            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
-            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000"; do
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&Seq=9877,120746,127012,151010,191955,281946,287003,307249,378719,385223,409233,429716,440167,471637,518053,657950,732333&-out.max=1000" \
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&Seq=9877,120746,127012,151010,191955,281946,287003,307249,378719,385223,409233,429716,440167,471637,518053,657950,732333&-out.max=1000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&Seq=9877,120746,127012,151010,191955,281946,287003,307249,378719,385223,409233,429716,440167,471637,518053,657950,732333&-out.max=1000"; do
             rm -f "$tmp"
             if curl -L --fail --show-error --silent --connect-timeout 20 --max-time 180 --retry 1 "$url" -o "$tmp" &&
                grep -Eq '^#Column[[:space:]]+[0-9]+[[:space:]]+Per-r([[:space:]]|$)' "$tmp" && grep -Eq '^#Column[[:space:]]+[0-9]+[[:space:]]+Seq([[:space:]]|$)' "$tmp"; then
