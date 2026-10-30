@@ -21,30 +21,30 @@
   "measurement": {
     "metrics": {
       "scientific_validity": {
-        "status": "NOT_MEASURED",
-        "note": "No validated membership result is available: the targeted audit failed at VizieR schema parsing before comparing any object."
+        "status": "PARTIALLY_MEASURED",
+        "note": "The 17-object residual subset has a completed direct Zenodo membership comparison (0/17 in reference); the full 11,602-object discrepancy and its scientific root cause remain unvalidated."
       }
     }
   },
   "validation": {
     "evidence": [
       "GitHub Actions run 40966809678: Format Check and Lint passed.",
-      "GitHub Actions run 40966809678: direct 17-object audit downloaded Zenodo 10.5281/zenodo.5764899 and verified the published MD5.",
-      "GitHub Actions run 40966809678: direct audit failed before membership comparison because its VizieR parser never recognized the data header; all 17 IDs reported missing are therefore not membership results.",
+      "GitHub Actions run 41143515205 on commit f06cf2c9f95443c99d03b1f97dce564d10912132: direct audit completed for all 17 targeted SourceIDs; 0/17 joined ZTF names occur in Zenodo 1st_layer.csv.",
+      "Run 41143515205 input hashes: Table 2 SHA-256 2a0120d43d15abf45ca930a22a50bfcfde9653130a16bc8f2fdc20ecdee54dd1; Zenodo CSV SHA-256 c235df101bf7a130b5dccdd95b786ac347f2b7ef24fc49ed7ae989aa8625437b.",
+      "Run 41143515205 uploaded artifact cpvs-17-object-zenodo-membership-audit (ID 13020293188; ZIP SHA-256 83479e77546ff57a08157e18375561e936d568c7e2722b0831c1aa89146f7950).",
       "CPVS residual report docs/scientific_validation/CPVS_RESIDUAL_17_AUDIT_2026-10-30.md",
-      "GitHub Actions run 40968076286: corrected first parser still failed to recognize the VizieR data header; Zenodo download and MD5 verification passed, but no membership comparison was produced."
+      "Earlier parser failures were superseded by the successful validated Table 2 ID/Seq crosswalk and 17-object membership comparison in run 41143515205."
     ],
     "scientific_gate_affected": true,
     "status": "BLOCKED",
     "blocker": "The VizieR Table 2 response schema must be parsed from its actual downloaded bytes; then verify direct 17-object membership and reproduce the full 11,602-object comparison. No membership verdict exists yet."
   },
   "failure_analysis": {
-    "status": "root-cause-partially-identified",
+    "status": "subset-audit-repaired; scientific-root-cause-unresolved",
     "root_causes": [
-      "The targeted CI script incorrectly expected a single #Column metadata line to contain both ID and Seq; VizieR emits one metadata line per column followed by a separate tab-delimited data header.",
-      "The prior failure to map all 17 IDs is an audit-script parsing failure and must not be interpreted as evidence of reference non-membership.",
-      "The scientific cause of the 11,602 candidate excess is not yet proven.",
-      "The first parser correction still assumed a conventional un-commented data header; the exact VizieR response header representation remains to be inspected from downloaded bytes."
+      "The earlier targeted audit failures were caused by VizieR response parsing assumptions; the corrected parser now successfully validates the ID/Seq crosswalk and compares all 17 requested objects.",
+      "The 17 residual IDs are directly verified absent from the frozen Zenodo membership, but this does not explain the other 11,585 excess candidates.",
+      "The scientific cause of the full 11,602 candidate excess is not yet proven."
     ]
   },
   "knowledge_extraction": {
@@ -58,9 +58,9 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Inspect and robustly parse the actual VizieR Table 2 response, preserving raw header lines as diagnostic evidence.",
-      "Re-run the direct 17-object Zenodo membership comparison and inspect its uploaded JSON.",
-      "Reproduce the comparison for all 11,602 candidate-only IDs and establish the scientific root cause."
+      "Reproduce the full 11,602 candidate-only comparison using source-backed object-level IDs and verified Table 2/Table 4 or Zenodo membership.",
+      "Complete reproducible 100-object diagnostics and a fixed 1,000-object sample covering reference members and non-members.",
+      "Establish the exact documented SNR/detection semantics and root cause without changing production selection criteria."
     ]
   },
   "decision": "BLOCKED",
