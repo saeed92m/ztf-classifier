@@ -176,7 +176,10 @@ def audit(
         for seq in sorted(four - published)
     ]
     candidate_only_by_failed_field = {
-        field: sum(field in record["failed_positive_fields"] for record in candidate_only_records)
+        field: sum(
+            field in record["failed_positive_fields"]
+            for record in candidate_only_records
+        )
         for field in field_names
     }
     return {
