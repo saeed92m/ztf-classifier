@@ -142,7 +142,7 @@ def main() -> int:
     }
     report: dict[str, Any] = {
         "status": "COMPLETED",
-        "reference": "VizieR J/ApJ/932/118 table4",
+        "reference": crosswalk["source"],
         "crosswalk": crosswalk,
         "parent_count": len(parent),
         "published_count": len(published),
