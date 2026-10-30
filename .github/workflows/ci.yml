@@ -74,10 +74,10 @@ jobs:
             exit 1
           fi
           changed_files_path="$RUNNER_TEMP/changed-python-files.txt"
-          git diff --name-only "origin/${base_ref}...HEAD" -- 'src/**/*.py' 'tests/**/*.py' > "$changed_files_path"
+          git diff --name-only "origin/${base_ref}...HEAD" -- '*.py' > "$changed_files_path"
           mapfile -t files < "$changed_files_path"
           if [ "${#files[@]}" -eq 0 ]; then
-            echo "No changed Python source/test files require formatting validation."
+            echo "No changed Python files require formatting validation."
             exit 0
           fi
           printf 'Checking formatting for %s changed Python file(s):\n' "${#files[@]}"
