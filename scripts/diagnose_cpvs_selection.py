@@ -53,6 +53,17 @@ def ids_hash(ids: set[int]) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _json_safe(value: Any) -> Any:
+    """Convert non-finite floats to JSON null without altering finite values."""
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    return value
+
+
 def published_membership(
     table2_path: Path,
     table4_path: Path | None,
