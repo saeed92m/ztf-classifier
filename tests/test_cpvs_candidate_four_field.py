@@ -51,6 +51,26 @@ def test_candidate_intersection_crosswalks_table4_by_ztf_name(tmp_path: Path) ->
     }
     assert report["verdict"]["four_field_intersection_exact_match"] is True
     assert report["verdict"]["candidate_excess_equals_four_field_failures"] is True
+    assert report["counts"]["candidate_only_by_failed_field"] == {
+        "gmag": 2,
+        "rmag": 0,
+        "Per-g": 1,
+        "Per-r": 0,
+    }
+    assert report["counts"]["candidate_only_without_any_failed_four_field"] == 0
+    assert [
+        (row["source_id"], row["ztf_name"], row["failed_positive_fields"])
+        for row in report["object_level_discrepancies"]["candidate_only"]
+    ] == [
+        (3, "ZTF3", ["gmag"]),
+        (5, "ZTF5", ["gmag"]),
+        (6, "ZTF6", ["Per-g"]),
+    ]
+    assert report["object_level_discrepancies"]["published_only"] == []
+    assert [
+        row["source_id"]
+        for row in report["object_level_discrepancies"]["four_field_only"]
+    ] == []
 
 
 def test_zenodo_membership_fallback_joins_by_ztf_name(tmp_path: Path) -> None:
