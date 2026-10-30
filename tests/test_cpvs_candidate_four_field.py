@@ -31,7 +31,9 @@ def test_candidate_intersection_crosswalks_table4_by_ztf_name(tmp_path: Path) ->
         "SourceID\n1\n2\n3\n5\n6\n",
     )
 
-    report = audit(table2, table4, candidates, expected_parent=None, expected_published=None)
+    report = audit(
+        table2, table4, candidates, expected_parent=None, expected_published=None
+    )
 
     assert report["counts"] == {
         "parent": 6,
@@ -67,7 +69,11 @@ def test_zenodo_membership_fallback_joins_by_ztf_name(tmp_path: Path) -> None:
     candidates = _write(tmp_path / "selected.tsv", "SourceID\n1\n2\n3\n")
 
     report = audit(
-        table2, None, candidates, expected_parent=None, expected_published=None,
+        table2,
+        None,
+        candidates,
+        expected_parent=None,
+        expected_published=None,
         zenodo_csv=zenodo,
     )
 
