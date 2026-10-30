@@ -80,18 +80,25 @@ def audit(
         raise ValueError("supply exactly one of table4 or zenodo_csv")
     t2 = read_vizier(table2, ("ID", "Seq", "gmag", "rmag", "Per-g", "Per-r"))
     t4 = read_vizier(table4, ("ZTF", "ID")) if table4 is not None else None
-    name_to_seq, seq_to_name, four = {}, {}, set()
+    name_to_seq, seq_to_name, four, field_values = {}, {}, set(), {}
+    field_names = ("gmag", "rmag", "Per-g", "Per-r")
     for row in t2:
         name, seq = row["ID"].strip(), int(row["Seq"])
         if not name or name in name_to_seq or seq in seq_to_name:
             raise ValueError(f"duplicate/empty Table 2 name or Seq: {name!r}/{seq}")
         name_to_seq[name] = seq
         seq_to_name[seq] = name
-        try:
-            vals = [float(row[k]) for k in ("gmag", "rmag", "Per-g", "Per-r")]
-        except (ValueError, KeyError):
-            vals = [0.0] * 4
-        if all(math.isfinite(v) and v > 0 for v in vals):
+        values = {}
+        for field in field_names:
+            try:
+                value = float(row[field])
+            except (ValueError, KeyError, TypeError):
+                value = None
+            values[field] = (
+                value if value is not None and math.isfinite(value) else None
+            )
+        field_values[seq] = values
+        if all(value is not None and value > 0 for value in values.values()):
             four.add(seq)
     published, seen_names = set(), set()
     if t4 is not None:
@@ -140,6 +147,38 @@ def audit(
         pass_four - published,
         published - pass_four,
     )
+    candidate_only_records = []
+    for seq in sorted(candidate_only):
+        values = field_values[seq]
+        failed_fields = [
+            field
+            for field in field_names
+            if values[field] is None or values[field] <= 0
+        ]
+        candidate_only_records.append(
+            {
+                "source_id": seq,
+                "ztf_name": seq_to_name[seq],
+                "field_values": values,
+                "failed_positive_fields": failed_fields,
+            }
+        )
+    published_only_records = [
+        {"source_id": seq, "ztf_name": seq_to_name[seq]}
+        for seq in sorted(published_only)
+    ]
+    four_field_only_records = [
+        {
+            "source_id": seq,
+            "ztf_name": seq_to_name[seq],
+            "field_values": field_values[seq],
+        }
+        for seq in sorted(four - published)
+    ]
+    candidate_only_by_failed_field = {
+        field: sum(field in record["failed_positive_fields"] for record in candidate_only_records)
+        for field in field_names
+    }
     return {
         "counts": {
             "parent": len(parent),
@@ -154,6 +193,15 @@ def audit(
             "four_field_parent_only": len(four - published),
             "filtered_candidate_only": len(filtered_candidate_only),
             "filtered_published_only": len(filtered_published_only),
+            "candidate_only_by_failed_field": candidate_only_by_failed_field,
+            "candidate_only_without_any_failed_four_field": sum(
+                not record["failed_positive_fields"] for record in candidate_only_records
+            ),
+        },
+        "object_level_discrepancies": {
+            "candidate_only": candidate_only_records,
+            "published_only": published_only_records,
+            "four_field_only": four_field_only_records,
         },
         "sha256_sorted_ids_newline_terminated": {
             "candidate_only": ids_hash(candidate_only),
