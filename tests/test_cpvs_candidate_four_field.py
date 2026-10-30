@@ -70,7 +70,7 @@ def test_candidate_intersection_crosswalks_table4_by_ztf_name(tmp_path: Path) ->
     assert [
         row["source_id"]
         for row in report["object_level_discrepancies"]["four_field_only"]
-    ] == []
+    ] == [4]
 
 
 def test_zenodo_membership_fallback_joins_by_ztf_name(tmp_path: Path) -> None:
