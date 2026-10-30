@@ -102,6 +102,7 @@ def test_zenodo_membership_fallback_joins_by_ztf_name(tmp_path: Path) -> None:
     assert report["verdict"]["four_field_intersection_exact_match"] is True
     assert report["inputs"]["published_membership_source"].startswith("Zenodo DOI")
 
+
 def test_selection_diagnostic_crosswalks_table4_by_ztf_name(tmp_path: Path) -> None:
     from scripts.diagnose_cpvs_selection import published_membership
 
