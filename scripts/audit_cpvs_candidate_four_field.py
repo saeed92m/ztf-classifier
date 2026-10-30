@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Audit CPVS SNR candidates against Table 2 fields and Table 4 by ZTF name."""
 from __future__ import annotations
-import argparse, csv, hashlib, json
+import argparse, csv, hashlib, json, math
 from pathlib import Path
 
 
@@ -80,7 +80,7 @@ def audit(table2: Path, table4: Path | None, candidates_file: Path,
             vals = [float(row[k]) for k in ("gmag", "rmag", "Per-g", "Per-r")]
         except (ValueError, KeyError):
             vals = [0.0] * 4
-        if all(v > 0 for v in vals):
+        if all(math.isfinite(v) and v > 0 for v in vals):
             four.add(seq)
     published, seen_names = set(), set()
     if t4 is not None:
