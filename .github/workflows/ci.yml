@@ -415,20 +415,22 @@ jobs:
           raw_preview = []
           with table2_path.open(encoding="utf-8-sig", newline="") as stream:
               for raw in stream:
-                  line = raw.rstrip("\\r\\n")
+                  line = raw.rstrip("\r\n")
                   if len(raw_preview) < 30:
                       raw_preview.append(line)
                   if not line.strip():
                       continue
                   if line.startswith("#Column"):
-                      parts = line.split("\\t")
+                      parts = line.split("\t")
                       # Standard VizieR metadata: #Column<TAB>index<TAB>name...
                       if len(parts) >= 3 and parts[1].strip().isdigit():
                           metadata_columns[int(parts[1].strip())] = parts[2].strip()
                       continue
                   if line.startswith("#"):
                       continue
-                  fields = [value.strip() for value in line.split("\\t")]
+                  fields = [value.strip() for value in line.split("\t")]
+                  if header is None and metadata_columns:
+                      header = [metadata_columns[i] for i in sorted(metadata_columns)]
                   if header is None and all(k in fields for k in ("ID", "Seq")):
                       header = fields
                       continue
@@ -450,7 +452,7 @@ jobs:
           if header is None and metadata_columns:
               header = [metadata_columns[i] for i in sorted(metadata_columns)]
           if header is None or not all(k in header for k in ("ID", "Seq")):
-              diagnostic = "\\n".join(raw_preview)
+              diagnostic = "\n".join(raw_preview)
               raise SystemExit(
                   "Table 2 response has no parseable ID/Seq schema. "
                   f"metadata_columns={metadata_columns}; first_lines:\\n{diagnostic}"
