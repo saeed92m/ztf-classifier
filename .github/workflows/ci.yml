@@ -49,6 +49,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v7
@@ -65,12 +67,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin "${GITHUB_BASE_REF:-main}" --depth=1
-          mapfile -t files < <(git diff --name-only "origin/${GITHUB_BASE_REF:-main}...HEAD" -- 'src/**/*.py' 'tests/**/*.py')
+          base_ref="${GITHUB_BASE_REF:-main}"
+          git fetch --no-tags origin "+refs/heads/${base_ref}:refs/remotes/origin/${base_ref}"
+          if ! git merge-base "origin/${base_ref}" HEAD >/dev/null; then
+            echo "Unable to establish a merge base with origin/${base_ref}; refusing to skip formatting validation." >&2
+            exit 1
+          fi
+          changed_files_path="$RUNNER_TEMP/changed-python-files.txt"
+          git diff --name-only "origin/${base_ref}...HEAD" -- 'src/**/*.py' 'tests/**/*.py' > "$changed_files_path"
+          mapfile -t files < "$changed_files_path"
           if [ "${#files[@]}" -eq 0 ]; then
             echo "No changed Python source/test files require formatting validation."
             exit 0
           fi
+          printf 'Checking formatting for %s changed Python file(s):\n' "${#files[@]}"
+          printf '  %s\n' "${files[@]}"
           python -m ruff format --check "${files[@]}"
 
 
