@@ -21,19 +21,36 @@
   "measurement": {
     "metrics": {
       "scientific_validity": {
-        "status": "PARTIALLY_MEASURED",
-        "note": "The 17-object residual subset has a completed direct Zenodo membership comparison (0/17 in reference); the full 11,602-object discrepancy and its scientific root cause remain unvalidated."
+        "status": "NOT_MEASURED",
+        "note": "The full scientific discrepancy has not been validated; partial evidence is recorded separately and must not be treated as a completed scientific-validity measurement.",
+        "partial_evidence": {
+          "targeted_residual_17": {
+            "status": "VERIFIED",
+            "in_reference": 0,
+            "not_in_reference": 17,
+            "run_id": 41143515205
+          },
+          "full_candidate_excess": {
+            "status": "UNRESOLVED",
+            "count": 11602
+          },
+          "root_cause": {
+            "status": "UNRESOLVED"
+          }
+        }
       }
     }
   },
   "validation": {
     "evidence": [
-      "GitHub Actions run 40966809678: Format Check and Lint passed.",
+      "GitHub Actions run 41144613152 on commit 67fefae5f22da7bd2da49845b7578c52354e3283: Format Check PASS; Lint PASS; Cumulative Lifecycle Gate initially failed because this cycle record used unsupported metric status PARTIALLY_MEASURED.",
+      "GitHub Actions run 41144613191 on commit 67fefae5f22da7bd2da49845b7578c52354e3283: Product Scope Audit PASS.",
+      "GitHub Actions run 41144613136 on commit 67fefae5f22da7bd2da49845b7578c52354e3283: CodeQL PASS.",
+      "GitHub Actions run 41144613232 on commit 67fefae5f22da7bd2da49845b7578c52354e3283: Validate benchmark and cumulative lifecycle contracts PASS; source-backed heavy jobs were skipped.",
       "GitHub Actions run 41143515205 on commit f06cf2c9f95443c99d03b1f97dce564d10912132: direct audit completed for all 17 targeted SourceIDs; 0/17 joined ZTF names occur in Zenodo 1st_layer.csv.",
       "Run 41143515205 input hashes: Table 2 SHA-256 2a0120d43d15abf45ca930a22a50bfcfde9653130a16bc8f2fdc20ecdee54dd1; Zenodo CSV SHA-256 c235df101bf7a130b5dccdd95b786ac347f2b7ef24fc49ed7ae989aa8625437b.",
       "Run 41143515205 uploaded artifact cpvs-17-object-zenodo-membership-audit (ID 13020293188; ZIP SHA-256 83479e77546ff57a08157e18375561e936d568c7e2722b0831c1aa89146f7950).",
-      "CPVS residual report docs/scientific_validation/CPVS_RESIDUAL_17_AUDIT_2026-10-30.md",
-      "Earlier parser failures were superseded by the successful validated Table 2 ID/Seq crosswalk and 17-object membership comparison in run 41143515205."
+      "Independent two-table audit artifact from run 40953220220: Table 2 SHA-256 c5422312ca470592d11f5a614ac6558b3665413d7806e55915e96007c90d71f4; Table 4 SHA-256 b5453a8659935c5323cab3bca73a92ba71fd3964803ccab9464ec601853f7460; published set 730184; four-field set 730239; intersection 730184; four-field-only 55; published-only 0."
     ],
     "scientific_gate_affected": true,
     "status": "BLOCKED",
