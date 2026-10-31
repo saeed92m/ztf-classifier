@@ -48,6 +48,8 @@ def test_candidate_intersection_crosswalks_table4_by_ztf_name(tmp_path: Path) ->
         "four_field_parent_only": 1,
         "filtered_candidate_only": 0,
         "filtered_published_only": 0,
+        "candidate_only_by_failed_field": {"gmag": 2, "rmag": 0, "Per-g": 1, "Per-r": 0},
+        "candidate_only_without_any_failed_four_field": 0,
     }
     assert report["verdict"]["four_field_intersection_exact_match"] is True
     assert report["verdict"]["candidate_excess_equals_four_field_failures"] is True
