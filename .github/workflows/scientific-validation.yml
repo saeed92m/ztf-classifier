@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - "ci/heavy/**"
+      - "investigation/**"
     tags:
       - "v*.*.*"
   schedule:
@@ -219,38 +220,100 @@ jobs:
           parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
           python -m ztf_classifier.validation derive-730k             --parent "$parent"             --g-lightcurve reports/scientific_validation/ztf_periodic_730k/g             --r-lightcurve reports/scientific_validation/ztf_periodic_730k/r             --output reports/scientific_validation/ztf_periodic_730k/selected.tsv             --parent-evidence-sha256 "$parent_sha"             --code-version "${GITHUB_SHA}"
 
-      - name: Download independent published 730k membership
-        if: always()
-        run: |
-          set -euo pipefail
-          root=reports/scientific_validation/ztf_periodic_730k
-          curl -L --fail --retry 3 --retry-all-errors \
-            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
-            -o "$root/published_table4.dat"
-          test -s "$root/published_table4.dat"
-          echo "Published VizieR membership downloaded."
-
-      - name: Diagnose CPVS selection semantics
-        if: always()
-        run: |
-          set -euo pipefail
-          python scripts/diagnose_cpvs_selection.py \
-            --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
-            --g reports/scientific_validation/ztf_periodic_730k/g \
-            --r reports/scientific_validation/ztf_periodic_730k/r \
-            --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
-            --output reports/scientific_validation/ztf_periodic_730k/selection_diagnostics.json
-
-      - name: Audit 730k membership against independent publication
+      - name: Download independent Table 2 and Table 4 TSV references
         id: audit_730k
         if: always()
         continue-on-error: true
+        shell: bash
         run: |
           set -euo pipefail
-          python scripts/audit_cpvs_membership.py \
-            --candidate reports/scientific_validation/ztf_periodic_730k/selected.tsv \
-            --published reports/scientific_validation/ztf_periodic_730k/published_table4.dat \
-            --output reports/scientific_validation/ztf_periodic_730k/membership_audit.json
+          root=reports/scientific_validation/ztf_periodic_730k
+          mkdir -p "$root"
+          tmp="$RUNNER_TEMP/cpvs-reference-tsv"
+          mkdir -p "$tmp"
+          fetch_table() {
+            local filename="$1" header="$2"
+            shift 2
+            local url part
+            for url in "$@"; do
+              part="$tmp/$filename.part"
+              rm -f "$part"
+              echo "Trying catalogue mirror: $url"
+              if curl --location --fail --show-error --silent \
+                --connect-timeout 20 --max-time 120 --retry 1 \
+                "$url" -o "$part"; then
+                if [[ -s "$part" ]] && grep -Fq "$header" "$part"; then
+                  mv "$part" "$tmp/$filename"
+                  echo "Accepted $filename"
+                  return 0
+                fi
+                echo "Rejected $url: expected metadata header absent" >&2
+              fi
+              rm -f "$part"
+            done
+            echo "ERROR: no VizieR mirror yielded a validated $filename" >&2
+            return 1
+          }
+          fetch_table table2.tsv $'#Column\tPer-r' \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000"
+          if fetch_table table4.tsv $'#Column\tZTF' \
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"; then
+            echo "Published membership source: VizieR Table 4"
+            sha256sum "$tmp/table2.tsv" "$tmp/table4.tsv"
+            python scripts/audit_cpvs_candidate_four_field.py \
+              --table2 "$tmp/table2.tsv" \
+              --table4 "$tmp/table4.tsv" \
+              --candidates "$root/selected.tsv" \
+              --out "$root/candidate_four_field_audit.json"
+          else
+            echo "VizieR Table 4 unavailable; using alternate published 730,184-object Zenodo catalogue."
+            curl --location --fail --show-error --silent \
+              --connect-timeout 20 --max-time 240 --retry 2 --retry-all-errors \
+              "https://zenodo.org/records/5764899/files/Zenodo.zip" \
+              -o "$tmp/Zenodo.zip"
+            echo "7fc6562d4208cbfa97366351984810e3  $tmp/Zenodo.zip" | md5sum --check -
+            unzip -p "$tmp/Zenodo.zip" 1st_layer.csv > "$tmp/1st_layer.csv"
+            test -s "$tmp/1st_layer.csv"
+            sha256sum "$tmp/table2.tsv" "$tmp/1st_layer.csv"
+            python scripts/audit_cpvs_candidate_four_field.py \
+              --table2 "$tmp/table2.tsv" \
+              --zenodo-csv "$tmp/1st_layer.csv" \
+              --candidates "$root/selected.tsv" \
+              --out "$root/candidate_four_field_audit.json"
+          fi
+      - name: Diagnose CPVS selection alternatives with object-level membership
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=reports/scientific_validation/ztf_periodic_730k
+          tmp="$RUNNER_TEMP/cpvs-reference-tsv"
+          test -s "$tmp/table2.tsv"
+          if [ -s "$tmp/table4.tsv" ]; then
+            python scripts/diagnose_cpvs_selection.py \
+              --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
+              --g "$root/g" \
+              --r "$root/r" \
+              --table2 "$tmp/table2.tsv" \
+              --published "$tmp/table4.tsv" \
+              --output "$root/selection_diagnostics.json"
+          elif [ -s "$tmp/1st_layer.csv" ]; then
+            python scripts/diagnose_cpvs_selection.py \
+              --parent reports/scientific_validation/ztf_periodic_781k/Table2.txt.zip \
+              --g "$root/g" \
+              --r "$root/r" \
+              --table2 "$tmp/table2.tsv" \
+              --zenodo-csv "$tmp/1st_layer.csv" \
+              --output "$root/selection_diagnostics.json"
+          else
+            echo "No verified published-membership file available for SNR predicate diagnostics." >&2
+            exit 1
+          fi
 
       - name: Classify CPVS reconstruction result
         if: always()
@@ -268,7 +331,7 @@ jobs:
           derive_outcome = os.environ.get("DERIVE_OUTCOME", "unknown")
           audit_outcome = os.environ.get("AUDIT_OUTCOME", "unknown")
           diagnostic = root / "selected.tsv.diagnostic.json"
-          audit = root / "membership_audit.json"
+          audit = root / "candidate_four_field_audit.json"
 
           # Exact reproduction is opt-in: every required evidence condition must pass.
           # Missing/failed audit evidence must never default to PASS.
@@ -280,16 +343,16 @@ jobs:
                   raise SystemExit("CPVS derivation failed without required diagnostic evidence.")
               reason = "published 730,184-object membership was not reproduced; candidate/diagnostic evidence retained"
           elif audit_outcome != "success":
-              reason = "independent VizieR membership audit did not complete successfully"
+              reason = "independent published-membership audit did not complete successfully"
           elif not audit.is_file():
-              reason = "independent VizieR membership audit output is missing"
+              reason = "independent published-membership audit output is missing"
           else:
               payload = json.loads(audit.read_text(encoding="utf-8"))
-              if payload.get("exact_membership_match") is True:
+              if payload.get("verdict", {}).get("exact_membership_match") is True:
                   status = "PASS"
                   reason = "exact published CPVS membership reproduced"
               else:
-                  reason = "derived candidate does not exactly match independent VizieR membership"
+                  reason = "derived candidate does not exactly match independent published membership"
 
           result = {
               "status": status,
@@ -298,7 +361,7 @@ jobs:
               "derive_outcome": derive_outcome,
               "audit_outcome": audit_outcome,
               "reason": reason,
-              "published_membership_source": "VizieR J/ApJ/932/118 table4.dat",
+              "published_membership_source": (payload.get("inputs", {}).get("published_membership_source", "unknown") if audit.is_file() else "unknown"),
           }
           (root / "cpvs_reconstruction_status.json").write_text(
               json.dumps(result, indent=2, sort_keys=True) + "\n",
@@ -372,7 +435,6 @@ jobs:
           name: scientific-validation-heavy
           path: reports/scientific_validation/**
           if-no-files-found: warn
-
   external-source-evidence:
     name: Execute DR24 and ALeRCE source-backed evidence
     if: >-

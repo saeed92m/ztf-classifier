@@ -1,0 +1,89 @@
+{
+  "stage_id": "CPVS-2026-10-30-residual-membership-audit",
+  "objective": "Diagnose the 11,602-object CPVS candidate excess with source-backed object-level evidence while preserving the v0.2.0 scientific baseline.",
+  "previous_knowledge_consumed": [
+    "CPVS-781602-parent-object-count",
+    "CPVS-730184-published-membership-count",
+    "CPVS-741786-reconstructed-candidate-count",
+    "CPVS-11602-candidate-only-excess"
+  ],
+  "baseline": {
+    "revision": "8e9834626c3ca7b7107ca767d756531363310184",
+    "parent_objects_reported": 781602,
+    "published_reference_objects_reported": 730184,
+    "reconstructed_candidates_reported": 741786,
+    "candidate_only_excess_reported": 11602,
+    "production_selector_changed": false
+  },
+  "expected_improvement": [
+    "Obtain a reproducible, source-backed explanation for the CPVS membership discrepancy without weakening scientific acceptance criteria."
+  ],
+  "measurement": {
+    "metrics": {
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "note": "The full scientific discrepancy has not been validated; partial evidence is recorded separately and must not be treated as a completed scientific-validity measurement.",
+        "partial_evidence": {
+          "targeted_residual_17": {
+            "status": "VERIFIED",
+            "in_reference": 0,
+            "not_in_reference": 17,
+            "run_id": 41143515205
+          },
+          "full_candidate_excess": {
+            "status": "UNRESOLVED",
+            "count": 11602
+          },
+          "root_cause": {
+            "status": "UNRESOLVED"
+          }
+        }
+      }
+    }
+  },
+  "validation": {
+    "evidence": [
+      "GitHub Actions run 41144613152 on commit 67fefae5f22da7bd2da49845b7578c52354e3283: Format Check PASS; Lint PASS; Cumulative Lifecycle Gate initially failed because this cycle record used unsupported metric status PARTIALLY_MEASURED.",
+      "GitHub Actions run 41144613191 on commit 67fefae5f22da7bd2da49845b7578c52354e3283: Product Scope Audit PASS.",
+      "GitHub Actions run 41144613136 on commit 67fefae5f22da7bd2da49845b7578c52354e3283: CodeQL PASS.",
+      "GitHub Actions run 41144613232 on commit 67fefae5f22da7bd2da49845b7578c52354e3283: Validate benchmark and cumulative lifecycle contracts PASS; source-backed heavy jobs were skipped.",
+      "GitHub Actions run 41143515205 on commit f06cf2c9f95443c99d03b1f97dce564d10912132: direct audit completed for all 17 targeted SourceIDs; 0/17 joined ZTF names occur in Zenodo 1st_layer.csv.",
+      "Run 41143515205 input hashes: Table 2 SHA-256 2a0120d43d15abf45ca930a22a50bfcfde9653130a16bc8f2fdc20ecdee54dd1; Zenodo CSV SHA-256 c235df101bf7a130b5dccdd95b786ac347f2b7ef24fc49ed7ae989aa8625437b.",
+      "Run 41143515205 uploaded artifact cpvs-17-object-zenodo-membership-audit (ID 13020293188; ZIP SHA-256 83479e77546ff57a08157e18375561e936d568c7e2722b0831c1aa89146f7950).",
+      "Independent two-table audit artifact from run 40953220220: Table 2 SHA-256 c5422312ca470592d11f5a614ac6558b3665413d7806e55915e96007c90d71f4; Table 4 SHA-256 b5453a8659935c5323cab3bca73a92ba71fd3964803ccab9464ec601853f7460; published set 730184; four-field set 730239; intersection 730184; four-field-only 55; published-only 0."
+    ],
+    "scientific_gate_affected": true,
+    "status": "BLOCKED",
+    "blocker": "The 17-object residual subset is verified absent from the frozen Zenodo membership. The remaining blocker is the full object-level comparison of all 11,602 candidate-only IDs, including fixed 100-object diagnostics and a reproducible 1,000-object sample, followed by a source-supported explanation of the documented SNR/detection semantics."
+  },
+  "failure_analysis": {
+    "status": "subset-audit-repaired; scientific-root-cause-unresolved",
+    "root_causes": [
+      "The earlier targeted audit failures were caused by VizieR response parsing assumptions; the corrected parser now successfully validates the ID/Seq crosswalk and compares all 17 requested objects.",
+      "The 17 residual IDs are directly verified absent from the frozen Zenodo membership, but this does not explain the other 11,585 excess candidates.",
+      "The scientific cause of the full 11,602 candidate excess is not yet proven."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "A failed ID crosswalk can arise before any membership comparison; the audit must validate its parsed schema before reporting per-object membership.",
+      "A successful Zenodo checksum verifies downloaded bytes, not the correctness of the object-level crosswalk or scientific interpretation.",
+      "The reconstruction and production scientific gates must remain blocked until full membership and provenance evidence are independently verified."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Reproduce the full 11,602 candidate-only comparison using source-backed object-level IDs and verified Table 2/Table 4 or Zenodo membership.",
+      "Complete reproducible 100-object diagnostics and a fixed 1,000-object sample covering reference members and non-members.",
+      "Establish the exact documented SNR/detection semantics and root cause without changing production selection criteria."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "CPVS-2026-10-30-residual-membership-audit",
+    "Do not interpret a parser failure as membership evidence.",
+    "Do not alter the production selector, thresholds, model, or acceptance criteria to force a match."
+  ]
+}

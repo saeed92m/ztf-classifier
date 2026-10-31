@@ -49,6 +49,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v7
@@ -65,12 +67,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin "${GITHUB_BASE_REF:-main}" --depth=1
-          mapfile -t files < <(git diff --name-only "origin/${GITHUB_BASE_REF:-main}...HEAD" -- 'src/**/*.py' 'tests/**/*.py')
+          base_ref="${GITHUB_BASE_REF:-main}"
+          git fetch --no-tags origin "+refs/heads/${base_ref}:refs/remotes/origin/${base_ref}"
+          if ! git merge-base "origin/${base_ref}" HEAD >/dev/null; then
+            echo "Unable to establish a merge base with origin/${base_ref}; refusing to skip formatting validation." >&2
+            exit 1
+          fi
+          changed_files_path="$RUNNER_TEMP/changed-python-files.txt"
+          git diff --name-only "origin/${base_ref}...HEAD" -- '*.py' > "$changed_files_path"
+          mapfile -t files < "$changed_files_path"
           if [ "${#files[@]}" -eq 0 ]; then
-            echo "No changed Python source/test files require formatting validation."
+            echo "No changed Python files require formatting validation."
             exit 0
           fi
+          printf 'Checking formatting for %s changed Python file(s):\n' "${#files[@]}"
+          printf '  %s\n' "${files[@]}"
           python -m ruff format --check "${files[@]}"
 
 
@@ -356,20 +367,214 @@ jobs:
           done
           exit 1
 
+
+  cpvs-targeted-zenodo-audit:
+    name: CPVS 17-object direct Zenodo membership audit
+    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'investigation/cpvs-candidate-field-audit-20261030' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download Table 2 ID-to-SourceID crosswalk
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cpvs"
+          tmp="$RUNNER_TEMP/cpvs/table2.tsv.part"
+          ok=0
+          ids="9877,120746,127012,151010,191955,281946,287003,307249,378719,385223,409233,429716,440167,471637,518053,657950,732333"
+          adql="SELECT * FROM \"J/ApJS/249/18/table2\" WHERE \"Seq\" IN (${ids})"
+
+          # Prefer TAP/ADQL; retain ASU-TSV mirrors as a fallback.
+          rm -f "$tmp"
+          if curl -L --fail --show-error --silent --connect-timeout 20 --max-time 120 --retry 3 --retry-all-errors --retry-delay 3 \
+            --data-urlencode "REQUEST=doQuery" \
+            --data-urlencode "LANG=ADQL" \
+            --data-urlencode "FORMAT=tsv" \
+            --data-urlencode "QUERY=$adql" \
+            "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync" -o "$tmp" && test -s "$tmp"; then
+            mv "$tmp" "$RUNNER_TEMP/cpvs/table2.tsv"
+            ok=1
+          fi
+
+          if [ "$ok" -eq 0 ]; then
+            for url in \
+              "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out.all&Seq=${ids}&-out.max=1000" \
+              "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out.all&Seq=${ids}&-out.max=1000" \
+              "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out.all&Seq=${ids}&-out.max=1000"; do
+              rm -f "$tmp"
+              if curl --http1.1 -L --fail --show-error --silent --connect-timeout 20 --max-time 120 --retry 3 --retry-all-errors --retry-delay 3 "$url" -o "$tmp" && test -s "$tmp"; then
+                mv "$tmp" "$RUNNER_TEMP/cpvs/table2.tsv"
+                ok=1
+                break
+              fi
+            done
+          fi
+          test "$ok" -eq 1 || { echo "Could not acquire validated Table 2 crosswalk from any mirror" >&2; exit 1; }
+          sha256sum "$RUNNER_TEMP/cpvs/table2.tsv"
+
+      - name: Download and verify alternate Zenodo membership
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -L --fail --show-error --silent --connect-timeout 20 --max-time 300 --retry 2 --retry-all-errors \
+            "https://zenodo.org/records/5764899/files/Zenodo.zip" -o "$RUNNER_TEMP/cpvs/Zenodo.zip"
+          echo "7fc6562d4208cbfa97366351984810e3  $RUNNER_TEMP/cpvs/Zenodo.zip" | md5sum --check -
+          unzip -p "$RUNNER_TEMP/cpvs/Zenodo.zip" 1st_layer.csv > "$RUNNER_TEMP/cpvs/1st_layer.csv"
+          test -s "$RUNNER_TEMP/cpvs/1st_layer.csv"
+          sha256sum "$RUNNER_TEMP/cpvs/1st_layer.csv"
+
+      - name: Crosswalk and compare the 17 residual objects directly
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "$RUNNER_TEMP/cpvs/table2.tsv" "$RUNNER_TEMP/cpvs/1st_layer.csv" "$RUNNER_TEMP/cpvs/17_object_zenodo_audit.json" <<'PY'
+          import csv, hashlib, json, sys
+          from pathlib import Path
+
+          table2_path, zenodo_path, output_path = map(Path, sys.argv[1:])
+          target_ids = [9877, 120746, 127012, 151010, 191955, 281946, 287003, 307249, 378719, 385223, 409233, 429716, 440167, 471637, 518053, 657950, 732333]
+
+          header = None
+          metadata_columns = {}
+          by_seq = {}
+          raw_preview = []
+          with table2_path.open(encoding="utf-8-sig", newline="") as stream:
+              for raw in stream:
+                  line = raw.rstrip("\r\n")
+                  if len(raw_preview) < 30:
+                      raw_preview.append(line)
+                  if not line.strip():
+                      continue
+                  if line.startswith("#Column"):
+                      parts = line.split("\t")
+                      # Standard VizieR metadata: #Column<TAB>index<TAB>name...
+                      if len(parts) >= 3 and parts[1].strip().isdigit():
+                          metadata_columns[int(parts[1].strip())] = parts[2].strip()
+                      continue
+                  if line.startswith("#"):
+                      continue
+                  fields = [value.strip() for value in line.split("\t")]
+                  if header is None and metadata_columns:
+                      header = [metadata_columns[i] for i in sorted(metadata_columns)]
+                  if header is None and all(k in fields for k in ("ID", "Seq")):
+                      header = fields
+                      continue
+                  if header is None:
+                      continue
+                  if len(fields) != len(header) or fields == header:
+                      continue
+                  row = dict(zip(header, fields))
+                  try:
+                      seq = int(row["Seq"])
+                  except (KeyError, ValueError):
+                      continue
+                  name = row.get("ID", "").strip()
+                  if not name:
+                      raise SystemExit(f"Table 2 row for Seq={seq} has an empty ID")
+                  if seq in by_seq:
+                      raise SystemExit(f"duplicate Table 2 Seq {seq}")
+                  by_seq[seq] = row
+          if header is None and metadata_columns:
+              header = [metadata_columns[i] for i in sorted(metadata_columns)]
+          if header is None or not all(k in header for k in ("ID", "Seq")):
+              diagnostic = "\n".join(raw_preview)
+              raise SystemExit(
+                  "Table 2 response has no parseable ID/Seq schema. "
+                  f"metadata_columns={metadata_columns}; first_lines:\\n{diagnostic}"
+              )
+          if not by_seq:
+              raise SystemExit(
+                  f"Table 2 schema parsed as {header}, but no data rows were parsed. "
+                  "Refusing to infer a crosswalk."
+              )
+          missing = sorted(set(target_ids) - set(by_seq))
+          unexpected = sorted(set(by_seq) - set(target_ids))
+          if missing:
+              raise SystemExit(f"Target SourceIDs absent from Table 2 Seq after parsing validated header {header}: {missing}")
+          if unexpected or len(by_seq) != len(target_ids):
+              raise SystemExit(
+                  "Targeted VizieR query did not return exactly the requested SourceIDs; "
+                  f"unexpected={unexpected}, observed={len(by_seq)}, expected={len(target_ids)}"
+              )
+
+          with zenodo_path.open(encoding="utf-8-sig", newline="") as stream:
+              reader = csv.DictReader(stream)
+              if not reader.fieldnames or "ID" not in reader.fieldnames:
+                  raise SystemExit(f"Zenodo CSV has no ID column: {reader.fieldnames}")
+              zenodo_names = set()
+              for row in reader:
+                  name = (row.get("ID") or "").strip()
+                  if name:
+                      zenodo_names.add(name)
+
+          records = []
+          for seq in target_ids:
+              row = by_seq[seq]
+              name = row.get("ID", "").strip()
+              records.append(
+                  {
+                      "source_id": seq,
+                      "ztf_name": name,
+                      "in_zenodo_membership": name in zenodo_names,
+                      "table2_row": row,
+                  }
+              )
+          matched = sum(r["in_zenodo_membership"] for r in records)
+          report = {
+              "status": "COMPLETED",
+              "reference": "Zenodo 10.5281/zenodo.5764899, 1st_layer.csv",
+              "join_key": "Table 2 ZTF ID string; SourceID is crosswalked via Table 2 Seq",
+              "target_count": len(target_ids),
+              "zenodo_unique_name_count": len(zenodo_names),
+              "in_reference_count": matched,
+              "not_in_reference_count": len(records) - matched,
+              "inputs": {
+                  "table2_sha256": hashlib.sha256(table2_path.read_bytes()).hexdigest(),
+                  "zenodo_csv_sha256": hashlib.sha256(zenodo_path.read_bytes()).hexdigest(),
+              },
+              "table2_schema": header,
+              "objects": records,
+          }
+          output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload direct membership audit
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-17-object-zenodo-membership-audit
+          path: ${{ runner.temp }}/cpvs/17_object_zenodo_audit.json
+          if-no-files-found: warn
+
   gate:
     name: CI Gate
     if: ${{ always() }}
     needs:
       - audit
+      - cpvs-targeted-zenodo-audit
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Require all gated stages to pass
+      - name: Require all applicable gated stages to pass
         env:
           AUDIT_RESULT: ${{ needs.audit.result }}
+          CPVS_RESULT: ${{ needs.cpvs-targeted-zenodo-audit.result }}
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
+        shell: bash
         run: |
+          set -euo pipefail
           if [ "$AUDIT_RESULT" != "success" ]; then
-            echo "Final gated CI stage failed or was cancelled: $AUDIT_RESULT"
+            echo "Dependency audit failed or was cancelled: $AUDIT_RESULT"
             exit 1
           fi
-          echo "All gated CI stages passed."
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REF" = "investigation/cpvs-candidate-field-audit-20261030" ]; then
+            if [ "$CPVS_RESULT" != "success" ]; then
+              echo "CPVS scientific membership audit is not successful: $CPVS_RESULT"
+              exit 1
+            fi
+          fi
+          echo "All applicable gated stages passed."
