@@ -274,3 +274,6 @@ The 55 controls do not have per-object light-curve SNR diagnostics in the retain
 
 No production selector, SNR threshold, model, feature set, class order, v0.2.0 baseline, or acceptance criterion changed. PR #244 remains Draft and must not be merged as a scientific fix.
 
+
+The historical candidate set can be decomposed further. SNR-only produces 741,786 IDs. Adding both positive Table 2 mean magnitudes leaves 730,201 IDs and 17 extras. All 17 have one missing per-band period (10 Per-g, 7 Per-r). Adding both Per-g and Per-r yields exact membership at 730,184. The five other residuals have both per-band periods but lack gmag. This is an empirical staged reconstruction, not a confirmed author rule. The current derive_730k function implements the mean-magnitude stage but not the per-band-period stage; its existing expected-count gate should therefore fail closed on the 17 residuals. No selector change is authorized.
+
