@@ -39,8 +39,15 @@ def records(path: pathlib.Path, expected_lrecl: int):
         raise ValueError(f"{path}: no data records")
     if any(len(row) < 29 for row in rows):
         raise ValueError(f"{path}: record shorter than required ID fields")
-    if any(len(row) > expected_lrecl for row in rows):
-        raise ValueError(f"{path}: record longer than expected Lrecl={expected_lrecl}")
+    invalid_lengths = [len(row) for row in rows
+                       if len(row) not in {expected_lrecl, expected_lrecl + 1}]
+    if invalid_lengths:
+        raise ValueError(
+            f"{path}: unexpected record lengths; expected {expected_lrecl} "
+            f"or one trailing pad byte, observed={Counter(invalid_lengths)}"
+        )
+    if any(len(row) == expected_lrecl + 1 and row[-1:] != b" " for row in rows):
+        raise ValueError(f"{path}: extra byte after Lrecl is not an ASCII space")
     return raw, rows, lengths
 
 def field(row: bytes, start: int, end: int) -> str:
