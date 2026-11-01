@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 jobs:
@@ -31,6 +31,20 @@ jobs:
           mkdir -p work/formatted
           cp scripts/cpvs_raw_cds_reconciliation.py work/formatted/
           cp tests/test_cpvs_raw_cds_reconciliation.py work/formatted/
+
+      - name: Commit formatting-only audit source changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- scripts/cpvs_raw_cds_reconciliation.py tests/test_cpvs_raw_cds_reconciliation.py; then
+            echo "Audit source files are already Ruff-formatted."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/cpvs_raw_cds_reconciliation.py tests/test_cpvs_raw_cds_reconciliation.py
+          git commit -m "style: format CPVS raw reconciliation audit"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Reuse immutable raw CDS sources from the verified acquisition run
         env:
