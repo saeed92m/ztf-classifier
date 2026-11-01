@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Byte-preserving CDS CPVS Table 2 / Table 4 reconciliation.
 
-The source .dat files are read as bytes. Hashes are calculated before parsing.
+The original publisher MRT files are read as bytes. Hashes are calculated before parsing.
 Identifiers remain strings. No selector or production artifact is modified.
 """
 from __future__ import annotations
@@ -31,18 +31,17 @@ def sha256(path: pathlib.Path) -> str:
 def records(path: pathlib.Path, expected_lrecl: int):
     raw = path.read_bytes()
     lines = raw.splitlines()
-    # Publisher MRT files contain a descriptive header. Select only fixed-width\n    # catalog records; retain their original bytes and whitespace.\n    rows = [line for line in lines if line[:22].strip().startswith(b"ZTF")]
+    # Publisher MRT files contain a descriptive header. Select only catalog
+    # records. Keep the original record bytes and whitespace unchanged.
+    rows = [line for line in lines if line[:22].strip().startswith(b"ZTF")]
     lengths = Counter(map(len, rows))
     if not rows:
         raise ValueError(f"{path}: no data records")
     if any(len(row) < 29 for row in rows):
         raise ValueError(f"{path}: record shorter than required ID fields")
-    # CDS ReadMe Lrecl is a maximum fixed record width. Report, but do not
-    # silently pad or truncate, if transport changes line-ending conventions.
     if any(len(row) > expected_lrecl for row in rows):
-        raise ValueError(f"{path}: record longer than ReadMe Lrecl={expected_lrecl}")
+        raise ValueError(f"{path}: record longer than expected Lrecl={expected_lrecl}")
     return raw, rows, lengths
-
 
 def field(row: bytes, start: int, end: int) -> str:
     return row[start:end].decode("ascii", errors="strict").strip()
@@ -364,12 +363,12 @@ def main():
         json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8"
     )
     (out / "reconciliation_report.md").write_text(
-        "# CPVS raw CDS reconciliation\n\n"
+        "# CPVS original publisher MRT reconciliation\n\n"
         f"- Status: **{report['status']}**\n"
-        f"- Table 2 records: {len(t2_rows):,}\n"
-        f"- Table 4 records: {len(t4_rows):,}\n"
+        f"- Table 2 publisher MRT records: {len(t2_rows):,}\n"
+        f"- Table 4 publisher MRT records: {len(t4_rows):,}\n"
         f"- Table 4 unmapped ZTF names: {len(unmapped):,}\n"
-        f"- Table 4 internal ID vs Table 2 Seq mismatches: {len(direct_id_mismatches):,}\n"
+        f"- Table 4 internal ID vs Table 2 SourceID mismatches: {len(direct_id_mismatches):,}\n"
         f"- Table 4 vs Zenodo exact membership: {table4_seq == zenodo_set}\n"
         f"- Historical candidate count: {len(candidate_set):,}\n"
         f"- Candidate-only residuals: {len(candidate_only):,}\n"
