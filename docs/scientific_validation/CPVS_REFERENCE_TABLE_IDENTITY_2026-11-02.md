@@ -256,7 +256,7 @@ The 11,602 candidate-only residuals have this mutually exclusive partition:
 | All four fields positive | 0 |
 | Total | 11,602 |
 
-The 55 four-field-only controls are absent from both the historical candidate set and Table 4. Their Table 2 metadata show nontrivial detection counts and fit-quality values. The retained historical artifact does not include their per-object light-curve SNR diagnostics. This audit cannot identify which band or detection condition excluded each of the 55.
+The 55 four-field-only controls are absent from both the historical candidate set and Table 4. Their Table 2 metadata show substantial detection counts: Ng minimum/median/p90/maximum = 42/99/172/307; Nr = 47/150/185/319. Their R2-g minimum/median = 0.421/0.925 and R2-r = 0.611/0.986. Their median gmag/rmag values are 18.412/15.904. Their classes are 45 Mira, 7 SR, 1 EA, 1 EW, and 1 RRc. These catalog-level counts and fit-quality values are not per-epoch SNR measurements. The retained historical artifact does not include their per-object light-curve SNR diagnostics. This audit cannot identify which band or detection condition excluded each of the 55.
 
 Raw source hashes from successful reconciliation run 41360681445:
 
