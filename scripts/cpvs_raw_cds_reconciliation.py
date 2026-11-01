@@ -387,7 +387,7 @@ def main():
             return None
 
     with residual_path.open("r", encoding="utf-8", newline="") as f:
-        residual_rows = list(csv.DictReader(f, delimiter="\\t"))
+        residual_rows = list(csv.DictReader(f, delimiter="\t"))
 
     def quantiles(values: list[float]):
         ordered = sorted(values)
