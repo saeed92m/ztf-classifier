@@ -178,25 +178,26 @@ Sorted-ID hashes:
 - Candidate-only residual set: `b891e2ef5a79841f23a7d4c8f5d45087280ba5de515d3f39463d9c1465286643`
 - Reference-only empty set: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
-The audit generated two deterministic, stratified samples. It uses SHA-256 ranking within each stratum. It does not use a random-number generator.
+The audit generated two deterministic, stratified samples. It uses SHA-256 ranking within each stratum. It does not use a random-number generator. The revised design includes the 55 objects that satisfy the four-field predicate but are absent from the historical SNR candidate set.
 
-| Sample | Reference and candidate | Candidate-only | Parent neither |
-|---|---:|---:|---:|
-| 100 objects | 50 | 25 | 25 |
-| 1,000 objects | 500 | 250 | 250 |
+| Sample | Reference and candidate | Candidate-only | Four-field-only controls | Parent neither | Reference-only |
+|---|---:|---:|---:|---:|---:|
+| 100 objects | 50 | 25 | 10 | 15 | 0 |
+| 1,000 objects | 500 | 250 | 55 | 195 | 0 |
 
-The samples are diagnostic samples. They are not population-representative random samples.
+The 1,000-object sample includes all 55 four-field-only controls. These are diagnostic samples. They are not population-representative random samples.
 
 Output files and SHA-256:
 
 | File | Bytes | SHA-256 |
 |---|---:|---|
-| `table4_to_table2_seq_crosswalk.tsv` | 30,455,719 | `89d353b3b8ce24b60ab69df3e119a8e7b7832c3271fcad950cbbd743921349aa` |
-| `candidate_only_11602_object_provenance.tsv` | 1,544,130 | `ea97fe7348b74a24621437f9e3bcf9b01a56c9852c64f2ebb6f0a266a4a3761a` |
-| `fixed_sample_100.tsv` | 10,809 | `1f12e7674479ac8b984781f82754458acbdfd41588a84281becc122c61a64056` |
-| `fixed_sample_1000.tsv` | 107,625 | `60f1514d31d8105c04725eceff95dc20d26c39748cf6c5c09764c8e42d86d9bb` |
+| table4_to_table2_seq_crosswalk.tsv | 30,455,719 | 89d353b3b8ce24b60ab69df3e119a8e7b7832c3271fcad950cbbd743921349aa |
+| candidate_only_11602_object_provenance.tsv | 1,753,019 | 35305bb61558660cebd439152691d5e008ee89fb8a88a52726de052c2015ac21 |
+| four_field_only_55.tsv | 7,063 | b7f712910467616919f616dfd5f9ddb94a4c6b819f973469eeeb704fae0e1ab6 |
+| fixed_sample_100.tsv | 12,634 | baf94d168b59b682d113015c8ab15a1d2e6ec414cb82e29875a13358f0e5b25b |
+| fixed_sample_1000.tsv | 124,564 | 0a713379eb274d380f7a399d4a719cd3572113d6dc5184442124f8a9e59ed340 |
 
-The residual file contains all 11,602 candidate-only IDs. It includes the original ZTF name, Table 2 fields, per-band qualifying detection counts, implemented SNR results, flag diagnostics, and parent metadata. The audit reports zero missing or extra residual diagnostic records.
+The residual file contains all 11,602 candidate-only IDs. It includes the original ZTF name, Table 2 fields, per-band qualifying detection counts, implemented SNR results, flag diagnostics, parent metadata, and explicit four-field eligibility flags. The audit reports zero missing or extra residual diagnostic records. The 55-control file contains parent metadata; per-object SNR failure details for those 55 are not present in the retained candidate artifact.
 
 ## 8. What the 11,602 residuals show
 
@@ -225,7 +226,52 @@ A simple minimum of 11 qualifying `g` detections also does not explain the full 
 
 The residual pattern is consistent with an additional data-completeness, period-fit, or preprocessing constraint. This is a hypothesis, not a root-cause finding.
 
-## 9. Remaining scientific blocker and next action
+## 9. Empirical conjunction test — not author-intent proof
+
+Let P be the 730,184 IDs in raw Chan et al. (2022) Table 4, mapped to Table 2 Seq. Let C be the 741,786 IDs in the retained historical two-band SNR candidate set. Let F be the 730,239 Table 2 IDs for which all four nullable fields gmag, rmag, Per-g, and Per-r are positive.
+
+The full-parent audit gives:
+
+| Set relation | Count |
+|---|---:|
+| P | 730,184 |
+| C | 741,786 |
+| F | 730,239 |
+| C intersect F | 730,184 |
+| F minus C | 55 |
+| (C intersect F) minus P | 0 |
+| P minus (C intersect F) | 0 |
+
+Thus, for these archived inputs, P = C intersect F. This is an exact object-level set equality, not only a count match.
+
+The four-field predicate F alone is not the published membership rule: it admits 55 objects outside Table 4. The combined historical candidate set and four-field predicate reproduce the Table 4 membership exactly. This does not prove that Chan et al. used this exact conjunction. Their paper states the two-band detection thresholds and use of the common period. It does not explicitly state the four-field metadata requirement.
+
+The 11,602 candidate-only residuals have this mutually exclusive partition:
+
+| Residual group | Count |
+|---|---:|
+| Both mean-magnitude pair and per-band-period pair incomplete | 11,580 |
+| Both mean magnitudes present; at least one per-band period missing | 17 |
+| Both per-band periods present; at least one mean magnitude missing | 5 |
+| All four fields positive | 0 |
+| Total | 11,602 |
+
+The 55 four-field-only controls are absent from both the historical candidate set and Table 4. Their Table 2 metadata show nontrivial detection counts and fit-quality values. The retained historical artifact does not include their per-object light-curve SNR diagnostics. This audit cannot identify which band or detection condition excluded each of the 55.
+
+Raw source hashes from successful reconciliation run 41360681445:
+
+| File | Bytes | SHA-256 |
+|---|---:|---|
+| table2.dat | 178,986,858 | 2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881 |
+| table4.dat | 46,650,697 | 4fa96379d47f851db7ecd80a83986d82201e8718f12ab727b5348a3914374e7d |
+
+Both raw CDS files matched every data row in the corresponding IOP/AAS publisher MRT source after right-padding only the in-memory raw record to the publisher record length. Mismatches: zero in Table 2 and zero in Table 4. The original raw files were not modified.
+
+The sorted four-field-only SourceID list has SHA-256 9ca933554a7c070f93d6fe36d614549ba8abcbf6aeb5ccd53787600745708941. The four_field_only_55.tsv artifact has SHA-256 b7f712910467616919f616dfd5f9ddb94a4c6b819f973469eeeb704fae0e1ab6.
+
+**Disposition:** this conjunction is a strong empirical reconstruction hypothesis. It is not an approved production selector. Keep the scientific gate blocked until the source-level detection/SNR semantics and the 55 control objects are explained.
+
+## 10. Remaining scientific blocker and next action
 
 **The reference files and identifier crosswalk are now verified. Exact candidate reproduction is not.**
 
