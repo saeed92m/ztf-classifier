@@ -123,6 +123,31 @@
               "RRc": 1
             },
             "per_object_lightcurve_snr_available": false
+          },
+          "staged_membership_predicates": {
+            "status": "VERIFIED_FOR_ARCHIVED_INPUTS",
+            "snr_only_count": 741786,
+            "snr_plus_both_positive_mean_magnitudes_count": 730201,
+            "residual_after_mean_magnitude_pair": 17,
+            "residuals_missing_Per_g": 10,
+            "residuals_missing_Per_r": 7,
+            "snr_plus_mean_magnitudes_plus_both_per_band_periods_count": 730184,
+            "final_set_equals_raw_table4": true,
+            "five_other_candidate_only_have_both_Per_g_Per_r_but_missing_gmag": 5,
+            "current_derive_730k_uses_mean_magnitude_pair": true,
+            "current_derive_730k_uses_Per_g_Per_r_gate": false,
+            "expected_count_gate_remains_fail_closed": true,
+            "production_selector_changed": false
+          },
+          "snr_formula_sensitivity": {
+            "status": "VERIFIED_FOR_ARCHIVED_INPUTS",
+            "approximate_1p085736_over_magerr_count": 741786,
+            "exact_inverse_magerr_transform_count": 741786,
+            "inverse_magerr_count": 741786,
+            "all_three_candidate_membership_sets_equal": true,
+            "zero_catalog_flag_candidate_count": 736225,
+            "zero_flag_reference_members_lost": 5472,
+            "zero_flag_rule_rejected": true
           }
         }
       }
@@ -143,7 +168,10 @@
       "Run 41360681445 artifact 13105086707: historical candidate set 741,786; candidate-only 11,602; reference-only zero; exact empirical equality (historical candidates ∩ four-field-positive Table 2 set) = raw Table 4 membership; four-field-only nonmembers 55.",
       "Run 41360681445: deterministic v2 samples completed. The 100-object sample includes 50 reference/candidate, 25 candidate-only, 10 four-field-only, 15 parent-neither. The 1,000-object sample includes 500, 250, all 55 four-field-only controls, and 195 parent-neither.",
       "The 55 four-field-only controls have Table 2 metadata in artifact 13105086707, but the retained historical photometry artifact does not include their per-object SNR traces. The exact failed band/detection condition is not yet established.",
-      "The 55 four-field-only controls have Table 2 Ng min/median/p90/max 42/99/172/307 and Nr 47/150/185/319; median R2-g/R2-r 0.925/0.986. These are catalog-level summaries, not per-epoch SNR evidence. Class counts: 45 Mira, 7 SR, 1 EA, 1 EW, 1 RRc."
+      "The 55 four-field-only controls have Table 2 Ng min/median/p90/max 42/99/172/307 and Nr 47/150/185/319; median R2-g/R2-r 0.925/0.986. These are catalog-level summaries, not per-epoch SNR evidence. Class counts: 45 Mira, 7 SR, 1 EA, 1 EW, 1 RRc.",
+      "The historical SNR-only set intersected with both positive Table 2 mean magnitudes contains 730,201 IDs and leaves 17 candidate-only residuals; all 17 have both mean magnitudes but lack one per-band period (10 Per-g, 7 Per-r). Adding both positive per-band periods yields exact 730,184 Table 4 membership.",
+      "The current derive_730k function applies the SNR and both-mean-magnitude conditions but does not test Per-g/Per-r. Its existing expected-count gate therefore remains the correct fail-closed behavior for the 17 residuals; no code change was made.",
+      "Approximate 1.0857362047581296/e_mag, exact inverse magnitude-error transform, and 1/e_mag SNR formulations produced identical historical candidate membership (741,786) and residual count (11,602). A zero-flag requirement loses 5,472 Table 4 members and is rejected."
     ],
     "scientific_gate_affected": true,
     "status": "BLOCKED",
@@ -159,7 +187,8 @@
       "For the retained historical inputs, intersecting the 741,786 two-band SNR candidate set with the 730,239-object four-field-positive Table 2 set yields exactly the 730,184 Table 4 members. The four-field set alone admits 55 nonmembers. This is an empirical conjunction, not proof of the authors' published rule.",
       "The 55 four-field-only controls lack per-object photometry/SNR diagnostics in the retained artifact, so the exact per-band detection failure is unknown.",
       "The current PR branch has not freshly re-derived the 741,786 candidate set from the full light-curve archives.",
-      "The 55 four-field-only controls have substantial Table 2 detection counts and high median R2 values, but their per-epoch light-curve SNR traces are absent from the retained historical artifact. Catalog-level Ng/Nr and R2 cannot identify which band-specific SNR threshold excluded them."
+      "The 55 four-field-only controls have substantial Table 2 detection counts and high median R2 values, but their per-epoch light-curve SNR traces are absent from the retained historical artifact. Catalog-level Ng/Nr and R2 cannot identify which band-specific SNR threshold excluded them.",
+      "The current production derivation's first metadata gate (both mean magnitudes) matches the historical 730,201-object intermediate set, but leaves 17 objects with one missing per-band period. A further Per-g/Per-r gate reproduces Table 4 exactly on archived inputs, but author-intent evidence is not yet established."
     ]
   },
   "knowledge_extraction": {
@@ -180,7 +209,8 @@
       "Re-derive the two-band SNR candidate set from the exact original 89,697,393-row-per-band light-curve inputs on the reviewed PR head, or provide an equivalently pinned and independently verified derivation.",
       "Retrieve or regenerate per-object g/r light-curve SNR diagnostics for all 55 four-field-only controls; identify which detection condition excludes each object.",
       "Establish the source-supported published selection semantics for the four nullable Table 2 fields and the SNR thresholds. Do not treat the empirical conjunction as author intent.",
-      "Retain the 11,602 candidate-only provenance and v2 fixed 100/1,000 samples; add regression tests only after the root cause and official rule are established."
+      "Retain the 11,602 candidate-only provenance and v2 fixed 100/1,000 samples; add regression tests only after the root cause and official rule are established.",
+      "Obtain primary-source or author evidence for whether both band-specific period fields are required in the Chan et al. (2022) preprocessing sample; do not implement the empirical Per-g/Per-r gate without this evidence."
     ]
   },
   "decision": "BLOCKED",
