@@ -95,14 +95,18 @@ def test_fixed_samples_are_deterministic_and_stratified() -> None:
 
     full_sample = AUDIT.sample_ids(groups, 1000, "test-seed")
     assert len(full_sample) == 1000
-    assert {name: sum(stratum == name for _, stratum in full_sample) for name in groups} == {
+    assert {
+        name: sum(stratum == name for _, stratum in full_sample) for name in groups
+    } == {
         "reference_candidate": 500,
         "candidate_only": 250,
         "four_field_only": 55,
         "reference_only": 0,
         "parent_neither": 195,
     }
-    assert {value for value, stratum in full_sample if stratum == "four_field_only"} == groups["four_field_only"]
+    assert {
+        value for value, stratum in full_sample if stratum == "four_field_only"
+    } == groups["four_field_only"]
 
 
 def test_is_positive_field_rejects_null_nonfinite_and_nonpositive_values() -> None:

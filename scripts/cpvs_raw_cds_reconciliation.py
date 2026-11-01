@@ -200,7 +200,12 @@ def sample_ids(groups: dict[str, set[str]], n: int, seed: str):
         raise ValueError(f"Sample {n}: stratum quotas exceed requested sample size")
 
     selected = []
-    for group in ("reference_candidate", "candidate_only", "four_field_only", "reference_only"):
+    for group in (
+        "reference_candidate",
+        "candidate_only",
+        "four_field_only",
+        "reference_only",
+    ):
         quota = quotas[group]
         ordered = sorted(groups[group], key=lambda x: hash_rank(seed + ":" + group, x))
         if len(ordered) < quota:
@@ -768,7 +773,9 @@ def main():
             "candidate_intersection_four_field_equals_table4": empirical_conjunction_exact_match,
             "four_field_only_non_candidate_count": len(four_field_only),
             "four_field_only_sorted_sourceid_sha256": id_set_sha256(four_field_only),
-            "candidate_only_field_partition": dict(sorted(residual_field_partition.items())),
+            "candidate_only_field_partition": dict(
+                sorted(residual_field_partition.items())
+            ),
             "parent_neither_after_four_field_partition_count": len(parent_neither),
             "parent_neither_count": len(parent_neither),
         },
