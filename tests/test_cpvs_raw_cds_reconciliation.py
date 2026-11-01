@@ -74,8 +74,9 @@ def test_fixed_samples_are_deterministic_and_stratified() -> None:
     groups = {
         "reference_candidate": {f"{i}" for i in range(1, 1001)},
         "candidate_only": {f"{i}" for i in range(1001, 1501)},
+        "four_field_only": {f"{i}" for i in range(1501, 1556)},
         "reference_only": set(),
-        "parent_neither": {f"{i}" for i in range(1501, 2001)},
+        "parent_neither": {f"{i}" for i in range(2001, 3001)},
     }
 
     first = AUDIT.sample_ids(groups, 100, "test-seed")
@@ -87,6 +88,27 @@ def test_fixed_samples_are_deterministic_and_stratified() -> None:
     assert {name: sum(stratum == name for _, stratum in first) for name in groups} == {
         "reference_candidate": 50,
         "candidate_only": 25,
+        "four_field_only": 10,
         "reference_only": 0,
-        "parent_neither": 25,
+        "parent_neither": 15,
     }
+
+    full_sample = AUDIT.sample_ids(groups, 1000, "test-seed")
+    assert len(full_sample) == 1000
+    assert {name: sum(stratum == name for _, stratum in full_sample) for name in groups} == {
+        "reference_candidate": 500,
+        "candidate_only": 250,
+        "four_field_only": 55,
+        "reference_only": 0,
+        "parent_neither": 195,
+    }
+    assert {value for value, stratum in full_sample if stratum == "four_field_only"} == groups["four_field_only"]
+
+
+def test_is_positive_field_rejects_null_nonfinite_and_nonpositive_values() -> None:
+    assert AUDIT.is_positive_field("0.001")
+    assert not AUDIT.is_positive_field("0")
+    assert not AUDIT.is_positive_field("-1")
+    assert not AUDIT.is_positive_field("nan")
+    assert not AUDIT.is_positive_field("inf")
+    assert not AUDIT.is_positive_field("")
