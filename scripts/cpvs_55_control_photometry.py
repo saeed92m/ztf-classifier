@@ -296,6 +296,16 @@ def main() -> int:
             per_object["bands"][band].get("query_status") == "OK"
             for band in ("g", "r")
         )
+        per_object["g_row_count_matches_table2_ng"] = (
+            g.get("row_count") == per_object["Table2_Ng"]
+            if g.get("row_count") is not None
+            else None
+        )
+        per_object["r_row_count_matches_table2_nr"] = (
+            r.get("row_count") == per_object["Table2_Nr"]
+            if r.get("row_count") is not None
+            else None
+        )
         object_results.append(per_object)
         if (index + 1) % 10 == 0:
             print(f"Queried {index + 1}/{len(controls)} control objects", flush=True)
@@ -331,9 +341,19 @@ def main() -> int:
         "query_count": len(query_manifest),
         "successful_queries": successful_queries,
         "failed_queries": 110 - successful_queries,
-        "historical_candidate_controls": 0,
+        "historical_candidate_controls": sum(
+            item["historical_candidate_member"] for item in object_results
+        ),
         "controls_reconstructed_as_two_band_snr_candidates": len(
             reconstructed_candidates
+        ),
+        "Table2_Ng_row_count_matches": sum(
+            item.get("g_row_count_matches_table2_ng") is True
+            for item in object_results
+        ),
+        "Table2_Nr_row_count_matches": sum(
+            item.get("r_row_count_matches_table2_nr") is True
+            for item in object_results
         ),
         "candidate_reconstruction_contradictions": [
             item["SourceID"] for item in reconstructed_candidates
