@@ -31,7 +31,7 @@ def sha256(path: pathlib.Path) -> str:
 def records(path: pathlib.Path, expected_lrecl: int):
     raw = path.read_bytes()
     lines = raw.splitlines()
-    rows = [line for line in lines if line.strip()]
+    # Publisher MRT files contain a descriptive header. Select only fixed-width\n    # catalog records; retain their original bytes and whitespace.\n    rows = [line for line in lines if line[:22].strip().startswith(b"ZTF")]
     lengths = Counter(map(len, rows))
     if not rows:
         raise ValueError(f"{path}: no data records")
@@ -177,15 +177,13 @@ def main():
     out = args.out
     out.mkdir(parents=True, exist_ok=True)
 
-    t2_path = args.raw / "table2.dat"
-    t4_path = args.raw / "table4.dat"
-    t2_readme = args.raw / "table2.ReadMe"
-    t4_readme = args.raw / "table4.ReadMe"
+    t2_path = args.raw / "table2.mrt.txt"
+    t4_path = args.raw / "table4.mrt.txt"
 
     # Hash the original downloaded bytes before any parsing.
     hashes = {
         p.name: {"bytes": p.stat().st_size, "sha256": sha256(p)}
-        for p in [t2_path, t4_path, t2_readme, t4_readme]
+        for p in [t2_path, t4_path]
     }
     (out / "raw_source_hashes.json").write_text(
         json.dumps({"retrieved_utc": datetime.now(timezone.utc).isoformat(),
@@ -312,7 +310,11 @@ def main():
     report = {
         "status": "PASS_IDENTIFIER_RECONCILIATION" if not unmapped and not direct_id_mismatches
                   else "FAIL_IDENTIFIER_RECONCILIATION",
-        "scope_note": "Candidate membership is historical evidence from workflow run 38635891449; this job does not re-download or re-derive the 179M light-curve rows.",
+        "scope_note": "Inputs are the original publisher machine-readable tables from IOP/AAS. Candidate membership is historical evidence from workflow run 38635891449; this job does not re-download or re-derive the 179M light-curve rows.",
+        "primary_source_urls": {
+            "table2_mrt": "https://content.cld.iop.org/journals/0067-0049/249/1/18/revision1/apjsab9caet2_mrt.txt",
+            "table4_mrt": "https://content.cld.iop.org/journals/0004-637X/932/2/118/revision1/apjac69d4t4_mrt.txt",
+        },
         "source_files": hashes,
         "record_validation": {
             "table2_records": len(t2_rows), "table2_expected": EXPECTED["table2"],
@@ -352,7 +354,7 @@ def main():
             "sample_method": "SHA-256 rank within explicit membership strata; no random-state dependence",
         },
         "limitations": [
-            "The raw CDS table files are hashed before parsing, but their hashes are not publisher-signed checksums.",
+            "The publisher MRT files are hashed before parsing. This run does not contain the CDS fixed-width .dat byte streams; it reconciles the publisher originals against the retained VizieR/Zenodo crosswalk evidence.",
             "Zenodo and candidate comparisons use retained workflow artifacts; the 89,697,393-row-per-band light curves are not re-downloaded in this job.",
             "The historical candidate set is not a fresh derivation from the current PR head.",
             "A membership match does not prove the scientific selection method was reproduced.",
