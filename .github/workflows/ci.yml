@@ -549,6 +549,205 @@ jobs:
           path: ${{ runner.temp }}/cpvs/17_object_zenodo_audit.json
           if-no-files-found: warn
 
+
+  cpvs-full-zenodo-membership:
+    name: CPVS full Zenodo membership crosswalk (metadata only)
+    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'investigation/cpvs-candidate-field-audit-20261030' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download full Table 2 ID-to-Seq crosswalk
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/cpvs-full-membership"
+          mkdir -p "$root"
+          fetch_table2() {
+            local url
+            for url in \
+              "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&-out.max=1000000" \
+              "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&-out.max=1000000" \
+              "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq&-out.max=1000000"; do
+              rm -f "$root/table2.tsv.part"
+              echo "Trying Table 2 crosswalk source: $url"
+              if curl --http1.1 --location --fail --show-error --silent \
+                --connect-timeout 20 --max-time 180 --retry 2 --retry-all-errors \
+                "$url" -o "$root/table2.tsv.part"; then
+                if grep -Eq '^#Column[[:space:]]+([0-9]+[[:space:]]+)?(ID|Seq)([[:space:]]|$)' "$root/table2.tsv.part"; then
+                  mv "$root/table2.tsv.part" "$root/table2.tsv"
+                  echo "Accepted Table 2 crosswalk."
+                  return 0
+                fi
+                echo "Rejected response: required ID/Seq column metadata absent." >&2
+              fi
+            done
+            echo "ERROR: no VizieR mirror returned a valid Table 2 crosswalk." >&2
+            return 1
+          }
+          fetch_table2
+          sha256sum "$root/table2.tsv"
+
+      - name: Download and verify frozen Zenodo membership
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/cpvs-full-membership"
+          curl --location --fail --show-error --silent \
+            --connect-timeout 20 --max-time 300 --retry 3 --retry-all-errors \
+            "https://zenodo.org/records/5764899/files/Zenodo.zip" \
+            -o "$root/Zenodo.zip"
+          echo "7fc6562d4208cbfa97366351984810e3  $root/Zenodo.zip" | md5sum --check -
+          unzip -p "$root/Zenodo.zip" 1st_layer.csv > "$root/1st_layer.csv"
+          test -s "$root/1st_layer.csv"
+          sha256sum "$root/Zenodo.zip" "$root/1st_layer.csv"
+
+      - name: Build and verify complete published Seq membership
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/cpvs-full-membership"
+          python - "$root/table2.tsv" "$root/1st_layer.csv" "$root/published_membership_seq.tsv" "$root/membership_manifest.json" <<'PY'
+          import csv
+          import hashlib
+          import json
+          import re
+          import sys
+          from pathlib import Path
+
+          table2_path, zenodo_path, output_path, manifest_path = map(Path, sys.argv[1:])
+
+          def sha256(path):
+              return hashlib.sha256(path.read_bytes()).hexdigest()
+
+          def read_vizier(path, required):
+              header = None
+              metadata = {}
+              rows = []
+              with path.open(encoding="utf-8-sig", newline="") as stream:
+                  for raw in stream:
+                      line = raw.rstrip("\r\n")
+                      if not line.strip():
+                          continue
+                      if line.startswith("#Column"):
+                          parts = re.split(r"\s+", line.strip(), maxsplit=3)
+                          if len(parts) >= 2:
+                              if parts[1].isdigit() and len(parts) >= 3:
+                                  index, name = int(parts[1]), parts[2]
+                              else:
+                                  index, name = len(metadata) + 1, parts[1]
+                              metadata[index] = name
+                          continue
+                      if line.startswith("#"):
+                          continue
+                      fields = [value.strip() for value in line.split("\t")]
+                      if header is None and all(k.lower() in {x.lower() for x in fields} for k in required):
+                          header = fields
+                          continue
+                      if header is None and metadata:
+                          header = [metadata[i] for i in sorted(metadata)]
+                      if header is None or len(fields) != len(header) or fields == header:
+                          continue
+                      rows.append(dict(zip(header, fields)))
+              if header is None:
+                  raise SystemExit(f"{path}: missing VizieR schema for {required}")
+              missing = [key for key in required if key not in header]
+              if missing:
+                  raise SystemExit(f"{path}: missing required columns {missing}; found {header}")
+              if not rows:
+                  raise SystemExit(f"{path}: schema parsed but no rows were found")
+              return rows, header
+
+          table2, schema = read_vizier(table2_path, ("ID", "Seq"))
+          name_to_seq = {}
+          seq_to_name = {}
+          for row in table2:
+              name = row["ID"].strip()
+              try:
+                  seq = int(row["Seq"])
+              except (TypeError, ValueError):
+                  continue
+              if not name or name in name_to_seq or seq in seq_to_name:
+                  raise SystemExit(f"duplicate/empty Table 2 ID or Seq: {name!r}/{seq}")
+              name_to_seq[name] = seq
+              seq_to_name[seq] = name
+
+          if len(seq_to_name) != 781602:
+              raise SystemExit(f"Expected 781602 unique Table 2 Seq values, got {len(seq_to_name)}")
+          if min(seq_to_name) != 1 or max(seq_to_name) != 781604:
+              raise SystemExit(f"Unexpected Table 2 Seq range: {min(seq_to_name)}..{max(seq_to_name)}")
+
+          with zenodo_path.open(encoding="utf-8-sig", newline="") as stream:
+              reader = csv.DictReader(stream)
+              if not reader.fieldnames or "ID" not in reader.fieldnames:
+                  raise SystemExit(f"Zenodo CSV must contain ID column; got {reader.fieldnames}")
+              published_names = []
+              seen = set()
+              for row in reader:
+                  name = (row.get("ID") or "").strip()
+                  if not name:
+                      continue
+                  if name in seen:
+                      raise SystemExit(f"Duplicate published ZTF name: {name}")
+                  seen.add(name)
+                  published_names.append(name)
+
+          if len(published_names) != 730184:
+              raise SystemExit(f"Expected 730184 unique published names, got {len(published_names)}")
+          unmapped = sorted(set(published_names) - set(name_to_seq))
+          if unmapped:
+              raise SystemExit(f"{len(unmapped)} published names do not map to Table 2; examples={unmapped[:10]}")
+
+          published_seq = sorted(name_to_seq[name] for name in published_names)
+          if len(published_seq) != len(set(published_seq)):
+              raise SystemExit("Published ZTF names map to duplicate Table 2 Seq values")
+
+          with output_path.open("w", encoding="utf-8", newline="") as stream:
+              writer = csv.writer(stream, delimiter="\t", lineterminator="\n")
+              writer.writerow(["SourceID", "ZTF"])
+              for seq in published_seq:
+                  writer.writerow([seq, seq_to_name[seq]])
+
+          id_payload = "".join(f"{seq}\n" for seq in published_seq).encode("ascii")
+          manifest = {
+              "status": "VERIFIED",
+              "reference": "Zenodo DOI 10.5281/zenodo.5764899, 1st_layer.csv",
+              "join_key": "Zenodo ID (ZTF name) -> Table 2 ID -> Table 2 Seq (SourceID)",
+              "table2_rows_mapped": len(seq_to_name),
+              "table2_unique_seq": len(seq_to_name),
+              "table2_seq_min": min(seq_to_name),
+              "table2_seq_max": max(seq_to_name),
+              "published_rows": len(published_names),
+              "published_unique_names": len(seen),
+              "published_unique_seq": len(published_seq),
+              "unmapped_published_names": 0,
+              "published_seq_ids_sha256": hashlib.sha256(id_payload).hexdigest(),
+              "inputs": {
+                  "table2_sha256": sha256(table2_path),
+                  "zenodo_csv_sha256": sha256(zenodo_path),
+              },
+              "outputs": {
+                  "published_membership_seq_tsv_sha256": sha256(output_path),
+              },
+              "table2_schema": schema,
+              "raw_table4_used": False,
+              "limitation": "This is a full object-level crosswalk to the frozen Zenodo 1st_layer.csv reference, not a direct Table 4 byte comparison."
+          }
+          manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(json.dumps(manifest, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload full published membership crosswalk
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-full-zenodo-membership-crosswalk
+          path: |
+            ${{ runner.temp }}/cpvs-full-membership/published_membership_seq.tsv
+            ${{ runner.temp }}/cpvs-full-membership/membership_manifest.json
+          if-no-files-found: warn
+
   gate:
     name: CI Gate
     if: ${{ always() }}
