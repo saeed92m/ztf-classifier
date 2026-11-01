@@ -306,9 +306,38 @@ def main():
                     "Ng": p["Ng"], "Nr": p["Nr"],
                 })
 
+    source_crosswalk_pass = (
+        len(t2_rows) == EXPECTED["table2"]
+        and len(t4_rows) == EXPECTED["table4"]
+        and not unmapped
+        and not direct_id_mismatches
+        and len(table4_seq) == EXPECTED["table4"]
+    )
+    zenodo_exact_match = table4_seq == zenodo_set
+    candidate_exact_match = table4_seq == candidate_set
+    candidate_diagnostics_missing = candidate_only - set(candidate_only_records)
+    candidate_diagnostics_extra = set(candidate_only_records) - candidate_only
+
+    if not source_crosswalk_pass:
+        overall_status = "FAIL_SOURCE_IDENTIFIER_CROSSWALK"
+    elif not zenodo_exact_match:
+        overall_status = "FAIL_TABLE4_VS_ZENODO_MEMBERSHIP"
+    elif not candidate_exact_match:
+        overall_status = "UNRESOLVED_CANDIDATE_MEMBERSHIP_MISMATCH"
+    else:
+        overall_status = "PASS_EXACT_MEMBERSHIP_MATCH"
+
     report = {
-        "status": "PASS_IDENTIFIER_RECONCILIATION" if not unmapped and not direct_id_mismatches
-                  else "FAIL_IDENTIFIER_RECONCILIATION",
+        "status": overall_status,
+        "source_crosswalk_status": "PASS" if source_crosswalk_pass else "FAIL",
+        "zenodo_membership_status": "PASS" if zenodo_exact_match else "FAIL",
+        "candidate_reproduction_status": "PASS" if candidate_exact_match else "FAIL",
+        "candidate_diagnostics_coverage": {
+            "missing_residual_diagnostics_count": len(candidate_diagnostics_missing),
+            "missing_residual_diagnostics_examples": sorted(candidate_diagnostics_missing, key=lambda x: int(x))[:20],
+            "extra_residual_diagnostics_count": len(candidate_diagnostics_extra),
+            "extra_residual_diagnostics_examples": sorted(candidate_diagnostics_extra, key=lambda x: int(x))[:20],
+        },
         "scope_note": "Inputs are the original publisher machine-readable tables from IOP/AAS. Candidate membership is historical evidence from workflow run 38635891449; this job does not re-download or re-derive the 179M light-curve rows.",
         "primary_source_urls": {
             "table2_mrt": "https://content.cld.iop.org/journals/0067-0049/249/1/18/revision1/apjsab9caet2_mrt.txt",
@@ -334,11 +363,12 @@ def main():
         "membership_comparison": {
             "table4_seq_count": len(table4_seq),
             "zenodo_sourceid_count": len(zenodo_set),
-            "table4_vs_zenodo_exact_match": table4_seq == zenodo_set,
+            "table4_vs_zenodo_exact_match": zenodo_exact_match,
             "table4_only_vs_zenodo_count": len(zenodo_vs_table4["table4_only"]),
             "zenodo_only_vs_table4_count": len(zenodo_vs_table4["zenodo_only"]),
             "candidate_count_historical": len(candidate_set),
             "table4_intersection_candidate_count": len(intersection),
+            "candidate_vs_table4_exact_match": candidate_exact_match,
             "candidate_only_count": len(candidate_only),
             "reference_only_count": len(reference_only),
             "parent_neither_count": len(parent_neither),
