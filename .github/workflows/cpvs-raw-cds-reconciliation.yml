@@ -1,0 +1,104 @@
+name: CPVS Raw CDS Reconciliation
+
+on:
+  push:
+    branches:
+      - investigation/cpvs-candidate-field-audit-20261030
+    paths:
+      - scripts/cpvs_raw_cds_reconciliation.py
+      - .github/workflows/cpvs-raw-cds-reconciliation.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  raw-catalog-reconciliation:
+    name: Download raw CDS catalogs and reconcile membership
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out reviewed investigation branch
+        uses: actions/checkout@v4
+
+      - name: Download original CDS files without transformation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/raw work/refs/zenodo work/refs/heavy work/output
+
+          fetch_cds_file() {
+            local relative="$1"
+            local destination="$2"
+            local source=""
+            local tmp="${destination}.part"
+            local bases=(
+              "https://cdsarc.cds.unistra.fr/ftp/cats"
+              "https://cdsarc.u-strasbg.fr/ftp/cats"
+              "https://vizier.idia.ac.za/ftp/cats"
+              "https://vizier.cfa.harvard.edu/ftp/cats"
+            )
+            for base in "${bases[@]}"; do
+              source="${base}/${relative}"
+              echo "Trying ${source}"
+              if curl --fail --location --silent --show-error \
+                   --retry 2 --retry-all-errors --connect-timeout 20 --max-time 900 \
+                   -H 'Accept-Encoding: identity' "${source}" -o "${tmp}"; then
+                if [ -s "${tmp}" ] && ! head -c 64 "${tmp}" | grep -Eqi '<!doctype|<html'; then
+                  mv "${tmp}" "${destination}"
+                  printf '%s\t%s\n' "${relative}" "${source}" >> work/raw/retrieval_sources.tsv
+                  echo "Downloaded ${relative} from ${source}"
+                  return 0
+                fi
+                echo "Rejected empty or HTML response from ${source}"
+              fi
+              rm -f "${tmp}"
+            done
+            echo "ERROR: unable to retrieve ${relative} from configured CDS mirrors" >&2
+            return 1
+          }
+
+          fetch_cds_file "J/ApJ/932/118/table4.dat" "work/raw/table4.dat"
+          fetch_cds_file "J/ApJS/249/18/table2.dat" "work/raw/table2.dat"
+          fetch_cds_file "J/ApJ/932/118/ReadMe" "work/raw/table4.ReadMe"
+          fetch_cds_file "J/ApJS/249/18/ReadMe" "work/raw/table2.ReadMe"
+
+          echo "=== Raw byte counts ==="
+          wc -c work/raw/*
+          echo "=== Raw SHA-256 ==="
+          sha256sum work/raw/*
+          echo "=== Record counts ==="
+          wc -l work/raw/table2.dat work/raw/table4.dat
+
+      - name: Retrieve frozen Zenodo membership and historical candidate evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run download 41299576448 --repo saeed92m/ztf-classifier \
+            --name cpvs-full-zenodo-membership-crosswalk --dir work/refs/zenodo
+          gh run download 38635891449 --repo saeed92m/ztf-classifier \
+            --name scientific-validation-heavy --dir work/refs/heavy
+          test -s work/refs/zenodo/published_membership_seq.tsv
+          test -s work/refs/heavy/ztf_periodic_730k/selected.tsv
+          test -s work/refs/heavy/ztf_periodic_730k/selection_diagnostics.json
+
+      - name: Run byte-preserving identifier and membership reconciliation
+        run: |
+          python scripts/cpvs_raw_cds_reconciliation.py \
+            --raw work/raw \
+            --zenodo work/refs/zenodo \
+            --heavy work/refs/heavy \
+            --out work/output
+
+      - name: Upload immutable raw sources and reconciliation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpvs-raw-cds-reconciliation
+          path: |
+            work/raw/
+            work/output/
+          if-no-files-found: error
+          retention-days: 90
