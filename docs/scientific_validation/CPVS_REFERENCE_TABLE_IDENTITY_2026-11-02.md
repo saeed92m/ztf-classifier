@@ -280,6 +280,18 @@ Raw source hashes from successful reconciliation run 41360681445:
 
 Both raw CDS files matched every data row in the corresponding IOP/AAS publisher MRT source after right-padding only the in-memory raw record to the publisher record length. Mismatches: zero in Table 2 and zero in Table 4. The original raw files were not modified.
 
+The original IOP/AAS publisher MRT files are retained in artifact 13103628946 from run 41357833854. Their pre-parse hashes are:
+
+| Publisher file | Bytes | SHA-256 |
+|---|---:|---|
+| table2.mrt.txt | 179,770,728 | 58848bee4c62f5bd930787b76045e40bb695b171cc8149b4336b00b55e28d5fa |
+| table4.mrt.txt | 47,463,000 | 3cb9e22c42ab19ce89346dd3773c82921d852432b4617f4ff52ce4aea2c8c7d0 |
+
+Publisher URLs:
+- https://content.cld.iop.org/journals/0067-0049/249/1/18/revision1/apjsab9caet2_mrt.txt
+- https://content.cld.iop.org/journals/0004-637X/932/2/118/revision1/apjac69d4t4_mrt.txt
+
+
 The sorted four-field-only SourceID list has SHA-256 9ca933554a7c070f93d6fe36d614549ba8abcbf6aeb5ccd53787600745708941. The four_field_only_55.tsv artifact has SHA-256 b7f712910467616919f616dfd5f9ddb94a4c6b819f973469eeeb704fae0e1ab6.
 
 **Disposition:** this conjunction is a strong empirical reconstruction hypothesis. It is not an approved production selector. Keep the scientific gate blocked until the source-level detection/SNR semantics and the 55 control objects are explained.
