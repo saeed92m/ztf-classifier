@@ -4,6 +4,7 @@
 The original publisher MRT files are read as bytes. Hashes are calculated before parsing.
 Identifiers remain strings. No selector or production artifact is modified.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,12 +28,15 @@ def sha256(path: pathlib.Path) -> str:
             h.update(block)
     return h.hexdigest()
 
+
 def id_set_sha256(values: set[str]) -> str:
     payload = "".join(f"{value}\n" for value in sorted(values, key=int)).encode("ascii")
     return hashlib.sha256(payload).hexdigest()
 
 
-def records(path: pathlib.Path, expected_lrecl: int, *, allow_trailing_pad: bool = False):
+def records(
+    path: pathlib.Path, expected_lrecl: int, *, allow_trailing_pad: bool = False
+):
     raw = path.read_bytes()
     lines = raw.splitlines()
     # CDS fixed-width files can omit trailing blank bytes. Publisher MRT files
@@ -57,12 +61,15 @@ def records(path: pathlib.Path, expected_lrecl: int, *, allow_trailing_pad: bool
         raise ValueError(f"{path}: raw CDS record exceeds Lrecl={expected_lrecl}")
     return raw, rows, lengths
 
+
 def field(row: bytes, start: int, end: int) -> str:
     return row[start:end].decode("ascii", errors="strict").strip()
 
 
 def load_table2(path: pathlib.Path, *, allow_trailing_pad: bool = False):
-    raw, rows, lengths = records(path, LRECL["table2"], allow_trailing_pad=allow_trailing_pad)
+    raw, rows, lengths = records(
+        path, LRECL["table2"], allow_trailing_pad=allow_trailing_pad
+    )
     by_name: dict[str, dict[str, str]] = {}
     by_seq: dict[str, str] = {}
     for n, row in enumerate(rows, 1):
@@ -97,7 +104,9 @@ def load_table2(path: pathlib.Path, *, allow_trailing_pad: bool = False):
 
 
 def load_table4(path: pathlib.Path, *, allow_trailing_pad: bool = False):
-    raw, rows, lengths = records(path, LRECL["table4"], allow_trailing_pad=allow_trailing_pad)
+    raw, rows, lengths = records(
+        path, LRECL["table4"], allow_trailing_pad=allow_trailing_pad
+    )
     parsed = []
     seen_names, seen_ids = set(), set()
     for n, row in enumerate(rows, 1):
@@ -120,7 +129,9 @@ def load_table4(path: pathlib.Path, *, allow_trailing_pad: bool = False):
 def find_one(root: pathlib.Path, name: str) -> pathlib.Path:
     matches = list(root.rglob(name))
     if len(matches) != 1:
-        raise ValueError(f"Expected exactly one {name} below {root}, found {len(matches)}")
+        raise ValueError(
+            f"Expected exactly one {name} below {root}, found {len(matches)}"
+        )
     return matches[0]
 
 
@@ -175,7 +186,9 @@ def sample_ids(groups: dict[str, set[str]], n: int, seed: str):
     for group, quota in quotas.items():
         ordered = sorted(groups[group], key=lambda x: hash_rank(seed + ":" + group, x))
         if len(ordered) < quota:
-            raise ValueError(f"Sample {n}: {group} has {len(ordered)} objects, needs {quota}")
+            raise ValueError(
+                f"Sample {n}: {group} has {len(ordered)} objects, needs {quota}"
+            )
         selected.extend((value, group) for value in ordered[:quota])
     if len(selected) != n or len({x for x, _ in selected}) != n:
         raise ValueError(f"Sample {n}: invalid sample cardinality or duplicate IDs")
@@ -204,16 +217,29 @@ def main():
 
     # Hash the exact raw CDS payloads, compressed archives, ReadMe files,
     # and retained original publisher MRT files before parsing.
-    hash_paths = [t2_path, t4_path, t2_readme, t4_readme, t2_gzip, t4_gzip,
-                  publisher_t2_path, publisher_t4_path]
+    hash_paths = [
+        t2_path,
+        t4_path,
+        t2_readme,
+        t4_readme,
+        t2_gzip,
+        t4_gzip,
+        publisher_t2_path,
+        publisher_t4_path,
+    ]
     hashes = {
-        str(p.relative_to(args.raw)) if p.is_relative_to(args.raw) else f"publisher/{p.name}":
-            {"bytes": p.stat().st_size, "sha256": sha256(p)}
+        str(p.relative_to(args.raw))
+        if p.is_relative_to(args.raw)
+        else f"publisher/{p.name}": {"bytes": p.stat().st_size, "sha256": sha256(p)}
         for p in hash_paths
     }
     (out / "raw_source_hashes.json").write_text(
-        json.dumps({"retrieved_utc": datetime.now(timezone.utc).isoformat(),
-                    "files": hashes}, indent=2) + "\n", encoding="utf-8"
+        json.dumps(
+            {"retrieved_utc": datetime.now(timezone.utc).isoformat(), "files": hashes},
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
     )
 
     t2_raw, t2_rows, t2_lengths, t2_by_name, t2_by_seq = load_table2(t2_path)
@@ -231,12 +257,14 @@ def main():
     if len(publisher_t2_rows) != len(t2_rows) or len(publisher_t4_rows) != len(t4_rows):
         raise ValueError("Publisher MRT and raw CDS record counts differ")
     t2_publisher_mismatches = [
-        i for i, (raw_row, publisher_row) in enumerate(zip(t2_rows, publisher_t2_rows), 1)
-        if publisher_row[:LRECL["table2"]] != raw_row.ljust(LRECL["table2"], b" ")
+        i
+        for i, (raw_row, publisher_row) in enumerate(zip(t2_rows, publisher_t2_rows), 1)
+        if publisher_row[: LRECL["table2"]] != raw_row.ljust(LRECL["table2"], b" ")
     ]
     t4_publisher_mismatches = [
-        i for i, (raw_row, publisher_row) in enumerate(zip(t4_rows, publisher_t4_rows), 1)
-        if publisher_row[:LRECL["table4"]] != raw_row.ljust(LRECL["table4"], b" ")
+        i
+        for i, (raw_row, publisher_row) in enumerate(zip(t4_rows, publisher_t4_rows), 1)
+        if publisher_row[: LRECL["table4"]] != raw_row.ljust(LRECL["table4"], b" ")
     ]
 
     table4_seq, unmapped, direct_id_mismatches = set(), [], []
@@ -266,11 +294,17 @@ def main():
         str(item["source_id"]): item
         for item in diagnostics.get("candidate_only_all_objects", [])
     }
-    if len(candidate_only_records) != len(diagnostics.get("candidate_only_all_objects", [])):
-        raise ValueError("Duplicate source_id in candidate_only_all_objects diagnostics")
+    if len(candidate_only_records) != len(
+        diagnostics.get("candidate_only_all_objects", [])
+    ):
+        raise ValueError(
+            "Duplicate source_id in candidate_only_all_objects diagnostics"
+        )
 
     parent_set = set(t2_by_seq)
-    table2_seq_gaps = sorted(set(range(1, 781605)) - {int(value) for value in parent_set})
+    table2_seq_gaps = sorted(
+        set(range(1, 781605)) - {int(value) for value in parent_set}
+    )
     table4_seq_sha256 = id_set_sha256(table4_seq)
     zenodo_seq_sha256 = id_set_sha256(zenodo_set)
     candidate_seq_sha256 = id_set_sha256(candidate_set)
@@ -286,15 +320,34 @@ def main():
     # Candidate-only object-level provenance from retained heavy-run diagnostics.
     residual_path = out / "candidate_only_11602_object_provenance.tsv"
     residual_fields = [
-        "SourceID", "Table4_member", "Zenodo_member", "candidate",
-        "ZTF", "Type", "gmag", "rmag", "Per-g", "Per-r", "Per",
-        "Ng", "Nr", "R2-g", "R2-r",
-        "g_qualifying_detections", "r_qualifying_detections",
-        "g_snr", "r_snr", "g_qualifying_flag_or", "r_qualifying_flag_or",
-        "g_smallest_qualifying_error", "r_smallest_qualifying_error",
+        "SourceID",
+        "Table4_member",
+        "Zenodo_member",
+        "candidate",
+        "ZTF",
+        "Type",
+        "gmag",
+        "rmag",
+        "Per-g",
+        "Per-r",
+        "Per",
+        "Ng",
+        "Nr",
+        "R2-g",
+        "R2-r",
+        "g_qualifying_detections",
+        "r_qualifying_detections",
+        "g_snr",
+        "r_snr",
+        "g_qualifying_flag_or",
+        "r_qualifying_flag_or",
+        "g_smallest_qualifying_error",
+        "r_smallest_qualifying_error",
     ]
     with residual_path.open("w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=residual_fields, delimiter="\t", lineterminator="\n")
+        w = csv.DictWriter(
+            f, fieldnames=residual_fields, delimiter="\t", lineterminator="\n"
+        )
         w.writeheader()
         for sid in sorted(candidate_only, key=lambda x: int(x)):
             item = candidate_only_records.get(sid, {})
@@ -302,28 +355,37 @@ def main():
             g = item.get("g", {})
             r = item.get("r", {})
             ztf = t2_by_seq.get(sid, "")
-            w.writerow({
-                "SourceID": sid, "Table4_member": False,
-                "Zenodo_member": sid in zenodo_set, "candidate": True,
-                "ZTF": ztf, "Type": p.get("type", t2_by_name.get(ztf, {}).get("Type", "")),
-                "gmag": p.get("gmag", t2_by_name.get(ztf, {}).get("gmag", "")),
-                "rmag": p.get("rmag", t2_by_name.get(ztf, {}).get("rmag", "")),
-                "Per-g": p.get("per_g", t2_by_name.get(ztf, {}).get("Per-g", "")),
-                "Per-r": p.get("per_r", t2_by_name.get(ztf, {}).get("Per-r", "")),
-                "Per": p.get("period", t2_by_name.get(ztf, {}).get("Per", "")),
-                "Ng": p.get("ng", t2_by_name.get(ztf, {}).get("Ng", "")),
-                "Nr": p.get("nr", t2_by_name.get(ztf, {}).get("Nr", "")),
-                "R2-g": p.get("r2_g", t2_by_name.get(ztf, {}).get("R2-g", "")),
-                "R2-r": p.get("r2_r", t2_by_name.get(ztf, {}).get("R2-r", "")),
-                "g_qualifying_detections": g.get("qualifying_detections", ""),
-                "r_qualifying_detections": r.get("qualifying_detections", ""),
-                "g_snr": g.get("snr_exact", g.get("snr", "")),
-                "r_snr": r.get("snr_exact", r.get("snr", "")),
-                "g_qualifying_flag_or": g.get("qualifying_flag_or", ""),
-                "r_qualifying_flag_or": r.get("qualifying_flag_or", ""),
-                "g_smallest_qualifying_error": g.get("smallest_qualifying_error", ""),
-                "r_smallest_qualifying_error": r.get("smallest_qualifying_error", ""),
-            })
+            w.writerow(
+                {
+                    "SourceID": sid,
+                    "Table4_member": False,
+                    "Zenodo_member": sid in zenodo_set,
+                    "candidate": True,
+                    "ZTF": ztf,
+                    "Type": p.get("type", t2_by_name.get(ztf, {}).get("Type", "")),
+                    "gmag": p.get("gmag", t2_by_name.get(ztf, {}).get("gmag", "")),
+                    "rmag": p.get("rmag", t2_by_name.get(ztf, {}).get("rmag", "")),
+                    "Per-g": p.get("per_g", t2_by_name.get(ztf, {}).get("Per-g", "")),
+                    "Per-r": p.get("per_r", t2_by_name.get(ztf, {}).get("Per-r", "")),
+                    "Per": p.get("period", t2_by_name.get(ztf, {}).get("Per", "")),
+                    "Ng": p.get("ng", t2_by_name.get(ztf, {}).get("Ng", "")),
+                    "Nr": p.get("nr", t2_by_name.get(ztf, {}).get("Nr", "")),
+                    "R2-g": p.get("r2_g", t2_by_name.get(ztf, {}).get("R2-g", "")),
+                    "R2-r": p.get("r2_r", t2_by_name.get(ztf, {}).get("R2-r", "")),
+                    "g_qualifying_detections": g.get("qualifying_detections", ""),
+                    "r_qualifying_detections": r.get("qualifying_detections", ""),
+                    "g_snr": g.get("snr_exact", g.get("snr", "")),
+                    "r_snr": r.get("snr_exact", r.get("snr", "")),
+                    "g_qualifying_flag_or": g.get("qualifying_flag_or", ""),
+                    "r_qualifying_flag_or": r.get("qualifying_flag_or", ""),
+                    "g_smallest_qualifying_error": g.get(
+                        "smallest_qualifying_error", ""
+                    ),
+                    "r_smallest_qualifying_error": r.get(
+                        "smallest_qualifying_error", ""
+                    ),
+                }
+            )
 
     # Fresh deterministic stratified samples against raw Table4 membership.
     groups = {
@@ -334,24 +396,48 @@ def main():
     }
     for n in (100, 1000):
         sample = sample_ids(groups, n, "ztf-cpvs-fixed-object-sample-v1")
-        with (out / f"fixed_sample_{n}.tsv").open("w", encoding="utf-8", newline="") as f:
-            fields = ["SourceID", "stratum", "Table4_member", "Zenodo_member", "candidate",
-                      "ZTF", "Type", "gmag", "rmag", "Per-g", "Per-r", "Ng", "Nr"]
-            w = csv.DictWriter(f, fieldnames=fields, delimiter="\t", lineterminator="\n")
+        with (out / f"fixed_sample_{n}.tsv").open(
+            "w", encoding="utf-8", newline=""
+        ) as f:
+            fields = [
+                "SourceID",
+                "stratum",
+                "Table4_member",
+                "Zenodo_member",
+                "candidate",
+                "ZTF",
+                "Type",
+                "gmag",
+                "rmag",
+                "Per-g",
+                "Per-r",
+                "Ng",
+                "Nr",
+            ]
+            w = csv.DictWriter(
+                f, fieldnames=fields, delimiter="\t", lineterminator="\n"
+            )
             w.writeheader()
             for sid, stratum in sample:
                 ztf = t2_by_seq[sid]
                 p = t2_by_name[ztf]
-                w.writerow({
-                    "SourceID": sid, "stratum": stratum,
-                    "Table4_member": sid in table4_seq,
-                    "Zenodo_member": sid in zenodo_set,
-                    "candidate": sid in candidate_set,
-                    "ZTF": ztf, "Type": p["Type"],
-                    "gmag": p["gmag"], "rmag": p["rmag"],
-                    "Per-g": p["Per-g"], "Per-r": p["Per-r"],
-                    "Ng": p["Ng"], "Nr": p["Nr"],
-                })
+                w.writerow(
+                    {
+                        "SourceID": sid,
+                        "stratum": stratum,
+                        "Table4_member": sid in table4_seq,
+                        "Zenodo_member": sid in zenodo_set,
+                        "candidate": sid in candidate_set,
+                        "ZTF": ztf,
+                        "Type": p["Type"],
+                        "gmag": p["gmag"],
+                        "rmag": p["rmag"],
+                        "Per-g": p["Per-g"],
+                        "Per-r": p["Per-r"],
+                        "Ng": p["Ng"],
+                        "Nr": p["Nr"],
+                    }
+                )
 
     source_crosswalk_pass = (
         len(t2_rows) == EXPECTED["table2"]
@@ -377,7 +463,12 @@ def main():
         overall_status = "PASS_EXACT_MEMBERSHIP_MATCH"
 
     def is_missing(value: object) -> bool:
-        return value is None or str(value).strip().lower() in {"", "nan", "none", "null"}
+        return value is None or str(value).strip().lower() in {
+            "",
+            "nan",
+            "none",
+            "null",
+        }
 
     def as_number(value: object):
         try:
@@ -395,7 +486,9 @@ def main():
             "count": len(ordered),
             "min": min(ordered) if ordered else None,
             "median": statistics.median(ordered) if ordered else None,
-            "p90_nearest_rank": ordered[round((len(ordered) - 1) * 0.90)] if ordered else None,
+            "p90_nearest_rank": ordered[round((len(ordered) - 1) * 0.90)]
+            if ordered
+            else None,
             "max": max(ordered) if ordered else None,
         }
 
@@ -415,17 +508,29 @@ def main():
             not is_missing(row["Per-g"]) and not is_missing(row["Per-r"])
             for row in residual_rows
         ),
-        "g_qualifying_detections": quantiles([
-            as_number(row["g_qualifying_detections"]) for row in residual_rows
-            if as_number(row["g_qualifying_detections"]) is not None
-        ]),
-        "r_qualifying_detections": quantiles([
-            as_number(row["r_qualifying_detections"]) for row in residual_rows
-            if as_number(row["r_qualifying_detections"]) is not None
-        ]),
+        "g_qualifying_detections": quantiles(
+            [
+                as_number(row["g_qualifying_detections"])
+                for row in residual_rows
+                if as_number(row["g_qualifying_detections"]) is not None
+            ]
+        ),
+        "r_qualifying_detections": quantiles(
+            [
+                as_number(row["r_qualifying_detections"])
+                for row in residual_rows
+                if as_number(row["r_qualifying_detections"]) is not None
+            ]
+        ),
         "objects_with_nonzero_qualifying_flag_or": {
-            "g": sum(as_number(row["g_qualifying_flag_or"]) not in (None, 0) for row in residual_rows),
-            "r": sum(as_number(row["r_qualifying_flag_or"]) not in (None, 0) for row in residual_rows),
+            "g": sum(
+                as_number(row["g_qualifying_flag_or"]) not in (None, 0)
+                for row in residual_rows
+            ),
+            "r": sum(
+                as_number(row["r_qualifying_flag_or"]) not in (None, 0)
+                for row in residual_rows
+            ),
         },
         "parent_zero_detection_counts": {
             "Ng_zero": sum(as_number(row["Ng"]) == 0 for row in residual_rows),
@@ -433,7 +538,9 @@ def main():
         },
     }
     output_artifacts = [
-        crosswalk_path, residual_path, out / "fixed_sample_100.tsv",
+        crosswalk_path,
+        residual_path,
+        out / "fixed_sample_100.tsv",
         out / "fixed_sample_1000.tsv",
     ]
     output_artifact_hashes = {
@@ -448,9 +555,13 @@ def main():
         "candidate_reproduction_status": "PASS" if candidate_exact_match else "FAIL",
         "candidate_diagnostics_coverage": {
             "missing_residual_diagnostics_count": len(candidate_diagnostics_missing),
-            "missing_residual_diagnostics_examples": sorted(candidate_diagnostics_missing, key=lambda x: int(x))[:20],
+            "missing_residual_diagnostics_examples": sorted(
+                candidate_diagnostics_missing, key=lambda x: int(x)
+            )[:20],
             "extra_residual_diagnostics_count": len(candidate_diagnostics_extra),
-            "extra_residual_diagnostics_examples": sorted(candidate_diagnostics_extra, key=lambda x: int(x))[:20],
+            "extra_residual_diagnostics_examples": sorted(
+                candidate_diagnostics_extra, key=lambda x: int(x)
+            )[:20],
         },
         "scope_note": "Inputs are the original CDS fixed-width tables from the official NAOJ VizieR mirror, with byte-for-byte row comparison against original IOP/AAS publisher MRT files. Candidate membership is historical evidence from workflow run 38635891449; this job does not re-download or re-derive the 179M light-curve rows.",
         "primary_source_urls": {
@@ -471,12 +582,18 @@ def main():
         "candidate_only_diagnostic_summary": residual_summary,
         "output_artifact_hashes": output_artifact_hashes,
         "record_validation": {
-            "table2_records": len(t2_rows), "table2_expected": EXPECTED["table2"],
+            "table2_records": len(t2_rows),
+            "table2_expected": EXPECTED["table2"],
             "table2_record_length_distribution": dict(sorted(t2_lengths.items())),
-            "table4_records": len(t4_rows), "table4_expected": EXPECTED["table4"],
+            "table4_records": len(t4_rows),
+            "table4_expected": EXPECTED["table4"],
             "table4_record_length_distribution": dict(sorted(t4_lengths.items())),
-            "publisher_table2_record_length_distribution": dict(sorted(publisher_t2_lengths.items())),
-            "publisher_table4_record_length_distribution": dict(sorted(publisher_t4_lengths.items())),
+            "publisher_table2_record_length_distribution": dict(
+                sorted(publisher_t2_lengths.items())
+            ),
+            "publisher_table4_record_length_distribution": dict(
+                sorted(publisher_t4_lengths.items())
+            ),
         },
         "publisher_vs_raw_cds_row_comparison": {
             "table2_exact_data_rows": len(t2_rows) - len(t2_publisher_mismatches),
@@ -493,7 +610,8 @@ def main():
             "table4_unique_ZTF": len(t4_rows_parsed),
             "table4_unmapped_ZTF_count": len(unmapped),
             "table4_unmapped_ZTF_examples": unmapped[:20],
-            "table4_ID_equals_parent_Seq_count": len(t4_rows_parsed) - len(direct_id_mismatches),
+            "table4_ID_equals_parent_Seq_count": len(t4_rows_parsed)
+            - len(direct_id_mismatches),
             "table4_ID_vs_parent_Seq_mismatch_count": len(direct_id_mismatches),
             "table4_ID_vs_parent_Seq_mismatch_examples": direct_id_mismatches[:20],
         },
@@ -528,7 +646,8 @@ def main():
         ],
     }
     (out / "reconciliation_report.json").write_text(
-        json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8"
+        json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
     )
     (out / "reconciliation_report.md").write_text(
         "# CPVS raw CDS and publisher reconciliation\n\n"
@@ -544,7 +663,7 @@ def main():
         f"- Reference-only residuals: {len(reference_only):,}\n\n"
         "See reconciliation_report.json, raw_source_hashes.json, the full crosswalk, "
         "candidate-only provenance, and deterministic 100/1,000-object samples.\n",
-        encoding="utf-8"
+        encoding="utf-8",
     )
     print(json.dumps(report, indent=2, sort_keys=True))
 

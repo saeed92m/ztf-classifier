@@ -3,14 +3,18 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "cpvs_raw_cds_reconciliation.py"
+SCRIPT = (
+    Path(__file__).resolve().parents[1] / "scripts" / "cpvs_raw_cds_reconciliation.py"
+)
 SPEC = importlib.util.spec_from_file_location("cpvs_raw_cds_reconciliation", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 AUDIT = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(AUDIT)
 
 
-def _catalog_row(lrecl: int, name: bytes = b"ZTFJ000000.13+620605.8", source_id: bytes = b"000123") -> bytes:
+def _catalog_row(
+    lrecl: int, name: bytes = b"ZTFJ000000.13+620605.8", source_id: bytes = b"000123"
+) -> bytes:
     row = bytearray(b" " * lrecl)
     row[:22] = name.ljust(22, b" ")
     row[23:29] = source_id
