@@ -64,7 +64,23 @@ These hashes are for the exact TSV responses used in the independent audit. They
 
 The artifact's verdict is that the four-field-positive predicate is **not** the published selection rule: 55 Table 2 objects satisfy all four positivity conditions but are absent from Chan et al. (2022) Table 4.
 
-## 3. Interpretation boundaries
+## 3. Additional residual-population evidence
+
+The retained historical heavy-run artifact (run [38635891449](https://github.com/saeed92m/ztf-classifier/actions/runs/38635891449)) provides additional diagnostics for the 11,602 candidate-only objects:
+
+| Diagnostic | Candidate-only (11,602) | Published ∩ candidate (730,184) |
+|---|---:|---:|
+| Qualifying `g)-band detections per object, minimum | 1 | 11 |
+| Qualifying `g)-band detections per object, median | 5 | 104 |
+| Qualifying `g)-band detections per object, 90th percentile | 9 | 201 |
+| Qualifying `r)-band detections per object, minimum | 1 | 4 |
+| Qualifying `r)-band detections per object, median | 118 | 132 |
+
+The same historical diagnostics report that 11,585 of the 11,602 candidate-only objects lack at least one Table 2 mean magnitude (`gmag` or `rmag`); the remaining 17 have both mean magnitudes but lack at least one per-band period (`Per-g` or `Per-r`). These are overlapping field diagnostics, not independent counts to add.
+
+This pattern is consistent with an additional two-band data-completeness or fit-quality constraint in the Chan et al. (2022) preprocessing pipeline. It does **not** prove such a rule. The paper states the two-band detection thresholds but does not provide executable selection code or a complete per-object exclusion trace. Do not convert the observed field pattern into a production selector without source evidence.
+
+## 4. Interpretation boundaries
 
 1. Chan et al. (2022) Table 4 is the correct 730,184-row object-level reference used in this project's historical membership comparison.
 2. Chen et al. (2020) Table 2 is the 781,602-row parent catalog.
@@ -73,7 +89,7 @@ The artifact's verdict is that the four-field-positive predicate is **not** the 
 5. The historical 741,786-versus-730,184 candidate comparison and its 11,602 candidate-only IDs remain unresolved. This clarification does not explain those residuals.
 6. A successful ZTF-name-to-`Seq` crosswalk validates identifier mapping. It does not prove that the local candidate derivation implements every preprocessing detail used by Chan et al. (2022).
 
-## 4. Required next audit
+## 5. Required next audit
 
 1. Acquire the original CDS fixed-width `table4.dat` for `J/ApJ/932/118` and preserve its downloaded bytes.
 2. Record its byte count, retrieval URL/date, and SHA-256. Compare the physical row count with the CDS ReadMe's 730,184 records.
