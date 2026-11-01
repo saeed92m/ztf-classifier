@@ -28,34 +28,40 @@ jobs:
           set -euo pipefail
           mkdir -p work/raw work/refs/zenodo work/refs/heavy work/output
 
+          : > work/raw/download.log
           fetch_cds_file() {
             local relative="$1"
             local destination="$2"
             local source=""
             local tmp="${destination}.part"
+            local suffix="${relative}"
             local bases=(
               "https://cdsarc.cds.unistra.fr/ftp/cats"
-              "https://cdsarc.u-strasbg.fr/ftp/cats"
-              "https://vizier.idia.ac.za/ftp/cats"
-              "https://vizier.cfa.harvard.edu/ftp/cats"
+              "https://vizier.cfa.harvard.edu/vizier/ftp/cats"
+              "https://vizier.idia.ac.za/vizier/ftp/cats"
+              "https://vizier.nao.ac.jp/vizier/ftp/cats"
             )
             for base in "${bases[@]}"; do
-              source="${base}/${relative}"
-              echo "Trying ${source}"
+              source="${base}/${suffix}"
+              echo "Trying ${source}" | tee -a work/raw/download.log
               if curl --fail --location --silent --show-error \
-                   --retry 2 --retry-all-errors --connect-timeout 20 --max-time 900 \
-                   -H 'Accept-Encoding: identity' "${source}" -o "${tmp}"; then
+                   --retry 1 --retry-all-errors --connect-timeout 15 --max-time 240 \
+                   --write-out 'HTTP=%{http_code} bytes=%{size_download} total=%{time_total}s\n' \
+                   -H 'Accept-Encoding: identity' "${source}" -o "${tmp}" \
+                   2>>work/raw/download.log; then
                 if [ -s "${tmp}" ] && ! head -c 64 "${tmp}" | grep -Eqi '<!doctype|<html'; then
                   mv "${tmp}" "${destination}"
                   printf '%s\t%s\n' "${relative}" "${source}" >> work/raw/retrieval_sources.tsv
-                  echo "Downloaded ${relative} from ${source}"
+                  echo "Downloaded ${relative} from ${source}" | tee -a work/raw/download.log
                   return 0
                 fi
-                echo "Rejected empty or HTML response from ${source}"
+                echo "Rejected empty or HTML response from ${source}" | tee -a work/raw/download.log
+              else
+                echo "Failed ${source}" | tee -a work/raw/download.log
               fi
               rm -f "${tmp}"
             done
-            echo "ERROR: unable to retrieve ${relative} from configured CDS mirrors" >&2
+            echo "ERROR: unable to retrieve ${relative} from configured CDS mirrors" | tee -a work/raw/download.log
             return 1
           }
 
@@ -94,11 +100,12 @@ jobs:
             --out work/output
 
       - name: Upload immutable raw sources and reconciliation evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cpvs-raw-cds-reconciliation
           path: |
             work/raw/
             work/output/
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 90
