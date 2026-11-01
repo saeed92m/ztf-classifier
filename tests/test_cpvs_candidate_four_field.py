@@ -174,6 +174,8 @@ def test_read_vizier_parses_cds_column_metadata_without_numeric_indices(
         "#Column\tID\t(A19)\n"
         "#Column\tSeq\t(I6)\n"
         "#Column\tPer-r\t(F10.5)\n"
+        " \td\t \n"
+        "-----\t-----\t-----\n"
         "ZTF1\t1\t0.25\n"
         "ZTF2\t2\t0.50\n",
     )
