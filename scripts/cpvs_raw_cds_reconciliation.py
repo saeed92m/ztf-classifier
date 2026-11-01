@@ -157,39 +157,70 @@ def read_candidate_ids(path: pathlib.Path) -> set[str]:
     return vals
 
 
+def is_positive_field(value: object) -> bool:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(number) and number > 0
+
+
 def hash_rank(seed: str, value: str) -> str:
     return hashlib.sha256((seed + ":" + value).encode("utf-8")).hexdigest()
 
 
 def sample_ids(groups: dict[str, set[str]], n: int, seed: str):
-    # Fixed design: if reference-only objects exist, reserve 5% for them;
-    # otherwise use the established 50/25/25 design.
-    if groups["reference_only"]:
-        fractions = {
-            "reference_candidate": 0.45,
-            "candidate_only": 0.25,
-            "reference_only": 0.05,
-            "parent_neither": 0.25,
-        }
-    else:
-        fractions = {
-            "reference_candidate": 0.50,
-            "candidate_only": 0.25,
-            "reference_only": 0.00,
-            "parent_neither": 0.25,
-        }
-    quotas = {k: int(round(n * v)) for k, v in fractions.items()}
-    # Keep the total exact. Allocate rounding remainder to the largest stratum.
-    diff = n - sum(quotas.values())
-    quotas["reference_candidate"] += diff
+    required = {
+        "reference_candidate",
+        "candidate_only",
+        "four_field_only",
+        "reference_only",
+        "parent_neither",
+    }
+    missing = required - groups.keys()
+    if missing:
+        raise ValueError(f"Sample groups missing required strata: {sorted(missing)}")
+
+    # Deliberately oversample discrepancy populations. The 1,000-object design
+    # includes all 55 four-field-only controls when that full population exists.
+    # This is a diagnostic sample, not a prevalence estimator.
+    quotas = {
+        "reference_candidate": int(round(n * 0.50)),
+        "candidate_only": int(round(n * 0.25)),
+        "four_field_only": min(
+            len(groups["four_field_only"]), max(10, int(round(n * 0.055)))
+        ),
+        "reference_only": min(
+            len(groups["reference_only"]),
+            max(1, int(round(n * 0.05))) if groups["reference_only"] else 0,
+        ),
+    }
+    quotas["parent_neither"] = n - sum(quotas.values())
+    if quotas["parent_neither"] < 0:
+        raise ValueError(f"Sample {n}: stratum quotas exceed requested sample size")
+
     selected = []
-    for group, quota in quotas.items():
+    for group in ("reference_candidate", "candidate_only", "four_field_only", "reference_only"):
+        quota = quotas[group]
         ordered = sorted(groups[group], key=lambda x: hash_rank(seed + ":" + group, x))
         if len(ordered) < quota:
             raise ValueError(
                 f"Sample {n}: {group} has {len(ordered)} objects, needs {quota}"
             )
         selected.extend((value, group) for value in ordered[:quota])
+    ordered_neither = sorted(
+        groups["parent_neither"],
+        key=lambda x: hash_rank(seed + ":parent_neither", x),
+    )
+    if len(ordered_neither) < quotas["parent_neither"]:
+        raise ValueError(
+            f"Sample {n}: parent_neither has {len(ordered_neither)} objects, "
+            f"needs {quotas['parent_neither']}"
+        )
+    selected.extend(
+        (value, "parent_neither")
+        for value in ordered_neither[: quotas["parent_neither"]]
+    )
     if len(selected) != n or len({x for x, _ in selected}) != n:
         raise ValueError(f"Sample {n}: invalid sample cardinality or duplicate IDs")
     return sorted(selected, key=lambda item: hash_rank(seed + ":output", item[0]))
@@ -302,6 +333,14 @@ def main():
         )
 
     parent_set = set(t2_by_seq)
+    four_field_set = {
+        sid
+        for sid, ztf in t2_by_seq.items()
+        if all(
+            is_positive_field(t2_by_name[ztf].get(field, ""))
+            for field in ("gmag", "rmag", "Per-g", "Per-r")
+        )
+    }
     table2_seq_gaps = sorted(
         set(range(1, 781605)) - {int(value) for value in parent_set}
     )
@@ -311,7 +350,27 @@ def main():
     candidate_only = candidate_set - table4_seq
     reference_only = table4_seq - candidate_set
     intersection = table4_seq & candidate_set
-    parent_neither = parent_set - (table4_seq | candidate_set)
+    candidate_four_field = candidate_set & four_field_set
+    four_field_only = four_field_set - candidate_set - table4_seq
+    parent_neither = parent_set - (table4_seq | candidate_set | four_field_set)
+    empirical_conjunction_exact_match = candidate_four_field == table4_seq
+    residual_field_partition = Counter()
+    for sid in candidate_only:
+        row = t2_by_name[t2_by_seq[sid]]
+        magnitude_pair = all(
+            is_positive_field(row.get(field, "")) for field in ("gmag", "rmag")
+        )
+        period_pair = all(
+            is_positive_field(row.get(field, "")) for field in ("Per-g", "Per-r")
+        )
+        if not magnitude_pair and not period_pair:
+            residual_field_partition["both_pairs_incomplete"] += 1
+        elif magnitude_pair and not period_pair:
+            residual_field_partition["magnitudes_complete_periods_incomplete"] += 1
+        elif not magnitude_pair and period_pair:
+            residual_field_partition["periods_complete_magnitudes_incomplete"] += 1
+        else:
+            residual_field_partition["all_four_fields_positive"] += 1
     zenodo_vs_table4 = {
         "table4_only": table4_seq - zenodo_set,
         "zenodo_only": zenodo_set - table4_seq,
@@ -324,6 +383,9 @@ def main():
         "Table4_member",
         "Zenodo_member",
         "candidate",
+        "mean_magnitude_pair_positive",
+        "band_period_pair_positive",
+        "four_field_positive",
         "ZTF",
         "Type",
         "gmag",
@@ -361,6 +423,15 @@ def main():
                     "Table4_member": False,
                     "Zenodo_member": sid in zenodo_set,
                     "candidate": True,
+                    "mean_magnitude_pair_positive": all(
+                        is_positive_field(t2_by_name[ztf].get(field, ""))
+                        for field in ("gmag", "rmag")
+                    ),
+                    "band_period_pair_positive": all(
+                        is_positive_field(t2_by_name[ztf].get(field, ""))
+                        for field in ("Per-g", "Per-r")
+                    ),
+                    "four_field_positive": sid in four_field_set,
                     "ZTF": ztf,
                     "Type": p.get("type", t2_by_name.get(ztf, {}).get("Type", "")),
                     "gmag": p.get("gmag", t2_by_name.get(ztf, {}).get("gmag", "")),
@@ -387,15 +458,68 @@ def main():
                 }
             )
 
-    # Fresh deterministic stratified samples against raw Table4 membership.
+    # Preserve all 55 four-field-positive controls outside the SNR candidate set.
+    four_field_only_path = out / "four_field_only_55.tsv"
+    four_field_fields = [
+        "SourceID",
+        "Table4_member",
+        "Zenodo_member",
+        "candidate",
+        "four_field_positive",
+        "ZTF",
+        "Type",
+        "gmag",
+        "rmag",
+        "Per-g",
+        "Per-r",
+        "Per",
+        "Ng",
+        "Nr",
+        "R2-g",
+        "R2-r",
+    ]
+    with four_field_only_path.open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(
+            f, fieldnames=four_field_fields, delimiter="\\t", lineterminator="\\n"
+        )
+        w.writeheader()
+        for sid in sorted(four_field_only, key=lambda x: int(x)):
+            ztf = t2_by_seq[sid]
+            row = t2_by_name[ztf]
+            w.writerow(
+                {
+                    "SourceID": sid,
+                    "Table4_member": sid in table4_seq,
+                    "Zenodo_member": sid in zenodo_set,
+                    "candidate": sid in candidate_set,
+                    "four_field_positive": sid in four_field_set,
+                    "ZTF": ztf,
+                    "Type": row["Type"],
+                    "gmag": row["gmag"],
+                    "rmag": row["rmag"],
+                    "Per-g": row["Per-g"],
+                    "Per-r": row["Per-r"],
+                    "Per": row["Per"],
+                    "Ng": row["Ng"],
+                    "Nr": row["Nr"],
+                    "R2-g": row["R2-g"],
+                    "R2-r": row["R2-r"],
+                }
+            )
+
+    # Fresh deterministic stratified samples from the full parent population.
     groups = {
         "reference_candidate": intersection,
         "candidate_only": candidate_only,
+        "four_field_only": four_field_only,
         "reference_only": reference_only,
         "parent_neither": parent_neither,
     }
+    sample_seed = "ztf-cpvs-fixed-object-sample-v2"
+    sample_quotas = {}
     for n in (100, 1000):
-        sample = sample_ids(groups, n, "ztf-cpvs-fixed-object-sample-v1")
+        sample = sample_ids(groups, n, sample_seed)
+        sample_quotas[str(n)] = dict(Counter(stratum for _, stratum in sample))
         with (out / f"fixed_sample_{n}.tsv").open(
             "w", encoding="utf-8", newline=""
         ) as f:
@@ -405,6 +529,9 @@ def main():
                 "Table4_member",
                 "Zenodo_member",
                 "candidate",
+                "mean_magnitude_pair_positive",
+                "band_period_pair_positive",
+                "four_field_positive",
                 "ZTF",
                 "Type",
                 "gmag",
@@ -428,6 +555,15 @@ def main():
                         "Table4_member": sid in table4_seq,
                         "Zenodo_member": sid in zenodo_set,
                         "candidate": sid in candidate_set,
+                        "mean_magnitude_pair_positive": all(
+                            is_positive_field(p.get(field, ""))
+                            for field in ("gmag", "rmag")
+                        ),
+                        "band_period_pair_positive": all(
+                            is_positive_field(p.get(field, ""))
+                            for field in ("Per-g", "Per-r")
+                        ),
+                        "four_field_positive": sid in four_field_set,
                         "ZTF": ztf,
                         "Type": p["Type"],
                         "gmag": p["gmag"],
@@ -540,6 +676,7 @@ def main():
     output_artifacts = [
         crosswalk_path,
         residual_path,
+        four_field_only_path,
         out / "fixed_sample_100.tsv",
         out / "fixed_sample_1000.tsv",
     ]
@@ -626,16 +763,25 @@ def main():
             "candidate_vs_table4_exact_match": candidate_exact_match,
             "candidate_only_count": len(candidate_only),
             "reference_only_count": len(reference_only),
+            "four_field_parent_count": len(four_field_set),
+            "candidate_four_field_intersection_count": len(candidate_four_field),
+            "candidate_intersection_four_field_equals_table4": empirical_conjunction_exact_match,
+            "four_field_only_non_candidate_count": len(four_field_only),
+            "four_field_only_sorted_sourceid_sha256": id_set_sha256(four_field_only),
+            "candidate_only_field_partition": dict(sorted(residual_field_partition.items())),
+            "parent_neither_after_four_field_partition_count": len(parent_neither),
             "parent_neither_count": len(parent_neither),
         },
         "artifacts": {
             "crosswalk_tsv": crosswalk_path.name,
             "candidate_only_object_provenance_tsv": residual_path.name,
+            "four_field_only_tsv": four_field_only_path.name,
             "samples": ["fixed_sample_100.tsv", "fixed_sample_1000.tsv"],
         },
         "reproducibility": {
-            "sample_seed": "ztf-cpvs-fixed-object-sample-v1",
-            "sample_method": "SHA-256 rank within explicit membership strata; no random-state dependence",
+            "sample_seed": sample_seed,
+            "sample_method": "SHA-256 rank within five explicit membership/diagnostic strata; diagnostic oversampling, not a prevalence estimator",
+            "sample_strata": sample_quotas,
         },
         "limitations": [
             "The CDS .dat files were retrieved unchanged from the official NAOJ VizieR mirror because the primary CDS host timed out in this environment; both original CDS URLs and mirror URLs are recorded.",
@@ -660,9 +806,14 @@ def main():
         f"- Table 4 vs Zenodo exact membership: {zenodo_exact_match}\n"
         f"- Historical candidate count: {len(candidate_set):,}\n"
         f"- Candidate-only residuals: {len(candidate_only):,}\n"
-        f"- Reference-only residuals: {len(reference_only):,}\n\n"
+        f"- Reference-only residuals: {len(reference_only):,}\n"
+        f"- Four-field parent rows: {len(four_field_set):,}\n"
+        f"- Candidate intersection with four-field set: {len(candidate_four_field):,}\n"
+        f"- Empirical conjunction equals Table 4: {empirical_conjunction_exact_match}\n"
+        f"- Four-field-only non-candidates: {len(four_field_only):,}\n\n"
         "See reconciliation_report.json, raw_source_hashes.json, the full crosswalk, "
-        "candidate-only provenance, and deterministic 100/1,000-object samples.\n",
+        "candidate-only provenance, the 55-object four-field-only control set, "
+        "and deterministic 100/1,000-object stratified samples.\n",
         encoding="utf-8",
     )
     print(json.dumps(report, indent=2, sort_keys=True))
