@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.audit_cpvs_candidate_four_field import audit
+from scripts.audit_cpvs_candidate_four_field import audit, read_vizier
 
 
 def _write(path: Path, text: str) -> Path:
@@ -146,3 +146,21 @@ def test_selection_diagnostic_zenodo_crosswalks_by_ztf_name(tmp_path: Path) -> N
 
     assert published == {1, 2}
     assert provenance["source"] == "Zenodo 10.5281/zenodo.5764899 1st_layer.csv"
+
+
+def test_read_vizier_parses_standard_column_metadata(tmp_path: Path) -> None:
+    table = _write(
+        tmp_path / "vizier.tsv",
+        "#Column 1 ID (A19)\n"
+        "#Column 2 Seq (I6)\n"
+        "#Column 3 Per-r (F10.5)\n"
+        "ZTF1\\t1\\t0.25\\n"
+        "ZTF2\\t2\\t0.50\\n",
+    )
+
+    rows = read_vizier(table, ("ID", "Seq", "Per-r"))
+
+    assert rows == [
+        {"ID": "ZTF1", "Seq": "1", "Per-r": "0.25"},
+        {"ID": "ZTF2", "Seq": "2", "Per-r": "0.50"},
+    ]
