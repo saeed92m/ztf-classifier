@@ -356,7 +356,7 @@ A benchmark is evidence about this system; it is not the system's architecture.
 | Candidate-only | 11,602 |
 | Duplicate / unmapped published names | 0 / 0 |
 
-The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) has completed derivation and an independent membership audit. All 730,184 published names map to actual Table2 Seq/SourceID values; the candidate set contains all published objects but 11,602 additional objects, so exact reconstruction remains **UNRESOLVED**. Earlier metrics 725,101 / 16,686 / 5,083 were invalid because they mapped names to row ordinals. The official CPVS ReadMe defines Table2 `Seq` at bytes 24–29 as the internal source identifier used by the lightcurve attachments. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
+The latest main-branch source-backed comparison remains the historical Seq-based result: 741,786 candidates, 730,184 published objects, 730,184 intersection, 11,602 candidate-only, and zero published-only. The official CPVS ReadMe defines Table2 `Seq` as the source identifier used by the light-curve attachments; row ordinals and Table 4 numeric IDs must not be used as substitutes. A retained-artifact recheck found that all 11,602 candidate-only objects pass the recorded exact per-band SNR diagnostics in both bands. A four-field parent-metadata predicate reproduces the historical membership set for the retained snapshot, but the paper does not explicitly document those four positivity conditions as its selection rule. A deterministic stratified 100/1,000-object sample is recorded in [the 2026-11-01 audit](docs/scientific_validation/CPVS_PARENT_SAMPLE_AUDIT_2026-11-01.md). This is diagnostic evidence, not proof of author intent or a fresh current-main reproduction. Issue [#170](https://github.com/saeed92m/ztf-classifier/issues/170) remains **OPEN / UNRESOLVED**. PR [#244](https://github.com/saeed92m/ztf-classifier/pull/244) adds a fail-closed candidate/metadata audit and VizieR source fallback; its full source-backed heavy path has not yet been executed on the reviewed head. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
 
 No threshold or predicate is to be introduced solely to force the candidate cardinality to 730,184 without independent scientific evidence.
 
@@ -415,11 +415,11 @@ The platform architecture now has executable domain contracts for external catal
 The current production model explicitly does **not** claim a scientific-anomaly detector: OOD diagnostics and scientific anomaly evidence are separate result channels. Scientific anomaly evidence remains `not_evaluated` until a dedicated analysis mode supplies and versions such evidence.
 
 
-## Current project roadmap and status (2026-10-11)
+## Current project roadmap and status (2026-11-01)
 
 - Current immutable software release: **v1.0.1**; frozen scientific baseline: **v0.2.0**.
-- Canonical continuity handbook: [HANDBOOK_UPDATED_v2.8.md](docs/HANDBOOK_UPDATED_v2.8.md).
+- Canonical continuity handbook: [HANDBOOK_UPDATED_v2.9.md](docs/HANDBOOK_UPDATED_v2.9.md).
 - Canonical cross-platform product roadmap: [PLATFORM_EXPANSION_ROADMAP.md](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md).
 - Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
-- Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
+- Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). The corrected Seq-space historical comparison remains 741,786 candidates / 730,184 published / 11,602 candidate-only / 0 published-only. The 11,602 residuals pass the retained SNR diagnostics in both bands; metadata-field correlations are diagnostic only and do not prove publisher intent. The current PR #244 improves the candidate/metadata audit and source fallback, but the full heavy source-backed workflow has not yet been rerun on its reviewed head.
 - Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.
