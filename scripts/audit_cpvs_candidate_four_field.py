@@ -18,9 +18,13 @@ def read_vizier(path: Path, required: tuple[str, ...]) -> list[dict[str, str]]:
             if not line.strip():
                 continue
             if line.startswith("#Column"):
-                match = re.match(r"^#Column\s+(\d+)\s+(\S+)", line)
-                if match:
-                    metadata[int(match.group(1))] = match.group(2)
+                parts = re.split(r"\\s+", line.strip(), maxsplit=3)
+                if len(parts) >= 2:
+                    if parts[1].isdigit() and len(parts) >= 3:
+                        index, name = int(parts[1]), parts[2]
+                    else:
+                        index, name = len(metadata) + 1, parts[1]
+                    metadata[index] = name
                 continue
             if line.startswith("#"):
                 continue
