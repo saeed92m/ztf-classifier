@@ -27,6 +27,10 @@ def sha256(path: pathlib.Path) -> str:
             h.update(block)
     return h.hexdigest()
 
+def id_set_sha256(values: set[str]) -> str:
+    payload = "".join(f"{value}\n" for value in sorted(values, key=int)).encode("ascii")
+    return hashlib.sha256(payload).hexdigest()
+
 
 def records(path: pathlib.Path, expected_lrecl: int, *, allow_trailing_pad: bool = False):
     raw = path.read_bytes()
@@ -266,6 +270,10 @@ def main():
         raise ValueError("Duplicate source_id in candidate_only_all_objects diagnostics")
 
     parent_set = set(t2_by_seq)
+    table2_seq_gaps = sorted(set(range(1, 781605)) - {int(value) for value in parent_set})
+    table4_seq_sha256 = id_set_sha256(table4_seq)
+    zenodo_seq_sha256 = id_set_sha256(zenodo_set)
+    candidate_seq_sha256 = id_set_sha256(candidate_set)
     candidate_only = candidate_set - table4_seq
     reference_only = table4_seq - candidate_set
     intersection = table4_seq & candidate_set
@@ -368,6 +376,71 @@ def main():
     else:
         overall_status = "PASS_EXACT_MEMBERSHIP_MATCH"
 
+    def is_missing(value: object) -> bool:
+        return value is None or str(value).strip().lower() in {"", "nan", "none", "null"}
+
+    def as_number(value: object):
+        try:
+            number = float(value)
+            return number if math.isfinite(number) else None
+        except (TypeError, ValueError):
+            return None
+
+    with residual_path.open("r", encoding="utf-8", newline="") as f:
+        residual_rows = list(csv.DictReader(f, delimiter="\\t"))
+
+    def quantiles(values: list[float]):
+        ordered = sorted(values)
+        return {
+            "count": len(ordered),
+            "min": min(ordered) if ordered else None,
+            "median": statistics.median(ordered) if ordered else None,
+            "p90_nearest_rank": ordered[round((len(ordered) - 1) * 0.90)] if ordered else None,
+            "max": max(ordered) if ordered else None,
+        }
+
+    residual_summary = {
+        "object_count": len(residual_rows),
+        "g_snr_true_count": sum(row["g_snr"] == "True" for row in residual_rows),
+        "r_snr_true_count": sum(row["r_snr"] == "True" for row in residual_rows),
+        "missing_parent_fields": {
+            key: sum(is_missing(row.get(key)) for row in residual_rows)
+            for key in ("gmag", "rmag", "Per-g", "Per-r")
+        },
+        "both_mean_magnitudes_present": sum(
+            not is_missing(row["gmag"]) and not is_missing(row["rmag"])
+            for row in residual_rows
+        ),
+        "both_band_periods_present": sum(
+            not is_missing(row["Per-g"]) and not is_missing(row["Per-r"])
+            for row in residual_rows
+        ),
+        "g_qualifying_detections": quantiles([
+            as_number(row["g_qualifying_detections"]) for row in residual_rows
+            if as_number(row["g_qualifying_detections"]) is not None
+        ]),
+        "r_qualifying_detections": quantiles([
+            as_number(row["r_qualifying_detections"]) for row in residual_rows
+            if as_number(row["r_qualifying_detections"]) is not None
+        ]),
+        "objects_with_nonzero_qualifying_flag_or": {
+            "g": sum(as_number(row["g_qualifying_flag_or"]) not in (None, 0) for row in residual_rows),
+            "r": sum(as_number(row["r_qualifying_flag_or"]) not in (None, 0) for row in residual_rows),
+        },
+        "parent_zero_detection_counts": {
+            "Ng_zero": sum(as_number(row["Ng"]) == 0 for row in residual_rows),
+            "Nr_zero": sum(as_number(row["Nr"]) == 0 for row in residual_rows),
+        },
+    }
+    output_artifacts = [
+        crosswalk_path, residual_path, out / "fixed_sample_100.tsv",
+        out / "fixed_sample_1000.tsv",
+    ]
+    output_artifact_hashes = {
+        item.name: {"bytes": item.stat().st_size, "sha256": sha256(item)}
+        for item in output_artifacts
+    }
+
     report = {
         "status": overall_status,
         "source_crosswalk_status": "PASS" if source_crosswalk_pass else "FAIL",
@@ -387,6 +460,16 @@ def main():
             "table4_naoj_mirror": "http://vizier.nao.ac.jp/ftp/cats/J/ApJ/932/118/table4.dat.gz",
         },
         "source_files": hashes,
+        "membership_set_hashes": {
+            "table4_sorted_seq_sha256": table4_seq_sha256,
+            "zenodo_sorted_sourceid_sha256": zenodo_seq_sha256,
+            "candidate_sorted_sourceid_sha256": candidate_seq_sha256,
+            "candidate_only_sorted_sourceid_sha256": id_set_sha256(candidate_only),
+            "reference_only_sorted_sourceid_sha256": id_set_sha256(reference_only),
+            "table2_missing_seq_values_in_1_to_781604": table2_seq_gaps,
+        },
+        "candidate_only_diagnostic_summary": residual_summary,
+        "output_artifact_hashes": output_artifact_hashes,
         "record_validation": {
             "table2_records": len(t2_rows), "table2_expected": EXPECTED["table2"],
             "table2_record_length_distribution": dict(sorted(t2_lengths.items())),
@@ -437,23 +520,25 @@ def main():
             "sample_method": "SHA-256 rank within explicit membership strata; no random-state dependence",
         },
         "limitations": [
-            "The publisher MRT files are hashed before parsing. This run does not contain the CDS fixed-width .dat byte streams; it reconciles the publisher originals against the retained VizieR/Zenodo crosswalk evidence.",
-            "Zenodo and candidate comparisons use retained workflow artifacts; the 89,697,393-row-per-band light curves are not re-downloaded in this job.",
+            "The CDS .dat files were retrieved unchanged from the official NAOJ VizieR mirror because the primary CDS host timed out in this environment; both original CDS URLs and mirror URLs are recorded.",
+            "The publisher MRT comparison right-pads only the in-memory raw CDS record for comparison. The raw source files remain unchanged.",
+            "Zenodo membership and candidate comparisons use retained workflow artifacts; the 89,697,393-row-per-band light curves are not re-downloaded in this job.",
             "The historical candidate set is not a fresh derivation from the current PR head.",
-            "A membership match does not prove the scientific selection method was reproduced.",
+            "A successful identifier crosswalk does not prove that the scientific selection method was reproduced.",
         ],
     }
     (out / "reconciliation_report.json").write_text(
         json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8"
     )
     (out / "reconciliation_report.md").write_text(
-        "# CPVS original publisher MRT reconciliation\n\n"
-        f"- Status: **{report['status']}**\n"
-        f"- Table 2 publisher MRT records: {len(t2_rows):,}\n"
-        f"- Table 4 publisher MRT records: {len(t4_rows):,}\n"
+        "# CPVS raw CDS and publisher reconciliation\n\n"
+        f"- Overall status: **{report['status']}**\n"
+        f"- Raw Table 2 records: {len(t2_rows):,}\n"
+        f"- Raw Table 4 records: {len(t4_rows):,}\n"
         f"- Table 4 unmapped ZTF names: {len(unmapped):,}\n"
-        f"- Table 4 internal ID vs Table 2 SourceID mismatches: {len(direct_id_mismatches):,}\n"
-        f"- Table 4 vs Zenodo exact membership: {table4_seq == zenodo_set}\n"
+        f"- Table 4 ID vs Table 2 SourceID mismatches: {len(direct_id_mismatches):,}\n"
+        f"- Raw CDS vs publisher MRT row mismatches: {len(t2_publisher_mismatches):,} (Table 2), {len(t4_publisher_mismatches):,} (Table 4)\n"
+        f"- Table 4 vs Zenodo exact membership: {zenodo_exact_match}\n"
         f"- Historical candidate count: {len(candidate_set):,}\n"
         f"- Candidate-only residuals: {len(candidate_only):,}\n"
         f"- Reference-only residuals: {len(reference_only):,}\n\n"
