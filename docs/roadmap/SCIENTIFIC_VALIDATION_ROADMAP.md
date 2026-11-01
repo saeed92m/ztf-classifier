@@ -249,3 +249,28 @@ No production selector, SNR threshold, model, feature set, class order, v0.2.0 b
 The full metadata-only crosswalk job completed successfully in [CI run 41299576448](https://github.com/saeed92m/ztf-classifier/actions/runs/41299576448) on PR head `7c73a4a9d2260e080300303e6aac826630369539`. It mapped 730,184 unique frozen Zenodo `1st_layer.csv` ZTF names through Table 2 `ID` to the actual `Seq` / `SourceID` namespace, with 781,602 unique parent Seq values and zero unmapped published names. The full object-level comparison against the retained historical candidate IDs confirms 730,184 intersection, 11,602 candidate-only, and zero published-only. This does not resolve the discrepancy. The source and hash manifest, exact set hashes, and metadata diagnostics are recorded in `docs/scientific_validation/CPVS_FULL_ZENODO_MEMBERSHIP_COMPARISON_2026-11-01.md`.
 
 **Limitation:** the crosswalk uses the frozen Zenodo membership archive, not raw Table 4 bytes; the candidate IDs and parent metadata are retained historical artifacts, not a fresh full photometry reconstruction on this PR head. Raw Table 4 acquisition and publisher-selection semantics remain outstanding.
+
+
+## Raw CDS reconciliation update — 2026-11-02
+
+**Issue #170 remains OPEN / BLOCKED.** The raw source-table identity and crosswalk are now independently verified. The 11,602 candidate excess is not resolved.
+
+Successful workflow: 41360681445. It reused the previously acquired raw source and historical membership artifacts. It did not re-download the 1.6 GB photometry archives or re-derive the candidate set on the current PR head.
+
+Verified results:
+
+- Raw Chen et al. (2020) Table 2: 781,602 rows; SHA-256 2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881.
+- Raw Chan et al. (2022) Table 4: 730,184 rows; SHA-256 4fa96379d47f851db7ecd80a83986d82201e8718f12ab727b5348a3914374e7d.
+- Raw CDS rows versus IOP/AAS publisher MRT records: zero mismatches for both tables.
+- Table 4 ZTF-name-to-Table-2-Seq crosswalk: 730,184/730,184 mapped; zero mismatches between Table 4 ID and Table 2 Seq.
+- Raw Table 4 membership and frozen Zenodo 1st_layer.csv membership: exact set match.
+- Historical candidate set: 741,786; candidate-only 11,602; reference-only zero.
+
+A full-parent empirical conjunction test gives C ∩ F = P, where C is the historical two-band SNR candidate set, F is the Table 2 four-field-positive set, and P is raw Table 4 membership. F alone contains 55 nonmembers. The result is an exact set equality for archived inputs, not proof that the authors used this rule. Do not implement it in production.
+
+The revised deterministic samples use five membership/diagnostic strata. The 100-object sample contains 50 reference-and-candidate, 25 candidate-only, 10 four-field-only controls, and 15 parent-neither. The 1,000-object sample contains 500, 250, all 55 controls, and 195 parent-neither. These samples are diagnostic oversamples, not prevalence estimates.
+
+The 55 controls do not have per-object light-curve SNR diagnostics in the retained historical artifact. The next scientific action is to retrieve or reproduce their original per-band photometry and identify the exact failed detection condition. A fresh candidate derivation on the current PR head is also still required before exact reproduction can be claimed.
+
+No production selector, SNR threshold, model, feature set, class order, v0.2.0 baseline, or acceptance criterion changed. PR #244 remains Draft and must not be merged as a scientific fix.
+
