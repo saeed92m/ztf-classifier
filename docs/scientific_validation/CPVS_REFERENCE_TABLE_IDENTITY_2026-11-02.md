@@ -246,6 +246,19 @@ Thus, for these archived inputs, P = C intersect F. This is an exact object-leve
 
 The four-field predicate F alone is not the published membership rule: it admits 55 objects outside Table 4. The combined historical candidate set and four-field predicate reproduce the Table 4 membership exactly. This does not prove that Chan et al. used this exact conjunction. Their paper states the two-band detection thresholds and use of the common period. It does not explicitly state the four-field metadata requirement.
 
+The result can be decomposed into the two metadata pairs. Let M mean both Table 2 mean magnitudes (gmag and rmag) are positive, and Q mean both per-band periods (Per-g and Per-r) are positive:
+
+| Historical candidate stage | Count | Candidate-only | Reference-only |
+|---|---:|---:|---:|
+| C: two-band SNR only | 741,786 | 11,602 | 0 |
+| C intersect M: SNR plus both mean magnitudes | 730,201 | 17 | 0 |
+| C intersect M intersect Q: also both per-band periods | 730,184 | 0 | 0 |
+
+All 17 residuals after the mean-magnitude condition have both mean magnitudes, but one per-band period is missing: 10 have no Per-g value and 7 have no Per-r value. The other 5 residuals from the original 11,602 have both per-band periods but lack a mean magnitude; all 5 lack gmag. This staged pattern matches the current derive_730k implementation at its first metadata gate (SNR plus both mean magnitudes), which would leave 17 objects and hit its fail-closed expected-count check. The current implementation does not apply a Per-g/Per-r completeness condition. Do not add that condition until the source methodology supports it.
+
+The historical diagnostics also show that three magnitude-error SNR formulations (1.0857362047581296/e_mag, the exact inverse magnitude-error transform, and 1/e_mag) produced the same 741,786-object candidate membership and the same 11,602 residuals. Therefore, the choice between those tested SNR formulations does not explain the discrepancy. Requiring zero catalog flags is not a valid substitute: that diagnostic lost 5,472 reference members.
+
+
 The 11,602 candidate-only residuals have this mutually exclusive partition:
 
 | Residual group | Count |
