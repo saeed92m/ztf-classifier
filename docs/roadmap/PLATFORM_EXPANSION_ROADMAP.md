@@ -1,6 +1,6 @@
 # Astronomical Data Analysis & Discovery Platform — Product Roadmap
 
-Status date: 2026-10-11  
+Status date: 2026-11-01  
 Current immutable software release: v1.0.1  
 Product implementation tracker: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158)  
 Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170)
@@ -22,7 +22,8 @@ Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issu
 - [x] Verify the robust parser reads all 730,184 published ZTF names without duplicates.
 - [x] Identify and correct the audit's invalid row-ordinal substitution: official CPVS lightcurve membership uses Table2 `Seq` (bytes 24–29), not physical row order.
 - [ ] Rerun derivation and independent membership audit using actual Seq values; previous membership metrics are invalid and superseded.
-- [ ] Explain the residual candidate/published membership difference from valid Seq-based evidence and source-backed selection semantics, not tuned thresholds.
+- [ ] Explain the 11,602 candidate-only objects from valid Seq-based evidence and source-backed selection semantics, not tuned thresholds.
+- [x] Recheck the retained historical artifact and produce fixed 100-object and 1,000-object stratified samples; sample reference labels are explicitly marked inferred because raw Table 4 bytes are absent from the retained artifact.
 - [ ] Require exact independent membership audit before claiming exact reconstruction.
 - [ ] Keep Issue #170 open until evidence-based disposition.
 
@@ -86,6 +87,14 @@ Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issu
 
 No milestone is complete based on code presence alone. Completion requires measured evidence and recorded acceptance.
 
-## Evidence update — 2026-10-11
+## Evidence update — 2026-11-01
 
-A deeper source-schema review found that the previous audit mapped published ZTF names to parent row ordinals instead of the explicit CPVS Table2 `Seq` field (bytes 24–29), while lightcurve `SourceID` joins by `Seq`. Thus the 725,101 / 16,686 / 5,083 values from heavy run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are invalid and superseded. PR [#176](https://github.com/saeed92m/ztf-classifier/pull/176) now reads actual Seq IDs for the derived candidate universe and published-name join. The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) has completed: 741,786 candidates; 730,184 intersection; 11,602 candidate-only; 0 published-only; 0 duplicate and 0 unmapped published names. This is a valid identifier-space comparison, but exact CPVS reproduction remains **UNRESOLVED** because 11,602 candidates remain unexplained. The flag-zero variant yields 736,225 candidates / 724,712 intersection / 5,472 published-only; a magnitude 20.6 diagnostic loses 18,865 published objects. Neither is an acceptable fix. Current-head CI must pass and the residual selection semantics must be resolved or documented from evidence; do not tune thresholds to force cardinality equality. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true.
+The corrected historical Seq-space comparison remains: 781,602 parent objects; 730,184 published members; 741,786 candidates; 730,184 intersection; 11,602 candidate-only; zero published-only. Earlier row-ordinal comparison metrics remain invalid and superseded.
+
+A retained historical heavy artifact from run [38635891449](https://github.com/saeed92m/ztf-classifier/actions/runs/38635891449) was rechecked without repeating the multi-gigabyte light-curve download. All 11,602 candidate-only objects have `snr_exact=true` in both bands in the retained diagnostics. The four-field metadata condition reproduces the retained membership set, but the paper does not explicitly document both parent mean magnitudes and both band-specific periods as mandatory selection fields. This remains diagnostic evidence, not proof of author intent.
+
+A deterministic 100-object and 1,000-object stratified sample was generated from the full retained parent metadata. The method, hashes, sample counts, results, and limitations are documented in [CPVS_PARENT_SAMPLE_AUDIT_2026-11-01.md](../scientific_validation/CPVS_PARENT_SAMPLE_AUDIT_2026-11-01.md). The sample's published-member labels are inferred from the retained audit because the raw Table 4 bytes are not present in that artifact; a fresh independent join remains required.
+
+PR [#244](https://github.com/saeed92m/ztf-classifier/pull/244) is an open Draft. It adds a candidate-level audit, ZTF-name-to-Seq crosswalk, VizieR mirror fallback, and regression coverage. Review identified and corrected a VizieR column-header format issue. The full heavy source-backed path has not yet been run on the latest PR head. The previous heavy run [#40873746342](https://github.com/saeed92m/ztf-classifier/actions/runs/40873746342) failed to acquire Table 4 from configured CDS endpoints.
+
+**Current disposition:** A1 remains OPEN / UNRESOLVED. Do not merge or claim scientific resolution based only on ordinary CI or historical artifact diagnostics. The next gate is a reviewed, current-head source-backed comparison with pinned raw Table 2 and Table 4/Zenodo bytes, full object-level differences, and documented SNR/detection semantics. Do not modify the production selector, thresholds, v0.2.0 baseline, or acceptance criteria to force a match.
