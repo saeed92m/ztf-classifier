@@ -38,10 +38,10 @@ All published membership IDs are present in the candidate set. The 11,602 candid
 | Sorted candidate IDs | `4e784952ac7a41f08ae78e04415f5b1dc4e5162d38091838c8725212ea7fe9fe` |
 | Sorted published membership IDs | `18fba7523a4f66fa2314d017433e3ef8bdbe85f1980557bc1f1e0dc61094774c` |
 | Sorted intersection IDs | `18fba7523a4f66fa2314d017433e3ef8bdbe85f1980557bc1f1e0dc61094774c` |
-| Sorted candidate-only IDs | `b891e2ef5a79841f08ae78e04415f5b1dc4e5162d38091838c8725212ea7fe9fe` |
+| Sorted candidate-only IDs | `b891e2ef5a79841f23a7d4c8f5d45087280ba5de515d3f39463d9c1465286643` |
 | Candidate-only TSV | `895559983a90a08b56d572f8f767fe19df4fd4324177f6e5edc0d92f6f2e03bf` |
 
-The complete candidate-only identifier list is in [CPVS_CANDIDATE_ONLY_11602_2026-11-01.tsv](CPVS_CANDIDATE_ONLY_11602_2026-11-01.tsv).
+The complete candidate-only identifier list is retained in the source heavy-run artifact `scientific-validation-heavy` (run 38635891449), and the exact sorted-ID hash is recorded above.
 
 ## Rechecked parent metadata for all 11,602 residual IDs
 
