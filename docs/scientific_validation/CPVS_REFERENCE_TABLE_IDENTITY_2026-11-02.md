@@ -70,11 +70,11 @@ The retained historical heavy-run artifact (run [38635891449](https://github.com
 
 | Diagnostic | Candidate-only (11,602) | Published ∩ candidate (730,184) |
 |---|---:|---:|
-| Qualifying `g)-band detections per object, minimum | 1 | 11 |
-| Qualifying `g)-band detections per object, median | 5 | 104 |
-| Qualifying `g)-band detections per object, 90th percentile | 9 | 201 |
-| Qualifying `r)-band detections per object, minimum | 1 | 4 |
-| Qualifying `r)-band detections per object, median | 118 | 132 |
+| Qualifying `g`-band detections per object, minimum | 1 | 11 |
+| Qualifying `g`-band detections per object, median | 5 | 104 |
+| Qualifying `g`-band detections per object, 90th percentile | 9 | 201 |
+| Qualifying `r`-band detections per object, minimum | 1 | 4 |
+| Qualifying `r`-band detections per object, median | 118 | 132 |
 
 The same historical diagnostics report that 11,585 of the 11,602 candidate-only objects lack at least one Table 2 mean magnitude (`gmag` or `rmag`); the remaining 17 have both mean magnitudes but lack at least one per-band period (`Per-g` or `Per-r`). These are overlapping field diagnostics, not independent counts to add.
 
