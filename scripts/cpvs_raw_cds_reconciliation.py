@@ -28,7 +28,7 @@ def sha256(path: pathlib.Path) -> str:
     return h.hexdigest()
 
 
-def records(path: pathlib.Path, expected_lrecl: int):
+def records(path: pathlib.Path, expected_lrecl: int, *, allow_trailing_pad: bool = False):
     raw = path.read_bytes()
     lines = raw.splitlines()
     # Publisher MRT files contain a descriptive header. Select only catalog
@@ -39,12 +39,12 @@ def records(path: pathlib.Path, expected_lrecl: int):
         raise ValueError(f"{path}: no data records")
     if any(len(row) < 29 for row in rows):
         raise ValueError(f"{path}: record shorter than required ID fields")
-    invalid_lengths = [len(row) for row in rows
-                       if len(row) not in {expected_lrecl, expected_lrecl + 1}]
+    allowed_lengths = {expected_lrecl, expected_lrecl + 1} if allow_trailing_pad else {expected_lrecl}
+    invalid_lengths = [len(row) for row in rows if len(row) not in allowed_lengths]
     if invalid_lengths:
         raise ValueError(
-            f"{path}: unexpected record lengths; expected {expected_lrecl} "
-            f"or one trailing pad byte, observed={Counter(invalid_lengths)}"
+            f"{path}: unexpected record lengths; allowed={sorted(allowed_lengths)}, "
+            f"observed={Counter(invalid_lengths)}"
         )
     if any(len(row) == expected_lrecl + 1 and row[-1:] != b" " for row in rows):
         raise ValueError(f"{path}: extra byte after Lrecl is not an ASCII space")
@@ -54,8 +54,8 @@ def field(row: bytes, start: int, end: int) -> str:
     return row[start:end].decode("ascii", errors="strict").strip()
 
 
-def load_table2(path: pathlib.Path):
-    raw, rows, lengths = records(path, LRECL["table2"])
+def load_table2(path: pathlib.Path, *, allow_trailing_pad: bool = False):
+    raw, rows, lengths = records(path, LRECL["table2"], allow_trailing_pad=allow_trailing_pad)
     by_name: dict[str, dict[str, str]] = {}
     by_seq: dict[str, str] = {}
     for n, row in enumerate(rows, 1):
@@ -87,8 +87,8 @@ def load_table2(path: pathlib.Path):
     return raw, rows, lengths, by_name, by_seq
 
 
-def load_table4(path: pathlib.Path):
-    raw, rows, lengths = records(path, LRECL["table4"])
+def load_table4(path: pathlib.Path, *, allow_trailing_pad: bool = False):
+    raw, rows, lengths = records(path, LRECL["table4"], allow_trailing_pad=allow_trailing_pad)
     parsed = []
     seen_names, seen_ids = set(), set()
     for n, row in enumerate(rows, 1):
@@ -177,19 +177,30 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--raw", required=True, type=pathlib.Path)
     ap.add_argument("--zenodo", required=True, type=pathlib.Path)
+    ap.add_argument("--publisher", required=True, type=pathlib.Path)
     ap.add_argument("--heavy", required=True, type=pathlib.Path)
     ap.add_argument("--out", required=True, type=pathlib.Path)
     args = ap.parse_args()
     out = args.out
     out.mkdir(parents=True, exist_ok=True)
 
-    t2_path = args.raw / "table2.mrt.txt"
-    t4_path = args.raw / "table4.mrt.txt"
+    t2_path = args.raw / "table2.dat"
+    t4_path = args.raw / "table4.dat"
+    t2_readme = args.raw / "table2.ReadMe"
+    t4_readme = args.raw / "table4.ReadMe"
+    t2_gzip = args.raw / "table2.dat.gz"
+    t4_gzip = args.raw / "table4.dat.gz"
+    publisher_t2_path = find_one(args.publisher, "table2.mrt.txt")
+    publisher_t4_path = find_one(args.publisher, "table4.mrt.txt")
 
-    # Hash the original downloaded bytes before any parsing.
+    # Hash the exact raw CDS payloads, compressed archives, ReadMe files,
+    # and retained original publisher MRT files before parsing.
+    hash_paths = [t2_path, t4_path, t2_readme, t4_readme, t2_gzip, t4_gzip,
+                  publisher_t2_path, publisher_t4_path]
     hashes = {
-        p.name: {"bytes": p.stat().st_size, "sha256": sha256(p)}
-        for p in [t2_path, t4_path]
+        str(p.relative_to(args.raw)) if p.is_relative_to(args.raw) else f"publisher/{p.name}":
+            {"bytes": p.stat().st_size, "sha256": sha256(p)}
+        for p in hash_paths
     }
     (out / "raw_source_hashes.json").write_text(
         json.dumps({"retrieved_utc": datetime.now(timezone.utc).isoformat(),
@@ -198,10 +209,26 @@ def main():
 
     t2_raw, t2_rows, t2_lengths, t2_by_name, t2_by_seq = load_table2(t2_path)
     t4_raw, t4_rows, t4_lengths, t4_rows_parsed = load_table4(t4_path)
+    _, publisher_t2_rows, publisher_t2_lengths, _ = load_table2(
+        publisher_t2_path, allow_trailing_pad=True
+    )
+    _, publisher_t4_rows, publisher_t4_lengths, _ = load_table4(
+        publisher_t4_path, allow_trailing_pad=True
+    )
     if len(t2_rows) != EXPECTED["table2"]:
         raise ValueError(f"Table2 count {len(t2_rows)} != {EXPECTED['table2']}")
     if len(t4_rows) != EXPECTED["table4"]:
         raise ValueError(f"Table4 count {len(t4_rows)} != {EXPECTED['table4']}")
+    if len(publisher_t2_rows) != len(t2_rows) or len(publisher_t4_rows) != len(t4_rows):
+        raise ValueError("Publisher MRT and raw CDS record counts differ")
+    t2_publisher_mismatches = [
+        i for i, (raw_row, publisher_row) in enumerate(zip(t2_rows, publisher_t2_rows), 1)
+        if publisher_row[:LRECL["table2"]] != raw_row
+    ]
+    t4_publisher_mismatches = [
+        i for i, (raw_row, publisher_row) in enumerate(zip(t4_rows, publisher_t4_rows), 1)
+        if publisher_row[:LRECL["table4"]] != raw_row
+    ]
 
     table4_seq, unmapped, direct_id_mismatches = set(), [], []
     crosswalk_path = out / "table4_to_table2_seq_crosswalk.tsv"
@@ -319,6 +346,8 @@ def main():
         and not unmapped
         and not direct_id_mismatches
         and len(table4_seq) == EXPECTED["table4"]
+        and not t2_publisher_mismatches
+        and not t4_publisher_mismatches
     )
     zenodo_exact_match = table4_seq == zenodo_set
     candidate_exact_match = table4_seq == candidate_set
@@ -345,10 +374,12 @@ def main():
             "extra_residual_diagnostics_count": len(candidate_diagnostics_extra),
             "extra_residual_diagnostics_examples": sorted(candidate_diagnostics_extra, key=lambda x: int(x))[:20],
         },
-        "scope_note": "Inputs are the original publisher machine-readable tables from IOP/AAS. Candidate membership is historical evidence from workflow run 38635891449; this job does not re-download or re-derive the 179M light-curve rows.",
+        "scope_note": "Inputs are the original CDS fixed-width tables from the official NAOJ VizieR mirror, with byte-for-byte row comparison against original IOP/AAS publisher MRT files. Candidate membership is historical evidence from workflow run 38635891449; this job does not re-download or re-derive the 179M light-curve rows.",
         "primary_source_urls": {
-            "table2_mrt": "https://content.cld.iop.org/journals/0067-0049/249/1/18/revision1/apjsab9caet2_mrt.txt",
-            "table4_mrt": "https://content.cld.iop.org/journals/0004-637X/932/2/118/revision1/apjac69d4t4_mrt.txt",
+            "table2_cds": "https://cdsarc.cds.unistra.fr/ftp/cats/J/ApJS/249/18/table2.dat",
+            "table4_cds": "https://cdsarc.cds.unistra.fr/ftp/cats/J/ApJ/932/118/table4.dat",
+            "table2_naoj_mirror": "http://vizier.nao.ac.jp/ftp/cats/J/ApJS/249/18/table2.dat.gz",
+            "table4_naoj_mirror": "http://vizier.nao.ac.jp/ftp/cats/J/ApJ/932/118/table4.dat.gz",
         },
         "source_files": hashes,
         "record_validation": {
@@ -356,6 +387,17 @@ def main():
             "table2_record_length_distribution": dict(sorted(t2_lengths.items())),
             "table4_records": len(t4_rows), "table4_expected": EXPECTED["table4"],
             "table4_record_length_distribution": dict(sorted(t4_lengths.items())),
+            "publisher_table2_record_length_distribution": dict(sorted(publisher_t2_lengths.items())),
+            "publisher_table4_record_length_distribution": dict(sorted(publisher_t4_lengths.items())),
+        },
+        "publisher_vs_raw_cds_row_comparison": {
+            "table2_exact_data_rows": len(t2_rows) - len(t2_publisher_mismatches),
+            "table2_mismatched_rows": len(t2_publisher_mismatches),
+            "table2_mismatch_examples": t2_publisher_mismatches[:20],
+            "table4_exact_data_rows": len(t4_rows) - len(t4_publisher_mismatches),
+            "table4_mismatched_rows": len(t4_publisher_mismatches),
+            "table4_mismatch_examples": t4_publisher_mismatches[:20],
+            "comparison_rule": "publisher MRT bytes [0:Lrecl] must equal raw CDS .dat record bytes in the same order; one trailing publisher pad byte is excluded",
         },
         "identifier_crosswalk": {
             "table2_unique_ZTF": len(t2_by_name),
