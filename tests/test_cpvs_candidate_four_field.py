@@ -164,3 +164,24 @@ def test_read_vizier_parses_standard_column_metadata(tmp_path: Path) -> None:
         {"ID": "ZTF1", "Seq": "1", "Per-r": "0.25"},
         {"ID": "ZTF2", "Seq": "2", "Per-r": "0.50"},
     ]
+
+
+def test_read_vizier_parses_cds_column_metadata_without_numeric_indices(
+    tmp_path: Path,
+) -> None:
+    table = _write(
+        tmp_path / "vizier_cds.tsv",
+        "#Column\\tID\\t(A19)\\n"
+        "#Column\\tSeq\\t(I6)\\n"
+        "#Column\\tPer-r\\t(F10.5)\\n"
+        "ID\\tSeq\\tPer-r\\n"
+        "ZTF1\\t1\\t0.25\\n"
+        "ZTF2\\t2\\t0.50\\n",
+    )
+
+    rows = read_vizier(table, ("ID", "Seq", "Per-r"))
+
+    assert rows == [
+        {"ID": "ZTF1", "Seq": "1", "Per-r": "0.25"},
+        {"ID": "ZTF2", "Seq": "2", "Per-r": "0.50"},
+    ]
