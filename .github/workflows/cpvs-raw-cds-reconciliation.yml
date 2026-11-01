@@ -1,4 +1,4 @@
-name: CPVS Raw CDS Reconciliation
+name: CPVS Primary-source Reconciliation
 
 on:
   push:
@@ -15,67 +15,52 @@ permissions:
 
 jobs:
   raw-catalog-reconciliation:
-    name: Download raw CDS catalogs and reconcile membership
+    name: Download original publisher MRT files and reconcile membership
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - name: Check out reviewed investigation branch
         uses: actions/checkout@v4
 
-      - name: Download original CDS files without transformation
+      - name: Download original publisher machine-readable tables without transformation
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p work/raw work/refs/zenodo work/refs/heavy work/output
-
+          : > work/raw/retrieval_sources.tsv
           : > work/raw/download.log
-          fetch_cds_file() {
-            local relative="$1"
+
+          fetch_source_file() {
+            local url="$1"
             local destination="$2"
-            local source=""
             local tmp="${destination}.part"
-            local suffix="${relative}"
-            local bases=(
-              "https://cdsarc.cds.unistra.fr/ftp/cats"
-              "https://vizier.cfa.harvard.edu/vizier/ftp/cats"
-              "https://vizier.idia.ac.za/vizier/ftp/cats"
-              "https://vizier.nao.ac.jp/vizier/ftp/cats"
-            )
-            for base in "${bases[@]}"; do
-              source="${base}/${suffix}"
-              echo "Trying ${source}" | tee -a work/raw/download.log
-              if curl --fail --location --silent --show-error \
-                   --retry 1 --retry-all-errors --connect-timeout 15 --max-time 240 \
-                   --write-out 'HTTP=%{http_code} bytes=%{size_download} total=%{time_total}s\n' \
-                   -H 'Accept-Encoding: identity' "${source}" -o "${tmp}" \
-                   2>>work/raw/download.log; then
-                if [ -s "${tmp}" ] && ! head -c 64 "${tmp}" | grep -Eqi '<!doctype|<html'; then
-                  mv "${tmp}" "${destination}"
-                  printf '%s\t%s\n' "${relative}" "${source}" >> work/raw/retrieval_sources.tsv
-                  echo "Downloaded ${relative} from ${source}" | tee -a work/raw/download.log
-                  return 0
-                fi
-                echo "Rejected empty or HTML response from ${source}" | tee -a work/raw/download.log
-              else
-                echo "Failed ${source}" | tee -a work/raw/download.log
-              fi
+            echo "Downloading ${url}" | tee -a work/raw/download.log
+            curl --fail --location --silent --show-error \
+              --retry 2 --retry-all-errors --connect-timeout 20 --max-time 600 \
+              -H 'Accept-Encoding: identity' "${url}" -o "${tmp}" \
+              2>>work/raw/download.log
+            test -s "${tmp}"
+            if head -c 64 "${tmp}" | grep -Eqi '<!doctype|<html'; then
+              echo "Rejected HTML response: ${url}" | tee -a work/raw/download.log
               rm -f "${tmp}"
-            done
-            echo "ERROR: unable to retrieve ${relative} from configured CDS mirrors" | tee -a work/raw/download.log
-            return 1
+              return 1
+            fi
+            mv "${tmp}" "${destination}"
+            printf '%s\t%s\n' "$(basename "${destination}")" "${url}" >> work/raw/retrieval_sources.tsv
+            echo "Downloaded ${destination}" | tee -a work/raw/download.log
           }
 
-          fetch_cds_file "J/ApJ/932/118/table4.dat" "work/raw/table4.dat"
-          fetch_cds_file "J/ApJS/249/18/table2.dat" "work/raw/table2.dat"
-          fetch_cds_file "J/ApJ/932/118/ReadMe" "work/raw/table4.ReadMe"
-          fetch_cds_file "J/ApJS/249/18/ReadMe" "work/raw/table2.ReadMe"
+          fetch_source_file \
+            "https://content.cld.iop.org/journals/0067-0049/249/1/18/revision1/apjsab9caet2_mrt.txt" \
+            "work/raw/table2.mrt.txt"
+          fetch_source_file \
+            "https://content.cld.iop.org/journals/0004-637X/932/2/118/revision1/apjac69d4t4_mrt.txt" \
+            "work/raw/table4.mrt.txt"
 
-          echo "=== Raw byte counts ==="
-          wc -c work/raw/*
-          echo "=== Raw SHA-256 ==="
-          sha256sum work/raw/*
-          echo "=== Record counts ==="
-          wc -l work/raw/table2.dat work/raw/table4.dat
+          echo "=== Publisher source byte counts ==="
+          wc -c work/raw/table2.mrt.txt work/raw/table4.mrt.txt
+          echo "=== Publisher source SHA-256 ==="
+          sha256sum work/raw/table2.mrt.txt work/raw/table4.mrt.txt
 
       - name: Retrieve frozen Zenodo membership and historical candidate evidence
         env:
@@ -99,11 +84,11 @@ jobs:
             --heavy work/refs/heavy \
             --out work/output
 
-      - name: Upload immutable raw sources and reconciliation evidence
+      - name: Upload immutable publisher sources and reconciliation evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cpvs-raw-cds-reconciliation
+          name: cpvs-primary-source-reconciliation
           path: |
             work/raw/
             work/output/
