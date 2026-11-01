@@ -113,3 +113,6 @@ The revised 100-object and 1,000-object deterministic samples include the 55 fou
 
 **Scientific status:** Issue #170 remains OPEN / BLOCKED. PR #244 remains Draft. Do not change the production selector, SNR thresholds, model, features, class order, v0.2.0 baseline, or acceptance criteria. The candidate set has not been freshly re-derived on the current PR head.
 
+
+The staged historical diagnostic is: SNR-only = 741,786; SNR plus both positive mean magnitudes = 730,201 with 17 residuals; adding both positive per-band periods = 730,184 and matches Table 4. The 17 residuals split into 10 missing Per-g and 7 missing Per-r. The current derive_730k function does not test the two per-band period fields, so its expected-count gate must remain fail-closed. Do not add the condition without source-method evidence.
+
