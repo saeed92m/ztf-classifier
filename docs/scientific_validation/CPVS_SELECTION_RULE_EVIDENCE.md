@@ -40,7 +40,7 @@ The retained source-backed artifact reports:
 - Candidate-only: 11,602.
 - Published-only: 0.
 
-In the retained metadata diagnostic, all 11,602 candidate-only objects fail at least one of gmag > 0, rmag > 0, Per-g > 0, and Per-r > 0. The diagnostic four-field predicate reduces the candidate set to 730,184 and matches the published membership set in that artifact. This is a strong correlation, not independent proof of author intent.
+On the retained historical candidate snapshot C and the full Table 2 four-field set F, the intersection C ∩ F contains exactly 730,184 IDs and equals the raw Table 4 membership P. The four-field set F alone contains 55 objects outside P, so F alone is refuted as the published selector. This is exact empirical set equivalence for the archived inputs, not proof of author intent or validation of a fresh derivation.
 
 One reported partition of the 11,602 extras is:
 - 11,580 fail both the mean-magnitude pair and the per-band-period pair.
@@ -71,3 +71,23 @@ No production membership rule, threshold, model baseline, acceptance criterion, 
 ## Non-finite SNR guard regression
 
 The derivation must explicitly reject non-finite SNR before comparing it to the per-band threshold. In Python, `NaN < threshold` is false, so a negative-only threshold predicate can admit invalid errors. A focused regression test now covers NaN, positive infinity, zero and negative errors, unparseable error text, and one valid row. This guard fixes a demonstrated predicate defect; it does not by itself establish the root cause or resolve the full CPVS membership discrepancy.
+
+
+## Raw CDS reconciliation and fixed diagnostic samples — 2026-11-02
+
+The byte-preserving reconciliation workflow 41360681445 completed successfully. It verified raw CDS Table 2 and Table 4 against the corresponding IOP/AAS publisher MRT records. It found 781,602 Table 2 rows, 730,184 Table 4 rows, zero row mismatches against the publisher files, zero unmapped ZTF names, and zero differences between Table 4 ID and Table 2 Seq for all 730,184 rows.
+
+For the archived historical candidate set:
+
+- C = 741,786 two-band SNR candidates.
+- F = 730,239 parent rows with all four nullable fields positive.
+- P = 730,184 raw Table 4 members.
+- C ∩ F = P exactly.
+- F \ C = 55 objects. These 55 are absent from Table 4 and from the historical SNR candidate list.
+
+The 11,602 candidate-only objects partition into 11,580 with both field pairs incomplete, 17 with both mean magnitudes but an incomplete per-band period pair, and 5 with both per-band periods but an incomplete mean-magnitude pair.
+
+The revised SHA-256-ranked sample design includes four strata: reference-and-candidate, candidate-only, four-field-only controls, and parent-neither. The 100-object sample contains 50/25/10/15 objects. The 1,000-object sample contains 500/250/55/195 objects and includes all 55 four-field-only controls. The samples are diagnostic oversamples, not prevalence estimates.
+
+This conjunction remains an empirical hypothesis. The paper does not state the four-field requirement. Per-object light-curve SNR diagnostics for the 55 controls are not in the retained historical artifact. The exact historical selector and the current-head fresh derivation remain unresolved. Do not change the production selector or scientific gate.
+
