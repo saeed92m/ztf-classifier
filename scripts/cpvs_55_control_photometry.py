@@ -114,9 +114,7 @@ def band_metrics(rows: list[dict[str, str]], threshold: float) -> dict[str, Any]
             (item["approximate_snr"] for item in valid), default=None
         ),
         "max_exact_snr": max((item["exact_snr"] for item in valid), default=None),
-        "minimum_magnitude_error": min(
-            (item["error"] for item in valid), default=None
-        ),
+        "minimum_magnitude_error": min((item["error"] for item in valid), default=None),
         "qualifying_flag_counts": dict(sorted(flags.items())),
     }
 
@@ -138,7 +136,11 @@ def request_rows(
     for attempt in range(1, retries + 1):
         try:
             request = urllib.request.Request(
-                url, headers={"User-Agent": USER_AGENT, "Accept": "text/tab-separated-values"}
+                url,
+                headers={
+                    "User-Agent": USER_AGENT,
+                    "Accept": "text/tab-separated-values",
+                },
             )
             with urllib.request.urlopen(request, timeout=60) as response:
                 payload = response.read()
@@ -265,14 +267,10 @@ def main() -> int:
                     ),
                     "passes_approximate_snr": metrics.get("passes_approximate_snr"),
                     "passes_exact_snr": metrics.get("passes_exact_snr"),
-                    "passes_inverse_error_snr": metrics.get(
-                        "passes_inverse_error_snr"
-                    ),
+                    "passes_inverse_error_snr": metrics.get("passes_inverse_error_snr"),
                     "max_approximate_snr": metrics.get("max_approximate_snr"),
                     "max_exact_snr": metrics.get("max_exact_snr"),
-                    "minimum_magnitude_error": metrics.get(
-                        "minimum_magnitude_error"
-                    ),
+                    "minimum_magnitude_error": metrics.get("minimum_magnitude_error"),
                     "query_status": query["status"],
                     "response_sha256": query.get("response_sha256"),
                     "response_bytes": query.get("response_bytes"),
@@ -293,8 +291,7 @@ def main() -> int:
             or metrics.get("passes_approximate_snr") is not True
         ]
         per_object["query_complete"] = all(
-            per_object["bands"][band].get("query_status") == "OK"
-            for band in ("g", "r")
+            per_object["bands"][band].get("query_status") == "OK" for band in ("g", "r")
         )
         per_object["g_row_count_matches_table2_ng"] = (
             g.get("row_count") == per_object["Table2_Ng"]
@@ -348,12 +345,10 @@ def main() -> int:
             reconstructed_candidates
         ),
         "Table2_Ng_row_count_matches": sum(
-            item.get("g_row_count_matches_table2_ng") is True
-            for item in object_results
+            item.get("g_row_count_matches_table2_ng") is True for item in object_results
         ),
         "Table2_Nr_row_count_matches": sum(
-            item.get("r_row_count_matches_table2_nr") is True
-            for item in object_results
+            item.get("r_row_count_matches_table2_nr") is True for item in object_results
         ),
         "candidate_reconstruction_contradictions": [
             item["SourceID"] for item in reconstructed_candidates
