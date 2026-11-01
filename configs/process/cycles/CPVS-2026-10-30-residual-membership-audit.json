@@ -49,7 +49,19 @@
             "publisher_table4_row_mismatches": 0,
             "table4_unmapped_ztf_names": 0,
             "table4_id_vs_table2_seq_mismatches": 0,
-            "table4_vs_zenodo_exact_membership": true
+            "table4_vs_zenodo_exact_membership": true,
+            "publisher_mrt_sources": {
+              "table2": {
+                "bytes": 179770728,
+                "sha256": "58848bee4c62f5bd930787b76045e40bb695b171cc8149b4336b00b55e28d5fa",
+                "url": "https://content.cld.iop.org/journals/0067-0049/249/1/18/revision1/apjsab9caet2_mrt.txt"
+              },
+              "table4": {
+                "bytes": 47463000,
+                "sha256": "3cb9e22c42ab19ce89346dd3773c82921d852432b4617f4ff52ce4aea2c8c7d0",
+                "url": "https://content.cld.iop.org/journals/0004-637X/932/2/118/revision1/apjac69d4t4_mrt.txt"
+              }
+            }
           },
           "historical_candidate_four_field_conjunction": {
             "status": "VERIFIED",
