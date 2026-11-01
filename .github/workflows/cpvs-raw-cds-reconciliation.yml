@@ -85,6 +85,8 @@ jobs:
             --name cpvs-full-zenodo-membership-crosswalk --dir work/refs/zenodo
           gh run download 38635891449 --repo saeed92m/ztf-classifier \
             --name scientific-validation-heavy --dir work/refs/heavy
+          gh run download 41357833854 --repo saeed92m/ztf-classifier \
+            --name cpvs-primary-source-reconciliation --dir work/refs/publisher
           test -s work/refs/zenodo/published_membership_seq.tsv
           test -s work/refs/heavy/ztf_periodic_730k/selected.tsv
           test -s work/refs/heavy/ztf_periodic_730k/selection_diagnostics.json
@@ -97,6 +99,7 @@ jobs:
             --raw work/raw \
             --zenodo work/refs/zenodo \
             --heavy work/refs/heavy \
+            --publisher work/refs/publisher \
             --out work/output
 
       - name: Upload immutable CDS sources and reconciliation evidence
