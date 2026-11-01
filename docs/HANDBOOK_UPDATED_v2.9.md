@@ -95,3 +95,9 @@ Issue [#158](https://github.com/saeed92m/ztf-classifier/issues/158) remains the 
 This handbook is the current continuity snapshot. The README and scientific/platform roadmaps must link to this version and retain the CPVS claim-specific blocker. Historical handbook versions remain historical records.
 
 **Immutable constraints:** v1.0.1 remains unchanged; scientific baseline v0.2.0 remains frozen; scientific validation stays fail-closed; OOD is not represented as scientific anomaly detection.
+
+## CPVS full membership crosswalk update — 2026-11-01
+
+The full Zenodo membership crosswalk job completed successfully in [CI run 41299576448](https://github.com/saeed92m/ztf-classifier/actions/runs/41299576448) on PR head `7c73a4a9d2260e080300303e6aac826630369539`. It mapped 730,184 unique published ZTF names to 730,184 unique Table 2 Seq IDs, with no unmapped names. A complete comparison against the retained historical candidate set confirms 730,184 intersection, 11,602 candidate-only, and zero published-only. The full result and hashes are in `docs/scientific_validation/CPVS_FULL_ZENODO_MEMBERSHIP_COMPARISON_2026-11-01.md`.
+
+This does not resolve CPVS. The comparison uses the frozen Zenodo membership archive, not raw Table 4 bytes, and it compares against retained historical candidate IDs rather than a fresh full derivation on the current PR head. Issue #170 remains OPEN / UNRESOLVED. No production selection, threshold, model, feature, class order, v0.2.0 baseline, or acceptance criterion changed.
