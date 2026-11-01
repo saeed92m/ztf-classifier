@@ -242,7 +242,7 @@ jobs:
               if curl --location --fail --show-error --silent \
                 --connect-timeout 20 --max-time 120 --retry 1 \
                 "$url" -o "$part"; then
-                if [[ -s "$part" ]] && grep -Fq "$header" "$part"; then
+                if [[ -s "$part" ]] && grep -Eq "^#Column[[:space:]]+[0-9]+[[:space:]]+${header}([[:space:]]|$)" "$part"; then
                   mv "$part" "$tmp/$filename"
                   echo "Accepted $filename"
                   return 0
@@ -254,11 +254,11 @@ jobs:
             echo "ERROR: no VizieR mirror yielded a validated $filename" >&2
             return 1
           }
-          fetch_table table2.tsv $'#Column\tPer-r' \
+          fetch_table table2.tsv 'Per-r' \
             "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
             "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000" \
             "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJS/249/18/table2&-out=ID,Seq,gmag,rmag,Per-g,Per-r&-out.max=1000000"
-          if fetch_table table4.tsv $'#Column\tZTF' \
+          if fetch_table table4.tsv 'ZTF' \
             "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
             "https://vizier.idia.ac.za/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
             "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"; then
