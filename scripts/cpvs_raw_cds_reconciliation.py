@@ -31,23 +31,26 @@ def sha256(path: pathlib.Path) -> str:
 def records(path: pathlib.Path, expected_lrecl: int, *, allow_trailing_pad: bool = False):
     raw = path.read_bytes()
     lines = raw.splitlines()
-    # Publisher MRT files contain a descriptive header. Select only catalog
-    # records. Keep the original record bytes and whitespace unchanged.
+    # CDS fixed-width files can omit trailing blank bytes. Publisher MRT files
+    # retain a final pad byte. Keep source bytes unchanged in both cases.
     rows = [line for line in lines if line[:22].strip().startswith(b"ZTF")]
     lengths = Counter(map(len, rows))
     if not rows:
         raise ValueError(f"{path}: no data records")
     if any(len(row) < 29 for row in rows):
         raise ValueError(f"{path}: record shorter than required ID fields")
-    allowed_lengths = {expected_lrecl, expected_lrecl + 1} if allow_trailing_pad else {expected_lrecl}
-    invalid_lengths = [len(row) for row in rows if len(row) not in allowed_lengths]
-    if invalid_lengths:
-        raise ValueError(
-            f"{path}: unexpected record lengths; allowed={sorted(allowed_lengths)}, "
-            f"observed={Counter(invalid_lengths)}"
-        )
-    if any(len(row) == expected_lrecl + 1 and row[-1:] != b" " for row in rows):
-        raise ValueError(f"{path}: extra byte after Lrecl is not an ASCII space")
+    if allow_trailing_pad:
+        allowed_lengths = {expected_lrecl, expected_lrecl + 1}
+        invalid_lengths = [len(row) for row in rows if len(row) not in allowed_lengths]
+        if invalid_lengths:
+            raise ValueError(
+                f"{path}: unexpected publisher record lengths; "
+                f"allowed={sorted(allowed_lengths)}, observed={Counter(invalid_lengths)}"
+            )
+        if any(len(row) == expected_lrecl + 1 and row[-1:] != b" " for row in rows):
+            raise ValueError(f"{path}: publisher pad byte is not an ASCII space")
+    elif any(len(row) > expected_lrecl for row in rows):
+        raise ValueError(f"{path}: raw CDS record exceeds Lrecl={expected_lrecl}")
     return raw, rows, lengths
 
 def field(row: bytes, start: int, end: int) -> str:
@@ -59,6 +62,8 @@ def load_table2(path: pathlib.Path, *, allow_trailing_pad: bool = False):
     by_name: dict[str, dict[str, str]] = {}
     by_seq: dict[str, str] = {}
     for n, row in enumerate(rows, 1):
+        if len(row) < 216:
+            raise ValueError(f"Table2 row {n}: truncated record ({len(row)} bytes)")
         name = field(row, 0, 22)
         seq = field(row, 23, 29)
         if not name or not name.startswith("ZTF"):
@@ -223,11 +228,11 @@ def main():
         raise ValueError("Publisher MRT and raw CDS record counts differ")
     t2_publisher_mismatches = [
         i for i, (raw_row, publisher_row) in enumerate(zip(t2_rows, publisher_t2_rows), 1)
-        if publisher_row[:LRECL["table2"]] != raw_row
+        if publisher_row[:LRECL["table2"]] != raw_row.ljust(LRECL["table2"], b" ")
     ]
     t4_publisher_mismatches = [
         i for i, (raw_row, publisher_row) in enumerate(zip(t4_rows, publisher_t4_rows), 1)
-        if publisher_row[:LRECL["table4"]] != raw_row
+        if publisher_row[:LRECL["table4"]] != raw_row.ljust(LRECL["table4"], b" ")
     ]
 
     table4_seq, unmapped, direct_id_mismatches = set(), [], []
@@ -397,7 +402,7 @@ def main():
             "table4_exact_data_rows": len(t4_rows) - len(t4_publisher_mismatches),
             "table4_mismatched_rows": len(t4_publisher_mismatches),
             "table4_mismatch_examples": t4_publisher_mismatches[:20],
-            "comparison_rule": "publisher MRT bytes [0:Lrecl] must equal raw CDS .dat record bytes in the same order; one trailing publisher pad byte is excluded",
+            "comparison_rule": "publisher MRT bytes [0:Lrecl] must equal the raw CDS .dat record right-padded with ASCII spaces to Lrecl; source files are not modified",
         },
         "identifier_crosswalk": {
             "table2_unique_ZTF": len(t2_by_name),
