@@ -91,3 +91,14 @@ The revised SHA-256-ranked sample design includes four strata: reference-and-can
 
 This conjunction remains an empirical hypothesis. The paper does not state the four-field requirement. Per-object light-curve SNR diagnostics for the 55 controls are not in the retained historical artifact. The exact historical selector and the current-head fresh derivation remain unresolved. Do not change the production selector or scientific gate.
 
+
+## Staged membership diagnostic — current derivation boundary
+
+The historical candidate set C contains 741,786 objects. Applying both positive Table 2 mean magnitudes M leaves 730,201 objects, with 17 candidate-only residuals and zero reference-only IDs. All 17 have both mean magnitudes, but lack one band-specific period: 10 lack Per-g and 7 lack Per-r. Adding the two per-band period fields Q gives C ∩ M ∩ Q = P exactly (730,184).
+
+The current derive_730k function implements the SNR and both-mean-magnitude conditions. It does not test Per-g or Per-r. On the archived diagnostics, that predicate leaves 17 extras and therefore reaches the existing fail-closed expected-count mismatch. Do not add the period-pair condition until the original published method supports it.
+
+The five other residuals in the original 11,602 have both per-band periods but lack a mean magnitude; all five lack gmag. The 11,602 residual partition is therefore consistent with a staged metadata-completeness hypothesis, but it does not prove author intent.
+
+The approximate magnitude-error SNR formula, the exact inverse magnitude-error transform, and 1/e_mag produced the same historical 741,786-object candidate set and 11,602 residuals. The tested SNR formula choice is not the cause. A zero-catalog-flag condition is also refuted as a substitute because it loses 5,472 reference members.
+
