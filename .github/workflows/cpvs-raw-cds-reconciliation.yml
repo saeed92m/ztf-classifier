@@ -22,39 +22,20 @@ jobs:
       - name: Check out reviewed investigation branch
         uses: actions/checkout@v4
 
-      - name: Download original CDS archives from official NAOJ VizieR mirror
+      - name: Reuse immutable raw CDS sources from the verified acquisition run
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p work/raw work/refs/zenodo work/refs/heavy work/refs/publisher work/output
-          : > work/raw/retrieval_sources.tsv
-          : > work/raw/download.log
+          mkdir -p work/raw work/refs/zenodo work/refs/heavy work/refs/publisher work/refs/raw-prior work/output
 
-          fetch_file() {
-            local url="$1"
-            local destination="$2"
-            local tmp="${destination}.part"
-            echo "Downloading ${url}" | tee -a work/raw/download.log
-            curl --fail --location --silent --show-error \
-              --retry 2 --retry-all-errors --connect-timeout 20 --max-time 900 \
-              -H 'Accept-Encoding: identity' "${url}" -o "${tmp}" \
-              2>>work/raw/download.log
-            test -s "${tmp}"
-            mv "${tmp}" "${destination}"
-            printf '%s\t%s\n' "$(basename "${destination}")" "${url}" >> work/raw/retrieval_sources.tsv
-          }
+          # Reuse the successful raw-source artifact. Do not fetch or transform
+          # the large catalog files again.
+          gh run download 41358513968 --repo saeed92m/ztf-classifier \
+            --name cpvs-raw-cds-reconciliation --dir work/refs/raw-prior
+          cp -a work/refs/raw-prior/raw/. work/raw/
 
-          fetch_file "http://vizier.nao.ac.jp/ftp/cats/J/ApJS/249/18/table2.dat.gz" "work/raw/table2.dat.gz"
-          fetch_file "http://vizier.nao.ac.jp/ftp/cats/J/ApJ/932/118/table4.dat.gz" "work/raw/table4.dat.gz"
-          fetch_file "http://vizier.nao.ac.jp/ftp/cats/J/ApJS/249/18/ReadMe" "work/raw/table2.ReadMe"
-          fetch_file "http://vizier.nao.ac.jp/ftp/cats/J/ApJ/932/118/ReadMe" "work/raw/table4.ReadMe"
-
-          gzip -t work/raw/table2.dat.gz
-          gzip -t work/raw/table4.dat.gz
-          gzip -dc work/raw/table2.dat.gz > work/raw/table2.dat
-          gzip -dc work/raw/table4.dat.gz > work/raw/table4.dat
-
-          echo "=== Verify decompressed CDS payload SHA-256 ==="
           printf '%s  %s\n' \
             "2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881" \
             "work/raw/table2.dat" | sha256sum -c -
@@ -67,13 +48,9 @@ jobs:
           printf '%s  %s\n' \
             "0a7ec0dac13b155fdd63322dc9b0230de42fd05169e0e02c70f68fce0bc67d6a" \
             "work/raw/table4.ReadMe" | sha256sum -c -
-
-          echo "=== Original CDS file byte counts ==="
-          wc -c work/raw/table2.dat work/raw/table4.dat
-          echo "=== Original CDS file record counts ==="
-          wc -l work/raw/table2.dat work/raw/table4.dat
-          echo "=== All raw source hashes ==="
-          sha256sum work/raw/*
+          test -s work/raw/table2.dat.gz
+          test -s work/raw/table4.dat.gz
+          test -s work/raw/retrieval_sources.tsv
 
       - name: Retrieve frozen Zenodo membership and historical candidate evidence
         env:
