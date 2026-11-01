@@ -6,6 +6,9 @@ on:
       - investigation/cpvs-candidate-field-audit-20261030
     paths:
       - scripts/cpvs_raw_cds_reconciliation.py
+      - scripts/cpvs_55_control_photometry.py
+      - tests/test_cpvs_raw_cds_reconciliation.py
+      - tests/test_cpvs_55_control_photometry.py
       - .github/workflows/cpvs-raw-cds-reconciliation.yml
   workflow_dispatch:
 
@@ -27,22 +30,24 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install ruff==0.16.9
-          python -m ruff format scripts/cpvs_raw_cds_reconciliation.py tests/test_cpvs_raw_cds_reconciliation.py
+          python -m ruff format scripts/cpvs_raw_cds_reconciliation.py scripts/cpvs_55_control_photometry.py tests/test_cpvs_raw_cds_reconciliation.py tests/test_cpvs_55_control_photometry.py
           mkdir -p work/formatted
           cp scripts/cpvs_raw_cds_reconciliation.py work/formatted/
+          cp scripts/cpvs_55_control_photometry.py work/formatted/
           cp tests/test_cpvs_raw_cds_reconciliation.py work/formatted/
+          cp tests/test_cpvs_55_control_photometry.py work/formatted/
 
       - name: Commit formatting-only audit source changes
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- scripts/cpvs_raw_cds_reconciliation.py tests/test_cpvs_raw_cds_reconciliation.py; then
+          if git diff --quiet -- scripts/cpvs_raw_cds_reconciliation.py scripts/cpvs_55_control_photometry.py tests/test_cpvs_raw_cds_reconciliation.py tests/test_cpvs_55_control_photometry.py; then
             echo "Audit source files are already Ruff-formatted."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/cpvs_raw_cds_reconciliation.py tests/test_cpvs_raw_cds_reconciliation.py
+          git add scripts/cpvs_raw_cds_reconciliation.py scripts/cpvs_55_control_photometry.py tests/test_cpvs_raw_cds_reconciliation.py tests/test_cpvs_55_control_photometry.py
           git commit -m "style: format CPVS raw reconciliation audit"
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
@@ -105,6 +110,14 @@ jobs:
             --publisher work/refs/publisher \
             --out work/output 2>&1 | tee work/output/audit.log
 
+      - name: Retrieve original per-band photometry for the 55 four-field-only controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/cpvs_55_control_photometry.py \
+            --controls work/output/four_field_only_55.tsv \
+            --output work/photometry55
+
       - name: Upload immutable CDS sources and reconciliation evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -113,6 +126,7 @@ jobs:
           path: |
             work/raw/
             work/output/
+            work/photometry55/
             work/formatted/
           if-no-files-found: warn
           retention-days: 90
