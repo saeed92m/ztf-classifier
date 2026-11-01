@@ -22,6 +22,16 @@ jobs:
       - name: Check out reviewed investigation branch
         uses: actions/checkout@v4
 
+      - name: Generate Ruff-formatted audit source copies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install ruff==0.16.9
+          python -m ruff format scripts/cpvs_raw_cds_reconciliation.py tests/test_cpvs_raw_cds_reconciliation.py
+          mkdir -p work/formatted
+          cp scripts/cpvs_raw_cds_reconciliation.py work/formatted/
+          cp tests/test_cpvs_raw_cds_reconciliation.py work/formatted/
+
       - name: Reuse immutable raw CDS sources from the verified acquisition run
         env:
           GH_TOKEN: ${{ github.token }}
@@ -89,5 +99,6 @@ jobs:
           path: |
             work/raw/
             work/output/
+            work/formatted/
           if-no-files-found: warn
           retention-days: 90
