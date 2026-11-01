@@ -214,7 +214,7 @@ def main():
 
     t2_raw, t2_rows, t2_lengths, t2_by_name, t2_by_seq = load_table2(t2_path)
     t4_raw, t4_rows, t4_lengths, t4_rows_parsed = load_table4(t4_path)
-    _, publisher_t2_rows, publisher_t2_lengths, _ = load_table2(
+    _, publisher_t2_rows, publisher_t2_lengths, _, _ = load_table2(
         publisher_t2_path, allow_trailing_pad=True
     )
     _, publisher_t4_rows, publisher_t4_lengths, _ = load_table4(
