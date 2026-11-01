@@ -18,7 +18,7 @@ def read_vizier(path: Path, required: tuple[str, ...]) -> list[dict[str, str]]:
             if not line.strip():
                 continue
             if line.startswith("#Column"):
-                parts = re.split(r"\\s+", line.strip(), maxsplit=3)
+                parts = re.split(r"\s+", line.strip(), maxsplit=3)
                 if len(parts) >= 2:
                     if parts[1].isdigit() and len(parts) >= 3:
                         index, name = int(parts[1]), parts[2]
