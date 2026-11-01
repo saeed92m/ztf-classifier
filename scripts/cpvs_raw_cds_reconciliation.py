@@ -480,7 +480,7 @@ def main():
     ]
     with four_field_only_path.open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(
-            f, fieldnames=four_field_fields, delimiter="\\t", lineterminator="\\n"
+            f, fieldnames=four_field_fields, delimiter="\t", lineterminator="\n"
         )
         w.writeheader()
         for sid in sorted(four_field_only, key=lambda x: int(x)):
