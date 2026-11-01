@@ -94,13 +94,15 @@ jobs:
           test -s work/refs/publisher/raw/table4.mrt.txt
 
       - name: Run byte-preserving identifier and membership reconciliation
+        shell: bash
         run: |
+          set -euo pipefail
           python scripts/cpvs_raw_cds_reconciliation.py \
             --raw work/raw \
             --zenodo work/refs/zenodo \
             --heavy work/refs/heavy \
             --publisher work/refs/publisher \
-            --out work/output
+            --out work/output 2>&1 | tee work/output/audit.log
 
       - name: Upload immutable CDS sources and reconciliation evidence
         if: always()
