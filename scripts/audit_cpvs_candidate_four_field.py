@@ -38,7 +38,13 @@ def read_vizier(path: Path, required: tuple[str, ...]) -> list[dict[str, str]]:
                 header = [metadata[i] for i in sorted(metadata)]
             if header is None or len(fields) != len(header) or fields == header:
                 continue
-            rows.append(dict(zip(header, fields)))
+            row = dict(zip(header, fields))
+            if "Seq" in row:
+                try:
+                    int(row["Seq"])
+                except (TypeError, ValueError):
+                    continue
+            rows.append(row)
     if header is None:
         raise ValueError(f"{path}: missing VizieR column metadata/header {required!r}")
     missing = [key for key in required if key not in header]
