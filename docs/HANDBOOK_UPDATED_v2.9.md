@@ -101,3 +101,15 @@ This handbook is the current continuity snapshot. The README and scientific/plat
 The full Zenodo membership crosswalk job completed successfully in [CI run 41299576448](https://github.com/saeed92m/ztf-classifier/actions/runs/41299576448) on PR head `7c73a4a9d2260e080300303e6aac826630369539`. It mapped 730,184 unique published ZTF names to 730,184 unique Table 2 Seq IDs, with no unmapped names. A complete comparison against the retained historical candidate set confirms 730,184 intersection, 11,602 candidate-only, and zero published-only. The full result and hashes are in `docs/scientific_validation/CPVS_FULL_ZENODO_MEMBERSHIP_COMPARISON_2026-11-01.md`.
 
 This does not resolve CPVS. The comparison uses the frozen Zenodo membership archive, not raw Table 4 bytes, and it compares against retained historical candidate IDs rather than a fresh full derivation on the current PR head. Issue #170 remains OPEN / UNRESOLVED. No production selection, threshold, model, feature, class order, v0.2.0 baseline, or acceptance criterion changed.
+
+
+## CPVS raw CDS reconciliation — 2026-11-02
+
+The raw Table 2 and Table 4 files are now verified in GitHub Actions run 41360681445. The raw CDS records match the original IOP/AAS publisher MRT records row by row. The Table 4 ZTF-name-to-Table-2-Seq crosswalk has zero unmapped rows and zero ID/Seq mismatches. Table 4 membership exactly matches the frozen Zenodo membership.
+
+The historical SNR candidate set still has 741,786 IDs. It contains all 730,184 reference members and 11,602 extra IDs. A full-parent diagnostic shows that the intersection of this candidate set with the four-field-positive Table 2 set is exactly the 730,184-object reference. The four-field set alone has 55 nonmembers. This is an empirical conjunction, not proof of the authors' selection rule.
+
+The revised 100-object and 1,000-object deterministic samples include the 55 four-field-only controls. The 1,000-object sample includes all 55. Per-object light-curve SNR diagnostics for these controls are not present in the retained historical artifact. The next action is to reproduce or retrieve their original per-band photometry and identify the failed detection condition.
+
+**Scientific status:** Issue #170 remains OPEN / BLOCKED. PR #244 remains Draft. Do not change the production selector, SNR thresholds, model, features, class order, v0.2.0 baseline, or acceptance criteria. The candidate set has not been freshly re-derived on the current PR head.
+
