@@ -154,8 +154,8 @@ def test_read_vizier_parses_standard_column_metadata(tmp_path: Path) -> None:
         "#Column 1 ID (A19)\n"
         "#Column 2 Seq (I6)\n"
         "#Column 3 Per-r (F10.5)\n"
-        "ZTF1\\t1\\t0.25\\n"
-        "ZTF2\\t2\\t0.50\\n",
+        "ZTF1\t1\t0.25\n"
+        "ZTF2\t2\t0.50\n",
     )
 
     rows = read_vizier(table, ("ID", "Seq", "Per-r"))
