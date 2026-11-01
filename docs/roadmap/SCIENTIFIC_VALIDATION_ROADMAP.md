@@ -243,3 +243,9 @@ The previous heavy run [40873746342](https://github.com/saeed92m/ztf-classifier/
 6. Establish the documented detection/SNR semantics or record a source-supported limitation. Do not change production selection or acceptance criteria.
 
 No production selector, SNR threshold, model, feature set, class order, v0.2.0 baseline, or release artifact has changed.
+
+## Full Zenodo crosswalk result — 2026-11-01
+
+The full metadata-only crosswalk job completed successfully in [CI run 41299576448](https://github.com/saeed92m/ztf-classifier/actions/runs/41299576448) on PR head `7c73a4a9d2260e080300303e6aac826630369539`. It mapped 730,184 unique frozen Zenodo `1st_layer.csv` ZTF names through Table 2 `ID` to the actual `Seq` / `SourceID` namespace, with 781,602 unique parent Seq values and zero unmapped published names. The full object-level comparison against the retained historical candidate IDs confirms 730,184 intersection, 11,602 candidate-only, and zero published-only. This does not resolve the discrepancy. The source and hash manifest, exact set hashes, and metadata diagnostics are recorded in `docs/scientific_validation/CPVS_FULL_ZENODO_MEMBERSHIP_COMPARISON_2026-11-01.md`.
+
+**Limitation:** the crosswalk uses the frozen Zenodo membership archive, not raw Table 4 bytes; the candidate IDs and parent metadata are retained historical artifacts, not a fresh full photometry reconstruction on this PR head. Raw Table 4 acquisition and publisher-selection semantics remain outstanding.
