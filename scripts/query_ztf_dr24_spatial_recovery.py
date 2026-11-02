@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -14,6 +15,8 @@ DR24_OBJECTS_HATS = (
     "s3://ipac-irsa-ztf/ztf/enhanced/dr24/objects/hats"
 )
 REQUIRED_COLUMNS = ("external_id", "ra", "dec")
+BASE_CATALOG_COLUMNS = ("oid", "ra", "dec", "filtercode")
+PROVENANCE_COLUMN_CANDIDATES = ("field", "ccdid", "qid", "rcid", "fid")
 
 
 def _read_targets(path: Path, limit: int | None) -> list[dict[str, str]]:
@@ -51,9 +54,23 @@ def query_dr24(
             "Install the optional recovery dependency: pip install 'lsdb[full]==0.10.4'"
         ) from exc
 
+    schema_catalog = lsdb.open_catalog(DR24_OBJECTS_HATS)
+    available_columns = set(schema_catalog.all_columns)
+    missing = sorted(set(BASE_CATALOG_COLUMNS) - available_columns)
+    if missing:
+        raise ValueError(
+            "DR24 Objects Table schema is missing required columns: "
+            + ", ".join(missing)
+        )
+    provenance_columns = [
+        column
+        for column in PROVENANCE_COLUMN_CANDIDATES
+        if column in available_columns
+    ]
+    selected_columns = [*BASE_CATALOG_COLUMNS, *provenance_columns]
     catalog = lsdb.open_catalog(
         DR24_OBJECTS_HATS,
-        columns=["oid", "ra", "dec", "filtercode"],
+        columns=selected_columns,
     )
     matches: list[dict[str, Any]] = []
     query_records: list[dict[str, Any]] = []
@@ -80,15 +97,18 @@ def query_dr24(
                     "DR24 response missing columns: " + ", ".join(missing)
                 )
             for row in frame.itertuples(index=False):
-                matches.append(
-                    {
-                        "external_id": external_id,
-                        "oid": str(getattr(row, "oid")),
-                        "ra": float(getattr(row, "ra")),
-                        "dec": float(getattr(row, "dec")),
-                        "filtercode": str(getattr(row, "filtercode")),
-                    }
-                )
+                record = row._asdict()
+                match = {
+                    "external_id": external_id,
+                    "oid": str(record["oid"]),
+                    "ra": float(record["ra"]),
+                    "dec": float(record["dec"]),
+                    "filtercode": str(record["filtercode"]),
+                }
+                for column in provenance_columns:
+                    value = record.get(column)
+                    match[column] = "" if value is None else value
+                matches.append(match)
                 returned += 1
         query_records.append(
             {
@@ -106,13 +126,15 @@ def query_dr24(
         )
 
     metadata = {
-        "schema_version": "ztf-dr24-spatial-recovery-v1",
+        "schema_version": "ztf-dr24-spatial-recovery-v2",
         "source": "IRSA ZTF DR24 Objects Table HATS",
         "catalog_uri": DR24_OBJECTS_HATS,
         "release": "DR24",
         "query_timestamp_utc": datetime.now(UTC).isoformat(),
         "query_radius_arcsec": radius_arcsec,
         "target_count": len(targets),
+        "selected_columns": selected_columns,
+        "provenance_columns": provenance_columns,
         "queries": query_records,
         "returned_match_rows": len(matches),
         "interpretation": (
@@ -141,16 +163,21 @@ def main() -> int:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     matches_path = args.output_dir / "dr24_spatial_matches.csv"
     with matches_path.open("w", newline="", encoding="utf-8") as handle:
-        fields = ("external_id", "oid", "ra", "dec", "filtercode")
+        fields = (
+            "external_id",
+            "oid",
+            "ra",
+            "dec",
+            "filtercode",
+            *metadata["provenance_columns"],
+        )
         writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         writer.writerows(matches)
 
     metadata["matches_artifact"] = {
         "path": matches_path.name,
-        "sha256": __import__("hashlib").sha256(
-            matches_path.read_bytes()
-        ).hexdigest(),
+        "sha256": hashlib.sha256(matches_path.read_bytes()).hexdigest(),
         "size_bytes": matches_path.stat().st_size,
     }
     metadata_path = args.output_dir / "dr24_query_manifest.json"
@@ -160,6 +187,7 @@ def main() -> int:
     )
     print(f"targets={len(targets)}")
     print(f"match_rows={len(matches)}")
+    print(f"provenance_columns={','.join(metadata['provenance_columns'])}")
     print(f"manifest={metadata_path}")
     return 0
 
