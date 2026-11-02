@@ -167,3 +167,25 @@ The current branch CI completed a full object-level crosswalk from the independe
 - The workflow did not use raw Table 4. This is an independent membership crosswalk, not a direct byte comparison.
 
 The 17 residual IDs listed above have zero intersection with this independently reconstructed 730,184-member set. This confirms their non-membership in the frozen reference; it does not explain why the paper excluded them.
+
+
+## Direct 17-object frozen-reference audit — 2026-11-02
+
+The dedicated 17-object audit completed in workflow run [41417954609](https://github.com/saeed92m/ztf-classifier/actions/runs/41417954609), artifact `13129155423`.
+
+- Status: `COMPLETED`.
+- Target IDs: 17.
+- Present in frozen Zenodo `1st_layer.csv`: 0.
+- Absent from frozen Zenodo `1st_layer.csv`: 17.
+- Join: Table 2 ZTF `ID` string, crosswalked through authoritative Table 2 `Seq`.
+- JSON SHA-256: `d8d8e3382450d85446988b70c1b65f82ddde1b4cb2da2c106391bf1ce6aee50a`.
+- Table 2 input SHA-256 for this audit: `db1c5e547e5abf68733a79fd5ff3fbd6b835dfb2e7509be7897ce519ac8e647c`.
+- Frozen Zenodo membership CSV SHA-256: `c235df101bf7a130b5dccdd95b786ac347f2b7ef24fc49ed7ae989aa8625437`.
+
+The direct audit confirms that the 17 residual IDs are not members of the frozen reference. It does not establish why they were excluded.
+
+The 17 have both mean magnitudes, a positive common period, and substantial Table 2 detection counts. Their missing per-band period is not explained by one uniform FAP state: 10 have `log(FAP)=0` in the band with the missing period, while 7 have a negative value. Do not claim that all 17 failed the same FAP threshold.
+
+The audit also found that the Table 2 `recno` value differs from authoritative `Seq` for Seq 657950 and 732333. The crosswalk correctly uses ZTF name to `Seq`; it must not use `recno` as a replacement identifier.
+
+The paper states that both bands are phase-folded using the common period and that mean colour `m_gr` is appended to the isolation-forest features. It does not explicitly require both `Per-g` and `Per-r` to be positive. Therefore the 17-object exclusion remains a scientific-method ambiguity. The next test must examine the authors' data-preparation or MGPR preprocessing behavior, or obtain author clarification. Do not add a per-band-period gate to the production selector based only on this exact set match.
