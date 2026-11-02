@@ -323,3 +323,14 @@ Issue [#170](https://github.com/saeed92m/ztf-classifier/issues/170) remains open
 - CDS fixed-width Table 4: https://cdsarc.cds.unistra.fr/ftp/cats/J/ApJ/932/118/table4.dat
 
 **Disposition: source-table identity is clarified; exact CPVS anomaly-sample reproduction is still UNRESOLVED / BLOCKED.**
+
+
+## Targeted photometry source correction — 2026-11-02
+
+An initial targeted query incorrectly treated ztf2g and ztf2r as VizieR tables in J/ApJS/249/18. VizieR returned an explicit error: Table 'ztf2g' does not exist in catalog: J/ApJS/249/18. No data rows were returned. This was a source-path error, not evidence that the objects have no photometry.
+
+The Zenodo record for Chen et al. (2020), DOI 10.5281/zenodo.3886372, explicitly describes ztf2g.zip and ztf2r.zip as the single-exposure photometry attachments. Its description identifies the columns as SourceID, RAdeg, DEdeg, HJD, gmag, e_gmag, g_flag and the corresponding r-band fields. SourceID is the join key to Table 2.
+
+The workflow was corrected to retrieve these original Zenodo archives, verify their published MD5 values (850fcef561dd7407fbe8e19e99100d7a for g and daa7bc45c67579253eebe6b1c09dfbd9 for r), calculate SHA-256 before extraction, and scan the extracted original light curves for the 55 controls. It does not query a nonexistent VizieR table. The previous invalid-query workflow run 41362575354 was cancelled. No scientific selector or baseline was changed.
+
+
