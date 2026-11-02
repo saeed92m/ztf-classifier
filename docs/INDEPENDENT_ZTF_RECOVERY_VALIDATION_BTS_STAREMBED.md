@@ -112,7 +112,7 @@ Do not run a full-catalog cross-match until the pilot establishes query cost and
 
 ## BTS pilot results — 2026-11-02
 
-The official BTS CSV endpoint returned HTTP 200 and 10,551 rows. The raw response SHA-256 is `af2362275074ff4b6c70523b9db6f2d5991af16fdd8d76ed47520948eb788e82`. The deterministic 100-row sample SHA-256 is `044dc0b3b6a3cf127f50099a7a3f76ae3423df62807564f0c365efb5007bd9a4`.
+The official BTS CSV endpoint returned HTTP 200 and 10,551 rows. The acquisition manifest records code revision `a4308f4943a046f4997c5b90304fb6269c2ba459`. The raw response SHA-256 is `af2362275074ff4b6c70523b9db6f2d5991af16fdd8d76ed47520948eb788e82`. The deterministic 100-row sample SHA-256 is `044dc0b3b6a3cf127f50099a7a3f76ae3423df62807564f0c365efb5007bd9a4`.
 
 The spatial query used the official IRSA ZTF DR24 Objects Table HATS collection. It processed all 100 targets and returned 773 OID rows within 5 arcseconds. The audit recomputed great-circle separations and produced the following counts:
 
