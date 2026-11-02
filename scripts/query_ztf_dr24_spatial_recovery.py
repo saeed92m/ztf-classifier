@@ -7,6 +7,9 @@ import argparse
 import csv
 import hashlib
 import json
+import os
+import sys
+from importlib.metadata import PackageNotFoundError, version
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -17,6 +20,13 @@ DR24_OBJECTS_HATS = (
 REQUIRED_COLUMNS = ("external_id", "ra", "dec")
 BASE_CATALOG_COLUMNS = ("oid", "ra", "dec", "filtercode")
 PROVENANCE_COLUMN_CANDIDATES = ("field", "ccdid", "qid", "rcid", "fid")
+
+
+def _package_version(distribution: str) -> str:
+    try:
+        return version(distribution)
+    except PackageNotFoundError:
+        return "not-installed"
 
 
 def _read_targets(path: Path, limit: int | None) -> list[dict[str, str]]:
@@ -125,16 +135,36 @@ def query_dr24(
             f"{returned} DR24 OIDs within {radius_arcsec:g} arcsec"
         )
 
+    schema_columns = sorted(available_columns)
+    schema_payload = json.dumps(
+        schema_columns, separators=(",", ":"), ensure_ascii=True
+    ).encode("utf-8")
     metadata = {
-        "schema_version": "ztf-dr24-spatial-recovery-v2",
+        "schema_version": "ztf-dr24-spatial-recovery-v3",
         "source": "IRSA ZTF DR24 Objects Table HATS",
         "catalog_uri": DR24_OBJECTS_HATS,
         "release": "DR24",
         "query_timestamp_utc": datetime.now(UTC).isoformat(),
+        "code_version": os.environ.get("GITHUB_SHA", "unknown"),
+        "runtime": {
+            "python": sys.version.split()[0],
+            "lsdb": _package_version("lsdb"),
+            "s3fs": _package_version("s3fs"),
+        },
+        "catalog_schema": {
+            "available_columns": schema_columns,
+            "available_column_count": len(schema_columns),
+            "columns_sha256": hashlib.sha256(schema_payload).hexdigest(),
+        },
         "query_radius_arcsec": radius_arcsec,
         "target_count": len(targets),
         "selected_columns": selected_columns,
         "provenance_columns": provenance_columns,
+        "missing_optional_provenance_columns": [
+            column
+            for column in PROVENANCE_COLUMN_CANDIDATES
+            if column not in available_columns
+        ],
         "queries": query_records,
         "returned_match_rows": len(matches),
         "interpretation": (
