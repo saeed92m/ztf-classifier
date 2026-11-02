@@ -5,6 +5,13 @@ on:
     branches:
       - main
       - "investigation/independent-bts-dr24-recovery-*"
+    paths:
+      - "scripts/acquire_bts_snapshot.py"
+      - "scripts/query_ztf_dr24_spatial_recovery.py"
+      - "scripts/audit_ztf_recovery_multiplicity.py"
+      - "tests/test_bts_snapshot_acquisition.py"
+      - "tests/test_ztf_recovery_multiplicity.py"
+      - ".github/workflows/independent-recovery-validation.yml"
   pull_request:
     paths:
       - "scripts/acquire_bts_snapshot.py"
