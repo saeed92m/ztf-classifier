@@ -98,7 +98,17 @@ Source-backed workflow [41488299913](https://github.com/saeed92m/ztf-classifier/
 
 The maximum was 22 OIDs for one BTS coordinate at 5 arcseconds. For that source, only one OID was within 1 arcsecond. Recomputed nearest-match separations for the 97 targets matched within 5 arcseconds had a median of 1.051 arcseconds, a mean of 1.330 arcseconds, a 90th percentile of 3.322 arcseconds, and a maximum of 4.913 arcseconds.
 
-These are positional candidate-recovery results. They do not establish physical identity, cross-match precision/recall, or model accuracy. ZTF objects are partitioned by filter and field/quadrant. Multiple OIDs can therefore be valid catalog records for one astrophysical source. The audit must use field/quadrant provenance before interpreting same-filter multiplicity.
+These are positional candidate-recovery results. They do not establish physical identity, cross-match precision/recall, or model accuracy. ZTF objects are partitioned by filter and field/quadrant. Multiple OIDs can therefore be valid catalog records for one astrophysical source. The schema-aware audit now separates same-filter OIDs across field/CCD/quadrant partitions from same-partition multiplicity:
+
+| Radius | Same-filter multi-OID targets | Across partitions | Within the same partition |
+|---:|---:|---:|---:|
+| 1 arcsec | 27 | 27 | 0 |
+| 2 arcsec | 59 | 58 | 15 |
+| 5 arcsec | 88 | 81 | 77 |
+
+At 1 arcsec, every same-filter multiple-OID case in this sample spans different partitions. At 5 arcsec, 77 targets have same-filter multiple OIDs within at least one field/CCD/quadrant partition. This is consistent with a wider cone including nearby catalog objects. It is not, by itself, a false-positive classification. The per-match audit contains all 773 OIDs and their recomputed separations. The 773 OIDs are unique across the 97 matched BTS targets; no OID was shared by two BTS targets in this sample.
+
+The 100-object spatial query is now complete. The next data check uses the `objectid` index in the DR24 Lightcurves HATS catalog. It will determine whether each Objects Table OID has a corresponding light-curve row. An Objects Table match alone does not prove that a time series is available.
 
 ### Updated schema-aware execution
 
@@ -147,9 +157,9 @@ The exact historical CPVS reconstruction remains a separate external-reproductio
 
 ## Immediate next actions
 
-1. Complete and inspect workflow run 41525750067. Verify the live HATS schema, all 100 targets, per-match angular separations, filter counts, field/quadrant partitions, hashes and manifest.
-2. Fix any source-query or audit defect found in the artifact. Add regression tests. Rerun the source-backed workflow.
-3. Review the latest PR CI after the RUF012 correction. Require all checks to complete on the current PR head.
+1. Complete the indexed DR24 Lightcurves HATS availability check for the 773 recovered OIDs. Record missing light-curve rows and epoch counts.
+2. Inspect light-curve quality flags and usable cadence for a stratified set. Do not equate a Lightcurves row with scientifically usable photometry.
+3. Review the latest PR CI after the RUF012 correction and the new light-curve tests. Require all checks to complete on the current PR head.
 4. Diagnose the five DR24 feature-engine failures from Issue #188. Do not change the frozen feature set or silently discard failed objects.
 5. Resolve the StarEmbed duplicate/overlap evidence before using its metrics.
 6. Complete the 100-object operational test as a separate end-to-end application test.
