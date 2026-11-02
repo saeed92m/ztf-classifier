@@ -60,22 +60,11 @@ jobs:
         run: |
           python -m pytest -q \
             tests/test_bts_snapshot_acquisition.py \
-            tests/test_ztf_recovery_multiplicity.py
+            tests/test_ztf_recovery_multiplicity.py \
+            tests/test_ztf_dr24_query_contract.py
 
   bts-dr24-pilot:
     name: Acquire BTS and query official ZTF DR24
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'push' &&
-        startsWith(github.ref, 'refs/heads/investigation/independent-bts-dr24-recovery-') &&
-        (
-          contains(join(github.event.head_commit.modified, ','), 'scripts/acquire_bts_snapshot.py') ||
-          contains(join(github.event.head_commit.modified, ','), 'scripts/query_ztf_dr24_spatial_recovery.py') ||
-          contains(join(github.event.head_commit.modified, ','), 'scripts/audit_ztf_recovery_multiplicity.py') ||
-          contains(join(github.event.head_commit.modified, ','), '.github/workflows/independent-recovery-validation.yml')
-        )
-      )
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
