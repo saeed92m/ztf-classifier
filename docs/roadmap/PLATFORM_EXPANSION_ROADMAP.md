@@ -14,7 +14,7 @@ The weighted platform-readiness estimate is **56%**. It measures progress toward
 | Subsystem | Weight | Readiness |
 |---|---:|---:|
 | Scientific core and model | 18% | 85% |
-| Data acquisition and ingestion | 10% | 60% |
+| Data acquisition and ingestion | 10% | 55% |
 | Product scientific validation | 20% | 40% |
 | API and application services | 12% | 80% |
 | Workbench and user experience | 12% | 45% |
@@ -30,7 +30,7 @@ The weighted platform-readiness estimate is **56%**. It measures progress toward
 - The v0.2.0 scientific baseline remains frozen: 150 benchmark objects, 15 ALeRCE reference classes, 42 features, and XGBoost `baseline_v0.2`.
 - Recent full CI run 41493244584 passed 645 tests, skipped 10, and reported 9 warnings. CodeQL and the dependency audit passed. This is engineering evidence, not a product-level scientific pass.
 - The product scientific gate remains fail-closed. The StarEmbed audit reports a duplicate source ID in train and an object-ID overlap between train and test (Issue #210).
-- The DR24 feature-engine smoke test processed 7 of 12 objects; 5 failed filter normalization. Model inference was not run (Issue #188).
+- The DR24 feature-engine smoke test exposed a source-grouping gap (Issue #188): 5/12 OIDs were i-only and correctly had no g/r input; the other 7 were single-band and produced partial vectors with 19/42 finite features. No object had both g and r observations. DR24 OIDs are filter/field/quadrant-specific, so the feature engine needs a traceable astrophysical source group that combines constituent OIDs across filters before feature generation. Model inference was not run.
 - The schema-aware 100-object BTS-to-DR24 pilot completed in workflow 41525750067. It returned 773 OID rows: 48, 78, and 97 BTS targets matched within 1, 2, and 5 arcseconds. The live schema exposed field/CCD/quadrant provenance. Same-filter same-partition multiplicity was 0, 15, and 77 targets at those radii. These are positional candidate-recovery diagnostics, not cross-match precision/recall or model accuracy. PR #246 now adds an indexed DR24 Lightcurves HATS lookup to check whether the recovered OIDs have time-series rows.
 - The complete 100-object operational test remains open (Issue #222).
 - The full desktop product remains open (Issue #158). No self-contained Windows, macOS, or Linux installer has passed clean-machine acceptance.
