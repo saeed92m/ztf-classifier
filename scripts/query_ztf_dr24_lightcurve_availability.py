@@ -61,13 +61,14 @@ def query_lightcurve_availability(
     target_ids = [str(row["external_id"]).strip() for row in targets]
     if any(not value for value in target_ids):
         raise ValueError("target catalogue contains an empty external_id")
-    if len(set(target_ids)) != len(target_ids):
+    target_id_set = set(target_ids)
+    if len(target_id_set) != len(target_ids):
         raise ValueError("target catalogue contains duplicate external_id")
 
     oid_to_matches: dict[int, list[dict[str, str]]] = {}
     for match in matches:
         external_id = str(match["external_id"]).strip()
-        if external_id not in set(target_ids):
+        if external_id not in target_id_set:
             raise ValueError(f"match references unknown target: {external_id}")
         oid = _as_int(match["oid"], "oid")
         if oid <= 0:
