@@ -10,7 +10,6 @@ import io
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import urlparse
 
 import requests
 from astropy import units as u
