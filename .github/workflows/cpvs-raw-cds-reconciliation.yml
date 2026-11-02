@@ -25,6 +25,11 @@ jobs:
       - name: Check out reviewed investigation branch
         uses: actions/checkout@v4
 
+      - name: Set up supported Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+
       - name: Generate Ruff-formatted audit source copies
         shell: bash
         run: |
