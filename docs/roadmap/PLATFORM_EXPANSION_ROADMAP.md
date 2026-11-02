@@ -31,7 +31,7 @@ The weighted platform-readiness estimate is **56%**. It measures progress toward
 - Recent full CI run 41493244584 passed 645 tests, skipped 10, and reported 9 warnings. CodeQL and the dependency audit passed. This is engineering evidence, not a product-level scientific pass.
 - The product scientific gate remains fail-closed. The StarEmbed audit reports a duplicate source ID in train and an object-ID overlap between train and test (Issue #210).
 - The DR24 feature-engine smoke test processed 7 of 12 objects; 5 failed filter normalization. Model inference was not run (Issue #188).
-- The initial 100-object BTS-to-DR24 spatial pilot matched 97 targets within 5 arcseconds. This is positional candidate recovery, not cross-match precision/recall or model accuracy. The schema-aware rerun is tracked by PR #246 and its artifact must be reviewed before its results are accepted.
+- The schema-aware 100-object BTS-to-DR24 pilot completed in workflow 41525750067. It returned 773 OID rows: 48, 78, and 97 BTS targets matched within 1, 2, and 5 arcseconds. The live schema exposed field/CCD/quadrant provenance. Same-filter same-partition multiplicity was 0, 15, and 77 targets at those radii. These are positional candidate-recovery diagnostics, not cross-match precision/recall or model accuracy. PR #246 now adds an indexed DR24 Lightcurves HATS lookup to check whether the recovered OIDs have time-series rows.
 - The complete 100-object operational test remains open (Issue #222).
 - The full desktop product remains open (Issue #158). No self-contained Windows, macOS, or Linux installer has passed clean-machine acceptance.
 
