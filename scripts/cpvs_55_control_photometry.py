@@ -65,7 +65,9 @@ def summarize_band(
         for source_id in source_ids
     }
     flags = {source_id: Counter() for source_id in source_ids}
-    for row in _iter_rows(path, required_columns=("SourceID", error_column, mag_column)):
+    for row in _iter_rows(
+        path, required_columns=("SourceID", error_column, mag_column)
+    ):
         source_id = str(row.get("SourceID", "")).strip()
         if source_id not in result:
             continue
@@ -86,7 +88,9 @@ def summarize_band(
 
         item["max_approximate_snr"] = max(
             approximate_snr,
-            item["max_approximate_snr"] if item["max_approximate_snr"] is not None else approximate_snr,
+            item["max_approximate_snr"]
+            if item["max_approximate_snr"] is not None
+            else approximate_snr,
         )
         item["max_exact_snr"] = max(
             exact_snr,
@@ -94,14 +98,20 @@ def summarize_band(
         )
         item["minimum_magnitude_error"] = min(
             error,
-            item["minimum_magnitude_error"] if item["minimum_magnitude_error"] is not None else error,
+            item["minimum_magnitude_error"]
+            if item["minimum_magnitude_error"] is not None
+            else error,
         )
 
         if approximate_snr >= threshold:
             item["qualifying_detections_approximate"] += 1
             item["passes_approximate_snr"] = True
             flag_key = next(
-                (key for key in row if key.strip().lower() in {name.lower() for name in flag_columns}),
+                (
+                    key
+                    for key in row
+                    if key.strip().lower() in {name.lower() for name in flag_columns}
+                ),
                 None,
             )
             if flag_key is not None and str(row[flag_key]).strip():
@@ -126,8 +136,12 @@ def run_audit(
 ) -> dict[str, Any]:
     controls = read_controls(controls_path)
     ids = {row["SourceID"].strip() for row in controls}
-    g = summarize_band(g_path, ids, "e_gmag", "gmag", ("g_flag", "catflags", "flag"), 2.5)
-    r = summarize_band(r_path, ids, "e_rmag", "rmag", ("r_flag", "catflags", "flag"), 3.0)
+    g = summarize_band(
+        g_path, ids, "e_gmag", "gmag", ("g_flag", "catflags", "flag"), 2.5
+    )
+    r = summarize_band(
+        r_path, ids, "e_rmag", "rmag", ("r_flag", "catflags", "flag"), 3.0
+    )
     output.mkdir(parents=True, exist_ok=True)
 
     per_object = []
@@ -144,10 +158,13 @@ def run_audit(
                 "Table4_member": control["Table4_member"].lower() == "true",
                 "g": g_item,
                 "r": r_item,
-                "g_row_count_matches_table2_Ng": g_item["row_count"] == int(float(control["Ng"])),
-                "r_row_count_matches_table2_Nr": r_item["row_count"] == int(float(control["Nr"])),
+                "g_row_count_matches_table2_Ng": g_item["row_count"]
+                == int(float(control["Ng"])),
+                "r_row_count_matches_table2_Nr": r_item["row_count"]
+                == int(float(control["Nr"])),
                 "reconstructed_two_band_snr_candidate": (
-                    g_item["passes_approximate_snr"] and r_item["passes_approximate_snr"]
+                    g_item["passes_approximate_snr"]
+                    and r_item["passes_approximate_snr"]
                 ),
                 "failed_approximate_snr_bands": [
                     band
@@ -182,7 +199,9 @@ def run_audit(
                     },
                 }
             )
-    with (output / "per_band_snr_metrics.tsv").open("w", encoding="utf-8", newline="") as stream:
+    with (output / "per_band_snr_metrics.tsv").open(
+        "w", encoding="utf-8", newline=""
+    ) as stream:
         writer = csv.DictWriter(
             stream,
             fieldnames=list(per_band_rows[0]),
@@ -197,8 +216,7 @@ def run_audit(
         encoding="utf-8",
     )
     complete = all(
-        item["g"]["row_count"] > 0 and item["r"]["row_count"] > 0
-        for item in per_object
+        item["g"]["row_count"] > 0 and item["r"]["row_count"] > 0 for item in per_object
     )
     report = {
         "status": "COMPLETE" if complete else "PARTIAL",
@@ -207,16 +225,26 @@ def run_audit(
         "control_count": len(controls),
         "g_objects_with_photometry": sum(item["row_count"] > 0 for item in g.values()),
         "r_objects_with_photometry": sum(item["row_count"] > 0 for item in r.values()),
-        "g_row_counts_match_Table2_Ng": sum(item["g_row_count_matches_table2_Ng"] for item in per_object),
-        "r_row_counts_match_Table2_Nr": sum(item["r_row_count_matches_table2_Nr"] for item in per_object),
+        "g_row_counts_match_Table2_Ng": sum(
+            item["g_row_count_matches_table2_Ng"] for item in per_object
+        ),
+        "r_row_counts_match_Table2_Nr": sum(
+            item["r_row_count_matches_table2_Nr"] for item in per_object
+        ),
         "reconstructed_as_two_band_snr_candidates": sum(
             item["reconstructed_two_band_snr_candidate"] for item in per_object
         ),
         "controls_reconstructed_as_candidates": [
-            item["SourceID"] for item in per_object if item["reconstructed_two_band_snr_candidate"]
+            item["SourceID"]
+            for item in per_object
+            if item["reconstructed_two_band_snr_candidate"]
         ],
-        "failed_g_snr": sum("g" in item["failed_approximate_snr_bands"] for item in per_object),
-        "failed_r_snr": sum("r" in item["failed_approximate_snr_bands"] for item in per_object),
+        "failed_g_snr": sum(
+            "g" in item["failed_approximate_snr_bands"] for item in per_object
+        ),
+        "failed_r_snr": sum(
+            "r" in item["failed_approximate_snr_bands"] for item in per_object
+        ),
         "all_controls_are_nonmembers": all(
             not item["historical_candidate_member"] and not item["Table4_member"]
             for item in per_object
