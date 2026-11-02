@@ -27,11 +27,13 @@ def test_multi_filter_oids_are_reported_but_not_called_false_positives():
         },
     ]
 
-    rows, summary = audit_recovery(catalog, matches, radii_arcsec=(1.0,))
+    rows, per_match, summary = audit_recovery(catalog, matches, radii_arcsec=(1.0,))
 
     assert rows[0]["ztf_oid_count"] == 3
     assert rows[0]["filter_count"] == 3
     assert rows[0]["same_filter_multiple_oids"] is False
+    assert len(per_match) == 3
+    assert per_match[0]["separation_arcsec"] == 0.0
     assert summary["radii"]["1.0"]["multi_oid_objects"] == 1
     assert summary["radii"]["1.0"]["multi_filter_objects"] == 1
     assert summary["radii"]["1.0"]["same_filter_multi_oid_objects"] == 0
@@ -64,11 +66,72 @@ def test_multiple_oids_in_one_filter_are_separately_flagged():
         },
     ]
 
-    rows, summary = audit_recovery(catalog, matches, radii_arcsec=(1.0,))
+    rows, _, summary = audit_recovery(catalog, matches, radii_arcsec=(1.0,))
 
     assert rows[0]["ztf_oid_count"] == 3
     assert rows[0]["same_filter_multiple_oids"] is True
+    assert rows[0]["same_filter_multiple_partitions"] is None
     assert summary["radii"]["1.0"]["same_filter_multi_oid_objects"] == 1
+
+
+def test_field_quadrant_provenance_separates_same_filter_oids():
+    catalog = [{"external_id": "CSS_C", "ra": "10", "dec": "20"}]
+    matches = [
+        {
+            "external_id": "CSS_C",
+            "oid": "100",
+            "ra": "10",
+            "dec": "20",
+            "filtercode": "zg",
+            "field": "100",
+            "rcid": "1",
+        },
+        {
+            "external_id": "CSS_C",
+            "oid": "101",
+            "ra": "10.0001",
+            "dec": "20",
+            "filtercode": "zg",
+            "field": "101",
+            "rcid": "1",
+        },
+    ]
+
+    rows, _, summary = audit_recovery(catalog, matches, radii_arcsec=(1.0,))
+
+    assert rows[0]["same_filter_multiple_partitions"] is True
+    assert rows[0]["same_filter_same_partition_multiple_oids"] is False
+    assert summary["radii"]["1.0"]["same_filter_multi_partition_objects"] == 1
+
+
+def test_same_filter_oids_in_same_partition_are_separately_reported():
+    catalog = [{"external_id": "CSS_D", "ra": "10", "dec": "20"}]
+    matches = [
+        {
+            "external_id": "CSS_D",
+            "oid": "100",
+            "ra": "10",
+            "dec": "20",
+            "filtercode": "zg",
+            "field": "100",
+            "rcid": "1",
+        },
+        {
+            "external_id": "CSS_D",
+            "oid": "101",
+            "ra": "10.0001",
+            "dec": "20",
+            "filtercode": "zg",
+            "field": "100",
+            "rcid": "1",
+        },
+    ]
+
+    rows, _, summary = audit_recovery(catalog, matches, radii_arcsec=(1.0,))
+
+    assert rows[0]["same_filter_multiple_partitions"] is False
+    assert rows[0]["same_filter_same_partition_multiple_oids"] is True
+    assert summary["radii"]["1.0"]["same_filter_same_partition_multi_oid_objects"] == 1
 
 
 def test_unmatched_catalog_sources_are_retained_in_denominator():
@@ -86,7 +149,7 @@ def test_unmatched_catalog_sources_are_retained_in_denominator():
         },
     ]
 
-    rows, summary = audit_recovery(catalog, matches, radii_arcsec=(1.0,))
+    rows, _, summary = audit_recovery(catalog, matches, radii_arcsec=(1.0,))
 
     assert len(rows) == 2
     assert summary["radii"]["1.0"]["catalog_objects"] == 2
@@ -106,13 +169,14 @@ def test_radius_sensitivity_uses_recomputed_angular_separation():
         },
     ]
 
-    _, summary = audit_recovery(
+    _, per_match, summary = audit_recovery(
         catalog, matches, radii_arcsec=(1.0, 2.0, 5.0)
     )
 
     assert summary["radii"]["1.0"]["matched_objects"] == 0
     assert summary["radii"]["2.0"]["matched_objects"] == 1
     assert summary["radii"]["5.0"]["matched_objects"] == 1
+    assert per_match[0]["separation_arcsec"] > 1.0
 
 
 def test_duplicate_catalog_ids_fail_closed():
