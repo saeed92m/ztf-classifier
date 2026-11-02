@@ -163,11 +163,18 @@ jobs:
                   "sample_rows": sample_rows[seq],
               }
 
+          def sha256_file(path):
+              digest = hashlib.sha256()
+              with path.open("rb") as stream:
+                  for chunk in iter(lambda: stream.read(8 * 1024 * 1024), b""):
+                      digest.update(chunk)
+              return digest.hexdigest()
+
           report = {
               "status": "COMPLETE",
               "source": "Zenodo 10.5281/zenodo.3886372 ztf2g.zip",
               "archive_md5_expected": "850fcef561dd7407fbe8e19e99100d7a",
-              "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+              "archive_sha256": sha256_file(archive),
               "photometry_file_sha256": archive_digest.hexdigest(),
               "table2_sha256": table2_digest.hexdigest(),
               "table2_mismatch_manifest_sha256": hashlib.sha256(mismatch_path.read_bytes()).hexdigest(),
