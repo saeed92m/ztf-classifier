@@ -37,7 +37,7 @@
         "reason": "The BTS pilot is a positional candidate-recovery diagnostic. It does not establish physical identity, a validated association radius, object-level precision, or recall."
       },
       "regression_protection_count": {
-        "before": 6,
+        "before": 10,
         "after": 12,
         "unit": "independent_recovery_contract_tests",
         "status": "MEASURED"
