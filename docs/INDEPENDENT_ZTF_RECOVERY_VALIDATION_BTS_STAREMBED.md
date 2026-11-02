@@ -2,7 +2,7 @@
 
 ## Status
 
-Planning and source-contract review only. No BTS-to-DR24 recovery run has been executed yet. This document does not claim any measured recovery rate or identifier multiplicity.
+BTS-to-DR24 spatial pilot completed for a deterministic 100-object sample on 2026-11-02. The run produced measured positional-recovery and OID-multiplicity results; these are reported below. The pilot does not establish object-level precision, recall, or a validated association radius. The separate StarEmbed coordinate-recovery pilot has not yet run. The existing StarEmbed source-acquisition step passed in workflow run 36756251456, but its full 5-artifact package is not reprocessed by this BTS pilot.
 
 CPVS is explicitly outside this workstream. Its open scientific question remains recorded separately; it is not a dependency for this experiment.
 
@@ -74,13 +74,14 @@ Use the official HATS collection for spatial recovery. Keep the source query, re
 Run two separate pilots:
 
 - StarEmbed: deterministic 100-object sample, balanced across available source splits where possible.
-- BTS: deterministic 100-object sample, restricted to rows with valid ZTF ID, TNS ID, RA, Dec, and a non-empty classification.
+- BTS recovery: deterministic 100-object sample from rows with valid ZTF ID, TNS ID, RA, and Dec. Do not require a classification label for spatial recovery. The initial sample contains 38 rows with BTS type `-`; these remain valid positional targets but are not labeled classification examples. The full 10,551-row snapshot contains 3,374 rows with type `-`.
+- BTS classification: create a separate, deterministic, class-aware sample only from rows with a valid published type. Do not use `-` as a class label. Do not claim that the current spatial sample is class-balanced.
 
-The sampling algorithm, seed, sorted source IDs, and sample SHA-256 must be recorded. Do not silently replace failed sample members.
+The BTS sample uses ascending SHA-256 of the external ZTF ID as its deterministic ordering; it does not use a random seed. Record the sorted sample IDs and sample SHA-256. Do not silently replace failed sample members.
 
 ### Phase 3 — spatial recovery
 
-For every sampled source, query the official ZTF DR24 Objects Table by sky position. Use a 1-arcsecond primary radius and sensitivity checks at 2 and 5 arcseconds. Keep all returned OIDs and their coordinates, filters, and angular separations.
+For every sampled source, query the official ZTF DR24 Objects Table by sky position with a 5-arcsecond outer radius. Recompute angular separations and report sensitivity at 1, 2, and 5 arcseconds. Keep all returned OIDs, coordinates, filters, and separations. Treat 1 arcsecond as a restrictive diagnostic, not an accepted radius. BTS transient coordinates can be offset from DR24 reference-object coordinates.
 
 For BTS, coordinate offsets between the transient and its host or reference-image object can occur. A spatial match is therefore an association candidate, not proof of physical identity. Record this limitation.
 
@@ -93,6 +94,7 @@ For each external source, report:
 - multiple OIDs across different filters;
 - multiple OIDs in the same filter;
 - multiple OIDs with distinct field/quadrant provenance, where available;
+- same-filter multiple OIDs that remain within one field/quadrant, where provenance is available;
 - ambiguous spatial associations;
 - nearest angular separation;
 - sensitivity to the 1, 2, and 5 arcsecond radii.
@@ -107,6 +109,26 @@ Only after the pilot passes data-integrity and matching checks:
 - then evaluate the full available source sample if runtime and query load are reasonable.
 
 Do not run a full-catalog cross-match until the pilot establishes query cost and match behavior.
+
+## BTS pilot results — 2026-11-02
+
+The official BTS CSV endpoint returned HTTP 200 and 10,551 rows. The raw response SHA-256 is `af2362275074ff4b6c70523b9db6f2d5991af16fdd8d76ed47520948eb788e82`. The deterministic 100-row sample SHA-256 is `044dc0b3b6a3cf127f50099a7a3f76ae3423df62807564f0c365efb5007bd9a4`.
+
+The spatial query used the official IRSA ZTF DR24 Objects Table HATS collection. It processed all 100 targets and returned 773 OID rows within 5 arcseconds. The audit recomputed great-circle separations and produced the following counts:
+
+| Cone radius | Targets with at least one OID | Unmatched targets | Targets with multiple OIDs | Same-filter multiple OIDs |
+|---:|---:|---:|---:|---:|
+| 1 arcsec | 48 | 52 | 33 | 27 |
+| 2 arcsec | 78 | 22 | 69 | 59 |
+| 5 arcsec | 97 | 3 | 94 | 88 |
+
+At 5 arcseconds, the maximum multiplicity was 22 OIDs for one BTS coordinate. At 1 arcsecond, the 48 matched targets had 160 OID rows. The raw DR24 match CSV SHA-256 is `32221405752ac3424054832c797ea502a6c19739b3201b87c7dbb397d04ce5f6`.
+
+The complete evidence artifact is attached to GitHub Actions run [41488299913](https://github.com/saeed92m/ztf-classifier/actions/runs/41488299913). Artifact ID: `13163452038`. ZIP SHA-256: `4e83841123920cdad7feaf72ffc2e1cddc47b276fb5f6cc7faa544c77d233844`.
+
+The current match rows contain OID, RA, Dec, and filter code. They do not yet contain field/quadrant identifiers. Therefore, the same-filter multiplicity counts are descriptive only. They cannot yet distinguish field/quadrant boundary splits from other close neighbors. The 5-arcsecond result is a broad candidate set, not a validated cross-match. The 1-arcsecond result is more restrictive but does not prove identity for transient sources. No precision, recall, or false-positive rate is claimed.
+
+The 100-object sample contains 62 rows with a non-placeholder type and 38 rows with type `-`. The full BTS snapshot contains 3,374 unclassified rows. This sample is suitable for the spatial-recovery pilot, not for a class-balanced classification benchmark.
 
 ## Acceptance criteria
 
