@@ -147,3 +147,23 @@ This demonstrates that the Table 2 summary counts and the Zenodo g attachment ar
 - The audit does not infer the authors' selection rule and does not establish the cause of the 11,602 residuals.
 
 Keep the source-coverage issue separate from the candidate-membership issue. Do not change the selector, thresholds, baseline, or acceptance criteria based on these diagnostics alone.
+
+
+## Independent frozen-membership crosswalk — 2026-11-02
+
+The current branch CI completed a full object-level crosswalk from the independent frozen Zenodo membership file (DOI `10.5281/zenodo.5764899`, `1st_layer.csv`) through Table 2 ZTF names to authoritative Table 2 `Seq` values.
+
+- Workflow run: [41417954609](https://github.com/saeed92m/ztf-classifier/actions/runs/41417954609).
+- Artifact: `13128218475`, `cpvs-full-zenodo-membership-crosswalk.zip`.
+- Manifest status: `VERIFIED`.
+- Table 2 rows and unique Seq values: 781,602.
+- Frozen Zenodo rows, unique names, and unique Seq values: 730,184.
+- Unmapped published names: 0.
+- Sorted published Seq SHA-256: `18fba7523a4f66fa2314d017433e3ef8bdbe85f1980557bc1f1e0dc61094774c`.
+- This hash is identical to the raw CDS Table 4 / Zenodo membership hash already verified in the raw reconciliation.
+- Zenodo Table 2 source SHA-256: `9139e4edea0c129772a1d9ac994512183733907e9585aaf1a6f35e4e1cd2e6ff`.
+- Frozen Zenodo membership CSV SHA-256: `c235df101bf7a130b5dccdd95b786ac347f2b7ef24fc49ed7ae989aa8625437`.
+- Output `published_membership_seq.tsv` SHA-256: `ee5062c8cd6368579e803f2df66f0d2e991a5b2cc9cfaa6d6662ba335f677721`.
+- The workflow did not use raw Table 4. This is an independent membership crosswalk, not a direct byte comparison.
+
+The 17 residual IDs listed above have zero intersection with this independently reconstructed 730,184-member set. This confirms their non-membership in the frozen reference; it does not explain why the paper excluded them.
