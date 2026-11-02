@@ -5,14 +5,14 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gzip
 import json
 import math
 import pathlib
+import re
 from collections import Counter
 from datetime import UTC, datetime
 from typing import Any
-
-from ztf_classifier.validation.derivation import _iter_rows
 
 SNR_FACTOR = 1.0857362047581296
 LN10_OVER_2P5 = math.log(10.0) / 2.5
@@ -36,6 +36,66 @@ def read_controls(path: pathlib.Path) -> list[dict[str, str]]:
     if len(rows) != 55 or len({row["SourceID"] for row in rows}) != 55:
         raise ValueError(f"Expected 55 unique controls, got {len(rows)}")
     return rows
+
+
+def split_fields(line: str) -> list[str]:
+    stripped = line.strip()
+    if "\t" in stripped:
+        return [value.strip() for value in stripped.split("\t")]
+    if "," in stripped:
+        return [value.strip() for value in next(csv.reader([stripped], delimiter=","))]
+    return re.split(r"\s+", stripped)
+
+
+def iter_photometry_rows(path: pathlib.Path, error_column: str, mag_column: str):
+    """Stream original Zenodo files using their documented named columns."""
+    candidates = (
+        [path]
+        if path.is_file()
+        else sorted(
+            item
+            for item in path.rglob("*")
+            if item.is_file()
+            and item.suffix.lower() in {".csv", ".txt", ".dat", ".gz", ""}
+        )
+    )
+    matched_files = 0
+    for candidate in candidates:
+        opener = gzip.open if candidate.suffix.lower() == ".gz" else open
+        with opener(candidate, "rt", encoding="utf-8", errors="replace", newline="") as stream:
+            header = None
+            indexes = None
+            for line in stream:
+                if not line.strip():
+                    continue
+                header_candidate = line.strip()
+                if header_candidate.startswith("#"):
+                    header_candidate = header_candidate[1:].strip()
+                fields = split_fields(header_candidate)
+                normalized = {value.strip().lower(): index for index, value in enumerate(fields)}
+                required = {"sourceid", mag_column.lower(), error_column.lower()}
+                if required.issubset(normalized):
+                    header = fields
+                    indexes = normalized
+                    break
+            if header is None or indexes is None:
+                continue
+            matched_files += 1
+            for line in stream:
+                if not line.strip() or line.lstrip().startswith("#"):
+                    continue
+                values = split_fields(line)
+                if len(values) != len(header):
+                    continue
+                yield {
+                    name: values[index]
+                    for name, index in indexes.items()
+                    if index < len(values)
+                }
+    if matched_files == 0:
+        raise ValueError(
+            f"No original photometry file below {path} has SourceID, {mag_column}, and {error_column}"
+        )
 
 
 def summarize_band(
