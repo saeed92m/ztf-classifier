@@ -76,4 +76,3 @@ def test_iter_photometry_rows_uses_documented_headerless_schema(
     assert rows[0]["gmag"] == "18.0"
     assert rows[0]["e_gmag"] == "0.20"
     assert rows[0]["g_flag"] == "0"
-
