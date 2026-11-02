@@ -74,10 +74,12 @@ jobs:
           if len(files) != 1:
               raise SystemExit(f"Expected one non-metadata data file, found {[str(p) for p in files]}")
           path = files[0]
-          first_lines, widths = [], collections.Counter()
-          token_counts, first_counts, substring_counts = collections.Counter(), collections.Counter(), collections.Counter()
+          first_lines = []
+          field_widths = collections.Counter()
+          first_column_counts = collections.Counter()
+          any_field_counts = collections.Counter()
           samples = {source_id: [] for source_id in ids}
-          pattern = re.compile(r"(?<!\d)(?:" + "|".join(re.escape(x) for x in sorted(ids, key=len, reverse=True)) + r")(?!\d)")
+          expected_counts = {row["SourceID"].strip(): int(float(row["Ng"])) for row in controls}
           total_lines = 0
           digest = hashlib.sha256()
           with path.open("rb") as raw:
@@ -87,22 +89,24 @@ jobs:
                   if not line:
                       continue
                   total_lines += 1
+                  fields = [value.strip() for value in line.split(",")]
+                  field_widths[len(fields)] += 1
                   if len(first_lines) < 15:
-                      first_lines.append({"line_number": total_lines, "repr": repr(line[:600]), "length": len(line)})
-                  tokens = line.split()
-                  widths[len(tokens)] += 1
-                  if tokens and tokens[0] in ids:
-                      first_counts[tokens[0]] += 1
-                  for token in set(tokens):
-                      token = token.strip(",;|[]()")
-                      if token in ids:
-                          token_counts[token] += 1
-                          if len(samples[token]) < 3:
-                              samples[token].append({"line_number": total_lines, "tokens": tokens[:24], "raw": line[:600]})
-                  for match in pattern.finditer(line):
-                      source_id = match.group(0)
-                      substring_counts[source_id] += 1
+                      first_lines.append({"line_number": total_lines, "repr": repr(line[:600]), "length": len(line), "field_count": len(fields)})
+                  seq = fields[0] if fields else ""
+                  if seq in ids:
+                      first_column_counts[seq] += 1
+                      if len(samples[seq]) < 3:
+                          samples[seq].append({"line_number": total_lines, "fields": fields, "raw": line[:600]})
+                  for value in set(fields):
+                      if value in ids:
+                          any_field_counts[value] += 1
 
+          row_count_mismatches = {
+              source_id: {"observed_g_rows": first_column_counts.get(source_id, 0), "Table2_Ng": expected_counts[source_id]}
+              for source_id in sorted(ids, key=int)
+              if first_column_counts.get(source_id, 0) != expected_counts[source_id]
+          }
           report = {
               "archive_md5_expected": "850fcef561dd7407fbe8e19e99100d7a",
               "archive_sha256": sha256_file(archive),
@@ -110,17 +114,19 @@ jobs:
               "data_file_size_bytes": path.stat().st_size,
               "data_file_sha256": digest.hexdigest(),
               "control_count": len(ids),
+              "expected_record_count_from_CDS_ReadMe": 89697393,
               "nonempty_line_count": total_lines,
+              "record_count_matches_CDS_ReadMe": total_lines == 89697393,
               "first_nonempty_lines": first_lines,
-              "whitespace_field_count_distribution": {str(k): v for k, v in sorted(widths.items())},
-              "control_ids_found_as_first_token": sorted(first_counts),
-              "control_ids_found_as_any_exact_token": sorted(token_counts),
-              "control_ids_found_as_substrings": sorted(substring_counts),
-              "exact_token_occurrences": dict(sorted(token_counts.items(), key=lambda x: int(x[0]))),
-              "substring_occurrences": dict(sorted(substring_counts.items(), key=lambda x: int(x[0]))),
-              "sample_matching_lines": samples,
+              "comma_field_count_distribution": {str(k): v for k, v in sorted(field_widths.items())},
+              "control_ids_found_in_first_csv_column": sorted(first_column_counts, key=int),
+              "control_ids_found_in_any_csv_field": sorted(any_field_counts, key=int),
+              "first_column_row_counts": dict(sorted(first_column_counts.items(), key=lambda x: int(x[0]))),
+              "expected_Table2_Ng": dict(sorted(expected_counts.items(), key=lambda x: int(x[0]))),
+              "first_column_row_count_mismatches": row_count_mismatches,
+              "sample_matching_rows": samples,
               "controls": controls,
-              "interpretation": "Layout and identifier diagnostic only; no SNR or membership conclusions."
+              "interpretation": "CSV first-column coverage diagnostic only; no SNR or membership conclusions."
           }
           Path("work/output/g_archive_layout_diagnostic.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
           print(json.dumps(report, indent=2, sort_keys=True))
