@@ -33,7 +33,7 @@ A larger number of ZTF OIDs is not automatically a false positive. The official 
 
 Use this source to test classification/OOD behavior and to provide independent source IDs and coordinates for a spatial recovery test. Do not treat `sourceid` as a ZTF identifier. Do not treat the dataset's source labels as a universal taxonomy.
 
-The repository already has a StarEmbed acquisition adapter. The scheduled scientific-validation run on 2026-11-02 reported `acquisition=ACQUIRED`. That confirms acquisition, not classifier performance or recovery accuracy.
+The repository already has a StarEmbed acquisition adapter. The scheduled scientific-validation run on 2026-11-02 reported `acquisition=ACQUIRED`. That confirms acquisition, not classifier performance or recovery accuracy. The separate source-integrity audit in Issue [#210](https://github.com/saeed92m/ztf-classifier/issues/210) reports one duplicate `sourceid` within train and one object-ID overlap between train and test. StarEmbed-derived model evaluation remains blocked until those records and the upstream split semantics are resolved.
 
 ### B. ZTF Bright Transient Survey (BTS) — transient recovery and classification
 
@@ -79,6 +79,8 @@ Run two separate pilots:
 
 The BTS sample uses ascending SHA-256 of the external ZTF ID as its deterministic ordering; it does not use a random seed. Record the sorted sample IDs and sample SHA-256. Do not silently replace failed sample members.
 
+The 2026-11-03 follow-up also queries the DR24 Lightcurves HATS `objectid` index for every recovered Objects Table OID. This records whether a time-series row exists and its `nepochs`. It does not download nested photometry or certify clean epochs.
+
 ### Phase 3 — spatial recovery
 
 For every sampled source, query the official ZTF DR24 Objects Table by sky position with a 5-arcsecond outer radius. Recompute angular separations and report sensitivity at 1, 2, and 5 arcseconds. Keep all returned OIDs, coordinates, filters, and separations. Treat 1 arcsecond as a restrictive diagnostic, not an accepted radius. BTS transient coordinates can be offset from DR24 reference-object coordinates.
@@ -112,21 +114,29 @@ Do not run a full-catalog cross-match until the pilot establishes query cost and
 
 ## BTS pilot results — 2026-11-02
 
-The official BTS CSV request used `subsample=cantrans`, `endpeakmag=19.0`, `quality=y`, and `samprcf=y`. It returned HTTP 200 and 10,551 unique rows for that filtered explorer query; this is not the complete BTS survey catalogue. The acquisition manifest records code revision `a4308f4943a046f4997c5b90304fb6269c2ba459`. The raw response SHA-256 is `af2362275074ff4b6c70523b9db6f2d5991af16fdd8d76ed47520948eb788e82`. The deterministic 100-row sample SHA-256 is `044dc0b3b6a3cf127f50099a7a3f76ae3423df62807564f0c365efb5007bd9a4`.
+The official BTS CSV request used `subsample=cantrans`, `endpeakmag=19.0`, `quality=y`, and `samprcf=y`. It returned HTTP 200 and 10,551 unique rows for that filtered explorer query; this is not the complete BTS survey catalogue. The verified acquisition manifest records code revision `79fff7d3d557df528c591234c410600d6d3735e6`. The raw response SHA-256 is `af2362275074ff4b6c70523b9db6f2d5991af16fdd8d76ed47520948eb788e82`. The deterministic 100-row sample SHA-256 is `044dc0b3b6a3cf127f50099a7a3f76ae3423df62807564f0c365efb5007bd9a4`.
 
 The spatial query used the official IRSA ZTF DR24 Objects Table HATS collection. It processed all 100 targets and returned 773 OID rows within 5 arcseconds. The audit recomputed great-circle separations and produced the following counts:
 
-| Cone radius | Targets with at least one OID | Unmatched targets | Targets with multiple OIDs | Same-filter multiple OIDs |
-|---:|---:|---:|---:|---:|
-| 1 arcsec | 48 | 52 | 33 | 27 |
-| 2 arcsec | 78 | 22 | 69 | 59 |
-| 5 arcsec | 97 | 3 | 94 | 88 |
+| Cone radius | Targets with at least one OID | Unmatched targets | OID rows | Targets with multiple OIDs | Same-filter multiple OIDs | Same-filter multi-OIDs across partitions | Same-filter multi-OIDs within one partition |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 arcsec | 48 | 52 | 160 | 33 | 27 | 27 | 0 |
+| 2 arcsec | 78 | 22 | 338 | 69 | 59 | 58 | 15 |
+| 5 arcsec | 97 | 3 | 773 | 94 | 88 | 81 | 77 |
 
-At 5 arcseconds, the maximum multiplicity was 22 OIDs for one BTS coordinate. At 1 arcsecond, the 48 matched targets had 160 OID rows. For the 97 targets with at least one match inside 5 arcseconds, the nearest-match separation had a median of 1.051 arcseconds, a mean of 1.330 arcseconds, a 90th percentile of 3.322 arcseconds, and a maximum of 4.913 arcseconds. Across all 773 returned OID rows, the median separation was 2.289 arcseconds. The 22-OID example is BTS source `ZTF19aaklqod` (TNS `SN2020ctr`, type `SN Ia`); it has 9 `zg`, 5 `zi`, and 8 `zr` OIDs within 5 arcseconds, but only one OID within 1 arcsecond. This demonstrates why a 5-arcsecond cone is a candidate-generation radius, not an identity rule. The raw DR24 match CSV SHA-256 is `32221405752ac3424054832c797ea502a6c19739b3201b87c7dbb397d04ce5f6`.
+At 5 arcseconds, the maximum multiplicity was 22 OIDs for one BTS coordinate. The nearest-match separation statistics were: 1 arcsec radius, median 0.496 arcsec, mean 0.519 arcsec, 90th percentile 0.983 arcsec, maximum 0.998 arcsec; 2 arcsec radius, median 0.831 arcsec, mean 0.873 arcsec, 90th percentile 1.636 arcsec, maximum 1.934 arcsec; 5 arcsec radius, median 1.051 arcsec, mean 1.330 arcsec, 90th percentile 3.322 arcsec, maximum 4.913 arcsec. Across all 773 returned OID rows, the median separation was 2.289 arcseconds, the mean was 2.456 arcseconds, the 90th percentile was 4.436 arcseconds, and the maximum was 4.995 arcseconds. The 22-OID example is BTS source `ZTF19aaklqod` (TNS `SN2020ctr`, type `SN Ia`); it has 9 `zg`, 5 `zi`, and 8 `zr` OIDs within 5 arcseconds, but only one OID within 1 arcsecond. This demonstrates why a 5-arcsecond cone is a candidate-generation radius, not an identity rule. The raw DR24 match CSV SHA-256 is `daf9e8196e475b50442d5fb8fa1d0346aa5b51df060f9ef104135a2c59fbf326`.
 
-The complete evidence artifact is attached to GitHub Actions run [41488299913](https://github.com/saeed92m/ztf-classifier/actions/runs/41488299913). Artifact ID: `13163452038`. ZIP SHA-256: `4e83841123920cdad7feaf72ffc2e1cddc47b276fb5f6cc7faa544c77d233844`.
+The schema-aware evidence artifact is attached to GitHub Actions run [41525750067](https://github.com/saeed92m/ztf-classifier/actions/runs/41525750067). Artifact ID: `13179927852`. ZIP SHA-256: `dbbd39759d11645cfa044538d786960b3bf221d25a9b73b849f136a735e1f830`.
 
-The initial match artifact contains OID, RA, Dec, and filter code, but no field/quadrant identifiers. Therefore, its same-filter multiplicity counts are descriptive only. They cannot distinguish field/quadrant boundary splits from other close neighbors. The updated query now introspects the DR24 HATS schema and requests `field`, `ccdid`, `qid`, `rcid`, and `fid` when available. Its v3 query manifest records the full available-column list, a SHA-256 of that schema list, the code commit, Python/LSDB/s3fs versions, and any unavailable optional provenance columns. The updated auditor writes a per-match CSV with recomputed angular separation and partitions OIDs by field/readout channel when the metadata is complete. Two mocked schema-contract tests were added. The updated source-backed query has not yet been verified against a new DR24 artifact. Until then, the initial counts remain the only measured results. The 5-arcsecond result is a broad candidate set, not a validated cross-match. The 1-arcsecond result is more restrictive but does not prove identity for transient sources. No precision, recall, or false-positive rate is claimed. The official IRSA DR24 tutorial also notes that the Objects Table can contain more objects than the Lightcurves Table. An Objects Table OID match therefore does not prove that a usable photometric time series exists for that OID. A follow-up must query the Lightcurves HATS index for every retained OID and record light-curve availability separately.
+The live Objects Table schema exposed 76 columns. The query selected `field`, `ccdid`, `qid`, and `fid`; `rcid` was not available. The schema-column SHA-256 is `8cb49b5d90cc6df36c306daf08be4aa0402a19de17c2a55058e99064336541f5`. The query used Python 3.11.16, LSDB 0.10.4, and s3fs 2026.9.0. The code revision was `79fff7d3d557df528c591234c410600d6d3735e6`. All 100 targets were processed. The 773 returned OIDs were unique across 97 matched BTS targets; no OID was shared between BTS targets.
+
+The provenance-aware audit shows that all 27 same-filter multi-OID cases at 1 arcsecond span different field/CCD/quadrant partitions. No target has same-filter multi-OIDs within one partition at this radius. At 2 arcseconds, 15 targets have same-filter multi-OIDs within one partition. At 5 arcseconds, 77 targets do. This is strong evidence that the wider cone includes additional nearby Objects Table entries in the same partition. It is not proof that every such entry is a false association. The 1-arcsecond result is consistent with IRSA's guidance that a 1-arcsecond cone can be reasonable for combining ZTF objects, but it is not an accepted identity rule.
+
+The per-match audit contains one row for each of the 773 OIDs and records recomputed angular separation plus field/CCD/quadrant/filter provenance. The raw match CSV SHA-256 is `daf9e8196e475b50442d5fb8fa1d0346aa5b51df060f9ef104135a2c59fbf326`; the per-match audit SHA-256 is `1ffaaeaa32c506d451c0241abf07f8450c1a47de749457f1d582e99de23468c3`; the per-object audit SHA-256 is `be0b248f36f8164f614c65ce8a811cf1c6924db213f3d38304f13377308963fd`.
+
+The official IRSA DR24 tutorial notes that the Objects Table can contain more objects than the Lightcurves Table. An Objects Table OID match therefore does not prove that a time-series row exists. PR #246 now adds an indexed Lightcurves HATS `objectid` lookup. Its source-backed execution is in progress; no availability count is claimed yet.
+
+These results remain positional diagnostics. They do not establish physical identity, cross-match precision/recall, or model accuracy.
 
 The 100-object sample contains 62 rows with a non-placeholder type and 38 rows with type `-`. The full BTS snapshot contains 3,374 unclassified rows. This sample is suitable for the spatial-recovery pilot, not for a class-balanced classification benchmark.
 
