@@ -1,60 +1,21 @@
 #!/usr/bin/env python3
-"""Retrieve original CPVS g/r photometry for the 55 four-field-only controls."""
+"""Audit original Zenodo g/r photometry for the 55 CPVS control objects."""
 
 from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import math
 import pathlib
-import time
-import urllib.error
-import urllib.parse
-import urllib.request
 from collections import Counter
 from datetime import UTC, datetime
 from typing import Any
 
-VIZIER_URL = "https://vizier.nao.ac.jp/viz-bin/asu-tsv"
+from ztf_classifier.validation.derivation import _iter_rows
+
 SNR_FACTOR = 1.0857362047581296
 LN10_OVER_2P5 = math.log(10.0) / 2.5
-USER_AGENT = "ztf-classifier-cpvs-control-audit/1.0"
-
-
-def parse_vizier_tsv(payload: bytes, expected_seq: str) -> list[dict[str, str]]:
-    """Parse one VizieR TSV response while ignoring units/type/separator rows."""
-    text = payload.decode("utf-8-sig", errors="strict")
-    lines = [
-        line.rstrip("\r\n")
-        for line in text.splitlines()
-        if line.strip() and not line.lstrip().startswith("#")
-    ]
-    header_index = None
-    header: list[str] = []
-    for index, line in enumerate(lines):
-        fields = next(csv.reader([line], delimiter="\t"))
-        normalized = [field.strip() for field in fields]
-        if {"Seq", "MJD", "mag", "e_mag", "flag"}.issubset(normalized):
-            header_index = index
-            header = normalized
-            break
-    if header_index is None:
-        raise ValueError("VizieR response has no Seq/MJD/mag/e_mag/flag header")
-    result: list[dict[str, str]] = []
-    for line in lines[header_index + 1 :]:
-        fields = next(csv.reader([line], delimiter="\t"))
-        if len(fields) != len(header):
-            continue
-        row = dict(zip(header, (value.strip() for value in fields), strict=True))
-        seq = row.get("Seq", "")
-        if not seq.isdecimal():
-            continue
-        if seq != expected_seq:
-            continue
-        result.append(row)
-    return result
 
 
 def finite_float(value: object) -> float | None:
@@ -65,316 +26,223 @@ def finite_float(value: object) -> float | None:
     return number if math.isfinite(number) else None
 
 
-def band_metrics(rows: list[dict[str, str]], threshold: float) -> dict[str, Any]:
-    """Apply the historical magnitude-error SNR rule and retain alternatives."""
-    valid = []
-    qualifying = []
-    exact_qualifying = []
-    inverse_error_qualifying = []
-    flags: Counter[str] = Counter()
-    for row in rows:
-        magnitude = finite_float(row.get("mag"))
-        error = finite_float(row.get("e_mag"))
+def read_controls(path: pathlib.Path) -> list[dict[str, str]]:
+    with path.open("r", encoding="utf-8-sig", newline="") as stream:
+        reader = csv.DictReader(stream, delimiter="\t")
+        required = {"SourceID", "ZTF", "Ng", "Nr", "candidate", "Table4_member"}
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+            raise ValueError(f"Control TSV missing columns: {sorted(required)}")
+        rows = list(reader)
+    if len(rows) != 55 or len({row["SourceID"] for row in rows}) != 55:
+        raise ValueError(f"Expected 55 unique controls, got {len(rows)}")
+    return rows
+
+
+def summarize_band(
+    path: pathlib.Path,
+    source_ids: set[str],
+    error_column: str,
+    mag_column: str,
+    flag_columns: tuple[str, ...],
+    threshold: float,
+) -> dict[str, dict[str, Any]]:
+    """Scan all original band files once and retain rows for the 55 controls."""
+    result = {
+        source_id: {
+            "row_count": 0,
+            "valid_photometry_rows": 0,
+            "qualifying_detections_approximate": 0,
+            "qualifying_detections_exact": 0,
+            "qualifying_detections_inverse_error": 0,
+            "passes_approximate_snr": False,
+            "passes_exact_snr": False,
+            "passes_inverse_error_snr": False,
+            "max_approximate_snr": None,
+            "max_exact_snr": None,
+            "minimum_magnitude_error": None,
+            "qualifying_flag_counts": {},
+        }
+        for source_id in source_ids
+    }
+    flags = {source_id: Counter() for source_id in source_ids}
+    for row in _iter_rows(path, required_columns=("SourceID", error_column, mag_column)):
+        source_id = str(row.get("SourceID", "")).strip()
+        if source_id not in result:
+            continue
+        item = result[source_id]
+        item["row_count"] += 1
+        magnitude = finite_float(row.get(mag_column))
+        error = finite_float(row.get(error_column))
         if magnitude is None or magnitude == 0 or error is None or error <= 0:
             continue
+
+        item["valid_photometry_rows"] += 1
         approximate_snr = SNR_FACTOR / error
         try:
             exact_snr = 1.0 / math.expm1(error * LN10_OVER_2P5)
         except (OverflowError, ZeroDivisionError):
             exact_snr = 0.0
         inverse_error_snr = 1.0 / error
-        item = {
-            "magnitude": magnitude,
-            "error": error,
-            "approximate_snr": approximate_snr,
-            "exact_snr": exact_snr,
-            "inverse_error_snr": inverse_error_snr,
-        }
-        valid.append(item)
+
+        item["max_approximate_snr"] = max(
+            approximate_snr,
+            item["max_approximate_snr"] if item["max_approximate_snr"] is not None else approximate_snr,
+        )
+        item["max_exact_snr"] = max(
+            exact_snr,
+            item["max_exact_snr"] if item["max_exact_snr"] is not None else exact_snr,
+        )
+        item["minimum_magnitude_error"] = min(
+            error,
+            item["minimum_magnitude_error"] if item["minimum_magnitude_error"] is not None else error,
+        )
+
         if approximate_snr >= threshold:
-            qualifying.append(item)
+            item["qualifying_detections_approximate"] += 1
+            item["passes_approximate_snr"] = True
+            flag_key = next(
+                (key for key in row if key.strip().lower() in {name.lower() for name in flag_columns}),
+                None,
+            )
+            if flag_key is not None and str(row[flag_key]).strip():
+                flags[source_id][str(row[flag_key]).strip()] += 1
         if exact_snr >= threshold:
-            exact_qualifying.append(item)
+            item["qualifying_detections_exact"] += 1
+            item["passes_exact_snr"] = True
         if inverse_error_snr >= threshold:
-            inverse_error_qualifying.append(item)
-        raw_flag = row.get("flag", "").strip()
-        if raw_flag:
-            flags[raw_flag] += 1
+            item["qualifying_detections_inverse_error"] += 1
+            item["passes_inverse_error_snr"] = True
 
-    return {
-        "row_count": len(rows),
-        "valid_photometry_rows": len(valid),
-        "qualifying_detections_approximate": len(qualifying),
-        "qualifying_detections_exact": len(exact_qualifying),
-        "qualifying_detections_inverse_error": len(inverse_error_qualifying),
-        "passes_approximate_snr": bool(qualifying),
-        "passes_exact_snr": bool(exact_qualifying),
-        "passes_inverse_error_snr": bool(inverse_error_qualifying),
-        "max_approximate_snr": max(
-            (item["approximate_snr"] for item in valid), default=None
-        ),
-        "max_exact_snr": max((item["exact_snr"] for item in valid), default=None),
-        "minimum_magnitude_error": min((item["error"] for item in valid), default=None),
-        "qualifying_flag_counts": dict(sorted(flags.items())),
-    }
+    for source_id, item in result.items():
+        item["qualifying_flag_counts"] = dict(sorted(flags[source_id].items()))
+    return result
 
 
-def request_rows(
-    seq: str, band: str, raw_dir: pathlib.Path, retries: int = 3
-) -> tuple[list[dict[str, str]], dict[str, Any]]:
-    table = f"ztf2{band}"
-    params = {
-        "-source": f"J/ApJS/249/18/{table}",
-        "-out": "Seq,MJD,mag,e_mag,flag",
-        "-out.max": "10000",
-        "Seq": seq,
-    }
-    url = VIZIER_URL + "?" + urllib.parse.urlencode(params)
-    raw_dir.mkdir(parents=True, exist_ok=True)
-    raw_path = raw_dir / f"{table}_seq_{seq}.tsv"
-    last_error = None
-    for attempt in range(1, retries + 1):
-        try:
-            request = urllib.request.Request(
-                url,
-                headers={
-                    "User-Agent": USER_AGENT,
-                    "Accept": "text/tab-separated-values",
-                },
-            )
-            with urllib.request.urlopen(request, timeout=60) as response:
-                payload = response.read()
-                status = response.status
-            raw_path.write_bytes(payload)
-            rows = parse_vizier_tsv(payload, seq)
-            return rows, {
-                "status": "OK",
-                "http_status": status,
-                "url": url,
-                "response_bytes": len(payload),
-                "response_sha256": hashlib.sha256(payload).hexdigest(),
-                "response_file": raw_path.name,
-                "rows_returned": len(rows),
-                "attempts": attempt,
+def run_audit(
+    controls_path: pathlib.Path,
+    g_path: pathlib.Path,
+    r_path: pathlib.Path,
+    output: pathlib.Path,
+) -> dict[str, Any]:
+    controls = read_controls(controls_path)
+    ids = {row["SourceID"].strip() for row in controls}
+    g = summarize_band(g_path, ids, "e_gmag", "gmag", ("g_flag", "catflags", "flag"), 2.5)
+    r = summarize_band(r_path, ids, "e_rmag", "rmag", ("r_flag", "catflags", "flag"), 3.0)
+    output.mkdir(parents=True, exist_ok=True)
+
+    per_object = []
+    for control in controls:
+        source_id = control["SourceID"].strip()
+        g_item, r_item = g[source_id], r[source_id]
+        per_object.append(
+            {
+                "SourceID": source_id,
+                "ZTF": control["ZTF"],
+                "Table2_Ng": int(float(control["Ng"])),
+                "Table2_Nr": int(float(control["Nr"])),
+                "historical_candidate_member": control["candidate"].lower() == "true",
+                "Table4_member": control["Table4_member"].lower() == "true",
+                "g": g_item,
+                "r": r_item,
+                "g_row_count_matches_table2_Ng": g_item["row_count"] == int(float(control["Ng"])),
+                "r_row_count_matches_table2_Nr": r_item["row_count"] == int(float(control["Nr"])),
+                "reconstructed_two_band_snr_candidate": (
+                    g_item["passes_approximate_snr"] and r_item["passes_approximate_snr"]
+                ),
+                "failed_approximate_snr_bands": [
+                    band
+                    for band, metrics in (("g", g_item), ("r", r_item))
+                    if not metrics["passes_approximate_snr"]
+                ],
             }
-        except (
-            urllib.error.URLError,
-            TimeoutError,
-            UnicodeDecodeError,
-            ValueError,
-        ) as exc:
-            last_error = f"{type(exc).__name__}: {exc}"
-            time.sleep(min(2**attempt, 8))
-    return [], {
-        "status": "ERROR",
-        "url": url,
-        "error": last_error or "unknown request error",
-        "attempts": retries,
-    }
+        )
 
-
-def read_controls(path: pathlib.Path) -> list[dict[str, str]]:
-    with path.open("r", encoding="utf-8-sig", newline="") as stream:
-        reader = csv.DictReader(stream, delimiter="\t")
-        required = {"SourceID", "ZTF", "Ng", "Nr", "candidate", "Table4_member"}
-        if not reader.fieldnames or not required.issubset(reader.fieldnames):
-            raise ValueError(
-                f"Control TSV missing required columns: {sorted(required)}"
+    per_band_rows = []
+    for band, values in (("g", g), ("r", r)):
+        for source_id, item in sorted(values.items(), key=lambda pair: int(pair[0])):
+            per_band_rows.append(
+                {
+                    "SourceID": source_id,
+                    "band": band,
+                    **{
+                        key: item[key]
+                        for key in (
+                            "row_count",
+                            "valid_photometry_rows",
+                            "qualifying_detections_approximate",
+                            "qualifying_detections_exact",
+                            "qualifying_detections_inverse_error",
+                            "passes_approximate_snr",
+                            "passes_exact_snr",
+                            "passes_inverse_error_snr",
+                            "max_approximate_snr",
+                            "max_exact_snr",
+                            "minimum_magnitude_error",
+                        )
+                    },
+                }
             )
-        rows = list(reader)
-    if len(rows) != 55:
-        raise ValueError(f"Expected 55 four-field-only controls, got {len(rows)}")
-    if len({row["SourceID"] for row in rows}) != 55:
-        raise ValueError("Control TSV contains duplicate SourceIDs")
-    return rows
+    with (output / "per_band_snr_metrics.tsv").open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=list(per_band_rows[0]),
+            delimiter="\t",
+            lineterminator="\n",
+        )
+        writer.writeheader()
+        writer.writerows(per_band_rows)
+
+    (output / "per_object_snr_metrics.json").write_text(
+        json.dumps(per_object, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    complete = all(
+        item["g"]["row_count"] > 0 and item["r"]["row_count"] > 0
+        for item in per_object
+    )
+    report = {
+        "status": "COMPLETE" if complete else "PARTIAL",
+        "source": "Zenodo 10.5281/zenodo.3886372 original ztf2g.zip and ztf2r.zip",
+        "retrieved_utc": datetime.now(UTC).isoformat(),
+        "control_count": len(controls),
+        "g_objects_with_photometry": sum(item["row_count"] > 0 for item in g.values()),
+        "r_objects_with_photometry": sum(item["row_count"] > 0 for item in r.values()),
+        "g_row_counts_match_Table2_Ng": sum(item["g_row_count_matches_table2_Ng"] for item in per_object),
+        "r_row_counts_match_Table2_Nr": sum(item["r_row_count_matches_table2_Nr"] for item in per_object),
+        "reconstructed_as_two_band_snr_candidates": sum(
+            item["reconstructed_two_band_snr_candidate"] for item in per_object
+        ),
+        "controls_reconstructed_as_candidates": [
+            item["SourceID"] for item in per_object if item["reconstructed_two_band_snr_candidate"]
+        ],
+        "failed_g_snr": sum("g" in item["failed_approximate_snr_bands"] for item in per_object),
+        "failed_r_snr": sum("r" in item["failed_approximate_snr_bands"] for item in per_object),
+        "all_controls_are_nonmembers": all(
+            not item["historical_candidate_member"] and not item["Table4_member"]
+            for item in per_object
+        ),
+        "limitations": [
+            "This re-evaluates the historical per-band SNR predicate on the original archived light curves.",
+            "It does not establish author intent for the four-field Table 2 metadata condition.",
+            "A mismatch between row_count and Table2 Ng/Nr must be investigated before interpreting SNR results.",
+        ],
+    }
+    (output / "report.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return report
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--controls", type=pathlib.Path, required=True)
+    parser.add_argument("--g", type=pathlib.Path, required=True)
+    parser.add_argument("--r", type=pathlib.Path, required=True)
     parser.add_argument("--output", type=pathlib.Path, required=True)
-    parser.add_argument("--delay-seconds", type=float, default=0.25)
     args = parser.parse_args()
-
-    controls = read_controls(args.controls)
-    args.output.mkdir(parents=True, exist_ok=True)
-    raw_dir = args.output / "raw_queries"
-    query_manifest: list[dict[str, Any]] = []
-    object_results: list[dict[str, Any]] = []
-    per_band_fields = [
-        "SourceID",
-        "ZTF",
-        "band",
-        "table2_expected_rows",
-        "row_count",
-        "valid_photometry_rows",
-        "qualifying_detections_approximate",
-        "qualifying_detections_exact",
-        "qualifying_detections_inverse_error",
-        "passes_approximate_snr",
-        "passes_exact_snr",
-        "passes_inverse_error_snr",
-        "max_approximate_snr",
-        "max_exact_snr",
-        "minimum_magnitude_error",
-        "query_status",
-        "response_sha256",
-        "response_bytes",
-        "error",
-    ]
-    per_band_rows: list[dict[str, Any]] = []
-
-    for index, control in enumerate(controls):
-        seq = control["SourceID"].strip()
-        per_object: dict[str, Any] = {
-            "SourceID": seq,
-            "ZTF": control["ZTF"],
-            "historical_candidate_member": control["candidate"].lower() == "true",
-            "Table4_member": control["Table4_member"].lower() == "true",
-            "Table2_Ng": int(float(control["Ng"])),
-            "Table2_Nr": int(float(control["Nr"])),
-            "bands": {},
-        }
-        for band, threshold, count_key in (
-            ("g", 2.5, "Ng"),
-            ("r", 3.0, "Nr"),
-        ):
-            rows, query = request_rows(seq, band, raw_dir)
-            query_manifest.append(
-                {"SourceID": seq, "ZTF": control["ZTF"], "band": band, **query}
-            )
-            metrics = band_metrics(rows, threshold) if query["status"] == "OK" else {}
-            per_object["bands"][band] = {
-                "query_status": query["status"],
-                **metrics,
-            }
-            per_band_rows.append(
-                {
-                    "SourceID": seq,
-                    "ZTF": control["ZTF"],
-                    "band": band,
-                    "table2_expected_rows": control[count_key],
-                    "row_count": len(rows),
-                    "valid_photometry_rows": metrics.get("valid_photometry_rows"),
-                    "qualifying_detections_approximate": metrics.get(
-                        "qualifying_detections_approximate"
-                    ),
-                    "qualifying_detections_exact": metrics.get(
-                        "qualifying_detections_exact"
-                    ),
-                    "qualifying_detections_inverse_error": metrics.get(
-                        "qualifying_detections_inverse_error"
-                    ),
-                    "passes_approximate_snr": metrics.get("passes_approximate_snr"),
-                    "passes_exact_snr": metrics.get("passes_exact_snr"),
-                    "passes_inverse_error_snr": metrics.get("passes_inverse_error_snr"),
-                    "max_approximate_snr": metrics.get("max_approximate_snr"),
-                    "max_exact_snr": metrics.get("max_exact_snr"),
-                    "minimum_magnitude_error": metrics.get("minimum_magnitude_error"),
-                    "query_status": query["status"],
-                    "response_sha256": query.get("response_sha256"),
-                    "response_bytes": query.get("response_bytes"),
-                    "error": query.get("error"),
-                }
-            )
-            time.sleep(max(0.0, args.delay_seconds))
-        g = per_object["bands"]["g"]
-        r = per_object["bands"]["r"]
-        per_object["historical_candidate_reconstructed"] = (
-            g.get("passes_approximate_snr") is True
-            and r.get("passes_approximate_snr") is True
-        )
-        per_object["failed_approximate_snr_bands"] = [
-            band
-            for band, metrics in (("g", g), ("r", r))
-            if metrics.get("query_status") != "OK"
-            or metrics.get("passes_approximate_snr") is not True
-        ]
-        per_object["query_complete"] = all(
-            per_object["bands"][band].get("query_status") == "OK" for band in ("g", "r")
-        )
-        per_object["g_row_count_matches_table2_ng"] = (
-            g.get("row_count") == per_object["Table2_Ng"]
-            if g.get("row_count") is not None
-            else None
-        )
-        per_object["r_row_count_matches_table2_nr"] = (
-            r.get("row_count") == per_object["Table2_Nr"]
-            if r.get("row_count") is not None
-            else None
-        )
-        object_results.append(per_object)
-        if (index + 1) % 10 == 0:
-            print(f"Queried {index + 1}/{len(controls)} control objects", flush=True)
-
-    with (args.output / "per_band_snr_metrics.tsv").open(
-        "w", encoding="utf-8", newline=""
-    ) as stream:
-        writer = csv.DictWriter(
-            stream, fieldnames=per_band_fields, delimiter="\t", lineterminator="\n"
-        )
-        writer.writeheader()
-        writer.writerows(per_band_rows)
-
-    (args.output / "per_object_snr_metrics.json").write_text(
-        json.dumps(object_results, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
-    (args.output / "query_manifest.json").write_text(
-        json.dumps(query_manifest, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
-    successful_queries = sum(item["status"] == "OK" for item in query_manifest)
-    reconstructed_candidates = [
-        item
-        for item in object_results
-        if item.get("historical_candidate_reconstructed") is True
-    ]
-    report = {
-        "status": "COMPLETE" if successful_queries == 110 else "PARTIAL",
-        "source": "VizieR J/ApJS/249/18 ztf2g and ztf2r",
-        "retrieved_utc": datetime.now(UTC).isoformat(),
-        "control_count": len(controls),
-        "query_count": len(query_manifest),
-        "successful_queries": successful_queries,
-        "failed_queries": 110 - successful_queries,
-        "historical_candidate_controls": sum(
-            item["historical_candidate_member"] for item in object_results
-        ),
-        "controls_reconstructed_as_two_band_snr_candidates": len(
-            reconstructed_candidates
-        ),
-        "Table2_Ng_row_count_matches": sum(
-            item.get("g_row_count_matches_table2_ng") is True for item in object_results
-        ),
-        "Table2_Nr_row_count_matches": sum(
-            item.get("r_row_count_matches_table2_nr") is True for item in object_results
-        ),
-        "candidate_reconstruction_contradictions": [
-            item["SourceID"] for item in reconstructed_candidates
-        ],
-        "all_controls_have_no_table4_membership": all(
-            item["Table4_member"] is False for item in object_results
-        ),
-        "all_controls_have_no_historical_candidate_membership": all(
-            item["historical_candidate_member"] is False for item in object_results
-        ),
-        "all_successful_queries_have_raw_response_hashes": all(
-            item.get("response_sha256")
-            for item in query_manifest
-            if item["status"] == "OK"
-        ),
-        "limitations": [
-            "The queried rows are the original CDS CPVS ztf2g/ztf2r tables, not current ZTF DR24 lightcurves.",
-            "This audit tests the historical per-band SNR predicate only; it does not establish author intent for the four-field metadata condition.",
-            "A query error or empty table result must be distinguished using query_manifest.json and the retained raw response bytes.",
-        ],
-    }
-    (args.output / "report.json").write_text(
-        json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
-    print(json.dumps(report, indent=2, sort_keys=True))
+    run_audit(args.controls, args.g, args.r, args.output)
     return 0
 
 
