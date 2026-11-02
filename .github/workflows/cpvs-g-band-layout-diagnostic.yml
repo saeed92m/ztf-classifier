@@ -52,8 +52,15 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import collections, csv, hashlib, json
+          import collections, csv, hashlib, json, re
           from pathlib import Path
+
+          def sha256_file(path):
+              digest = hashlib.sha256()
+              with path.open("rb") as stream:
+                  for chunk in iter(lambda: stream.read(8 * 1024 * 1024), b""):
+                      digest.update(chunk)
+              return digest.hexdigest()
 
           controls_path = Path("work/controls.tsv")
           archive = Path("work/archive/ztf2g.zip")
@@ -70,15 +77,13 @@ jobs:
           first_lines, widths = [], collections.Counter()
           token_counts, first_counts, substring_counts = collections.Counter(), collections.Counter(), collections.Counter()
           samples = {source_id: [] for source_id in ids}
+          pattern = re.compile(r"(?<!\\d)(?:" + "|".join(re.escape(x) for x in sorted(ids, key=len, reverse=True)) + r")(?!\\d)")
           total_lines = 0
           digest = hashlib.sha256()
           with path.open("rb") as raw:
               for byte_line in raw:
                   digest.update(byte_line)
-                  try:
-                      line = byte_line.decode("utf-8", errors="replace").strip()
-                  except Exception:
-                      continue
+                  line = byte_line.decode("utf-8", errors="replace").strip()
                   if not line:
                       continue
                   total_lines += 1
@@ -89,17 +94,18 @@ jobs:
                   if tokens and tokens[0] in ids:
                       first_counts[tokens[0]] += 1
                   for token in set(tokens):
+                      token = token.strip(",;|[]()")
                       if token in ids:
                           token_counts[token] += 1
                           if len(samples[token]) < 3:
                               samples[token].append({"line_number": total_lines, "tokens": tokens[:24], "raw": line[:600]})
-                  for source_id in ids:
-                      if source_id in line:
-                          substring_counts[source_id] += 1
+                  for match in pattern.finditer(line):
+                      source_id = match.group(0)
+                      substring_counts[source_id] += 1
 
           report = {
               "archive_md5_expected": "850fcef561dd7407fbe8e19e99100d7a",
-              "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+              "archive_sha256": sha256_file(archive),
               "data_file": str(path),
               "data_file_size_bytes": path.stat().st_size,
               "data_file_sha256": digest.hexdigest(),
