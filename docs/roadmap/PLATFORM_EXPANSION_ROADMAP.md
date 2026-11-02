@@ -1,9 +1,43 @@
 # Astronomical Data Analysis & Discovery Platform — Product Roadmap
 
-Status date: 2026-10-11  
+Status date: 2026-11-03  
 Current immutable software release: v1.0.1  
 Product implementation tracker: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158)  
 Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170)
+
+## Verified platform status — 2026-11-03
+
+See the full evidence-based report: [Project Status Report 2026-11-03](../PROJECT_STATUS_REPORT_2026-11-03.md).
+
+The weighted platform-readiness estimate is **56%**. It measures progress toward the declared cross-platform scientific application. It is not a code-completion percentage and it does not mean the product scientific gate has passed.
+
+| Subsystem | Weight | Readiness |
+|---|---:|---:|
+| Scientific core and model | 18% | 85% |
+| Data acquisition and ingestion | 10% | 60% |
+| Product scientific validation | 20% | 40% |
+| API and application services | 12% | 80% |
+| Workbench and user experience | 12% | 45% |
+| Discovery, anomaly and explainability | 8% | 30% |
+| Cross-platform packaging and deployment | 10% | 15% |
+| CI, security and release engineering | 6% | 90% |
+| Documentation and operations | 4% | 60% |
+| **Weighted total** | **100%** | **56%** |
+
+### Current verified position
+
+- Software release v1.0.1 is published. It contains a Python wheel and source distribution. It is not a self-contained desktop release.
+- The v0.2.0 scientific baseline remains frozen: 150 benchmark objects, 15 ALeRCE reference classes, 42 features, and XGBoost `baseline_v0.2`.
+- Recent full CI run 41493244584 passed 645 tests, skipped 10, and reported 9 warnings. CodeQL and the dependency audit passed. This is engineering evidence, not a product-level scientific pass.
+- The product scientific gate remains fail-closed. The StarEmbed audit reports a duplicate source ID in train and an object-ID overlap between train and test (Issue #210).
+- The DR24 feature-engine smoke test processed 7 of 12 objects; 5 failed filter normalization. Model inference was not run (Issue #188).
+- The initial 100-object BTS-to-DR24 spatial pilot matched 97 targets within 5 arcseconds. This is positional candidate recovery, not cross-match precision/recall or model accuracy. The schema-aware rerun is tracked by PR #246 and its artifact must be reviewed before its results are accepted.
+- The complete 100-object operational test remains open (Issue #222).
+- The full desktop product remains open (Issue #158). No self-contained Windows, macOS, or Linux installer has passed clean-machine acceptance.
+
+### Scope boundary
+
+The CPVS exact historical-reproduction claim remains separate and unresolved in Issue #170. It is excluded from the product-readiness score in the status report. This roadmap does not authorize work on CPVS or any change to its membership rules.
 
 ## Guiding constraints
 - Preserve scientific baseline v0.2.0 and model identity baseline_v0.2.
