@@ -23,7 +23,9 @@ def test_finite_float_rejects_nonfinite_and_invalid_values() -> None:
     assert AUDIT.finite_float("") is None
 
 
-def test_summarize_band_filters_target_ids_and_applies_threshold(tmp_path: pathlib.Path) -> None:
+def test_summarize_band_filters_target_ids_and_applies_threshold(
+    tmp_path: pathlib.Path,
+) -> None:
     source = tmp_path / "g.tsv"
     source.write_text(
         "SourceID\\tgmag\\te_gmag\\tg_flag\\n"
@@ -46,8 +48,7 @@ def test_summarize_band_filters_target_ids_and_applies_threshold(tmp_path: pathl
 def test_summarize_band_fails_when_no_detection_passes(tmp_path: pathlib.Path) -> None:
     source = tmp_path / "r.tsv"
     source.write_text(
-        "SourceID\\trmag\\te_rmag\\tr_flag\\n"
-        "101\\t19.0\\t0.80\\t0\\n",
+        "SourceID\\trmag\\te_rmag\\tr_flag\\n101\\t19.0\\t0.80\\t0\\n",
         encoding="utf-8",
     )
     result = AUDIT.summarize_band(
