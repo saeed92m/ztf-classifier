@@ -58,16 +58,22 @@ This is a Python package release. It is not a desktop installer release.
 
 ### Full CI evidence
 
-CI run [41493244584](https://github.com/saeed92m/ztf-classifier/actions/runs/41493244584) completed with all eight jobs successful. The full test suite reported:
+Current PR-head CI run [41528271371](https://github.com/saeed92m/ztf-classifier/actions/runs/41528271371) reports:
 
-- 645 passed;
+- 650 passed;
 - 10 skipped;
 - 9 warnings;
-- 98.59 seconds for the pytest run.
+- 83% total test coverage.
 
-The dependency audit reported no known vulnerabilities for the audited environment. CodeQL, Product Scope Audit and Scientific Validation contract checks passed on the associated PR head. The source-backed scientific jobs were skipped in the ordinary PR event. The 10 skipped tests remain visible; their detailed reasons must be reviewed before a release-readiness claim.
+Format, lint, cumulative lifecycle validation, the test suite, and runtime smoke tests passed. Package build and dependency audit were still running at the time of this report.
 
-### Frozen scientific baseline
+The 10 skipped tests are gated on optional source-backed inputs. The relevant test modules require raw ZTF data roots, frozen diagnostic feature inputs, or legacy production-model test artifacts. The CI log does not print a per-test skip list. These tests are not counted as passed scientific validation.
+
+The 9 warnings include a Starlette/FastAPI test-client deprecation and numerical warnings from NumPy, Astropy Lomb–Scargle, and a single-label scikit-learn diagnostic. They did not fail the test suite, but they need review.
+
+Earlier full CI run 41493244584 completed with all eight jobs successful. Its dependency audit reported no known vulnerabilities for the audited environment. CodeQL, Product Scope Audit and Scientific Validation contract checks passed on the associated PR head. The source-backed scientific jobs were skipped in the ordinary PR event.
+
+## Frozen scientific baseline
 
 The repository manifests and reproduction report confirm:
 
