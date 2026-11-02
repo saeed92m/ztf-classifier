@@ -78,7 +78,9 @@ def iter_photometry_rows(path: pathlib.Path, error_column: str, mag_column: str)
                 if not line.strip():
                     continue
                 stripped = line.strip()
-                header_candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
+                header_candidate = (
+                    stripped[1:].strip() if stripped.startswith("#") else stripped
+                )
                 fields = split_fields(header_candidate)
                 normalized = {
                     value.strip().lower(): index for index, value in enumerate(fields)
