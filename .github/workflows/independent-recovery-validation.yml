@@ -73,7 +73,7 @@ jobs:
           python -m pip install --upgrade pip==26.2 setuptools==84.1.0 wheel==0.48.0
           python -m pip install -r requirements.lock
           python -m pip install -e .
-          python -m pip install "lsdb[full]==0.10.4"
+          python -m pip install "lsdb==0.10.4" s3fs
 
       - name: Acquire and normalize BTS snapshot
         run: |
