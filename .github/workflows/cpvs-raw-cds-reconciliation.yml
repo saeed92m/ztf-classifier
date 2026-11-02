@@ -9,7 +9,6 @@ on:
       - scripts/cpvs_55_control_photometry.py
       - tests/test_cpvs_raw_cds_reconciliation.py
       - tests/test_cpvs_55_control_photometry.py
-      - .github/workflows/cpvs-raw-cds-reconciliation.yml
   workflow_dispatch:
 
 permissions:
@@ -164,70 +163,6 @@ jobs:
           find work/lightcurves/r -type f -printf '%p %s bytes\\n' | sort
           test -n "$(find work/lightcurves/g -type f -print -quit)"
           test -n "$(find work/lightcurves/r -type f -print -quit)"
-
-      - name: Diagnose raw Zenodo g-band record layout and control-ID coverage
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import collections, json
-          from pathlib import Path
-
-          root = Path("work/lightcurves/g")
-          controls_path = Path("work/output/four_field_only_55.tsv")
-          import csv
-          with controls_path.open(encoding="utf-8-sig", newline="") as stream:
-              controls = list(csv.DictReader(stream, delimiter="\\t"))
-          ids = {row["SourceID"].strip() for row in controls}
-          files = [p for p in root.rglob("*") if p.is_file() and not p.name.startswith("._")]
-          if len(files) != 1:
-              raise SystemExit(f"Expected one non-metadata g-band file, found: {[str(p) for p in files]}")
-          path = files[0]
-          first_lines = []
-          widths = collections.Counter()
-          first_token_counts = collections.Counter()
-          any_token_counts = collections.Counter()
-          substring_counts = collections.Counter()
-          samples = {source_id: [] for source_id in ids}
-          total_lines = 0
-          with path.open("rt", encoding="utf-8", errors="replace", newline="") as stream:
-              for line in stream:
-                  if not line.strip():
-                      continue
-                  total_lines += 1
-                  stripped = line.strip()
-                  if len(first_lines) < 12:
-                      first_lines.append({"line_number": total_lines, "repr": repr(stripped[:500]), "length": len(stripped)})
-                  tokens = stripped.split()
-                  widths[len(tokens)] += 1
-                  if tokens:
-                      first_token_counts[tokens[0]] += 1
-                  for token in set(tokens):
-                      if token in ids:
-                          any_token_counts[token] += 1
-                          if len(samples[token]) < 2:
-                              samples[token].append({"line_number": total_lines, "tokens": tokens[:20], "raw": stripped[:500]})
-                  for source_id in ids:
-                      if source_id in stripped:
-                          substring_counts[source_id] += 1
-          report = {
-              "source_file": str(path),
-              "file_size_bytes": path.stat().st_size,
-              "nonempty_line_count": total_lines,
-              "first_nonempty_lines": first_lines,
-              "whitespace_field_count_distribution": {str(k): v for k, v in sorted(widths.items())},
-              "control_count": len(ids),
-              "control_ids_found_as_first_token": sorted(set(first_token_counts) & ids),
-              "control_ids_found_as_any_exact_token": sorted(any_token_counts),
-              "control_ids_found_as_substrings": sorted(substring_counts),
-              "exact_token_occurrences": dict(sorted(any_token_counts.items(), key=lambda x: int(x[0]))),
-              "substring_occurrences": dict(sorted(substring_counts.items(), key=lambda x: int(x[0]))),
-              "sample_matching_lines": samples,
-              "limitations": ["This is a raw-layout diagnostic, not an SNR result.", "Exact token matching is whitespace-based and does not assume a column until the header or data layout is established."],
-          }
-          Path("work/photometry55/g_archive_layout_diagnostic.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
-          print(json.dumps(report, indent=2, sort_keys=True))
-          PY
 
       - name: Retrieve original per-band photometry for the 55 four-field-only controls
         shell: bash
