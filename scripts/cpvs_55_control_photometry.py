@@ -89,7 +89,7 @@ def iter_photometry_rows(path: pathlib.Path, error_column: str, mag_column: str)
                     continue
                 yield {
                     name: values[index]
-                    for name, index in indexes.items()
+                    for index, name in enumerate(header)
                     if index < len(values)
                 }
     if matched_files == 0:
