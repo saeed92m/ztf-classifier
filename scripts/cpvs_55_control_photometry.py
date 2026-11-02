@@ -48,7 +48,7 @@ def split_fields(line: str) -> list[str]:
 
 
 def iter_photometry_rows(path: pathlib.Path, error_column: str, mag_column: str):
-    """Stream original Zenodo files using their documented named columns."""
+    """Stream original Zenodo files with header or documented headerless schema."""
     candidates = (
         [path]
         if path.is_file()
@@ -59,6 +59,13 @@ def iter_photometry_rows(path: pathlib.Path, error_column: str, mag_column: str)
             and item.suffix.lower() in {".csv", ".txt", ".dat", ".gz", ""}
         )
     )
+    schema = (
+        ["SourceID", "RAdeg", "DEdeg", "HJD", "gmag", "e_gmag", "g_flag"]
+        if error_column.lower() == "e_gmag"
+        else ["SourceID", "RAdeg", "DEdeg", "HJD", "rmag", "e_rmag", "r_flag"]
+        if error_column.lower() == "e_rmag"
+        else None
+    )
     matched_files = 0
     for candidate in candidates:
         opener = gzip.open if candidate.suffix.lower() == ".gz" else open
@@ -66,13 +73,12 @@ def iter_photometry_rows(path: pathlib.Path, error_column: str, mag_column: str)
             candidate, "rt", encoding="utf-8", errors="replace", newline=""
         ) as stream:
             header = None
-            indexes = None
+            first_data_line = None
             for line in stream:
                 if not line.strip():
                     continue
-                header_candidate = line.strip()
-                if header_candidate.startswith("#"):
-                    header_candidate = header_candidate[1:].strip()
+                stripped = line.strip()
+                header_candidate = stripped[1:].strip() if stripped.startswith("#") else stripped
                 fields = split_fields(header_candidate)
                 normalized = {
                     value.strip().lower(): index for index, value in enumerate(fields)
@@ -80,25 +86,39 @@ def iter_photometry_rows(path: pathlib.Path, error_column: str, mag_column: str)
                 required = {"sourceid", mag_column.lower(), error_column.lower()}
                 if required.issubset(normalized):
                     header = fields
-                    indexes = normalized
                     break
-            if header is None or indexes is None:
+                if stripped.startswith("#"):
+                    continue
+                if schema is not None and len(fields) == len(schema):
+                    first_data_line = fields
+                    break
+
+            if header is not None:
+                matched_files += 1
+                for line in stream:
+                    if not line.strip() or line.lstrip().startswith("#"):
+                        continue
+                    values = split_fields(line)
+                    if len(values) != len(header):
+                        continue
+                    yield dict(zip(header, values, strict=True))
+                continue
+
+            if schema is None or first_data_line is None:
                 continue
             matched_files += 1
+            yield dict(zip(schema, first_data_line, strict=True))
             for line in stream:
                 if not line.strip() or line.lstrip().startswith("#"):
                     continue
                 values = split_fields(line)
-                if len(values) != len(header):
-                    continue
-                yield {
-                    name: values[index]
-                    for index, name in enumerate(header)
-                    if index < len(values)
-                }
+                if len(values) == len(schema):
+                    yield dict(zip(schema, values, strict=True))
+
     if matched_files == 0:
         raise ValueError(
-            f"No original photometry file below {path} has SourceID, {mag_column}, and {error_column}"
+            f"No original photometry file below {path} matches the expected "
+            f"SourceID/{mag_column}/{error_column} schema"
         )
 
 
