@@ -206,3 +206,18 @@ The 11,602 historical candidate-only objects split into five mutually exclusive 
 Most candidate-only objects have few detections in the band whose mean magnitude and per-band period are missing. This is consistent with insufficient or unsuccessful band-specific fitting. It is not proof of the authors' selection rule.
 
 The 17 period-only residuals are different: they have substantial detection counts in both bands, positive mean magnitudes, and a positive common period. A simple `Ng/Nr >= 11` rule is not sufficient: 45 candidate-only objects satisfy that count condition. Do not add a detection-count threshold as a substitute for source evidence.
+
+
+## Primary-paper selection wording — explicit reproducibility gap
+
+The full arXiv text for Chan et al. (2022), [arXiv:2112.03306](https://arxiv.org/abs/2112.03306), Section II.1, states that the authors extract 730,184 of 781,602 objects because each selected light curve contains at least one 2.5σ g-band and one 3σ r-band detection. It then states that both bands are phase-folded using the **common period** from Chen et al. Table 2.
+
+The stated selection paragraph does not specify:
+- a minimum `Ng` or `Nr` count;
+- positive Table 2 mean magnitudes `gmag` and `rmag`;
+- positive band-specific periods `Per-g` and `Per-r`;
+- a Table 2 complete-case filter.
+
+Section III.3 says unphysical MGPR interpolations could not be completely eliminated and were manually checked to be below 0.01% of the sample. It does not say these objects were removed from the 730,184 sample.
+
+This creates an explicit reproducibility gap: the published text describes the two-band SNR rule, but the historical reconstruction gives 741,786 candidates. The empirical four-field intersection is exact, but it is not a documented selection rule. The 17/MGPR connection remains a testable hypothesis only. Do not treat it as the cause of the 11,602 difference without direct MGPR evidence or author clarification.
