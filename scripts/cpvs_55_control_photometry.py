@@ -129,9 +129,7 @@ def summarize_band(
         for source_id in source_ids
     }
     flags = {source_id: Counter() for source_id in source_ids}
-    for row in _iter_rows(
-        path, required_columns=("SourceID", error_column, mag_column)
-    ):
+    for row in iter_photometry_rows(path, error_column, mag_column):
         source_id = str(row.get("SourceID", "")).strip()
         if source_id not in result:
             continue
