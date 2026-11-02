@@ -32,7 +32,7 @@ The overall estimate is the weighted sum of the subsystem scores. The weights re
 | Subsystem | Weight | Score | Evidence and remaining gap |
 |---|---:|---:|---|
 | Scientific core and model | 18% | 85% | Frozen 42-feature v0.2.0 contract, XGBoost baseline, persisted artifact, calibration, conformal and OOD diagnostics, CLI and batch inference. Independent population-level validation remains incomplete. |
-| Data acquisition and ingestion | 10% | 60% | Local CSV/Parquet and ALeRCE paths exist. A bounded DR24 light-curve smoke test processed 7/12 objects; 5 failed filter normalization. TAP and AVRO alert ingestion remain open. |
+| Data acquisition and ingestion | 10% | 55% | Local CSV/Parquet and ALeRCE paths exist. A bounded DR24 light-curve smoke test processed 7/12 objects; 5 failed filter normalization. TAP and AVRO alert ingestion remain open. |
 | Product scientific validation | 20% | 40% | Versioned benchmark registry, provenance manifests and fail-closed gate exist. StarEmbed leakage audit is blocked. DR24 feature-engine validation is partial. No independent model-performance claim is established. |
 | API and application services | 12% | 80% | FastAPI v1, application services, persisted jobs/results, catalog/report and provenance contracts exist. Full user-path and clean-install acceptance remains open. |
 | Workbench and user experience | 12% | 45% | API-backed Workbench and several analysis views exist. Data Manager, complete Object/Source Explorer, integrated Help and full discovery review remain incomplete. |
@@ -41,7 +41,7 @@ The overall estimate is the weighted sum of the subsystem scores. The weights re
 | CI, security and release engineering | 6% | 90% | A recent full CI run passed 645 tests, skipped 10, and reported 9 warnings. CodeQL and dependency audit passed; the audited lock environment reported no known vulnerabilities. Latest PR checks are being rerun after a lint correction. |
 | Documentation and operations | 4% | 60% | Architecture, API, roadmap, model and user documentation exist. Several guides still state v1.0.0, the main handbook is dated 2026-10-11, and operational acceptance guides need synchronization. |
 
-**Weighted total: 56%.**
+**Weighted total: 55.5%, rounded to 56%.**
 
 ## Verified release and engineering evidence
 
@@ -108,7 +108,7 @@ These are positional candidate-recovery results. They do not establish physical 
 
 At 1 arcsec, every same-filter multiple-OID case in this sample spans different partitions. At 5 arcsec, 77 targets have same-filter multiple OIDs within at least one field/CCD/quadrant partition. This is consistent with a wider cone including nearby catalog objects. It is not, by itself, a false-positive classification. The per-match audit contains all 773 OIDs and their recomputed separations. The 773 OIDs are unique across the 97 matched BTS targets; no OID was shared by two BTS targets in this sample.
 
-The 100-object spatial query is now complete. The next data check uses the `objectid` index in the DR24 Lightcurves HATS catalog. It will determine whether each Objects Table OID has a corresponding light-curve row. An Objects Table match alone does not prove that a time series is available.
+The 100-object spatial query is complete. The follow-up workflow [41527459598](https://github.com/saeed92m/ztf-classifier/actions/runs/41527459598) has passed its 17 contract tests and is running the indexed `objectid` lookup against DR24 Lightcurves HATS for the recovered OIDs. Its availability artifact is not yet verified. An Objects Table match alone does not prove that a time series is available.
 
 ### Updated schema-aware execution
 
@@ -129,15 +129,16 @@ StarEmbed-derived model metrics are not independent evaluation evidence until th
 
 ### Real DR24 light-curve processing
 
-Issue [#188](https://github.com/saeed92m/ztf-classifier/issues/188) records a bounded source-backed smoke test:
+Issue [#188](https://github.com/saeed92m/ztf-classifier/issues/188) records a bounded source-backed smoke test. I inspected the raw responses in artifact `12691138935`:
 
-- 12 candidate objects from a pinned DR24 subset;
-- 7 feature-engine executions succeeded;
-- 5 failed because no g/r-band rows remained after filter normalization;
-- 0/12 had at least 30 valid points in both bands;
+- 12 candidate OIDs came from a pinned DR24 subset;
+- 5 failed OIDs contain only `filtercode=zi` rows. The g/r feature contract correctly excludes them;
+- 7 feature-engine executions returned partial vectors. All 7 were single-band: 4 r-only and 3 g-only;
+- each partial vector had 19 finite values and 23 NaN values out of 42;
+- 0/12 had both g and r observations;
 - model inference was not run.
 
-This is an ingestion/feature-engine smoke test, not model validation.
+The normalizer is not the root cause. The smoke sample is selected per OID, but DR24 OIDs are filter/field/quadrant-specific. The feature engine needs an astrophysical source group with constituent OIDs across filters. The existing `ngoodobsrel >= 30` criterion does not guarantee g/r coverage. Issue #188 now records this root-cause diagnosis and the required source-group design. This is an ingestion/feature-engine smoke test, not model validation.
 
 ### 100-object operational test
 
@@ -157,14 +158,15 @@ The exact historical CPVS reconstruction remains a separate external-reproductio
 
 ## Immediate next actions
 
-1. Complete the indexed DR24 Lightcurves HATS availability check for the 773 recovered OIDs. Record missing light-curve rows and epoch counts.
-2. Inspect light-curve quality flags and usable cadence for a stratified set. Do not equate a Lightcurves row with scientifically usable photometry.
-3. Review the latest PR CI after the RUF012 correction and the new light-curve tests. Require all checks to complete on the current PR head.
-4. Diagnose the five DR24 feature-engine failures from Issue #188. Do not change the frozen feature set or silently discard failed objects.
-5. Resolve the StarEmbed duplicate/overlap evidence before using its metrics.
-6. Complete the 100-object operational test as a separate end-to-end application test.
-7. Finish desktop workflows, help, clean-machine installation and Windows/macOS/Linux packaging.
-8. Synchronize README, handbook, roadmap, installation guide, user guide and model card. Keep all unresolved evidence visible.
+1. Inspect the indexed DR24 Lightcurves HATS result for the 773 recovered OIDs. Record missing rows, filter IDs and epoch counts.
+2. Design and test astrophysical source grouping across filter/field/quadrant OIDs. Do not change the frozen 42-feature schema.
+3. Build combined g/r observation groups with complete OID provenance and explicit ambiguity handling.
+4. Re-run feature generation on grouped sources. Require g/r coverage and report valid epochs before inference.
+5. Review the latest PR CI after the new Lightcurves tests. Require all checks to complete on the current PR head.
+6. Resolve the StarEmbed duplicate/overlap evidence before using its metrics.
+7. Complete the 100-object operational test as a separate end-to-end application test.
+8. Finish desktop workflows, help, clean-machine installation and Windows/macOS/Linux packaging.
+9. Synchronize README, handbook, roadmap, installation guide, user guide and model card. Keep all unresolved evidence visible.
 
 ## Decision
 
