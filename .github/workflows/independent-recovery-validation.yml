@@ -9,10 +9,6 @@ on:
       - "scripts/acquire_bts_snapshot.py"
       - "scripts/query_ztf_dr24_spatial_recovery.py"
       - "scripts/audit_ztf_recovery_multiplicity.py"
-      - "tests/test_bts_snapshot_acquisition.py"
-      - "tests/test_ztf_recovery_multiplicity.py"
-      - "tests/test_ztf_dr24_query_contract.py"
-      - ".github/workflows/independent-recovery-validation.yml"
   pull_request:
     paths:
       - "scripts/acquire_bts_snapshot.py"
@@ -65,6 +61,7 @@ jobs:
 
   bts-dr24-pilot:
     name: Acquire BTS and query official ZTF DR24
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
