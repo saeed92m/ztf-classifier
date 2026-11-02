@@ -9,6 +9,7 @@ on:
       - "scripts/acquire_bts_snapshot.py"
       - "scripts/query_ztf_dr24_spatial_recovery.py"
       - "scripts/audit_ztf_recovery_multiplicity.py"
+      - "scripts/query_ztf_dr24_lightcurve_availability.py"
   pull_request:
     paths:
       - "scripts/acquire_bts_snapshot.py"
