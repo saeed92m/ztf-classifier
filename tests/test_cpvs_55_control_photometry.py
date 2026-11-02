@@ -28,11 +28,11 @@ def test_summarize_band_filters_target_ids_and_applies_threshold(
 ) -> None:
     source = tmp_path / "g.tsv"
     source.write_text(
-        "SourceID\\tgmag\\te_gmag\\tg_flag\\n"
-        "101\\t18.0\\t0.20\\t0\\n"
-        "101\\t19.0\\t0.60\\t16\\n"
-        "101\\t0\\t0.10\\t0\\n"
-        "202\\t18.0\\t0.10\\t0\\n",
+        "SourceID\tgmag\te_gmag\tg_flag\n"
+        "101\t18.0\t0.20\t0\n"
+        "101\t19.0\t0.60\t16\n"
+        "101\t0\t0.10\t0\n"
+        "202\t18.0\t0.10\t0\n",
         encoding="utf-8",
     )
     result = AUDIT.summarize_band(
@@ -48,7 +48,7 @@ def test_summarize_band_filters_target_ids_and_applies_threshold(
 def test_summarize_band_fails_when_no_detection_passes(tmp_path: pathlib.Path) -> None:
     source = tmp_path / "r.tsv"
     source.write_text(
-        "SourceID\\trmag\\te_rmag\\tr_flag\\n101\\t19.0\\t0.80\\t0\\n",
+        "SourceID\trmag\te_rmag\tr_flag\n101\t19.0\t0.80\t0\n",
         encoding="utf-8",
     )
     result = AUDIT.summarize_band(
