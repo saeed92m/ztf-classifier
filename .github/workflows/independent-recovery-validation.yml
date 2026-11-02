@@ -11,6 +11,7 @@ on:
       - "scripts/audit_ztf_recovery_multiplicity.py"
       - "tests/test_bts_snapshot_acquisition.py"
       - "tests/test_ztf_recovery_multiplicity.py"
+      - "tests/test_ztf_dr24_query_contract.py"
       - ".github/workflows/independent-recovery-validation.yml"
   pull_request:
     paths:
@@ -19,6 +20,7 @@ on:
       - "scripts/audit_ztf_recovery_multiplicity.py"
       - "tests/test_bts_snapshot_acquisition.py"
       - "tests/test_ztf_recovery_multiplicity.py"
+      - "tests/test_ztf_dr24_query_contract.py"
       - ".github/workflows/independent-recovery-validation.yml"
   workflow_dispatch:
     inputs:
