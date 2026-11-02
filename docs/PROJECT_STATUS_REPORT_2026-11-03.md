@@ -24,8 +24,10 @@ Each subsystem receives a score from 0 to 100:
 - 0: no implementation or evidence;
 - 25: design or partial contract only;
 - 50: partial implementation with some tests;
-- 75: implementation exists, but important end-to-end evidence is missing;
+- 75: implementation covers the main path, but important end-to-end evidence is missing;
 - 100: declared acceptance criteria pass with reproducible evidence.
+
+Scores between these anchors are interpolated from the number and importance of verified sub-criteria. They are engineering estimates. They are not measured scientific metrics.
 
 The overall estimate is the weighted sum of the subsystem scores. The weights reflect the target product: a scientist-facing, cross-platform, scientifically validated application.
 
