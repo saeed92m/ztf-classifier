@@ -62,7 +62,9 @@ def iter_photometry_rows(path: pathlib.Path, error_column: str, mag_column: str)
     matched_files = 0
     for candidate in candidates:
         opener = gzip.open if candidate.suffix.lower() == ".gz" else open
-        with opener(candidate, "rt", encoding="utf-8", errors="replace", newline="") as stream:
+        with opener(
+            candidate, "rt", encoding="utf-8", errors="replace", newline=""
+        ) as stream:
             header = None
             indexes = None
             for line in stream:
@@ -72,7 +74,9 @@ def iter_photometry_rows(path: pathlib.Path, error_column: str, mag_column: str)
                 if header_candidate.startswith("#"):
                     header_candidate = header_candidate[1:].strip()
                 fields = split_fields(header_candidate)
-                normalized = {value.strip().lower(): index for index, value in enumerate(fields)}
+                normalized = {
+                    value.strip().lower(): index for index, value in enumerate(fields)
+                }
                 required = {"sourceid", mag_column.lower(), error_column.lower()}
                 if required.issubset(normalized):
                     header = fields
