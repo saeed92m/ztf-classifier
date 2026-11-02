@@ -79,7 +79,8 @@ jobs:
         run: |
           python scripts/acquire_bts_snapshot.py \
             --output-dir reports/independent_recovery/bts \
-            --sample-size "${{ github.event.inputs.sample_size || '100' }}"
+            --sample-size "${{ github.event.inputs.sample_size || '100' }}" \
+            --code-version "${GITHUB_SHA}"
 
       - name: Query official ZTF DR24 Objects Table by position
         run: |
