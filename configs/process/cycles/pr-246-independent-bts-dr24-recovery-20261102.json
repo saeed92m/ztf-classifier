@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-246-independent-bts-dr24-recovery-20261102",
+  "objective": "Build a reproducible independent BTS-to-ZTF-DR24 spatial-recovery pilot, preserve every candidate OID and angular separation, and distinguish filter-level and field/quadrant-level OID multiplicity without changing the production selector or scientific acceptance criteria.",
+  "previous_knowledge_consumed": [
+    "Official IRSA DR24 HATS documentation states that ZTF object identifiers are defined per filter, field, and quadrant; multiple OIDs are not automatically false positives.",
+    "The official BTS explorer snapshot retrieved on 2026-11-02 contains 10,551 rows and is preserved with SHA-256 af2362275074ff4b6c70523b9db6f2d5991af16fdd8d76ed47520948eb788e82.",
+    "Initial 100-object BTS-to-DR24 pilot run 41488299913 returned 773 OID rows within 5 arcseconds and showed strong radius-dependent multiplicity.",
+    "The existing StarEmbed adapter requires a verified Hugging Face revision and five Parquet artifacts; its coordinate-recovery pilot remains separate and pending."
+  ],
+  "baseline": {
+    "revision": "4f98a06bde95b08a54a8844995b7717d6281ca33",
+    "description": "PR #246 is based on main at this revision. Frozen v0.2.0 model, feature set, class order, production selector, and scientific acceptance criteria remain unchanged."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility",
+    "scientific_validity"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The initial DR24 query selected oid, ra, dec, and filtercode only. It did not preserve field/quadrant provenance.",
+        "after": "The query introspects the HATS schema and requests field, ccdid, qid, rcid, and fid when available. The auditor separates same-filter OIDs across partitions from multiple OIDs within one partition."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "The updated schema-aware query has not yet completed a verified source-backed execution. The first 100-object run measures the previous query implementation only."
+      },
+      "reproducibility": {
+        "before": "The first auditor wrote per-object multiplicity and nearest separation only.",
+        "after": "The updated auditor writes a per-match CSV with recomputed great-circle separation, available field/quadrant metadata, input hashes, and output hashes."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The BTS pilot is a positional candidate-recovery diagnostic. It does not establish physical identity, a validated association radius, object-level precision, or recall."
+      },
+      "regression_protection_count": {
+        "before": 6,
+        "after": 12,
+        "unit": "independent_recovery_contract_tests",
+        "status": "MEASURED"
+      }
+    },
+    "trade_off": "The 5-arcsecond cone is retained as a candidate-generation radius. A narrower radius is not selected as an identity rule. Field/quadrant provenance and a new source-backed run are required before interpreting same-filter multiplicity."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Independent recovery contract job for PR head 512b25babc7f9af51b3fa587d49574315d144afd: 12 tests passed in 0.62 seconds (run 41491583198).",
+      "CI run 41491583359: Ruff format passed and Ruff lint passed. The cumulative lifecycle gate initially failed because this required PR cycle record was absent; this record addresses that process blocker.",
+      "CodeQL run 41491583381 passed.",
+      "Product Scope Audit run 41491583257 passed.",
+      "Scientific Validation run 41491583278 passed its benchmark/lifecycle contract job. Source-backed jobs were skipped for the ordinary PR event.",
+      "Initial BTS-to-DR24 source-backed pilot run 41488299913 processed 100 targets and uploaded evidence artifact 13163452038. Its measured results are documented in docs/INDEPENDENT_ZTF_RECOVERY_VALIDATION_BTS_STAREMBED.md.",
+      "The initial sample has 38 unclassified rows marked type '-'; these are spatial-recovery targets only and are not treated as classification labels."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The first query did not select DR24 field, CCD, quadrant, or readout-channel provenance.",
+      "The first audit did not preserve one recomputed angular separation row per returned OID.",
+      "The initial 5-arcsecond cone includes many close OIDs. For one BTS source, 22 OIDs were returned within 5 arcseconds, but only one was within 1 arcsecond."
+    ],
+    "unresolved": [
+      "Verify which field/quadrant provenance columns are available in the live DR24 HATS schema.",
+      "Inspect the updated source-backed artifact and confirm all 100 targets and per-match audit rows.",
+      "Classify same-filter multiplicity as cross-partition or same-partition using complete provenance.",
+      "Inspect a stratified set of DR24 light curves and BTS transient positions before defining an association rule.",
+      "Run the separate StarEmbed coordinate-recovery pilot after its immutable source manifest and hashes are verified."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Multiple ZTF OIDs must not be counted as false positives without checking filter, field, and quadrant provenance.",
+      "The initial BTS sample recovered 48, 78, and 97 of 100 targets within 1, 2, and 5 arcseconds, respectively; the 5-arcsecond radius is not a validated identity threshold.",
+      "BTS type '-' is an unclassified placeholder and must not enter a labeled classification benchmark.",
+      "A passing synthetic contract suite does not prove the updated live DR24 association behavior."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Updated schema-aware BTS-to-DR24 source-backed execution and artifact inspection are pending.",
+      "Full CI completion on the latest PR head remains pending."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not equate BTS 9-character IDs with DR24 numeric OIDs; use coordinates only to generate candidate associations.",
+    "Do not interpret 5-arcsecond spatial matches as physical identity.",
+    "Require complete field/quadrant provenance before interpreting same-filter OID multiplicity.",
+    "Exclude BTS type '-' from all labeled classification evaluation.",
+    "Keep StarEmbed coordinate recovery separate from BTS transient recovery.",
+    "Do not modify the v0.2.0 production baseline or scientific acceptance criteria in this workstream."
+  ]
+}
