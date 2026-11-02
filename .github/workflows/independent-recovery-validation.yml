@@ -1,0 +1,107 @@
+name: Independent ZTF Recovery Validation
+
+on:
+  push:
+    branches:
+      - main
+      - "investigation/independent-bts-dr24-recovery-*"
+  pull_request:
+    paths:
+      - "scripts/acquire_bts_snapshot.py"
+      - "scripts/query_ztf_dr24_spatial_recovery.py"
+      - "scripts/audit_ztf_recovery_multiplicity.py"
+      - "tests/test_bts_snapshot_acquisition.py"
+      - "tests/test_ztf_recovery_multiplicity.py"
+      - ".github/workflows/independent-recovery-validation.yml"
+  workflow_dispatch:
+    inputs:
+      sample_size:
+        description: "Number of BTS sources for the spatial recovery pilot"
+        required: true
+        default: "100"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: independent-ztf-recovery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract-tests:
+    name: Test independent recovery contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: pip
+
+      - name: Install locked project dependencies
+        run: |
+          python -m pip install --upgrade pip==26.2 setuptools==84.1.0 wheel==0.48.0
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Run independent recovery tests
+        run: |
+          python -m pytest -q \
+            tests/test_bts_snapshot_acquisition.py \
+            tests/test_ztf_recovery_multiplicity.py
+
+  bts-dr24-pilot:
+    name: Acquire BTS and query official ZTF DR24
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/investigation/independent-bts-dr24-recovery-'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: pip
+
+      - name: Install locked project and spatial-catalog dependencies
+        run: |
+          python -m pip install --upgrade pip==26.2 setuptools==84.1.0 wheel==0.48.0
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+          python -m pip install "lsdb[full]==0.10.4"
+
+      - name: Acquire and normalize BTS snapshot
+        run: |
+          python scripts/acquire_bts_snapshot.py \
+            --output-dir reports/independent_recovery/bts \
+            --sample-size "${{ github.event.inputs.sample_size || '100' }}"
+
+      - name: Query official ZTF DR24 Objects Table by position
+        run: |
+          python scripts/query_ztf_dr24_spatial_recovery.py \
+            --targets reports/independent_recovery/bts/bts_catalog_sample.csv \
+            --output-dir reports/independent_recovery/bts/dr24 \
+            --radius-arcsec 5 \
+            --limit "${{ github.event.inputs.sample_size || '100' }}"
+
+      - name: Audit OID multiplicity at 1, 2, and 5 arcseconds
+        run: |
+          python scripts/audit_ztf_recovery_multiplicity.py \
+            --catalog reports/independent_recovery/bts/bts_catalog_sample.csv \
+            --matches reports/independent_recovery/bts/dr24/dr24_spatial_matches.csv \
+            --output-dir reports/independent_recovery/bts/audit \
+            --radii-arcsec 1 2 5
+
+      - name: Upload independent recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: independent-bts-dr24-recovery
+          path: reports/independent_recovery/bts/
+          if-no-files-found: error
+          retention-days: 30
