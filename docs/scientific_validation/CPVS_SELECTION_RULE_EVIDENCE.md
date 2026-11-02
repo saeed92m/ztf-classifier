@@ -189,3 +189,20 @@ The 17 have both mean magnitudes, a positive common period, and substantial Tabl
 The audit also found that the Table 2 `recno` value differs from authoritative `Seq` for Seq 657950 and 732333. The crosswalk correctly uses ZTF name to `Seq`; it must not use `recno` as a replacement identifier.
 
 The paper states that both bands are phase-folded using the common period and that mean colour `m_gr` is appended to the isolation-forest features. It does not explicitly require both `Per-g` and `Per-r` to be positive. Therefore the 17-object exclusion remains a scientific-method ambiguity. The next test must examine the authors' data-preparation or MGPR preprocessing behavior, or obtain author clarification. Do not add a per-band-period gate to the production selector based only on this exact set match.
+
+
+## Candidate-only detection-count strata — 2026-11-02
+
+The 11,602 historical candidate-only objects split into five mutually exclusive missing-field groups. Table 2 detection-count summaries are:
+
+| Missing fields | Objects | Ng min / median / max | Nr min / median / max | Both Ng,Nr ≥ 11 |
+|---|---:|---:|---:|---:|
+| gmag + Per-g | 11,465 | 0 / 5 / 22 | 12 / 119 / 1,078 | 23 |
+| rmag + Per-r | 115 | 35 / 46 / 198 | 0 / 8 / 722 | 1 |
+| Per-g only | 10 | 51 / 105 / 171 | 50 / 122 / 187 | 10 |
+| Per-r only | 7 | 62 / 149 / 245 | 63 / 150 / 204 | 7 |
+| gmag only | 5 | 6 / 11 / 12 | 78 / 177 / 1,062 | 4 |
+
+Most candidate-only objects have few detections in the band whose mean magnitude and per-band period are missing. This is consistent with insufficient or unsuccessful band-specific fitting. It is not proof of the authors' selection rule.
+
+The 17 period-only residuals are different: they have substantial detection counts in both bands, positive mean magnitudes, and a positive common period. A simple `Ng/Nr >= 11` rule is not sufficient: 45 candidate-only objects satisfy that count condition. Do not add a detection-count threshold as a substitute for source evidence.
