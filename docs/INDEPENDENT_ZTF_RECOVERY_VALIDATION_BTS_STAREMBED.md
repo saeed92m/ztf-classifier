@@ -140,6 +140,17 @@ These results remain positional diagnostics. They do not establish physical iden
 
 The 100-object sample contains 62 rows with a non-placeholder type and 38 rows with type `-`. The full BTS snapshot contains 3,374 unclassified rows. This sample is suitable for the spatial-recovery pilot, not for a class-balanced classification benchmark.
 
+## Relationship to the DR24 feature-engine smoke
+
+The separate real-data feature-engine smoke in Issue [#188](https://github.com/saeed92m/ztf-classifier/issues/188) was reviewed at raw-response level. Its 12 selected OIDs did not represent 12 complete multi-filter sources:
+
+- All 5 failed OIDs had only `filtercode=zi` observations. The g/r feature contract correctly excluded these rows.
+- The 7 feature-engine calls that returned results were single-band: 4 r-only and 3 g-only.
+- Each partial feature vector had 19 finite values and 23 NaN values out of 42.
+- No selected OID had both g and r observations. Model inference was not run.
+
+The filter normalizer is not the root cause. The sample selection uses one OID as the unit, but DR24 OIDs are filter/field/quadrant-specific. The frozen g/r feature contract needs an astrophysical source group that maps constituent OIDs across filters. This PR supplies spatial candidate evidence and an indexed Lightcurves availability check; it does not implement or validate source grouping. Issue #188 now records the root-cause diagnosis and required work.
+
 ## Acceptance criteria
 
 The pilot is complete only when:
