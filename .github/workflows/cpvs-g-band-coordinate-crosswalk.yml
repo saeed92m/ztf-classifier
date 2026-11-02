@@ -1,0 +1,198 @@
+name: CPVS g-band coordinate-to-Seq crosswalk
+
+on:
+  push:
+    branches:
+      - investigation/cpvs-candidate-field-audit-20261030
+    paths:
+      - .github/workflows/cpvs-g-band-coordinate-crosswalk.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  coordinate-crosswalk:
+    name: Cross-match mismatched g rows by sky coordinates
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out investigation branch
+        uses: actions/checkout@v4
+
+      - name: Download and verify original Zenodo g-band archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/archive work/extracted work/output work/prior_cds work/prior_g
+          curl --location --fail --show-error --silent \
+            --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \
+            -o work/archive/ztf2g.zip
+          echo "850fcef561dd7407fbe8e19e99100d7a  work/archive/ztf2g.zip" | md5sum --check -
+          sha256sum work/archive/ztf2g.zip | tee work/output/archive_sha256.txt
+          unzip -q work/archive/ztf2g.zip -d work/extracted
+
+      - name: Retrieve pinned Table 2 and full mismatch manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run download 41367972395 --repo saeed92m/ztf-classifier --name cpvs-raw-cds-reconciliation --dir work/prior_cds
+          gh run download 41410496155 --repo saeed92m/ztf-classifier --name cpvs-g-band-layout-diagnostic --dir work/prior_g
+          test -s work/prior_cds/raw/table2.dat
+          test -s work/prior_g/g_table2_ng_full_reconciliation.tsv
+
+      - name: Match discrepant Table 2 objects by RA and Dec
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections, csv, hashlib, json, math
+          from pathlib import Path
+
+          table2_path = Path("work/prior_cds/raw/table2.dat")
+          mismatch_path = Path("work/prior_g/g_table2_ng_full_reconciliation.tsv")
+          archive = Path("work/archive/ztf2g.zip")
+          files = [p for p in Path("work/extracted").rglob("*") if p.is_file() and not p.name.startswith("._")]
+          if len(files) != 1:
+              raise SystemExit(f"Expected one non-metadata data file, found {[str(p) for p in files]}")
+          photometry_path = files[0]
+
+          with mismatch_path.open(encoding="utf-8", newline="") as stream:
+              mismatch_rows = list(csv.DictReader(stream, delimiter="\\t"))
+          target_ids = {row["Seq"].strip() for row in mismatch_rows}
+          if not target_ids:
+              raise SystemExit("Mismatch manifest is empty")
+
+          targets = {}
+          table2_digest = hashlib.sha256()
+          with table2_path.open("rb") as stream:
+              for raw_row in stream:
+                  table2_digest.update(raw_row)
+                  seq = raw_row[23:29].decode("ascii").strip()
+                  if seq not in target_ids:
+                      continue
+                  ra = float(raw_row[30:39].decode("ascii").strip())
+                  dec = float(raw_row[40:49].decode("ascii").strip())
+                  ng = int(raw_row[131:135].decode("ascii").strip())
+                  targets[seq] = {"ra": ra, "dec": dec, "Table2_Ng": ng}
+          if set(targets) != target_ids:
+              raise SystemExit(f"Table 2 missing target IDs: {sorted(target_ids - set(targets), key=int)}")
+
+          # Table 2 coordinates are rounded to 5 decimal places. Search adjacent
+          # 1e-4 degree bins and confirm each match within 2e-5 degrees.
+          scale = 10000
+          tolerance = 0.00002
+          grid = collections.defaultdict(list)
+          for seq, item in targets.items():
+              key = (math.floor(item["ra"] * scale), math.floor(item["dec"] * scale))
+              grid[key].append((seq, item["ra"], item["dec"]))
+
+          coord_counts = collections.Counter()
+          archive_seq_counts = {seq: collections.Counter() for seq in target_ids}
+          sample_rows = {seq: [] for seq in target_ids}
+          ambiguous_rows = 0
+          matched_rows = 0
+          total_lines = 0
+          malformed_rows = 0
+          archive_digest = hashlib.sha256()
+
+          with photometry_path.open("rb") as stream:
+              for byte_line in stream:
+                  archive_digest.update(byte_line)
+                  line = byte_line.decode("utf-8", errors="replace").strip()
+                  if not line:
+                      continue
+                  total_lines += 1
+                  fields = [value.strip() for value in line.split(",")]
+                  if len(fields) != 7:
+                      malformed_rows += 1
+                      continue
+                  archive_seq = fields[0]
+                  try:
+                      ra = float(fields[1])
+                      dec = float(fields[2])
+                  except ValueError:
+                      malformed_rows += 1
+                      continue
+                  base = (math.floor(ra * scale), math.floor(dec * scale))
+                  candidates = []
+                  for dra in (-1, 0, 1):
+                      for ddec in (-1, 0, 1):
+                          candidates.extend(grid.get((base[0] + dra, base[1] + ddec), ()))
+                  matches = [
+                      (seq, target_ra, target_dec)
+                      for seq, target_ra, target_dec in candidates
+                      if abs(ra - target_ra) <= tolerance and abs(dec - target_dec) <= tolerance
+                  ]
+                  if len(matches) > 1:
+                      ambiguous_rows += 1
+                      continue
+                  if not matches:
+                      continue
+                  target_seq = matches[0][0]
+                  matched_rows += 1
+                  coord_counts[target_seq] += 1
+                  archive_seq_counts[target_seq][archive_seq] += 1
+                  if len(sample_rows[target_seq]) < 3:
+                      sample_rows[target_seq].append({
+                          "archive_seq": archive_seq,
+                          "ra": fields[1],
+                          "dec": fields[2],
+                          "mjd": fields[3],
+                          "mag": fields[4],
+                          "e_mag": fields[5],
+                          "flag": fields[6],
+                      })
+
+          object_results = {}
+          for seq in sorted(target_ids, key=int):
+              direct_rows = sum(count for archive_seq, count in archive_seq_counts[seq].items() if archive_seq == seq)
+              mapped = dict(sorted(archive_seq_counts[seq].items(), key=lambda item: item[0]))
+              object_results[seq] = {
+                  **targets[seq],
+                  "direct_seq_rows": direct_rows,
+                  "coordinate_matched_rows": coord_counts.get(seq, 0),
+                  "coordinate_delta_vs_Table2_Ng": coord_counts.get(seq, 0) - targets[seq]["Table2_Ng"],
+                  "archive_seq_counts_for_this_coordinate": mapped,
+                  "rows_with_different_archive_seq": coord_counts.get(seq, 0) - direct_rows,
+                  "sample_rows": sample_rows[seq],
+              }
+
+          report = {
+              "status": "COMPLETE",
+              "source": "Zenodo 10.5281/zenodo.3886372 ztf2g.zip",
+              "archive_md5_expected": "850fcef561dd7407fbe8e19e99100d7a",
+              "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+              "photometry_file_sha256": archive_digest.hexdigest(),
+              "table2_sha256": table2_digest.hexdigest(),
+              "table2_mismatch_manifest_sha256": hashlib.sha256(mismatch_path.read_bytes()).hexdigest(),
+              "target_mismatch_object_count": len(target_ids),
+              "coordinate_tolerance_degrees": tolerance,
+              "coordinate_match_method": "RAdeg/DEdeg spatial grid; 5-decimal Table 2 coordinates; adjacent 1e-4 degree bins; absolute coordinate tolerance 2e-5 degree",
+              "photometry_record_count": total_lines,
+              "malformed_rows": malformed_rows,
+              "coordinate_matched_rows": matched_rows,
+              "ambiguous_coordinate_rows": ambiguous_rows,
+              "objects_with_coordinate_rows": sum(1 for seq in target_ids if coord_counts.get(seq, 0) > 0),
+              "objects_with_no_coordinate_rows": sorted((seq for seq in target_ids if coord_counts.get(seq, 0) == 0), key=int),
+              "objects_with_archive_seq_mismatch": sorted((seq for seq in target_ids if any(k != seq for k in archive_seq_counts[seq])), key=int),
+              "object_results": object_results,
+              "interpretation": "Coordinate crosswalk diagnostic only. It can distinguish absent photometry from a Seq-label mismatch; it does not infer SNR or published membership."
+          }
+          Path("work/output/g_band_coordinate_crosswalk.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload coordinate crosswalk evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpvs-g-band-coordinate-crosswalk
+          path: work/output/
+          if-no-files-found: warn
+          retention-days: 90
