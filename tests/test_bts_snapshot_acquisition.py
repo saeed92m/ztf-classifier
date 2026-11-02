@@ -3,9 +3,9 @@ from scripts.acquire_bts_snapshot import deterministic_sample, parse_bts_csv
 
 def test_bts_csv_parser_handles_leading_blank_and_sexagesimal_coordinates():
     payload = (
-        "\nZTFID,IAUID,RA,Dec,type,peakmag\n"
-        "ZTF18abcde,AT2018abc,21:05:10.27,-09:32:41.6,SN Ia,18.2\n"
-    ).encode()
+        b"\nZTFID,IAUID,RA,Dec,type,peakmag\n"
+        b"ZTF18abcde,AT2018abc,21:05:10.27,-09:32:41.6,SN Ia,18.2\n"
+    )
 
     rows = parse_bts_csv(payload)
 
@@ -18,9 +18,9 @@ def test_bts_csv_parser_handles_leading_blank_and_sexagesimal_coordinates():
 
 def test_bts_csv_parser_accepts_decimal_coordinates():
     payload = (
-        "ZTFID,IAUID,RA,Dec,type\n"
-        "ZTF18abcde,AT2018abc,316.25,-9.5,SN Ia\n"
-    ).encode()
+        b"ZTFID,IAUID,RA,Dec,type\n"
+        b"ZTF18abcde,AT2018abc,316.25,-9.5,SN Ia\n"
+    )
 
     rows = parse_bts_csv(payload)
 
@@ -30,10 +30,10 @@ def test_bts_csv_parser_accepts_decimal_coordinates():
 
 def test_bts_csv_parser_rejects_duplicate_ztf_ids():
     payload = (
-        "ZTFID,IAUID,RA,Dec,type\n"
-        "ZTF18abcde,AT2018abc,10,20,SN Ia\n"
-        "ZTF18abcde,AT2018abd,10,20,SN Ia\n"
-    ).encode()
+        b"ZTFID,IAUID,RA,Dec,type\n"
+        b"ZTF18abcde,AT2018abc,10,20,SN Ia\n"
+        b"ZTF18abcde,AT2018abd,10,20,SN Ia\n"
+    )
 
     try:
         parse_bts_csv(payload)
