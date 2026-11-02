@@ -122,7 +122,7 @@ The spatial query used the official IRSA ZTF DR24 Objects Table HATS collection.
 | 2 arcsec | 78 | 22 | 69 | 59 |
 | 5 arcsec | 97 | 3 | 94 | 88 |
 
-At 5 arcseconds, the maximum multiplicity was 22 OIDs for one BTS coordinate. At 1 arcsecond, the 48 matched targets had 160 OID rows. The raw DR24 match CSV SHA-256 is `32221405752ac3424054832c797ea502a6c19739b3201b87c7dbb397d04ce5f6`.
+At 5 arcseconds, the maximum multiplicity was 22 OIDs for one BTS coordinate. At 1 arcsecond, the 48 matched targets had 160 OID rows. For the 97 targets with at least one match inside 5 arcseconds, the nearest-match separation had a median of 1.051 arcseconds, a mean of 1.330 arcseconds, a 90th percentile of 3.193 arcseconds, and a maximum of 4.913 arcseconds. Across all 773 returned OID rows, the median separation was 2.289 arcseconds. The 22-OID example is BTS source `ZTF19aaklqod` (TNS `SN2020ctr`, type `SN Ia`); it has 9 `zg`, 5 `zi`, and 8 `zr` OIDs within 5 arcseconds, but only one OID within 1 arcsecond. This demonstrates why a 5-arcsecond cone is a candidate-generation radius, not an identity rule. The raw DR24 match CSV SHA-256 is `32221405752ac3424054832c797ea502a6c19739b3201b87c7dbb397d04ce5f6`.
 
 The complete evidence artifact is attached to GitHub Actions run [41488299913](https://github.com/saeed92m/ztf-classifier/actions/runs/41488299913). Artifact ID: `13163452038`. ZIP SHA-256: `4e83841123920cdad7feaf72ffc2e1cddc47b276fb5f6cc7faa544c77d233844`.
 
