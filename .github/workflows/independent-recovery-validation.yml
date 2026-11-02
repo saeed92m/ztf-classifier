@@ -57,7 +57,16 @@ jobs:
     name: Acquire BTS and query official ZTF DR24
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/investigation/independent-bts-dr24-recovery-'))
+      (
+        github.event_name == 'push' &&
+        startsWith(github.ref, 'refs/heads/investigation/independent-bts-dr24-recovery-') &&
+        (
+          contains(join(github.event.head_commit.modified, ','), 'scripts/acquire_bts_snapshot.py') ||
+          contains(join(github.event.head_commit.modified, ','), 'scripts/query_ztf_dr24_spatial_recovery.py') ||
+          contains(join(github.event.head_commit.modified, ','), 'scripts/audit_ztf_recovery_multiplicity.py') ||
+          contains(join(github.event.head_commit.modified, ','), '.github/workflows/independent-recovery-validation.yml')
+        )
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
