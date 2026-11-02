@@ -356,7 +356,7 @@ def main() -> int:
                 "separation_arcsec",
                 *PROVENANCE_FIELDS,
             ),
-            lineterminator="\\n",
+            lineterminator="\n",
         )
         writer.writeheader()
         writer.writerows(per_match)
