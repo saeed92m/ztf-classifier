@@ -61,7 +61,6 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install pytest==8.4.2
-          python -m pip install --no-deps -e .
 
       - name: Run CPVS reconciliation unit tests
         shell: bash
