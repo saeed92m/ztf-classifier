@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-246-independent-bts-dr24-recovery-20261102",
+  "objective": "Build a reproducible independent BTS-to-ZTF-DR24 spatial-recovery pilot, preserve every candidate OID and angular separation, and distinguish filter-level and field/quadrant-level OID multiplicity without changing the production selector or scientific acceptance criteria.",
+  "previous_knowledge_consumed": [
+    "Official IRSA DR24 HATS documentation states that ZTF object identifiers are defined per filter, field, and quadrant; multiple OIDs are not automatically false positives.",
+    "The official BTS explorer snapshot retrieved on 2026-11-02 contains 10,551 rows and is preserved with SHA-256 af2362275074ff4b6c70523b9db6f2d5991af16fdd8d76ed47520948eb788e82.",
+    "Initial 100-object BTS-to-DR24 pilot run 41488299913 returned 773 OID rows within 5 arcseconds and showed strong radius-dependent multiplicity.",
+    "The existing StarEmbed adapter requires a verified Hugging Face revision and five Parquet artifacts; its coordinate-recovery pilot remains separate and pending.",
+    "Schema-aware BTS-to-DR24 source-backed run 41525750067 completed 100 targets and 773 unique OIDs; the live Objects Table schema exposed field, ccdid, qid, and fid.",
+    "The DR24 Lightcurves HATS table uses an objectid index; Objects Table presence does not prove a light-curve row exists.",
+    "Issue #188 raw DR24 light-curve artifact shows OIDs are single-filter: 5/12 selected OIDs were zi-only; the other 7 produced single-band, 19/42-finite feature vectors."
+  ],
+  "baseline": {
+    "revision": "4f98a06bde95b08a54a8844995b7717d6281ca33",
+    "description": "PR #246 is based on main at this revision. Frozen v0.2.0 model, feature set, class order, production selector, and scientific acceptance criteria remain unchanged."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility",
+    "scientific_validity"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The initial DR24 query selected oid, ra, dec, and filtercode only. It did not preserve field/quadrant provenance.",
+        "after": "The schema-aware query captures field, ccdid, qid, and fid. The auditor distinguishes same-filter OIDs across partitions from same-partition multiplicity. In the 100-object sample, same-filter same-partition multiplicity was 0, 15, and 77 targets at 1, 2, and 5 arcseconds."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "One schema-aware 100-target source-backed run completed. Repeat-run stability, larger-sample behavior, and end-to-end lightcurve availability are not yet verified."
+      },
+      "reproducibility": {
+        "before": "The first auditor wrote per-object multiplicity and nearest separation only.",
+        "after": "The query manifest records the 76-column HATS schema and SHA-256, code revision, runtime versions, and selected provenance columns. The auditor writes one row per OID with recomputed separation and available field/CCD/quadrant/filter provenance. Input and output hashes are recorded."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The BTS pilot is a positional candidate-recovery diagnostic. It does not establish physical identity, a validated association radius, object-level precision, or recall."
+      },
+      "regression_protection_count": {
+        "before": 10,
+        "after": 17,
+        "unit": "independent_recovery_contract_tests",
+        "status": "MEASURED"
+      }
+    },
+    "trade_off": "The 5-arcsecond cone is retained as a candidate-generation radius. A narrower radius is not selected as an identity rule. Field/quadrant provenance and a new source-backed run are required before interpreting same-filter multiplicity."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Independent recovery contract job for PR head 512b25babc7f9af51b3fa587d49574315d144afd: 12 tests passed in 0.62 seconds (run 41491583198).",
+      "CI run 41491583359: Ruff format passed and Ruff lint passed. The cumulative lifecycle gate initially failed because this required PR cycle record was absent; this record addresses that process blocker.",
+      "CodeQL run 41491583381 passed.",
+      "Product Scope Audit run 41491583257 passed.",
+      "Scientific Validation run 41491583278 passed its benchmark/lifecycle contract job. Source-backed jobs were skipped for the ordinary PR event.",
+      "Initial BTS-to-DR24 source-backed pilot run 41488299913 processed 100 targets and uploaded evidence artifact 13163452038. Its measured results are documented in docs/INDEPENDENT_ZTF_RECOVERY_VALIDATION_BTS_STAREMBED.md.",
+      "The initial sample has 38 unclassified rows marked type '-'; these are spatial-recovery targets only and are not treated as classification labels.",
+      "Schema-aware BTS-to-DR24 push run 41525750067 completed 100/100 targets and returned 773 OID rows. Artifact 13179927852; ZIP SHA-256 dbbd39759d11645cfa044538d786960b3bf221d25a9b73b849f136a735e1f830.",
+      "The live DR24 Objects Table schema exposed 76 columns, including field, ccdid, qid, and fid; rcid was absent. Schema SHA-256 8cb49b5d90cc6df36c306daf08be4aa0402a19de17c2a55058e99064336541f5.",
+      "The provenance-aware audit found same-filter same-partition multiplicity in 0, 15, and 77 targets at 1, 2, and 5 arcseconds. The 773 OIDs were unique across the 97 matched BTS targets.",
+      "Independent recovery contract tests: 14 passed in run 41525750067 and 17 passed in run 41527459598. The latter also includes three mocked Lightcurves index-contract tests.",
+      "The Lightcurves HATS indexed lookup was added to the source-backed workflow. Run 41527459598 is in progress; its availability artifact has not yet been inspected.",
+      "Issue #188 was updated with a raw-artifact diagnosis: all five failed OIDs were zi-only; all seven successful feature calculations were single-band and had 19/42 finite features. No model inference was run."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The first query did not select DR24 field, CCD, quadrant, or readout-channel provenance.",
+      "The first audit did not preserve one recomputed angular separation row per returned OID.",
+      "The initial 5-arcsecond cone includes many close OIDs. For one BTS source, 22 OIDs were returned within 5 arcseconds, but only one was within 1 arcsecond.",
+      "The DR24 Objects Table schema exposed field, ccdid, qid, and fid but not rcid; the available fields are sufficient to distinguish the sample's field/CCD/quadrant partitions.",
+      "The 5-arcsecond cone includes same-filter multiple OIDs within the same partition for 77/100 BTS targets; these are candidate nearby catalog objects, not automatically false positives.",
+      "The existing DR24 feature-engine smoke test selected filter-specific OIDs as if each OID were a complete astrophysical source. All 7 successful feature calculations were single-band and 19/42 finite; the 5 failed OIDs were i-only."
+    ],
+    "unresolved": [
+      "Inspect the indexed DR24 Lightcurves HATS lookup artifact for all 773 OIDs and record missing rows, filter IDs, and nepochs.",
+      "Build and validate astrophysical source groups that map constituent OIDs across filters, fields, CCDs, and quadrants. Preserve ambiguity and all source IDs.",
+      "Re-run feature generation on combined g/r source groups. Require valid g/r coverage before model inference.",
+      "Inspect a stratified set of light curves and BTS transient positions before defining an association rule.",
+      "Resolve StarEmbed duplicate/overlap evidence before using its metrics."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Multiple ZTF OIDs must not be counted as false positives without checking filter, field, and quadrant provenance.",
+      "The initial BTS sample recovered 48, 78, and 97 of 100 targets within 1, 2, and 5 arcseconds, respectively; the 5-arcsecond radius is not a validated identity threshold.",
+      "BTS type '-' is an unclassified placeholder and must not enter a labeled classification benchmark.",
+      "A passing synthetic contract suite does not prove the updated live DR24 association behavior.",
+      "The 1-arcsecond sample had no same-filter multi-OID cases within one field/CCD/quadrant partition; at 5 arcseconds, 77 targets did. This supports using the wider cone only for candidate generation.",
+      "The Objects Table may contain OIDs without corresponding Lightcurves rows; availability must be checked by the Lightcurves objectid index.",
+      "A DR24 OID is filter/field/quadrant-specific. The v0.2 g/r feature contract needs a grouped astrophysical source input, not a single-filter OID light curve."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "The Lightcurves HATS indexed lookup in run 41527459598 and its artifact have not yet been verified.",
+      "The latest PR full CI and contract checks must complete on the current head.",
+      "Source-group construction and g/r feature-engine integration remain unimplemented and require a separate regression-backed task."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not equate BTS 9-character IDs with DR24 numeric OIDs; use coordinates only to generate candidate associations.",
+    "Do not interpret 5-arcsecond spatial matches as physical identity.",
+    "Require complete field/quadrant provenance before interpreting same-filter OID multiplicity.",
+    "Exclude BTS type '-' from all labeled classification evaluation.",
+    "Keep StarEmbed coordinate recovery separate from BTS transient recovery.",
+    "Do not modify the v0.2.0 production baseline or scientific acceptance criteria in this workstream.",
+    "Do not use a single DR24 OID as a complete g/r source input. Group its filter-specific OIDs under a traceable astrophysical source identity before feature generation.",
+    "Do not assume an Objects Table OID has a corresponding Lightcurves row; query the objectid index and record nepochs.",
+    "A 5-arcsecond cone is a broad candidate-generation radius; the 1-arcsecond result is promising but not an accepted identity rule."
+  ]
+}
