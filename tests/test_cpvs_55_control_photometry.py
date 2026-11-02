@@ -57,3 +57,23 @@ def test_summarize_band_fails_when_no_detection_passes(tmp_path: pathlib.Path) -
     assert result["101"]["row_count"] == 1
     assert result["101"]["qualifying_detections_approximate"] == 0
     assert result["101"]["passes_approximate_snr"] is False
+
+
+def test_iter_photometry_rows_uses_documented_headerless_schema(
+    tmp_path: pathlib.Path,
+) -> None:
+    source = tmp_path / "headerless.dat"
+    source.write_text(
+        "# CPVS single-exposure photometry\n"
+        "101 150.0 22.0 58600.1 18.0 0.20 0\n"
+        "101 150.0 22.0 58601.1 19.0 0.60 16\n"
+        "202 151.0 23.0 58602.1 17.0 0.10 0\n",
+        encoding="utf-8",
+    )
+    rows = list(AUDIT.iter_photometry_rows(source, "e_gmag", "gmag"))
+    assert len(rows) == 3
+    assert rows[0]["SourceID"] == "101"
+    assert rows[0]["gmag"] == "18.0"
+    assert rows[0]["e_gmag"] == "0.20"
+    assert rows[0]["g_flag"] == "0"
+
