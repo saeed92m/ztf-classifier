@@ -37,6 +37,16 @@ jobs:
           unzip -q work/archive/ztf2g.zip -d work/extracted
           find work/extracted -type f -printf '%p %s bytes\\n' | sort | tee work/output/extracted_files.txt
 
+      - name: Retrieve verified 55-control manifest from prior audit artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/prior
+          gh run download 41367972395 --repo saeed92m/ztf-classifier --name cpvs-raw-cds-reconciliation --dir work/prior
+          cp work/prior/output/four_field_only_55.tsv work/controls.tsv
+
       - name: Scan raw file layout and locate all control IDs
         shell: bash
         run: |
@@ -47,9 +57,6 @@ jobs:
 
           controls_path = Path("work/controls.tsv")
           archive = Path("work/archive/ztf2g.zip")
-          import urllib.request
-          url = "https://raw.githubusercontent.com/saeed92m/ztf-classifier/investigation/cpvs-candidate-field-audit-20261030/work/output/four_field_only_55.tsv"
-          urllib.request.urlretrieve(url, controls_path)
           with controls_path.open(encoding="utf-8-sig", newline="") as stream:
               controls = list(csv.DictReader(stream, delimiter="\\t"))
           ids = {row["SourceID"].strip() for row in controls}
