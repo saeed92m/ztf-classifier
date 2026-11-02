@@ -1,0 +1,123 @@
+name: CPVS g-band raw archive layout diagnostic
+
+on:
+  push:
+    branches:
+      - investigation/cpvs-candidate-field-audit-20261030
+    paths:
+      - .github/workflows/cpvs-g-band-layout-diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  inspect-g-band:
+    name: Inspect original Zenodo g-band archive and 55 control IDs
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out investigation branch
+        uses: actions/checkout@v4
+
+      - name: Download and verify original Zenodo g-band archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/archive work/extracted work/output
+          curl --location --fail --show-error --silent \
+            --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \
+            -o work/archive/ztf2g.zip
+          echo "850fcef561dd7407fbe8e19e99100d7a  work/archive/ztf2g.zip" | md5sum --check -
+          sha256sum work/archive/ztf2g.zip | tee work/output/archive_sha256.txt
+          unzip -Z1 work/archive/ztf2g.zip | tee work/output/archive_entries.txt
+          unzip -q work/archive/ztf2g.zip -d work/extracted
+          find work/extracted -type f -printf '%p %s bytes\\n' | sort | tee work/output/extracted_files.txt
+
+      - name: Scan raw file layout and locate all control IDs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections, csv, hashlib, json
+          from pathlib import Path
+
+          controls_path = Path("work/controls.tsv")
+          archive = Path("work/archive/ztf2g.zip")
+          import urllib.request
+          url = "https://raw.githubusercontent.com/saeed92m/ztf-classifier/investigation/cpvs-candidate-field-audit-20261030/work/output/four_field_only_55.tsv"
+          urllib.request.urlretrieve(url, controls_path)
+          with controls_path.open(encoding="utf-8-sig", newline="") as stream:
+              controls = list(csv.DictReader(stream, delimiter="\\t"))
+          ids = {row["SourceID"].strip() for row in controls}
+          if len(ids) != 55:
+              raise SystemExit(f"Expected 55 unique controls, found {len(ids)}")
+
+          files = [p for p in Path("work/extracted").rglob("*") if p.is_file() and not p.name.startswith("._")]
+          if len(files) != 1:
+              raise SystemExit(f"Expected one non-metadata data file, found {[str(p) for p in files]}")
+          path = files[0]
+          first_lines, widths = [], collections.Counter()
+          token_counts, first_counts, substring_counts = collections.Counter(), collections.Counter(), collections.Counter()
+          samples = {source_id: [] for source_id in ids}
+          total_lines = 0
+          digest = hashlib.sha256()
+          with path.open("rb") as raw:
+              for byte_line in raw:
+                  digest.update(byte_line)
+                  try:
+                      line = byte_line.decode("utf-8", errors="replace").strip()
+                  except Exception:
+                      continue
+                  if not line:
+                      continue
+                  total_lines += 1
+                  if len(first_lines) < 15:
+                      first_lines.append({"line_number": total_lines, "repr": repr(line[:600]), "length": len(line)})
+                  tokens = line.split()
+                  widths[len(tokens)] += 1
+                  if tokens and tokens[0] in ids:
+                      first_counts[tokens[0]] += 1
+                  for token in set(tokens):
+                      if token in ids:
+                          token_counts[token] += 1
+                          if len(samples[token]) < 3:
+                              samples[token].append({"line_number": total_lines, "tokens": tokens[:24], "raw": line[:600]})
+                  for source_id in ids:
+                      if source_id in line:
+                          substring_counts[source_id] += 1
+
+          report = {
+              "archive_md5_expected": "850fcef561dd7407fbe8e19e99100d7a",
+              "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+              "data_file": str(path),
+              "data_file_size_bytes": path.stat().st_size,
+              "data_file_sha256": digest.hexdigest(),
+              "control_count": len(ids),
+              "nonempty_line_count": total_lines,
+              "first_nonempty_lines": first_lines,
+              "whitespace_field_count_distribution": {str(k): v for k, v in sorted(widths.items())},
+              "control_ids_found_as_first_token": sorted(first_counts),
+              "control_ids_found_as_any_exact_token": sorted(token_counts),
+              "control_ids_found_as_substrings": sorted(substring_counts),
+              "exact_token_occurrences": dict(sorted(token_counts.items(), key=lambda x: int(x[0]))),
+              "substring_occurrences": dict(sorted(substring_counts.items(), key=lambda x: int(x[0]))),
+              "sample_matching_lines": samples,
+              "controls": controls,
+              "interpretation": "Layout and identifier diagnostic only; no SNR or membership conclusions."
+          }
+          Path("work/output/g_archive_layout_diagnostic.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload raw layout diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpvs-g-band-layout-diagnostic
+          path: work/output/
+          if-no-files-found: warn
+          retention-days: 90
