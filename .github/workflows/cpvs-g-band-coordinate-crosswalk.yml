@@ -63,7 +63,7 @@ jobs:
           photometry_path = files[0]
 
           with mismatch_path.open(encoding="utf-8", newline="") as stream:
-              mismatch_rows = list(csv.DictReader(stream, delimiter="\\t"))
+              mismatch_rows = list(csv.DictReader(stream, delimiter="\t"))
           target_ids = {row["Seq"].strip() for row in mismatch_rows}
           if not target_ids:
               raise SystemExit("Mismatch manifest is empty")
@@ -191,7 +191,7 @@ jobs:
               "object_results": object_results,
               "interpretation": "Coordinate crosswalk diagnostic only. It can distinguish absent photometry from a Seq-label mismatch; it does not infer SNR or published membership."
           }
-          Path("work/output/g_band_coordinate_crosswalk.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+          Path("work/output/g_band_coordinate_crosswalk.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
           print(json.dumps(report, indent=2, sort_keys=True))
           PY
 
