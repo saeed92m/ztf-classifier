@@ -89,7 +89,7 @@ The 11,602 candidate-only objects partition into 11,580 with both field pairs in
 
 The revised SHA-256-ranked sample design includes four strata: reference-and-candidate, candidate-only, four-field-only controls, and parent-neither. The 100-object sample contains 50/25/10/15 objects. The 1,000-object sample contains 500/250/55/195 objects and includes all 55 four-field-only controls. The samples are diagnostic oversamples, not prevalence estimates.
 
-This conjunction remains an empirical hypothesis. The paper does not state the four-field requirement. Per-object light-curve SNR diagnostics for the 55 controls are not in the retained historical artifact. The exact historical selector and the current-head fresh derivation remain unresolved. Do not change the production selector or scientific gate.
+This conjunction remains an empirical hypothesis. The paper does not state the four-field requirement. A separate partial original-photometry audit of all 55 controls is now available; see the section below. The exact historical selector and the current-head fresh derivation remain unresolved. Do not change the production selector or scientific gate.
 
 
 ## Staged membership diagnostic — current derivation boundary
@@ -102,3 +102,48 @@ The five other residuals in the original 11,602 have both per-band periods but l
 
 The approximate magnitude-error SNR formula, the exact inverse magnitude-error transform, and 1/e_mag produced the same historical 741,786-object candidate set and 11,602 residuals. The tested SNR formula choice is not the cause. A zero-catalog-flag condition is also refuted as a substitute because it loses 5,472 reference members.
 
+
+
+## Original Zenodo photometry coverage audit — 2026-11-02
+
+This audit used the published Zenodo v1 attachments for DOI `10.5281/zenodo.3886372`. Both downloaded ZIP files match the published MD5 values. The g-band full-layout diagnostic is GitHub Actions run [41410496155](https://github.com/saeed92m/ztf-classifier/actions/runs/41410496155), artifact `13126290795`. The 55-control photometry audit is retained in raw reconciliation run [41367972395](https://github.com/saeed92m/ztf-classifier/actions/runs/41367972395), artifact `13108147605`.
+
+### g-band full-archive counts
+
+- Zenodo `ztf2g.zip` MD5: `850fcef561dd7407fbe8e19e99100d7a` (published value).
+- ZIP SHA-256: `47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9`.
+- Extracted photometry SHA-256: `366aaf3539f83955bb1e29799df9e63005a9eb682f4f56d0807545a3534b0f16`.
+- Parsed CSV rows: 89,697,393; all rows have seven fields; malformed rows: 0.
+- Sum of Table 2 `Ng`: 89,702,309. The archive contains 4,916 fewer rows than this sum.
+- 91 Table 2 Seq values have a direct row-count mismatch: 35 have more archive rows than `Ng`; 56 have fewer. Of the 56, 55 have no g-band archive rows despite positive Table 2 `Ng`.
+- One archive-only Seq, `615172`, has 132 rows. Table 2 has gaps at Seq 615171 and 615172; Table 2 Seq 615170 has `Ng=132` but no g archive rows. A coordinate crosswalk found no coordinate match for Table 2 Seq 615170. The equal count of 132 is not evidence that Seq 615172 belongs to Seq 615170. Do not merge these identities.
+- A coordinate diagnostic for the 91 mismatch targets found 23 objects with coordinate-matched archive rows and 68 with none. It found zero ambiguous coordinate rows and no Seq mismatch among the 23 matches. For those 23, 22 archive row counts exceed `Ng` and one is lower. This is a diagnostic crosscheck, not a replacement identifier join.
+
+### The 55 four-field-only controls
+
+All 55 controls have positive Table 2 `Ng` and `Nr`, but the published Zenodo attachments do not contain both bands for any control:
+
+- g band: 1 of 55 objects has photometry; its 119 rows match Table 2 `Ng` and it passes the g threshold. The other 54 have no g archive rows.
+- r band: 51 of 55 objects have photometry; all 51 row counts match Table 2 `Nr` and all 51 pass the r threshold. The other 4 have no r archive rows.
+- No control has both g and r archive coverage. Therefore none can be reconstructed as a two-band SNR candidate from these attachments.
+
+The previous report labels these objects as failed g/r SNR. That wording is too broad: for the missing band, no SNR test is possible because there are no rows. The correct interpretation is missing archive coverage. Table 2 reports positive detection counts for these same objects, so the attachment-to-catalogue coverage discrepancy remains a separate source-integrity issue.
+
+### Overlap with the 11,602 candidate-only objects
+
+14 of the 11,602 historical candidate-only IDs also occur in the 91-object g row-count mismatch set:
+- 13 have Table 2 `Ng=0` but have g-band archive rows.
+- Seq `339262` has Table 2 `Ng=83` and 85 archive rows.
+- The other 11,588 candidate-only IDs have no g row-count mismatch in this diagnostic.
+
+This demonstrates that the Table 2 summary counts and the Zenodo g attachment are not identical for every object. It does not explain the 11,602 membership residuals.
+
+### Source hashes and limitations
+
+- Zenodo `ztf2r.zip` MD5: `daa7bc45c67579253eebe6b1c09dfbd9` (published value).
+- ZIP SHA-256: `48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74`.
+- The 55-control r audit is not a full 781,602-object r row-count reconciliation.
+- The g coordinate crosswalk uses a 2e-5 degree tolerance against Table 2 coordinates rounded to five decimal places. It is not a proof of source identity for unmatched objects.
+- The audit does not infer the authors' selection rule and does not establish the cause of the 11,602 residuals.
+
+Keep the source-coverage issue separate from the candidate-membership issue. Do not change the selector, thresholds, baseline, or acceptance criteria based on these diagnostics alone.
