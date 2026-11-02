@@ -55,7 +55,7 @@ def test_unmatched_catalog_sources_are_retained_in_denominator():
 def test_radius_sensitivity_uses_recomputed_angular_separation():
     catalog = [{"external_id": "CSS_A", "ra": "10", "dec": "20"}]
     matches = [
-        {"external_id": "CSS_A", "oid": "100", "ra": "10.0002", "dec": "20", "filtercode": "zg"},
+        {"external_id": "CSS_A", "oid": "100", "ra": "10.00035", "dec": "20", "filtercode": "zg"},
     ]
 
     _, summary = audit_recovery(catalog, matches, radii_arcsec=(1.0, 2.0, 5.0))
