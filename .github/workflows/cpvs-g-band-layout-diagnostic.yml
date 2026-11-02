@@ -137,11 +137,11 @@ jobs:
           }
           mismatch_path = Path("work/output/g_table2_ng_full_reconciliation.tsv")
           with mismatch_path.open("w", encoding="utf-8", newline="") as stream:
-              stream.write("Seq\\tTable2_Ng\\tObserved_g_rows\\tDelta\\n")
+              stream.write("Seq\tTable2_Ng\tObserved_g_rows\tDelta\\n")
               for seq in sorted(row_count_mismatches, key=int):
                   expected = row_count_mismatches[seq]["Table2_Ng"]
                   observed = row_count_mismatches[seq]["observed_g_rows"]
-                  stream.write(f"{seq}\\t{expected}\\t{observed}\\t{observed - expected}\\n")
+                  stream.write(f"{seq}\t{expected}\t{observed}\t{observed - expected}\\n")
 
           control_reconciliation = {
               seq: {
@@ -186,7 +186,6 @@ jobs:
               },
               "interpretation": "Full object-level Table 2 Ng versus raw g-archive row reconciliation. This is a source-coverage diagnostic only; it makes no SNR or CPVS membership conclusion."
           }
-          print(json.dumps(report, indent=2, sort_keys=True))
           Path("work/output/g_archive_layout_diagnostic.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
           print(json.dumps(report, indent=2, sort_keys=True))
           PY
