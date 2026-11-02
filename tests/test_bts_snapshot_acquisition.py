@@ -1,7 +1,4 @@
-from scripts.acquire_bts_snapshot import (
-    deterministic_sample,
-    parse_bts_csv,
-)
+from scripts.acquire_bts_snapshot import deterministic_sample, parse_bts_csv
 
 
 def test_bts_csv_parser_handles_leading_blank_and_sexagesimal_coordinates():
