@@ -35,7 +35,7 @@ jobs:
           sha256sum work/archive/ztf2g.zip | tee work/output/archive_sha256.txt
           unzip -Z1 work/archive/ztf2g.zip | tee work/output/archive_entries.txt
           unzip -q work/archive/ztf2g.zip -d work/extracted
-          find work/extracted -type f -printf '%p %s bytes\\n' | sort | tee work/output/extracted_files.txt
+          find work/extracted -type f -printf '%p %s bytes\n' | sort | tee work/output/extracted_files.txt
 
       - name: Retrieve verified 55-control manifest from prior audit artifact
         env:
@@ -65,7 +65,7 @@ jobs:
           controls_path = Path("work/controls.tsv")
           archive = Path("work/archive/ztf2g.zip")
           with controls_path.open(encoding="utf-8-sig", newline="") as stream:
-              controls = list(csv.DictReader(stream, delimiter="\\t"))
+              controls = list(csv.DictReader(stream, delimiter="\t"))
           ids = {row["SourceID"].strip() for row in controls}
           if len(ids) != 55:
               raise SystemExit(f"Expected 55 unique controls, found {len(ids)}")
@@ -77,7 +77,7 @@ jobs:
           first_lines, widths = [], collections.Counter()
           token_counts, first_counts, substring_counts = collections.Counter(), collections.Counter(), collections.Counter()
           samples = {source_id: [] for source_id in ids}
-          pattern = re.compile(r"(?<!\\d)(?:" + "|".join(re.escape(x) for x in sorted(ids, key=len, reverse=True)) + r")(?!\\d)")
+          pattern = re.compile(r"(?<!\d)(?:" + "|".join(re.escape(x) for x in sorted(ids, key=len, reverse=True)) + r")(?!\d)")
           total_lines = 0
           digest = hashlib.sha256()
           with path.open("rb") as raw:
@@ -122,7 +122,7 @@ jobs:
               "controls": controls,
               "interpretation": "Layout and identifier diagnostic only; no SNR or membership conclusions."
           }
-          Path("work/output/g_archive_layout_diagnostic.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+          Path("work/output/g_archive_layout_diagnostic.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
           print(json.dumps(report, indent=2, sort_keys=True))
           PY
 
