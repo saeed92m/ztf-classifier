@@ -19,6 +19,7 @@ from typing import Any
 
 CATALOG_FIELDS = ("external_id", "ra", "dec")
 MATCH_FIELDS = ("external_id", "oid", "ra", "dec", "filtercode")
+PROVENANCE_FIELDS = ("field", "ccdid", "qid", "rcid", "fid")
 DEFAULT_RADII_ARCSEC = (1.0, 2.0, 5.0)
 
 
@@ -70,13 +71,35 @@ def angular_separation_arcsec(
     return math.degrees(2.0 * math.asin(math.sqrt(hav))) * 3600.0
 
 
+def _partition_fields(rows: list[dict[str, Any]]) -> tuple[str, ...]:
+    present = {
+        field
+        for field in PROVENANCE_FIELDS
+        if any(str(row.get(field, "")).strip() for row in rows)
+    }
+    if {"field", "rcid"} <= present:
+        return ("field", "rcid")
+    if {"field", "ccdid", "qid"} <= present:
+        return ("field", "ccdid", "qid")
+    return ()
+
+
+def _partition_key(
+    row: dict[str, Any], fields: tuple[str, ...]
+) -> tuple[str, ...] | None:
+    if not fields:
+        return None
+    values = tuple(str(row.get(field, "")).strip() for field in fields)
+    return values if all(values) else None
+
+
 def audit_recovery(
     catalog_rows: list[dict[str, str]],
     match_rows: list[dict[str, str]],
     *,
     radii_arcsec: tuple[float, ...] = DEFAULT_RADII_ARCSEC,
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Build per-source multiplicity rows and aggregate summaries."""
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    """Return per-object rows, per-match rows, and aggregate summaries."""
     if not catalog_rows:
         raise ValueError("catalog contains no source rows")
     if not radii_arcsec or any(
@@ -126,6 +149,8 @@ def audit_recovery(
             "ztf_dec": dec,
             "separation_arcsec": separation,
         }
+        for field in PROVENANCE_FIELDS:
+            value[field] = str(row.get(field, "") or "").strip()
         if key in unique_matches:
             duplicate_match_rows += 1
             previous = unique_matches[key]
@@ -136,11 +161,20 @@ def audit_recovery(
         else:
             unique_matches[key] = value
 
+    match_audit = sorted(
+        unique_matches.values(),
+        key=lambda item: (
+            item["external_id"],
+            item["separation_arcsec"],
+            item["oid"],
+        ),
+    )
+    partition_fields = _partition_fields(match_audit)
     rows: list[dict[str, Any]] = []
     summaries: dict[str, Any] = {}
     for radius in sorted(set(radii_arcsec)):
         by_source: dict[str, list[dict[str, Any]]] = defaultdict(list)
-        for match in unique_matches.values():
+        for match in match_audit:
             if match["separation_arcsec"] <= radius:
                 by_source[match["external_id"]].append(match)
 
@@ -155,6 +189,28 @@ def audit_recovery(
             filters = sorted({item["filtercode"] for item in matches})
             per_filter = Counter(item["filtercode"] for item in matches)
             same_filter_multi = any(value > 1 for value in per_filter.values())
+            partition_keys = {
+                key
+                for item in matches
+                if (key := _partition_key(item, partition_fields)) is not None
+            }
+            per_filter_partitions: dict[str, set[tuple[str, ...]]] = defaultdict(set)
+            per_filter_partition_counts = Counter()
+            for item in matches:
+                key = _partition_key(item, partition_fields)
+                if key is not None:
+                    per_filter_partitions[item["filtercode"]].add(key)
+                    per_filter_partition_counts[(item["filtercode"], key)] += 1
+            same_filter_multi_partition = (
+                any(len(keys) > 1 for keys in per_filter_partitions.values())
+                if partition_fields
+                else None
+            )
+            same_filter_same_partition_multi = (
+                any(count > 1 for count in per_filter_partition_counts.values())
+                if partition_fields
+                else None
+            )
             oid_count = len(oids)
             oid_counts.append(oid_count)
             counts["matched_objects"] += int(oid_count > 0)
@@ -162,6 +218,21 @@ def audit_recovery(
             counts["multi_oid_objects"] += int(oid_count > 1)
             counts["multi_filter_objects"] += int(len(filters) > 1)
             counts["same_filter_multi_oid_objects"] += int(same_filter_multi)
+            if partition_fields:
+                counts["provenance_complete_objects"] += int(
+                    bool(matches)
+                    and len(partition_keys) > 0
+                    and all(
+                        _partition_key(item, partition_fields) is not None
+                        for item in matches
+                    )
+                )
+                counts["same_filter_multi_partition_objects"] += int(
+                    same_filter_multi_partition is True
+                )
+                counts["same_filter_same_partition_multi_oid_objects"] += int(
+                    same_filter_same_partition_multi is True
+                )
             counts["matched_oid_rows"] += oid_count
             rows.append(
                 {
@@ -172,6 +243,15 @@ def audit_recovery(
                     "filter_count": len(filters),
                     "filtercodes": ";".join(filters),
                     "same_filter_multiple_oids": same_filter_multi,
+                    "partition_key_fields": ";".join(partition_fields),
+                    "partition_count": len(partition_keys),
+                    "partition_keys": ";".join(
+                        "/".join(key) for key in sorted(partition_keys)
+                    ),
+                    "same_filter_multiple_partitions": same_filter_multi_partition,
+                    "same_filter_same_partition_multiple_oids": (
+                        same_filter_same_partition_multi
+                    ),
                     "nearest_separation_arcsec": (
                         min(item["separation_arcsec"] for item in matches)
                         if matches
@@ -191,23 +271,32 @@ def audit_recovery(
             "same_filter_multi_oid_objects": counts[
                 "same_filter_multi_oid_objects"
             ],
+            "partition_key_fields": list(partition_fields),
+            "provenance_complete_objects": counts["provenance_complete_objects"],
+            "same_filter_multi_partition_objects": counts[
+                "same_filter_multi_partition_objects"
+            ],
+            "same_filter_same_partition_multi_oid_objects": counts[
+                "same_filter_same_partition_multi_oid_objects"
+            ],
             "max_oids_per_source": max(oid_counts, default=0),
         }
 
     metadata = {
-        "schema_version": "ztf-recovery-multiplicity-v1",
+        "schema_version": "ztf-recovery-multiplicity-v2",
         "interpretation": (
             "OID multiplicity is descriptive. Multiple OIDs are not classified "
-            "as false positives because ZTF objects are defined per filter, "
-            "field, and quadrant."
+            "as false positives. Field/quadrant provenance separates boundary "
+            "splits from same-partition multiplicity."
         ),
         "duplicate_match_rows_removed": duplicate_match_rows,
         "unique_external_objects": len(catalog),
         "unique_external_ids": sorted(catalog),
         "unique_external_ztf_oid_pairs": len(unique_matches),
+        "partition_key_fields": list(partition_fields),
         "radii": summaries,
     }
-    return rows, metadata
+    return rows, match_audit, metadata
 
 
 def main() -> int:
@@ -225,7 +314,7 @@ def main() -> int:
 
     catalog_rows = _read_csv(args.catalog, CATALOG_FIELDS)
     match_rows = _read_csv(args.matches, MATCH_FIELDS)
-    per_object, summary = audit_recovery(
+    per_object, per_match, summary = audit_recovery(
         catalog_rows, match_rows, radii_arcsec=tuple(args.radii_arcsec)
     )
 
@@ -242,12 +331,35 @@ def main() -> int:
                 "filter_count",
                 "filtercodes",
                 "same_filter_multiple_oids",
+                "partition_key_fields",
+                "partition_count",
+                "partition_keys",
+                "same_filter_multiple_partitions",
+                "same_filter_same_partition_multiple_oids",
                 "nearest_separation_arcsec",
             ),
             lineterminator="\n",
         )
         writer.writeheader()
         writer.writerows(per_object)
+
+    per_match_path = args.output_dir / "per_match_audit.csv"
+    with per_match_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=(
+                "external_id",
+                "oid",
+                "filtercode",
+                "ztf_ra",
+                "ztf_dec",
+                "separation_arcsec",
+                *PROVENANCE_FIELDS,
+            ),
+            lineterminator="\\n",
+        )
+        writer.writeheader()
+        writer.writerows(per_match)
 
     summary["inputs"] = {
         "catalog": {
@@ -266,7 +378,12 @@ def main() -> int:
         "per_object_multiplicity": {
             "path": per_object_path.name,
             "sha256": sha256_file(per_object_path),
-        }
+        },
+        "per_match_audit": {
+            "path": per_match_path.name,
+            "sha256": sha256_file(per_match_path),
+            "rows": len(per_match),
+        },
     }
     summary_path = args.output_dir / "summary.json"
     summary_path.write_text(
@@ -279,8 +396,11 @@ def main() -> int:
             f"radius={radius} arcsec matched={metrics['matched_objects']} "
             f"unmatched={metrics['unmatched_objects']} "
             f"multi_oid={metrics['multi_oid_objects']} "
-            f"same_filter_multi_oid={metrics['same_filter_multi_oid_objects']}"
+            f"same_filter_multi_oid={metrics['same_filter_multi_oid_objects']} "
+            f"same_filter_multi_partition="
+            f"{metrics['same_filter_multi_partition_objects']}"
         )
+    print(f"per_match_audit={per_match_path}")
     print(f"summary={summary_path}")
     return 0
 
