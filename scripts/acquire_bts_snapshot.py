@@ -50,10 +50,11 @@ def _angle_degrees(value: str, *, right_ascension: bool) -> float:
 def parse_bts_csv(payload: bytes) -> list[dict[str, str | float]]:
     """Parse the publisher CSV, including its documented leading blank line."""
     text = payload.decode("utf-8-sig")
-    text = text.lstrip("\r\n")
+    text = text.lstrip("\ufeff\r\n ")
     reader = csv.DictReader(io.StringIO(text))
     if reader.fieldnames is None:
         raise ValueError("BTS CSV has no header")
+    reader.fieldnames = [name.strip() for name in reader.fieldnames]
     missing = sorted(set(REQUIRED_COLUMNS) - set(reader.fieldnames))
     if missing:
         raise ValueError("BTS CSV is missing columns: " + ", ".join(missing))
@@ -109,6 +110,7 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--sample-size", type=int, default=100)
     parser.add_argument("--timeout", type=float, default=90.0)
+    parser.add_argument("--code-version", default="unknown")
     args = parser.parse_args()
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -136,9 +138,14 @@ def main() -> int:
         "schema_version": "bts-source-snapshot-v1",
         "source": "ZTF Bright Transient Survey Sample Explorer",
         "source_url": BTS_CSV_URL,
+        "resolved_url": response.url,
+        "code_version": args.code_version,
         "retrieval_timestamp_utc": datetime.now(UTC).isoformat(),
         "http_status": response.status_code,
         "content_type": response.headers.get("content-type"),
+        "etag": response.headers.get("etag"),
+        "last_modified": response.headers.get("last-modified"),
+        "content_length_header": response.headers.get("content-length"),
         "raw_response_sha256": digest,
         "raw_response_bytes": len(payload),
         "row_count": len(rows),
