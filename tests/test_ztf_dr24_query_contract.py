@@ -1,4 +1,6 @@
+import sys
 from types import SimpleNamespace
+from typing import ClassVar
 
 import pandas as pd
 
@@ -6,7 +8,7 @@ from scripts import query_ztf_dr24_spatial_recovery as query
 
 
 class _FakeCatalog:
-    all_columns = [
+    all_columns: ClassVar[list[str]] = [
         "oid",
         "ra",
         "dec",
@@ -42,7 +44,7 @@ class _FakeCatalog:
 
 def test_query_preserves_available_field_and_quadrant_provenance(monkeypatch):
     fake_lsdb = SimpleNamespace(open_catalog=lambda *args, **kwargs: _FakeCatalog())
-    monkeypatch.setitem(__import__("sys").modules, "lsdb", fake_lsdb)
+    monkeypatch.setitem(sys.modules, "lsdb", fake_lsdb)
 
     matches, metadata = query.query_dr24(
         [{"external_id": "BTS_A", "ra": "10", "dec": "20"}],
@@ -75,12 +77,12 @@ def test_query_preserves_available_field_and_quadrant_provenance(monkeypatch):
 
 def test_query_fails_closed_when_required_dr24_columns_are_missing(monkeypatch):
     class IncompleteCatalog:
-        all_columns = ["oid", "ra", "dec"]
+        all_columns: ClassVar[list[str]] = ["oid", "ra", "dec"]
 
     fake_lsdb = SimpleNamespace(
         open_catalog=lambda *args, **kwargs: IncompleteCatalog()
     )
-    monkeypatch.setitem(__import__("sys").modules, "lsdb", fake_lsdb)
+    monkeypatch.setitem(sys.modules, "lsdb", fake_lsdb)
 
     try:
         query.query_dr24(
