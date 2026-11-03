@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-register-dr24-payload-probe-workflow-20261103",
+  "objective": "Register a bounded, manual-only DR24 light-curve payload probe on the default branch so the source-backed probe can be dispatched against the dedicated investigation branch.",
+  "previous_knowledge_consumed": [
+    "The probe implementation and deterministic contract tests are maintained in PR #255.",
+    "GitHub Actions exposes workflow_dispatch for a workflow only when its workflow definition is present on the repository default branch.",
+    "Pull-request-triggered probe runs do not retrieve external DR24 payloads.",
+    "CPVS exact-membership discrepancy remains unresolved and is not in scope for this workflow registration."
+  ],
+  "baseline": {
+    "revision": "main@e428bc9d95b658e7de3957bc3b3368290f6a8412",
+    "description": "The DR24 payload probe workflow file is absent from main; the implementation exists on the PR #255 investigation branch."
+  },
+  "expected_improvement": [
+    "Expose a manual workflow_dispatch entry for the bounded DR24 probe.",
+    "Allow selecting the PR #255 investigation branch when dispatching the probe.",
+    "Keep source retrieval limited to a maximum of five explicitly supplied OIDs and read-only repository permissions."
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "The workflow definition was absent from the default branch, so manual dispatch was unavailable.",
+        "after": "The workflow definition is present on the PR branch; manual dispatch availability remains unverified until merge."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "No workflow_dispatch run has retrieved live DR24 payload data. Registration does not establish scientific validity."
+      }
+    },
+    "trade_off": "A separate workflow registration change is required before dispatch. This change does not modify scientific code, benchmark data, model artifacts, or acceptance criteria."
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "PR checks must validate the workflow and cumulative lifecycle record.",
+      "After merge, manually dispatch against the PR #255 branch and inspect the generated manifest and payload artifact."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The workflow_dispatch definition was not present on the repository default branch; pull_request events did not trigger the source-backed payload-probe job."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A successful pull-request contract test is not evidence of external DR24 retrieval.",
+      "Workflow registration must be validated separately from live payload retrieval."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "PR checks must pass on the accepted head.",
+      "A workflow_dispatch run must retrieve the bounded OID sample and produce inspectable artifacts."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not promote DR24 payload availability to scientific benchmark truth without provenance and content validation.",
+    "Keep the CPVS discrepancy as an explicit scientific validation blocker."
+  ]
+}
