@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "stage_id": "pr-decouple-cpvs-from-product-validation-20261103",
-  "objective": "Separate deferred CPVS reconstruction research from the active ZTF product validation path, while preserving independent DR24 and ALeRCE evidence and making StarEmbed acquisition an explicit opt-in.",
+  "objective": "Separate deferred CPVS reconstruction research from the active ZTF product validation path, while preserving DR24, ALeRCE, and independent StarEmbed product evidence.",
   "previous_knowledge_consumed": [
     "The current Scientific Validation workflow ran CPVS parent acquisition, large g/r archive downloads, reconstruction, and VizieR membership audit inside the heavy job.",
     "The CPVS reconstruction is not the active product dataset or a product acceptance target; it is deferred research.",
@@ -39,7 +39,7 @@
         "after": "The Release workflow now requires StarEmbed, DR24, ALeRCE live evidence, and the frozen ALeRCE reference. The independent StarEmbed job retains the scientific-validation-heavy artifact name and release provenance record."
       }
     },
-    "trade_off": "CPVS reconstruction no longer runs as part of routine product validation. StarEmbed acquisition requires an explicit manual opt-in. CPVS research artifacts and code remain available for a separate future workflow."
+    "trade_off": "CPVS reconstruction no longer runs as part of routine product validation. StarEmbed acquisition remains an independent product-evidence job and runs on main pushes, schedules, tags, and manual validation runs. CPVS research artifacts and code remain available for separate deferred work."
   },
   "validation": {
     "status": "PENDING_CI",
@@ -51,9 +51,10 @@
       "Inspect the workflow graph to confirm CPVS bulk acquisition and membership audit are absent from push, schedule, tag, and pull-request product paths.",
       "Confirm DR24 and ALeRCE source-evidence jobs retain their existing trigger conditions.",
       "Release workflow was inspected before modification. It downloaded frozen CPVS evidence and required CPVS parent/derivation manifests; these hidden dependencies were removed.",
-      "The independent StarEmbed acquisition job now runs on main pushes, scheduled runs, tags, and the explicit manual opt-in; it uploads the compatibility artifact scientific-validation-heavy and records release_ref.json for main/tag runs.",
+      "The independent StarEmbed acquisition job now runs on main pushes, scheduled runs, tags, and the manual validation run; it uploads the compatibility artifact scientific-validation-heavy and records release_ref.json for main/tag runs.",
       "Release evidence requirements now retain StarEmbed acquisition, DR24 source evidence, live ALeRCE reference evidence, and the frozen historical ALeRCE manifest; CPVS requirements are removed.",
-      "Added tests/test_release_workflow_scope.py to prevent CPVS data acquisition or release-artifact dependencies from returning."
+      "Added tests/test_release_workflow_scope.py to prevent CPVS data acquisition or release-artifact dependencies from returning.",
+      "StarEmbed acquisition is not optional for a successful main/manual Scientific Validation run because the Release workflow consumes the scientific-validation-heavy artifact."
     ]
   },
   "failure_analysis": {
