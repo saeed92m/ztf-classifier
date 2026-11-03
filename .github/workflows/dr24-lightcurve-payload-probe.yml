@@ -54,9 +54,10 @@ jobs:
       - name: Retrieve only the explicitly supplied object IDs
         env:
           GITHUB_SHA: ${{ github.sha }}
+          PROBE_OIDS: ${{ inputs.object_ids }}
         run: |
           python scripts/probe_ztf_dr24_lightcurve_payload.py \
-            --oids "${{ inputs.object_ids }}" \
+            --oids "$PROBE_OIDS" \
             --max-oids 5 \
             --output-dir reports/dr24_lightcurve_payload_probe
       - name: Upload bounded payload evidence
