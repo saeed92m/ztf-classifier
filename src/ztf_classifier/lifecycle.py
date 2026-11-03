@@ -174,12 +174,12 @@ def assert_valid_cycle_record(record: dict[str, Any]) -> None:
 def validate_cycle_file(path: str | Path) -> None:
     """Validate one JSON lifecycle record from disk."""
     file_path = Path(path)
-    record = json.loads(file_path.read_text(encoding="utf-8"))
-    if not isinstance(record, dict):
-        raise TypeError(f"{file_path}: lifecycle record must be a JSON object")
     try:
+        record = json.loads(file_path.read_text(encoding="utf-8"))
+        if not isinstance(record, dict):
+            raise TypeError("lifecycle record must be a JSON object")
         assert_valid_cycle_record(record)
-    except ValueError as exc:
+    except (TypeError, ValueError) as exc:
         raise ValueError(f"{file_path}: {exc}") from exc
 
 
@@ -190,10 +190,16 @@ def _main() -> int:
     parser.add_argument("command", choices=("validate",))
     parser.add_argument("paths", nargs="+")
     args = parser.parse_args()
+    failures = []
     for path in args.paths:
-        validate_cycle_file(path)
-        print(f"PASS {path}")
-    return 0
+        try:
+            validate_cycle_file(path)
+        except ValueError as exc:
+            failures.append(str(exc))
+            print(f"FAIL {exc}")
+        else:
+            print(f"PASS {path}")
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":
