@@ -9,7 +9,7 @@ Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issu
 
 See the full evidence-based report: [Project Status Report 2026-11-03](../PROJECT_STATUS_REPORT_2026-11-03.md).
 
-The weighted platform-readiness estimate is **56%**. It measures progress toward the declared cross-platform scientific application. It is not a code-completion percentage and it does not mean the product scientific gate has passed.
+The weighted platform-readiness estimate is **57.7% (rounded to 58%)**. It measures progress toward the declared cross-platform scientific application. It is not a code-completion percentage and it does not mean the product scientific gate has passed.
 
 | Subsystem | Weight | Readiness |
 |---|---:|---:|
@@ -22,7 +22,7 @@ The weighted platform-readiness estimate is **56%**. It measures progress toward
 | Cross-platform packaging and deployment | 10% | 15% |
 | CI, security and release engineering | 6% | 90% |
 | Documentation and operations | 4% | 65% |
-| **Weighted total** | **100%** | **58%** |
+| **Weighted total** | **100%** | **57.7% (58% rounded)** |
 
 ### Current verified position
 
