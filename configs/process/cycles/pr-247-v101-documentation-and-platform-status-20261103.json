@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-247-v101-documentation-and-platform-status-20261103",
+  "objective": "Synchronize installation, user, model, roadmap, and status documentation with the published v1.0.1 package, the frozen v0.2.0 scientific baseline, and the latest verified independent DR24 recovery evidence. Preserve all scientific limitations and fail-closed acceptance criteria.",
+  "previous_knowledge_consumed": [
+    "Official IRSA DR24 HATS documentation states that ZTF object identifiers are defined per filter, field, and quadrant; multiple OIDs are not automatically false positives.",
+    "The official BTS explorer snapshot retrieved on 2026-11-02 contains 10,551 rows and is preserved with SHA-256 af2362275074ff4b6c70523b9db6f2d5991af16fdd8d76ed47520948eb788e82.",
+    "Initial 100-object BTS-to-DR24 pilot run 41488299913 returned 773 OID rows within 5 arcseconds and showed strong radius-dependent multiplicity.",
+    "The existing StarEmbed adapter requires a verified Hugging Face revision and five Parquet artifacts; its coordinate-recovery pilot remains separate and pending.",
+    "Schema-aware BTS-to-DR24 source-backed run 41525750067 completed 100 targets and 773 unique OIDs; the live Objects Table schema exposed field, ccdid, qid, and fid.",
+    "The DR24 Lightcurves HATS table uses an objectid index; Objects Table presence does not prove a light-curve row exists.",
+    "Issue #188 raw DR24 light-curve artifact shows OIDs are single-filter: 5/12 selected OIDs were zi-only; the other 7 produced single-band, 19/42-finite feature vectors."
+  ],
+  "baseline": {
+    "revision": "4f98a06bde95b08a54a8844995b7717d6281ca33",
+    "description": "Documentation-only update based on main at this revision. No production code, v0.2.0 model artifact, feature schema, taxonomy, selector, or scientific acceptance criteria are changed."
+  },
+  "expected_improvement": [
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Several user-facing guides had outdated software-version instructions and did not clearly separate the v1.0.1 software release from the frozen v0.2.0 model baseline.",
+        "after": "Installation, User Guide, Model Card, roadmap, and status report now state the v1.0.1 package version, the frozen v0.2.0/baseline_v0.2 model identity, and the absence of self-contained desktop installers."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "This PR changes documentation only. It does not measure runtime reliability, scientific performance, or installation success on clean machines."
+      },
+      "reproducibility": {
+        "before": "The status report did not include the completed indexed DR24 Lightcurves availability results.",
+        "after": "The status report records the 100-target BTS→DR24 run, 773 OIDs, 714 Lightcurves rows, 59 missing rows, filter-level missing counts, artifact ID, SHA-256, and scientific interpretation limits."
+      },
+      "scientific_validity": {
+        "status": "NOT_CHANGED",
+        "reason": "No scientific method, feature, model, benchmark, label, selector, or acceptance criterion is changed. Source-backed recovery evidence remains positional and does not establish source identity or model performance."
+      },
+      "regression_protection_count": {
+        "before": 10,
+        "after": 17,
+        "unit": "independent_recovery_contract_tests",
+        "status": "MEASURED"
+      }
+    },
+    "trade_off": "The platform readiness estimate is updated to 57.7% (rounded to 58%) using the documented subsystem weights. It remains an engineering estimate. Documentation changes do not increase scientific acceptance status."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "PR #247 documentation changes cover docs/INSTALLATION.md, docs/MODEL_CARD.md, docs/PROJECT_STATUS_REPORT_2026-11-03.md, docs/USER_GUIDE.md, and docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md.",
+      "Source-backed workflow 41527459598 completed successfully. Artifact 13184608092, ZIP SHA-256 84548734b39fa5e1639e6b06ed54d0630c23603b4c6a803b3e7c0935966de7e3.",
+      "The artifact reports 714/773 OIDs with Lightcurves rows, 59 missing, 773/773 filter metadata pairs consistent, 87/100 BTS targets with both g/r availability, 96/100 with any Lightcurves row, and 60/100 with every recovered OID present.",
+      "The documentation status report records the 650 passed, 10 skipped, 9 warnings, 83% coverage result from PR-head CI run 41528271371.",
+      "PR #247 CI run 41529640518: format and lint passed; cumulative lifecycle gate failed because the documentation PR did not include a machine-readable cycle record. The test suite, runtime smoke, package build, and dependency audit were skipped as a consequence. This cycle record is added to address the process requirement; a new CI run must verify it.",
+      "Product Scope Audit run 41529640632 passed; CodeQL run 41529640503 passed; Scientific Validation run 41529640483 passed its contract job. These checks do not establish scientific product acceptance."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The previous installation/user documentation did not consistently distinguish the published Python package from planned self-contained desktop installers.",
+      "The status report's source-backed Lightcurves availability check was stale because the final artifact had not yet been inspected when the first report draft was written.",
+      "The documentation-only PR failed the cumulative lifecycle gate because the workflow requires a cycle record for meaningful documentation changes."
+    ],
+    "unresolved": [
+      "Re-run PR #247 CI after adding this lifecycle record and inspect all gated jobs.",
+      "Synchronize the main handbook and remaining operational acceptance documentation.",
+      "Do not claim scientific validation from documentation or contract checks."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "The v1.0.1 release is a Python package, not a self-contained desktop installer.",
+      "The frozen v0.2.0 scientific baseline and v1.0.1 software release are separate version identities and must be stated separately.",
+      "A successful indexed Lightcurves lookup proves row availability only; it does not prove clean photometry, sufficient cadence, source identity, or model readiness.",
+      "The 100-target BTS→DR24 pilot found 714 Lightcurves rows for 773 recovered OIDs; 59 OIDs had no row. These counts are bounded sample evidence only.",
+      "A weighted platform readiness estimate is an engineering planning measure, not a scientific validation metric."
+    ]
+  },
+  "regression": {
+    "status": "NOT_APPLICABLE",
+    "open_blockers": [
+      "Documentation changes do not implement astrophysical source grouping or g/r feature-engine integration.",
+      "Photometry quality, cadence, source identity, StarEmbed leakage, desktop packaging, and full product scientific acceptance remain open."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep software release v1.0.1 distinct from frozen scientific baseline v0.2.0 / baseline_v0.2.",
+    "Do not call a Python wheel a self-contained desktop installer.",
+    "Use source-backed DR24 availability counts with their sample size, manifest, hashes, and limitations.",
+    "Do not treat Lightcurves row availability as proof of scientific usability.",
+    "Do not change scientific baselines or acceptance criteria to improve readiness scores."
+  ]
+}
