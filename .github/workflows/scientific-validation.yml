@@ -17,11 +17,6 @@ on:
         required: false
         default: true
         type: boolean
-      run_star_embed:
-        description: "Acquire the optional independent StarEmbed benchmark"
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: read
@@ -58,7 +53,7 @@ jobs:
     name: Acquire independent StarEmbed product benchmark evidence
     if: >-
       github.event_name == 'schedule' ||
-      (github.event_name == 'workflow_dispatch' && inputs.run_star_embed == true) ||
+      github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/ci/heavy/'))) ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
       (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
