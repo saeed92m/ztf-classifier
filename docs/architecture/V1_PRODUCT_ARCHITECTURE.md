@@ -106,3 +106,20 @@ Streaming support is a future execution mode, not a requirement to weaken curren
 4. Human feedback is not silently promoted to ground truth.
 5. External-source claims require provenance and access/licensing review.
 6. New analysis modes require explicit contracts, tests, provenance, and scientific validation before being treated as validated capability.
+
+
+## Astronomical Object Identity and Cross-Match (AOIC) — proposed
+
+AOIC is a proposed foundational identity layer. It will preserve survey/catalog identifiers while maintaining evidence-backed internal object identities, aliases, detections, observations, events, datasets and analysis lineage. Matching must be epoch-aware and uncertainty-aware. Confirmed, ambiguous and unmatched states remain distinct. AOIC is tracked in [Issue #249](https://github.com/saeed92m/ztf-classifier/issues/249); its architecture PR is a separate draft proposal and is not yet accepted or implemented.
+
+## Cosmic Intelligence Network (CIN) — proposed
+
+CIN is a logically independent human-in-the-loop annotation and intelligence subsystem. It will provide task generation/allocation, immutable contributions, task-specific quality control, consensus with preserved disagreement, expert review, active learning and versioned research datasets. CIN must not be embedded in the scientific core and must not be required for local analysis, inference, benchmark evaluation or reporting.
+
+## Three-system relationship
+
+- ZTF Classifier: computational scientific analysis and machine-generated assessments.
+- AOIC: evidence-backed identity and cross-catalog/source association.
+- CIN: structured human-generated assessments and annotation datasets.
+
+All three use explicit versioned contracts. A catalog match, model prediction, human consensus or novelty score is not automatically scientific ground truth. CIN task subjects must preserve original source IDs and unresolved identity state until AOIC is validated. CIN architecture: [COSMIC_INTELLIGENCE_NETWORK_v1.0.0.md](COSMIC_INTELLIGENCE_NETWORK_v1.0.0.md); AOIC: tracked by Issue #249; CIN: tracked by Issue #251.
