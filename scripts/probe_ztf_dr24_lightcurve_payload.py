@@ -119,6 +119,7 @@ def summarize_payload(
         "objdec": float(metadata["objdec"]),
         "catalog_nepochs": int(metadata["nepochs"]),
         "payload_rows": len(payload),
+        "payload_dtypes": {name: str(dtype) for name, dtype in payload.dtypes.items()},
         "epoch_count_matches": int(metadata["nepochs"]) == len(payload),
         "payload_sha256": payload_hash,
         "hmjd_finite_count": int(hmjd.notna().sum()),
@@ -185,6 +186,8 @@ def probe(oids: list[int]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], 
         summaries.append(summary)
         epoch_rows.extend(epochs)
 
+    schema_columns = sorted(str(column) for column in available)
+    schema_bytes = json.dumps(schema_columns, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
     metadata = {
         "schema_version": "ztf-dr24-lightcurve-payload-probe-v1",
         "source": "IRSA ZTF DR24 Lightcurves HATS",
@@ -198,6 +201,12 @@ def probe(oids: list[int]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], 
             "s3fs": _version("s3fs"),
         },
         "index_column": "objectid",
+        "index_columns": indexes,
+        "catalog_schema": {
+            "available_columns": schema_columns,
+            "column_count": len(schema_columns),
+            "column_names_sha256": hashlib.sha256(schema_bytes).hexdigest(),
+        },
         "requested_oids": oids,
         "returned_oids": sorted(returned),
         "missing_oids": sorted(set(oids) - returned),
