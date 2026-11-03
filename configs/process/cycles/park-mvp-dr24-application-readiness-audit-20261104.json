@@ -1,0 +1,112 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "park-mvp-dr24-application-readiness-audit-20261103",
+  "objective": "Audit the current main-branch Park MVP readiness against the supplied Park acceptance requirements; trace application observation-source wiring; record bounded BTS-to-DR24 Lightcurves availability evidence; identify the application-level DR24 acquisition gap and define a fail-closed implementation sequence without changing scientific baselines.",
+  "previous_knowledge_consumed": [
+    "Park MVP is the primary delivery track; CPVS exact-reconstruction is excluded from this delivery track.",
+    "The v0.2.0 scientific baseline and v1.0.1 package release are immutable.",
+    "The bounded BTS-to-DR24 pilot is candidate recovery and row-availability evidence, not physical identity or scientific validation.",
+    "The application observation service currently uses the ALeRCE detection backend.",
+    "The user requires provenance, reproducibility, traceability, and no unsupported completion claims."
+  ],
+  "baseline": {
+    "revision": "main@5bb01ffe15926502bb96fee6e86e86c183ca7779",
+    "description": "Refreshed documentation audit against current main after PR #260 and #259 merges. No runtime, model, data, benchmark, feature schema, taxonomy, or scientific threshold changes."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reproducibility",
+    "maintainability"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "MEASURED",
+        "before": "Park requirements, application source wiring, and DR24 pilot evidence were not recorded together as a current application-readiness matrix.",
+        "after": "The refreshed audit maps current main application wiring and adds the bounded nested-payload evidence. The default ObservationService remains ALeRCE-backed; DR24 is not yet a selectable application source."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "No application-level DR24 acquisition adapter or end-to-end DR24 Workbench run was executed."
+      },
+      "reproducibility": {
+        "before": "A prior bounded BTS-to-DR24 availability run recorded 773 candidate OIDs, 714 Lightcurves rows found, and 59 missing, but did not retrieve nested epoch payloads.",
+        "after": "A separate bounded indexed HATS payload probe retrieved 4/4 explicitly requested OIDs and 626 epoch rows; the manifest and output artifacts include SHA-256 hashes.",
+        "reason": "The payload result is limited to four OIDs. No end-to-end application run manifest or production adapter exists."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The audit does not measure photometry quality, physical identity, classification performance, calibration, anomaly performance, or independent temporal validation."
+      },
+      "regression_protection_count": {
+        "status": "NOT_MEASURED",
+        "unit": "new regression tests",
+        "reason": "This cycle records a read-only audit and creates no runtime code or tests."
+      }
+    },
+    "trade_off": "Prioritize the explicit DR24 application acquisition gap and bounded adapter integration over larger data downloads, optional CIN runtime, or unrelated scientific workstreams."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Inspected repository main at 764ed5d9dcf43693f5c2e5a278afe326b432d578.",
+      "Inspected ObservationService, API application wiring, ALeRCE normalization, local ingestion, DR24 source-subset normalization, feature pipeline, job executor, and Workbench entry files.",
+      "Verified that ObservationService constructs AlerceDetectionBackend directly and the API creates the default ObservationService with Alerce().",
+      "Verified the recorded DR24 pilot counts: 773 recovered OIDs queried, 714 Lightcurves rows found, 59 missing, 773/773 filter metadata pairs consistent, and 87/100 BTS targets with at least one g and one r OID.",
+      "Created an acceptance matrix that separates verified bounded evidence from partial, blocked, and not-started Park requirements.",
+      "No runtime code, model artifact, feature schema, benchmark, production data, or release was changed.",
+      "Downloaded and inspected the exact DR24 Lightcurves workflow artifact 13184608092. Its 13-column schema includes a lightcurve payload column, but the availability script selected only objectid, filterid, and nepochs; no lightcurve payload was retrieved or inspected.",
+      "Refreshed against current main revision 5bb01ffe15926502bb96fee6e86e86c183ca7779 after PR #260 and PR #259 merged.",
+      "PR #260 removed CPVS reconstruction from routine product validation and made Release publication manual-only with explicit opt-in and exact-SHA validation.",
+      "PR #259 added a bounded manual-only DR24 nested payload probe. Run 41674212725 retrieved 4/4 requested OIDs and 626 epoch rows; artifact ZIP SHA-256 d6918f6a9da9b9fce8c18bdc7bcca73c1ba99ea6d31df561585c2ee3ac06bb7f.",
+      "The probe preserves HMJD, native magnitude, color coefficient, raw catflags, and OID/filter/field/rcid metadata. It does not normalize production data or infer universal cross-OID identity."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The default application observation service is wired directly to AlerceDetectionBackend rather than a source-selectable DR24 adapter.",
+      "The existing DR24 work is a separate recovery/availability workflow and has not been integrated into application observation retrieval."
+    ],
+    "unresolved": [
+      "DR24 Lightcurves time-basis semantics and feature compatibility remain unresolved.",
+      "DR24 magnitude/color treatment and controlled photometric comparison with ALeRCE remain unresolved.",
+      "A versioned catflags quality policy and per-filter exclusion diagnostics remain unresolved.",
+      "Cross-OID grouping requires explicit field/filter/quadrant evidence and a separate identity policy.",
+      "No DR24 production adapter, API/Workbench end-to-end run, 100,000-light-curve labeled dataset, or Park scientific evaluation is complete."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "The DR24 pilot is useful for adapter design but does not establish scientific validation.",
+      "DR24 must be an explicit selectable source and must not silently fall back to ALeRCE.",
+      "The frozen v0.2.0 feature contract must remain unchanged during acquisition integration.",
+      "A bounded pinned sample and complete provenance should precede any large-scale retrieval.",
+      "The Lightcurves row-availability probe did not retrieve the `lightcurve` payload; inspect its actual representation before implementing photometry normalization.",
+      "A bounded nested-payload probe is now available, but it remains separate from the production application observation path.",
+      "HMJD must remain distinct from MJD until a validated time-basis contract exists.",
+      "Native DR24 magnitude and magerr cannot be assumed equivalent to ALeRCE corrected/raw PSF photometry.",
+      "Raw catflags must be retained; a production bitmask or exclusion policy requires separate scientific review."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "No DR24 production adapter or application-level regression suite has been implemented.",
+      "No end-to-end DR24 API/Workbench workflow has been executed.",
+      "No approved DR24 photometry, time-basis, color, or quality policy exists.",
+      "No independent temporal scientific validation or Park-dataset model evaluation has been performed."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Park MVP is the primary delivery track.",
+    "Implement a source-selectable DR24 Lightcurves adapter behind the application observation boundary.",
+    "Keep ALeRCE selectable and prohibit silent source fallback.",
+    "Use fixture-backed regression tests and bounded source-backed integration runs.",
+    "Do not increase product progress or scientific readiness based on this documentation-only audit.",
+    "Keep CPVS outside the Park MVP scope and CIN runtime off the critical path."
+  ]
+}
