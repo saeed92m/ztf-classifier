@@ -262,3 +262,107 @@ For substantial CIN work, report repository/branch, completed work, remaining wo
 CIN is not complete when a UI or vote counter exists. It is complete only when raw human evidence is immutable and traceable; task definitions and policies are versioned; quality and uncertainty are measured; disagreement and expert review are preserved; selection bias is evaluated; datasets are reproducible and licensed; protected benchmarks remain isolated; human-assisted experiments are independently validated; and the optional subsystem cannot compromise standalone ZTF Classifier operation.
 
 **Final principle:** ZTF Classifier supplies computational analysis. CIN supplies structured human-generated evidence. AOIC supplies traceable identity and cross-match evidence. Together they form a governed human–AI astronomical discovery architecture.
+
+
+## 21. User experience and participation strategy
+
+The interaction should minimize unnecessary effort while maximizing scientific usefulness:
+
+- one clear task at a time;
+- short task duration only where scientifically appropriate;
+- clear visual representation and simple language;
+- optional confidence and explicit uncertainty/abstention;
+- no unnecessary registration barrier;
+- accessibility and mobile/desktop support;
+- transparent explanation of participation, data use and attribution.
+
+Potential engagement experiences include Daily Cosmic Challenge, Light Curve Explorer, Real-or-Artifact, Find-the-Anomaly, Compare-Two-Objects, Discovery Missions, contributor dashboard, research progress, community challenges and educational explanations. These are future product concepts, not implemented features.
+
+Gamification must never reward guessing, speed at the expense of accuracy or indiscriminate submission volume. Recognition labels such as Cosmic Observer, Stellar Analyst, Transient Hunter and Anomaly Investigator may describe participation/task experience only. They must not imply professional credentials, expose private participant information or replace task-specific quality measurement. Recognition is optional.
+
+## 22. Metrics and performance evaluation
+
+Keep three metric families separate.
+
+**Product activity:** active participants, task completion/abandonment, median task time, repeat participation, task coverage and participation distribution. These metrics do not measure scientific success.
+
+**Scientific quality:** agreement with independently validated references, inter-annotator agreement, annotation uncertainty, expert adjudication rate, false-positive/false-negative behavior, quality by task type, candidate validation rate, relevant downstream utility and coverage of underrepresented patterns.
+
+**Operations:** task-generation and contribution-ingestion latency, API availability, database performance, storage growth, queue processing, backup/restore success and cost per valid annotation.
+
+Success is not millions of interactions, high vote counts, task completion or a large anomaly queue. A successful CIN release must demonstrate measurable information value, reproducibility, acceptable annotation quality and practical scientific usefulness.
+
+## 23. Deployment and resilience
+
+The initial deployment should reuse compatible existing Python/scientific components where justified, a lightweight API, PostgreSQL-compatible persistence, object storage only for necessary derived assets, queues only when asynchronous work requires them, containerization where operationally useful, and automated backup/restore verification. The actual stack must follow repository and infrastructure inspection. No paid infrastructure is assumed for the first prototype.
+
+The logical deployment boundary is client → API → task/contribution/research services → database/audit log, with object storage for scientific assets and a versioned ZTF adapter to the independently operating ZTF Classifier.
+
+CIN may be unavailable without affecting local scientific analysis, model inference, data validation, benchmark evaluation or reports. Backup and restore procedures must be tested before production deployment.
+
+## 24. Institutional and commercial positioning
+
+CIN may be presented as a planned R&D subsystem for structured human participation in astronomical analysis. Potential institutional value includes citizen-science methods, specialized annotation datasets, human-in-the-loop AI research, active-learning studies, reusable scientific data infrastructure and future university/research collaboration.
+
+If a grant, technology-park application or acceptance document has already been submitted, describe CIN according to its actual status. Use terms such as proposed subsystem, planned R&D, future implementation and experimental validation. Do not claim a global user network, completed crowdsourced dataset, proven discovery, validated classification improvement, mission integration or institutional partnership without evidence.
+
+Potential outputs include a human-annotated ZTF light-curve dataset, human-guided anomaly-prioritization dataset, Real/Bogus assessment dataset, pairwise astronomical similarity dataset, human–AI evaluation framework, publications and reusable APIs. These are planned research outputs, not guaranteed outcomes.
+
+## 25. Risk register and failure conditions
+
+| Risk | Required mitigation |
+|---|---|
+| Low participation | Reduce task friction and test recruitment channels without relaxing quality rules |
+| Low annotation quality | Independently validated controls and expert review |
+| Human bias | Blind presentation and independent assignments |
+| Selection bias | Random audits and representative sampling |
+| Incorrect consensus | Preserve disagreement and uncertainty |
+| Model anchoring | Hide predictions from ordinary contributors where practical |
+| Benchmark leakage | Strict dataset separation and object-level leakage checks |
+| Privacy concerns | Transparent, purpose-limited collection and retention controls |
+| Spam/automated responses | Rate limiting, validation and abuse controls |
+| Infrastructure cost | Modular architecture and staged scaling |
+| Scientific overclaiming | Expert validation and publication governance |
+| Provenance loss | Immutable raw records and versioned manifests |
+
+CIN is not scientifically successful if participants merely repeat model predictions, consensus is treated as ground truth, uncertainty is hidden, provenance is lost, only unusual candidates are sampled, or model improvement is claimed without independent evaluation.
+
+## 26. Minimum operational MVP acceptance
+
+The MVP is technically functional only when:
+
+**Product:** participants can access a task, view traceable scientific data, submit allowed responses, express uncertainty/abstain and use supported devices.
+
+**Data:** each contribution has a unique ID; raw responses are preserved; task/schema versions and source provenance are recorded; duplicate submissions are controlled.
+
+**Quality:** independent repeated annotations and control samples are supported; basic agreement statistics are computed; ambiguous cases are identified; expert review is separately recorded.
+
+**Integration:** ZTF data are referenced without modifying original sources; model outputs can be associated with eligible tasks; CIN failure does not break ZTF Classifier; protected benchmarks and production artifacts remain unchanged.
+
+**Governance:** privacy and retention policies exist; licensing is documented; dataset releases are versioned; reproducibility can be demonstrated.
+
+Passing these criteria proves an operational MVP, not scientific effectiveness. The separate scientific gate must evaluate reference agreement, task-type reliability, contributor-experience effects, presentation sensitivity, selection bias, correlated errors, baseline comparison and generalization. A minimum number of contributions alone never authorizes retraining or production deployment.
+
+## 27. Long-term evolution
+
+After ZTF-focused implementation is scientifically validated, possible future capabilities include multi-survey intelligence, human-guided representation learning from pairwise judgments, focused discovery campaigns, researcher workspaces, public scientific dataset releases, external research integrations and a scientific knowledge graph linking validated objects, annotations, relationships, provenance and research outcomes.
+
+Each capability requires independent feasibility and scientific evaluation. These future options are not present integrations or committed deliverables.
+
+## 28. Repository and documentation integration
+
+The canonical source remains the single authoritative CIN specification. Focused repository documents should implement or reference it, not create contradictory copies. The proposed organization includes architecture, product, data, API, research, governance and roadmap documentation.
+
+For every material implementation change, assess and update README, Handbook, Product Vision, architecture, roadmap, data contracts, API docs, scientific validation strategy, Model Card impact, changelog, installation/user guides, testing documentation, release criteria and research documentation as applicable. Do not update historical documents in a way that makes proposed features appear implemented. Preserve immutable releases and baselines.
+
+## 29. Required initial audit deliverables
+
+Before runtime implementation, complete:
+
+1. CIN Integration Assessment mapping every component to current repository modules.
+2. Individual ADRs and unresolved design decisions.
+3. Prioritized implementation backlog with dependencies and acceptance criteria.
+4. Formal task, contribution, consensus and dataset contracts.
+5. Scientific pilot protocol with reference samples, procedure, quality metrics and evaluation methodology.
+
+The audit must inspect ingestion, prediction, feature/object IDs, benchmark isolation, storage, GUI/web, API, tests/releases, image annotation feasibility, reusable dependencies and components that must remain independent.
