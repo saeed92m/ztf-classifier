@@ -1,4 +1,5 @@
 from ztf_classifier.lifecycle import (
+    _main,
     assert_valid_cycle_record,
     validate_cycle_file,
     validate_cycle_record,
@@ -117,3 +118,29 @@ def test_cycle_file_error_identifies_the_invalid_record_path(tmp_path):
         assert "regression.status must be an allowed status" in str(exc)
     else:
         raise AssertionError("invalid lifecycle record unexpectedly passed")
+
+
+
+def test_lifecycle_cli_reports_all_invalid_files(tmp_path, monkeypatch, capsys):
+    import json
+
+    invalid = valid_record()
+    invalid["regression"] = {
+        "status": "PARTIALLY_VERIFIED",
+        "open_blockers": ["pending"],
+    }
+    first = tmp_path / "first.json"
+    second = tmp_path / "second.json"
+    first.write_text(json.dumps(invalid), encoding="utf-8")
+    second.write_text(json.dumps(invalid), encoding="utf-8")
+
+    monkeypatch.setattr(
+        "sys.argv",
+        ["ztf-lifecycle", "validate", str(first), str(second)],
+    )
+
+    assert _main() == 1
+    output = capsys.readouterr().out
+    assert str(first) in output
+    assert str(second) in output
+    assert output.count("FAIL ") == 2
