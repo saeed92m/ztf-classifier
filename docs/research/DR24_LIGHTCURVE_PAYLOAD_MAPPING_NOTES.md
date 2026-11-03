@@ -81,7 +81,7 @@ The probe does not normalize data, group OIDs, select a quality policy, infer ph
 
 ## 7. Live DR24 payload verification — 2026-11-03
 
-<badge>Source-backed retrieval passed</badge>
+**Status:** Source-backed retrieval passed for the bounded four-OID sample.
 
 The isolated branch-scoped run [41674212725](https://github.com/saeed92m/ztf-classifier/actions/runs/41674212725) completed both jobs:
 
