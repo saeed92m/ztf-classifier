@@ -13,7 +13,7 @@ The v1.0.1 Python package is released. The frozen v0.2.0 classifier has a 42-fea
 
 The broader product is not complete. The current application has a FastAPI service and an API-backed web Workbench. It does not yet have self-contained Windows, macOS, or Linux desktop installers. Independent scientific validation is also incomplete.
 
-**Estimated platform progress: 58%.** This is a weighted product-readiness estimate. It is not a code-completion percentage and it is not a scientific-validation result. The scoring method is below.
+**Estimated platform progress: 57.7% (rounded to 58%).** This is a weighted product-readiness estimate. It is not a code-completion percentage and it is not a scientific-validation result. The scoring method is below.
 
 The product-level scientific gate remains fail-closed. A successful CI workflow does not prove that all required source-backed scientific checks passed. The exact historical CPVS reconstruction is a separate claim-specific workstream. It is excluded from the product progress score and is not being worked in this status cycle.
 
@@ -134,7 +134,7 @@ Missing Lightcurves rows by Objects Table filter: `zg` 25, `zr` 23, and `zi` 11.
 
 The schema-aware source-backed run [41525750067](https://github.com/saeed92m/ztf-classifier/actions/runs/41525750067) completed 100/100 targets and returned 773 OID rows. The later run [41527459598](https://github.com/saeed92m/ztf-classifier/actions/runs/41527459598) repeated the source-backed query and added the Lightcurves index check. The latest artifact is the evidence source for the availability counts above.
 
-The independent recovery contract job passed 14 tests on the same push run. A later test-style correction is awaiting the latest PR CI checks.
+The independent recovery contract job passed 17 tests in source-backed run 41527459598. Current PR #246 CI run 41589519098 has passed format, lint, and lifecycle validation; its full test suite is still running.
 
 ## Scientific validation blockers
 
@@ -189,6 +189,6 @@ The exact historical CPVS reconstruction remains a separate external-reproductio
 
 ## Decision
 
-**The v1.0.1 software package is released. The broader platform is in active development at an estimated 56% readiness. Scientific product acceptance and cross-platform desktop acceptance are not complete.**
+**The v1.0.1 software package is released. The broader platform is in active development at an estimated 57.7% (rounded to 58%) readiness. Scientific product acceptance and cross-platform desktop acceptance are not complete.**
 
 No release, merge, or scientific-validation claim is authorized by this report.
