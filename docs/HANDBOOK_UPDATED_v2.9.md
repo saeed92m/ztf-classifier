@@ -138,7 +138,10 @@ CIN task records must use typed subject references. Preserve original ZTF/catalo
 - Repository fit and gap analysis: docs/CIN_INTEGRATION_ASSESSMENT_2026-11-03.md
 - Logical data/API contracts: docs/api/CIN_DATA_CONTRACTS_v0.1.md
 - LC-01 pilot protocol: docs/research/CIN_LC01_PILOT_PROTOCOL_v0.1.md
+- Participation strategy: docs/product/CIN_PARTICIPATION_STRATEGY_v0.1.md
+- Privacy, security, licensing and risk: docs/governance/CIN_GOVERNANCE_AND_RISK_v0.1.md
 - Staged implementation roadmap: docs/roadmap/CIN_IMPLEMENTATION_ROADMAP.md
+- Proposed decisions: docs/knowledge/ARCHITECTURAL_DECISIONS.md
 
 These are proposed design documents. No runtime implementation or pilot execution is claimed.
 
