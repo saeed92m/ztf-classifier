@@ -100,3 +100,14 @@ Do not publish a CIN release until privacy, security, data rights, reproducibili
 ## Relationship to the platform roadmap
 
 CIN extends the discovery and human-review track. It does not replace the core desktop product, AOIC identity work, data acquisition or independent scientific validation. It must remain separately measurable so CIN planning does not inflate readiness estimates for the existing ZTF product.
+
+
+## Reference specifications
+
+- [Canonical architecture companion](../architecture/COSMIC_INTELLIGENCE_NETWORK_v1.0.0.md)
+- [Repository integration assessment](../CIN_INTEGRATION_ASSESSMENT_2026-11-03.md)
+- [Task, contribution, consensus and dataset contracts](../api/CIN_DATA_CONTRACTS_v0.1.md)
+- [LC-01 scientific pilot protocol](../research/CIN_LC01_PILOT_PROTOCOL_v0.1.md)
+- [Participation and contributor experience](../product/CIN_PARTICIPATION_STRATEGY_v0.1.md)
+- [Governance, privacy, security and risk](../governance/CIN_GOVERNANCE_AND_RISK_v0.1.md)
+- [Proposed decision register](../knowledge/ARCHITECTURAL_DECISIONS.md)
