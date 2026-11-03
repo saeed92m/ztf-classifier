@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "stage_id": "pr-cin-architecture-roadmap-20261103",
-  "objective": "Translate the complete canonical CIN source ZTF-CIN-ARCH-001 v1.0.0 into repository architecture, feasibility assessment, logical contracts, LC-01 pilot protocol, roadmap, handbook, product architecture, README and cumulative knowledge while preserving ZTF scientific baselines and subsystem independence.",
+  "objective": "Translate the complete 23-part canonical CIN source ZTF-CIN-ARCH-001 v1.0.0 into repository architecture, feasibility assessment, logical contracts, LC-01 pilot protocol, participation strategy, governance/risk specification, staged roadmap, handbook, product architecture, API and scientific-validation boundaries, README and cumulative knowledge while preserving ZTF scientific baselines and subsystem independence.",
   "previous_knowledge_consumed": [
     "ZTF Classifier v1.0.1 is a published immutable Python package; the frozen scientific baseline v0.2.0 is a separate immutable model/benchmark identity.",
     "The repository already has observation, catalog-context, discovery-candidate, human-review/feedback, model-provenance, FastAPI, Workbench and scientific-validation boundaries.",
@@ -56,7 +56,8 @@
       "Created CIN architecture, integration assessment, logical data/API contracts, LC-01 pilot protocol and staged implementation roadmap.",
       "Updated README, platform expansion roadmap, product architecture index, architectural decisions, project status report and cumulative knowledge index.",
       "Created handbook v2.9 addendum preserving the historical v2.8 content.",
-      "No runtime code, model artifact, feature schema, benchmark, production data or release was modified."
+      "No runtime code, model artifact, feature schema, benchmark, production data or release was modified.",
+      "Added dedicated participation/recognition and contributor-experience strategy; governance/privacy/security/licensing/risk specification; complete CIN-ADR-001 through CIN-ADR-015 register; and explicit CIN boundaries in Discovery Platform Extensions, API v1 and the Scientific Validation Roadmap."
     ]
   },
   "failure_analysis": {
@@ -97,6 +98,8 @@
     "Keep CIN, AOIC and the ZTF computational core as separate systems with versioned contracts.",
     "Start with feasibility, contracts and controlled LC-01 pilot; do not implement the entire network at once.",
     "Keep human consensus, expert review and scientific validation distinct.",
-    "Do not increase platform progress or scientific readiness based on documentation and planning."
+    "Do not increase platform progress or scientific readiness based on documentation and planning.",
+    "Product activity metrics must remain separate from scientific and operational metrics; recognition is optional and cannot imply scientific credentials.",
+    "Institutional claims must describe CIN as proposed/planned until the relevant capability and evidence exist."
   ]
 }
