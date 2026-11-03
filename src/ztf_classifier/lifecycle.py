@@ -177,7 +177,10 @@ def validate_cycle_file(path: str | Path) -> None:
     record = json.loads(file_path.read_text(encoding="utf-8"))
     if not isinstance(record, dict):
         raise TypeError(f"{file_path}: lifecycle record must be a JSON object")
-    assert_valid_cycle_record(record)
+    try:
+        assert_valid_cycle_record(record)
+    except ValueError as exc:
+        raise ValueError(f"{file_path}: {exc}") from exc
 
 
 def _main() -> int:
