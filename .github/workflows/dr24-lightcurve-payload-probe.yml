@@ -1,11 +1,6 @@
 name: DR24 Lightcurve Payload Probe
 
 on:
-  pull_request:
-    paths:
-      - "scripts/probe_ztf_dr24_lightcurve_payload.py"
-      - "tests/test_dr24_lightcurve_payload_probe.py"
-      - ".github/workflows/dr24-lightcurve-payload-probe.yml"
   workflow_dispatch:
     inputs:
       object_ids:
