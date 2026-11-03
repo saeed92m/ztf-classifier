@@ -23,13 +23,13 @@
         "status": "NOT_MEASURED",
         "reason": "The manual source-backed probe has not yet been dispatched."
       },
-      "source_coverage": {
-        "status": "NOT_MEASURED",
-        "reason": "No live epoch payload artifact has yet been collected or reviewed."
-      },
       "scientific_validity": {
         "status": "NOT_MEASURED",
         "reason": "The probe is an acquisition/mapping experiment, not a benchmark validation."
+      },
+      "coverage": {
+        "status": "NOT_MEASURED",
+        "reason": "No live epoch payload artifact has yet been collected or reviewed."
       }
     },
     "trade_off": "The probe is limited to at most five explicitly supplied OIDs. It does not establish full-catalog coverage or production compatibility."
@@ -47,7 +47,8 @@
     "status": "ROOT_CAUSE_IDENTIFIED",
     "root_causes": [
       "The first PR-triggered CI attempt failed the cumulative lifecycle gate because the refreshed probe files did not include a cycle record under configs/process/cycles/.",
-      "The failure is a process-record requirement, not evidence of a defect in the DR24 payload parser."
+      "The failure is a process-record requirement, not evidence of a defect in the DR24 payload parser.",
+      "The first lifecycle-record correction used an unsupported metric name (source_coverage) and an unsupported regression status (PENDING); the validator permits coverage and NOT_VERIFIED."
     ]
   },
   "knowledge_extraction": {
@@ -59,9 +60,9 @@
     ]
   },
   "regression": {
-    "status": "PENDING",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
-      "The new cycle record and refreshed PR must pass the full PR lifecycle gate.",
+      "The refreshed probe and cumulative lifecycle record must pass the full PR CI gate.",
       "The manual workflow must be dispatched and its payload manifest and artifact inspected."
     ]
   },
