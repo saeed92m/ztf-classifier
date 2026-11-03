@@ -1,7 +1,8 @@
 # ZTF Classifier — Project Status Report
 
 **Status date:** 2026-11-03  
-**Main branch:** `4f98a06bde95b08a54a8844995b7717d6281ca33`  
+**Assessment base commit:** `4f98a06bde95b08a54a8844995b7717d6281ca33`  
+**CIN documentation proposal base:** `764ed5d9dcf43693f5c2e5a278afe326b432d578`  
 **Current software release:** `v1.0.1` (published, immutable)  
 **Scientific baseline:** `v0.2.0` (frozen)  
 **Production model:** `baseline_v0.2`  
@@ -201,10 +202,10 @@ On 2026-11-03, the canonical user-supplied source **ZTF CLASSIFIER — COSMIC IN
 - GitHub tracking: [Issue #251](https://github.com/saeed92m/ztf-classifier/issues/251).
 - Proposed subsystem: independent, optional human-in-the-loop annotation, quality control, consensus, expert review, active learning and research dataset infrastructure.
 - Proposed initial pilot: LC-01 light-curve morphology assessment, with independent controls, blind presentation where practical, repeated assessments, abstention, preserved disagreement and a predeclared evaluation plan.
-- Architecture companion, data/API contracts, pilot protocol and staged roadmap are being proposed in a dedicated documentation branch/PR.
+- Architecture companion, integration assessment, data/API contracts, LC-01 pilot protocol, participation strategy, governance/risk controls and staged roadmap are proposed in [Draft PR #252](https://github.com/saeed92m/ztf-classifier/pull/252), based on main commit `764ed5d9dcf43693f5c2e5a278afe326b432d578`.
 - Current repository inspection found reusable observation, catalog-context, discovery-candidate, human-review, model-provenance, API and Workbench boundaries. It did not establish a complete CIN task lifecycle, immutable contribution store, consensus pipeline, active-learning scheduler or human-annotation dataset release system.
 
-**Implementation status: NOT IMPLEMENTED.** This documentation and planning work does not increase the 57.7% platform-readiness estimate and does not establish scientific effectiveness. No human data were collected, no pilot was run, no model was retrained, and no production data or baseline artifacts were changed.
+**Implementation status: NOT IMPLEMENTED.** This documentation and planning work does not increase the 57.7% platform-readiness estimate and does not establish scientific effectiveness. No human data were collected, no pilot was run, no model was retrained, and no production data or baseline artifacts were changed. PR #252 remains open and draft; it does not change main.
 
 CIN must remain independent of ZTF Classifier and optional at runtime. AOIC is a separate proposed identity subsystem; CIN must preserve original source IDs and unresolved identity until canonical identity contracts are accepted. The v0.2.0 scientific baseline, v1.0.1 software release, benchmark, feature schema and release gates remain unchanged.
 
