@@ -56,7 +56,8 @@
       "Verified that ObservationService constructs AlerceDetectionBackend directly and the API creates the default ObservationService with Alerce().",
       "Verified the recorded DR24 pilot counts: 773 recovered OIDs queried, 714 Lightcurves rows found, 59 missing, 773/773 filter metadata pairs consistent, and 87/100 BTS targets with at least one g and one r OID.",
       "Created an acceptance matrix that separates verified bounded evidence from partial, blocked, and not-started Park requirements.",
-      "No runtime code, model artifact, feature schema, benchmark, production data, or release was changed."
+      "No runtime code, model artifact, feature schema, benchmark, production data, or release was changed.",
+      "Downloaded and inspected the exact DR24 Lightcurves workflow artifact 13184608092. Its 13-column schema includes a lightcurve payload column, but the availability script selected only objectid, filterid, and nepochs; no lightcurve payload was retrieved or inspected."
     ]
   },
   "failure_analysis": {
@@ -70,7 +71,8 @@
       "Object/filter/field/CCD/quadrant grouping and identity semantics require fixture-backed tests.",
       "Photometry quality, cadence, temporal coverage, and per-filter completeness remain unmeasured.",
       "No 100,000-light-curve labeled Park dataset has been produced or validated.",
-      "No end-to-end DR24 Workbench demo, Park run bundle, or clean-machine deployment acceptance has been verified."
+      "No end-to-end DR24 Workbench demo, Park run bundle, or clean-machine deployment acceptance has been verified.",
+      "The DR24 Lightcurves `lightcurve` payload representation and field mapping were not inspected in the availability artifact; photometry extraction cannot be designed from the current row-availability evidence alone."
     ]
   },
   "knowledge_extraction": {
@@ -79,7 +81,8 @@
       "The DR24 pilot is useful for adapter design but does not establish scientific validation.",
       "DR24 must be an explicit selectable source and must not silently fall back to ALeRCE.",
       "The frozen v0.2.0 feature contract must remain unchanged during acquisition integration.",
-      "A bounded pinned sample and complete provenance should precede any large-scale retrieval."
+      "A bounded pinned sample and complete provenance should precede any large-scale retrieval.",
+      "The Lightcurves row-availability probe did not retrieve the `lightcurve` payload; inspect its actual representation before implementing photometry normalization."
     ]
   },
   "regression": {
