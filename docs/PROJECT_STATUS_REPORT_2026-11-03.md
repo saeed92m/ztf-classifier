@@ -192,3 +192,20 @@ The exact historical CPVS reconstruction remains a separate external-reproductio
 **The v1.0.1 software package is released. The broader platform is in active development at an estimated 56% readiness. Scientific product acceptance and cross-platform desktop acceptance are not complete.**
 
 No release, merge, or scientific-validation claim is authorized by this report.
+
+
+## Cosmic Intelligence Network (CIN) — new proposed workstream
+
+On 2026-11-03, the canonical user-supplied source **ZTF CLASSIFIER — COSMIC INTELLIGENCE NETWORK**, Document ID ZTF-CIN-ARCH-001, version 1.0.0, was read in full and translated into a proposed repository architecture workstream.
+
+- GitHub tracking: [Issue #251](https://github.com/saeed92m/ztf-classifier/issues/251).
+- Proposed subsystem: independent, optional human-in-the-loop annotation, quality control, consensus, expert review, active learning and research dataset infrastructure.
+- Proposed initial pilot: LC-01 light-curve morphology assessment, with independent controls, blind presentation where practical, repeated assessments, abstention, preserved disagreement and a predeclared evaluation plan.
+- Architecture companion, data/API contracts, pilot protocol and staged roadmap are being proposed in a dedicated documentation branch/PR.
+- Current repository inspection found reusable observation, catalog-context, discovery-candidate, human-review, model-provenance, API and Workbench boundaries. It did not establish a complete CIN task lifecycle, immutable contribution store, consensus pipeline, active-learning scheduler or human-annotation dataset release system.
+
+**Implementation status: NOT IMPLEMENTED.** This documentation and planning work does not increase the 57.7% platform-readiness estimate and does not establish scientific effectiveness. No human data were collected, no pilot was run, no model was retrained, and no production data or baseline artifacts were changed.
+
+CIN must remain independent of ZTF Classifier and optional at runtime. AOIC is a separate proposed identity subsystem; CIN must preserve original source IDs and unresolved identity until canonical identity contracts are accepted. The v0.2.0 scientific baseline, v1.0.1 software release, benchmark, feature schema and release gates remain unchanged.
+
+CPVS investigation is outside this CIN workstream.
