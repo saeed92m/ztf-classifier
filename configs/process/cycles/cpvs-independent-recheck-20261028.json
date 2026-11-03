@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-independent-recheck-20261028",
+  "objective": "Recheck retained CPVS membership evidence independently, harden acquisition of the published Table 4 reference, and preserve a fail-closed record of current scientific and CI outcomes.",
+  "previous_knowledge_consumed": [
+    "Issue #170: exact CPVS reconstruction remains unresolved; 741,786 retained candidates versus 730,184 published members, with 11,602 candidate-only IDs and zero published-only IDs.",
+    "Issue #196 / PR #197: the retained diagnostic JSON contains non-standard NaN literals and requires a separate strict-JSON fix.",
+    "PR #240 head before this record: 1033200d0666e1797a9a5041a03fc01b5b5abf59."
+  ],
+  "baseline": {
+    "revision": "main@e181b69e6119dd513760035ff1abeaa77f69155a",
+    "description": "Frozen v0.2.0 scientific baseline and v1.0.1 release remain unchanged. Historical published membership is separately pinned to Zenodo 5764899; live reconstruction is diagnostic only."
+  },
+  "change": {
+    "scope": "Workflow acquisition hardening and discrepancy-report documentation only. No model, feature, production selection rule, benchmark acceptance threshold, or released artifact changed.",
+    "rationale": "Live VizieR/CDS reference acquisition timed out in the prior source-backed run; this PR adds multiple official endpoints and strict membership-count validation."
+  },
+  "expected_improvement": [
+    "reliability",
+    "reproducibility",
+    "correctness",
+    "scientific_validity"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Retained-artifact recheck: 741786 unique candidate IDs, 730184 published IDs, 11602 candidate-only IDs, zero published-only IDs.",
+        "after": "Current-head heavy run 40785255949 derived 741787 candidates; independent membership comparison did not run because reference acquisition failed.",
+        "status": "MEASURED",
+        "evidence": "PR #240 comments and Scientific Validation run 40785255949."
+      },
+      "reliability": {
+        "before": "The prior current-head run could not reach the configured VizieR/CDS primary reference endpoint.",
+        "after": "The multi-endpoint retry still could not connect to the configured VizieR/CDS hosts from the hosted runner; fallback acquisition failed closed.",
+        "status": "MEASURED",
+        "evidence": "Scientific Validation run 40785255949 job 123156717402 logs."
+      },
+      "reproducibility": {
+        "before": "Retained artifacts reproduce the 741786 candidate count.",
+        "after": "Fresh source-backed derivation returned 741787; this one-object difference is not yet explained.",
+        "status": "PARTIAL",
+        "evidence": "Retained artifact hashes recorded in PR #240 and current-head run 40785255949."
+      }
+    },
+    "trade_off": "Do not trade scientific integrity for CI success. External reference acquisition and the one-object count drift remain explicit blockers."
+  },
+  "validation": {
+    "status": "BLOCKED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Run 40785255949: DR24/ALeRCE source-backed evidence passed.",
+      "Run 40785255949: immutable historical ALeRCE and published CPVS reference archive checks passed.",
+      "Run 40785255949: CPVS derivation ran but produced 741787 candidates; live Table 4 acquisition failed across configured endpoints, so the independent membership audit could not execute.",
+      "PR #240 run 40785255959: Format Check and Lint passed; Cumulative Lifecycle Gate failed because the PR had no configs/process/cycles/*.json record, causing Test Suite, Runtime Smoke Tests, package build, and Dependency Audit to be skipped.",
+      "Product Scope Audit and CodeQL passed; neither establishes CPVS scientific validity."
+    ],
+    "blocker": "Use a verified immutable published-membership artifact in the derivation job or otherwise restore reliable reference acquisition; reconcile the 741786 versus 741787 candidate count; rerun full CI and inspect the independent membership audit."
+  },
+  "failure_analysis": {
+    "status": "known-failure",
+    "root_causes": [
+      "Operational failure in run 40785255949: all configured live VizieR/CDS reference endpoints timed out from the hosted runner.",
+      "CI lifecycle failure in run 40785255959: meaningful workflow/documentation changes were submitted without a machine-readable cumulative lifecycle record.",
+      "Scientific root cause of the 11602 candidate-only membership discrepancy remains unresolved; the four-field metadata predicate is diagnostic only.",
+      "The one-object difference between retained candidate evidence (741786) and current derivation (741787) remains unexplained."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "An immutable reference archive already exists in the benchmark registry at Zenodo 5764899; live VizieR should not be the only path available for an independent membership audit.",
+      "A successful download is not sufficient: the reference must pass the pinned publisher checksum and the parsed unique-ID contract.",
+      "Retained-artifact membership checks do not independently reproduce the candidate set from the original g/r archives.",
+      "CI lifecycle validation is a required gate; missing records skip downstream tests and dependency audits.",
+      "Do not change CPVS selection criteria to force cardinality equality."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Fresh current-head CI must complete lifecycle validation, the full test suite, runtime smoke tests, package build, and dependency audit.",
+      "Published Table 4 membership must be acquired and hash-verified from an immutable source for the independent audit.",
+      "The 741786 versus 741787 candidate-count difference must be traced to exact source bytes and per-object IDs.",
+      "The 11602 candidate-only IDs still require publisher-rule justification or an explicit documented limitation."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Issue #170 remains open until the scientific selection semantics are source-supported or explicitly documented as unresolved.",
+    "Keep v0.2.0 and v1.0.1 immutable.",
+    "Do not merge PR #240 until current-head CI and scientific evidence have been inspected.",
+    "Keep product-level validation separate from external CPVS exact-reconstruction evidence."
+  ]
+}

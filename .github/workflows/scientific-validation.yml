@@ -219,16 +219,65 @@ jobs:
           parent_sha="$(sha256sum "$evidence" | awk '{print $1}')"
           python -m ztf_classifier.validation derive-730k             --parent "$parent"             --g-lightcurve reports/scientific_validation/ztf_periodic_730k/g             --r-lightcurve reports/scientific_validation/ztf_periodic_730k/r             --output reports/scientific_validation/ztf_periodic_730k/selected.tsv             --parent-evidence-sha256 "$parent_sha"             --code-version "${GITHUB_SHA}"
 
-      - name: Download independent published 730k membership
+      - name: Download and validate independent published 730k membership
         if: always()
         run: |
           set -euo pipefail
           root=reports/scientific_validation/ztf_periodic_730k
-          curl -L --fail --retry 3 --retry-all-errors \
-            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000" \
-            -o "$root/published_table4.dat"
-          test -s "$root/published_table4.dat"
-          echo "Published VizieR membership downloaded."
+          mkdir -p "$root"
+
+          # VizieR/CDS can be intermittently unreachable from hosted runners.
+          # Try independent official mirrors, then the direct CDS archive file.
+          # A response is accepted only if the repository parser recovers exactly
+          # 730,184 unique published IDs; HTML/error pages must never count as data.
+          urls=(
+            "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"
+            "https://vizier.nao.ac.jp/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"
+            "https://tapvizier.u-strasbg.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"
+            "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=J/ApJ/932/118/table4&-out=ZTF,ID&-out.max=1000000"
+            "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/932/118/table4.dat"
+          )
+          acquired=0
+          for url in "${urls[@]}"; do
+            echo "Trying published Table 4 source: $url"
+            rm -f "$root/published_table4.dat"
+            if ! curl --location --fail --show-error --silent \
+              --retry 2 --retry-all-errors --retry-delay 3 \
+              --connect-timeout 20 --max-time 240 --speed-time 60 --speed-limit 512 \
+              "$url" -o "$root/published_table4.dat"; then
+              echo "Source unavailable; trying next source." >&2
+              continue
+            fi
+            if ! test -s "$root/published_table4.dat"; then
+              echo "Source returned an empty file; trying next source." >&2
+              continue
+            fi
+            if python - "$root/published_table4.dat" <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, "scripts")
+          from audit_cpvs_membership import read_vizier
+          path = Path(sys.argv[1])
+          ids = read_vizier(path)
+          print(f"Parsed published IDs: {len(ids)}; SHA-256 will be recorded after validation.")
+          if len(ids) != 730_184:
+              raise SystemExit(f"Expected 730184 unique published IDs, got {len(ids)}")
+          PY
+            then
+              printf '%s\n' "$url" > "$root/published_table4.source.txt"
+              acquired=1
+              break
+            fi
+            echo "Source did not yield the expected 730,184 unique IDs; trying next source." >&2
+          done
+
+          if [ "$acquired" -ne 1 ]; then
+            echo "ERROR: Could not acquire and validate published Table 4 from any configured official source." >&2
+            exit 1
+          fi
+
+          sha256sum "$root/published_table4.dat" | tee "$root/published_table4.sha256"
+          echo "Published Table 4 downloaded and validated: 730184 unique IDs."
 
       - name: Diagnose CPVS selection semantics
         if: always()
