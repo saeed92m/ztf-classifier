@@ -59,3 +59,15 @@ def test_release_publication_is_manual_and_explicitly_authorized() -> None:
     assert "inputs.release_sha" in workflow
     assert '"head_branch": "main"' in workflow
     assert '"conclusion": "success"' in workflow
+
+
+
+def test_release_workflow_never_moves_existing_tags_or_overwrites_releases() -> None:
+    workflow = RELEASE_WORKFLOW.read_text(encoding="utf-8")
+
+    assert "gh api --method DELETE" not in workflow
+    assert "--clobber" not in workflow
+    assert "gh release edit" not in workflow
+    assert "Repair existing mutable release in place" not in workflow
+    assert "Refusing to delete or move an existing tag" in workflow
+    assert "refusing to overwrite assets or edit release metadata" in workflow
