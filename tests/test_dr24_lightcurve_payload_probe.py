@@ -67,3 +67,32 @@ def test_summary_preserves_hmjd_and_quality_flag_counts():
     assert summary["epoch_count_matches"] is True
     assert epochs[0]["hmjd"] == pytest.approx(60000.1)
     assert summary["photometry_interpretation"].startswith("Raw DR24")
+
+
+def test_summary_counts_only_finite_numeric_values():
+    payload = pd.DataFrame(
+        {
+            "hmjd": [60000.0, float("inf"), float("nan")],
+            "mag": [17.0, float("inf"), float("nan")],
+            "magerr": [0.02, float("inf"), -0.1],
+            "clrcoeff": [0.1, 0.2, 0.3],
+            "catflags": [0, 32768, 32768.5],
+        }
+    )
+    summary, _ = summarize_payload(
+        102,
+        {
+            "filterid": 2,
+            "fieldid": 124,
+            "rcid": 5,
+            "objra": 11.0,
+            "objdec": -3.0,
+            "nepochs": 3,
+        },
+        payload,
+    )
+    assert summary["hmjd_finite_count"] == 1
+    assert summary["mag_finite_count"] == 1
+    assert summary["magerr_finite_count"] == 2
+    assert summary["magerr_positive_count"] == 1
+    assert summary["catflags_counts"]["32768.5"] == 1
