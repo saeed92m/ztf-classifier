@@ -172,22 +172,23 @@ This overlay does not relax the permanent Scientific Validation Product-Level Ga
 
 The CPVS 730k reconstruction is now explicitly split from the product gate.
 
-Observed evidence:
-- parent CPVS: 781,602
+Observed historical Seq-space evidence:
+- parent CPVS: 781,602 unique Seq values
 - published membership: 730,184
-- current candidate: 741,788
-- exact intersection: 730,184
+- reconstructed candidates: 741,786
+- candidate/published intersection: 730,184
 - published-only: 0
-- candidate-only: 11,604
+- candidate-only: 11,602
 
-Interpretation: the current selection predicate contains the complete published membership but also admits 11,604 additional parent objects. This is an unresolved historical-selection reconstruction discrepancy, not an ML error.
+The retained historical artifact records 11,602/11,602 candidate-only objects with `snr_exact=true` in both bands. Its metadata diagnostics show 11,585 fail at least one parent mean-magnitude field and 17 pass both mean magnitudes but fail one band-specific period field. These correlations do not prove the publisher's intended selection rule.
 
 Policy:
-1. Do not introduce a threshold solely to force the candidate count to 730,184.
-2. Preserve candidate, diagnostic, and membership-audit evidence.
+1. Do not introduce thresholds, flags, metadata filters, or hardcoded IDs solely to force the candidate count to 730,184.
+2. Preserve full candidate/reference ID sets, object-level provenance, source hashes, and diagnostic outputs.
 3. Mark exact historical CPVS reproduction `UNRESOLVED` until source semantics are independently established.
 4. Do not let this claim-specific unresolved state block unrelated product ingestion, feature, analysis, or product-scope validation work.
 5. Keep the product Scientific Gate release-blocking for its own declared evidence scope.
+6. Label any membership inferred from a retained audit as inferred; do not present it as a fresh join against raw Table 4 bytes.
 
 ### Product-scope validation path
 
@@ -209,3 +210,70 @@ The earlier **P0 exit status (2026-10-04): COMPLETE** describes the recovery mil
 - The published Table 4 ID ↔ ZTF name ↔ parent-catalog mapping (including IDs 781603 and 781604) is an investigation lead and must be verified against the pinned source tables; it is not yet a confirmed root cause.
 
 **Required next action:** run the heavy source-backed workflow on its intended ci/heavy/* ref after the merged correction, confirm required jobs execute rather than skip, inspect derivation/acquisition artifacts, and independently audit the membership and ID/name mapping. Keep exact reconstruction UNRESOLVED until evidence justifies a different disposition. Do not weaken the product gate or alter the frozen v0.2.0 baseline.
+
+
+## Current status update — 2026-11-01
+
+**Issue [#170](https://github.com/saeed92m/ztf-classifier/issues/170) remains OPEN / UNRESOLVED.** The latest main commit is `4f98a06bde95b08a54a8844995b7717d6281ca33`. No new heavy source-backed CPVS run has completed on the current main revision.
+
+### Verified historical-artifact recheck
+
+The retained artifact from run [38635891449](https://github.com/saeed92m/ztf-classifier/actions/runs/38635891449) was downloaded and its actual bytes re-hashed. It contains 781,602 unique parent Seq IDs, 741,786 candidate IDs, the complete 11,602 candidate-only diagnostic list, and a membership audit reporting 730,184 published IDs with zero published-only IDs.
+
+- Parent metadata SHA-256: `3675b1274f73fcb15d47e7a780f194ef8fa335cd248c6ff53ea4f01559c86591`.
+- Candidate list SHA-256: `699ff34bcf8dd4b5043eed48384973cb5109fd86ca260f831a502097370238df`.
+- Selection diagnostics SHA-256: `7e763d8804a57d75d1633d0a4089a4a6ac5aa40bb4695964d35e645b67ad5b61`.
+- Membership audit SHA-256: `4c1a082569820af26cbca80320a4913a00e1849446b0ca0205fc872b5ce89c5c`.
+
+The 100-object and 1,000-object stratified samples are documented in `docs/scientific_validation/CPVS_PARENT_SAMPLE_AUDIT_2026-11-01.md`. The sample uses three groups: inferred published members, candidate-only objects, and parent non-candidates. **The reference labels are inferred from the retained audit relation because the raw Table 4 bytes are not included in that artifact.** This is not a fresh independent Table 4 comparison.
+
+### Engineering status
+
+PR [#244](https://github.com/saeed92m/ztf-classifier/pull/244) adds a fail-closed candidate × metadata audit, a Table 4 ZTF-name-to-Table-2-Seq crosswalk, a synthetic regression for different Table 4 ID and Table 2 Seq namespaces, VizieR mirror fallback, and compact evidence. A parser/header-format issue found during review was corrected on the PR branch. The latest PR head remains Draft; its latest CI, CodeQL, Product Scope Audit, and Scientific Validation results must be checked before any merge decision.
+
+The previous heavy run [40873746342](https://github.com/saeed92m/ztf-classifier/actions/runs/40873746342) acquired the parent and light-curve sources but failed to acquire Table 4 from configured CDS endpoints. The fallback changes in PR #244 have not yet been exercised by the full heavy path.
+
+### Next acceptance gates
+
+1. Finish ordinary CI and security/scope checks on the exact latest PR head.
+2. Review the VizieR/Zenodo fallback against actual VizieR TSV header formats and strict schema/row-count checks.
+3. Run the full source-backed workflow only after code review and resource approval; avoid repeating the multi-gigabyte photometry transfer without a clear need.
+4. Acquire and hash raw Table 2 and Table 4/Zenodo membership bytes, validate the ZTF-name-to-Seq crosswalk, and produce full object-level differences.
+5. Re-run the fixed 100/1,000 samples against the fresh membership set and preserve commands, hashes, and intermediate outputs.
+6. Establish the documented detection/SNR semantics or record a source-supported limitation. Do not change production selection or acceptance criteria.
+
+No production selector, SNR threshold, model, feature set, class order, v0.2.0 baseline, or release artifact has changed.
+
+## Full Zenodo crosswalk result — 2026-11-01
+
+The full metadata-only crosswalk job completed successfully in [CI run 41299576448](https://github.com/saeed92m/ztf-classifier/actions/runs/41299576448) on PR head `7c73a4a9d2260e080300303e6aac826630369539`. It mapped 730,184 unique frozen Zenodo `1st_layer.csv` ZTF names through Table 2 `ID` to the actual `Seq` / `SourceID` namespace, with 781,602 unique parent Seq values and zero unmapped published names. The full object-level comparison against the retained historical candidate IDs confirms 730,184 intersection, 11,602 candidate-only, and zero published-only. This does not resolve the discrepancy. The source and hash manifest, exact set hashes, and metadata diagnostics are recorded in `docs/scientific_validation/CPVS_FULL_ZENODO_MEMBERSHIP_COMPARISON_2026-11-01.md`.
+
+**Limitation:** the crosswalk uses the frozen Zenodo membership archive, not raw Table 4 bytes; the candidate IDs and parent metadata are retained historical artifacts, not a fresh full photometry reconstruction on this PR head. Raw Table 4 acquisition and publisher-selection semantics remain outstanding.
+
+
+## Raw CDS reconciliation update — 2026-11-02
+
+**Issue #170 remains OPEN / BLOCKED.** The raw source-table identity and crosswalk are now independently verified. The 11,602 candidate excess is not resolved.
+
+Successful workflow: 41360681445. It reused the previously acquired raw source and historical membership artifacts. It did not re-download the 1.6 GB photometry archives or re-derive the candidate set on the current PR head.
+
+Verified results:
+
+- Raw Chen et al. (2020) Table 2: 781,602 rows; SHA-256 2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881.
+- Raw Chan et al. (2022) Table 4: 730,184 rows; SHA-256 4fa96379d47f851db7ecd80a83986d82201e8718f12ab727b5348a3914374e7d.
+- Raw CDS rows versus IOP/AAS publisher MRT records: zero mismatches for both tables.
+- Table 4 ZTF-name-to-Table-2-Seq crosswalk: 730,184/730,184 mapped; zero mismatches between Table 4 ID and Table 2 Seq.
+- Raw Table 4 membership and frozen Zenodo 1st_layer.csv membership: exact set match.
+- Historical candidate set: 741,786; candidate-only 11,602; reference-only zero.
+
+A full-parent empirical conjunction test gives C ∩ F = P, where C is the historical two-band SNR candidate set, F is the Table 2 four-field-positive set, and P is raw Table 4 membership. F alone contains 55 nonmembers. The result is an exact set equality for archived inputs, not proof that the authors used this rule. Do not implement it in production.
+
+The revised deterministic samples use five membership/diagnostic strata. The 100-object sample contains 50 reference-and-candidate, 25 candidate-only, 10 four-field-only controls, and 15 parent-neither. The 1,000-object sample contains 500, 250, all 55 controls, and 195 parent-neither. These samples are diagnostic oversamples, not prevalence estimates.
+
+The 55 controls do not have per-object light-curve SNR diagnostics in the retained historical artifact. The next scientific action is to retrieve or reproduce their original per-band photometry and identify the exact failed detection condition. A fresh candidate derivation on the current PR head is also still required before exact reproduction can be claimed.
+
+No production selector, SNR threshold, model, feature set, class order, v0.2.0 baseline, or acceptance criterion changed. PR #244 remains Draft and must not be merged as a scientific fix.
+
+
+The historical candidate set can be decomposed further. SNR-only produces 741,786 IDs. Adding both positive Table 2 mean magnitudes leaves 730,201 IDs and 17 extras. All 17 have one missing per-band period (10 Per-g, 7 Per-r). Adding both Per-g and Per-r yields exact membership at 730,184. The five other residuals have both per-band periods but lack gmag. This is an empirical staged reconstruction, not a confirmed author rule. The current derive_730k function implements the mean-magnitude stage but not the per-band-period stage; its existing expected-count gate should therefore fail closed on the 17 residuals. No selector change is authorized.
+

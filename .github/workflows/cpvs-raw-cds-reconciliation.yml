@@ -1,0 +1,188 @@
+name: CPVS Raw CDS Reconciliation
+
+on:
+  push:
+    branches:
+      - investigation/cpvs-candidate-field-audit-20261030
+    paths:
+      - scripts/cpvs_raw_cds_reconciliation.py
+      - scripts/cpvs_55_control_photometry.py
+      - tests/test_cpvs_raw_cds_reconciliation.py
+      - tests/test_cpvs_55_control_photometry.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  raw-catalog-reconciliation:
+    name: Download original CDS files and cross-check publisher MRT rows
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out reviewed investigation branch
+        uses: actions/checkout@v4
+
+      - name: Set up supported Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+
+      - name: Generate Ruff-formatted audit source copies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install ruff==0.16.9
+          python -m ruff format scripts/cpvs_raw_cds_reconciliation.py scripts/cpvs_55_control_photometry.py tests/test_cpvs_raw_cds_reconciliation.py tests/test_cpvs_55_control_photometry.py
+          mkdir -p work/formatted
+          cp scripts/cpvs_raw_cds_reconciliation.py work/formatted/
+          cp scripts/cpvs_55_control_photometry.py work/formatted/
+          cp tests/test_cpvs_raw_cds_reconciliation.py work/formatted/
+          cp tests/test_cpvs_55_control_photometry.py work/formatted/
+
+      - name: Install lightweight audit test environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install pytest==8.4.2
+
+      - name: Run CPVS reconciliation unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pytest -q tests/test_cpvs_raw_cds_reconciliation.py tests/test_cpvs_55_control_photometry.py
+
+      - name: Reuse immutable raw CDS sources from the verified acquisition run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/raw work/refs/zenodo work/refs/heavy work/refs/publisher work/refs/raw-prior work/output
+
+          # Reuse the successful raw-source artifact. Do not fetch or transform
+          # the large catalog files again.
+          gh run download 41358513968 --repo saeed92m/ztf-classifier \
+            --name cpvs-raw-cds-reconciliation --dir work/refs/raw-prior
+          cp -a work/refs/raw-prior/raw/. work/raw/
+
+          printf '%s  %s\n' \
+            "2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881" \
+            "work/raw/table2.dat" | sha256sum -c -
+          printf '%s  %s\n' \
+            "4fa96379d47f851db7ecd80a83986d82201e8718f12ab727b5348a3914374e7d" \
+            "work/raw/table4.dat" | sha256sum -c -
+          printf '%s  %s\n' \
+            "e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a" \
+            "work/raw/table2.ReadMe" | sha256sum -c -
+          printf '%s  %s\n' \
+            "0a7ec0dac13b155fdd63322dc9b0230de42fd05169e0e02c70f68fce0bc67d6a" \
+            "work/raw/table4.ReadMe" | sha256sum -c -
+          test -s work/raw/table2.dat.gz
+          test -s work/raw/table4.dat.gz
+          test -s work/raw/retrieval_sources.tsv
+
+      - name: Retrieve frozen Zenodo membership and historical candidate evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run download 41299576448 --repo saeed92m/ztf-classifier \
+            --name cpvs-full-zenodo-membership-crosswalk --dir work/refs/zenodo
+          gh run download 38635891449 --repo saeed92m/ztf-classifier \
+            --name scientific-validation-heavy --dir work/refs/heavy
+          gh run download 41357833854 --repo saeed92m/ztf-classifier \
+            --name cpvs-primary-source-reconciliation --dir work/refs/publisher
+          test -s work/refs/zenodo/published_membership_seq.tsv
+          test -s work/refs/heavy/ztf_periodic_730k/selected.tsv
+          test -s work/refs/heavy/ztf_periodic_730k/selection_diagnostics.json
+          test -s work/refs/publisher/raw/table2.mrt.txt
+          test -s work/refs/publisher/raw/table4.mrt.txt
+
+      - name: Run byte-preserving identifier and membership reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/cpvs_raw_cds_reconciliation.py \
+            --raw work/raw \
+            --zenodo work/refs/zenodo \
+            --heavy work/refs/heavy \
+            --publisher work/refs/publisher \
+            --out work/output 2>&1 | tee work/output/audit.log
+
+      - name: Download and verify original Zenodo CPVS g/r photometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/lightcurves/g work/lightcurves/r work/photometry55
+
+          curl --location --fail --show-error --silent \
+            --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \
+            -o work/ztf2g.zip &
+          g_pid=$!
+          curl --location --fail --show-error --silent \
+            --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" \
+            -o work/ztf2r.zip &
+          r_pid=$!
+          g_status=0
+          r_status=0
+          wait "$g_pid" || g_status=$?
+          wait "$r_pid" || r_status=$?
+          if [ "$g_status" -ne 0 ] || [ "$r_status" -ne 0 ]; then
+            echo "g download exit=$g_status"
+            echo "r download exit=$r_status"
+            exit 1
+          fi
+
+          echo "850fcef561dd7407fbe8e19e99100d7a  work/ztf2g.zip" | md5sum -c -
+          echo "daa7bc45c67579253eebe6b1c09dfbd9  work/ztf2r.zip" | md5sum -c -
+          sha256sum work/ztf2g.zip work/ztf2r.zip | tee work/photometry55/source_archive_sha256.txt
+
+          unzip -q work/ztf2g.zip -d work/lightcurves/g
+          unzip -q work/ztf2r.zip -d work/lightcurves/r
+          for band in g r; do
+            while find "work/lightcurves/$band" -type f -iname '*.zip' -print -quit | grep -q .; do
+              while IFS= read -r -d '' nested; do
+                target="${nested%.zip}"
+                mkdir -p "$target"
+                unzip -q "$nested" -d "$target"
+                rm -f "$nested"
+              done < <(find "work/lightcurves/$band" -type f -iname '*.zip' -print0)
+            done
+          done
+
+          echo "g-band files:"
+          find work/lightcurves/g -type f -printf '%p %s bytes\\n' | sort
+          echo "r-band files:"
+          find work/lightcurves/r -type f -printf '%p %s bytes\\n' | sort
+          test -n "$(find work/lightcurves/g -type f -print -quit)"
+          test -n "$(find work/lightcurves/r -type f -print -quit)"
+
+      - name: Retrieve original per-band photometry for the 55 four-field-only controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/cpvs_55_control_photometry.py \
+            --controls work/output/four_field_only_55.tsv \
+            --g work/lightcurves/g \
+            --r work/lightcurves/r \
+            --output work/photometry55
+
+      - name: Upload immutable CDS sources and reconciliation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpvs-raw-cds-reconciliation
+          path: |
+            work/raw/
+            work/output/
+            work/photometry55/
+            work/formatted/
+          if-no-files-found: warn
+          retention-days: 90

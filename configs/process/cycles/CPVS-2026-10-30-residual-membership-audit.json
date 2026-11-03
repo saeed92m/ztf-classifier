@@ -1,0 +1,237 @@
+{
+  "stage_id": "CPVS-2026-10-30-residual-membership-audit",
+  "objective": "Diagnose the 11,602-object CPVS candidate excess with source-backed object-level evidence while preserving the v0.2.0 scientific baseline.",
+  "previous_knowledge_consumed": [
+    "CPVS-781602-parent-object-count",
+    "CPVS-730184-published-membership-count",
+    "CPVS-741786-reconstructed-candidate-count",
+    "CPVS-11602-candidate-only-excess"
+  ],
+  "baseline": {
+    "revision": "8e9834626c3ca7b7107ca767d756531363310184",
+    "parent_objects_reported": 781602,
+    "published_reference_objects_reported": 730184,
+    "reconstructed_candidates_reported": 741786,
+    "candidate_only_excess_reported": 11602,
+    "production_selector_changed": false
+  },
+  "expected_improvement": [
+    "Obtain a reproducible, source-backed explanation for the CPVS membership discrepancy without weakening scientific acceptance criteria."
+  ],
+  "measurement": {
+    "metrics": {
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "note": "The full scientific discrepancy has not been validated; partial evidence is recorded separately and must not be treated as a completed scientific-validity measurement.",
+        "partial_evidence": {
+          "targeted_residual_17": {
+            "status": "VERIFIED",
+            "in_reference": 0,
+            "not_in_reference": 17,
+            "run_id": 41143515205
+          },
+          "full_candidate_excess": {
+            "status": "UNRESOLVED",
+            "count": 11602
+          },
+          "root_cause": {
+            "status": "UNRESOLVED"
+          },
+          "raw_cds_reconciliation": {
+            "status": "VERIFIED",
+            "run_id": 41360681445,
+            "artifact_id": 13105086707,
+            "table2_rows": 781602,
+            "table4_rows": 730184,
+            "table2_sha256": "2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881",
+            "table4_sha256": "4fa96379d47f851db7ecd80a83986d82201e8718f12ab727b5348a3914374e7d",
+            "publisher_table2_row_mismatches": 0,
+            "publisher_table4_row_mismatches": 0,
+            "table4_unmapped_ztf_names": 0,
+            "table4_id_vs_table2_seq_mismatches": 0,
+            "table4_vs_zenodo_exact_membership": true,
+            "publisher_mrt_sources": {
+              "table2": {
+                "bytes": 179770728,
+                "sha256": "58848bee4c62f5bd930787b76045e40bb695b171cc8149b4336b00b55e28d5fa",
+                "url": "https://content.cld.iop.org/journals/0067-0049/249/1/18/revision1/apjsab9caet2_mrt.txt"
+              },
+              "table4": {
+                "bytes": 47463000,
+                "sha256": "3cb9e22c42ab19ce89346dd3773c82921d852432b4617f4ff52ce4aea2c8c7d0",
+                "url": "https://content.cld.iop.org/journals/0004-637X/932/2/118/revision1/apjac69d4t4_mrt.txt"
+              }
+            }
+          },
+          "historical_candidate_four_field_conjunction": {
+            "status": "VERIFIED",
+            "candidate_count": 741786,
+            "four_field_parent_count": 730239,
+            "candidate_four_field_intersection_count": 730184,
+            "table4_reference_count": 730184,
+            "candidate_intersection_equals_table4": true,
+            "four_field_only_nonmembers": 55,
+            "candidate_only_count": 11602,
+            "candidate_only_field_partition": {
+              "both_magnitude_and_period_pairs_incomplete": 11580,
+              "magnitudes_complete_periods_incomplete": 17,
+              "periods_complete_magnitudes_incomplete": 5
+            },
+            "production_selector_changed": false,
+            "author_intent_proven": false
+          },
+          "fixed_samples_v2": {
+            "status": "VERIFIED",
+            "seed": "ztf-cpvs-fixed-object-sample-v2",
+            "sample_100": {
+              "reference_candidate": 50,
+              "candidate_only": 25,
+              "four_field_only": 10,
+              "parent_neither": 15,
+              "reference_only": 0
+            },
+            "sample_1000": {
+              "reference_candidate": 500,
+              "candidate_only": 250,
+              "four_field_only": 55,
+              "parent_neither": 195,
+              "reference_only": 0
+            },
+            "all_55_four_field_controls_in_sample_1000": true,
+            "samples_are_prevalence_estimates": false,
+            "sample_100_sha256": "baf94d168b59b682d113015c8ab15a1d2e6ec414cb82e29875a13358f0e5b25b",
+            "sample_1000_sha256": "0a713379eb274d380f7a399d4a719cd3572113d6dc5184442124f8a9e59ed340"
+          },
+          "four_field_only_control_metadata": {
+            "status": "VERIFIED",
+            "count": 55,
+            "Ng": {
+              "min": 42,
+              "median": 99,
+              "p90": 172,
+              "max": 307
+            },
+            "Nr": {
+              "min": 47,
+              "median": 150,
+              "p90": 185,
+              "max": 319
+            },
+            "R2_g": {
+              "min": 0.421,
+              "median": 0.925
+            },
+            "R2_r": {
+              "min": 0.611,
+              "median": 0.986
+            },
+            "gmag_median": 18.412,
+            "rmag_median": 15.904,
+            "class_counts": {
+              "Mira": 45,
+              "SR": 7,
+              "EA": 1,
+              "EW": 1,
+              "RRc": 1
+            },
+            "per_object_lightcurve_snr_available": false
+          },
+          "staged_membership_predicates": {
+            "status": "VERIFIED_FOR_ARCHIVED_INPUTS",
+            "snr_only_count": 741786,
+            "snr_plus_both_positive_mean_magnitudes_count": 730201,
+            "residual_after_mean_magnitude_pair": 17,
+            "residuals_missing_Per_g": 10,
+            "residuals_missing_Per_r": 7,
+            "snr_plus_mean_magnitudes_plus_both_per_band_periods_count": 730184,
+            "final_set_equals_raw_table4": true,
+            "five_other_candidate_only_have_both_Per_g_Per_r_but_missing_gmag": 5,
+            "current_derive_730k_uses_mean_magnitude_pair": true,
+            "current_derive_730k_uses_Per_g_Per_r_gate": false,
+            "expected_count_gate_remains_fail_closed": true,
+            "production_selector_changed": false
+          },
+          "snr_formula_sensitivity": {
+            "status": "VERIFIED_FOR_ARCHIVED_INPUTS",
+            "approximate_1p085736_over_magerr_count": 741786,
+            "exact_inverse_magerr_transform_count": 741786,
+            "inverse_magerr_count": 741786,
+            "all_three_candidate_membership_sets_equal": true,
+            "zero_catalog_flag_candidate_count": 736225,
+            "zero_flag_reference_members_lost": 5472,
+            "zero_flag_rule_rejected": true
+          }
+        }
+      }
+    }
+  },
+  "validation": {
+    "evidence": [
+      "GitHub Actions run 41144613152 on commit 67fefae5f22da7bd2da49845b7578c52354e3283: Format Check PASS; Lint PASS; Cumulative Lifecycle Gate initially failed because this cycle record used unsupported metric status PARTIALLY_MEASURED.",
+      "GitHub Actions run 41144613191 on commit 67fefae5f22da7bd2da49845b7578c52354e3283: Product Scope Audit PASS.",
+      "GitHub Actions run 41144613136 on commit 67fefae5f22da7bd2da49845b7578c52354e3283: CodeQL PASS.",
+      "GitHub Actions run 41144613232 on commit 67fefae5f22da7bd2da49845b7578c52354e3283: Validate benchmark and cumulative lifecycle contracts PASS; source-backed heavy jobs were skipped.",
+      "GitHub Actions run 41143515205 on commit f06cf2c9f95443c99d03b1f97dce564d10912132: direct audit completed for all 17 targeted SourceIDs; 0/17 joined ZTF names occur in Zenodo 1st_layer.csv.",
+      "Run 41143515205 input hashes: Table 2 SHA-256 2a0120d43d15abf45ca930a22a50bfcfde9653130a16bc8f2fdc20ecdee54dd1; Zenodo CSV SHA-256 c235df101bf7a130b5dccdd95b786ac347f2b7ef24fc49ed7ae989aa8625437b.",
+      "Run 41143515205 uploaded artifact cpvs-17-object-zenodo-membership-audit (ID 13020293188; ZIP SHA-256 83479e77546ff57a08157e18375561e936d568c7e2722b0831c1aa89146f7950).",
+      "Independent two-table audit artifact from run 40953220220: Table 2 SHA-256 c5422312ca470592d11f5a614ac6558b3665413d7806e55915e96007c90d71f4; Table 4 SHA-256 b5453a8659935c5323cab3bca73a92ba71fd3964803ccab9464ec601853f7460; published set 730184; four-field set 730239; intersection 730184; four-field-only 55; published-only 0.",
+      "GitHub Actions run 41360681445 on the PR investigation branch: raw CDS Table 2 (781,602 rows) and Table 4 (730,184 rows) were retrieved and matched every IOP/AAS publisher MRT data row; zero mismatches in either table.",
+      "Run 41360681445: all 730,184 Table 4 ZTF names mapped to Table 2 Seq; zero Table4.ID/Seq mismatches; raw Table 4 membership exactly matches frozen Zenodo membership.",
+      "Run 41360681445 artifact 13105086707: historical candidate set 741,786; candidate-only 11,602; reference-only zero; exact empirical equality (historical candidates ∩ four-field-positive Table 2 set) = raw Table 4 membership; four-field-only nonmembers 55.",
+      "Run 41360681445: deterministic v2 samples completed. The 100-object sample includes 50 reference/candidate, 25 candidate-only, 10 four-field-only, 15 parent-neither. The 1,000-object sample includes 500, 250, all 55 four-field-only controls, and 195 parent-neither.",
+      "The 55 four-field-only controls have Table 2 metadata in artifact 13105086707, but the retained historical photometry artifact does not include their per-object SNR traces. The exact failed band/detection condition is not yet established.",
+      "The 55 four-field-only controls have Table 2 Ng min/median/p90/max 42/99/172/307 and Nr 47/150/185/319; median R2-g/R2-r 0.925/0.986. These are catalog-level summaries, not per-epoch SNR evidence. Class counts: 45 Mira, 7 SR, 1 EA, 1 EW, 1 RRc.",
+      "The historical SNR-only set intersected with both positive Table 2 mean magnitudes contains 730,201 IDs and leaves 17 candidate-only residuals; all 17 have both mean magnitudes but lack one per-band period (10 Per-g, 7 Per-r). Adding both positive per-band periods yields exact 730,184 Table 4 membership.",
+      "The current derive_730k function applies the SNR and both-mean-magnitude conditions but does not test Per-g/Per-r. Its existing expected-count gate therefore remains the correct fail-closed behavior for the 17 residuals; no code change was made.",
+      "Approximate 1.0857362047581296/e_mag, exact inverse magnitude-error transform, and 1/e_mag SNR formulations produced identical historical candidate membership (741,786) and residual count (11,602). A zero-flag requirement loses 5,472 Table 4 members and is rejected."
+    ],
+    "scientific_gate_affected": true,
+    "status": "BLOCKED",
+    "blocker": "The raw Table 2/Table 4 identity, publisher-byte comparison, Zenodo membership crosswalk, and fixed 100/1,000 samples are verified. The 11,602 historical candidate-only IDs remain unexplained as a published selection process. The exact empirical conjunction is not proof of author intent. A fresh candidate derivation on the current PR head and per-object per-band photometry/SNR diagnostics for the 55 four-field-only controls are still required."
+  },
+  "failure_analysis": {
+    "status": "raw-source-reconciliation-verified; empirical-conjunction-identified; scientific-root-cause-unresolved",
+    "root_causes": [
+      "The earlier targeted audit failures were caused by VizieR response parsing assumptions; the corrected parser now successfully validates the ID/Seq crosswalk and compares all 17 requested objects.",
+      "The 17 residual IDs are directly verified absent from the frozen Zenodo membership, but this does not explain the other 11,585 excess candidates.",
+      "The scientific cause of the full 11,602 candidate excess is not yet proven.",
+      "The raw CDS Table 2 and Table 4 files match the corresponding publisher MRT records row by row, and the full 730,184-object Table 4 crosswalk to Table 2 Seq is exact; identifier mapping is not the cause of the 11,602 candidate-only residuals.",
+      "For the retained historical inputs, intersecting the 741,786 two-band SNR candidate set with the 730,239-object four-field-positive Table 2 set yields exactly the 730,184 Table 4 members. The four-field set alone admits 55 nonmembers. This is an empirical conjunction, not proof of the authors' published rule.",
+      "The 55 four-field-only controls lack per-object photometry/SNR diagnostics in the retained artifact, so the exact per-band detection failure is unknown.",
+      "The current PR branch has not freshly re-derived the 741,786 candidate set from the full light-curve archives.",
+      "The 55 four-field-only controls have substantial Table 2 detection counts and high median R2 values, but their per-epoch light-curve SNR traces are absent from the retained historical artifact. Catalog-level Ng/Nr and R2 cannot identify which band-specific SNR threshold excluded them.",
+      "The current production derivation's first metadata gate (both mean magnitudes) matches the historical 730,201-object intermediate set, but leaves 17 objects with one missing per-band period. A further Per-g/Per-r gate reproduces Table 4 exactly on archived inputs, but author-intent evidence is not yet established."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "A failed ID crosswalk can arise before any membership comparison; the audit must validate its parsed schema before reporting per-object membership.",
+      "A successful Zenodo checksum verifies downloaded bytes, not the correctness of the object-level crosswalk or scientific interpretation.",
+      "The reconstruction and production scientific gates must remain blocked until full membership and provenance evidence are independently verified.",
+      "A raw Table 4 object-level reference exists in Chan et al. (2022), CDS J/ApJ/932/118; it must not be confused with Chen et al. (2020) Table 4, which is an aggregate purity comparison.",
+      "The raw Table 4 ID equals the original CPVS Table 2 Seq for all 730,184 rows after the ZTF-name crosswalk.",
+      "The exact historical set relation C ∩ F = P is reproducible, but F alone has 55 false positives and must not be promoted to the production selector without author-method evidence.",
+      "A diagnostic sample should explicitly include the 55 four-field-only controls; the fixed 1,000-object sample now includes all 55."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Re-derive the two-band SNR candidate set from the exact original 89,697,393-row-per-band light-curve inputs on the reviewed PR head, or provide an equivalently pinned and independently verified derivation.",
+      "Retrieve or regenerate per-object g/r light-curve SNR diagnostics for all 55 four-field-only controls; identify which detection condition excludes each object.",
+      "Establish the source-supported published selection semantics for the four nullable Table 2 fields and the SNR thresholds. Do not treat the empirical conjunction as author intent.",
+      "Retain the 11,602 candidate-only provenance and v2 fixed 100/1,000 samples; add regression tests only after the root cause and official rule are established.",
+      "Obtain primary-source or author evidence for whether both band-specific period fields are required in the Chan et al. (2022) preprocessing sample; do not implement the empirical Per-g/Per-r gate without this evidence."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "CPVS-2026-10-30-residual-membership-audit",
+    "Do not interpret a parser failure as membership evidence.",
+    "Do not alter the production selector, thresholds, model, or acceptance criteria to force a match.",
+    "Raw CDS Table 2/Table 4 source hashes and publisher row-level comparison are recorded in CPVS_REFERENCE_TABLE_IDENTITY_2026-11-02.md.",
+    "Historical candidate ∩ four-field-positive Table 2 set equals Table 4 membership for archived inputs; this is an empirical result, not an approved selector.",
+    "The 1,000-object v2 sample includes all 55 four-field-only controls."
+  ]
+}

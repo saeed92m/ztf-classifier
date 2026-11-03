@@ -1,0 +1,200 @@
+name: CPVS g-band raw archive layout diagnostic
+
+on:
+  push:
+    branches:
+      - investigation/cpvs-candidate-field-audit-20261030
+    paths:
+      - .github/workflows/cpvs-g-band-layout-diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  inspect-g-band:
+    name: Inspect original Zenodo g-band archive and 55 control IDs
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out investigation branch
+        uses: actions/checkout@v4
+
+      - name: Download and verify original Zenodo g-band archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/archive work/extracted work/output
+          curl --location --fail --show-error --silent \
+            --retry 5 --retry-all-errors --retry-delay 5 \
+            --connect-timeout 30 --speed-time 120 --speed-limit 1024 \
+            "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \
+            -o work/archive/ztf2g.zip
+          echo "850fcef561dd7407fbe8e19e99100d7a  work/archive/ztf2g.zip" | md5sum --check -
+          sha256sum work/archive/ztf2g.zip | tee work/output/archive_sha256.txt
+          unzip -Z1 work/archive/ztf2g.zip | tee work/output/archive_entries.txt
+          unzip -q work/archive/ztf2g.zip -d work/extracted
+          find work/extracted -type f -printf '%p %s bytes\n' | sort | tee work/output/extracted_files.txt
+
+      - name: Retrieve verified 55-control manifest from prior audit artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/prior
+          gh run download 41367972395 --repo saeed92m/ztf-classifier --name cpvs-raw-cds-reconciliation --dir work/prior
+          cp work/prior/output/four_field_only_55.tsv work/controls.tsv
+
+      - name: Scan raw file layout and locate all control IDs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections, csv, hashlib, json, re
+          from pathlib import Path
+
+          def sha256_file(path):
+              digest = hashlib.sha256()
+              with path.open("rb") as stream:
+                  for chunk in iter(lambda: stream.read(8 * 1024 * 1024), b""):
+                      digest.update(chunk)
+              return digest.hexdigest()
+
+          controls_path = Path("work/controls.tsv")
+          archive = Path("work/archive/ztf2g.zip")
+          with controls_path.open(encoding="utf-8-sig", newline="") as stream:
+              controls = list(csv.DictReader(stream, delimiter="\t"))
+          ids = {row["SourceID"].strip() for row in controls}
+          if len(ids) != 55:
+              raise SystemExit(f"Expected 55 unique controls, found {len(ids)}")
+
+          # Re-read the authoritative fixed-width Table 2 from the retained,
+          # checksum-verified reconciliation artifact. Table 2 Seq is bytes 24-29;
+          # Ng is bytes 132-135 (1-based CDS ReadMe offsets).
+          table2_path = Path("work/prior/raw/table2.dat")
+          if not table2_path.is_file():
+              raise SystemExit(f"Missing retained raw Table 2: {table2_path}")
+          parent_expected = {}
+          table2_digest = hashlib.sha256()
+          with table2_path.open("rb") as stream:
+              for raw_row in stream:
+                  table2_digest.update(raw_row)
+                  seq = raw_row[23:29].decode("ascii").strip()
+                  if not seq:
+                      raise SystemExit("Table 2 row has an empty Seq field")
+                  ng_text = raw_row[131:135].decode("ascii").strip()
+                  if not ng_text.isdigit():
+                      raise SystemExit(f"Invalid Table 2 Ng for Seq={seq}: {ng_text!r}")
+                  if seq in parent_expected:
+                      raise SystemExit(f"Duplicate Table 2 Seq: {seq}")
+                  parent_expected[seq] = int(ng_text)
+          if len(parent_expected) != 781602:
+              raise SystemExit(f"Expected 781602 Table 2 objects, found {len(parent_expected)}")
+
+          files = [p for p in Path("work/extracted").rglob("*") if p.is_file() and not p.name.startswith("._")]
+          if len(files) != 1:
+              raise SystemExit(f"Expected one non-metadata data file, found {[str(p) for p in files]}")
+          path = files[0]
+          first_lines = []
+          field_widths = collections.Counter()
+          first_column_counts = collections.Counter()
+          any_field_counts = collections.Counter()
+          samples = {source_id: [] for source_id in ids}
+          total_lines = 0
+          digest = hashlib.sha256()
+          malformed_first_column = 0
+          unknown_seq_counts = collections.Counter()
+          with path.open("rb") as raw:
+              for byte_line in raw:
+                  digest.update(byte_line)
+                  line = byte_line.decode("utf-8", errors="replace").strip()
+                  if not line:
+                      continue
+                  total_lines += 1
+                  fields = [value.strip() for value in line.split(",")]
+                  field_widths[len(fields)] += 1
+                  if len(first_lines) < 15:
+                      first_lines.append({"line_number": total_lines, "repr": repr(line[:600]), "length": len(line), "field_count": len(fields)})
+                  seq = fields[0] if fields else ""
+                  if not seq.isdigit():
+                      malformed_first_column += 1
+                      continue
+                  first_column_counts[seq] += 1
+                  if seq not in parent_expected:
+                      unknown_seq_counts[seq] += 1
+                  if seq in ids and len(samples[seq]) < 3:
+                      samples[seq].append({"line_number": total_lines, "fields": fields, "raw": line[:600]})
+                  for value in set(fields):
+                      if value in ids:
+                          any_field_counts[value] += 1
+
+          row_count_mismatches = {
+              seq: {"observed_g_rows": first_column_counts.get(seq, 0), "Table2_Ng": expected}
+              for seq, expected in parent_expected.items()
+              if first_column_counts.get(seq, 0) != expected
+          }
+          mismatch_path = Path("work/output/g_table2_ng_full_reconciliation.tsv")
+          with mismatch_path.open("w", encoding="utf-8", newline="") as stream:
+              stream.write("Seq\tTable2_Ng\tObserved_g_rows\tDelta\n")
+              for seq in sorted(row_count_mismatches, key=int):
+                  expected = row_count_mismatches[seq]["Table2_Ng"]
+                  observed = row_count_mismatches[seq]["observed_g_rows"]
+                  stream.write(f"{seq}\t{expected}\t{observed}\t{observed - expected}\n")
+
+          control_reconciliation = {
+              seq: {
+                  "Table2_Ng": parent_expected[seq],
+                  "observed_g_rows": first_column_counts.get(seq, 0),
+                  "delta": first_column_counts.get(seq, 0) - parent_expected[seq],
+                  "sample_rows": samples[seq],
+              }
+              for seq in sorted(ids, key=int)
+          }
+          report = {
+              "archive_md5_expected": "850fcef561dd7407fbe8e19e99100d7a",
+              "archive_sha256": sha256_file(archive),
+              "data_file": str(path),
+              "data_file_size_bytes": path.stat().st_size,
+              "data_file_sha256": digest.hexdigest(),
+              "table2_data_file": str(table2_path),
+              "table2_sha256": table2_digest.hexdigest(),
+              "table2_unique_seq_count": len(parent_expected),
+              "table2_total_Ng": sum(parent_expected.values()),
+              "control_count": len(ids),
+              "expected_record_count_from_CDS_ReadMe": 89697393,
+              "nonempty_line_count": total_lines,
+              "record_count_matches_CDS_ReadMe": total_lines == 89697393,
+              "unique_photometry_seq_count": len(first_column_counts),
+              "malformed_first_column_rows": malformed_first_column,
+              "unknown_seq_count": len(unknown_seq_counts),
+              "unknown_seq_total_rows": sum(unknown_seq_counts.values()),
+              "unknown_seq_examples": dict(list(unknown_seq_counts.items())[:20]),
+              "observed_total_g_rows": sum(first_column_counts.values()),
+              "table2_ng_object_mismatch_count": len(row_count_mismatches),
+              "table2_ng_objects_with_no_photometry_rows": sum(1 for seq, values in row_count_mismatches.items() if values["observed_g_rows"] == 0 and values["Table2_Ng"] > 0),
+              "table2_ng_objects_with_photometry_count_mismatch": len(row_count_mismatches),
+              "first_nonempty_lines": first_lines,
+              "comma_field_count_distribution": {str(k): v for k, v in sorted(field_widths.items())},
+              "control_ids_found_in_first_csv_column": sorted((seq for seq in ids if first_column_counts.get(seq, 0)), key=int),
+              "control_ids_found_in_any_csv_field": sorted(any_field_counts, key=int),
+              "control_reconciliation": control_reconciliation,
+              "first_column_row_count_mismatches_for_controls": {
+                  seq: control_reconciliation[seq] for seq in sorted(ids, key=int)
+                  if control_reconciliation[seq]["delta"] != 0
+              },
+              "interpretation": "Full object-level Table 2 Ng versus raw g-archive row reconciliation. This is a source-coverage diagnostic only; it makes no SNR or CPVS membership conclusion."
+          }
+          Path("work/output/g_archive_layout_diagnostic.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload raw layout diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpvs-g-band-layout-diagnostic
+          path: work/output/
+          if-no-files-found: warn
+          retention-days: 90
