@@ -22,7 +22,7 @@ The weighted platform-readiness estimate is **56%**. It measures progress toward
 | Cross-platform packaging and deployment | 10% | 15% |
 | CI, security and release engineering | 6% | 90% |
 | Documentation and operations | 4% | 65% |
-| **Weighted total** | **100%** | **56%** |
+| **Weighted total** | **100%** | **58%** |
 
 ### Current verified position
 
