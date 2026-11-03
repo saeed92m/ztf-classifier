@@ -189,7 +189,7 @@ The exact historical CPVS reconstruction remains a separate external-reproductio
 
 ## Decision
 
-**The v1.0.1 software package is released. The broader platform is in active development at an estimated 56% readiness. Scientific product acceptance and cross-platform desktop acceptance are not complete.**
+**The v1.0.1 software package is released. The broader platform is in active development at an estimated 57.7% readiness (rounded to 58%). Scientific product acceptance and cross-platform desktop acceptance are not complete.**
 
 No release, merge, or scientific-validation claim is authorized by this report.
 
