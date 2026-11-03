@@ -136,8 +136,8 @@ jobs:
                 EXPECTED_SHA="$release_tag_sha"
                 break
               else
-                echo "Mutable release exists and will be repaired in place: $selected"
-                break
+                echo "ERROR: Mutable release already exists for $selected; refusing to overwrite assets or edit release metadata."
+                exit 1
               fi
             else
               tag_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${selected}" 2>/dev/null | jq -r '.object.sha // empty' || true)"
@@ -150,14 +150,9 @@ jobs:
                 echo "Existing tag points to validated SHA: $selected"
                 break
               fi
-              echo "Stale pre-release tag $selected points to $tag_sha, expected $EXPECTED_SHA"
-              echo "Deleting stale tag so the immutable release can be created at the validated SHA."
-              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${selected}"
-              gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
-                -f "ref=refs/tags/${selected}" \
-                -f "sha=${EXPECTED_SHA}" >/tmp/tag-recreated.json
-              echo "Recreated validated tag: $selected"
-              break
+              echo "ERROR: Existing tag $selected points to $tag_sha, not validated SHA $EXPECTED_SHA."
+              echo "Refusing to delete or move an existing tag. Select a new version after review."
+              exit 1
             fi
           done
           {
@@ -345,16 +340,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
         run: gh release create "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --verify-tag --notes-file ".github/release-notes/${RELEASE_TAG}.md"
-
-      - name: Repair existing mutable release in place
-        if: steps.ref.outputs.existing_immutable != 'true' && steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
-        run: |
-          set -euo pipefail
-          gh release upload "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --clobber
-          gh release edit "$RELEASE_TAG" --draft=false --notes-file ".github/release-notes/${RELEASE_TAG}.md"
 
       - name: Accept already-complete immutable release
         if: steps.ref.outputs.existing_immutable == 'true' || (steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable == 'true')
