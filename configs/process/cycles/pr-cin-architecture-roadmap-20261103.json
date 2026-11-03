@@ -32,8 +32,10 @@
         "reason": "No runtime CIN implementation or operational pilot was executed."
       },
       "reproducibility": {
+        "before": "The CIN source and proposed architecture decisions were not yet mapped to versioned repository records and implementation boundaries.",
+        "after": "The source version, assessment base commit, proposed data/API contracts, task versions, pilot sampling requirements and documentation links are recorded.",
         "status": "PARTIALLY_MEASURED",
-        "after": "The source version, assessment base commit, proposed data/API contracts, task versions, pilot sampling requirements and documentation links are recorded."
+        "reason": "The documentation and provenance mapping are recorded, but no runtime implementation or pilot has been reproduced."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
