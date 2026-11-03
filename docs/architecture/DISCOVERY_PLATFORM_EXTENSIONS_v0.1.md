@@ -96,3 +96,14 @@ PR #138 implements the architecture boundaries as executable domain contracts:
 - `ModalityDeclaration` and `AnalysisModeContract` for explicit modality consumption and future specialized analysis modes.
 
 The contracts enforce evaluation-role semantics, version identity, feedback dataset identity for training/validation candidates, explanation alignment, and unique modality declarations. They do not add GPU/CNN/LLM/distributed infrastructure.
+
+
+## 13. AOIC and CIN integration boundary — proposed
+
+The catalog/cross-match contract in this document represents contextual evidence. It is not a canonical astronomical identity registry. AOIC is a separate proposed subsystem for evidence-backed internal identity, external aliases, identity decisions and merge/split lineage. Until AOIC is implemented and validated, preserve original survey identifiers and unresolved identity states.
+
+The human review and feedback contracts in this document are not a complete citizen-science platform. CIN is a separate proposed, optional subsystem for versioned scientific tasks, independent assignments, immutable human contributions, task-specific quality control, consensus with preserved disagreement, expert adjudication, active learning and research dataset releases.
+
+ZTF Classifier must remain functional without CIN. Human consensus is not ground truth; expert review is separate; novelty is prioritization rather than discovery; and human annotations must not automatically retrain production models or enter the protected v0.2.0 benchmark.
+
+See [CIN architecture](COSMIC_INTELLIGENCE_NETWORK_v1.0.0.md), [CIN integration assessment](../CIN_INTEGRATION_ASSESSMENT_2026-11-03.md), and [Issue #251](https://github.com/saeed92m/ztf-classifier/issues/251). These are proposals, not implemented runtime capabilities.

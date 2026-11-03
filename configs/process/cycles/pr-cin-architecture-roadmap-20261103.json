@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-cin-architecture-roadmap-20261103",
+  "objective": "Translate the complete 23-part canonical CIN source ZTF-CIN-ARCH-001 v1.0.0 into repository architecture, feasibility assessment, logical contracts, LC-01 pilot protocol, participation strategy, governance/risk specification, staged roadmap, handbook, product architecture, API and scientific-validation boundaries, README and cumulative knowledge while preserving ZTF scientific baselines and subsystem independence.",
+  "previous_knowledge_consumed": [
+    "ZTF Classifier v1.0.1 is a published immutable Python package; the frozen scientific baseline v0.2.0 is a separate immutable model/benchmark identity.",
+    "The repository already has observation, catalog-context, discovery-candidate, human-review/feedback, model-provenance, FastAPI, Workbench and scientific-validation boundaries.",
+    "CatalogMatch/CatalogContext preserve contextual cross-match evidence but do not provide a complete canonical identity registry; AOIC remains a separate proposed workstream.",
+    "CIN is specified as a logically independent, optional human-in-the-loop subsystem. Local ZTF analysis, inference, benchmark evaluation and reports must continue if CIN is unavailable.",
+    "Human consensus is not ground truth; novelty is not discovery; human contributions must not contaminate the protected benchmark or trigger automatic production retraining.",
+    "Active-learning selection must retain random audits and representative samples to evaluate selection bias.",
+    "The canonical CIN source contains 23 parts and proposes staged implementation from feasibility audit through controlled LC-01 pilot and later task families."
+  ],
+  "baseline": {
+    "revision": "764ed5d9dcf43693f5c2e5a278afe326b432d578",
+    "description": "Documentation and architecture proposal based on main at this commit. No runtime code, scientific model, feature schema, benchmark, production data, baseline artifact or release was modified."
+  },
+  "expected_improvement": [
+    "reproducibility",
+    "maintainability",
+    "documentation"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "MEASURED",
+        "before": "The supplied CIN specification had not been mapped into repository architecture and the existing implementation boundary was not documented.",
+        "after": "A repository integration assessment identifies reusable interfaces and explicit gaps; the source, proposed contracts, staged roadmap and pilot requirements are documented."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "No runtime CIN implementation or operational pilot was executed."
+      },
+      "reproducibility": {
+        "before": "The CIN source and proposed architecture decisions were not yet mapped to versioned repository records and implementation boundaries.",
+        "after": "The source version, assessment base commit, proposed data/API contracts, task versions, pilot sampling requirements and documentation links are recorded.",
+        "status": "PARTIALLY_MEASURED",
+        "reason": "The documentation and provenance mapping are recorded, but no runtime implementation or pilot has been reproduced."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "No human contributions, consensus results, pilot observations or model experiments were generated."
+      },
+      "regression_protection_count": {
+        "status": "NOT_MEASURED",
+        "unit": "CIN runtime regression tests",
+        "reason": "This cycle is documentation and architecture planning only."
+      }
+    },
+    "trade_off": "A controlled LC-01 pilot is prioritized over public-network scale, gamification, advanced consensus models, broad survey integration and new infrastructure. No platform readiness score increase is justified."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Canonical user-supplied source ZTF-CIN-ARCH-001 v1.0.0 was read in full.",
+      "Read-only repository inspection was pinned to main commit 764ed5d9dcf43693f5c2e5a278afe326b432d578.",
+      "Created CIN architecture, integration assessment, logical data/API contracts, LC-01 pilot protocol and staged implementation roadmap.",
+      "Updated README, platform expansion roadmap, product architecture index, architectural decisions, project status report and cumulative knowledge index.",
+      "Created handbook v2.9 addendum preserving the historical v2.8 content.",
+      "No runtime code, model artifact, feature schema, benchmark, production data or release was modified.",
+      "Added dedicated participation/recognition and contributor-experience strategy; governance/privacy/security/licensing/risk specification; complete CIN-ADR-001 through CIN-ADR-015 register; and explicit CIN boundaries in Discovery Platform Extensions, API v1 and the Scientific Validation Roadmap."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The source specification was not previously represented as a traceable repository workstream.",
+      "Existing discovery and human-review interfaces could be mistaken for a complete citizen-science annotation system unless the missing task, contribution, consensus, quality and dataset-release lifecycles are documented."
+    ],
+    "unresolved": [
+      "Detailed route, persistence, authentication, authorization, job and UI audit remains.",
+      "Image-source availability, cutout provenance, licensing and data-retention feasibility remain.",
+      "Privacy notice, consent, deletion, pseudonymization, threat model and attribution policy remain.",
+      "Pilot sample size, control adjudication, assignment count, metrics and stopping rules remain to be selected from evidence.",
+      "No runtime CIN implementation or scientific pilot has been executed."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "CIN must remain an optional and logically independent subsystem.",
+      "Raw human responses, QC states, aggregates, expert reviews and research-ready annotations require separate provenance and lifecycle states.",
+      "Consensus is not ground truth; novelty is not discovery; human annotations do not automatically retrain the production model.",
+      "A controlled LC-01 pilot is the first recommended experiment; a public contributor network is not required to establish feasibility.",
+      "CIN task references must preserve original survey IDs and unresolved identity until AOIC is accepted and evidence-backed."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "No CIN runtime tests exist in this documentation-only cycle.",
+      "CI result for the exact final PR head must be inspected before merge.",
+      "No scientific validation or pilot result is available."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Treat ZTF-CIN-ARCH-001 v1.0.0 as the canonical proposed CIN source.",
+    "Keep CIN, AOIC and the ZTF computational core as separate systems with versioned contracts.",
+    "Start with feasibility, contracts and controlled LC-01 pilot; do not implement the entire network at once.",
+    "Keep human consensus, expert review and scientific validation distinct.",
+    "Do not increase platform progress or scientific readiness based on documentation and planning.",
+    "Product activity metrics must remain separate from scientific and operational metrics; recognition is optional and cannot imply scientific credentials.",
+    "Institutional claims must describe CIN as proposed/planned until the relevant capability and evidence exist."
+  ]
+}

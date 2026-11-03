@@ -423,3 +423,12 @@ The current production model explicitly does **not** claim a scientific-anomaly 
 - Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
 - Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
 - Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.
+
+
+## Cosmic Intelligence Network — proposed strategic extension
+
+The project has a proposed human-in-the-loop subsystem named **Cosmic Intelligence Network (CIN)**. CIN is intended to provide versioned astronomical annotation tasks, independent human contributions, quality control, consensus with preserved disagreement, expert review, active-learning task selection, and reproducible research datasets.
+
+CIN is a proposed extension, not a shipped capability. ZTF Classifier must remain independently useful when CIN is unavailable. Human consensus is not ground truth, novelty is not discovery, and human annotations must not trigger automatic production retraining. The frozen v0.2.0 scientific baseline and v1.0.1 software release remain unchanged.
+
+CIN architecture and current gaps: [CIN architecture](docs/architecture/COSMIC_INTELLIGENCE_NETWORK_v1.0.0.md), [integration assessment](docs/CIN_INTEGRATION_ASSESSMENT_2026-11-03.md), [data/API contracts](docs/api/CIN_DATA_CONTRACTS_v0.1.md), [LC-01 pilot protocol](docs/research/CIN_LC01_PILOT_PROTOCOL_v0.1.md), [participation strategy](docs/product/CIN_PARTICIPATION_STRATEGY_v0.1.md), [governance and risk](docs/governance/CIN_GOVERNANCE_AND_RISK_v0.1.md), [implementation roadmap](docs/roadmap/CIN_IMPLEMENTATION_ROADMAP.md), [Handbook v2.9](docs/HANDBOOK_UPDATED_v2.9.md), and [Issue #251](https://github.com/saeed92m/ztf-classifier/issues/251).

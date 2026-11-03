@@ -1,6 +1,6 @@
 # Astronomical Data Analysis & Discovery Platform — Product Roadmap
 
-Status date: 2026-10-11  
+Status date: 2026-11-03 (CIN workstream update; historical Track A–D evidence retains its original dates)  
 Current immutable software release: v1.0.1  
 Product implementation tracker: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158)  
 Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170)
@@ -89,3 +89,34 @@ No milestone is complete based on code presence alone. Completion requires measu
 ## Evidence update — 2026-10-11
 
 A deeper source-schema review found that the previous audit mapped published ZTF names to parent row ordinals instead of the explicit CPVS Table2 `Seq` field (bytes 24–29), while lightcurve `SourceID` joins by `Seq`. Thus the 725,101 / 16,686 / 5,083 values from heavy run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are invalid and superseded. PR [#176](https://github.com/saeed92m/ztf-classifier/pull/176) now reads actual Seq IDs for the derived candidate universe and published-name join. The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) has completed: 741,786 candidates; 730,184 intersection; 11,602 candidate-only; 0 published-only; 0 duplicate and 0 unmapped published names. This is a valid identifier-space comparison, but exact CPVS reproduction remains **UNRESOLVED** because 11,602 candidates remain unexplained. The flag-zero variant yields 736,225 candidates / 724,712 intersection / 5,472 published-only; a magnitude 20.6 diagnostic loses 18,865 published objects. Neither is an acceptable fix. Current-head CI must pass and the residual selection semantics must be resolved or documented from evidence; do not tune thresholds to force cardinality equality. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true.
+
+
+## Track E — Cosmic Intelligence Network (CIN) — PROPOSED
+
+CIN is a logically independent, optional human-in-the-loop scientific annotation subsystem. It extends discovery and human review but does not replace the ZTF computational core or AOIC identity layer. CIN planning is not counted as completed platform implementation or as an increase to the current weighted readiness estimate.
+
+- [ ] E0 — Repository, data-source, API, storage, authentication, privacy, licensing and deployment feasibility audit.
+- [ ] E1 — Versioned task, contribution, subject-reference, consensus and dataset-manifest contracts; privacy/retention policy and threat model.
+- [ ] E2 — Controlled LC-01 light-curve morphology MVP with immutable contributions, idempotent ingestion, provenance, repeated independent assessments, confidence and abstention.
+- [ ] E3 — Validated controls, task-specific quality estimates, consensus, disagreement preservation and expert adjudication.
+- [ ] E4 — Versioned ZTF adapter and human–AI comparison with blind presentation, random audits, representative sampling and selection-bias evaluation.
+- [ ] E5 — PAIR-01, PAT-01, NOV-01 and SIM-01 experiments, each independently evaluated.
+- [ ] E6 — IMG-01 image/artifact assessment with image-source licensing and observation provenance.
+- [ ] E7 — Immutable research dataset releases and controlled model experiments; production retraining remains separately approved.
+- [ ] E8 — Community, researcher workspace and multi-survey expansion after security, privacy and scientific gates.
+
+**Initial recommendation:** prove measurable information value with a controlled LC-01 pilot before building a public network, gamification, advanced consensus models or new infrastructure. Do not choose a fixed sample size before feasibility and statistical-power assessment.
+
+CIN architecture: [COSMIC_INTELLIGENCE_NETWORK_v1.0.0.md](../architecture/COSMIC_INTELLIGENCE_NETWORK_v1.0.0.md). Contracts: [CIN_DATA_CONTRACTS_v0.1.md](../api/CIN_DATA_CONTRACTS_v0.1.md). Pilot protocol: [CIN_LC01_PILOT_PROTOCOL_v0.1.md](../research/CIN_LC01_PILOT_PROTOCOL_v0.1.md). Tracking: [Issue #251](https://github.com/saeed92m/ztf-classifier/issues/251).
+
+### CIN guardrails
+
+- ZTF Classifier remains functional without CIN or network access.
+- CIN, AOIC and the computational classifier remain separate systems with versioned interfaces.
+- A task subject uses typed references. Do not treat a ZTF OID as a globally unique physical-object identity.
+- Preserve raw human responses; consensus and expert decisions are separate records.
+- Hide model outputs from ordinary contributors where practical.
+- Keep random audit and representative streams beside active-learning selection.
+- Never promote crowd consensus to ground truth or auto-retrain the production model.
+- Preserve benchmark, feature, taxonomy, model and release immutability.
+- All public claims must distinguish proposed, implemented, tested, validated and released states.
