@@ -62,7 +62,7 @@
   "failure_analysis": {
     "status": "PARTIALLY_DIAGNOSED",
     "root_causes": [
-      "The default application observation service is wired directly to ALeRCEDetectionBackend rather than a source-selectable DR24 adapter.",
+      "The default application observation service is wired directly to AlerceDetectionBackend rather than a source-selectable DR24 adapter.",
       "The existing DR24 work is a separate recovery/availability workflow and has not been integrated into application observation retrieval."
     ],
     "unresolved": [
