@@ -13,7 +13,7 @@ The v1.0.1 Python package is released. The frozen v0.2.0 classifier has a 42-fea
 
 The broader product is not complete. The current application has a FastAPI service and an API-backed web Workbench. It does not yet have self-contained Windows, macOS, or Linux desktop installers. Independent scientific validation is also incomplete.
 
-**Estimated platform progress: 56%.** This is a weighted product-readiness estimate. It is not a code-completion percentage and it is not a scientific-validation result. The scoring method is below.
+**Estimated platform progress: 58%.** This is a weighted product-readiness estimate. It is not a code-completion percentage and it is not a scientific-validation result. The scoring method is below.
 
 The product-level scientific gate remains fail-closed. A successful CI workflow does not prove that all required source-backed scientific checks passed. The exact historical CPVS reconstruction is a separate claim-specific workstream. It is excluded from the product progress score and is not being worked in this status cycle.
 
@@ -34,16 +34,16 @@ The overall estimate is the weighted sum of the subsystem scores. The weights re
 | Subsystem | Weight | Score | Evidence and remaining gap |
 |---|---:|---:|---|
 | Scientific core and model | 18% | 85% | Frozen 42-feature v0.2.0 contract, XGBoost baseline, persisted artifact, calibration, conformal and OOD diagnostics, CLI and batch inference. Independent population-level validation remains incomplete. |
-| Data acquisition and ingestion | 10% | 55% | Local CSV/Parquet and ALeRCE paths exist. A bounded DR24 light-curve smoke test processed 7/12 objects; 5 failed filter normalization. TAP and AVRO alert ingestion remain open. |
-| Product scientific validation | 20% | 40% | Versioned benchmark registry, provenance manifests and fail-closed gate exist. StarEmbed leakage audit is blocked. DR24 feature-engine validation is partial. No independent model-performance claim is established. |
+| Data acquisition and ingestion | 10% | 65% | BTS snapshot acquisition, DR24 Objects HATS spatial queries, and indexed Lightcurves HATS availability checks now run with manifests and hashes. Source grouping, quality-aware ingestion, TAP and AVRO alert ingestion remain open. |
+| Product scientific validation | 20% | 45% | Fail-closed gate and benchmark registry exist. Independent BTS→DR24 recovery and Lightcurves availability are measured on 100 targets. StarEmbed leakage and DR24 source grouping/photometry-quality validation remain blockers. No independent model-performance claim is established. |
 | API and application services | 12% | 80% | FastAPI v1, application services, persisted jobs/results, catalog/report and provenance contracts exist. Full user-path and clean-install acceptance remains open. |
 | Workbench and user experience | 12% | 45% | API-backed Workbench and several analysis views exist. Data Manager, complete Object/Source Explorer, integrated Help and full discovery review remain incomplete. |
 | Discovery, anomaly and explainability | 8% | 30% | Domain contracts and separate diagnostic channels exist. A validated end-to-end scientific discovery workflow and human review/ranking are not complete. |
 | Cross-platform packaging and deployment | 10% | 15% | Python wheel and source distribution are published. No self-contained Windows installer, macOS app, or Linux AppImage has passed clean-machine tests. |
-| CI, security and release engineering | 6% | 90% | A recent full CI run passed 645 tests, skipped 10, and reported 9 warnings. CodeQL and dependency audit passed; the audited lock environment reported no known vulnerabilities. Latest PR checks are being rerun after a lint correction. |
-| Documentation and operations | 4% | 60% | Architecture, API, roadmap, model and user documentation exist. Several guides still state v1.0.0, the main handbook is dated 2026-10-11, and operational acceptance guides need synchronization. |
+| CI, security and release engineering | 6% | 90% | PR #246 current-head CI, CodeQL, Product Scope Audit, and Scientific Validation contract checks passed. Full CI reported 650 passed, 10 skipped, 9 warnings, and 83% coverage. PR #247 previously failed its lifecycle gate because its documentation-only changes lacked a cycle record; this update adds one and requires a new run. |
+| Documentation and operations | 4% | 65% | Installation, user guide, model card, roadmap and status report are being aligned with v1.0.1 and the frozen v0.2.0 baseline. The main handbook and operational acceptance guides still need a full synchronization pass. |
 
-**Weighted total: 55.5%, rounded to 56%.**
+**Weighted total: 57.7%, rounded to 58%.**
 
 ## Verified release and engineering evidence
 
@@ -58,14 +58,14 @@ This is a Python package release. It is not a desktop installer release.
 
 ### Full CI evidence
 
-Current PR-head CI run [41528271371](https://github.com/saeed92m/ztf-classifier/actions/runs/41528271371) reports:
+Current PR-head CI run [41528271371](https://github.com/saeed92m/ztf-classifier/actions/runs/41528271371) completed successfully:
 
 - 650 passed;
 - 10 skipped;
 - 9 warnings;
 - 83% total test coverage.
 
-Format, lint, cumulative lifecycle validation, the test suite, and runtime smoke tests passed. Package build and dependency audit were still running at the time of this report.
+Format, lint, cumulative lifecycle validation, the test suite, and runtime smoke tests passed. This is engineering evidence, not scientific product acceptance.
 
 The 10 skipped tests are gated on optional source-backed inputs. The relevant test modules require raw ZTF data roots, frozen diagnostic feature inputs, or legacy production-model test artifacts. The CI log does not print a per-test skip list. These tests are not counted as passed scientific validation.
 
@@ -116,11 +116,23 @@ These are positional candidate-recovery results. They do not establish physical 
 
 At 1 arcsec, every same-filter multiple-OID case in this sample spans different partitions. At 5 arcsec, 77 targets have same-filter multiple OIDs within at least one field/CCD/quadrant partition. This is consistent with a wider cone including nearby catalog objects. It is not, by itself, a false-positive classification. The per-match audit contains all 773 OIDs and their recomputed separations. The 773 OIDs are unique across the 97 matched BTS targets; no OID was shared by two BTS targets in this sample.
 
-The 100-object spatial query is complete. The follow-up workflow [41527459598](https://github.com/saeed92m/ztf-classifier/actions/runs/41527459598) has passed its 17 contract tests and is running the indexed `objectid` lookup against DR24 Lightcurves HATS for the recovered OIDs. Its availability artifact is not yet verified. An Objects Table match alone does not prove that a time series is available.
+The source-backed follow-up workflow [41527459598](https://github.com/saeed92m/ztf-classifier/actions/runs/41527459598) completed successfully. Its indexed `objectid` lookup queried all 773 recovered OIDs in the official DR24 Lightcurves HATS catalog. The final artifact was downloaded and inspected (artifact ID `13184608092`; ZIP SHA-256 `84548734b39fa5e1639e6b06ed54d0630c23603b4c6a803b3e7c0935966de7e3`).
+
+| Lightcurves availability metric | Result |
+|---|---:|
+| Objects Table OIDs queried | 773 |
+| OIDs with a Lightcurves row | 714 |
+| OIDs without a Lightcurves row | 59 |
+| Filter metadata pairs consistent | 773/773 |
+| BTS targets with at least one g and r Lightcurves OID | 87/100 |
+| BTS targets with at least one Lightcurves OID | 96/100 |
+| BTS targets with all recovered OIDs present in Lightcurves | 60/100 |
+
+Missing Lightcurves rows by Objects Table filter: `zg` 25, `zr` 23, and `zi` 11. The 714 found OIDs have 1–1,850 epochs (median 56.5). Row presence does not certify clean epochs, cadence, or scientific usability. The artifact records the Lightcurves HATS 13-column schema, `objectid` index, runtime versions, and input/output hashes.
 
 ### Updated schema-aware execution
 
-The updated query records the DR24 schema columns and hash, code revision, Python/LSDB/s3fs versions, and available field/quadrant provenance. The latest source-backed push run is [41525750067](https://github.com/saeed92m/ztf-classifier/actions/runs/41525750067). At the time of this report, its DR24 query step is still running. Its new artifact has not yet been inspected. Do not replace the initial measured counts with unverified estimates.
+The schema-aware source-backed run [41525750067](https://github.com/saeed92m/ztf-classifier/actions/runs/41525750067) completed 100/100 targets and returned 773 OID rows. The later run [41527459598](https://github.com/saeed92m/ztf-classifier/actions/runs/41527459598) repeated the source-backed query and added the Lightcurves index check. The latest artifact is the evidence source for the availability counts above.
 
 The independent recovery contract job passed 14 tests on the same push run. A later test-style correction is awaiting the latest PR CI checks.
 
@@ -166,15 +178,14 @@ The exact historical CPVS reconstruction remains a separate external-reproductio
 
 ## Immediate next actions
 
-1. Inspect the indexed DR24 Lightcurves HATS result for the 773 recovered OIDs. Record missing rows, filter IDs and epoch counts.
+1. Audit photometric quality flags, valid epochs, cadence, and time coverage for a stratified sample of the 714 OIDs with Lightcurves rows.
 2. Design and test astrophysical source grouping across filter/field/quadrant OIDs. Do not change the frozen 42-feature schema.
 3. Build combined g/r observation groups with complete OID provenance and explicit ambiguity handling.
 4. Re-run feature generation on grouped sources. Require g/r coverage and report valid epochs before inference.
-5. Review the latest PR CI after the new Lightcurves tests. Require all checks to complete on the current PR head.
-6. Resolve the StarEmbed duplicate/overlap evidence before using its metrics.
-7. Complete the 100-object operational test as a separate end-to-end application test.
-8. Finish desktop workflows, help, clean-machine installation and Windows/macOS/Linux packaging.
-9. Synchronize README, handbook, roadmap, installation guide, user guide and model card. Keep all unresolved evidence visible.
+5. Resolve the StarEmbed duplicate/overlap evidence before using its metrics.
+6. Complete the 100-object operational test as a separate end-to-end application test.
+7. Finish desktop workflows, help, clean-machine installation and Windows/macOS/Linux packaging.
+8. Synchronize the main handbook and operational acceptance guides. Keep all unresolved evidence visible.
 
 ## Decision
 
