@@ -1,7 +1,7 @@
 # ZTF Classifier — Project Status Report
 
 **Status date:** 2026-11-03  
-**Main branch:** `4f98a06bde95b08a54a8844995b7717d6281ca33`  
+**Assessment base commit:** `4f98a06bde95b08a54a8844995b7717d6281ca33`  
 **Current software release:** `v1.0.1` (published, immutable)  
 **Scientific baseline:** `v0.2.0` (frozen)  
 **Production model:** `baseline_v0.2`  
