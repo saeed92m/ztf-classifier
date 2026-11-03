@@ -180,7 +180,10 @@ For the first LC-01 feasibility slice, prefer a pinned, explicitly public DR24 l
 - [x] Reusable components separated from missing CIN capabilities.
 - [x] Product and scientific independence requirements recorded.
 - [x] Registered API routes, shared-key authentication boundary and local persistence modules inspected.
-- [x] DR24 public-data availability, IRSA access boundaries and general IRSA terms reviewed from official documentation.\n- [ ] ALeRCE Zenodo license/redistribution terms confirmed.\n- [ ] IMG-01 source-specific redistribution, cutout and derived-image display terms confirmed.\n- [ ] Actual DR24 acquisition and public-access filtering demonstrated with a pinned sample manifest.
+- [x] DR24 public-data availability, IRSA access boundaries and general IRSA terms reviewed from official documentation.
+- [ ] ALeRCE Zenodo license/redistribution terms confirmed.
+- [ ] IMG-01 source-specific redistribution, cutout and derived-image display terms confirmed.
+- [ ] Actual DR24 acquisition and public-access filtering demonstrated with a pinned sample manifest.
 - [ ] Privacy, consent, retention and threat model.
 - [ ] Deployment, backup/restore and multi-user concurrency review.
 - [ ] Formal LC-01 pilot protocol reviewed.
