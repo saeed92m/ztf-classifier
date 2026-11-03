@@ -1,9 +1,6 @@
 name: DR24 Lightcurve Payload Probe
 
 on:
-  push:
-    branches:
-      - "investigation/dr24-lightcurve-payload-probe-refresh-20261103"
   workflow_dispatch:
     inputs:
       object_ids:
@@ -38,7 +35,7 @@ jobs:
         run: python -m pytest -q tests/test_dr24_lightcurve_payload_probe.py
 
   payload-probe:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    if: github.event_name == 'workflow_dispatch'
     needs: contract-tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -57,7 +54,7 @@ jobs:
       - name: Retrieve only the explicitly supplied object IDs
         env:
           GITHUB_SHA: ${{ github.sha }}
-          PROBE_OIDS: ${{ inputs.object_ids || '264114400013085,264214400000912,278115200026587,278215200018105' }}
+          PROBE_OIDS: ${{ inputs.object_ids }}
         run: |
           python scripts/probe_ztf_dr24_lightcurve_payload.py \
             --oids "$PROBE_OIDS" \
