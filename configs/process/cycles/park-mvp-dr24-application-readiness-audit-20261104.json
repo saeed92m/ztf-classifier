@@ -59,7 +59,7 @@
       "Downloaded and inspected the exact DR24 Lightcurves workflow artifact 13184608092. Its 13-column schema includes a lightcurve payload column, but the availability script selected only objectid, filterid, and nepochs; no lightcurve payload was retrieved or inspected.",
       "Refreshed against current main revision 5bb01ffe15926502bb96fee6e86e86c183ca7779 after PR #260 and PR #259 merged.",
       "PR #260 removed CPVS reconstruction from routine product validation and made Release publication manual-only with explicit opt-in and exact-SHA validation.",
-      "PR #259 added a bounded manual-only DR24 nested payload probe. Run 41674212725 retrieved 4/4 requested OIDs and 626 epoch rows; artifact ZIP SHA-256 d6918f6a9da9b9fce8c18bd7cbdc73c1ba99ea6d31df561585c2ee3ac06bb7f.",
+      "PR #259 added a bounded manual-only DR24 nested payload probe. Run 41674212725 retrieved 4/4 requested OIDs and 626 epoch rows; artifact ZIP SHA-256 d6918f6a9da9b9fce8c18bdc7bcca73c1ba99ea6d31df561585c2ee3ac06bb7f.",
       "The probe preserves HMJD, native magnitude, color coefficient, raw catflags, and OID/filter/field/rcid metadata. It does not normalize production data or infer universal cross-OID identity."
     ]
   },
