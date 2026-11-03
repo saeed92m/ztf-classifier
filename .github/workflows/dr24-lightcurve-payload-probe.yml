@@ -32,6 +32,8 @@ jobs:
           python -m pip install -r requirements.lock
           python -m pip install -e .
           python -m pip install "lsdb==0.10.4" s3fs
+      - name: Run deterministic payload contract tests
+        run: python -m pytest -q tests/test_dr24_lightcurve_payload_probe.py
       - name: Retrieve only the explicitly supplied object IDs
         env:
           GITHUB_SHA: ${{ github.sha }}
