@@ -1,0 +1,50 @@
+name: DR24 Lightcurve Payload Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      object_ids:
+        description: "Comma-separated DR24 object IDs (maximum 5)"
+        required: true
+        default: "264114400013085,264214400000912,278115200026587"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dr24-lightcurve-payload-probe
+  cancel-in-progress: false
+
+jobs:
+  payload-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: pip
+      - name: Install locked project dependencies and bounded HATS reader
+        run: |
+          python -m pip install --upgrade pip==26.2 setuptools==84.1.0 wheel==0.48.0
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+          python -m pip install "lsdb==0.10.4" s3fs
+      - name: Retrieve only the explicitly supplied object IDs
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          python scripts/probe_ztf_dr24_lightcurve_payload.py \
+            --oids "${{ inputs.object_ids }}" \
+            --max-oids 5 \
+            --output-dir reports/dr24_lightcurve_payload_probe
+      - name: Upload bounded payload evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: dr24-lightcurve-payload-probe
+          path: reports/dr24_lightcurve_payload_probe/
+          if-no-files-found: error
+          retention-days: 14
