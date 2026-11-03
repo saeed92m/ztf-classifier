@@ -184,7 +184,8 @@ For the first LC-01 feasibility slice, prefer a pinned, explicitly public DR24 l
 - [ ] ALeRCE Zenodo license/redistribution terms confirmed.
 - [ ] IMG-01 source-specific redistribution, cutout and derived-image display terms confirmed.
 - [ ] Actual DR24 acquisition and public-access filtering demonstrated with a pinned sample manifest.
-- [ ] Privacy, consent, retention and threat model.
+- [x] Initial repository privacy/authentication boundary and proposed CIN threat model documented.
+- [ ] Participant consent, retention, deletion and jurisdiction-specific privacy review approved.
 - [ ] Deployment, backup/restore and multi-user concurrency review.
 - [ ] Formal LC-01 pilot protocol reviewed.
 - [ ] ADRs and task backlog approved.
