@@ -14,14 +14,14 @@ The weighted platform-readiness estimate is **56%**. It measures progress toward
 | Subsystem | Weight | Readiness |
 |---|---:|---:|
 | Scientific core and model | 18% | 85% |
-| Data acquisition and ingestion | 10% | 55% |
-| Product scientific validation | 20% | 40% |
+| Data acquisition and ingestion | 10% | 65% |
+| Product scientific validation | 20% | 45% |
 | API and application services | 12% | 80% |
 | Workbench and user experience | 12% | 45% |
 | Discovery, anomaly and explainability | 8% | 30% |
 | Cross-platform packaging and deployment | 10% | 15% |
 | CI, security and release engineering | 6% | 90% |
-| Documentation and operations | 4% | 60% |
+| Documentation and operations | 4% | 65% |
 | **Weighted total** | **100%** | **56%** |
 
 ### Current verified position
@@ -31,7 +31,7 @@ The weighted platform-readiness estimate is **56%**. It measures progress toward
 - Recent full CI run 41493244584 passed 645 tests, skipped 10, and reported 9 warnings. CodeQL and the dependency audit passed. This is engineering evidence, not a product-level scientific pass.
 - The product scientific gate remains fail-closed. The StarEmbed audit reports a duplicate source ID in train and an object-ID overlap between train and test (Issue #210).
 - The DR24 feature-engine smoke test exposed a source-grouping gap (Issue #188): 5/12 OIDs were i-only and correctly had no g/r input; the other 7 were single-band and produced partial vectors with 19/42 finite features. No object had both g and r observations. DR24 OIDs are filter/field/quadrant-specific, so the feature engine needs a traceable astrophysical source group that combines constituent OIDs across filters before feature generation. Model inference was not run.
-- The schema-aware 100-object BTS-to-DR24 pilot completed in workflow 41525750067. It returned 773 OID rows: 48, 78, and 97 BTS targets matched within 1, 2, and 5 arcseconds. The live schema exposed field/CCD/quadrant provenance. Same-filter same-partition multiplicity was 0, 15, and 77 targets at those radii. These are positional candidate-recovery diagnostics, not cross-match precision/recall or model accuracy. PR #246 now adds an indexed DR24 Lightcurves HATS lookup to check whether the recovered OIDs have time-series rows.
+- The schema-aware 100-object BTS-to-DR24 pilot completed in workflow 41525750067 and was repeated with the indexed Lightcurves lookup in workflow 41527459598. It returned 773 OID rows: 48, 78, and 97 BTS targets matched within 1, 2, and 5 arcseconds. The live Objects schema exposed field/CCD/quadrant provenance. Same-filter same-partition multiplicity was 0, 15, and 77 targets at those radii. The Lightcurves index contained rows for 714/773 OIDs; 59 were missing (zg 25, zr 23, zi 11). 87/100 BTS targets had at least one g and r Lightcurves OID; 96/100 had any Lightcurves row; 60/100 had rows for every recovered OID. These are bounded positional-recovery and row-availability diagnostics. They do not establish source identity, clean photometry, cadence sufficiency, cross-match precision/recall, or model accuracy. See PR #246 artifact 13184608092.
 - The complete 100-object operational test remains open (Issue #222).
 - The full desktop product remains open (Issue #158). No self-contained Windows, macOS, or Linux installer has passed clean-machine acceptance.
 
