@@ -19,17 +19,13 @@
   ],
   "measurement": {
     "metrics": {
-      "workflow_discoverability": {
-        "before": "The workflow file is absent from main, so the Actions UI does not expose its manual dispatch control.",
-        "after": "The workflow definition is added to the default branch; manual dispatch availability must be verified after merge."
-      },
-      "source_retrieval": {
-        "status": "NOT_MEASURED",
-        "reason": "No workflow_dispatch run has retrieved a live DR24 payload yet."
+      "reliability": {
+        "before": "The workflow definition was absent from the default branch, so manual dispatch was unavailable.",
+        "after": "The workflow definition is present on the PR branch; manual dispatch availability remains unverified until merge."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
-        "reason": "Workflow registration and payload retrieval do not establish scientific validity or resolve CPVS membership."
+        "reason": "No workflow_dispatch run has retrieved live DR24 payload data. Registration does not establish scientific validity."
       }
     },
     "trade_off": "A separate workflow registration change is required before dispatch. This change does not modify scientific code, benchmark data, model artifacts, or acceptance criteria."
