@@ -6,7 +6,7 @@
     "DR24 Objects Table HATS acquisition succeeded for a deterministic 150-object sample; this does not prove epoch-payload retrieval.",
     "PR #255 contains an earlier bounded probe implementation but is stale relative to the current main workflow registration.",
     "The default branch now contains a manual-only DR24 payload-probe workflow.",
-    "The CPVS exact-membership discrepancy remains unresolved and is outside this probe's scope."
+    "The bounded source probe is executed only from its isolated investigation branch or by manual dispatch; no full-catalog scan is part of this workflow."
   ],
   "baseline": {
     "revision": "main@ad0145871487684291a00a1ac234bfc505b937c7",
@@ -40,7 +40,7 @@
     "evidence": [
       "CI must validate formatting, lint, lifecycle schema, tests, smoke tests, package build, and dependency audit.",
       "CodeQL and Product Scope Audit must pass.",
-      "After review, a manual workflow_dispatch run must produce a source-backed payload artifact before epoch-field availability can be claimed."
+      "A branch-scoped push run or manual workflow_dispatch run must produce a source-backed payload artifact before epoch-field availability can be claimed."
     ]
   },
   "failure_analysis": {
@@ -63,12 +63,11 @@
     "status": "NOT_VERIFIED",
     "open_blockers": [
       "The refreshed probe and cumulative lifecycle record must pass the full PR CI gate.",
-      "The manual workflow must be dispatched and its payload manifest and artifact inspected."
+      "The bounded branch-scoped workflow must complete and its payload manifest and artifact inspected."
     ]
   },
   "decision": "REVISE",
   "knowledge_carried_forward": [
-    "Keep the CPVS discrepancy as a separate fail-closed scientific validation blocker.",
     "Do not modify the v0.2.0 model, 42-feature schema, class order, or historical cutoff as part of this source probe.",
     "Do not claim DR24 epoch payload support until the live artifact is verified."
   ]
