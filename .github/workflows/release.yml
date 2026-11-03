@@ -1,37 +1,48 @@
 name: Release
 
 on:
-  workflow_run:
-    workflows:
-      - Scientific Validation
-    types:
-      - completed
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Explicitly authorize release publication after reviewing the validation run"
+        required: true
+        default: false
+        type: boolean
+      validation_run_id:
+        description: "Successful Scientific Validation workflow run ID on main"
+        required: true
+        type: string
+      release_sha:
+        description: "Exact main commit SHA validated by that workflow run"
+        required: true
+        type: string
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 jobs:
   release:
     name: Build and publish release
-    if: >-
-      github.event_name == 'workflow_run' &&
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'main'
+    if: github.event_name == 'workflow_dispatch' && inputs.publish == true
+    permissions:
+      contents: write
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
       - name: Checkout release source
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ inputs.release_sha }}
 
       - name: Resolve release target
         id: target
         shell: bash
         env:
-          EVENT_SHA: ${{ github.event.workflow_run.head_sha }}
-          VALIDATION_RUN_ID: ${{ github.event.workflow_run.id }}
+          EVENT_SHA: ${{ inputs.release_sha }}
+          VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -40,10 +51,30 @@ jobs:
           from pathlib import Path
 
           event_sha = os.environ["EVENT_SHA"]
+          if len(event_sha) != 40 or any(c not in "0123456789abcdef" for c in event_sha.lower()):
+              raise SystemExit("release_sha must be a full 40-character commit SHA")
+          run_id = os.environ["VALIDATION_RUN_ID"]
+          if not run_id.isdigit():
+              raise SystemExit("validation_run_id must be numeric")
           version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
           tag = f"v{version}"
           if not tag.startswith("v1."):
               raise SystemExit(f"release workflow is frozen for v1.x publication; derived tag: {tag}")
+          import json
+          import subprocess
+          run = json.loads(subprocess.check_output([
+              "gh", "api", f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{run_id}"
+          ], text=True))
+          expected = {
+              "name": "Scientific Validation",
+              "status": "completed",
+              "conclusion": "success",
+              "head_branch": "main",
+              "head_sha": event_sha,
+          }
+          mismatches = {key: (run.get(key), value) for key, value in expected.items() if run.get(key) != value}
+          if mismatches:
+              raise SystemExit(f"validation run does not match requested release provenance: {mismatches}")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as o:
               o.write(
                   f'tag={tag}\n'
