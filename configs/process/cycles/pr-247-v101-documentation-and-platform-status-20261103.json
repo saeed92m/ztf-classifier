@@ -33,8 +33,8 @@
         "after": "The status report records the 100-target BTS→DR24 run, 773 OIDs, 714 Lightcurves rows, 59 missing rows, filter-level missing counts, artifact ID, SHA-256, and scientific interpretation limits."
       },
       "scientific_validity": {
-        "status": "NOT_CHANGED",
-        "reason": "No scientific method, feature, model, benchmark, label, selector, or acceptance criterion is changed. Source-backed recovery evidence remains positional and does not establish source identity or model performance."
+        "status": "NOT_MEASURED",
+        "reason": "This PR changes documentation only. It does not measure scientific validity or change scientific methods."
       },
       "regression_protection_count": {
         "before": 10,
@@ -81,7 +81,7 @@
     ]
   },
   "regression": {
-    "status": "NOT_APPLICABLE",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
       "Documentation changes do not implement astrophysical source grouping or g/r feature-engine integration.",
       "Photometry quality, cadence, source identity, StarEmbed leakage, desktop packaging, and full product scientific acceptance remain open."
