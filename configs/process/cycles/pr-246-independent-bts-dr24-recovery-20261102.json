@@ -29,8 +29,8 @@
         "after": "The schema-aware query captures field, ccdid, qid, and fid. The auditor distinguishes same-filter OIDs across partitions from same-partition multiplicity. In the 100-object sample, same-filter same-partition multiplicity was 0, 15, and 77 targets at 1, 2, and 5 arcseconds. The indexed Lightcurves lookup found 714/773 OIDs and 59 missing rows; all 773 available filter metadata pairs were consistent. Per-filter missing counts: zg 25, zr 23, zi 11. 87/100 BTS targets had at least one matched Lightcurves OID in both g and r."
       },
       "reliability": {
-        "status": "PARTIALLY_MEASURED",
-        "reason": "One source-backed 100-target run completed. It found 714 of 773 OIDs in Lightcurves HATS and 59 without a row. Repeat-run stability, larger samples, and scientific photometry usability remain unmeasured."
+        "before": "One source-backed 100-target run completed; repeat-run stability, larger samples, and scientific photometry usability were not measured.",
+        "after": "The run found 714 of 773 OIDs in Lightcurves HATS and 59 without a row. Repeat-run stability, larger samples, and scientific photometry usability remain unmeasured."
       },
       "reproducibility": {
         "before": "The first auditor wrote per-object multiplicity and nearest separation only.",
@@ -107,7 +107,7 @@
     ]
   },
   "regression": {
-    "status": "PARTIALLY_VERIFIED",
+    "status": "BLOCKED",
     "open_blockers": [
       "Source-group construction and g/r feature-engine integration remain unimplemented and require regression-backed validation.",
       "Lightcurve photometry quality, cadence, and time coverage have not been scientifically audited.",
