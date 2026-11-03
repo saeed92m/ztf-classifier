@@ -17,6 +17,7 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 DR24_LIGHTCURVES_HATS = "s3://ipac-irsa-ztf/ztf/enhanced/dr24/lc/hats"
@@ -104,10 +105,18 @@ def summarize_payload(
     mag = pd.to_numeric(payload["mag"], errors="coerce")
     magerr = pd.to_numeric(payload["magerr"], errors="coerce")
     catflags = pd.to_numeric(payload["catflags"], errors="coerce")
+    hmjd_finite = hmjd[np.isfinite(hmjd)]
+    mag_finite = mag[np.isfinite(mag)]
+    magerr_finite = magerr[np.isfinite(magerr)]
 
     flag_counts: dict[str, int] = {}
     for value, count in catflags.value_counts(dropna=False).items():
-        key = "null" if pd.isna(value) else str(int(value))
+        if pd.isna(value):
+            key = "null"
+        elif float(value).is_integer():
+            key = str(int(value))
+        else:
+            key = str(value)
         flag_counts[key] = int(count)
 
     summary = {
@@ -121,13 +130,13 @@ def summarize_payload(
         "payload_rows": len(payload),
         "payload_dtypes": {name: str(dtype) for name, dtype in payload.dtypes.items()},
         "epoch_count_matches": int(metadata["nepochs"]) == len(payload),
-        "payload_sha256": payload_hash,
-        "hmjd_finite_count": int(hmjd.notna().sum()),
-        "hmjd_min": None if not hmjd.notna().any() else float(hmjd.min()),
-        "hmjd_max": None if not hmjd.notna().any() else float(hmjd.max()),
-        "mag_finite_count": int(mag.notna().sum()),
-        "magerr_finite_count": int(magerr.notna().sum()),
-        "magerr_positive_count": int((magerr > 0).sum()),
+        "canonical_payload_sha256": payload_hash,
+        "hmjd_finite_count": len(hmjd_finite),
+        "hmjd_min": None if hmjd_finite.empty else float(hmjd_finite.min()),
+        "hmjd_max": None if hmjd_finite.empty else float(hmjd_finite.max()),
+        "mag_finite_count": len(mag_finite),
+        "magerr_finite_count": len(magerr_finite),
+        "magerr_positive_count": int((magerr_finite > 0).sum()),
         "catflags_counts": flag_counts,
         "clean_catflags_zero_count": int((catflags == 0).sum()),
         "photometry_interpretation": (
