@@ -207,6 +207,7 @@ jobs:
           root=Path("reports/scientific_validation")
           required=[
             root/"ztf_star_embed.acquisition.json",
+            root/"ztf_star_embed",
             root/"external_source_evidence"/"ztf_dr24_source_subset"/"response.tsv.evidence.json",
             root/"external_source_evidence"/"alerce_reference"/"response.tsv.evidence.json",
             root/"frozen_reference"/"alerce_reference_frozen_20200609"/"evidence_manifest.json",
@@ -226,6 +227,7 @@ jobs:
           root = Path("reports/scientific_validation")
           required = [
               root / "ztf_star_embed.acquisition.json",
+              root / "ztf_star_embed",
               root / "external_source_evidence" / "ztf_dr24_source_subset" / "response.tsv.evidence.json",
               root / "external_source_evidence" / "alerce_reference" / "response.tsv.evidence.json",
               root / "frozen_reference" / "alerce_reference_frozen_20200609" / "evidence_manifest.json",
