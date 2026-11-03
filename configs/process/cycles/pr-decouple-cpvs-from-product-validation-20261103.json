@@ -34,7 +34,7 @@
         "status": "NOT_MEASURED",
         "reason": "Product source coverage remains defined by DR24 and ALeRCE evidence jobs; this workflow-only PR does not change those data results."
       },
-      "release_integrity": {
+      "correctness": {
         "before": "The Release workflow required CPVS archives and frozen-reference artifacts and depended on scientific-validation-heavy being uploaded by the former CPVS-heavy job.",
         "after": "The Release workflow now requires StarEmbed, DR24, ALeRCE live evidence, and the frozen ALeRCE reference. The independent StarEmbed job retains the scientific-validation-heavy artifact name and release provenance record."
       }
