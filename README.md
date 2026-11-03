@@ -431,4 +431,4 @@ The project has a proposed human-in-the-loop subsystem named **Cosmic Intelligen
 
 CIN is a proposed extension, not a shipped capability. ZTF Classifier must remain independently useful when CIN is unavailable. Human consensus is not ground truth, novelty is not discovery, and human annotations must not trigger automatic production retraining. The frozen v0.2.0 scientific baseline and v1.0.1 software release remain unchanged.
 
-CIN architecture and current gaps: [CIN architecture](docs/architecture/COSMIC_INTELLIGENCE_NETWORK_v1.0.0.md), [integration assessment](docs/CIN_INTEGRATION_ASSESSMENT_2026-11-03.md), [implementation roadmap](docs/roadmap/CIN_IMPLEMENTATION_ROADMAP.md), and [Issue #251](https://github.com/saeed92m/ztf-classifier/issues/251).
+CIN architecture and current gaps: [CIN architecture](docs/architecture/COSMIC_INTELLIGENCE_NETWORK_v1.0.0.md), [integration assessment](docs/CIN_INTEGRATION_ASSESSMENT_2026-11-03.md), [implementation roadmap](docs/roadmap/CIN_IMPLEMENTATION_ROADMAP.md), [Handbook v2.9](docs/HANDBOOK_UPDATED_v2.9.md), and [Issue #251](https://github.com/saeed92m/ztf-classifier/issues/251).
