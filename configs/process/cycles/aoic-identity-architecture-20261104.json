@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "aoic-identity-architecture-20261104",
+  "objective": "Add the proposed AOIC architecture specification to the current main baseline. This is documentation only and does not implement identity matching.",
+  "previous_knowledge_consumed": [
+    "The current application preserves survey OIDs in observation contracts but does not provide a canonical cross-survey identity registry.",
+    "CatalogMatch and CatalogContext are contextual cross-match evidence, not a canonical object identity lifecycle.",
+    "DR24 OIDs must remain distinct from physical-source identity; OID grouping requires independent evidence and versioned rules.",
+    "The frozen v0.2.0 model, feature schema, class order, benchmark, and scientific acceptance criteria must remain unchanged."
+  ],
+  "baseline": {
+    "revision": "main@5bb01ffe15926502bb96fee6e86e86c183ca7779",
+    "description": "Documentation-only architecture proposal; no runtime, schema, model, benchmark, or data changes."
+  },
+  "expected_improvement": [
+    "maintainability",
+    "reproducibility",
+    "correctness"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "No canonical object identity architecture document is registered on current main.",
+        "after": "AOIC architecture and acceptance boundaries are documented in one versioned proposal."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "This documentation PR does not implement or execute identity matching."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "No matching algorithm, catalog adapter, adjudicated sample, or scientific evaluation is implemented."
+      }
+    },
+    "trade_off": "The document defines proposed contracts and phases only. It intentionally does not create a database schema or production identity service."
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "CI must validate lifecycle record, formatting, tests, and package build.",
+      "CodeQL and Product Scope Audit must pass.",
+      "Review the architecture against current application and domain contracts.",
+      "Confirm the document does not claim AOIC is implemented or scientifically validated.",
+      "Confirm the frozen v0.2.0 baseline and CPVS research scope remain unchanged."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "Current application observation contracts use survey OIDs and do not provide stable canonical identities across catalogs.",
+      "Existing catalog context contracts do not represent an append-only identity decision lifecycle."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Survey OIDs, catalog entries, detections, observations, physical sources, transient events, datasets, and analysis runs require distinct identities.",
+      "Coordinate proximity alone is insufficient to confirm identity; epoch, uncertainty, source context, and ambiguity must be represented.",
+      "AOIC must be additive and must not rewrite the frozen v0.2.0 benchmark or historical identifiers."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "PR CI and documentation review must pass.",
+      "AOIC remains proposed until versioned contracts, persistence, matching tests, adapters, and independent adjudicated validation are implemented."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep AOIC optional and additive until implementation feasibility and contracts are reviewed.",
+    "Use DR24 OID/filter/field/quadrant metadata as source identifiers, not as proof of physical identity.",
+    "Do not claim calibrated match probabilities without independent calibration evidence.",
+    "Keep AOIC runtime implementation separate from the immediate DR24 production observation adapter."
+  ]
+}
