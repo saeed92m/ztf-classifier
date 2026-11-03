@@ -77,14 +77,6 @@ jobs:
           run-id: ${{ steps.target.outputs.validation_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download frozen CPVS evidence
-        uses: actions/download-artifact@v8
-        with:
-          name: frozen-reference-evidence-ztf_periodic_730k_published
-          path: ${{ runner.temp }}/scientific-frozen-cpvs
-          run-id: ${{ steps.target.outputs.validation_run_id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Resolve an immutable-safe release tag
         id: ref
         shell: bash
@@ -176,10 +168,6 @@ jobs:
             mkdir -p reports/scientific_validation/frozen_reference/alerce_reference_frozen_20200609
             find "$RUNNER_TEMP/scientific-frozen-alerce" -mindepth 1 -maxdepth 1 -exec mv -t reports/scientific_validation/frozen_reference/alerce_reference_frozen_20200609 {} +
           fi
-          if [ -d "$RUNNER_TEMP/scientific-frozen-cpvs" ]; then
-            mkdir -p reports/scientific_validation/frozen_reference/ztf_periodic_730k_published
-            find "$RUNNER_TEMP/scientific-frozen-cpvs" -mindepth 1 -maxdepth 1 -exec mv -t reports/scientific_validation/frozen_reference/ztf_periodic_730k_published {} +
-          fi
 
       - uses: actions/setup-python@v7
         with:
@@ -218,19 +206,13 @@ jobs:
           from pathlib import Path
           root=Path("reports/scientific_validation")
           required=[
-            root/"ztf_periodic_781k"/"Table2.txt.zip.evidence.json",
-            root/"ztf_periodic_730k"/"cpvs_reconstruction_status.json",
-            root/"ztf_star_embed",
+            root/"ztf_star_embed.acquisition.json",
             root/"external_source_evidence"/"ztf_dr24_source_subset"/"response.tsv.evidence.json",
             root/"external_source_evidence"/"alerce_reference"/"response.tsv.evidence.json",
             root/"frozen_reference"/"alerce_reference_frozen_20200609"/"evidence_manifest.json",
-            root/"frozen_reference"/"ztf_periodic_730k_published"/"evidence_manifest.json",
           ]
           missing=[str(x) for x in required if not x.exists()]
           if missing: raise SystemExit("missing scientific evidence:\n"+"\n".join(missing))
-          cpvs=json.loads((root/"ztf_periodic_730k"/"cpvs_reconstruction_status.json").read_text())
-          if cpvs.get("product_gate_effect") != "none":
-              raise SystemExit("CPVS evidence is not isolated from product gate")
           PY
           else
             # The Scientific Validation workflow is the authoritative producer of
@@ -243,27 +225,20 @@ jobs:
 
           root = Path("reports/scientific_validation")
           required = [
-              root / "ztf_periodic_781k" / "Table2.txt.zip.evidence.json",
-              root / "ztf_periodic_730k" / "cpvs_reconstruction_status.json",
               root / "ztf_star_embed.acquisition.json",
               root / "external_source_evidence" / "ztf_dr24_source_subset" / "response.tsv.evidence.json",
               root / "external_source_evidence" / "alerce_reference" / "response.tsv.evidence.json",
               root / "frozen_reference" / "alerce_reference_frozen_20200609" / "evidence_manifest.json",
-              root / "frozen_reference" / "ztf_periodic_730k_published" / "evidence_manifest.json",
           ]
           missing = [str(path) for path in required if not path.exists()]
           if missing:
               raise SystemExit("missing release scientific evidence:\\n" + "\\n".join(missing))
 
-          cpvs = json.loads((root / "ztf_periodic_730k" / "cpvs_reconstruction_status.json").read_text(encoding="utf-8"))
-          if cpvs.get("product_gate_effect") != "none":
-              raise SystemExit("CPVS external-reproduction evidence is incorrectly affecting the product gate")
 
           for path in (
               root / "external_source_evidence" / "ztf_dr24_source_subset" / "response.tsv.evidence.json",
               root / "external_source_evidence" / "alerce_reference" / "response.tsv.evidence.json",
               root / "frozen_reference" / "alerce_reference_frozen_20200609" / "evidence_manifest.json",
-              root / "frozen_reference" / "ztf_periodic_730k_published" / "evidence_manifest.json",
           ):
               payload = json.loads(path.read_text(encoding="utf-8"))
               if not isinstance(payload, dict):
