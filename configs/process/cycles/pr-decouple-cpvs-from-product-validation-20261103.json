@@ -6,7 +6,9 @@
     "The current Scientific Validation workflow ran CPVS parent acquisition, large g/r archive downloads, reconstruction, and VizieR membership audit inside the heavy job.",
     "The CPVS reconstruction is not the active product dataset or a product acceptance target; it is deferred research.",
     "The repository has independent BTS-to-DR24 recovery evidence and a bounded DR24 Lightcurves HATS acquisition path.",
-    "The v0.2.0 model, feature schema, taxonomy, and baseline artifacts must remain unchanged."
+    "The v0.2.0 model, feature schema, taxonomy, and baseline artifacts must remain unchanged.",
+    "The Release workflow also downloaded the CPVS frozen-reference artifact and required CPVS parent/derivation evidence, so changing only Scientific Validation would leave a hidden CPVS release dependency.",
+    "The release workflow consumes the scientific-validation-heavy artifact; its name and release provenance record must remain available after CPVS removal."
   ],
   "baseline": {
     "revision": "main@ad0145871487684291a00a1ac234bfc505b937c7",
@@ -15,7 +17,8 @@
   "expected_improvement": [
     "reliability",
     "reproducibility",
-    "maintainability"
+    "maintainability",
+    "release_integrity"
   ],
   "measurement": {
     "metrics": {
@@ -30,6 +33,10 @@
       "coverage": {
         "status": "NOT_MEASURED",
         "reason": "Product source coverage remains defined by DR24 and ALeRCE evidence jobs; this workflow-only PR does not change those data results."
+      },
+      "release_integrity": {
+        "before": "The Release workflow required CPVS archives and frozen-reference artifacts and depended on scientific-validation-heavy being uploaded by the former CPVS-heavy job.",
+        "after": "The Release workflow now requires StarEmbed, DR24, ALeRCE live evidence, and the frozen ALeRCE reference. The independent StarEmbed job retains the scientific-validation-heavy artifact name and release provenance record."
       }
     },
     "trade_off": "CPVS reconstruction no longer runs as part of routine product validation. StarEmbed acquisition requires an explicit manual opt-in. CPVS research artifacts and code remain available for a separate future workflow."
@@ -42,7 +49,11 @@
       "CodeQL and Product Scope Audit must pass.",
       "Scientific Validation contract tests must pass.",
       "Inspect the workflow graph to confirm CPVS bulk acquisition and membership audit are absent from push, schedule, tag, and pull-request product paths.",
-      "Confirm DR24 and ALeRCE source-evidence jobs retain their existing trigger conditions."
+      "Confirm DR24 and ALeRCE source-evidence jobs retain their existing trigger conditions.",
+      "Release workflow was inspected before modification. It downloaded frozen CPVS evidence and required CPVS parent/derivation manifests; these hidden dependencies were removed.",
+      "The independent StarEmbed acquisition job now runs on main pushes, scheduled runs, tags, and the explicit manual opt-in; it uploads the compatibility artifact scientific-validation-heavy and records release_ref.json for main/tag runs.",
+      "Release evidence requirements now retain StarEmbed acquisition, DR24 source evidence, live ALeRCE reference evidence, and the frozen historical ALeRCE manifest; CPVS requirements are removed.",
+      "Added tests/test_release_workflow_scope.py to prevent CPVS data acquisition or release-artifact dependencies from returning."
     ]
   },
   "failure_analysis": {
@@ -50,7 +61,8 @@
     "root_causes": [
       "The product Scientific Validation workflow coupled CPVS-specific data acquisition and reconstruction to the routine heavy validation job.",
       "The CPVS job downloaded large external archives and queried an external catalogue. Network failures in this research path could make the overall Scientific Validation workflow fail even though CPVS is not the active product dataset.",
-      "StarEmbed acquisition shared the same job and therefore could not run independently of the CPVS reconstruction."
+      "StarEmbed acquisition shared the same job and therefore could not run independently of the CPVS reconstruction.",
+      "The Release workflow retained hidden dependencies on CPVS artifacts and would fail after the Scientific Validation job was decoupled unless its downloads, restoration logic, and required-file checks were updated."
     ]
   },
   "knowledge_extraction": {
@@ -59,15 +71,17 @@
       "The active product data path is being developed around ZTF DR24 and independently sourced transient references, not CPVS reproduction.",
       "CPVS reconstruction must remain a separate deferred research activity and must not define routine product readiness.",
       "DR24 and ALeRCE evidence acquisition can remain independent of optional benchmark archive acquisition.",
-      "A passing workflow contract does not establish that a source-backed DR24 payload retrieval or scientific model validation has completed."
+      "A passing workflow contract does not establish that a source-backed DR24 payload retrieval or scientific model validation has completed.",
+      "The release pipeline consumes scientific-validation-heavy as a required artifact. Decoupling benchmark acquisition must preserve this artifact contract and its release_ref.json provenance.",
+      "CPVS parent, derivation, and frozen-reference files are external reproduction evidence. They must not be mandatory release inputs for the independent product data path."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "The updated workflow and lifecycle record must pass all PR checks.",
-      "A subsequent main-branch run must confirm the product workflow no longer invokes CPVS bulk acquisition.",
-      "The bounded DR24 payload workflow must produce and pass inspection of a live source artifact before DR24 epoch payload support is claimed."
+      "The latest PR CI must pass the new workflow-scope regression tests and all existing tests.",
+      "The release artifact contract must be verified by a source-backed main-branch run after merge; no release or tag will be published as part of this PR.",
+      "The product scientific gate still requires real benchmark_result evidence for StarEmbed, DR24, and ALeRCE before scientific release readiness can be claimed."
     ]
   },
   "decision": "REVISE",
