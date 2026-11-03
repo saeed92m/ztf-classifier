@@ -45,3 +45,17 @@ def test_release_workflow_requires_product_evidence_without_cpvs() -> None:
     assert "ztf_dr24_source_subset" in workflow
     assert "alerce_reference" in workflow
     assert "frozen-reference-evidence-alerce_reference_frozen_20200609" in workflow
+
+
+
+def test_release_publication_is_manual_and_explicitly_authorized() -> None:
+    workflow = RELEASE_WORKFLOW.read_text(encoding="utf-8")
+
+    assert "workflow_run:" not in workflow
+    assert "workflow_dispatch:" in workflow
+    assert "default: false" in workflow
+    assert "inputs.publish == true" in workflow
+    assert "inputs.validation_run_id" in workflow
+    assert "inputs.release_sha" in workflow
+    assert '"head_branch": "main"' in workflow
+    assert '"conclusion": "success"' in workflow
