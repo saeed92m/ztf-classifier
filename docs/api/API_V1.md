@@ -156,3 +156,12 @@ The default backend is native, preserving the frozen v0.2 42-feature contract. B
 When ZTF_API_KEY is configured, versioned API endpoints require Authorization: Bearer <key>. Liveness/readiness endpoints remain public for deployment probes. The API never returns the configured credential.
 
 Every HTTP response receives an X-Request-ID. Clients may provide one; otherwise the server generates a UUID. The request ID is also included in stable API error envelopes.
+
+
+## Optional CIN API boundary — proposed, not implemented
+
+The current ZTF Classifier API v1 does not expose the proposed Cosmic Intelligence Network task, assignment, contribution, consensus, expert-review or research-dataset endpoints. Those interfaces are specified separately in [CIN_DATA_CONTRACTS_v0.1.md](CIN_DATA_CONTRACTS_v0.1.md) and tracked by [Issue #251](https://github.com/saeed92m/ztf-classifier/issues/251).
+
+CIN must remain optional and independently governed. Do not add CIN routes to the existing API until the feasibility audit, privacy/consent/retention policy, threat model, typed subject-reference contract, storage boundary and LC-01 pilot acceptance criteria are reviewed. CIN outage must not affect local ZTF analysis, inference, benchmark evaluation or reporting.
+
+The proposed CIN endpoints are not part of the current OpenAPI contract. This note does not change API behavior or compatibility.
