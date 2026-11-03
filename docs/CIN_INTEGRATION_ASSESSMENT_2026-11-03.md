@@ -73,7 +73,7 @@ Repository code search found `HumanReview` and `LearningFeedback` in the domain 
 
 - The package currently targets Python `>=3.11,<3.12`.
 - The inspected API configuration defaults to local filesystem paths and SQLite stores.
-- This audit does not establish production-grade multi-user concurrency, public-network abuse protection, backup/restore, retention enforcement or independent CIN deployment.
+- This audit does not establish production-grade multi-user concurrency, public-network abuse protection, backup/restore, retention enforcement or independent CIN deployment. The inspected main tree contains no Dockerfile, Compose, Kubernetes/Helm, Terraform or reverse-proxy deployment manifest. No operational backup/restore runbook or tested recovery evidence was identified in this source-level pass.
 - No new dependency, paid service or infrastructure requirement is justified by this source-level review.
 
 This is a source-level audit of registered routes and inspected modules. It is not a penetration test, load test, database recovery test, deployment audit or proof of production security.
