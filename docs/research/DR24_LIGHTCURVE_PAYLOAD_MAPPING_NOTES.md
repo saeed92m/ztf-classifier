@@ -2,7 +2,7 @@
 
 **Status:** source-derived engineering notes; not an approved production normalization contract  
 **Date:** 2026-11-03  
-**Related work:** [Issue #253](https://github.com/saeed92m/ztf-classifier/issues/253), [PR #246](https://github.com/saeed92m/ztf-classifier/pull/246), [PR #255](https://github.com/saeed92m/ztf-classifier/pull/255)
+**Related work:** [Issue #253](https://github.com/saeed92m/ztf-classifier/issues/253), [PR #246](https://github.com/saeed92m/ztf-classifier/pull/246), [PR #255](https://github.com/saeed92m/ztf-classifier/pull/255), [PR #259](https://github.com/saeed92m/ztf-classifier/pull/259)
 
 ## 1. Confirmed source structure
 
