@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-decouple-cpvs-from-product-validation-20261103",
+  "objective": "Separate deferred CPVS reconstruction research from the active ZTF product validation path, while preserving independent DR24 and ALeRCE evidence and making StarEmbed acquisition an explicit opt-in.",
+  "previous_knowledge_consumed": [
+    "The current Scientific Validation workflow ran CPVS parent acquisition, large g/r archive downloads, reconstruction, and VizieR membership audit inside the heavy job.",
+    "The CPVS reconstruction is not the active product dataset or a product acceptance target; it is deferred research.",
+    "The repository has independent BTS-to-DR24 recovery evidence and a bounded DR24 Lightcurves HATS acquisition path.",
+    "The v0.2.0 model, feature schema, taxonomy, and baseline artifacts must remain unchanged."
+  ],
+  "baseline": {
+    "revision": "main@ad0145871487684291a00a1ac234bfc505b937c7",
+    "description": "Workflow-only change against the current main revision. No application runtime, model, feature schema, taxonomy, or benchmark artifact changes."
+  },
+  "expected_improvement": [
+    "reliability",
+    "reproducibility",
+    "maintainability"
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "The revised workflow must complete its PR checks and a later main-branch run before operational reliability can be measured."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "This change separates execution paths; it does not create new scientific dataset measurements."
+      },
+      "coverage": {
+        "status": "NOT_MEASURED",
+        "reason": "Product source coverage remains defined by DR24 and ALeRCE evidence jobs; this workflow-only PR does not change those data results."
+      }
+    },
+    "trade_off": "CPVS reconstruction no longer runs as part of routine product validation. StarEmbed acquisition requires an explicit manual opt-in. CPVS research artifacts and code remain available for a separate future workflow."
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "CI must validate YAML formatting, lint, lifecycle schema, tests, package build, and dependency audit.",
+      "CodeQL and Product Scope Audit must pass.",
+      "Scientific Validation contract tests must pass.",
+      "Inspect the workflow graph to confirm CPVS bulk acquisition and membership audit are absent from push, schedule, tag, and pull-request product paths.",
+      "Confirm DR24 and ALeRCE source-evidence jobs retain their existing trigger conditions."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The product Scientific Validation workflow coupled CPVS-specific data acquisition and reconstruction to the routine heavy validation job.",
+      "The CPVS job downloaded large external archives and queried an external catalogue. Network failures in this research path could make the overall Scientific Validation workflow fail even though CPVS is not the active product dataset.",
+      "StarEmbed acquisition shared the same job and therefore could not run independently of the CPVS reconstruction."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "The active product data path is being developed around ZTF DR24 and independently sourced transient references, not CPVS reproduction.",
+      "CPVS reconstruction must remain a separate deferred research activity and must not define routine product readiness.",
+      "DR24 and ALeRCE evidence acquisition can remain independent of optional benchmark archive acquisition.",
+      "A passing workflow contract does not establish that a source-backed DR24 payload retrieval or scientific model validation has completed."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "The updated workflow and lifecycle record must pass all PR checks.",
+      "A subsequent main-branch run must confirm the product workflow no longer invokes CPVS bulk acquisition.",
+      "The bounded DR24 payload workflow must produce and pass inspection of a live source artifact before DR24 epoch payload support is claimed."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep the v0.2.0 baseline, 42-feature schema, class order, model artifact, and historical cutoff unchanged.",
+    "Keep CPVS code and historical evidence intact, but do not use CPVS reconstruction as a product validation gate.",
+    "Continue product data work with DR24, BTS and other independently documented data sources.",
+    "Do not claim DR24 production adapter readiness until raw payload semantics, identity grouping, photometry quality, and provenance contracts are validated."
+  ]
+}
