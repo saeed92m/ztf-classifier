@@ -133,6 +133,46 @@ Do not start with contributor rankings, gamification, large-scale public access,
 - AOIC subject identity integration after AOIC validation.
 - Backup/restore, operational ownership and public deployment boundary.
 
+## 6.1 External source availability and rights review
+
+Public documentation was checked on 2026-11-03. This is a documentation review, not a live bulk-download or redistribution test.
+
+**ZTF DR24 availability**
+
+- The official ZTF release page identifies DR24 as published on 2026-01-22 and describes the release as covering March 2018 through October 2025. The public-survey portion extends through 2025-10-22; the release also includes proprietary-survey observations before 2024-07-22.
+- The ZTF-3 schedule states that public images are released on a 60-day sliding window, light curves are recalculated every 12 months, and alerts/forced photometry remain available in real time. Proprietary products follow a 550-day release delay.
+- IRSA documents both API access to light curves and image products/cutouts. Its access-control documentation states that proprietary data require credentials.
+- IRSA Cloud Access documents DR24 Objects Table and Lightcurves as Parquet/HATS collections in the `ipac-irsa-ztf` S3 bucket. This establishes a documented public acquisition route for DR24 products, but does not prove that the current ZTF Classifier application has integrated that route.
+- The repository has a separate open P0 item, [Issue #253](https://github.com/saeed92m/ztf-classifier/issues/253), for connecting provenance-backed DR24 Lightcurves acquisition to the application. CIN must reuse that accepted source-acquisition boundary rather than create a competing, undocumented data path.
+
+**Use restrictions and attribution**
+
+- IRSA's general terms distinguish public, proprietary/exclusive and copyrighted datasets. IRSA states that most public data it serves have no usage restrictions; proprietary/exclusive datasets require explicit access rights; and appropriate acknowledgements/citations are best practice.
+- The ZTF API documentation explicitly distinguishes public from proprietary data and describes authenticated access for proprietary products.
+- Therefore, CIN must select data whose release/access state is verified as public at retrieval time. It must not use a user's ability to query IRSA as evidence that every returned record is unrestricted.
+- Each task must retain release identifier, source locator, retrieval time, source record/observation identity, schema/version metadata, and a content checksum where feasible. Dataset manifests must preserve the relevant ZTF and IRSA acknowledgement/citation information.
+- For IMG-01, retain the original image product identity and cutout parameters (center, size, product type, observation epoch, filter and processing version). Do not redistribute or publish a derived image bundle until its source-specific terms and intended redistribution/display use have been reviewed.
+
+**ALeRCE historical dataset**
+
+- Zenodo record [10.5281/zenodo.4279623](https://doi.org/10.5281/zenodo.4279623) describes the labeled ZTF alert-stream set through 2020-06-09 and lists a 1.1 GB archive.
+- The record is marked as an open dataset, but the retrieved metadata does not show an identified license value. Open access is not, by itself, a clear redistribution license.
+- Do not bundle, mirror, republish or include the ALeRCE archive in a public CIN dataset release until its license/redistribution terms are confirmed with the record maintainers or rights holders. Preserve the DOI and required scientific citation in internal provenance meanwhile.
+- ALeRCE labels remain reference/benchmark labels, not independently established astrophysical ground truth. They must not be used as the sole independent control or adjudication source for the LC-01 pilot.
+
+**Pilot consequence**
+
+For the first LC-01 feasibility slice, prefer a pinned, explicitly public DR24 light-curve sample obtained through the approved DR24 acquisition path. Keep the pilot object-level disjoint from the protected v0.2.0 benchmark and its frozen evaluation records. Use independently adjudicated control cases; do not treat ALeRCE labels as independent truth. The current source-level review does not yet establish the sample manifest, exact public-access flags, sample size, image rights, or actual acquisition success.
+
+**External references**
+
+- [ZTF Public Data Releases](https://www.ztf.caltech.edu/ztf-public-releases.html)
+- [IRSA ZTF mission and data services](https://irsa.ipac.caltech.edu/Missions/ztf.html)
+- [IRSA ZTF API and proprietary-data access](https://irsa.ipac.caltech.edu/docs/program_interface/ztf_api.html)
+- [IRSA Cloud Access — DR24 Objects and Lightcurves](https://irsa.ipac.caltech.edu/cloud_access/)
+- [IRSA Terms of Use](https://irsa.ipac.caltech.edu/data_use_terms.html)
+- [ALeRCE historical dataset — Zenodo](https://doi.org/10.5281/zenodo.4279623)
+
 ## 7. Acceptance criteria for the assessment phase
 
 - [x] Canonical CIN source read in full.
@@ -140,7 +180,7 @@ Do not start with contributor rankings, gamification, large-scale public access,
 - [x] Reusable components separated from missing CIN capabilities.
 - [x] Product and scientific independence requirements recorded.
 - [x] Registered API routes, shared-key authentication boundary and local persistence modules inspected.
-- [ ] Data availability and image-license review.
+- [x] DR24 public-data availability, IRSA access boundaries and general IRSA terms reviewed from official documentation.\n- [ ] ALeRCE Zenodo license/redistribution terms confirmed.\n- [ ] IMG-01 source-specific redistribution, cutout and derived-image display terms confirmed.\n- [ ] Actual DR24 acquisition and public-access filtering demonstrated with a pinned sample manifest.
 - [ ] Privacy, consent, retention and threat model.
 - [ ] Deployment, backup/restore and multi-user concurrency review.
 - [ ] Formal LC-01 pilot protocol reviewed.
@@ -151,4 +191,4 @@ Do not start with contributor rankings, gamification, large-scale public access,
 
 This assessment is partially completed architecture work, not implemented, tested or scientifically validated. Documentation and planning do not increase scientific readiness of the existing ZTF model. The v0.2.0 baseline and v1.0.1 release remain unchanged.
 
-**Next action:** complete data availability/licensing, privacy/retention, deployment/recovery and LC-01 protocol reviews. Then freeze the task and contribution contracts before runtime code.
+**Next action:** resolve the ALeRCE license and IMG-01 image-use terms; demonstrate public-only DR24 retrieval with a pinned object-level sample; then complete privacy/retention, deployment/recovery and LC-01 protocol reviews before freezing the task and contribution contracts.
