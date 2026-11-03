@@ -20,19 +20,19 @@
   "measurement": {
     "metrics": {
       "reproducibility": {
-        "status": "NOT_MEASURED",
-        "reason": "The manual source-backed probe has not yet been dispatched."
+        "before": "No live DR24 epoch payload had been retrieved by this bounded probe.",
+        "after": "Run 41674212725 retrieved all 4 requested OIDs and 626 epoch rows in approximately 18 seconds. The source manifest, per-OID summary, and epoch CSV include content hashes and source/runtime provenance."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
-        "reason": "The probe is an acquisition/mapping experiment, not a benchmark validation."
+        "reason": "Raw payload acquisition does not establish astrophysical identity, photometric calibration equivalence, a validated catflags policy, cadence sufficiency, or classification performance."
       },
       "coverage": {
-        "status": "NOT_MEASURED",
-        "reason": "No live epoch payload artifact has yet been collected or reviewed."
+        "before": "No live epoch payload artifact had been collected for the selected OIDs.",
+        "after": "4/4 requested OIDs returned; 626/626 epoch rows had finite HMJD, magnitude, and magnitude error; all magnitude errors were positive; catalog nepochs matched payload row counts for all 4 OIDs."
       }
     },
-    "trade_off": "The probe is limited to at most five explicitly supplied OIDs. It does not establish full-catalog coverage or production compatibility."
+    "trade_off": "The probe is limited to four explicitly selected OIDs from two BTS-associated targets. It validates payload retrieval and field structure only; it does not establish production normalization, physical source grouping, or model readiness."
   },
   "validation": {
     "status": "PENDING_CI",
@@ -40,7 +40,14 @@
     "evidence": [
       "CI must validate formatting, lint, lifecycle schema, tests, smoke tests, package build, and dependency audit.",
       "CodeQL and Product Scope Audit must pass.",
-      "A branch-scoped push run or manual workflow_dispatch run must produce a source-backed payload artifact before epoch-field availability can be claimed."
+      "A branch-scoped push run or manual workflow_dispatch run must produce a source-backed payload artifact before epoch-field availability can be claimed.",
+      "Source-backed run 41674212725 completed successfully: contract-tests PASS and payload-probe PASS. The indexed DR24 Lightcurves HATS query returned all 4 requested OIDs with no missing IDs.",
+      "Artifact 13250061563: dr24-lightcurve-payload-probe.zip; ZIP SHA-256 d6918f6a9da9b9fce8c18bdc7bcca73c1ba99ea6d31df561585c2ee3ac06bb7f.",
+      "Retrieved at 2026-11-03T16:29:10.474988Z from s3://ipac-irsa-ztf/ztf/enhanced/dr24/lc/hats; code revision 9566335c1ecd372ec5049d1a1708038045acff10; LSDB 0.10.4, s3fs 2026.9.0, Python 3.11.16, pandas 2.3.3.",
+      "DR24 HATS schema: 13 columns; objectid index; column-name SHA-256 9114cbba3b014cab91193e225bcdebf2f89878c10a1bab890dd9e683aa5a23f9.",
+      "Epoch CSV: 626 rows; SHA-256 c37f4d7ac4e294b14a3f2e87b9b35bacaf79a4baf02b30ab85df2984b1d29bbd. Summary JSON SHA-256 020f7febb47b3fd95720b383d6302254d88c6b2a54a8d080eef6375ebb989835.",
+      "Per-OID payload counts: 264114400013085 (g, 78), 264214400000912 (r, 123), 278115200026587 (g, 216), 278215200018105 (r, 209). All 4 catalog nepochs values matched returned epoch rows.",
+      "All 626 HMJD, magnitude, and magnitude-error values were finite; all 626 magnitude errors were positive. catflags counts: 570 zero and 56 equal to 32768. The probe retained raw flags and did not apply a production quality policy."
     ]
   },
   "failure_analysis": {
@@ -56,14 +63,21 @@
     "findings": [
       "A successful Objects Table catalog query is distinct from successful epoch-level Lightcurves payload acquisition.",
       "Contract tests do not establish live-source availability.",
-      "Raw source fields must remain unmodified until their semantics and units are verified."
+      "Raw source fields must remain unmodified until their semantics and units are verified.",
+      "The bounded indexed HATS query completed without a network timeout for 4 OIDs and returned 626 epoch rows.",
+      "The live nested payload contains hmjd, mag, magerr, clrcoeff, and catflags. The observed dtypes were float64 for HMJD, float32 for magnitude/error/color coefficient, and int32 for catflags.",
+      "The two selected g/r OID pairs share field and readout-channel metadata. Their catalog positions differ by approximately 0.206 and 0.178 arcsec respectively; this is supporting association evidence for the pilot only, not a universal identity rule.",
+      "The observed catflags values were 0 and 32768. Raw values must remain available; the project has not approved a production exclusion policy."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "The refreshed probe and cumulative lifecycle record must pass the full PR CI gate.",
-      "The bounded branch-scoped workflow must complete and its payload manifest and artifact inspected."
+      "Review the live payload artifact and retain the source-backed evidence in the project validation record.",
+      "Define and test a DR24-specific source contract for HMJD, magnitude, color coefficient, magnitude error, and raw quality flags.",
+      "Define and validate an explicit cross-OID source-grouping policy before feature generation.",
+      "Implement the DR24 adapter behind the observation service boundary without changing the frozen v0.2.0 feature schema or silently falling back to ALeRCE.",
+      "Run deterministic fixture tests and a pinned end-to-end API/Workbench test before claiming production DR24 support."
     ]
   },
   "decision": "REVISE",
