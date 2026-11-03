@@ -17,3 +17,19 @@
 | AD-PROD-005 | ADOPTED | Cross-match, similar-object search, human review, discovery ranking, and Real/Bogus are explicit architectural boundaries. | Ecosystem review identified these as reusable patterns with clear scientific semantics. | Discovery architecture, analysis modes |
 | AD-PROD-006 | ADOPTED | OOD, uncertainty, scientific anomaly, catalog evidence, and explainability remain separate evidence channels. | Prevents semantic overclaiming. | Result contracts, UI, validation |
 | AD-PROD-007 | ADOPTED | Future alert/streaming support must be enabled by contracts without weakening deterministic offline/batch workflows. | Preserves reproducibility while allowing operational scaling. | Ingestion, orchestration |
+
+
+## Proposed architecture decisions — 2026-11-03
+
+| ID | Status | Decision | Evidence / rationale | Propagated to |
+|---|---|---|---|---|
+| AOIC-001 | PROPOSED | Maintain a stable internal object identity separately from external catalog and survey identifiers. | Canonical identity and cross-match design; prevent OID/alias conflation. | Identity contracts, catalog adapters, provenance |
+| AOIC-002 | PROPOSED | Matching must account for epoch, astrometric uncertainty and competing candidates; ambiguous/unmatched states are explicit. | Nearest-neighbour matching alone cannot establish astrophysical identity. | Match engine, review, scientific validation |
+| AOIC-003 | PROPOSED | Identity changes use append-only decisions and merge/split lineage. | Preserve traceability and correction history. | Identity registry, audit, downstream lineage |
+| CIN-001 | PROPOSED | CIN is an optional, logically independent human-intelligence subsystem. | ZTF Classifier must remain useful without CIN. | Architecture, API, deployment |
+| CIN-002 | PROPOSED | Raw human contributions are immutable; QC, consensus, expert review and research-ready annotations are separate. | Preserve independent evidence and disagreement. | Data model, provenance, research datasets |
+| CIN-003 | PROPOSED | Human consensus is not ground truth and cannot automatically trigger production retraining. | Protect benchmark validity and scientific authority boundaries. | Governance, model training, release gates |
+| CIN-004 | PROPOSED | Active learning must retain random audits and representative sampling. | Measure selection bias and avoid over-sampling anomalies. | Scheduler, pilot protocol, evaluation |
+| CIN-005 | PROPOSED | Begin with a controlled LC-01 pilot before public-network expansion. | Prove information value before scaling. | Roadmap, pilot protocol |
+
+These entries are proposals until individually reviewed and adopted. They do not authorize changes to frozen baselines, model artifacts or production data.
