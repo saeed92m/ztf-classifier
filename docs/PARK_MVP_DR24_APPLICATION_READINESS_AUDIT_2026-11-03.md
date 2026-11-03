@@ -32,7 +32,7 @@ No scientific-performance, calibration, photometry-quality, anomaly-discovery, o
 
 The independent recovery work is tracked in PR #246. Its latest recorded source-backed follow-up is workflow run [41527459598](https://github.com/saeed92m/ztf-classifier/actions/runs/41527459598).
 
-The bounded pilot used 100 BTS targets and recovered 773 unique DR24 OIDs within a 5-arcsecond positional search radius. The indexed DR24 Lightcurves lookup reported:
+The bounded pilot used 100 BTS targets and recovered 773 unique DR24 OIDs within a 5-arcsecond positional search radius. The indexed DR24 Lightcurves lookup reported the availability counts below. I also downloaded and inspected the exact workflow artifact (artifact ID `13184608092`). Its schema manifest lists 13 columns, including `lightcurve`, `objectid`, `filterid`, `nepochs`, `fieldid`, and `rcid`. However, the availability script requests only `objectid`, `filterid`, and `nepochs`; it does **not** retrieve or inspect the `lightcurve` payload. Therefore this artifact proves indexed row availability and filter/epoch metadata consistency only. It does not yet expose the photometry required by the feature pipeline.
 
 | Measure | Result |
 |---|---:|
@@ -68,7 +68,7 @@ Status meanings:
 | Local CSV/Parquet import | PARTIAL | Import service exists; end-to-end user workflow and supported light-curve schema coverage need acceptance tests. |
 | Direct, selectable DR24 Lightcurves acquisition in application | BLOCKED | Default ObservationService is hard-wired to ALeRCE. Track implementation in #253. |
 | DR24 object/filter/partition provenance in application results | BLOCKED | Pilot records recovery metadata; application observation/result provenance is not connected to it. |
-| DR24 photometry mapping and quality audit | NOT STARTED | No application-level DR24-specific photometry normalization/QC was verified in this audit. |
+| DR24 photometry mapping and quality audit | NOT STARTED | The pilot artifact schema exposes a `lightcurve` column, but the availability query did not retrieve it. Its payload structure, field mapping, photometry values, and QC remain uninspected. |
 | Explicit missing-data and exclusion reporting | PARTIAL | Existing normalization diagnostics and source-subset validation exist; DR24 application-level reason codes are not implemented. |
 | 100,000 labeled light curves | NOT STARTED | This is a delivery target, not a current dataset achievement. |
 | Leakage-safe temporal model evaluation on the Park dataset | NOT STARTED | No qualifying Park-dataset evaluation artifact was verified. |
@@ -101,6 +101,6 @@ Status meanings:
 
 ## 7. Audit conclusion
 
-The most important current correction is architectural: the Park MVP requires a DR24-backed application path, but the default application observation service currently uses ALeRCE. The independent DR24 pilot is useful evidence for adapter design, but it is not a working product integration.
+The most important current correction is architectural and data-level: the Park MVP requires a DR24-backed application path, but the default application observation service currently uses ALeRCE. The independent DR24 pilot queried only Lightcurves index metadata; although the catalog schema includes a `lightcurve` payload column, the pilot did not retrieve or inspect that payload. The pilot is useful evidence for adapter design, but it is not a working photometry integration or product path.
 
 The next measurable exit condition is not a larger download. It is a tested, provenance-complete DR24 adapter that runs through the existing API and Workbench without silent source substitution.
