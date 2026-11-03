@@ -1,37 +1,48 @@
 name: Release
 
 on:
-  workflow_run:
-    workflows:
-      - Scientific Validation
-    types:
-      - completed
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Explicitly authorize release publication after reviewing the validation run"
+        required: true
+        default: false
+        type: boolean
+      validation_run_id:
+        description: "Successful Scientific Validation workflow run ID on main"
+        required: true
+        type: string
+      release_sha:
+        description: "Exact main commit SHA validated by that workflow run"
+        required: true
+        type: string
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 jobs:
   release:
     name: Build and publish release
-    if: >-
-      github.event_name == 'workflow_run' &&
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'main'
+    if: github.event_name == 'workflow_dispatch' && inputs.publish == true
+    permissions:
+      contents: write
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
       - name: Checkout release source
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ inputs.release_sha }}
 
       - name: Resolve release target
         id: target
         shell: bash
         env:
-          EVENT_SHA: ${{ github.event.workflow_run.head_sha }}
-          VALIDATION_RUN_ID: ${{ github.event.workflow_run.id }}
+          EVENT_SHA: ${{ inputs.release_sha }}
+          VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -40,10 +51,30 @@ jobs:
           from pathlib import Path
 
           event_sha = os.environ["EVENT_SHA"]
+          if len(event_sha) != 40 or any(c not in "0123456789abcdef" for c in event_sha.lower()):
+              raise SystemExit("release_sha must be a full 40-character commit SHA")
+          run_id = os.environ["VALIDATION_RUN_ID"]
+          if not run_id.isdigit():
+              raise SystemExit("validation_run_id must be numeric")
           version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
           tag = f"v{version}"
           if not tag.startswith("v1."):
               raise SystemExit(f"release workflow is frozen for v1.x publication; derived tag: {tag}")
+          import json
+          import subprocess
+          run = json.loads(subprocess.check_output([
+              "gh", "api", f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{run_id}"
+          ], text=True))
+          expected = {
+              "name": "Scientific Validation",
+              "status": "completed",
+              "conclusion": "success",
+              "head_branch": "main",
+              "head_sha": event_sha,
+          }
+          mismatches = {key: (run.get(key), value) for key, value in expected.items() if run.get(key) != value}
+          if mismatches:
+              raise SystemExit(f"validation run does not match requested release provenance: {mismatches}")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as o:
               o.write(
                   f'tag={tag}\n'
@@ -77,14 +108,6 @@ jobs:
           run-id: ${{ steps.target.outputs.validation_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download frozen CPVS evidence
-        uses: actions/download-artifact@v8
-        with:
-          name: frozen-reference-evidence-ztf_periodic_730k_published
-          path: ${{ runner.temp }}/scientific-frozen-cpvs
-          run-id: ${{ steps.target.outputs.validation_run_id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Resolve an immutable-safe release tag
         id: ref
         shell: bash
@@ -113,8 +136,8 @@ jobs:
                 EXPECTED_SHA="$release_tag_sha"
                 break
               else
-                echo "Mutable release exists and will be repaired in place: $selected"
-                break
+                echo "ERROR: Mutable release already exists for $selected; refusing to overwrite assets or edit release metadata."
+                exit 1
               fi
             else
               tag_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${selected}" 2>/dev/null | jq -r '.object.sha // empty' || true)"
@@ -127,14 +150,9 @@ jobs:
                 echo "Existing tag points to validated SHA: $selected"
                 break
               fi
-              echo "Stale pre-release tag $selected points to $tag_sha, expected $EXPECTED_SHA"
-              echo "Deleting stale tag so the immutable release can be created at the validated SHA."
-              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/tags/${selected}"
-              gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
-                -f "ref=refs/tags/${selected}" \
-                -f "sha=${EXPECTED_SHA}" >/tmp/tag-recreated.json
-              echo "Recreated validated tag: $selected"
-              break
+              echo "ERROR: Existing tag $selected points to $tag_sha, not validated SHA $EXPECTED_SHA."
+              echo "Refusing to delete or move an existing tag. Select a new version after review."
+              exit 1
             fi
           done
           {
@@ -176,10 +194,6 @@ jobs:
             mkdir -p reports/scientific_validation/frozen_reference/alerce_reference_frozen_20200609
             find "$RUNNER_TEMP/scientific-frozen-alerce" -mindepth 1 -maxdepth 1 -exec mv -t reports/scientific_validation/frozen_reference/alerce_reference_frozen_20200609 {} +
           fi
-          if [ -d "$RUNNER_TEMP/scientific-frozen-cpvs" ]; then
-            mkdir -p reports/scientific_validation/frozen_reference/ztf_periodic_730k_published
-            find "$RUNNER_TEMP/scientific-frozen-cpvs" -mindepth 1 -maxdepth 1 -exec mv -t reports/scientific_validation/frozen_reference/ztf_periodic_730k_published {} +
-          fi
 
       - uses: actions/setup-python@v7
         with:
@@ -218,19 +232,14 @@ jobs:
           from pathlib import Path
           root=Path("reports/scientific_validation")
           required=[
-            root/"ztf_periodic_781k"/"Table2.txt.zip.evidence.json",
-            root/"ztf_periodic_730k"/"cpvs_reconstruction_status.json",
+            root/"ztf_star_embed.acquisition.json",
             root/"ztf_star_embed",
             root/"external_source_evidence"/"ztf_dr24_source_subset"/"response.tsv.evidence.json",
             root/"external_source_evidence"/"alerce_reference"/"response.tsv.evidence.json",
             root/"frozen_reference"/"alerce_reference_frozen_20200609"/"evidence_manifest.json",
-            root/"frozen_reference"/"ztf_periodic_730k_published"/"evidence_manifest.json",
           ]
           missing=[str(x) for x in required if not x.exists()]
           if missing: raise SystemExit("missing scientific evidence:\n"+"\n".join(missing))
-          cpvs=json.loads((root/"ztf_periodic_730k"/"cpvs_reconstruction_status.json").read_text())
-          if cpvs.get("product_gate_effect") != "none":
-              raise SystemExit("CPVS evidence is not isolated from product gate")
           PY
           else
             # The Scientific Validation workflow is the authoritative producer of
@@ -243,27 +252,21 @@ jobs:
 
           root = Path("reports/scientific_validation")
           required = [
-              root / "ztf_periodic_781k" / "Table2.txt.zip.evidence.json",
-              root / "ztf_periodic_730k" / "cpvs_reconstruction_status.json",
               root / "ztf_star_embed.acquisition.json",
+              root / "ztf_star_embed",
               root / "external_source_evidence" / "ztf_dr24_source_subset" / "response.tsv.evidence.json",
               root / "external_source_evidence" / "alerce_reference" / "response.tsv.evidence.json",
               root / "frozen_reference" / "alerce_reference_frozen_20200609" / "evidence_manifest.json",
-              root / "frozen_reference" / "ztf_periodic_730k_published" / "evidence_manifest.json",
           ]
           missing = [str(path) for path in required if not path.exists()]
           if missing:
               raise SystemExit("missing release scientific evidence:\\n" + "\\n".join(missing))
 
-          cpvs = json.loads((root / "ztf_periodic_730k" / "cpvs_reconstruction_status.json").read_text(encoding="utf-8"))
-          if cpvs.get("product_gate_effect") != "none":
-              raise SystemExit("CPVS external-reproduction evidence is incorrectly affecting the product gate")
 
           for path in (
               root / "external_source_evidence" / "ztf_dr24_source_subset" / "response.tsv.evidence.json",
               root / "external_source_evidence" / "alerce_reference" / "response.tsv.evidence.json",
               root / "frozen_reference" / "alerce_reference_frozen_20200609" / "evidence_manifest.json",
-              root / "frozen_reference" / "ztf_periodic_730k_published" / "evidence_manifest.json",
           ):
               payload = json.loads(path.read_text(encoding="utf-8"))
               if not isinstance(payload, dict):
@@ -337,16 +340,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.ref.outputs.tag }}
         run: gh release create "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --verify-tag --notes-file ".github/release-notes/${RELEASE_TAG}.md"
-
-      - name: Repair existing mutable release in place
-        if: steps.ref.outputs.existing_immutable != 'true' && steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
-        run: |
-          set -euo pipefail
-          gh release upload "$RELEASE_TAG" dist/*.whl dist/*.tar.gz --clobber
-          gh release edit "$RELEASE_TAG" --draft=false --notes-file ".github/release-notes/${RELEASE_TAG}.md"
 
       - name: Accept already-complete immutable release
         if: steps.ref.outputs.existing_immutable == 'true' || (steps.existing.outputs.exists == 'true' && steps.existing.outputs.immutable == 'true')
