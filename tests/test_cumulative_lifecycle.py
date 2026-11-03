@@ -1,4 +1,8 @@
-from ztf_classifier.lifecycle import assert_valid_cycle_record, validate_cycle_record
+from ztf_classifier.lifecycle import (
+    assert_valid_cycle_record,
+    validate_cycle_file,
+    validate_cycle_record,
+)
 
 
 def valid_record():
@@ -79,3 +83,37 @@ def test_scientific_blocker_is_explicitly_allowed():
     }
     record["decision"] = "BLOCKED"
     assert validate_cycle_record(record) == []
+
+
+
+def test_partial_recovery_evidence_is_valid_when_limited_claims_are_explicit():
+    record = valid_record()
+    record["measurement"]["metrics"]["reliability"] = {
+        "before": "No source-backed recovery availability measurement.",
+        "after": "One 100-target run completed; repeatability and photometry quality remain unmeasured.",
+        "status": "PARTIALLY_MEASURED",
+        "reason": "Single-run evidence is partial.",
+    }
+    record["regression"] = {
+        "status": "NOT_VERIFIED",
+        "open_blockers": ["Repeatability remains untested."],
+    }
+    record["decision"] = "REVISE"
+    assert validate_cycle_record(record) == []
+
+
+def test_cycle_file_error_identifies_the_invalid_record_path(tmp_path):
+    import json
+
+    record = valid_record()
+    record["regression"] = {"status": "PARTIALLY_VERIFIED", "open_blockers": ["pending"]}
+    path = tmp_path / "broken-cycle.json"
+    path.write_text(json.dumps(record), encoding="utf-8")
+
+    try:
+        validate_cycle_file(path)
+    except ValueError as exc:
+        assert "broken-cycle.json" in str(exc)
+        assert "regression.status must be an allowed status" in str(exc)
+    else:
+        raise AssertionError("invalid lifecycle record unexpectedly passed")
