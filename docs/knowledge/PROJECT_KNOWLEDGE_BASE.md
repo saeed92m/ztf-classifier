@@ -52,3 +52,18 @@ Every implementation cycle consumes validated prior knowledge, records its inher
 2. Never tune a scientific selection predicate to reproduce a published row count.
 3. Never allow a reference-system prediction to satisfy an independent-ground-truth requirement.
 4. Every immutable external archive used for release validation must be hash-verified and provenance-recorded.
+
+
+## AOIC and CIN architecture knowledge — 2026-11-03
+
+- Canonical CIN source ZTF-CIN-ARCH-001 v1.0.0 has been read in full and translated into a proposed repository workstream. — VERIFIED (source review)
+- CIN is an optional, logically independent human-in-the-loop annotation subsystem; it must not be required for local ZTF analysis, inference, benchmark evaluation or reporting. — PROPOSED
+- Human contributions, QC-approved responses, aggregates, expert adjudications and research-ready annotations are separate evidence types. — PROPOSED
+- Community consensus is not ground truth; novelty is not discovery; human annotations do not automatically retrain production models. — PROPOSED
+- Active learning must retain random audits and representative samples to measure selection bias. — PROPOSED
+- AOIC canonical identity is a separate proposed dependency. CIN must preserve original survey/catalog identifiers and unresolved identity state until AOIC is validated. — PROPOSED
+- The first CIN pilot should be controlled LC-01 light-curve assessment; no fixed sample size is set before feasibility and statistical-power review. — PROPOSED
+- The current repository has reusable observation, catalog-context, discovery, human-review, API, Workbench and model-provenance boundaries, but no verified end-to-end CIN task/contribution/consensus pipeline. — SUPPORTED at assessment base 764ed5d9dcf43693f5c2e5a278afe326b432d578
+- CIN documentation and planning do not increase the existing platform readiness estimate or scientific acceptance status. — VERIFIED (scope rule)
+
+Canonical documents: docs/architecture/COSMIC_INTELLIGENCE_NETWORK_v1.0.0.md; docs/CIN_INTEGRATION_ASSESSMENT_2026-11-03.md; docs/api/CIN_DATA_CONTRACTS_v0.1.md; docs/research/CIN_LC01_PILOT_PROTOCOL_v0.1.md; docs/roadmap/CIN_IMPLEMENTATION_ROADMAP.md. Tracking: Issue #251.
