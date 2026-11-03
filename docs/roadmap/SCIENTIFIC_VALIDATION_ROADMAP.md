@@ -209,3 +209,14 @@ The earlier **P0 exit status (2026-10-04): COMPLETE** describes the recovery mil
 - The published Table 4 ID ↔ ZTF name ↔ parent-catalog mapping (including IDs 781603 and 781604) is an investigation lead and must be verified against the pinned source tables; it is not yet a confirmed root cause.
 
 **Required next action:** run the heavy source-backed workflow on its intended ci/heavy/* ref after the merged correction, confirm required jobs execute rather than skip, inspect derivation/acquisition artifacts, and independently audit the membership and ID/name mapping. Keep exact reconstruction UNRESOLVED until evidence justifies a different disposition. Do not weaken the product gate or alter the frozen v0.2.0 baseline.
+
+
+## Human-in-the-loop annotation validation — CIN (proposed)
+
+CIN annotation quality is a separate validation scope. It does not replace the product-level model validation gate and does not modify the protected v0.2.0 benchmark.
+
+Before human annotations are used for research or model experiments, validate task-specific agreement against independently adjudicated controls, inter-annotator reliability, abstention and confidence behavior, correlated errors, presentation effects, selection bias, and generalization. Preserve raw responses, disagreement, task/policy versions and dataset manifests.
+
+Community consensus is not ground truth. Expert adjudication is a separate evidence class. Human annotations must not enter the frozen benchmark or trigger automatic production retraining. Any future model experiment requires a separately versioned dataset, leakage-safe object-level splits and independent evaluation.
+
+The initial controlled experiment is LC-01 and is specified in [CIN_LC01_PILOT_PROTOCOL_v0.1.md](../research/CIN_LC01_PILOT_PROTOCOL_v0.1.md). CIN architecture and roadmap: [architecture](../architecture/COSMIC_INTELLIGENCE_NETWORK_v1.0.0.md), [implementation roadmap](CIN_IMPLEMENTATION_ROADMAP.md), [Issue #251](https://github.com/saeed92m/ztf-classifier/issues/251).
