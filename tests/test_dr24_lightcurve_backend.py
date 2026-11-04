@@ -116,4 +116,6 @@ def test_backend_reports_missing_oids_and_source_provenance() -> None:
     assert "32768" in interpretation["quality"]
     assert interpretation["quality"].startswith("raw")
     assert "filterid 1/2/3" in interpretation["identity"]
+    assert "per filter/field/quadrant" in interpretation["identity"]
+    assert "multiple OIDs" in interpretation["identity"]
     assert result.provenance["epoch_count"] == 2
