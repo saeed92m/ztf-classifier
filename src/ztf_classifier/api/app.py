@@ -829,6 +829,27 @@ def create_app(
         )
 
     @app.get(
+        "/v1/dr24/objects/{objectid}/lightcurve",
+        tags=["observations"],
+    )
+    def dr24_native_lightcurve(objectid: int) -> dict[str, Any]:
+        """Return source-native DR24 epochs and acquisition provenance."""
+        if objectid <= 0:
+            raise ApiContractError(
+                "dr24_objectid_invalid",
+                "DR24 objectid must be a positive integer.",
+                status_code=422,
+            )
+        try:
+            return observations.get_dr24_native_lightcurve(objectid)
+        except Exception as exc:
+            raise ApiContractError(
+                "dr24_acquisition_failed",
+                "DR24 light-curve acquisition failed. No alternate source was used.",
+                status_code=502,
+            ) from exc
+
+    @app.get(
         "/v1/objects/{oid}",
         response_model=ObjectObservationResponse,
         tags=["observations"],
