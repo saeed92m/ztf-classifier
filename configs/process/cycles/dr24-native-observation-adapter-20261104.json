@@ -74,6 +74,7 @@
     "Keep raw DR24 acquisition separate from normalized model observations until time, photometry, quality and identity contracts pass scientific validation.",
     "Never silently substitute ALeRCE when DR24 acquisition fails.",
     "IRSA documents ZTF object IDs as per-filter/field/quadrant identities; one astrophysical source may have multiple OIDs. Keep raw OIDs separate until AOIC cross-match is implemented and validated.",
-    "The versioned API contract in docs/api/API_V1.md now documents the raw DR24 endpoint, optional extra, request bounds, source-native response fields, error codes, and scientific/identity limitations."
+    "The versioned API contract in docs/api/API_V1.md now documents the raw DR24 endpoint, optional extra, request bounds, source-native response fields, error codes, and scientific/identity limitations.",
+    "The v2.1 handbook now includes a dated 2026-11-04 section for the DR24 raw endpoint, its source semantics and identity boundary, current acceptance blockers, CPVS membership status, and baseline/release controls."
   ]
 }
