@@ -28,7 +28,8 @@
       "scripts/audit_cpvs_candidate_four_field.py",
       "tests/test_cpvs_vizier_separator_parser.py",
       "docs/research/CPVS_VIZIER_SEPARATOR_PARSER_DIAGNOSTIC_2026-11-04.md",
-      "configs/process/cycles/cpvs-vizier-separator-parser-20261104.json"
+      "configs/process/cycles/cpvs-vizier-separator-parser-20261104.json",
+      "docs/research/CPVS_55_CONTROL_ARCHIVE_IDENTITY_LEAD_2026-11-04.md"
     ],
     "rationale": "Reject only rows whose non-empty fields consist entirely of hyphens, and add regression coverage for the exact separator-row failure. Keep all valid table rows and the name-to-Seq crosswalk unchanged."
   },
@@ -83,6 +84,7 @@
   "knowledge_carried_forward": [
     "The 741786 versus 730184 membership discrepancy remains unresolved.",
     "Do not add the four-field predicate or tune SNR thresholds to force equality.",
-    "Do not repeat multi-gigabyte CPVS acquisition until the bounded parser and crosswalk tests pass."
+    "Do not repeat multi-gigabyte CPVS acquisition until the bounded parser and crosswalk tests pass.",
+    "Seq 615170 has Ng=132 and no rows in the inspected g/r archives; unknown g-archive Seq 615172 has 132 rows. This is an unverified identifier-mapping lead that requires raw coordinate/time comparison."
   ]
 }
