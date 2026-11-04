@@ -30,7 +30,7 @@ These values describe agreement with the published membership list only. They mu
 - The four-field-positive parent set contains 730,239 IDs, including 55 noncandidate/nonmember controls.
 - Candidate-only objects: 11,602. All have qualifying finite-SNR detections in both bands in the retained diagnostics. The parent metadata fields are incomplete for every one of these objects: 11,580 lack both positive mean-magnitude and period pairs; 17 have both mean magnitudes but incomplete band periods; 5 have both periods but incomplete mean magnitudes.
 - Published-only objects: zero.
-- The paper's stated two-band SNR rule does not document the four-field-positive Table 2 condition. The exact intersection is therefore diagnostic evidence, not proof of author intent.
+- The later paper *Searching for Anomalies in the ZTF Catalog of Periodic Variable Stars* (DOI: https://doi.org/10.3847/1538-4357/ac69d4), Section 2.1, states that it extracted 730,184 of 781,602 objects using at least one 2.5σ g-band and 3σ r-band detection, then phase-folded both bands using the common period from Table 2. The accessible method text does not state that all four Table 2 fields `gmag`, `rmag`, `Per-g`, and `Per-r` must be positive. The exact intersection with that four-field condition is therefore diagnostic evidence, not proof of author intent or an established selection rule.
 
 ## Evidence and limitations
 
