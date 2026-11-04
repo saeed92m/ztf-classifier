@@ -19,7 +19,9 @@ def test_orphan_seq_coordinate_match_is_reported_as_identity_lead(
         for index in range(132)
     ).encode("utf-8")
     archive_path = tmp_path / "ztf2g.zip"
-    with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    with zipfile.ZipFile(
+        archive_path, "w", compression=zipfile.ZIP_DEFLATED
+    ) as archive:
         archive.writestr("ztf2g", data)
 
     report = scan_archive(
@@ -30,6 +32,7 @@ def test_orphan_seq_coordinate_match_is_reported_as_identity_lead(
         expected_archive_sha256=hashlib.sha256(archive_path.read_bytes()).hexdigest(),
         expected_data_sha256=hashlib.sha256(data).hexdigest(),
         expected_data_size=len(data),
+        expected_total_rows=132,
         expected_ra_deg=307.36563,
         expected_dec_deg=-13.42128,
         expected_gmag=14.886,
@@ -38,6 +41,9 @@ def test_orphan_seq_coordinate_match_is_reported_as_identity_lead(
 
     assert report["target_seq_summary"]["row_count"] == 0
     assert report["orphan_seq_summary"]["row_count"] == 132
-    assert report["comparison"]["orphan_median_coordinate_separation_arcsec"] == 0.0
+    assert (
+        report["comparison"]["orphan_median_coordinate_separation_arcsec"]
+        == 0.0
+    )
     assert report["comparison"]["strong_coordinate_match_to_table2_target"] is True
     assert report["comparison"]["interpretation"] == "STRONG_IDENTITY_LEAD"
