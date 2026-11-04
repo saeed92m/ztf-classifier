@@ -38,6 +38,11 @@ def read_vizier(path: Path, required: tuple[str, ...]) -> list[dict[str, str]]:
                 header = [metadata[i] for i in sorted(metadata)]
             if header is None or len(fields) != len(header) or fields == header:
                 continue
+            nonempty_fields = [value for value in fields if value]
+            if nonempty_fields and all(
+                re.fullmatch(r"-+", value) for value in nonempty_fields
+            ):
+                continue
             row = dict(zip(header, fields))
             if "Seq" in row:
                 try:
