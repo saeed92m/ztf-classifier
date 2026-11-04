@@ -205,7 +205,12 @@ def test_external_benchmark_adapters_have_pinned_query_contracts():
         "ztf_classifier.validation.adapters",
         fromlist=["build_adapter_plan"],
     ).build_adapter_plan(dr24)
-    assert dr24_plan.query_manifest["selection"]["limit"] == 150
+    selection = dr24_plan.query_manifest["selection"]
+    assert selection["limit"] == 150
+    assert selection["method"] == "sha256_ranked_across_evenly_spaced_hats_index_fragments"
+    assert selection["order_by"] == ["oid"]
+    assert selection["seed"] == "DR24-HATS-INDEX-SAMPLE-v1"
+    assert selection["fragment_sample_count"] == 15
     assert dr24_plan.query_manifest["object_id_column"] == "oid"
 
     alerce = registry.load("alerce_reference")
