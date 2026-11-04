@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-native-observation-adapter-20261104",
+  "objective": "Add bounded, provenance-preserving native DR24 Lightcurves acquisition at the Observation Service and API boundary without changing the frozen v0.2.0 feature or model contracts.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Issue #253",
+      "status": "VERIFIED",
+      "detail": "The existing ObservationService uses ALeRCE; DR24 payload retrieval was previously isolated in a probe."
+    },
+    {
+      "source": "docs/research/DR24_LIGHTCURVE_PAYLOAD_MAPPING_NOTES.md",
+      "status": "VERIFIED",
+      "detail": "DR24 HMJD, photometry, color coefficient, catflags and OID partition metadata require explicit handling."
+    }
+  ],
+  "baseline": {
+    "main_sha": "bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "expected_improvement": [
+    "Add a bounded indexed DR24 objectid acquisition contract.",
+    "Expose source-native lightcurve payloads through the Observation Service and explicit API route.",
+    "Preserve OID, filter, field, readout-channel, schema and payload-hash provenance.",
+    "Keep scientific normalization blocked until source semantics are approved and validated."
+  ],
+  "measurement": {
+    "metrics": {
+      "dr24_adapter_module": {
+        "before": 0,
+        "after": 1
+      },
+      "dr24_api_routes": {
+        "before": 0,
+        "after": 1
+      },
+      "deterministic_adapter_tests": {
+        "before": 0,
+        "after": 5
+      },
+      "scientific_normalization": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "scientific_gate_affected": false,
+    "status": "NOT_VERIFIED",
+    "evidence": "Feature branch only; CI and source-backed runtime execution are pending."
+  },
+  "failure_analysis": {
+    "known_risks": [
+      "HMJD-to-MJD strategy is not approved.",
+      "DR24-to-ALeRCE photometric equivalence is not established.",
+      "Production catflags policy is not approved.",
+      "No general cross-OID identity rule is implemented."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "Raw DR24 acquisition can be implemented without changing the frozen v0.2.0 feature contract.",
+      "The raw source adapter must not imply that HMJD is MJD or that raw DR24 measurements are inference-ready."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Current-head CI has not run.",
+      "The DR24 adapter has not been source-backed through the production environment.",
+      "No normalized DR24-to-feature-to-inference path is implemented."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep raw DR24 acquisition separate from normalized model observations until time, photometry, quality and identity contracts pass scientific validation.",
+    "Never silently substitute ALeRCE when DR24 acquisition fails."
+  ]
+}
