@@ -140,3 +140,8 @@ Draft PR #264 head `02d96ce85b58d8a6ce5670a8833b2beb74d70b24` completed ordinary
 - DR24/ALeRCE/CPVS source-backed jobs were skipped on this feature branch. This ordinary CI result does not verify live HATS acquisition, DR24 normalization, or end-to-end inference.
 
 The raw DR24 adapter remains Draft PR #264 and is not merged. The baseline and release remain unchanged.
+
+
+### CPVS source archive integrity detail — 2026-11-04
+
+The retained CDS ReadMe defines `Ng`/`Nr` as band detection counts and lists 89,697,393 rows in each band archive. Table 2 `Ng` sums to 89,702,309. The g-band per-Seq audit reports 91 count mismatches (56 deficits, 35 surpluses), net -5,048; orphan Seq 615172 adds 132 rows, producing the net -4,916 difference. This archive-to-Table2 integrity issue is separate from the 11,602 candidate-only membership discrepancy and remains under investigation.
