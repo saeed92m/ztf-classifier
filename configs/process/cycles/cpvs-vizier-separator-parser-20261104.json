@@ -93,6 +93,7 @@
     "Do not repeat multi-gigabyte CPVS acquisition until the bounded parser and crosswalk tests pass.",
     "Seq 615170 has Ng=132 and no rows in the inspected g/r archives; unknown g-archive Seq 615172 has 132 rows. This is an unverified identifier-mapping lead that requires raw coordinate/time comparison.",
     "The fixed 100/1000-object stratified samples from artifact 13108147605 were independently regenerated exactly using seed ztf-cpvs-fixed-object-sample-v2; the design oversamples discrepancy strata and is not a prevalence estimator.",
-    "Against the published membership reference, the object-level comparison is TP=730184, FP=11602, FN=0, TN=39816; these are reference-membership metrics, not astrophysical ground-truth performance."
+    "Against the published membership reference, the object-level comparison is TP=730184, FP=11602, FN=0, TN=39816; these are reference-membership metrics, not astrophysical ground-truth performance.",
+    "All 11602 candidate-only objects have a finite positive common Per value in Table 2; missing common period does not explain their exclusion. Table 2 Ng/Nr counts also disagree with retained raw-archive qualifying detections for a small subset."
   ]
 }
