@@ -28,7 +28,7 @@ Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issu
 - [ ] Keep Issue #170 open until evidence-based disposition.
 
 ### A2. Product-level validation — RELEASE-BLOCKING
-- [ ] Complete pinned ZTF DR24 source-backed adapter execution.
+- [ ] Complete pinned ZTF DR24 source-backed adapter execution. A raw-only indexed HATS adapter and API route are in Draft PR #264; live acquisition and downstream inference are not yet verified.
 - [ ] Complete frozen historical ALeRCE reference acquisition/execution and immutable manifests.
 - [ ] Complete object-overlap, duplicate, target leakage, temporal leakage, preprocessing, schema, provenance, and failure-code audits.
 - [ ] Generate per-release benchmark evidence and show scope limits/known failure cases to users.
@@ -102,3 +102,28 @@ PR [#244](https://github.com/saeed92m/ztf-classifier/pull/244) is an open Draft.
 ## CPVS evidence refresh — 2026-11-01
 
 The new full Zenodo membership crosswalk completed successfully on PR head `7c73a4a9d2260e080300303e6aac826630369539`. A full comparison against the retained candidate IDs again found 730,184 published members, all present in the 741,786 candidates, plus 11,602 candidate-only IDs and zero published-only IDs. This is stronger source-backed membership evidence, but it is not scientific resolution: raw Table 4 bytes were not used, and the candidate set remains a retained historical derivation. See `docs/scientific_validation/CPVS_FULL_ZENODO_MEMBERSHIP_COMPARISON_2026-11-01.md` for hashes and limitations. Keep Issue #170 open and fail-closed.
+
+
+## Evidence update — 2026-11-04
+
+### CPVS
+
+The source-backed run [41417144949](https://github.com/saeed92m/ztf-classifier/actions/runs/41417144949), job `125183681255`, completed. It verified the parent/archive acquisition and reproduced **741,786** candidates against the **730,184** published membership reference. Candidate-only remains **11,602**; published-only remains **0**. The finite/nonzero magnitude guard removed zero candidates.
+
+The independent membership audit did not complete. VizieR mirror requests timed out; the fallback parser treated a dashed separator row as a ZTF name and failed the Table 2 name-to-Seq crosswalk. The parser repair and two regression tests are in Draft PR #244. Do not call this audit PASS until current-head tests and the retained-artifact crosswalk pass.
+
+Object-level membership counts relative to the published list are TP=730,184, FP=11,602, FN=0, TN=39,816. These are agreement metrics against published membership, not astrophysical truth or model-performance metrics.
+
+The candidate/reference intersection equals the reference. The candidate ∩ four-field-positive Table 2 set also equals the reference, but the 2022 method describes two-band SNR thresholds and use of the common Table 2 period. It does not document a requirement for all four fields `gmag`, `rmag`, `Per-g`, and `Per-r`. All 11,602 candidate-only IDs have a finite positive common `Per`; missing common period does not explain the difference. Table 2 `Ng`/`Nr` counts also disagree with raw-archive detections for a small subset.
+
+The 100- and 1,000-object fixed samples were independently reproduced exactly using seed `ztf-cpvs-fixed-object-sample-v2`. The 55 four-field-only controls have incomplete archived photometry coverage. One identity lead is under targeted investigation: Table 2 Seq 615170 has `Ng=132` but no g rows; orphan g-archive Seq 615172 has 132 rows. Draft PR #265 checks the checksum-pinned g archive's raw coordinates and HJD. This remains a hypothesis until the scan completes.
+
+No SNR threshold, selector, reference definition, or v0.2.0 artifact was changed. Issue #170 remains OPEN / UNRESOLVED.
+
+### DR24
+
+Draft PR #264 adds a raw-only, bounded, indexed DR24 HATS adapter and API route. It preserves native HMJD, photometry, flags, filter and OID provenance. It does not normalize times, correct color, apply quality masks, merge OIDs, or run inference. Ordinary CI is being verified. Live source-backed acquisition and the 30–50 object end-to-end inference path remain incomplete.
+
+### Release and baseline
+
+The v0.2.0 baseline and v1.0.1 release remain unchanged. No tag or release was created. No draft PR was merged. M0 and all later milestones remain incomplete.
