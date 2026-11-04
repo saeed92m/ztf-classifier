@@ -226,11 +226,21 @@ class DR24LightcurveBackend:
                 },
                 "interpretation": {
                     "time_column": "hmjd",
-                    "time_scale": "heliocentric-based MJD; not MJD",
-                    "photometry": "native DR24 mag and magerr; clrcoeff preserved",
-                    "quality": "raw catflags preserved; no quality mask applied",
+                    "time_scale": (
+                        "HMJD = HJD - 2400000.5; exposure midpoint; "
+                        "heliocentric-corrected, not geocentric MJD"
+                    ),
+                    "photometry": (
+                        "native ZTF mag assumes AB g-r=0; clrcoeff is the "
+                        "linear color term; magerr excludes zeropoint/systematic terms"
+                    ),
+                    "quality": (
+                        "raw bit-encoded catflags preserved; bit 15 (32768) "
+                        "marks cloud/moon-affected epochs; no mask applied"
+                    ),
                     "identity": (
-                        "objectid is a survey OID; no cross-OID grouping performed"
+                        "objectid is the DR24 OID; filterid 1/2/3 means g/r/i; "
+                        "no cross-OID grouping performed"
                     ),
                 },
                 "limitations": [
