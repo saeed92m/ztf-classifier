@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pandas as pd
 import pytest
 
@@ -45,14 +47,14 @@ def test_canonical_payload_rejects_schema_drift() -> None:
 
 def test_backend_requires_objectid_index() -> None:
     class Collection:
-        all_indexes = {"other": object()}
+        all_indexes: ClassVar[dict[str, object]] = {"other": object()}
 
     class Catalog:
-        all_columns = {
+        all_columns: ClassVar[set[str]] = {
             "objectid", "filterid", "fieldid", "rcid", "objra", "objdec",
             "nepochs", "lightcurve",
         }
-        hc_collection = Collection()
+        hc_collection: ClassVar[Collection] = Collection()
 
     backend = DR24LightcurveBackend(lambda *_args, **_kwargs: Catalog())
     with pytest.raises(DR24AcquisitionError, match="no objectid index"):
@@ -61,7 +63,7 @@ def test_backend_requires_objectid_index() -> None:
 
 def test_backend_reports_missing_oids_and_source_provenance() -> None:
     class Collection:
-        all_indexes = {"objectid": object()}
+        all_indexes: ClassVar[dict[str, object]] = {"objectid": object()}
 
     class Query:
         def compute(self) -> pd.DataFrame:
