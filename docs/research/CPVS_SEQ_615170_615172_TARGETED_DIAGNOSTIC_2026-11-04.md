@@ -22,7 +22,7 @@ Seq `615170` is one of the 55 four-field-positive noncandidate controls. The 132
 
 ## Diagnostic method
 
-The workflow downloads only the g-band archive. The script verifies the official archive MD5/SHA-256, streams the compressed member without writing the 5 GB extracted file to disk, verifies the extracted member SHA-256 and byte count, and scans the complete data for Seq `615170` and `615172`.
+The workflow downloads only the g-band archive. The first run verified the official archive MD5/SHA-256 but Python's ZIP reader reported a CRC-32 mismatch at the end of the `ztf2g` member. The revised script records the ZIP CRC separately, streams the full member without writing the 5 GB extracted file to disk, and independently verifies the uncompressed member SHA-256, byte count, and total row count before it accepts any identity comparison. A CRC mismatch is reported as a warning; it is not called a PASS. If the independent member hash or size does not match, the scan fails closed.
 
 For each target Seq, it records row count, coordinate ranges and medians, HJD range, magnitude/error ranges, and flag counts. It computes the angular separation between the orphan rows' median coordinates and the Table 2 coordinates for Seq `615170`.
 
@@ -41,6 +41,6 @@ Only the small JSON diagnostic is uploaded as a GitHub Actions artifact. The raw
 ## Current disposition
 
 - Identity hypothesis: NOT VERIFIED.
-- Source checksum and full extracted-file integrity: required by the workflow.
+- Archive MD5/SHA-256 matched the retained official values on the first run; ZIP member CRC-32 did not match. Independent uncompressed-member SHA-256/size verification is required on the rerun.
 - Scientific gate: unchanged and fail-closed.
 - Next step after the report: compare the raw coordinate/HJD evidence, then decide whether to run a separate targeted r-band check.
