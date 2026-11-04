@@ -127,3 +127,16 @@ Draft PR #264 adds a raw-only, bounded, indexed DR24 HATS adapter and API route.
 ### Release and baseline
 
 The v0.2.0 baseline and v1.0.1 release remain unchanged. No tag or release was created. No draft PR was merged. M0 and all later milestones remain incomplete.
+
+
+### DR24 ordinary CI update — 2026-11-04
+
+Draft PR #264 head `02d96ce85b58d8a6ce5670a8833b2beb74d70b24` completed ordinary CI:
+- Format, lint, lifecycle, runtime smoke, package build/install/import, dependency audit, and final CI Gate passed.
+- Test Suite: 649 passed, 10 skipped, 9 warnings, 0 failures.
+- Dependency audit reported 0 known vulnerabilities.
+- The 10 skips are explicit: 3 feature/raw-data integration tests lack the frozen feature artifact or raw detection cache; 7 production-inference tests lack `runs/model_baseline_v0.2_production/artifact`.
+- The skipped artifact-dependent tests are not PASS. CI does not yet verify the frozen v0.2.0 production artifact path.
+- DR24/ALeRCE/CPVS source-backed jobs were skipped on this feature branch. This ordinary CI result does not verify live HATS acquisition, DR24 normalization, or end-to-end inference.
+
+The raw DR24 adapter remains Draft PR #264 and is not merged. The baseline and release remain unchanged.
