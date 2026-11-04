@@ -10,8 +10,9 @@ import hashlib
 import json
 import math
 from dataclasses import asdict, dataclass
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any, Callable
+from typing import Any
 
 import pandas as pd
 
