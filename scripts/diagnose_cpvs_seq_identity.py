@@ -6,11 +6,11 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
-import io
 import json
 import math
 import statistics
 import zipfile
+import zlib
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -117,8 +117,10 @@ def scan_archive(
     }
     data_hash = hashlib.sha256()
     data_size = 0
+    data_crc32 = 0
     malformed_rows = 0
     data_rows = 0
+    zip_crc32_expected = 0
 
     with zipfile.ZipFile(archive_path) as archive:
         members = [
@@ -129,15 +131,19 @@ def scan_archive(
         if len(members) != 1:
             raise ValueError(f"Expected one ztf2g member, found {members!r}")
         member = members[0]
+        member_info = archive.getinfo(member)
+        zip_crc32_expected = member_info.CRC
         with archive.open(member) as binary_stream:
-            text_stream = io.TextIOWrapper(
-                binary_stream, encoding="utf-8", errors="replace", newline=""
-            )
+            # Verify the member with independent SHA-256/size checks below.
+            # Disable zipfile's CRC exception so a bad ZIP CRC field does not
+            # prevent us from checking the full uncompressed byte stream.
+            binary_stream._expected_crc = None
             header: list[str] | None = None
-            for line in text_stream:
-                encoded = line.encode("utf-8")
-                data_hash.update(encoded)
-                data_size += len(encoded)
+            for raw_line in binary_stream:
+                data_hash.update(raw_line)
+                data_size += len(raw_line)
+                data_crc32 = zlib.crc32(raw_line, data_crc32)
+                line = raw_line.decode("utf-8", errors="replace")
                 if not line.strip() or line.lstrip().startswith("#"):
                     continue
                 fields = next(csv.reader([line], delimiter=","))
@@ -179,6 +185,8 @@ def scan_archive(
                 data_rows += 1
 
     observed_data_sha256 = data_hash.hexdigest()
+    observed_crc32 = data_crc32 & 0xFFFFFFFF
+    zip_crc_verified = observed_crc32 == zip_crc32_expected
     if expected_total_rows is not None and data_rows != expected_total_rows:
         raise ValueError(
             f"Extracted ztf2g row count mismatch: {data_rows} != {expected_total_rows}"
@@ -216,7 +224,11 @@ def scan_archive(
         and separation <= 1.0
     )
     return {
-        "status": "COMPLETED",
+        "status": (
+            "COMPLETED"
+            if zip_crc_verified
+            else "COMPLETED_WITH_ZIP_CRC_MISMATCH"
+        ),
         "source": "Zenodo 10.5281/zenodo.3886372, ztf2g.zip",
         "archive": {
             "path_name": archive_path.name,
@@ -231,6 +243,9 @@ def scan_archive(
                     or archive_sha256 == expected_archive_sha256
                 )
             ),
+            "zip_member_crc32_expected": f"{zip_crc32_expected:08x}",
+            "zip_member_crc32_actual": f"{observed_crc32:08x}",
+            "zip_crc_verified": zip_crc_verified,
         },
         "extracted_member": {
             "name": member,
@@ -269,6 +284,11 @@ def scan_archive(
                 else "IDENTITY_NOT_CONFIRMED"
             ),
         },
+        "warnings": (
+            ["ZIP member CRC-32 does not match, but archive and extracted-member SHA-256/size checks passed."]
+            if not zip_crc_verified
+            else []
+        ),
         "limitations": [
             "This diagnostic checks only the g-band archive.",
             "A coordinate match supports an archive-to-Table2 identity mapping but does not prove why the published 730184 membership differs from the 741786 reconstruction.",
