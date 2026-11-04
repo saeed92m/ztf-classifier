@@ -239,7 +239,8 @@ class DR24LightcurveBackend:
                         "marks cloud/moon-affected epochs; no mask applied"
                     ),
                     "identity": (
-                        "objectid is the DR24 OID; filterid 1/2/3 means g/r/i; "
+                        "objectid is a ZTF OID per filter/field/quadrant; filterid 1/2/3 means g/r/i; "
+                        "one row per OID; one astrophysical source may have multiple OIDs; "
                         "no cross-OID grouping performed"
                     ),
                 },
