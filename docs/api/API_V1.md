@@ -28,6 +28,7 @@ Clients never submit arbitrary artifact or registry filesystem paths.
 | POST | `/v1/batch` | Synchronous multi-row inference |
 | GET | `/v1/objects/{oid}` | Normalized object summary |
 | GET | `/v1/objects/{oid}/observations` | Normalized observation stream |
+| GET | `/v1/dr24/objects/{objectid}/lightcurve` | Raw, source-native DR24 light curve for one ZTF OID |
 | POST | `/v1/objects/{oid}/analysis` | Source-backed object analysis |
 | POST | `/v1/objects/{oid}/jobs` | Durable analysis job submission |
 | GET | `/v1/jobs` | Bounded durable analysis-job listing |
@@ -156,3 +157,41 @@ The default backend is native, preserving the frozen v0.2 42-feature contract. B
 When ZTF_API_KEY is configured, versioned API endpoints require Authorization: Bearer <key>. Liveness/readiness endpoints remain public for deployment probes. The API never returns the configured credential.
 
 Every HTTP response receives an X-Request-ID. Clients may provide one; otherwise the server generates a UUID. The request ID is also included in stable API error envelopes.
+
+
+## Native ZTF DR24 lightcurve endpoint
+
+**GET** `/v1/dr24/objects/{objectid}/lightcurve`
+
+This endpoint retrieves the native DR24 HATS lightcurve for one positive ZTF `objectid`. It is a bounded raw-acquisition interface. It is not the normalized observation stream used by the production v0.2.0 feature/model path.
+
+Optional dependencies:
+
+```bash
+python -m pip install "ztf-classifier[dr24]"
+```
+
+The endpoint returns:
+- schema version `ztf-dr24-native-lightcurve-v1`;
+- the ZTF OID and native `filterid`, `fieldid`, `rcid`, `objra`, `objdec`, and catalog epoch count;
+- raw nested epoch values: `hmjd`, `mag`, `magerr`, `clrcoeff`, and `catflags`;
+- a canonical SHA-256 hash for each OID's epoch payload;
+- acquisition provenance, requested/returned/missing OIDs, schema-column hash, and field interpretation notes.
+
+The backend enforces a maximum of 10 unique positive OIDs per request and requires the indexed `objectid` column. The HTTP route accepts one OID per request.
+
+### Scientific and identity boundaries
+
+- `objectid` is a ZTF OID defined per filter, field, and quadrant. One astrophysical source can have multiple OIDs. This endpoint does not cross-match or merge them.
+- `hmjd` remains heliocentric Modified Julian Date. The endpoint does not relabel it as geocentric MJD.
+- `mag`, `magerr`, `clrcoeff`, and `catflags` remain source-native. No color correction or quality mask is applied.
+- No DR24-to-ALeRCE photometric equivalence is asserted.
+- The endpoint does not generate model features, run inference, or modify the frozen v0.2.0 baseline.
+- Missing OIDs are reported. The backend does not fall back to ALeRCE or another source.
+
+### Errors
+
+- `422 dr24_objectid_invalid`: objectid is not a positive integer.
+- `502 dr24_acquisition_failed`: indexed source acquisition or schema validation failed. No alternate source was used.
+
+This endpoint remains an experimental raw-source interface until bounded live acquisition, source-backed regression, and downstream scientific normalization are independently validated.
