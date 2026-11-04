@@ -41,7 +41,10 @@ class DR24LightcurveRequest:
             raise ValueError("At least one DR24 objectid is required.")
         if len(values) > MAX_OIDS_PER_REQUEST:
             raise ValueError(f"At most {MAX_OIDS_PER_REQUEST} OIDs are allowed.")
-        if any(not isinstance(value, int) or isinstance(value, bool) or value <= 0 for value in values):
+        if any(
+            not isinstance(value, int) or isinstance(value, bool) or value <= 0
+            for value in values
+        ):
             raise ValueError("DR24 objectids must be positive integers.")
         if len(values) != len(set(values)):
             raise ValueError("Duplicate DR24 objectids are not allowed.")
@@ -88,7 +91,9 @@ def _json_scalar(value: Any) -> Any:
         return None
     if isinstance(value, (str, int, float, bool)) or value is None:
         return value
-    raise DR24AcquisitionError(f"Unsupported DR24 payload scalar: {type(value).__name__}")
+    raise DR24AcquisitionError(
+        f"Unsupported DR24 payload scalar: {type(value).__name__}"
+    )
 
 
 def _canonical_records(frame: pd.DataFrame) -> tuple[tuple[dict[str, Any], ...], str]:
@@ -102,7 +107,11 @@ def _canonical_records(frame: pd.DataFrame) -> tuple[tuple[dict[str, Any], ...],
         for row in frame.loc[:, list(PAYLOAD_COLUMNS)].to_dict(orient="records")
     )
     encoded = json.dumps(
-        records, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
+        records,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+        allow_nan=False,
     ).encode("utf-8")
     return records, hashlib.sha256(encoded).hexdigest()
 
@@ -134,7 +143,8 @@ class DR24LightcurveBackend:
             missing = sorted(set(CATALOG_COLUMNS) - available)
             if missing:
                 raise DR24AcquisitionError(
-                    "DR24 HATS schema is missing required columns: " + ", ".join(missing)
+                    "DR24 HATS schema is missing required columns: "
+                    + ", ".join(missing)
                 )
             indexes = list(catalog.hc_collection.all_indexes.keys())
             if "objectid" not in indexes:
@@ -142,7 +152,9 @@ class DR24LightcurveBackend:
                     "DR24 Lightcurves has no objectid index; refusing a full scan."
                 )
 
-            frame = catalog.id_search(values={"objectid": list(request.objectids)}).compute()
+            frame = catalog.id_search(
+                values={"objectid": list(request.objectids)}
+            ).compute()
             if "objectid" not in frame.columns:
                 frame = frame.reset_index()
             if "objectid" not in frame.columns:
@@ -163,7 +175,9 @@ class DR24LightcurveBackend:
                 oid = int(row["objectid"])
                 payload = row["lightcurve"]
                 if payload is None:
-                    raise DR24AcquisitionError(f"DR24 OID {oid} has a null lightcurve payload.")
+                    raise DR24AcquisitionError(
+                        f"DR24 OID {oid} has a null lightcurve payload."
+                    )
                 try:
                     payload_frame = (
                         payload.copy()
@@ -214,7 +228,9 @@ class DR24LightcurveBackend:
                     "time_scale": "heliocentric-based MJD; not MJD",
                     "photometry": "native DR24 mag and magerr; clrcoeff preserved",
                     "quality": "raw catflags preserved; no quality mask applied",
-                    "identity": "objectid is a survey OID; no cross-OID grouping performed",
+                    "identity": (
+                        "objectid is a survey OID; no cross-OID grouping performed"
+                    ),
                 },
                 "limitations": [
                     "Raw acquisition only; no production feature normalization.",
