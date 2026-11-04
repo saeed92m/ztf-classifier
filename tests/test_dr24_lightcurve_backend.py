@@ -91,11 +91,11 @@ def test_backend_reports_missing_oids_and_source_provenance() -> None:
             )
 
     class Catalog:
-        all_columns = {
+        all_columns: ClassVar[set[str]] = {
             "objectid", "filterid", "fieldid", "rcid", "objra", "objdec",
             "nepochs", "lightcurve",
         }
-        hc_collection = Collection()
+        hc_collection: ClassVar[Collection] = Collection()
 
         def id_search(self, *, values: dict[str, list[int]]) -> Query:
             assert values == {"objectid": [123, 456]}
