@@ -40,15 +40,15 @@
   ],
   "measurement": {
     "metrics": {
-      "parser_separator_rows": {
-        "before": "A same-width dashed row was treated as a data row.",
-        "after": "Rows containing only hyphens in all non-empty fields are skipped."
+      "correctness": {
+        "before": "A same-width dashed VizieR separator row was parsed as a published ZTF name and caused a false crosswalk failure.",
+        "after": "The shared parser skips rows whose non-empty fields contain only hyphens."
       },
-      "regression_coverage": {
+      "regression_protection_count": {
         "before": 0,
         "after": 2
       },
-      "cpvs_membership_reproduction": {
+      "scientific_validity": {
         "status": "NOT_MEASURED"
       }
     }
