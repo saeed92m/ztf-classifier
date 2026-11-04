@@ -109,6 +109,11 @@ def test_backend_reports_missing_oids_and_source_provenance() -> None:
     assert result.records[0].objectid == 123
     assert result.records[0].catalog_nepochs == 2
     assert result.provenance["missing_oids"] == [456]
-    assert result.provenance["interpretation"]["time_column"] == "hmjd"
-    assert result.provenance["interpretation"]["quality"].startswith("raw")
+    interpretation = result.provenance["interpretation"]
+    assert interpretation["time_column"] == "hmjd"
+    assert "HJD - 2400000.5" in interpretation["time_scale"]
+    assert "AB g-r=0" in interpretation["photometry"]
+    assert "32768" in interpretation["quality"]
+    assert interpretation["quality"].startswith("raw")
+    assert "filterid 1/2/3" in interpretation["identity"]
     assert result.provenance["epoch_count"] == 2
