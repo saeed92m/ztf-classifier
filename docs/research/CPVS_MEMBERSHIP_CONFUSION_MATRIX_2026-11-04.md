@@ -42,3 +42,16 @@ These values describe agreement with the published membership list only. They mu
 ## Decision
 
 Keep the CPVS membership blocker open. Do not alter SNR thresholds, add the four-field condition to the production selector, or change v0.2.0. The next steps are to complete the bounded parser/crosswalk tests and investigate the original archive-to-Table2 identifier/row-coverage mismatches.
+
+
+## Table 2 / lightcurve archive schema cross-check
+
+The original CDS `table2.ReadMe` defines:
+- `Per`: the common period.
+- `Per-g` and `Per-r`: periods determined separately in each band; zero means unknown.
+- `gmag` and `rmag`: mean band magnitudes; zero means unknown.
+- `Ng` and `Nr`: number of detections in the g and r bands.
+
+The same ReadMe lists 89,697,393 rows for each of `ztf2g.dat` and `ztf2r.dat`. The retained Table 2 `Ng` sum is 89,702,309, which differs from the g archive row count by 4,916. The full g-band Seq reconciliation identifies 91 per-object count mismatches: 56 deficits and 35 surpluses. The net per-Seq delta is -5,048; the orphan Seq 615172 adds 132 rows, giving the observed total deficit of 4,916.
+
+This is a source-level count/identifier integrity issue. The ReadMe's definition of `Per` also confirms that common period and per-band periods are distinct. Since all 11,602 candidate-only objects have a positive common `Per`, missing common period is not a supported explanation for the membership difference.
