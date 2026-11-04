@@ -72,6 +72,7 @@
   "decision": "REVISE",
   "knowledge_carried_forward": [
     "Keep raw DR24 acquisition separate from normalized model observations until time, photometry, quality and identity contracts pass scientific validation.",
-    "Never silently substitute ALeRCE when DR24 acquisition fails."
+    "Never silently substitute ALeRCE when DR24 acquisition fails.",
+    "IRSA documents ZTF object IDs as per-filter/field/quadrant identities; one astrophysical source may have multiple OIDs. Keep raw OIDs separate until AOIC cross-match is implemented and validated."
   ]
 }
