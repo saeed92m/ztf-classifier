@@ -231,7 +231,7 @@ The historical comparison remains:
 
 Against published membership only, the object-level counts are TP=730,184, FP=11,602, FN=0, TN=39,816. These are membership-agreement metrics, not astrophysical ground-truth or model-performance metrics.
 
-The candidate/reference intersection equals the reference. The candidate ∩ four-field-positive Table 2 set also equals the reference, but the published method describes the two-band SNR threshold and common period from Table 2. It does not document the four-field-positive condition. Do not treat this coincidence as the root cause.
+The candidate/reference intersection equals the reference. The candidate ∩ four-field-positive Table 2 set also equals the reference, but the published method describes the two-band SNR threshold and common period from Table 2. It does not document the four-field-positive condition. All 11,602 candidate-only objects have a finite positive common `Per` value, so missing common period does not explain their exclusion. Table 2 reports `Ng=0` for 13 and `Nr=0` for 1 of these objects, despite qualifying raw-archive detections in both bands; this is another source-level count mismatch. Do not treat the four-field coincidence as the root cause.
 
 The 100- and 1,000-object diagnostic samples were independently reproduced exactly with the fixed SHA-256 seed. The 55 four-field-only controls have incomplete archived lightcurve coverage. A possible Seq 615170/615172 mismatch remains a hypothesis pending raw coordinate/time comparison.
 
