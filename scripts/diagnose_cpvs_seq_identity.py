@@ -23,6 +23,7 @@ EXPECTED_DATA_SHA256 = (
     "366aaf3539f83955bb1e29799df9e63005a9eb682f4f56d0807545a3534b0f16"
 )
 EXPECTED_DATA_SIZE = 5_034_066_142
+EXPECTED_TOTAL_G_ROWS = 89_697_393
 TABLE2_TARGET = {
     "source_id": 615170,
     "ztf_name": "ZTFJ202927.75-132516.6",
@@ -94,6 +95,7 @@ def scan_archive(
     expected_archive_sha256: str | None = EXPECTED_ARCHIVE_SHA256,
     expected_data_sha256: str | None = EXPECTED_DATA_SHA256,
     expected_data_size: int | None = EXPECTED_DATA_SIZE,
+    expected_total_rows: int | None = EXPECTED_TOTAL_G_ROWS,
     expected_ra_deg: float = TABLE2_TARGET["ra_deg"],
     expected_dec_deg: float = TABLE2_TARGET["dec_deg"],
     expected_gmag: float = TABLE2_TARGET["gmag"],
@@ -177,6 +179,12 @@ def scan_archive(
                 data_rows += 1
 
     observed_data_sha256 = data_hash.hexdigest()
+    if expected_total_rows is not None and data_rows != expected_total_rows:
+        raise ValueError(
+            f"Extracted ztf2g row count mismatch: {data_rows} != {expected_total_rows}"
+        )
+    if malformed_rows:
+        raise ValueError(f"Found {malformed_rows} malformed ztf2g rows")
     if expected_data_size is not None and data_size != expected_data_size:
         raise ValueError(
             f"Extracted ztf2g size mismatch: {data_size} != {expected_data_size}"
@@ -240,6 +248,7 @@ def scan_archive(
         },
         "scan": {
             "data_rows": data_rows,
+            "expected_data_rows": expected_total_rows,
             "malformed_rows": malformed_rows,
             "target_seq": target_seq,
             "orphan_seq": orphan_seq,
