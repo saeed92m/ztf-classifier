@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-vizier-separator-parser-20261104",
+  "objective": "Repair the shared CPVS VizieR table parser after a source-backed membership audit failed on a dashed separator row, without changing the CPVS selector or scientific baseline.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Issue #170; workflow run 41417144949, job 125183681255",
+      "status": "VERIFIED",
+      "detail": "A fresh archived-photometry derivation returned 741786 candidates against the 730184 published reference count; the independent membership audit then failed because a dashed separator row was treated as a ZTF name."
+    },
+    {
+      "source": "scripts/audit_cpvs_candidate_four_field.py and scripts/diagnose_cpvs_selection.py",
+      "status": "VERIFIED",
+      "detail": "Both membership audit paths share read_vizier(); the parser accepted same-width dashed separator rows as data."
+    }
+  ],
+  "baseline": {
+    "scientific_baseline": "v0.2.0 immutable",
+    "cpvs_reference_membership": 730184,
+    "historical_snr_candidates": 741786,
+    "candidate_only": 11602,
+    "published_only": 0,
+    "selector": "unchanged; diagnostic parser repair only"
+  },
+  "change": {
+    "branch": "investigation/cpvs-candidate-field-audit-20261030",
+    "files": [
+      "scripts/audit_cpvs_candidate_four_field.py",
+      "tests/test_cpvs_vizier_separator_parser.py",
+      "docs/research/CPVS_VIZIER_SEPARATOR_PARSER_DIAGNOSTIC_2026-11-04.md",
+      "configs/process/cycles/cpvs-vizier-separator-parser-20261104.json"
+    ],
+    "rationale": "Reject only rows whose non-empty fields consist entirely of hyphens, and add regression coverage for the exact separator-row failure. Keep all valid table rows and the name-to-Seq crosswalk unchanged."
+  },
+  "expected_improvement": [
+    "Prevent VizieR separator lines from entering the published membership set.",
+    "Allow the shared crosswalk parser to process Table 4 and the selection diagnostic consistently.",
+    "Add deterministic regression coverage for the separator-row failure.",
+    "Preserve the published reference, SNR thresholds, selector, and v0.2.0 baseline."
+  ],
+  "measurement": {
+    "metrics": {
+      "parser_separator_rows": {
+        "before": "A same-width dashed row was treated as a data row.",
+        "after": "Rows containing only hyphens in all non-empty fields are skipped."
+      },
+      "regression_coverage": {
+        "before": 0,
+        "after": 2
+      },
+      "cpvs_membership_reproduction": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": "Parser repair and regression tests are committed to the investigation branch. Ordinary CI and the retained-artifact crosswalk have not yet been verified on this head."
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "read_vizier() accepted a VizieR separator row when its tab-delimited field count matched the header; the Table 4 ZTF value then became a dashed string and failed the Table 2 name-to-Seq crosswalk."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "VizieR metadata tables can contain dashed separator rows that must be excluded from membership parsing.",
+      "A parser-level fix must preserve strict schema, row-count, uniqueness, and crosswalk validation; it must not silently accept malformed object identifiers."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the two new separator-row regression tests.",
+      "Run the retained-artifact Table 4/Zenodo crosswalk after the tests pass.",
+      "A fresh multi-gigabyte source-backed derivation is not yet required; it remains a separate research run."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "The 741786 versus 730184 membership discrepancy remains unresolved.",
+    "Do not add the four-field predicate or tune SNR thresholds to force equality.",
+    "Do not repeat multi-gigabyte CPVS acquisition until the bounded parser and crosswalk tests pass."
+  ]
+}
