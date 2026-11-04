@@ -28,7 +28,7 @@ def test_orphan_seq_coordinate_match_is_reported_as_identity_lead(
     # Corrupt only the central-directory CRC field. The compressed payload
     # and its independent SHA-256/size remain unchanged.
     archive_bytes = bytearray(archive_path.read_bytes())
-    central_directory = archive_bytes.index(b"PK\\x01\\x02")
+    central_directory = archive_bytes.index(b"PK\x01\x02")
     struct.pack_into("<I", archive_bytes, central_directory + 16, 0x12345678)
     archive_path.write_bytes(archive_bytes)
 
@@ -36,8 +36,12 @@ def test_orphan_seq_coordinate_match_is_reported_as_identity_lead(
         archive_path,
         target_seq=615170,
         orphan_seq=615172,
-        expected_archive_md5=hashlib.md5(archive_path.read_bytes()).hexdigest(),
-        expected_archive_sha256=hashlib.sha256(archive_path.read_bytes()).hexdigest(),
+        expected_archive_md5=hashlib.md5(
+            archive_path.read_bytes()
+        ).hexdigest(),
+        expected_archive_sha256=hashlib.sha256(
+            archive_path.read_bytes()
+        ).hexdigest(),
         expected_data_sha256=hashlib.sha256(data).hexdigest(),
         expected_data_size=len(data),
         expected_total_rows=132,
@@ -53,7 +57,10 @@ def test_orphan_seq_coordinate_match_is_reported_as_identity_lead(
         report["comparison"]["orphan_median_coordinate_separation_arcsec"]
         == 0.0
     )
-    assert report["comparison"]["strong_coordinate_match_to_table2_target"] is True
+    assert (
+        report["comparison"]["strong_coordinate_match_to_table2_target"]
+        is True
+    )
     assert report["comparison"]["interpretation"] == "STRONG_IDENTITY_LEAD"
     assert report["archive"]["zip_crc_verified"] is False
     assert report["extracted_member"]["integrity_verified"] is True
