@@ -90,6 +90,8 @@ def scan_archive(
     target_seq: int,
     orphan_seq: int,
     *,
+    expected_archive_md5: str | None = EXPECTED_ARCHIVE_MD5,
+    expected_archive_sha256: str | None = EXPECTED_ARCHIVE_SHA256,
     expected_data_sha256: str | None = EXPECTED_DATA_SHA256,
     expected_data_size: int | None = EXPECTED_DATA_SIZE,
     expected_ra_deg: float = TABLE2_TARGET["ra_deg"],
@@ -99,9 +101,12 @@ def scan_archive(
 ) -> dict[str, Any]:
     archive_md5 = file_digest(archive_path, "md5")
     archive_sha256 = file_digest(archive_path, "sha256")
-    if archive_md5 != EXPECTED_ARCHIVE_MD5:
+    if expected_archive_md5 is not None and archive_md5 != expected_archive_md5:
         raise ValueError(f"Zenodo g-archive MD5 mismatch: {archive_md5}")
-    if archive_sha256 != EXPECTED_ARCHIVE_SHA256:
+    if (
+        expected_archive_sha256 is not None
+        and archive_sha256 != expected_archive_sha256
+    ):
         raise ValueError(f"Zenodo g-archive SHA-256 mismatch: {archive_sha256}")
 
     matches: dict[int, list[dict[str, Any]]] = {
@@ -209,9 +214,15 @@ def scan_archive(
             "path_name": archive_path.name,
             "md5": archive_md5,
             "sha256": archive_sha256,
-            "expected_md5": EXPECTED_ARCHIVE_MD5,
-            "expected_sha256": EXPECTED_ARCHIVE_SHA256,
-            "checksum_verified": True,
+            "expected_md5": expected_archive_md5,
+            "expected_sha256": expected_archive_sha256,
+            "checksum_verified": (
+                (expected_archive_md5 is None or archive_md5 == expected_archive_md5)
+                and (
+                    expected_archive_sha256 is None
+                    or archive_sha256 == expected_archive_sha256
+                )
+            ),
         },
         "extracted_member": {
             "name": member,
