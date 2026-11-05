@@ -23,17 +23,17 @@
       "correctness": {
         "status": "MEASURED",
         "before": "The DR24 Explorer UI had not been tested against live HATS data.",
-        "after": "Workflow 42069871100 passed on the latest tested code revision 1a4ae6ecb872bdfb2421a4eafc7e626163d0a170. Chromium rendered 78, 123, and 216 chart points for three OIDs. All three displayed payload hashes matched the independent HATS reference."
+        "after": "Workflow 42071119887 passed on the latest tested code revision ee73c144690a6de89b6b2582b46ffcfda76409e7. Chromium rendered 78, 123, and 216 chart points for three OIDs. All three displayed payload hashes matched the independent HATS reference."
       },
       "reproducibility": {
         "status": "MEASURED",
         "before": "No browser evidence artifact existed.",
-        "after": "Latest artifact 13437000164 was uploaded. ZIP SHA-256: 868b5562fde5af81309e6205a363d488f08fe870f2e08a34bb77a7f6dfd9944a. The JSON report records the code revision, workflow run, OIDs, epoch counts, chart points, quality-flag counts, and hashes."
+        "after": "Latest artifact 13437151809 was uploaded. ZIP SHA-256: 8ad783c790f8656b5f739a883d41bfdda5c11f8dfb97b7890283f5dff47bdd96. The JSON report records the code revision, workflow run, OIDs, epoch counts, chart points, quality-flag counts, and hashes."
       },
       "reliability": {
         "status": "MEASURED",
         "before": "The UI had no live-browser integration result.",
-        "after": "The browser test passed for all three OIDs on latest tested revision 1a4ae6ecb872bdfb2421a4eafc7e626163d0a170. It verified the loading and response states, provenance source, 50-row table rendering, chart point counts, and flagged/unflagged point counts."
+        "after": "The browser test passed for all three OIDs on latest tested revision ee73c144690a6de89b6b2582b46ffcfda76409e7. It verified the loading and response states, provenance source, 50-row table rendering, chart point counts, and flagged/unflagged point counts."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
