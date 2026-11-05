@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "astronomy-ecosystem-documentation-alignment-20261016",
+  "objective": "Record the evidence-based astronomy ecosystem review and align handbook, roadmap, architectural decisions, cumulative improvement ledger, and README without changing scientific code or release artifacts.",
+  "previous_knowledge_consumed": [
+    "Issue #170 latest Seq-based CPVS membership evidence and unresolved 11,602 candidate-only objects",
+    "Issue #182 records deterministic 100/1,000-object source-backed samples and full-vs-batch execution as pending review/execution",
+    "Existing cumulative lifecycle gate requires a machine-readable cycle record for every meaningful PR",
+    "External repository review and follow-up references mcp-stargazing and GNU Astronomy Utilities"
+  ],
+  "baseline": {
+    "revision": "main@d331036dddbbdbe399f18a58c7a204b7ca039558",
+    "status": "v0.2.0 scientific baseline and v1.0.1 release artifacts remain unchanged; CPVS exact reconstruction remains unresolved"
+  },
+  "expected_improvement": [
+    "Make object-level identity, label provenance, leakage audit, full-vs-batch equivalence, and scientific channel separation explicit design requirements",
+    "Record deferred optional status for Gnuastro and mcp-stargazing rather than adding dependencies",
+    "Align current CPVS statements to latest Seq-based evidence and preserve unresolved status",
+    "Link the current action plan and handbook from README"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Cross-repository lessons and current CPVS state were spread across existing records",
+        "after": "Documentation-only decision record and linked handbook/roadmap/action plan; no scientific outcome measured"
+      },
+      "reproducibility": {
+        "before": "New lessons not yet consolidated into the current documentation cycle",
+        "after": "Object-ID, provenance, leakage, full-vs-batch, and backup-verification requirements recorded"
+      },
+      "scientific_validity": {
+        "before": "CPVS exact membership unresolved",
+        "after": "NOT_MEASURED by this documentation-only cycle; CPVS remains unresolved at 741786 candidates, 730184 reference IDs, 11602 candidate-only, zero published-only"
+      }
+    }
+  },
+  "validation": {
+    "status": "IN_PROGRESS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Documentation-only change; no scientific code, model, dataset, or release artifact changed",
+      "PR #187 initial CI run failed only at the cumulative lifecycle gate because this required machine-readable record was absent; formatting and lint passed, and downstream tests were skipped as designed",
+      "CodeQL and Product Scope Audit passed on initial PR head",
+      "Scientific Validation workflow reported success for the documentation PR but did not run the CPVS sample/full-vs-batch experiments; it is not evidence of CPVS resolution"
+    ]
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "The documentation PR omitted the required configs/process/cycles/*.json lifecycle record, causing the cumulative lifecycle gate to fail and downstream CI stages to skip"
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Every meaningful documentation or implementation PR must include a schema-valid machine-readable cycle record under configs/process/cycles/",
+      "A successful documentation or scientific workflow status does not establish that CPVS experiments ran or that the scientific blocker is resolved",
+      "Optional astronomy integrations must be justified by a concrete workload and reproducible comparison before becoming dependencies"
+    ]
+  },
+  "regression": {
+    "status": "IN_PROGRESS",
+    "open_blockers": [
+      "Re-run PR-triggered CI after adding this cycle record; inspect test, smoke, package, dependency, and lifecycle gates",
+      "Review and merge PR #187 only after all required checks pass",
+      "CPVS sample artifacts and full-vs-batch experiment remain pending under Issue #182"
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "v0.2.0 baseline remains immutable; v1.0.1 release artifacts remain unchanged",
+    "CPVS exact reconstruction remains unresolved; do not tune criteria to force cardinality equality",
+    "Notion is an operational knowledge mirror; backups are current only when generated from and verified against a named commit with manifest and hashes",
+    "Gnuastro and mcp-stargazing remain deferred optional tools"
+  ]
+}

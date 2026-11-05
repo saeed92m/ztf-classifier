@@ -43,7 +43,7 @@ The product expansion includes:
 - integrated Help and Troubleshooting;
 - reproducible reports and exports.
 
-See `docs/ECOSYSTEM_REVIEW_PRODUCT_EXPANSION_2026-10-08.md` and `docs/architecture/V1_PRODUCT_ARCHITECTURE.md` for the canonical expansion record.
+See `docs/ECOSYSTEM_REVIEW_PRODUCT_EXPANSION_2026-10-08.md`, `docs/ECOSYSTEM_LESSONS_AND_ACTION_PLAN_2026-10-16.md`, `docs/HANDBOOK_UPDATED_v2.9.md`, and `docs/architecture/V1_PRODUCT_ARCHITECTURE.md` for the canonical expansion record and current evidence-based action plan.
 
 ## Scientific objective
 
