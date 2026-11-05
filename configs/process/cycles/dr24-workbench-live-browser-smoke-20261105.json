@@ -21,16 +21,19 @@
   "measurement": {
     "metrics": {
       "correctness": {
-        "status": "NOT_MEASURED",
-        "reason": "The live browser workflow has not completed. It must verify chart point counts, visible table rows, provenance, and exact payload hashes."
+        "status": "MEASURED",
+        "before": "The DR24 Explorer UI had not been tested against live HATS data.",
+        "after": "Workflow 42064925261 passed on code revision 29f7b23396efdfc6b6dbea97994de4532e58f15c. Chromium rendered 78, 123, and 216 chart points for three OIDs. All three displayed payload hashes matched the independent HATS reference."
       },
       "reproducibility": {
-        "status": "NOT_MEASURED",
-        "reason": "The browser evidence artifact has not yet been generated."
+        "status": "MEASURED",
+        "before": "No browser evidence artifact existed.",
+        "after": "Artifact 13433621371 was uploaded. ZIP SHA-256: ba28da858620dbeb0b8fcbe7ca177f2723f582c9ceef1d4e0ab61d15bdeb6844. The JSON report records the code revision, workflow run, OIDs, epoch counts, chart points, quality-flag counts, and hashes."
       },
       "reliability": {
-        "status": "NOT_MEASURED",
-        "reason": "The test must verify the UI loading state and successful response for all three OIDs."
+        "status": "MEASURED",
+        "before": "The UI had no live-browser integration result.",
+        "after": "The browser test passed for all three OIDs. It verified the loading and response states, provenance source, 50-row table rendering, chart point counts, and flagged/unflagged point counts."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
@@ -55,7 +58,8 @@
     "status": "PARTIALLY_DIAGNOSED",
     "root_causes": [],
     "unresolved": [
-      "The live browser workflow must complete and its artifact must be inspected.",
+      "The passing browser test used code revision 29f7b23396efdfc6b6dbea97994de4532e58f15c. Re-run against the current PR head after the lifecycle record update.",
+      "Test the no-record UI state and source-failure UI state.",
       "A 5–10 object end-to-end application smoke test with QC, exports, and a reproducibility bundle remains open."
     ]
   },
@@ -68,9 +72,9 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "PASS",
     "open_blockers": [
-      "Run the live browser workflow and inspect its artifact.",
+      "Re-run the live browser test against the latest PR head.",
       "Test the no-record UI state and source-failure UI state.",
       "Complete a 5–10 object application smoke test before the 30–50 object Park demonstration."
     ]
