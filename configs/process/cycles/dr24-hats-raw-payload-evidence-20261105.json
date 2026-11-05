@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-hats-raw-payload-evidence-20261105",
+  "objective": "Record and independently inspect a bounded live retrieval from the public ZTF DR24 HATS Lightcurves catalog. Verify objectid lookup, epoch counts, raw schema, provenance, and payload hashes without changing scientific processing.",
+  "previous_knowledge_consumed": [
+    "The DR24 Lightcurves catalog is an indexed HATS dataset and supports objectid lookups.",
+    "DR24 HMJD is heliocentric-based and must not be relabeled as geocentric MJD.",
+    "DR24 mag and clrcoeff are source-native values; color correction requires separate color and calibration evidence.",
+    "catflags is a bitmask. The raw view must preserve flagged epochs and show quality diagnostics separately.",
+    "OID values are partitioned by filter/field/quadrant; OID proximity or coordinate similarity alone does not establish astrophysical identity."
+  ],
+  "baseline": {
+    "revision": "main@bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c; probe-code@940bb8d402ca8141f165618a647cc4097461409b",
+    "description": "Source-backed acquisition evidence only. No model, feature schema, taxonomy, benchmark, threshold, v0.2.0 artifact, or release change."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reproducibility",
+    "source_coverage"
+  ],
+  "measurement": {
+    "metrics": {
+      "source_lookup": {
+        "status": "MEASURED",
+        "before": "The DR24 source path had deterministic contract tests but no retained live payload evidence for this bounded object set.",
+        "after": "Four requested OIDs returned successfully from the objectid index; no missing OIDs were reported."
+      },
+      "epoch_integrity": {
+        "status": "MEASURED",
+        "before": "Catalog nepochs and retrieved epoch counts had not been compared in a retained source-backed report.",
+        "after": "All four OID payload counts match catalog nepochs; total retrieved rows are 626."
+      },
+      "payload_reproducibility": {
+        "status": "MEASURED",
+        "before": "No independent run comparison was recorded.",
+        "after": "Two runs produced identical epoch CSV and summary JSON SHA-256 values. Downloaded artifact hashes were recomputed and matched the manifest."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "Raw payload retrieval does not validate astrophysical identity, feature compatibility, classifier performance, calibration, OOD, or anomaly detection."
+      },
+      "application_integration": {
+        "status": "NOT_MEASURED",
+        "reason": "This workflow calls the bounded probe script. It does not exercise PR #264's FastAPI endpoint or PR #267's Workbench browser view."
+      }
+    },
+    "trade_off": "Retain only compact evidence and hashes. Do not commit raw light curves or expand into bulk DR24 acquisition."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Workflow run 41674952418 completed successfully and produced artifact 13251350175.",
+      "An independent run, 41674221225, produced identical epoch CSV and summary JSON SHA-256 values.",
+      "The artifact ZIP SHA-256 was recomputed as 8c17485d3b5ba651a997d5bc5ad5bca7528655685e8204fdf416af08176fccc7.",
+      "The epoch CSV SHA-256 was recomputed as c37f4d7ac4e294b14a3f2e87b9b35bacaf79a4baf02b30ab85df2984b1d29bbd.",
+      "The summary JSON SHA-256 was recomputed as 020f7febb47b3fd95720b383d6302254d88c6b2a54a8d080eef6375ebb989835.",
+      "All four requested OIDs were returned; total epoch count was 626; per-OID payload counts match catalog nepochs.",
+      "All 626 HMJD, mag, and magerr values are finite; all magerr values are positive.",
+      "catflags was retained without filtering: 570 rows have value 0 and 56 rows have value 32768.",
+      "No color correction, HMJD conversion, OID grouping, feature generation, or inference was performed."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [],
+    "unresolved": [
+      "The probe does not exercise the FastAPI adapter introduced by PR #264.",
+      "The Workbench UI in PR #267 has not been tested against the live API.",
+      "The application-level 5-10 object smoke test and 30-50 object guided demonstration remain open."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A bounded objectid-indexed query can retrieve raw DR24 epochs for the four tested OIDs.",
+      "The source payload includes objectid, filterid, fieldid, rcid, hmjd, mag, magerr, clrcoeff, and catflags.",
+      "Catalog nepochs is a useful per-OID integrity check for this probe.",
+      "Raw catflags must remain visible; bit-15 epochs must not be silently removed.",
+      "HMJD and native magnitude values must remain unchanged until separate, versioned scientific contracts are approved."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Complete the isolated repeat on PR #268 and compare all output hashes.",
+      "Exercise PR #264's FastAPI endpoint against the same OIDs and compare its raw response with the retained probe artifact.",
+      "Test PR #267's browser view for valid, missing, invalid, and source-failure cases.",
+      "Produce a 5-10 object application smoke-test manifest before expanding to the 30-50 object guided demonstration."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Treat this report as verified raw-source acquisition evidence, not scientific validation.",
+    "Do not feed raw DR24 data to the frozen v0.2.0 model without a validated feature mapping.",
+    "Do not merge OIDs or infer physical-source identity from proximity alone.",
+    "Keep HMJD, mag, clrcoeff, and catflags source-native.",
+    "Keep Issue #253 open until the API, UI, and application smoke-test gates pass."
+  ]
+}
