@@ -7,9 +7,9 @@ import os
 import threading
 import time
 import urllib.request
-from urllib.error import URLError
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.error import URLError
 
 import pytest
 import uvicorn
