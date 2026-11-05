@@ -27,7 +27,7 @@
       "reproducibility": {
         "status": "MEASURED",
         "before": "A live rerun depended on a manual workflow dispatch.",
-        "after": "A commit to the isolated branch starts a traceable workflow run and uploads the bounded payload artifact."
+        "after": "Workflow run 42061697065 completed. It returned all three requested OIDs and 417 epochs. Artifact 13432467426 was downloaded and its ZIP, epoch CSV, summary, and manifest hashes were recomputed."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
@@ -35,7 +35,8 @@
       },
       "reliability": {
         "status": "NOT_MEASURED",
-        "reason": "The new source-backed run is still pending final artifact inspection."
+        "before": "No source-backed result had been recorded for the isolated branch trigger.",
+        "after": "The run returned all three OIDs with no missing IDs. Per-OID payload counts match catalog nepochs. All 417 HMJD, magnitude, and magnitude-error values are finite; all magnitude errors are positive. The epoch CSV and summary hashes match the manifest."
       }
     },
     "trade_off": "Use a branch-specific trigger to avoid manual UI access. Keep the trigger limited to the exact research branch and retain contents: read permissions."
@@ -48,7 +49,13 @@
       "Added a push trigger limited to that branch and three explicit OIDs.",
       "Preserved the existing workflow_dispatch input and the hard maximum of five OIDs.",
       "The deterministic payload contract-tests job passed in workflow run 42061697065.",
-      "The source-backed payload-probe job completed successfully in workflow run 42061697065; artifact inspection is pending."
+      "The source-backed payload-probe job completed successfully in workflow run 42061697065.",
+      "Artifact 13432467426 has SHA-256 dd472e43fb1bf2400a92f93169de3dc0c87d78fdd7d6a542706a1b3480e00cc5.",
+      "The epoch CSV has 417 rows and SHA-256 143bcd1e80473d01c7f66fd8c2380abc463cce690325ffaa54dbd445f18e6c77.",
+      "The summary JSON SHA-256 is 906a73dc5ff80d60f6af56e25ddee88c5905d64867367880b18865ce11ecc932; the manifest SHA-256 is 8072ef97f3f5e8d0d9b031ff9b4ee27a0332d82323a7528ef92a4bae5d021f84.",
+      "Returned OIDs were 264114400013085, 264214400000912, and 278115200026587; no missing OIDs were reported.",
+      "Per-OID epoch counts were 78, 123, and 216; all matched catalog nepochs.",
+      "catflags was preserved without filtering: 377 rows have value 0 and 40 rows have value 32768."
     ]
   },
   "failure_analysis": {
@@ -72,8 +79,8 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Inspect the current run's source-backed artifact.",
-      "Verify the current PR CI and lifecycle gates.",
+      "Verify the current PR CI and lifecycle gates after the lifecycle record update.",
+      "The probe does not exercise PR #264's API endpoint or PR #267's Workbench UI.",
       "Do not merge the workflow change unless the isolated trigger and all checks pass."
     ]
   },
