@@ -10,6 +10,10 @@ This utility creates an object-level evidence table for candidate IDs absent fro
 
 Every candidate-only ID must join to exactly one parent metadata row. Duplicate IDs, missing required columns, malformed IDs, missing parent provenance, and invalid/unmapped Table 4 name crosswalks stop report generation.
 
+**Important Table 4 join-key requirement:** the official published Table 4 contains both a ZTF object-name column (`ZTF`) and its own numeric internal `ID`. The report builder must join by normalized ZTF object name to the parent Table 2 `ID` name and map that name to the parent's `Seq`/SourceID. Never compare Table 4's numeric `ID` directly with parent `Seq`.
+
+For the official Table 2 parent metadata input, include both the object name and source identifier, as well as the four diagnostic fields. For example, retrieve a VizieR TSV with columns `ID,Seq,gmag,rmag,Per-g,Per-r`; an export containing only `Seq,Per,gmag,rmag,Per-g,Per-r` is insufficient for the name crosswalk unless a separate verified crosswalk is joined first. A suitable published-reference export is Table 4 columns `ZTF,ID`. Record the exact query URLs, retrieval time, raw response hashes, and source revision alongside the inputs.
+
 ## Outputs
 
 - cpvs_candidate_only_objects.csv: all candidate-only IDs, original metadata columns, feature status/reasons, raw-light-curve and cross-match states.
