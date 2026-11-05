@@ -7,6 +7,7 @@ import os
 import threading
 import time
 import urllib.request
+from urllib.error import URLError
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -67,7 +68,7 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                     ready = response.status == 200
                 if ready:
                     break
-            except Exception:
+            except (URLError, TimeoutError, ConnectionError):
                 time.sleep(0.5)
         assert ready, "FastAPI did not become ready within 60 seconds"
 
