@@ -9,6 +9,7 @@ on:
       - src/ztf_classifier/web/static/app.js
       - src/ztf_classifier/web/static/index.html
       - tests/integration/test_dr24_workbench_live_smoke.py
+      - configs/process/cycles/dr24-workbench-live-browser-smoke-20261105.json
 
 permissions:
   contents: read
