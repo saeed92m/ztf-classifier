@@ -120,6 +120,8 @@ def scan_archive(
     data_crc32 = 0
     malformed_rows = 0
     data_rows = 0
+    field_count_distribution: Counter[int] = Counter()
+    parse_error_samples: list[str] = []
     zip_crc32_expected = 0
 
     with zipfile.ZipFile(archive_path) as archive:
@@ -146,22 +148,28 @@ def scan_archive(
                 line = raw_line.decode("utf-8", errors="replace")
                 if not line.strip() or line.lstrip().startswith("#"):
                     continue
+                data_rows += 1
                 fields = next(csv.reader([line], delimiter=","))
+                field_count_distribution[len(fields)] += 1
                 if fields and fields[0].strip().lower() == "sourceid":
                     header = [value.strip() for value in fields]
+                    data_rows -= 1
                     continue
                 schema = header or SCHEMA
                 if len(fields) != len(schema):
                     malformed_rows += 1
+                    if len(parse_error_samples) < 5:
+                        parse_error_samples.append(f"line {data_rows}: expected {len(schema)} fields, got {len(fields)}: {line[:240]!r}")
                     continue
                 row = dict(zip(schema, fields, strict=True))
                 try:
                     source_id = int(row["SourceID"])
                 except (KeyError, TypeError, ValueError):
                     malformed_rows += 1
+                    if len(parse_error_samples) < 5:
+                        parse_error_samples.append(f"line {data_rows}: invalid SourceID: {line[:240]!r}")
                     continue
                 if source_id not in matches:
-                    data_rows += 1
                     continue
                 try:
                     values = {
@@ -182,28 +190,19 @@ def scan_archive(
                     malformed_rows += 1
                     continue
                 matches[source_id].append(values)
-                data_rows += 1
 
     observed_data_sha256 = data_hash.hexdigest()
     observed_crc32 = data_crc32 & 0xFFFFFFFF
     zip_crc_verified = observed_crc32 == zip_crc32_expected
+    validation_errors: list[str] = []
     if expected_total_rows is not None and data_rows != expected_total_rows:
-        raise ValueError(
-            f"Extracted ztf2g row count mismatch: {data_rows} != {expected_total_rows}"
-        )
+        validation_errors.append(f"Non-empty record count mismatch: {data_rows} != {expected_total_rows}")
     if malformed_rows:
-        raise ValueError(f"Found {malformed_rows} malformed ztf2g rows")
+        validation_errors.append(f"Found {malformed_rows} malformed ztf2g rows")
     if expected_data_size is not None and data_size != expected_data_size:
-        raise ValueError(
-            f"Extracted ztf2g size mismatch: {data_size} != {expected_data_size}"
-        )
-    if (
-        expected_data_sha256 is not None
-        and observed_data_sha256 != expected_data_sha256
-    ):
-        raise ValueError(
-            "Extracted ztf2g SHA-256 mismatch: " + observed_data_sha256
-        )
+        validation_errors.append(f"Extracted ztf2g size mismatch: {data_size} != {expected_data_size}")
+    if expected_data_sha256 is not None and observed_data_sha256 != expected_data_sha256:
+        validation_errors.append("Extracted ztf2g SHA-256 mismatch: " + observed_data_sha256)
 
     target = _summary(matches[target_seq])
     orphan = _summary(matches[orphan_seq])
@@ -225,10 +224,11 @@ def scan_archive(
     )
     return {
         "status": (
-            "COMPLETED"
-            if zip_crc_verified
-            else "COMPLETED_WITH_ZIP_CRC_MISMATCH"
+            "FAILED_VALIDATION" if validation_errors else (
+                "COMPLETED" if zip_crc_verified else "COMPLETED_WITH_ZIP_CRC_MISMATCH"
+            )
         ),
+        "validation_errors": validation_errors,
         "source": "Zenodo 10.5281/zenodo.3886372, ztf2g.zip",
         "archive": {
             "path_name": archive_path.name,
@@ -265,6 +265,8 @@ def scan_archive(
             "data_rows": data_rows,
             "expected_data_rows": expected_total_rows,
             "malformed_rows": malformed_rows,
+            "field_count_distribution": {str(k): v for k, v in sorted(field_count_distribution.items())},
+            "parse_error_samples": parse_error_samples,
             "target_seq": target_seq,
             "orphan_seq": orphan_seq,
         },
@@ -309,7 +311,7 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
-    return 0
+    return 1 if report["validation_errors"] else 0
 
 
 if __name__ == "__main__":
