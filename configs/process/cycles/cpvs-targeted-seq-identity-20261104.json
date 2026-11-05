@@ -50,12 +50,12 @@
   "validation": {
     "status": "NOT_VERIFIED",
     "scientific_gate_affected": false,
-    "evidence": "The first source-backed run verified the archive MD5/SHA-256 but Python zipfile reported a CRC-32 mismatch for the member. The scanner now records ZIP CRC separately and independently verifies the full uncompressed member SHA-256, byte count, and row count. A rerun is pending."
+    "evidence": "Run 7 (42061358291) verified the archive MD5/SHA-256 but Python ZipExtFile returned only 739098846 bytes and 13517255 rows, not the expected 5034066142 bytes and 89697393 rows. The partial member SHA-256 did not match. The revised scanner now uses Info-ZIP unzip -p, which was used in the prior full-layout audit, and independently verifies member SHA-256, byte count, row count, and ZIP CRC. Run 8 (42062460017) is pending."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED",
     "root_causes": [
-      "The checksum-pinned ztf2g.zip member raises BadZipFile due to a CRC-32 mismatch at the end of decompression, even though the archive MD5/SHA-256 matches the retained official values. This is an archive CRC metadata/content integrity anomaly; the extracted member SHA-256 and byte count must be independently reverified before using its rows."
+      "Python ZipExtFile stopped after 739098846 bytes on the checksum-pinned ztf2g.zip member, although the expected full member is 5034066142 bytes. The archive MD5/SHA-256 matched the retained official values, but the partial member SHA-256 and row count did not. The diagnostic now uses the Info-ZIP extraction path and fails closed unless the full member SHA-256, byte count, and row count match."
     ],
     "hypothesis": "The 132 g rows under Seq 615172 may belong to Table 2 Seq 615170, but coordinate and epoch evidence is required."
   },
@@ -64,14 +64,14 @@
     "findings": [
       "A matching row count alone does not establish object identity.",
       "The raw archive coordinates can test the suspected Seq mismatch without changing the CPVS candidate selector.",
-      "The diagnostic should stream the 5 GB extracted data member and retain only aggregate evidence for the two target IDs."
+      "The diagnostic should stream the 5 GB extracted data member with Info-ZIP and retain only aggregate evidence for the two target IDs."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Run the synthetic regression test that corrupts only the central-directory CRC and verifies independent member SHA-256/size handling.",
-      "Rerun the pull-request workflow against the checksum-pinned Zenodo g archive.",
+      "Run the synthetic regression test that corrupts only the central-directory CRC and verifies Info-ZIP extraction plus independent member SHA-256/size handling.",
+      "Inspect run 8 against the checksum-pinned Zenodo g archive.",
       "Confirm the full extracted member SHA-256, byte count, and row count before reviewing coordinates.",
       "Review the output coordinates and row counts before making any mapping conclusion.",
       "A separate r-band check is required if the g-band identity lead is confirmed."
@@ -82,6 +82,6 @@
     "The Seq 615170/615172 identity relationship remains a hypothesis until raw coordinate and time evidence is compared.",
     "This targeted scan does not explain the 11602 candidate-only IDs or prove the published selection rule.",
     "Do not change CPVS thresholds, selector, or the frozen v0.2.0 baseline.",
-    "The first source-backed run found a ZIP member CRC-32 mismatch despite matching official archive MD5/SHA-256. Do not silently ignore it; independently verify the uncompressed member SHA-256, byte count, and row count, and report CRC status separately."
+    "The first source-backed run showed that Python ZipExtFile returned only 739098846 bytes from the 5 GB member. Do not use the partial result. The revised scanner uses Info-ZIP and independently verifies uncompressed member SHA-256, byte count, row count, and CRC status."
   ]
 }
