@@ -22,7 +22,7 @@ Seq `615170` is one of the 55 four-field-positive noncandidate controls. The 132
 
 ## Diagnostic method
 
-The workflow downloads only the g-band archive. The first run verified the official archive MD5/SHA-256 but Python's ZIP reader reported a CRC-32 mismatch at the end of the `ztf2g` member. The revised script records the ZIP CRC separately, streams the full member without writing the 5 GB extracted file to disk, and independently verifies the uncompressed member SHA-256, byte count, and total row count before it accepts any identity comparison. A CRC mismatch is reported as a warning; it is not called a PASS. If the independent member hash or size does not match, the scan fails closed.
+The workflow downloads only the g-band archive. The first scanner run verified the official archive MD5/SHA-256 but Python `ZipExtFile` yielded only 739,098,846 bytes and 13,517,255 rows. The expected uncompressed member is 5,034,066,142 bytes and 89,697,393 rows. The observed partial member SHA-256 was `9ffbb54896a4c0676f421ca281a7c53f48fca7047a535cfeff6628ec8db0d3b2`; it did not match the retained full-member SHA-256. The revised scanner uses Info-ZIP `unzip -p`, the extraction path used by the earlier full-layout audit, and verifies the uncompressed member SHA-256, byte count, and row count independently. It also records the ZIP central-directory CRC separately. A CRC mismatch is never ignored; it is reported separately from the independent byte-level checks. A synthetic test changes only the central-directory CRC and verifies that Info-ZIP still returns the complete payload with the expected SHA-256 and size.
 
 For each target Seq, it records row count, coordinate ranges and medians, HJD range, magnitude/error ranges, and flag counts. It computes the angular separation between the orphan rows' median coordinates and the Table 2 coordinates for Seq `615170`.
 
@@ -41,6 +41,8 @@ Only the small JSON diagnostic is uploaded as a GitHub Actions artifact. The raw
 ## Current disposition
 
 - Identity hypothesis: NOT VERIFIED.
-- Archive MD5/SHA-256 matched the retained official values on the first run; ZIP member CRC-32 did not match. Independent uncompressed-member SHA-256/size verification is required on the rerun.
+- Run 7 (42061358291) confirmed the archive MD5/SHA-256 but the Python reader stopped at 739,098,846 bytes. It produced no valid identity comparison.
+- The revised scanner uses Info-ZIP and has a synthetic regression test for a central-directory CRC-only discrepancy.
+- Run 8 (42062460017) is testing the revised scanner against the full checksum-pinned source archive. Its result is pending.
 - Scientific gate: unchanged and fail-closed.
-- Next step after the report: compare the raw coordinate/HJD evidence, then decide whether to run a separate targeted r-band check.
+- Next step after a successful full-member integrity check: compare the raw coordinate/HJD evidence, then decide whether to run a separate targeted r-band check.
