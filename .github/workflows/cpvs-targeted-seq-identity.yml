@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/diagnose_cpvs_seq_identity.py \
+          python scripts/diagnose_cpvs_seq_identity_unzip.py \
             --archive "$RUNNER_TEMP/ztf2g.zip" \
             --target-seq 615170 \
             --orphan-seq 615172 \
