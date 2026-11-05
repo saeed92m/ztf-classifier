@@ -250,6 +250,7 @@ const overviewMarkup = mainCanvas.innerHTML;
 const titles = {
   overview: ["Object analysis", "Scientific overview"],
   observations: ["Observations", "Normalized observation stream"],
+  dr24: ["DR24 Explorer", "Native DR24 light curve · raw data only"],
   features: ["Features", "Scientific Feature Engine output"],
   classification: ["Classification", "Model prediction and probabilities"],
   uncertainty: ["Uncertainty / OOD / Anomaly", "Independent diagnostic channels"],
@@ -476,10 +477,113 @@ async function loadValidationDashboard() {
   }
 }
 
+
+async function loadDR24Explorer() {
+  mainCanvas.innerHTML = [
+    '<div class="canvas-header"><div><div class="eyebrow">SOURCE EXPLORER · EXPERIMENTAL</div>',
+    '<h1 id="viewTitle">DR24 Explorer</h1>',
+    '<p id="viewSubtitle">Native DR24 data only. This view does not normalize features or run inference.</p></div></div>',
+    '<section class="panel"><div class="panel-header"><div><div class="panel-title">Indexed OID lookup</div>',
+    '<div class="panel-subtitle">Enter one positive ZTF DR24 objectid. No broad catalog scan is performed.</div></div></div>',
+    '<div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding:12px 0">',
+    '<label for="dr24ObjectId">DR24 objectid</label><input id="dr24ObjectId" type="number" min="1" step="1" inputmode="numeric" style="max-width:260px" />',
+    '<button class="primary-button" id="dr24LoadButton" type="button">Load raw light curve</button>',
+    '</div><p id="dr24Status" class="muted" role="status">No DR24 object loaded.</p></section>',
+    '<section class="panel"><div class="panel-header"><div><div class="panel-title">Native DR24 light curve</div>',
+    '<div class="panel-subtitle">Time coordinate: HMJD · magnitude: native ZTF system</div></div></div>',
+    '<div id="dr24Summary" class="muted">Load an OID to inspect its epochs.</div>',
+    '<div class="chart" style="margin-top:16px"><svg id="dr24Chart" viewBox="0 0 900 280" preserveAspectRatio="none" role="img" aria-label="Native DR24 light curve"></svg>',
+    '<div class="axis-label x">HMJD (HJD − 2400000.5) →</div><div class="axis-label y">mag</div></div></section>',
+    '<section class="panel"><div class="panel-header"><div><div class="panel-title">Raw epoch records</div>',
+    '<div class="panel-subtitle">Source values are preserved. The table shows at most the first 50 rows.</div></div></div>',
+    '<div class="catalog-table-wrap"><table class="metadata"><thead><tr><th>HMJD</th><th>mag</th><th>magerr</th><th>clrcoeff</th><th>catflags</th></tr></thead>',
+    '<tbody id="dr24EpochRows"><tr><td colspan="5">No data.</td></tr></tbody></table></div></section>',
+    '<section class="panel"><div class="panel-header"><div><div class="panel-title">Acquisition provenance</div>',
+    '<div class="panel-subtitle">Source, schema, query, and payload hashes</div></div></div>',
+    '<pre id="dr24Provenance" class="report-content">No acquisition performed.</pre></section>'
+  ].join("");
+  setViewHeading("dr24");
+  const input = document.getElementById("dr24ObjectId");
+  const loadButton = document.getElementById("dr24LoadButton");
+  if (params.get("objectid")) input.value = params.get("objectid");
+  async function loadRaw() {
+    const value = input.value.trim();
+    if (!/^[1-9][0-9]*$/.test(value)) {
+      document.getElementById("dr24Status").textContent = "Enter a positive integer objectid.";
+      return;
+    }
+    loadButton.disabled = true;
+    document.getElementById("dr24Status").textContent = "Querying indexed DR24 source…";
+    try {
+      const payload = await fetchJson("/v1/dr24/objects/" + encodeURIComponent(value) + "/lightcurve");
+      const records = payload.records || [];
+      const provenance = payload.provenance || {};
+      document.getElementById("dr24Provenance").textContent = JSON.stringify(provenance, null, 2);
+      const summary = document.getElementById("dr24Summary");
+      if (!records.length) {
+        summary.textContent = "No catalog row returned for this OID. No alternate source was used.";
+        document.getElementById("dr24EpochRows").innerHTML = '<tr><td colspan="5">No DR24 row.</td></tr>';
+        document.getElementById("dr24Chart").innerHTML = "";
+      } else {
+        const record = records[0];
+        const epochs = record.epochs || [];
+        const filterName = ({1:"g",2:"r",3:"i"})[record.filterid] || "unknown";
+        summary.textContent = "OID " + record.objectid + " · filter " + filterName +
+          " · field " + record.fieldid + " · rcid " + record.rcid +
+          " · epochs " + epochs.length + " / catalog " + record.catalog_nepochs +
+          " · payload SHA-256 " + record.payload_sha256;
+        const tableRows = epochs.slice(0, 50).map(epoch =>
+          "<tr><td>" + escapeHtml(epoch.hmjd) + "</td><td>" + escapeHtml(epoch.mag) +
+          "</td><td>" + escapeHtml(epoch.magerr) + "</td><td>" + escapeHtml(epoch.clrcoeff) +
+          "</td><td>" + escapeHtml(epoch.catflags) + "</td></tr>"
+        ).join("");
+        document.getElementById("dr24EpochRows").innerHTML =
+          tableRows || '<tr><td colspan="5">No epochs in payload.</td></tr>';
+        const points = epochs.map(epoch => ({
+          x:Number(epoch.hmjd), y:Number(epoch.mag), err:Number(epoch.magerr), flags:epoch.catflags
+        })).filter(point => Number.isFinite(point.x) && Number.isFinite(point.y));
+        const svg = document.getElementById("dr24Chart");
+        if (!points.length) {
+          svg.innerHTML = "";
+        } else {
+          const xs = points.map(point => point.x), ys = points.map(point => point.y);
+          const xmin = Math.min(...xs), xmax = Math.max(...xs);
+          const ymin = Math.min(...ys), ymax = Math.max(...ys);
+          const xspan = xmax - xmin || 1, yspan = ymax - ymin || 1;
+          const circles = points.map(point => {
+            const x = 35 + ((point.x - xmin) / xspan) * 830;
+            const y = 18 + ((point.y - ymin) / yspan) * 235;
+            const flagged = (Number(point.flags) & 32768) !== 0;
+            return '<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) +
+              '" r="3" fill="' + (flagged ? "#e0a34a" : "#55b8df") +
+              '" fill-opacity="0.85"><title>HMJD ' + point.x + ', mag ' + point.y +
+              ', catflags ' + escapeHtml(point.flags) + '</title></circle>';
+          }).join("");
+          svg.innerHTML = '<g class="grid-lines"><line x1="0" y1="55" x2="900" y2="55"/>' +
+            '<line x1="0" y1="110" x2="900" y2="110"/><line x1="0" y1="165" x2="900" y2="165"/>' +
+            '<line x1="0" y1="220" x2="900" y2="220"/></g>' + circles;
+        }
+      }
+      document.getElementById("dr24Status").textContent =
+        "Raw DR24 response received. This view does not perform feature generation or inference.";
+      setConnectionState("DR24 raw data loaded");
+    } catch (error) {
+      document.getElementById("dr24Status").textContent =
+        "DR24 acquisition failed (" + (error.status || "network") + "). No fallback source was used.";
+      setConnectionState("DR24 acquisition failed", false);
+    } finally {
+      loadButton.disabled = false;
+    }
+  }
+  loadButton.addEventListener("click", loadRaw);
+  if (input.value) await loadRaw();
+}
+
 async function showView(view) {
   document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
   const active = document.querySelector('.nav-item[data-view="' + view + '"]');
   if (active) active.classList.add("active");
+  if (view === "dr24") return loadDR24Explorer();
   if (view === "overview") {
     mainCanvas.innerHTML = overviewMarkup;
     bindOverviewActions();
