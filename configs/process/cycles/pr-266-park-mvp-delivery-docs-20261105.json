@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "park-mvp-delivery-docs-20261105",
+  "objective": "Refresh the Park MVP delivery controls and correct stale installation/user documentation. Define a truthful two-lane demonstration scope and measurable acceptance gates without changing runtime behavior or the frozen scientific baseline.",
+  "previous_knowledge_consumed": [
+    "Park MVP is the primary product delivery track under Issue #158.",
+    "DR24 application integration is tracked by Issue #253; PR #264 is a raw-only adapter and remains Draft.",
+    "The v0.2.0 scientific baseline, 42-feature contract, class order, benchmark and v1.0.1 software release remain immutable.",
+    "CPVS exact reconstruction remains a separate unresolved scientific blocker.",
+    "Ordinary CI does not establish source-backed scientific validation."
+  ],
+  "baseline": {
+    "revision": "main@bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c",
+    "description": "Documentation-only delivery-control update based on current repository state and Issue #158/#253 plus PR #264. No runtime, model, data, benchmark, feature schema, taxonomy, or scientific threshold changes."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reproducibility",
+    "maintainability"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "MEASURED",
+        "before": "Quick Start, User Guide, Installation, and product roadmap contained stale v1.0.0/v1.0.1 statements or an obsolete 2026-10-11 roadmap.",
+        "after": "Updated documentation to v1.0.1 and stated the current distinction between frozen baseline inference and raw DR24 exploratory acquisition."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "This change is documentation-only. It does not implement or test the DR24 runtime path."
+      },
+      "reproducibility": {
+        "status": "MEASURED",
+        "before": "The Park MVP acceptance scope and staged demonstration gates were spread across issues and audit notes.",
+        "after": "Added a dated delivery plan with explicit gates G0–G8, source/identity/QC rules, two separate analysis lanes, and required reproducibility artifacts."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "No new scientific data acquisition, model evaluation, calibration, anomaly evaluation, or source-backed validation was performed."
+      },
+      "regression_protection_count": {
+        "status": "NOT_MEASURED",
+        "unit": "new regression tests",
+        "reason": "No runtime code or tests changed."
+      }
+    },
+    "trade_off": "Prioritize accurate Park acceptance criteria and removal of misleading documentation over adding unsupported completion claims."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Inspected current Issue #158, Issue #253, PR #264 and the current Park readiness audit.",
+      "Updated docs/QUICK_START.md, docs/USER_GUIDE.md, docs/INSTALLATION.md, and docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md.",
+      "Added docs/PARK_MVP_DELIVERY_PLAN_2026-11-05.md with two separate scientific lanes and explicit acceptance gates.",
+      "Confirmed the frozen v0.2.0 baseline and 42-feature contract remain unchanged by this documentation-only branch.",
+      "CI on this PR initially failed the cumulative lifecycle gate because the required cycle record was missing; a matching machine-readable record is now being added. Final CI must be rerun and inspected.",
+      "No model, feature schema, benchmark, taxonomy, scientific threshold, data artifact, or release was changed."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "Documentation drift caused the user guide and quick start to describe v1.0.0 after v1.0.1 had been released.",
+      "The prior roadmap date and completion claims did not describe the current Park MVP delivery state."
+    ],
+    "unresolved": [
+      "DR24 source-selectable application integration is not complete.",
+      "No 5–10 object source-backed Workbench smoke test has been verified.",
+      "No 30–50 object guided demonstration or complete Park handover package has been verified.",
+      "The frozen production model artifact is not present in the GitHub package release and requires controlled local verification."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "The first Park demonstration must distinguish raw DR24 exploratory analysis from frozen v0.2.0 reference inference.",
+      "Native DR24 data must not be fed to the frozen v0.2.0 model without a validated feature mapping.",
+      "A 5–10 object smoke test is required before the 30–50 object guided demonstration.",
+      "CPVS and CIN runtime must remain outside the Park MVP critical path.",
+      "Do not report a completion percentage without a defined method and current evidence."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Documentation-only change; automated tests do not validate runtime DR24 acquisition or Workbench behavior.",
+      "Final CI and cumulative lifecycle gate must pass on the final PR head.",
+      "Source-backed smoke-test and guided-demo evidence remain absent."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep the v0.2.0 baseline and v1.0.1 release immutable.",
+    "Complete a bounded raw DR24 application path and 5–10 object smoke test before expanding to 30–50 objects.",
+    "Keep CPVS #170 unresolved and separate from Park delivery.",
+    "Do not claim a DR24 classifier, scientific performance, or Park acceptance without matching evidence."
+  ]
+}
