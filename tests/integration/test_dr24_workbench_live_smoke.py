@@ -120,6 +120,60 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                         "provenance_source": provenance["source"],
                     }
                 )
+            no_record_oid = 987654321
+            no_record_payload = {
+                "schema_version": "ztf-dr24-native-lightcurve-v1",
+                "records": [],
+                "provenance": {
+                    "source": "IRSA ZTF DR24 Lightcurves HATS",
+                    "query": {"index": "objectid", "objectids": [no_record_oid]},
+                    "returned_oids": [],
+                    "missing_oids": [no_record_oid],
+                },
+            }
+            page.route(
+                f"**/v1/dr24/objects/{no_record_oid}/lightcurve",
+                lambda route: route.fulfill(
+                    status=200,
+                    content_type="application/json",
+                    body=json.dumps(no_record_payload),
+                ),
+            )
+            page.locator("#dr24ObjectId").fill(str(no_record_oid))
+            page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
+                timeout=10_000,
+            )
+            assert "No catalog row returned for this OID. No alternate source was used." in page.locator("#dr24Summary").inner_text()
+            assert "No DR24 row." in page.locator("#dr24EpochRows").inner_text()
+            assert page.locator("#dr24Chart circle").count() == 0
+            no_record_provenance = json.loads(page.locator("#dr24Provenance").inner_text())
+            assert no_record_provenance["missing_oids"] == [no_record_oid]
+
+            failed_oid = 987654322
+            page.route(
+                f"**/v1/dr24/objects/{failed_oid}/lightcurve",
+                lambda route: route.fulfill(
+                    status=502,
+                    content_type="application/json",
+                    body=json.dumps(
+                        {
+                            "code": "dr24_acquisition_failed",
+                            "message": "Simulated HATS outage. No alternate source was used.",
+                        }
+                    ),
+                ),
+            )
+            page.locator("#dr24ObjectId").fill(str(failed_oid))
+            page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('DR24 acquisition failed (502)')",
+                timeout=10_000,
+            )
+            assert "No fallback source was used." in page.locator("#dr24Status").inner_text()
+            assert "DR24 acquisition failed" in page.locator("#connectionStatus").inner_text()
+
             browser.close()
 
         report = {
@@ -132,6 +186,11 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
             "retrieved_at_utc": datetime.now(UTC).isoformat(),
             "objects": results,
             "total_epochs": sum(int(item["epochs"]) for item in results),
+            "failure_contracts": {
+                "missing_oid_ui": "PASS",
+                "source_failure_ui": "PASS",
+                "fallback_used": False,
+            },
             "limitations": [
                 "This verifies the DR24 Explorer UI for three OIDs only.",
                 "The UI displays at most 50 raw epoch rows per OID.",
