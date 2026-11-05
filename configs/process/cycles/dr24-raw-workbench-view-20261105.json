@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-raw-workbench-view-20261105",
+  "objective": "Expose the raw DR24 endpoint in the Workbench so a user can inspect one indexed OID, its native HMJD light curve, raw epoch fields, and acquisition provenance without invoking the frozen model or applying unvalidated normalization.",
+  "previous_knowledge_consumed": [
+    "PR #264 adds a bounded raw-only DR24 HATS adapter and explicit API endpoint.",
+    "The current Workbench uses the ALeRCE normalized observation route and labels its time axis MJD.",
+    "DR24 HMJD is heliocentric and must not be relabeled as geocentric MJD.",
+    "DR24 OIDs are partitioned by filter/field/quadrant; do not infer physical-source identity from OID alone.",
+    "Raw DR24 photometry and catflags must remain unmodified until a separate contract is approved."
+  ],
+  "baseline": {
+    "revision": "PR-264@02d96ce85b58d8a6ce5670a8833b2beb74d70b24",
+    "description": "Stacked Workbench-only UI extension on the raw DR24 adapter branch. No changes to model, feature schema, class order, benchmark, scientific thresholds, or source data."
+  },
+  "expected_improvement": [
+    "correctness",
+    "usability",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "MEASURED",
+        "before": "Workbench has no user-facing path to call the raw DR24 endpoint; its existing light-curve view is the normalized ALeRCE observation path with MJD labeling.",
+        "after": "Added a distinct DR24 Explorer view that calls the explicit raw endpoint, labels the horizontal axis HMJD, and displays source-native fields and provenance. It performs no inference or normalization."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "No live DR24 acquisition or browser end-to-end test has been run for this UI branch."
+      },
+      "reproducibility": {
+        "status": "PARTIALLY_MEASURED",
+        "before": "Raw API responses were not inspectable through the Workbench.",
+        "after": "The UI displays the API-returned query, schema hash, payload hash, and retrieval provenance. A live source-backed replay is still required."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The view is a raw data inspector. It does not measure classification, calibration, astrophysical identity, or anomaly performance."
+      },
+      "regression_protection_count": {
+        "status": "NOT_MEASURED",
+        "unit": "new automated regression tests",
+        "reason": "No JavaScript test harness is configured in the inspected Workbench files; browser interaction testing remains required."
+      }
+    },
+    "trade_off": "Provide a minimal, transparent raw-source inspector first. Do not add unsupported source normalization, OID merging, or classifier controls."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Inspected the raw DR24 API route and response contract on PR #264 head.",
+      "Inspected the current Workbench navigation, main-canvas view routing, and existing observation display.",
+      "Added a separate DR24 navigation entry and single-OID raw viewer.",
+      "The chart uses the returned hmjd and explicitly labels it HMJD (HJD - 2400000.5).",
+      "The epoch table preserves hmjd, mag, magerr, clrcoeff, and catflags and limits visible rows to 50.",
+      "Bit-15 epochs receive a distinct plot marker only; no records are filtered or excluded.",
+      "Provenance display includes the API-returned source manifest and payload hash.",
+      "Live source-backed UI execution and browser tests have not been performed. PR is stacked on #264 and requires #264 first."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The current Workbench has no DR24 navigation route or UI component.",
+      "The existing chart labels its time axis MJD and is tied to the normalized observation flow."
+    ],
+    "unresolved": [
+      "No multi-object sample workflow, curated OID grouping, or 5–10 object run exists yet.",
+      "No versioned DR24 quality/exclusion policy or normalized feature contract is implemented.",
+      "No browser automation or live source-backed test has been run on this branch."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Raw DR24 inspection should be a separate Workbench view from normalized baseline inference.",
+      "HMJD must be shown explicitly in both plot and UI labels.",
+      "Raw catflags can be visualized but must not be silently applied as a filter.",
+      "Payload hashes and query provenance should be visible to support reproducible review.",
+      "An empty OID response must remain an explicit no-row state; do not substitute ALeRCE."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run current-head CI, CodeQL, and product-scope checks.",
+      "Perform browser interaction tests for valid, invalid, missing, and source-failure OIDs.",
+      "Perform a bounded live DR24 retrieval and verify the UI display against the raw API payload.",
+      "Add the curated multi-object demo workflow only after the single-OID viewer is verified."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Merge or otherwise integrate PR #264 before this stacked UI change.",
+    "Keep raw DR24 data separate from frozen v0.2.0 inference.",
+    "Do not merge OIDs, apply color correction, or relabel HMJD.",
+    "Complete live source-backed smoke testing before claiming Park MVP readiness."
+  ]
+}
