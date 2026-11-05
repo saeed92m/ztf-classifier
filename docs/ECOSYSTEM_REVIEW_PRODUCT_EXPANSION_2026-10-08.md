@@ -147,3 +147,13 @@ The product should allow a non-developer scientist to:
 
 Advanced users retain CLI/API access.
 
+
+
+
+## Follow-up decision — 2026-10-22: ecosystem review is continuous, not one-off
+
+The initial review remains a design record, not an exhaustive inventory of all relevant public repositories. Follow-up comparisons are tracked in [PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md](roadmap/PARALLEL_VALIDATION_AND_ECOSYSTEM_PLAN_2026-10-22.md).
+
+Future ecosystem findings must be based on inspected implementation evidence (source, tests, docs, release/maintenance state) and include license/attribution review. Recommendations must map to a specific project gap, expected value, cost/risk, and an acceptance test. Repository popularity alone is not evidence of scientific correctness. No dependency or code should be adopted merely for feature parity; preserve CPU-first operation, provenance, the immutable v0.2.0 baseline, and fail-closed scientific validation.
+
+Status: follow-up review planned; a complete updated inventory and prioritized gap matrix have not yet been produced.

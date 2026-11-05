@@ -13,3 +13,5 @@ This ledger is the auditable growth record for meaningful implementation cycles.
 ## Measurement rule
 
 If numeric measurement is not applicable or not yet available, record NOT_MEASURED rather than inventing a value and explain why in the cycle evidence.
+
+| PR #211 / parallel-validation-ecosystem-20261022 | main base d88e54a2; v1.0.1 and v0.2.0 immutable | Record five parallel validation workstreams, initial GitHub ecosystem sample, and generic-ingestion vs schema-specific-analysis boundary | Independent dataset/sample and second-paper execution not yet verified | Plan, issue #210, initial ecosystem report, and architecture notes recorded; no scientific behavior changed | Documentation and lifecycle CI pending; do not accept until required checks pass | Generic CSV/Parquet import was at risk of being confused with arbitrary scientific analysis; benchmark work had been too centered on CPVS | AD-VAL-001–004 | No scientific code tests added in this documentation stage; cycle record created | REVISE / BLOCKED | Execute StarEmbed sample, 50 schema/quality cases, second-paper protocol, full architecture audit, and broader license-aware ecosystem comparison |
