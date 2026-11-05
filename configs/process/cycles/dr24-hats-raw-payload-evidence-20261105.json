@@ -20,17 +20,17 @@
   ],
   "measurement": {
     "metrics": {
-      "source_lookup": {
+      "coverage": {
         "status": "MEASURED",
         "before": "The DR24 source path had deterministic contract tests but no retained live payload evidence for this bounded object set.",
         "after": "Four requested OIDs returned successfully from the objectid index; no missing OIDs were reported."
       },
-      "epoch_integrity": {
+      "correctness": {
         "status": "MEASURED",
         "before": "Catalog nepochs and retrieved epoch counts had not been compared in a retained source-backed report.",
         "after": "All four OID payload counts match catalog nepochs; total retrieved rows are 626."
       },
-      "payload_reproducibility": {
+      "reproducibility": {
         "status": "MEASURED",
         "before": "No independent run comparison was recorded.",
         "after": "Two runs produced identical epoch CSV and summary JSON SHA-256 values. Downloaded artifact hashes were recomputed and matched the manifest."
@@ -39,7 +39,7 @@
         "status": "NOT_MEASURED",
         "reason": "Raw payload retrieval does not validate astrophysical identity, feature compatibility, classifier performance, calibration, OOD, or anomaly detection."
       },
-      "application_integration": {
+      "reliability": {
         "status": "NOT_MEASURED",
         "reason": "This workflow calls the bounded probe script. It does not exercise PR #264's FastAPI endpoint or PR #267's Workbench browser view."
       }
