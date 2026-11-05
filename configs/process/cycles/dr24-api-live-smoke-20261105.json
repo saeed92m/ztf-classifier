@@ -31,8 +31,9 @@
         "after": "The API smoke test records code revision, workflow run, retrieval timestamps, per-OID payload hashes, and object-level counts in a compact artifact."
       },
       "reliability": {
-        "status": "NOT_MEASURED",
-        "reason": "The live API smoke test has not completed. Its result must be inspected before any acceptance claim."
+        "status": "MEASURED",
+        "before": "The API adapter had no live source-backed parity result.",
+        "after": "Workflow run 42063653144 completed successfully. The API returned 417 epochs for three OIDs. All three canonical payload SHA-256 values exactly matched the independent HATS probe artifact. Per-OID catalog_nepochs and returned epoch counts matched."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
@@ -56,8 +57,8 @@
     "status": "PARTIALLY_DIAGNOSED",
     "root_causes": [],
     "unresolved": [
-      "The live API-to-HATS run must complete and its artifact must be inspected.",
-      "The Workbench browser view in PR #267 remains unverified against the live API."
+      "The Workbench browser view in PR #267 remains unverified against the live API.",
+      "A 5–10 object end-to-end application smoke test with UI, QC, exports, and reproducibility bundle remains open."
     ]
   },
   "knowledge_extraction": {
@@ -69,12 +70,11 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "PASS",
     "open_blockers": [
-      "Run the live API smoke workflow and inspect the uploaded artifact.",
-      "Verify all three API payload hashes against the probe reference.",
-      "Verify no ALeRCE fallback occurs when DR24 acquisition fails.",
-      "Test the Workbench browser flow separately after API parity passes."
+      "Test the Workbench browser flow against the verified live API.",
+      "Test explicit missing-OID and source-failure behavior through the API.",
+      "Complete a 5–10 object end-to-end application smoke test with QC, visualization, exports, and a reproducibility bundle."
     ]
   },
   "decision": "REVISE",
