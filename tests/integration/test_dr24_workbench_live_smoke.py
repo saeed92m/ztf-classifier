@@ -172,7 +172,7 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                 timeout=10_000,
             )
             assert "No fallback source was used." in page.locator("#dr24Status").inner_text()
-            assert "DR24 acquisition failed" in page.locator("#connectionStatus").inner_text()
+            assert "DR24 acquisition failed" in page.locator(".connection-state").inner_text()
 
             browser.close()
 
