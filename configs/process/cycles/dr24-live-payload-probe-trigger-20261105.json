@@ -64,7 +64,7 @@
       "No branch-scoped push trigger existed for this bounded probe workflow."
     ],
     "unresolved": [
-      "The source-backed run uses three OIDs, while the prior reference run uses four; the three shared OID payload hashes match, but the combined CSV hash differs because the fourth OID is absent."
+      "The source-backed run uses three OIDs, while the prior reference run uses four; the three shared OID payload hashes match, but the combined CSV hash differs because the fourth OID is absent.",
       "The application API endpoint and Workbench UI remain outside this workflow's scope."
     ]
   },
