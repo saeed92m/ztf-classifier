@@ -6,7 +6,9 @@ on:
     paths:
       - ".github/workflows/cpvs-targeted-seq-identity.yml"
       - "scripts/diagnose_cpvs_seq_identity.py"
+      - "scripts/diagnose_cpvs_seq_identity_unzip.py"
       - "tests/test_cpvs_seq_identity_diagnostic.py"
+      - "tests/test_cpvs_seq_identity_unzip_diagnostic.py"
       - "configs/process/cycles/cpvs-targeted-seq-identity-20261104.json"
   workflow_dispatch:
 
