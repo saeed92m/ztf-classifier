@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-workbench-live-browser-smoke-20261105",
+  "objective": "Verify the DR24 Explorer browser view against the live FastAPI-to-HATS route for three OIDs. Confirm that the chart, raw table, provenance, and quality-flag highlighting match the independently verified payloads.",
+  "previous_knowledge_consumed": [
+    "PR #267 adds a separate DR24 Explorer view that calls the raw DR24 API route and does not run inference.",
+    "PR #270 verified the FastAPI route against live HATS for three OIDs; all API payload hashes matched the independent probe artifact.",
+    "The expected OID epoch counts are 78, 123, and 216.",
+    "The expected bit-15 catflags counts are 7, 8, and 25; flagged epochs must remain visible.",
+    "The Workbench renders at most 50 epoch rows and plots all finite epochs."
+  ],
+  "baseline": {
+    "revision": "PR #267 head 71c5e5021bf3b6a7042e548f908c12e6bc667335",
+    "description": "This is a browser test branch stacked on PR #267, which is itself stacked on PR #264. No default-branch, model, feature, taxonomy, benchmark, or release changes."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reproducibility",
+    "reliability"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "reason": "The live browser workflow has not completed. It must verify chart point counts, visible table rows, provenance, and exact payload hashes."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "The browser evidence artifact has not yet been generated."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "The test must verify the UI loading state and successful response for all three OIDs."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The browser view displays raw data only. It does not validate astrophysical identity, features, inference, calibration, OOD, or anomaly performance."
+      }
+    },
+    "trade_off": "Use a browser-only test with three previously verified OIDs. Install Playwright only in the dedicated workflow; do not add it to runtime dependencies."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The test starts the real FastAPI application with the real DR24LightcurveBackend.",
+      "The test uses Chromium and the actual Workbench static assets from PR #267.",
+      "The test compares displayed payload hashes with the independent HATS probe references.",
+      "The test checks chart point counts, flagged/unflagged point counts, 50-row table rendering, and provenance.",
+      "The test is skipped in ordinary offline CI unless ZTF_DR24_WORKBENCH_LIVE_TEST=1 is set.",
+      "The branch-scoped workflow installs Playwright and uploads only a compact JSON evidence artifact."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [],
+    "unresolved": [
+      "The live browser workflow must complete and its artifact must be inspected.",
+      "A 5–10 object end-to-end application smoke test with QC, exports, and a reproducibility bundle remains open."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "API payload parity does not by itself prove that the Workbench renders the correct data.",
+      "Chart point counts and flagged-point colors can be checked against raw catflags without filtering epochs.",
+      "The browser test must use the same API endpoint and independent payload hashes as the API smoke test."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the live browser workflow and inspect its artifact.",
+      "Test the no-record UI state and source-failure UI state.",
+      "Complete a 5–10 object application smoke test before the 30–50 object Park demonstration."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not claim Workbench UI validation until the browser workflow passes.",
+    "Keep the DR24 Explorer raw-only and separate from the frozen v0.2.0 inference contract.",
+    "Do not filter catflags or relabel HMJD.",
+    "Do not claim Park MVP acceptance from this three-OID browser smoke test."
+  ]
+}
