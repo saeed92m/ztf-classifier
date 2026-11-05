@@ -34,7 +34,7 @@
         "reason": "The workflow retrieves raw payloads only. It does not test astrophysical identity, feature compatibility, model inference, calibration, or anomaly performance."
       },
       "reliability": {
-        "status": "NOT_MEASURED",
+        "status": "MEASURED",
         "before": "No source-backed result had been recorded for the isolated branch trigger.",
         "after": "The run returned all three OIDs with no missing IDs. Per-OID payload counts match catalog nepochs. All 417 HMJD, magnitude, and magnitude-error values are finite; all magnitude errors are positive. The epoch CSV and summary hashes match the manifest."
       }
@@ -64,7 +64,7 @@
       "No branch-scoped push trigger existed for this bounded probe workflow."
     ],
     "unresolved": [
-      "The source-backed run artifact must be inspected and its hashes compared with the prior four-OID reference artifact.",
+      "The source-backed run uses three OIDs, while the prior reference run uses four; the three shared OID payload hashes match, but the combined CSV hash differs because the fourth OID is absent."
       "The application API endpoint and Workbench UI remain outside this workflow's scope."
     ]
   },
