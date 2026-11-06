@@ -10,6 +10,7 @@ on:
       - tests/test_cpvs_rband_identity.py
       - configs/process/cycles/cpvs-rband-identity-20261107.json
   pull_request:
+    types: [opened, reopened]
     branches: [main]
     paths:
       - ".github/workflows/cpvs-targeted-rband-identity.yml"
