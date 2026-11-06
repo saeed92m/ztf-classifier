@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-workbench-live-browser-smoke-20261105",
+  "objective": "Verify the DR24 Explorer browser view against the live FastAPI-to-HATS route for three OIDs. Confirm that the chart, raw table, provenance, and quality-flag highlighting match the independently verified payloads.",
+  "previous_knowledge_consumed": [
+    "PR #267 adds a separate DR24 Explorer view that calls the raw DR24 API route and does not run inference.",
+    "PR #270 verified the FastAPI route against live HATS for three OIDs; all API payload hashes matched the independent probe artifact.",
+    "The expected OID epoch counts are 78, 123, and 216.",
+    "The expected bit-15 catflags counts are 7, 8, and 25; flagged epochs must remain visible.",
+    "The Workbench renders at most 50 epoch rows and plots all finite epochs."
+  ],
+  "baseline": {
+    "revision": "PR #267 head 71c5e5021bf3b6a7042e548f908c12e6bc667335",
+    "description": "This is a browser test branch stacked on PR #267, which is itself stacked on PR #264. No default-branch, model, feature, taxonomy, benchmark, or release changes."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reproducibility",
+    "reliability"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "MEASURED",
+        "before": "The DR24 Explorer UI had not been tested against live HATS data.",
+        "after": "Workflow 42073257588 passed on code revision 370776f98400a42b6917ed0b39514ca621c65f21. Chromium rendered 78, 123, and 216 chart points for three OIDs. All three displayed payload hashes matched the independent HATS reference."
+      },
+      "reproducibility": {
+        "status": "MEASURED",
+        "before": "No browser evidence artifact existed.",
+        "after": "Latest artifact 13438006375 was uploaded. ZIP SHA-256: 0ed59f21be2867310996b78e27c90c9a5c7f3248ea2d51c8d764366b734b64e4. The JSON report records code revision, run, OIDs, epoch counts, chart points, quality flags, payload hashes, missing-OID UI result, source-failure UI result, and fallback status."
+      },
+      "reliability": {
+        "status": "MEASURED",
+        "before": "The UI had no live-browser integration result.",
+        "after": "Workflow 42073257588 passed on revision 370776f98400a42b6917ed0b39514ca621c65f21. It verified loading/response states, source provenance, 50-row table rendering, chart point counts, flagged/unflagged points, missing-OID UI, source-failure UI, and that no ALeRCE fallback occurred."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The browser view displays raw data only. It does not validate astrophysical identity, features, inference, calibration, OOD, or anomaly performance."
+      }
+    },
+    "trade_off": "Use a browser-only test with three previously verified OIDs. Install Playwright only in the dedicated workflow; do not add it to runtime dependencies."
+  },
+  "validation": {
+    "status": "VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The test starts the real FastAPI application with the real DR24LightcurveBackend.",
+      "The test uses Chromium and the actual Workbench static assets from PR #267.",
+      "The test compares displayed payload hashes with the independent HATS probe references.",
+      "The test checks chart point counts, flagged/unflagged point counts, 50-row table rendering, and provenance.",
+      "The test is skipped in ordinary offline CI unless ZTF_DR24_WORKBENCH_LIVE_TEST=1 is set.",
+      "The branch-scoped workflow installs Playwright and uploads only a compact JSON evidence artifact.",
+      "Latest artifact 13438006375 records failure_contracts.missing_oid_ui=PASS, source_failure_ui=PASS, fallback_used=false."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [],
+    "unresolved": [
+      "The three-object browser smoke does not satisfy the 5–10 object application acceptance test.",
+      "Exports, full QC report, and end-to-end reproducibility bundle remain unverified.",
+      "The Workbench browser test remains raw-only; it does not validate feature generation, inference, calibration, OOD, or anomaly performance."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "API payload parity does not by itself prove that the Workbench renders the correct data.",
+      "Chart point counts and flagged-point colors can be checked against raw catflags without filtering epochs.",
+      "The browser test must use the same API endpoint and independent payload hashes as the API smoke test.",
+      "The latest browser run verifies the explicit missing-OID and source-failure UI states and confirms that no ALeRCE fallback occurs."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [
+      "Complete a 5–10 object application smoke test with source selection, QC, exports, and a reproducibility bundle.",
+      "Then complete the 30–50 object guided Park demonstration."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "The DR24 Explorer raw browser path is verified for the three pinned OIDs only.",
+    "Keep the DR24 Explorer raw-only and separate from the frozen v0.2.0 inference contract.",
+    "Do not filter catflags or relabel HMJD.",
+    "Do not claim Park MVP acceptance from this three-OID browser smoke test."
+  ]
+}
