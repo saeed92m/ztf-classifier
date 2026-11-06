@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "stage_id": "cpvs-rband-identity-20261107",
-  "objective": "Run an independent bounded scan of the checksum-pinned Zenodo r-band archive to test the Seq 615170/615172 identity lead from the g-band diagnostic and discover any other SourceIDs within two arcseconds of the Table 2 target.",
+  "objective": "Verify the checksum-pinned Zenodo r-band archive, reconcile every archive Seq count against the original CDS Table 2 Nr values, and assess the Seq 615170/615172 cross-band identity lead without changing any source identifier or CPVS membership rule.",
   "previous_knowledge_consumed": [
     {
       "source": "Zenodo DOI 10.5281/zenodo.3886372",
@@ -17,6 +17,21 @@
       "source": "Table 2 entry for Seq 615170",
       "status": "VERIFIED",
       "detail": "Table 2 reports Nr=113 and coordinates RA 307.36563 deg, Dec -13.42128 deg."
+    },
+    {
+      "source": "First r-band source scan workflow 42311975704, artifact 13550020720",
+      "status": "VERIFIED",
+      "detail": "Zenodo archive MD5 and ZIP CRC matched. Info-ZIP streamed 6,175,667,360 bytes, SHA-256 78df6d0b22099a7e5c6e74b897682c6ab94f90d5f9e887d4b0b3b152514e50fe, 109,971,576 seven-field rows and zero malformed rows."
+    },
+    {
+      "source": "CDS Table 2 raw artifact from workflow 41367972395, artifact 13108147605",
+      "status": "VERIFIED",
+      "detail": "table2.dat SHA-256 2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881; 781,602 unique Seq rows; sum Nr=109,970,858; Seq 615170 has Nr=113 and rmag=14.736."
+    },
+    {
+      "source": "CDS ReadMe J/ApJS/249/18",
+      "status": "VERIFIED",
+      "detail": "The ReadMe File Summary lists 89,697,393 rows for ztf2r.dat, which conflicts with both the sum of Table 2 Nr and the checksum-pinned Zenodo r archive stream."
     }
   ],
   "baseline": {
@@ -28,19 +43,20 @@
     "selector": "unchanged"
   },
   "expected_improvement": [
-    "Acquire r-band evidence independent of the g-band archive.",
-    "Report row counts for Seq 615170 and Seq 615172 and all source IDs with rows within two arcseconds of the Table 2 target.",
-    "Record the r archive checksum, extracted-member SHA-256, byte count, row count, field distribution, and malformed-row count."
+    "Reproduce the first r archive member SHA-256, size, CRC and row count in an independent second run.",
+    "Compare all 781,602 Table 2 Seq values and Nr counts with the r archive SourceID counts.",
+    "Identify all deficits, surpluses, missing Seq IDs and archive-only Seq IDs.",
+    "Retain the 615170/615172 cross-band mapping as a strong identity lead only."
   ],
   "measurement": {
     "metrics": {
       "correctness": {
         "before": "The identity lead is supported by g-band data only; the r-band archive has not been independently scanned.",
-        "after": "The r-band scan will compare the target and orphan Seq counts, coordinate separations, HJD, r magnitude, error and flags, while preserving all nearby SourceIDs as candidates."
+        "after": "The first r scan found zero rows under Seq 615170 and 113 rows under orphan Seq 615172, matching Table 2 Nr=113. Median-coordinate separation is 0.5277981 arcsec from Table 2; g/r medians are 0.0897550 arcsec apart. The r mean magnitude differs from Table 2 by -0.0002832 mag. Full per-Seq comparison is implemented but not yet run."
       },
       "reproducibility": {
         "before": "The Zenodo r archive MD5 is published, but no extracted-member hash, size or row count is pinned in the project evidence.",
-        "after": "The first run records independent extracted-member SHA-256, size and row count. These values remain discovery evidence until reviewed and pinned in a second reproducibility run."
+        "after": "The first r scan verified archive MD5 daa7bc45c67579253eebe6b1c09dfbd9, archive SHA-256 48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74, member CRC 225495a0, extracted member SHA-256 78df6d0b22099a7e5c6e74b897682c6ab94f90d5f9e887d4b0b3b152514e50fe, 6,175,667,360 bytes and 109,971,576 rows. These first-run values are pinned for the second run. CDS Table 2 and ReadMe hashes are pinned."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED"
@@ -48,35 +64,61 @@
     }
   },
   "validation": {
-    "status": "NOT_RUN",
+    "status": "PARTIAL_VERIFIED",
     "scientific_gate_affected": false,
-    "evidence": []
+    "evidence": [
+      "First r-band scan workflow 42311975704, artifact 13550020720 completed.",
+      "Zenodo r archive MD5 matched: daa7bc45c67579253eebe6b1c09dfbd9.",
+      "Archive SHA-256: 48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74.",
+      "ZIP member CRC-32 expected/actual: 225495a0.",
+      "Extracted member SHA-256: 78df6d0b22099a7e5c6e74b897682c6ab94f90d5f9e887d4b0b3b152514e50fe; size 6175667360 bytes; 109971576 rows; zero malformed rows.",
+      "CDS Table 2 raw artifact: SHA-256 2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881; 178986858 bytes; 781602 unique Seq; sum Nr=109970858.",
+      "CDS ReadMe SHA-256 e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a; it lists 89697393 r rows, inconsistent with Table 2 sum Nr and Zenodo archive.",
+      "Seq 615170 has zero r rows; Seq 615172 has 113 r rows. Median-coordinate separation from Table 2 is 0.5277981 arcsec; mean r magnitude delta is -0.0002832 mag.",
+      "g/r median-coordinate separation for Seq 615172 is 0.0897550 arcsec; both bands have the Table 2 per-band counts under Seq 615172.",
+      "The full per-Seq r count reconciliation and second-run integrity verification have not yet completed."
+    ]
   },
   "failure_analysis": {
-    "status": "NOT_ASSESSED",
-    "hypothesis": "The 113 r-band rows associated with Table 2 Seq 615170 may be stored under a nearby orphan SourceID, potentially Seq 615172. This must be tested against the raw archive."
+    "status": "PARTIAL_ROOT_CAUSE_EVIDENCE",
+    "hypothesis": "The g and r archive rows under Seq 615172 strongly match Table 2 Seq 615170 in per-band counts, position, mean magnitude and overlapping time coverage. Separately, the CDS ReadMe r row count appears inconsistent with the checksum-pinned Zenodo archive and the sum of Table 2 Nr. Full per-Seq reconciliation is required.",
+    "unresolved": [
+      "The second r archive run must reproduce the first run's archive/member hashes, byte count, CRC and row count.",
+      "The per-Seq r-band mismatch distribution is not yet measured.",
+      "The 718-row difference between the Zenodo r archive total and summed Table 2 Nr is not yet explained.",
+      "The 20,274,183-row difference from the CDS ReadMe r record count is a source metadata discrepancy; its cause is not yet formally resolved.",
+      "The 11,602 candidate-only CPVS membership residuals remain unexplained."
+    ]
   },
   "knowledge_extraction": {
-    "status": "HYPOTHESIS",
+    "status": "SUPPORTED",
     "findings": [
-      "The r-band source scan is pending. No source-backed r-band identity conclusion is available yet."
+      "The r-band Zenodo archive MD5 and member CRC match; Info-ZIP produced a full stream with 109,971,576 rows and zero malformed rows.",
+      "The r archive member central-directory 32-bit size value equals the streamed size modulo 2^32; this is a size-field representation issue, not evidence of a truncated stream.",
+      "The CDS ReadMe reports 89,697,393 r rows, while the sum of Table 2 Nr is 109,970,858 and the Zenodo r stream has 109,971,576 rows.",
+      "Seq 615172 is a strong cross-band identity lead for Table 2 Seq 615170, but no automatic SourceID remapping is accepted.",
+      "The 718-row archive-versus-Table2 Nr residual and the full per-Seq mismatch distribution remain open."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Run the synthetic tests and the source-backed r archive scan.",
-      "Review the archive MD5, extracted-member SHA-256, size, row count, ZIP CRC and malformed-row count.",
-      "If the first scan is complete, pin the observed extracted-member SHA-256, size and row count and rerun independently.",
-      "Reconcile all r-band SourceID counts against Table 2 Nr; the targeted scan is not a full reconciliation.",
-      "Do not change the CPVS selector or infer a source-ID remapping from spatial proximity alone."
+      "Run synthetic regression tests for fixed-width Table 2 parsing and per-Seq count comparison.",
+      "Run the pinned second r archive scan and verify archive/member hashes, byte count, CRC and row count.",
+      "Review the complete r-band per-Seq mismatch TSV, including deficits, surpluses, missing Seq IDs and archive-only IDs.",
+      "Reconcile the 718-row archive-versus-Table2 Nr difference at object level.",
+      "Investigate the ReadMe r-band record-count inconsistency.",
+      "Do not infer or apply SourceID remapping from proximity alone.",
+      "Keep the 11,602 CPVS membership residual open."
     ]
   },
-  "decision": "PENDING",
+  "decision": "REVISE",
   "knowledge_carried_forward": [
-    "The r-band scan is a discovery step; its first observed member hash/size/row count are not independently pinned.",
-    "The 2-arcsecond radius only retrieves candidate rows. It is not an identity rule.",
-    "Do not map SourceIDs automatically and do not claim that this scan resolves the 11,602 membership discrepancy.",
+    "The first r-band scan provides internal reproducibility references, not an independently published Zenodo member hash.",
+    "The CDS ReadMe row count for ztf2r.dat conflicts with the checksum-pinned Zenodo archive and the sum of Table 2 Nr.",
+    "The full per-Seq r-band count comparison is the next required evidence step.",
+    "Seq 615172 is a STRONG_CROSS_BAND_IDENTITY_LEAD for Table 2 Seq 615170; do not auto-remap.",
+    "Do not claim that the 11,602 candidate-only membership discrepancy is resolved.",
     "Do not modify thresholds, selector, published reference, or frozen v0.2.0 artifacts."
   ]
 }
