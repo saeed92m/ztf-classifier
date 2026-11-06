@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - research/dr24-workbench-live-smoke-20261105
+      - research/dr24-workbench-live-smoke-20261106
     paths:
       - .github/workflows/dr24-workbench-live-smoke.yml
       - src/ztf_classifier/web/static/app.js
