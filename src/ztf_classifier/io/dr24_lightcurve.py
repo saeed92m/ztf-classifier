@@ -97,6 +97,18 @@ def _json_scalar(value: Any) -> Any:
     )
 
 
+def _positive_objectid(value: Any) -> int:
+    """Validate a returned catalog OID without lossy integer coercion."""
+    scalar = _json_scalar(value)
+    if (
+        not isinstance(scalar, int)
+        or isinstance(scalar, bool)
+        or scalar <= 0
+    ):
+        raise DR24AcquisitionError("DR24 returned an invalid objectid value.")
+    return scalar
+
+
 def _canonical_records(frame: pd.DataFrame) -> tuple[tuple[dict[str, Any], ...], str]:
     missing = sorted(set(PAYLOAD_COLUMNS) - set(frame.columns))
     if missing:
@@ -163,7 +175,9 @@ class DR24LightcurveBackend:
             if frame["objectid"].duplicated().any():
                 raise DR24AcquisitionError("DR24 returned duplicate objectid rows.")
 
-            returned = {int(value) for value in frame["objectid"].tolist()}
+            returned = {
+                _positive_objectid(value) for value in frame["objectid"].tolist()
+            }
             requested = set(request.objectids)
             unexpected = sorted(returned - requested)
             if unexpected:
