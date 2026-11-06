@@ -102,7 +102,12 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 
-def parse_readme(path: Path) -> dict[str, Any]:
+def parse_readme(
+    path: Path,
+    *,
+    expected_sha256: str | None = EXPECTED_README_SHA256,
+    expected_size: int | None = EXPECTED_README_SIZE,
+) -> dict[str, Any]:
     size = path.stat().st_size
     sha256 = digest_file(path, "sha256")
     content = path.read_text(encoding="utf-8", errors="replace")
@@ -113,10 +118,10 @@ def parse_readme(path: Path) -> dict[str, Any]:
         readme_rows = None
     else:
         readme_rows = int(match.group(1))
-    if sha256 != EXPECTED_README_SHA256:
+    if expected_sha256 and sha256 != expected_sha256:
         errors.append(f"CDS ReadMe SHA-256 mismatch: {sha256}")
-    if size != EXPECTED_README_SIZE:
-        errors.append(f"CDS ReadMe size mismatch: {size} != {EXPECTED_README_SIZE}")
+    if expected_size is not None and size != expected_size:
+        errors.append(f"CDS ReadMe size mismatch: {size} != {expected_size}")
     return {
         "source_url": "https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true",
         "size_bytes": size,
@@ -126,7 +131,13 @@ def parse_readme(path: Path) -> dict[str, Any]:
     }
 
 
-def parse_table2(path: Path) -> tuple[dict[int, dict[str, Any]], dict[str, Any]]:
+def parse_table2(
+    path: Path,
+    *,
+    expected_sha256: str | None = EXPECTED_TABLE2_SHA256,
+    expected_size: int | None = EXPECTED_TABLE2_SIZE,
+    expected_records: int | None = EXPECTED_TABLE2_RECORDS,
+) -> tuple[dict[int, dict[str, Any]], dict[str, Any]]:
     size = path.stat().st_size
     sha256 = digest_file(path, "sha256")
     rows: dict[int, dict[str, Any]] = {}
@@ -158,13 +169,13 @@ def parse_table2(path: Path) -> tuple[dict[int, dict[str, Any]], dict[str, Any]]
                 "rmag": rmag,
                 "nr": nr,
             }
-    if sha256 != EXPECTED_TABLE2_SHA256:
+    if expected_sha256 and sha256 != expected_sha256:
         errors.append(f"Table 2 SHA-256 mismatch: {sha256}")
-    if size != EXPECTED_TABLE2_SIZE:
-        errors.append(f"Table 2 size mismatch: {size} != {EXPECTED_TABLE2_SIZE}")
-    if record_count != EXPECTED_TABLE2_RECORDS:
+    if expected_size is not None and size != expected_size:
+        errors.append(f"Table 2 size mismatch: {size} != {expected_size}")
+    if expected_records is not None and record_count != expected_records:
         errors.append(
-            f"Table 2 record count mismatch: {record_count} != {EXPECTED_TABLE2_RECORDS}"
+            f"Table 2 record count mismatch: {record_count} != {expected_records}"
         )
     if len(rows) != record_count:
         errors.append(f"Table 2 unique Seq count mismatch: {len(rows)} != {record_count}")
@@ -287,6 +298,11 @@ def scan_archive(
     expected_data_sha256: str | None = EXPECTED_MEMBER_SHA256,
     expected_data_size: int | None = EXPECTED_MEMBER_SIZE,
     expected_total_rows: int | None = EXPECTED_MEMBER_ROWS,
+    expected_table2_sha256: str | None = EXPECTED_TABLE2_SHA256,
+    expected_table2_size: int | None = EXPECTED_TABLE2_SIZE,
+    expected_table2_records: int | None = EXPECTED_TABLE2_RECORDS,
+    expected_readme_sha256: str | None = EXPECTED_README_SHA256,
+    expected_readme_size: int | None = EXPECTED_README_SIZE,
     spatial_radius_arcsec: float = 2.0,
 ) -> dict[str, Any]:
     archive_md5 = digest_file(archive_path, "md5")
@@ -297,9 +313,18 @@ def scan_archive(
         errors.append(f"Zenodo archive MD5 mismatch: {archive_md5}")
     if expected_archive_sha256 and archive_sha256 != expected_archive_sha256:
         errors.append(f"Zenodo archive SHA-256 mismatch: {archive_sha256}")
-    readme_report = parse_readme(readme_path)
+    readme_report = parse_readme(
+        readme_path,
+        expected_sha256=expected_readme_sha256,
+        expected_size=expected_readme_size,
+    )
     errors.extend(readme_report["validation_errors"])
-    table2, table2_report = parse_table2(table2_path)
+    table2, table2_report = parse_table2(
+        table2_path,
+        expected_sha256=expected_table2_sha256,
+        expected_size=expected_table2_size,
+        expected_records=expected_table2_records,
+    )
     errors.extend(table2_report["validation_errors"])
 
     with zipfile.ZipFile(archive_path) as archive:
