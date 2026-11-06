@@ -13,7 +13,7 @@ on:
       object_ids:
         description: "Comma-separated DR24 object IDs (maximum 5)"
         required: true
-        default: "264114400013085,264214400000912,278115200026587"
+        default: "264114400013085,264214400000912,278115200026587,278215200018105,289111400013506"
         type: string
 
 permissions:
@@ -61,7 +61,7 @@ jobs:
       - name: Retrieve only the explicitly supplied object IDs
         env:
           GITHUB_SHA: ${{ github.sha }}
-          PROBE_OIDS: ${{ github.event_name == 'workflow_dispatch' && inputs.object_ids || '264114400013085,264214400000912,278115200026587' }}
+          PROBE_OIDS: ${{ github.event_name == 'workflow_dispatch' && inputs.object_ids || '264114400013085,264214400000912,278115200026587,278215200018105,289111400013506' }}
         run: |
           python scripts/probe_ztf_dr24_lightcurve_payload.py \
             --oids "$PROBE_OIDS" \
