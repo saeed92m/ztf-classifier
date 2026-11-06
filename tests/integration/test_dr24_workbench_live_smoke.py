@@ -71,6 +71,11 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
     assert manifest["identity_policy"]["physical_identity_confirmed"] is False
     assert manifest["totals"]["candidate_external_ids"] == 5
     assert manifest["totals"]["oids"] == 7
+    assert all(
+        target["association_status"] == "SPATIAL_CANDIDATE_ONLY"
+        for target in manifest["targets"]
+    )
+    assert len({target["candidate_external_id"] for target in manifest["targets"]}) == 5
     assert manifest["totals"]["catalog_epochs"] == sum(
         item["epochs"] for item in EXPECTED.values()
     )
