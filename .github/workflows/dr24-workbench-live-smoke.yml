@@ -33,6 +33,9 @@ jobs:
     env:
       ZTF_DR24_WORKBENCH_LIVE_TEST: "1"
       DR24_WORKBENCH_SMOKE_OUTPUT: reports/dr24_workbench_live_smoke.json
+      DR24_WORKBENCH_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      DR24_WORKBENCH_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+      DR24_WORKBENCH_WORKFLOW_SHA: ${{ github.sha }}
     steps:
       - name: Check out source
         uses: actions/checkout@v7
