@@ -123,7 +123,7 @@ def parse_readme(
     if expected_size is not None and size != expected_size:
         errors.append(f"CDS ReadMe size mismatch: {size} != {expected_size}")
     return {
-        "source_url": "https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true",
+        "source_url": "http://vizier.nao.ac.jp/ftp/cats/J/ApJS/249/18/ReadMe",
         "size_bytes": size,
         "sha256": sha256,
         "published_ztf2r_rows": readme_rows,
@@ -180,7 +180,7 @@ def parse_table2(
     if len(rows) != record_count:
         errors.append(f"Table 2 unique Seq count mismatch: {len(rows)} != {record_count}")
     return rows, {
-        "source_url": "https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/table2.dat.gz",
+        "source_url": "http://vizier.nao.ac.jp/ftp/cats/J/ApJS/249/18/table2.dat.gz",
         "size_bytes": size,
         "sha256": sha256,
         "record_count": record_count,
