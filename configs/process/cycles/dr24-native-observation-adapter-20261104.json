@@ -30,11 +30,11 @@
     "metrics": {
       "reliability": {
         "before": "No bounded native DR24 indexed lightcurve adapter was exposed by the Observation Service.",
-        "after": "A raw-only adapter accepts at most 10 unique OIDs and rejects unindexed broad scans."
+        "after": "The adapter requires indexed objectid lookup, rejects duplicate/unrequested OIDs, rejects non-integer/boolean/non-positive returned OIDs without lossy coercion, and rejects catalog nepochs/payload-row mismatches. Dedicated regression tests cover malformed OIDs and epoch-count mismatch."
       },
       "reproducibility": {
         "before": "No per-OID canonical payload hash or catalog schema hash was recorded by the application path.",
-        "after": "The adapter records per-OID payload SHA-256, catalog schema SHA-256, requested/returned/missing OIDs, and native provenance."
+        "after": "The adapter records per-OID payload SHA-256, catalog schema SHA-256, requested/returned/missing OIDs, and native provenance. The dependent live API smoke verified exact payload-hash parity for three pinned OIDs (417 epochs); a seven-OID browser smoke is being extended on the dependent Workbench branch."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED"
@@ -43,8 +43,18 @@
   },
   "validation": {
     "scientific_gate_affected": false,
-    "status": "NOT_VERIFIED",
-    "evidence": "Feature branch only; CI and source-backed runtime execution are pending."
+    "status": "VERIFIED",
+    "evidence": [
+      "Current PR head 06669fe6c366771d5ff1c364c7c58815d1e1c03c passed workflow run 42232182784: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit and CI Gate all succeeded.",
+      "Test Suite: 655 passed, 10 skipped, 9 warnings, 0 failures.",
+      "CodeQL run 42232182802 passed.",
+      "Product Scope Audit run 42232182762 passed.",
+      "Scientific Validation contract run 42232182779 passed, but source-backed DR24/ALeRCE, StarEmbed, source-provenance and historical-reference jobs were skipped. This is not scientific validation.",
+      "Regression coverage rejects catalog nepochs/payload-row mismatches and rejects returned OID values that are non-integer, boolean, non-positive, or require lossy integer coercion.",
+      "Dependent API/HATS run 42063653144 verified three pinned OIDs and 417 epochs; all three canonical payload SHA-256 values matched independent HATS references. This run predates the latest strict-ID hardening commit.",
+      "Dependent five-OID Workbench run 42232639126 passed for 650 epochs, but it predates the latest strict-ID hardening commit. A seven-OID browser run is pending against the dependent Workbench branch.",
+      "The 10 skipped tests remain unresolved: 3 require frozen feature/raw-detection artifacts and 7 require the production v0.2.0 model artifact."
+    ]
   },
   "failure_analysis": {
     "known_risks": [
@@ -62,11 +72,14 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "PASS",
     "open_blockers": [
-      "Current-head CI has not run.",
-      "The DR24 adapter has not been source-backed through the production environment.",
-      "No normalized DR24-to-feature-to-inference path is implemented."
+      "The 10 skipped tests still require frozen feature/raw-detection artifacts and the production model artifact. Provision them through a controlled, hash-verified test workflow before claiming inference-path coverage.",
+      "Rerun live API/HATS parity on the latest adapter commit 06669fe6c366771d5ff1c364c7c58815d1e1c03c. Existing API parity run predates the latest strict-ID hardening commit.",
+      "No validated DR24-to-source-neutral normalization, time-basis policy, photometric mapping, production quality policy, or general OID identity/grouping is implemented.",
+      "No DR24 feature generation or model inference is enabled; do not use native DR24 payloads with the frozen v0.2.0 model.",
+      "The 5–10 source-target application acceptance test, descriptive QC, exports, and full reproducibility bundle remain open.",
+      "The 30–50 source-target guided Park demonstration remains open."
     ]
   },
   "decision": "REVISE",
