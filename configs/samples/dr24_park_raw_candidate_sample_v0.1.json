@@ -1,0 +1,153 @@
+{
+  "schema_version": "0.1",
+  "sample_id": "dr24-park-raw-candidate-sample-v0.1",
+  "created_utc": "2026-11-06",
+  "purpose": "Bounded raw DR24 OID retrieval and Workbench UI smoke testing. This is not a validated astrophysical object catalog or training set.",
+  "source_artifacts": [
+    {
+      "source": "BTS-to-DR24 spatial recovery sample",
+      "workflow_run_id": "41525750067",
+      "artifact_id": "13179927852",
+      "zip_sha256": "dbbd39759d11645cfa044538d786960b3bf221d25a9b73b849f136a735e1f830",
+      "role": "Candidate cross-match coordinates and object identifiers."
+    },
+    {
+      "source": "DR24 lightcurve availability by OID",
+      "workflow_run_id": "41527459598",
+      "artifact_id": "13184608092",
+      "zip_sha256": "84548734b39fa5e1639e6b06ed54d0630c23603b4c6a803b3e7c0935966de7e3",
+      "role": "Verifies that each selected OID has a lightcurve row, photometry, and consistent filter metadata; supplies catalog epoch counts."
+    },
+    {
+      "source": "Independent HATS payload probe",
+      "workflow_run_id": "41674212725",
+      "artifact_id": "13250061563",
+      "role": "Independent canonical payload SHA-256 references for the first four OIDs."
+    }
+  ],
+  "identity_policy": {
+    "status": "CANDIDATE_SPATIAL_ASSOCIATIONS_ONLY",
+    "spatial_matching_method": "The source recovery workflow used a bounded 5-arcsec spatial candidate match.",
+    "grouping_approved": false,
+    "physical_identity_confirmed": false,
+    "rules": [
+      "A BTS external_id is a candidate reference identifier, not independent astrophysical ground truth.",
+      "A ZTF objectid identifies a filter/field/quadrant-specific time series. It is not a guaranteed unique astrophysical source ID.",
+      "Multiple OIDs listed under one BTS candidate are not merged by this manifest.",
+      "Do not use these associations for training labels, model evaluation, cross-OID grouping, or scientific identity claims.",
+      "Use the manifest only to select bounded raw OID lookups and display candidate provenance."
+    ]
+  },
+  "targets": [
+    {
+      "candidate_external_id": "ZTF20acusqsp",
+      "association_status": "SPATIAL_CANDIDATE_ONLY",
+      "oid_pair_separation_arcsec": 0.212564,
+      "oids": [
+        {
+          "objectid": 264114400013085,
+          "filter": "g",
+          "filterid": 1,
+          "catalog_nepochs": 78,
+          "separation_from_bts_arcsec": 1.645735,
+          "independent_payload_hash": "735ee15135670a1a28b03b76edfb394e9c0c193d528f3da56ebb593468baf2a0"
+        },
+        {
+          "objectid": 264214400000912,
+          "filter": "r",
+          "filterid": 2,
+          "catalog_nepochs": 123,
+          "separation_from_bts_arcsec": 1.551045,
+          "independent_payload_hash": "a37f6fa2ee91009805b6fab3a5563b793cba9e84f6a82ec333bae507442c70ae"
+        }
+      ]
+    },
+    {
+      "candidate_external_id": "ZTF25aanrkut",
+      "association_status": "SPATIAL_CANDIDATE_ONLY",
+      "oid_pair_separation_arcsec": 0.178167,
+      "oids": [
+        {
+          "objectid": 278115200026587,
+          "filter": "g",
+          "filterid": 1,
+          "catalog_nepochs": 216,
+          "separation_from_bts_arcsec": 2.160695,
+          "independent_payload_hash": "03d865e1ce0dc76c721eb09534f0441370c45d4fbb1fffb715e5433899d2ed5f"
+        },
+        {
+          "objectid": 278215200018105,
+          "filter": "r",
+          "filterid": 2,
+          "catalog_nepochs": 209,
+          "separation_from_bts_arcsec": 2.153672,
+          "independent_payload_hash": "8fc2f95b389cb9cca129538f647dc83a1cf3b82cde37635a90f2d35ad9c596b8"
+        }
+      ]
+    },
+    {
+      "candidate_external_id": "ZTF21abiccis",
+      "association_status": "SPATIAL_CANDIDATE_ONLY",
+      "oids": [
+        {
+          "objectid": 289111400013506,
+          "filter": "g",
+          "filterid": 1,
+          "catalog_nepochs": 24,
+          "separation_from_bts_arcsec": 1.089341,
+          "independent_payload_hash": null
+        }
+      ]
+    },
+    {
+      "candidate_external_id": "ZTF20acbeanu",
+      "association_status": "SPATIAL_CANDIDATE_ONLY",
+      "oids": [
+        {
+          "objectid": 347104300029855,
+          "filter": "g",
+          "filterid": 1,
+          "catalog_nepochs": 368,
+          "separation_from_bts_arcsec": 0.10638,
+          "independent_payload_hash": null
+        }
+      ]
+    },
+    {
+      "candidate_external_id": "ZTF19abgcbey",
+      "association_status": "SPATIAL_CANDIDATE_ONLY",
+      "oids": [
+        {
+          "objectid": 725113200004086,
+          "filter": "g",
+          "filterid": 1,
+          "catalog_nepochs": 1165,
+          "separation_from_bts_arcsec": 0.173257,
+          "independent_payload_hash": null
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "candidate_external_ids": 5,
+    "oids": 7,
+    "catalog_epochs": 2183,
+    "oids_with_independent_payload_hash": 4,
+    "oids_without_independent_payload_hash": 3
+  },
+  "usage_status": {
+    "raw_lookup_only": true,
+    "workbench_smoke_test": "Five OIDs/650 epochs passed in run 42232639126. Seven-OID expansion is pending.",
+    "quality_selection_applied": false,
+    "feature_generation_applied": false,
+    "model_inference_applied": false,
+    "source_grouping_applied": false
+  },
+  "limitations": [
+    "The candidate BTS-to-ZTF spatial associations are not confirmed physical identities.",
+    "The 5-arcsec spatial candidate match is not an identity criterion.",
+    "The first two candidate groups have g/r OID pairs with small mutual angular separation, but this does not prove the published cross-match or selection method.",
+    "The first four payload hashes have independent HATS references. The last three require independent payload probes.",
+    "No HMJD conversion, color correction, catflags filtering, QC selection, feature generation, inference, calibration, OOD or anomaly analysis is performed."
+  ]
+}

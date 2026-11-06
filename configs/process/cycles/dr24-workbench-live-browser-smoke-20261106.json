@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-workbench-live-browser-smoke-20261106",
+  "objective": "Extend the DR24 Explorer browser smoke to four pinned OIDs and test that missing catflags are displayed as unknown, not clean.",
+  "previous_knowledge_consumed": [
+    "PR #267 adds a raw-only DR24 Explorer that preserves HMJD, native photometry and catflags.",
+    "PR #270 verified FastAPI-to-HATS payload parity for three OIDs (417 epochs).",
+    "PR #259 verified a fourth OID payload as part of a four-OID HATS sample; its catalog nepochs matched 209 returned epochs.",
+    "The previous browser smoke verified three OIDs, 417 epochs, missing-OID behavior and source-failure behavior.",
+    "Missing catflags must not be interpreted as catflags=0."
+  ],
+  "baseline": {
+    "revision": "PR #267 branch feat/dr24-raw-workbench-view-20261105",
+    "description": "Test-only branch based on the Workbench implementation. No model, feature, taxonomy, benchmark, or release changes."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "MEASURED",
+        "before": "The browser smoke covered three OIDs and did not test missing catflags.",
+        "after": "Live browser workflow 42231050192 passed on PR head b64d6773d12317f35c288575fe5f58d399505990. Four OIDs rendered 78, 123, 216 and 209 points (626 total). All four displayed payload hashes matched the independent HATS references. The synthetic null-catflags case rendered as unknown (gray), not clean (blue)."
+      },
+      "reproducibility": {
+        "status": "MEASURED",
+        "before": "Browser evidence covered three OIDs.",
+        "after": "Artifact 13509101727 was uploaded. ZIP SHA-256: 3380d0a1902960c40219753df45498eb952ae7462bbebe30d3f63af2c01549fc. The report records four OIDs, epoch/point counts, hashes, table rows, source provenance and failure contracts. The workflow merge revision was 80306458b81eb0205944d959e3ca80ef0a079ef2; PR head was b64d6773d12317f35c288575fe5f58d399505990."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The browser view remains raw-only. It does not validate astrophysical identity, photometric normalization, feature generation, inference, calibration, OOD, or anomaly performance."
+      },
+      "reliability": {
+        "status": "MEASURED",
+        "after": "The browser test verified four live HATS lookups, 626 plotted epochs, 50-row table caps, provenance, missing-OID behavior, source-failure behavior, no fallback, visible quality legend, and neutral rendering for null catflags."
+      }
+    },
+    "trade_off": "Use four independently pinned OIDs. The fourth OID comes from the previously verified four-OID payload artifact. No additional source acquisition is required for this test revision."
+  },
+  "validation": {
+    "status": "VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Workflow run 42231050192 completed successfully on PR head b64d6773d12317f35c288575fe5f58d399505990.",
+      "Browser artifact 13509101727: ZIP SHA-256 3380d0a1902960c40219753df45498eb952ae7462bbebe30d3f63af2c01549fc.",
+      "Four OIDs returned and rendered: 264114400013085 (78 epochs), 264214400000912 (123), 278115200026587 (216), and 278215200018105 (209). Total 626.",
+      "All four canonical payload SHA-256 values exactly matched the independent HATS artifact from PR #259.",
+      "Chart point counts exactly matched epoch counts for all four OIDs. Flagged/unflagged counts matched the source references: 7/71, 8/115, 25/191, 16/193.",
+      "The UI rendered 50 raw table rows per OID and displayed HATS source/query provenance.",
+      "Missing-OID UI: PASS. Source-failure UI: PASS. Silent ALeRCE fallback: false.",
+      "The synthetic catflags=null case passed: the point used the neutral gray marker, not the blue unflagged marker; the quality legend was visible.",
+      "The first rerun failed before test execution because Playwright 1.56 does not support Ubuntu 26.04. The workflow is pinned to ubuntu-24.04; the successful run used that supported runner.",
+      "The test remains raw-only and does not validate astrophysical identity, photometric normalization, feature generation, inference, calibration, OOD or anomaly performance."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The first rerun failed during browser installation because the ubuntu-latest runner resolved to Ubuntu 26.04, which Playwright 1.56 does not support. Pinning the workflow to ubuntu-24.04 resolved this infrastructure failure."
+    ],
+    "unresolved": [
+      "The browser smoke covers four OIDs, not the 5–10 object application acceptance test.",
+      "The UI still has no validated source-neutral normalization, quality-selection policy, cross-OID grouping, feature generation or inference.",
+      "Exports and a complete reproducibility bundle remain unverified.",
+      "The 30–50 object guided Park demonstration remains open."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A null catflags value is unknown quality metadata and must not be colored as unflagged.",
+      "Bit 15 remains visible; this UI does not filter epochs.",
+      "The browser test must verify the exact API payload and its displayed representation."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [
+      "Expand to a 5–10 object application smoke test with explicit source/target definition, validated source mapping, QC diagnostics, exports and a complete reproducibility bundle.",
+      "Do not treat five OIDs as five astrophysical objects; OID-to-source grouping remains a separate evidence-backed task.",
+      "Complete the 30–50 object guided Park demonstration.",
+      "Keep DR24 raw exploration separate from the frozen v0.2.0 inference contract until time and photometry mapping are validated."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "The raw Workbench path is verified for four pinned OIDs and 626 epochs only.",
+    "Missing catflags are unknown, not clean; the UI must not render them as unflagged.",
+    "Keep DR24 Explorer raw-only and separate from the frozen v0.2.0 inference contract.",
+    "Do not filter catflags or relabel HMJD.",
+    "Do not claim Park MVP acceptance from this four-OID browser smoke."
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-workbench-five-oid-smoke-20261106",
+  "objective": "Exercise the raw DR24 Workbench with five pinned OIDs, preserve all returned epochs, and verify that the UI respects the 50-row display cap without requiring 50 rows when an OID has fewer epochs.",
+  "previous_knowledge_consumed": [
+    "Four OIDs have independent HATS payload hashes and a successful four-OID browser run.",
+    "The fifth OID 289111400013506 is present in the BTS-to-DR24 availability artifact with filterid 1, photometry present, consistent filter metadata, and 24 catalog epochs.",
+    "A ZTF OID is not necessarily an astrophysical source. Do not count OIDs as objects.",
+    "Missing catflags are unknown, not equivalent to zero."
+  ],
+  "baseline": {
+    "revision": "PR #267 branch feat/dr24-raw-workbench-view-20261105",
+    "description": "Raw-only DR24 Explorer. No feature, model, taxonomy, benchmark, or release changes."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "MEASURED",
+        "before": "The browser smoke covered four OIDs and 626 epochs.",
+        "after": "Five-OID browser workflow 42232639126 passed. It returned and rendered 650 epochs across five OIDs. Four OIDs matched independent HATS payload hashes. The fifth OID returned 24 epochs and a valid SHA-256; its hash is recorded but does not yet have an independent payload reference."
+      },
+      "reproducibility": {
+        "status": "MEASURED",
+        "before": "Four OID browser evidence was archived.",
+        "after": "Artifact 13508968279, ZIP SHA-256 fc33d3cdfe77f4f836226f990c60f8bb178674cc4da24d7bc687602515b42cd7. The report records PR head 0e3076e173ca6873a90f2ad2fcee5933d44ac787, base ed2ac91bf027b4081c727690ac0599acabe6f699, workflow revision e2704c4ff6e5d1788de1bc7b45ff7f6b1ace548c, per-OID counts, hashes, provenance and failure contracts."
+      },
+      "reliability": {
+        "status": "MEASURED",
+        "before": "The previous test assumed every OID had at least 50 epochs.",
+        "after": "Five OIDs passed the browser smoke. The table rendered 50, 50, 50, 50 and 24 rows respectively, which equals min(50, epochs). The null-catflags fixture rendered as unknown, not clean. Missing-OID and source-failure UI passed; no fallback was used."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "This remains raw-only. It does not establish physical identity, cross-OID grouping, photometric equivalence, feature compatibility, inference, calibration, OOD or anomaly performance."
+      }
+    },
+    "trade_off": "Use five OIDs across three BTS-associated candidate targets. Four have independent HATS payload hashes. The fifth OID is supported by an availability artifact but does not yet have an independent payload-hash reference. This is a five-OID smoke, not a five-object sample."
+  },
+  "validation": {
+    "status": "VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Five-OID browser workflow 42232639126 completed successfully on PR head 0e3076e173ca6873a90f2ad2fcee5933d44ac787; base revision ed2ac91bf027b4081c727690ac0599acabe6f699.",
+      "Artifact 13508968279: ZIP SHA-256 fc33d3cdfe77f4f836226f990c60f8bb178674cc4da24d7bc687602515b42cd7.",
+      "Five OIDs returned and rendered: 264114400013085 (78 epochs), 264214400000912 (123), 278115200026587 (216), 278215200018105 (209), and 289111400013506 (24). Total 650.",
+      "All five chart point counts matched their epoch counts. Table rows rendered were 50, 50, 50, 50 and 24, respecting the 50-row cap.",
+      "The first four canonical payload SHA-256 values matched independent HATS references. The fifth hash was recorded as a 64-character lowercase SHA-256 but has no independent payload reference yet: a345a4da89a08ea844e3609c27587db00925b99e1ba0983f6a5315af6fb0d042.",
+      "Flagged/unflagged counts for the five OIDs were 7/71, 8/115, 25/191, 16/193 and 1/23. No unknown flags occurred in these live records.",
+      "Synthetic catflags=null UI: PASS. The marker rendered gray (unknown), not blue (unflagged), and the quality legend was visible.",
+      "Missing-OID UI: PASS. Source-failure UI: PASS. Silent ALeRCE fallback: false.",
+      "The first five-OID run 42232010404 failed only because the test expected 50 table rows for every OID. The fifth OID had 24 epochs and the UI correctly rendered 24 rows. The assertion was corrected to min(50, epochs); run 42232639126 passed.",
+      "The five OIDs map to three BTS-associated candidate identifiers in the availability/recovery sample. They are not five confirmed astrophysical objects."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The initial five-OID browser test used an incorrect fixed expectation of 50 table rows. The UI correctly displayed 24 rows for an OID with 24 epochs. The test now checks min(50, epochs)."
+    ],
+    "unresolved": [
+      "The fifth OID payload hash still needs an independent HATS payload reference if it remains in the pinned sample.",
+      "Five OIDs represent three BTS-associated candidate targets, not five confirmed astrophysical objects.",
+      "No general OID-to-source grouping or identity acceptance has been established.",
+      "The full 5–10 object application acceptance test still needs at least five explicitly defined source targets, descriptive QC, exports and a complete reproducibility bundle.",
+      "The 30–50 object guided Park demonstration remains open."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "The UI row limit is a maximum, not a fixed row count.",
+      "Short light curves must display all available epochs.",
+      "A successful five-OID raw retrieval does not establish five astrophysical objects or validated OID grouping."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [
+      "Create a 5–10 source-target application sample with explicit, evidence-backed source/identity mapping. Do not count OIDs as astrophysical objects.",
+      "Add descriptive raw QC diagnostics that preserve all epochs and do not apply an unapproved quality mask.",
+      "Add catalog/report export and a complete reproducibility bundle.",
+      "Keep the DR24 raw path separate from the frozen v0.2.0 inference contract until HMJD and photometry mappings are validated.",
+      "Complete the 30–50 object guided Park demonstration."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Five-OID raw Workbench smoke is verified for 650 epochs; four hashes match independent HATS references and one hash has no independent payload reference.",
+    "The 50-row table cap is a maximum; short light curves display all available rows.",
+    "Do not count OIDs as astrophysical objects.",
+    "Missing catflags are unknown, not clean.",
+    "Keep the raw Explorer separate from frozen v0.2.0 inference.",
+    "Do not filter catflags or relabel HMJD.",
+    "Do not claim Park MVP acceptance from this raw OID smoke."
+  ]
+}
