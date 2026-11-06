@@ -23,17 +23,17 @@
       "correctness": {
         "status": "MEASURED",
         "before": "Five-OID browser smoke covered three BTS-associated candidate identifiers and 650 epochs.",
-        "after": "Seven-OID browser workflow 42233590242 passed for 2183 epochs across five BTS-associated spatial candidate identifiers. Chart counts match epoch counts for all seven OIDs. Four OIDs matched independent HATS hashes; three OIDs passed availability, epoch-count, chart-count and SHA-256-format checks without independent payload-hash references."
+        "after": "Seven-OID browser workflow 42234667135 passed against the latest hardened adapter code copied from PR #264 head 8948f7af7dbb0a08c3a2454a8703276b6d2630b7. It returned and rendered 2183 epochs across five BTS-associated spatial candidate identifiers. Four OIDs matched independent HATS hashes; three OIDs passed availability, epoch-count, chart-count and SHA-256-format checks without independent payload-hash references."
       },
       "reproducibility": {
         "status": "MEASURED",
         "before": "Five-OID sample was not linked to a machine-readable candidate sample manifest.",
-        "after": "Artifact 13510103766, ZIP SHA-256 43a61483b10b0b158ac45d09713df02873643e6f924bfbcfc8b366bb3e0cc0f8. Report records PR head 90f6603d41f945589e46ebd368a8192964f5031d, base ed2ac91bf027b4081c727690ac0599acabe6f699, workflow revision e9811ab19641e209e04ac053b31117af4d05078f, per-OID counts, hashes, provenance and failure contracts. The browser test verifies the candidate manifest OID set, hash references, candidate-only status and totals."
+        "after": "Artifact 13511089199, ZIP SHA-256 c3abfad6b454a0433deee4e6792fff60653cf42d1c2e1244a2428c00b9f5b48d. Report records PR head 96b54aa4d5762b6fd881c32b2e0601647e2d61c9, base ed2ac91bf027b4081c727690ac0599acabe6f699, workflow revision 883a2abe02499d056b7070852b41522443866da5, per-OID counts, hashes, provenance and failure contracts. The test verifies the candidate manifest OID set, hash references, candidate-only status and totals."
       },
       "reliability": {
         "status": "MEASURED",
         "before": "Five-OID browser test passed.",
-        "after": "Seven OIDs returned and rendered: 78, 123, 216, 209, 24, 368 and 1165 points. Table rows were 50, 50, 50, 50, 24, 50 and 50. The null-catflags fixture rendered gray, not clean. Missing-OID and source-failure UI passed; no fallback was used."
+        "after": "Seven OIDs returned and rendered using the hardened adapter. Point counts were 78, 123, 216, 209, 24, 368 and 1165. Table rows were 50, 50, 50, 50, 24, 50 and 50. The null-catflags fixture rendered gray, not clean. Missing-OID and source-failure UI passed; no fallback was used."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
@@ -46,8 +46,9 @@
     "status": "VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
-      "Seven-OID browser workflow 42233590242 passed on PR head 90f6603d41f945589e46ebd368a8192964f5031d; base revision ed2ac91bf027b4081c727690ac0599acabe6f699; workflow revision e9811ab19641e209e04ac053b31117af4d05078f.",
-      "Artifact 13510103766: ZIP SHA-256 43a61483b10b0b158ac45d09713df02873643e6f924bfbcfc8b366bb3e0cc0f8.",
+      "Seven-OID browser workflow 42234667135 passed on PR head 96b54aa4d5762b6fd881c32b2e0601647e2d61c9; base revision ed2ac91bf027b4081c727690ac0599acabe6f699; workflow revision 883a2abe02499d056b7070852b41522443866da5.",
+      "This run includes the latest hardened adapter code from PR #264 head 8948f7af7dbb0a08c3a2454a8703276b6d2630b7, including strict returned-OID validation and catalog/payload epoch-count validation.",
+      "Artifact 13511089199: ZIP SHA-256 c3abfad6b454a0433deee4e6792fff60653cf42d1c2e1244a2428c00b9f5b48d.",
       "Seven OIDs returned and rendered: 264114400013085 (78), 264214400000912 (123), 278115200026587 (216), 278215200018105 (209), 289111400013506 (24), 347104300029855 (368), 725113200004086 (1165). Total 2183 epochs.",
       "All seven chart point counts matched epoch counts. Table rows were 50, 50, 50, 50, 24, 50 and 50, respecting the 50-row cap.",
       "The first four canonical payload SHA-256 values matched independent HATS references. The last three have only availability evidence and recorded API hashes; they do not have independent payload-hash references.",
@@ -55,13 +56,14 @@
       "The candidate manifest consistency checks passed: five unique BTS external IDs, seven OIDs, 2183 catalog epochs, exact OID set, exact independent-hash reference map, and candidate-only/no-grouping policy.",
       "Synthetic catflags=null UI: PASS. The marker rendered gray (unknown), not blue (unflagged); the quality legend was visible.",
       "Missing-OID UI: PASS. Source-failure UI: PASS. Silent ALeRCE fallback: false.",
-      "The five BTS external IDs are spatial candidates only. The test does not confirm physical identity or authorize OID grouping."
+      "The five BTS external IDs are spatial candidates only. The test does not confirm physical identity or authorize OID grouping.",
+      "PR #264 strict adapter unit tests passed: 655 passed, 10 skipped, 9 warnings, 0 failures in run 42234083543. The 10 skipped tests remain unresolved."
     ]
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED",
     "root_causes": [
-      "The first five-OID browser test failed because it expected 50 table rows for an OID with 24 epochs. The UI correctly rendered 24 rows. The assertion was corrected to min(50, epochs). The subsequent five-OID run passed, and the seven-OID expansion also passed."
+      "The first five-OID browser test failed because it expected 50 table rows for an OID with 24 epochs. The UI correctly rendered 24 rows. The assertion was corrected to min(50, epochs). The five-OID rerun and subsequent seven-OID runs passed."
     ],
     "unresolved": [
       "The last three OIDs still need independent payload-hash references.",
