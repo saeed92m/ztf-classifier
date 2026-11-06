@@ -83,3 +83,45 @@ The result is a **STRONG_IDENTITY_LEAD**, not a confirmed ID correction. The sca
 4. Keep the 11,602 membership residuals and the publisher-method interpretation open until a reproducible source-level explanation is established.
 
 The CPVS selector, SNR thresholds, published reference, model, features, class order, and frozen v0.2.0 baseline remain unchanged. The scientific gate remains fail-closed.
+
+
+## Independent r-band archive scan — 2026-11-07
+
+The g-band result is a strong identity lead only. The next diagnostic is deliberately separate and reads the original `ztf2r.zip` archive from Zenodo record [3886372](https://zenodo.org/records/3886372).
+
+### Source contract
+
+- Archive: `ztf2r.zip`.
+- Zenodo-published MD5: `daa7bc45c67579253eebe6b1c09dfbd9`.
+- Table 2 target: Seq `615170`, `Nr=113`, RA 307.36563°, Dec −13.42128°.
+- Suspected orphan: Seq `615172`.
+- Expected r-band schema: `SourceID, RAdeg, DEdeg, HJD, rmag, e_rmag, r_flag`.
+
+### Diagnostic behavior
+
+- Verify the downloaded archive against the published MD5.
+- Stream the extracted member with Info-ZIP and calculate its SHA-256, byte count, row count, field-count distribution, malformed-row count and ZIP CRC.
+- Summarize Seq 615170 and Seq 615172 independently.
+- Search for all SourceIDs with rows within 2 arcseconds of the Table 2 coordinates. This radius only retrieves candidates; it is not an identity rule.
+- Preserve HJD, r magnitude, magnitude error and flags in aggregate summaries.
+- Upload only a small JSON report. Do not upload or commit raw photometry.
+- The first run is a discovery run. It does not claim independent member integrity until the observed member SHA-256, size and row count are reviewed and pinned in a second run.
+
+### Scientific boundaries
+
+- No automatic SourceID remapping.
+- No proximity-only identity decision.
+- No full r-band Table 2 reconciliation in this targeted diagnostic.
+- No explanation of the 11,602 candidate-only membership residuals.
+- No change to the CPVS selector, SNR thresholds, published reference, model, features, taxonomy or frozen v0.2.0 baseline.
+
+### Acceptance sequence
+
+1. Pass synthetic regression tests.
+2. Complete the source-backed r archive scan with matching Zenodo archive MD5 and zero malformed rows.
+3. Review the extracted-member SHA-256, byte count, row count, CRC, Seq summaries and nearby SourceIDs.
+4. Pin the reviewed member SHA-256, size and row count.
+5. Rerun and verify those pinned values.
+6. Perform full r-band SourceID-to-Table2 `Nr` reconciliation in a separate bounded workflow.
+
+The CPVS scientific blocker remains open until the full membership residual is explained.
