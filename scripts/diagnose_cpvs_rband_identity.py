@@ -11,6 +11,7 @@ import csv
 import hashlib
 import json
 import math
+import re
 import shutil
 import statistics
 import subprocess
@@ -22,6 +23,31 @@ from pathlib import Path
 from typing import Any
 
 ZENODO_MD5 = "daa7bc45c67579253eebe6b1c09dfbd9"
+EXPECTED_ARCHIVE_SHA256 = "48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74"
+EXPECTED_MEMBER_SHA256 = "78df6d0b22099a7e5c6e74b897682c6ab94f90d5f9e887d4b0b3b152514e50fe"
+EXPECTED_MEMBER_SIZE = 6175667360
+EXPECTED_MEMBER_ROWS = 109971576
+EXPECTED_TABLE2_SHA256 = "2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881"
+EXPECTED_TABLE2_SIZE = 178986858
+EXPECTED_TABLE2_RECORDS = 781602
+EXPECTED_README_SHA256 = "e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a"
+EXPECTED_README_SIZE = 12990
+FIRST_DISCOVERY_REFERENCE = {
+    "workflow_run_id": 42311975704,
+    "artifact_id": 13550020720,
+    "artifact_zip_sha256": "0d64d338998fc62694d0cc4527ed9cf95544bda5156168ab642ca3731602c80b",
+    "report_sha256": "2c31b258dffddc3eff0cd6cdc70bb7bf743e180608004b4b808ec06d6710f3e8",
+    "interpretation": "First source-backed discovery run; member hashes are internal reproducibility references, not Zenodo-published checksums.",
+}
+G_BAND_ORPHAN = {
+    "source_id": 615172,
+    "row_count": 132,
+    "ra_median_deg": 307.3656934,
+    "dec_median_deg": -13.4214107,
+    "gmag_mean": 14.88604545,
+    "hjd_min": 58254.44022,
+    "hjd_max": 58657.48608,
+}
 ZENODO_SOURCE = "https://zenodo.org/records/3886372"
 TABLE2_TARGET = {
     "source_id": 615170,
@@ -29,6 +55,7 @@ TABLE2_TARGET = {
     "ra_deg": 307.36563,
     "dec_deg": -13.42128,
     "gmag": 14.886,
+    "rmag": 14.736,
     "ng": 132,
     "nr": 113,
 }
@@ -74,22 +101,206 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+
+def parse_readme(path: Path) -> dict[str, Any]:
+    size = path.stat().st_size
+    sha256 = digest_file(path, "sha256")
+    content = path.read_text(encoding="utf-8", errors="replace")
+    match = re.search(r"^\s*ztf2r\.dat\s+\d+\s+(\d+)", content, re.MULTILINE)
+    errors = []
+    if not match:
+        errors.append("CDS ReadMe does not contain a ztf2r.dat row count")
+        readme_rows = None
+    else:
+        readme_rows = int(match.group(1))
+    if sha256 != EXPECTED_README_SHA256:
+        errors.append(f"CDS ReadMe SHA-256 mismatch: {sha256}")
+    if size != EXPECTED_README_SIZE:
+        errors.append(f"CDS ReadMe size mismatch: {size} != {EXPECTED_README_SIZE}")
+    return {
+        "source_url": "https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true",
+        "size_bytes": size,
+        "sha256": sha256,
+        "published_ztf2r_rows": readme_rows,
+        "validation_errors": errors,
+    }
+
+
+def parse_table2(path: Path) -> tuple[dict[int, dict[str, Any]], dict[str, Any]]:
+    size = path.stat().st_size
+    sha256 = digest_file(path, "sha256")
+    rows: dict[int, dict[str, Any]] = {}
+    errors = []
+    record_count = 0
+    with path.open("r", encoding="ascii", errors="strict") as stream:
+        for line_number, line in enumerate(stream, start=1):
+            if not line.strip():
+                continue
+            record_count += 1
+            if len(line.rstrip("\r\n")) < 140:
+                errors.append(f"Table 2 line {line_number} is shorter than 140 columns")
+                continue
+            try:
+                seq = int(line[23:29])
+                ra_deg = float(line[30:39])
+                dec_deg = float(line[40:49])
+                rmag = float(line[96:102])
+                nr = int(line[136:140])
+            except ValueError:
+                errors.append(f"Table 2 line {line_number} has invalid fixed-width fields")
+                continue
+            if seq in rows:
+                errors.append(f"Duplicate Table 2 Seq {seq}")
+                continue
+            rows[seq] = {
+                "ra_deg": ra_deg,
+                "dec_deg": dec_deg,
+                "rmag": rmag,
+                "nr": nr,
+            }
+    if sha256 != EXPECTED_TABLE2_SHA256:
+        errors.append(f"Table 2 SHA-256 mismatch: {sha256}")
+    if size != EXPECTED_TABLE2_SIZE:
+        errors.append(f"Table 2 size mismatch: {size} != {EXPECTED_TABLE2_SIZE}")
+    if record_count != EXPECTED_TABLE2_RECORDS:
+        errors.append(
+            f"Table 2 record count mismatch: {record_count} != {EXPECTED_TABLE2_RECORDS}"
+        )
+    if len(rows) != record_count:
+        errors.append(f"Table 2 unique Seq count mismatch: {len(rows)} != {record_count}")
+    return rows, {
+        "source_url": "https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/table2.dat.gz",
+        "size_bytes": size,
+        "sha256": sha256,
+        "record_count": record_count,
+        "unique_seq_count": len(rows),
+        "sum_nr": sum(row["nr"] for row in rows.values()),
+        "validation_errors": errors,
+    }
+
+
+def reconcile_counts(
+    table2: dict[int, dict[str, Any]],
+    actual_counts: Counter[int],
+    archive_rows: int,
+    readme_rows: int | None,
+    mismatch_output: Path,
+) -> dict[str, Any]:
+    expected_total = sum(row["nr"] for row in table2.values())
+    actual_for_table2 = sum(actual_counts.get(seq, 0) for seq in table2)
+    mismatches = []
+    deficit_rows = 0
+    surplus_rows = 0
+    missing_seq_count = 0
+    with mismatch_output.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.writer(stream, delimiter="\t")
+        writer.writerow(
+            ["status", "Seq", "Table2_Nr", "Archive_rows", "delta", "RAdeg", "DEdeg", "rmag"]
+        )
+        for seq, reference in sorted(table2.items()):
+            expected = reference["nr"]
+            actual = actual_counts.get(seq, 0)
+            delta = actual - expected
+            if delta == 0:
+                continue
+            mismatches.append(
+                {
+                    "seq": seq,
+                    "expected_nr": expected,
+                    "actual_rows": actual,
+                    "delta": delta,
+                    "ra_deg": reference["ra_deg"],
+                    "dec_deg": reference["dec_deg"],
+                    "rmag": reference["rmag"],
+                }
+            )
+            if delta < 0:
+                deficit_rows += -delta
+            else:
+                surplus_rows += delta
+            if expected > 0 and actual == 0:
+                missing_seq_count += 1
+            writer.writerow(
+                ["COUNT_MISMATCH", seq, expected, actual, delta,
+                 reference["ra_deg"], reference["dec_deg"], reference["rmag"]]
+            )
+        archive_only = {
+            seq: count for seq, count in actual_counts.items() if seq not in table2
+        }
+        for seq, actual in sorted(archive_only.items()):
+            writer.writerow(["ARCHIVE_ONLY_SEQ", seq, "", actual, actual, "", "", ""])
+
+    top_mismatches = sorted(
+        mismatches, key=lambda row: (abs(row["delta"]), row["seq"]), reverse=True
+    )[:50]
+    top_archive_only = [
+        {"seq": seq, "archive_rows": count}
+        for seq, count in sorted(
+            archive_only.items(), key=lambda item: (item[1], item[0]), reverse=True
+        )[:50]
+    ]
+    return {
+        "table2_unique_seq_count": len(table2),
+        "table2_sum_nr": expected_total,
+        "archive_total_rows": archive_rows,
+        "archive_rows_for_table2_seq": actual_for_table2,
+        "archive_only_seq_count": len(archive_only),
+        "archive_only_rows": sum(archive_only.values()),
+        "archive_minus_table2_sum_nr": archive_rows - expected_total,
+        "table2_seq_net_delta": actual_for_table2 - expected_total,
+        "matched_seq_count": len(table2) - len(mismatches),
+        "mismatched_seq_count": len(mismatches),
+        "deficit_seq_count": sum(row["delta"] < 0 for row in mismatches),
+        "surplus_seq_count": sum(row["delta"] > 0 for row in mismatches),
+        "missing_seq_count": missing_seq_count,
+        "sum_deficit_rows": deficit_rows,
+        "sum_surplus_rows": surplus_rows,
+        "net_delta_for_table2_seq": surplus_rows - deficit_rows,
+        "published_readme_r_rows": readme_rows,
+        "archive_minus_readme_rows": (
+            archive_rows - readme_rows if readme_rows is not None else None
+        ),
+        "table2_sum_nr_minus_readme_rows": (
+            expected_total - readme_rows if readme_rows is not None else None
+        ),
+        "readme_count_matches_table2_sum_nr": (
+            expected_total == readme_rows if readme_rows is not None else None
+        ),
+        "readme_count_matches_archive_rows": (
+            archive_rows == readme_rows if readme_rows is not None else None
+        ),
+        "mismatch_tsv": str(mismatch_output),
+        "top_mismatches_by_absolute_delta": top_mismatches,
+        "top_archive_only_seq_ids": top_archive_only,
+    }
+
 def scan_archive(
     archive_path: Path,
     *,
+    table2_path: Path,
+    readme_path: Path,
+    mismatch_output: Path,
     target_seq: int = TABLE2_TARGET["source_id"],
     orphan_seq: int = 615172,
     expected_archive_md5: str | None = ZENODO_MD5,
-    expected_data_sha256: str | None = None,
-    expected_data_size: int | None = None,
-    expected_total_rows: int | None = None,
+    expected_archive_sha256: str | None = EXPECTED_ARCHIVE_SHA256,
+    expected_data_sha256: str | None = EXPECTED_MEMBER_SHA256,
+    expected_data_size: int | None = EXPECTED_MEMBER_SIZE,
+    expected_total_rows: int | None = EXPECTED_MEMBER_ROWS,
     spatial_radius_arcsec: float = 2.0,
 ) -> dict[str, Any]:
     archive_md5 = digest_file(archive_path, "md5")
     archive_sha256 = digest_file(archive_path, "sha256")
     errors: list[str] = []
+    warnings: list[str] = []
     if expected_archive_md5 and archive_md5 != expected_archive_md5:
         errors.append(f"Zenodo archive MD5 mismatch: {archive_md5}")
+    if expected_archive_sha256 and archive_sha256 != expected_archive_sha256:
+        errors.append(f"Zenodo archive SHA-256 mismatch: {archive_sha256}")
+    readme_report = parse_readme(readme_path)
+    errors.extend(readme_report["validation_errors"])
+    table2, table2_report = parse_table2(table2_path)
+    errors.extend(table2_report["validation_errors"])
 
     with zipfile.ZipFile(archive_path) as archive:
         members = [
@@ -111,6 +322,7 @@ def scan_archive(
         raise RuntimeError("Info-ZIP 'unzip' is required for this archive")
 
     selected: dict[int, list[dict[str, Any]]] = {}
+    actual_counts: Counter[int] = Counter()
     data_hash = hashlib.sha256()
     data_size = 0
     actual_crc = 0
@@ -168,6 +380,7 @@ def scan_archive(
                 malformed_rows += 1
                 continue
 
+            actual_counts[source_id] += 1
             separation = angular_separation_arcsec(
                 TABLE2_TARGET["ra_deg"], TABLE2_TARGET["dec_deg"],
                 values["ra_deg"], values["dec_deg"],
@@ -187,6 +400,7 @@ def scan_archive(
     data_sha256 = data_hash.hexdigest()
     actual_crc &= 0xFFFFFFFF
     crc_verified = actual_crc == expected_crc
+    archive_size_modulo_matches = info.file_size == data_size % (2**32)
     if unzip_returncode:
         errors.append(
             f"Info-ZIP exit code {unzip_returncode}: {unzip_stderr[-500:]}"
@@ -227,9 +441,17 @@ def scan_archive(
         <= 1.0
     )
 
+    if not errors and warnings:
+        status = "DISCOVERY_COMPLETE_WITH_SOURCE_DISCREPANCIES"
+    elif errors:
+        status = "FAILED_VALIDATION"
+    else:
+        status = "DISCOVERY_COMPLETE"
+
     return {
-        "status": "FAILED_VALIDATION" if errors else "DISCOVERY_COMPLETE",
+        "status": status,
         "validation_errors": errors,
+        "warnings": warnings,
         "source": {
             "record": ZENODO_SOURCE,
             "doi": "10.5281/zenodo.3886372",
@@ -243,10 +465,17 @@ def scan_archive(
             "md5_verified": (
                 expected_archive_md5 is None or archive_md5 == expected_archive_md5
             ),
+            "expected_sha256": expected_archive_sha256,
+            "sha256_verified": (
+                expected_archive_sha256 is None or archive_sha256 == expected_archive_sha256
+            ),
             "zip_member_crc32_expected": f"{expected_crc:08x}",
             "zip_member_crc32_actual": f"{actual_crc:08x}",
             "zip_member_crc32_matches": crc_verified,
-            "member_metadata": member_metadata,
+            "member_metadata": {
+                **member_metadata,
+                "central_directory_size_modulo_2_32_matches_actual": archive_size_modulo_matches,
+            },
             "unzip_returncode": unzip_returncode,
             "unzip_stderr": unzip_stderr,
         },
@@ -256,16 +485,19 @@ def scan_archive(
             "sha256": data_sha256,
             "expected_size_bytes": expected_data_size,
             "expected_sha256": expected_data_sha256,
-            "independent_member_hash_pinned": (
-                expected_data_sha256 is not None and expected_data_size is not None
-            ),
+            "expected_rows": expected_total_rows,
+            "first_discovery_reference": FIRST_DISCOVERY_REFERENCE,
             "pinned_integrity_verified": (
-                expected_data_sha256 is not None
-                and expected_data_size is not None
+                expected_data_sha256 is not None and expected_data_size is not None
+                and expected_total_rows is not None
                 and data_sha256 == expected_data_sha256
                 and data_size == expected_data_size
+                and data_rows == expected_total_rows
+                and crc_verified
             ),
         },
+        "table2_source": table2_report,
+        "readme_source": readme_report,
         "scan": {
             "data_rows": data_rows,
             "expected_data_rows": expected_total_rows,
@@ -278,9 +510,27 @@ def scan_archive(
             "orphan_seq": orphan_seq,
             "spatial_radius_arcsec": spatial_radius_arcsec,
         },
-        "table2_target": TABLE2_TARGET,
+        "table2_target": {
+            "catalog_reference": TABLE2_TARGET,
+            "parsed_row": table2.get(target_seq),
+        },
         "target_seq_summary": target_summary,
         "orphan_seq_summary": orphan_summary,
+        "cross_band_identity_diagnostic": {
+            "g_orphan_reference": G_BAND_ORPHAN,
+            "g_median_coordinate_separation_from_table2_arcsec": g_table2_separation,
+            "r_median_coordinate_separation_from_table2_arcsec": r_table2_separation,
+            "g_r_median_coordinate_separation_arcsec": g_r_separation,
+            "g_mean_magnitude_delta_from_table2": G_BAND_ORPHAN["gmag_mean"] - TABLE2_TARGET["gmag"],
+            "r_mean_magnitude_delta_from_table2": orphan_summary.get("rmag_mean_delta_from_table2"),
+            "hjd_ranges_overlap": hjd_overlap,
+            "interpretation": (
+                "STRONG_CROSS_BAND_IDENTITY_LEAD" if cross_band_identity
+                else "CROSS_BAND_IDENTITY_NOT_CONFIRMED"
+            ),
+            "no_automatic_source_id_remap": True,
+        },
+        "source_count_reconciliation": reconciliation,
         "comparison": {
             "target_seq_rows_match_table2_nr": (
                 target_summary.get("row_count") == TABLE2_TARGET["nr"]
@@ -316,12 +566,20 @@ def scan_archive(
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--archive", type=Path, required=True)
+    parser.add_argument("--table2", type=Path, required=True)
+    parser.add_argument("--readme", type=Path, required=True)
+    parser.add_argument("--mismatches-output", type=Path, required=True)
     parser.add_argument("--target-seq", type=int, default=TABLE2_TARGET["source_id"])
     parser.add_argument("--orphan-seq", type=int, default=615172)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     report = scan_archive(
-        args.archive, target_seq=args.target_seq, orphan_seq=args.orphan_seq
+        args.archive,
+        table2_path=args.table2,
+        readme_path=args.readme,
+        mismatch_output=args.mismatches_output,
+        target_seq=args.target_seq,
+        orphan_seq=args.orphan_seq,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
