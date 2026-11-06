@@ -46,10 +46,10 @@ jobs:
           set -euo pipefail
           curl --fail --location --retry 6 --retry-all-errors --retry-delay 10 \
             --output "$RUNNER_TEMP/table2.dat.gz" \
-            "https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/table2.dat.gz"
+            "http://vizier.nao.ac.jp/ftp/cats/J/ApJS/249/18/table2.dat.gz"
           curl --fail --location --retry 6 --retry-all-errors --retry-delay 10 \
             --output "$RUNNER_TEMP/ReadMe" \
-            "https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/ReadMe"
+            "http://vizier.nao.ac.jp/ftp/cats/J/ApJS/249/18/ReadMe"
           echo "56dc09d5e874c3acedea887d8f928accb4c344c4f354c274edb1af6f9a62e074  $RUNNER_TEMP/table2.dat.gz" | sha256sum --check -
           echo "e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a  $RUNNER_TEMP/ReadMe" | sha256sum --check -
           gzip --decompress --stdout "$RUNNER_TEMP/table2.dat.gz" > "$RUNNER_TEMP/table2.dat"
