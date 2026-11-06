@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Discover r-band archive identity evidence for the CPVS Seq 615170/615172 lead.
 
 This is a bounded, read-only scan. It never rewrites SourceIDs or CPVS membership.
@@ -466,6 +465,78 @@ def scan_archive(
     ]
     orphan_summary = summarize(orphan_rows)
     target_summary = summarize(target_rows)
+    if orphan_summary.get("row_count"):
+        orphan_summary["median_coordinate_separation_arcsec"] = angular_separation_arcsec(
+            orphan_summary["ra_median_deg"],
+            orphan_summary["dec_median_deg"],
+            TABLE2_TARGET["ra_deg"],
+            TABLE2_TARGET["dec_deg"],
+        )
+        orphan_summary["rmag_mean_delta_from_table2"] = (
+            orphan_summary["rmag_mean"] - TABLE2_TARGET["rmag"]
+        )
+    else:
+        orphan_summary["median_coordinate_separation_arcsec"] = None
+        orphan_summary["rmag_mean_delta_from_table2"] = None
+
+    reconciliation = reconcile_counts(
+        table2,
+        actual_counts,
+        data_rows,
+        readme_report["published_ztf2r_rows"],
+        mismatch_output,
+    )
+    if (
+        reconciliation["archive_minus_readme_rows"] != 0
+        or reconciliation["table2_sum_nr_minus_readme_rows"] != 0
+    ):
+        warnings.append(
+            "CDS ReadMe r-band record count differs from the Table 2 Nr sum and "
+            "the checksum-pinned Zenodo archive."
+        )
+    if reconciliation["mismatched_seq_count"] or reconciliation["archive_only_seq_count"]:
+        warnings.append(
+            "Per-Seq r-band counts differ from Table 2 Nr; review the complete mismatch TSV."
+        )
+    if not archive_size_modulo_matches:
+        warnings.append(
+            "The central-directory 32-bit size field does not equal the streamed size modulo 2^32."
+        )
+
+    r_table2_separation = orphan_summary.get("median_coordinate_separation_arcsec")
+    g_table2_separation = angular_separation_arcsec(
+        G_BAND_ORPHAN["ra_median_deg"],
+        G_BAND_ORPHAN["dec_median_deg"],
+        TABLE2_TARGET["ra_deg"],
+        TABLE2_TARGET["dec_deg"],
+    )
+    g_r_separation = None
+    if orphan_summary.get("row_count"):
+        g_r_separation = angular_separation_arcsec(
+            G_BAND_ORPHAN["ra_median_deg"],
+            G_BAND_ORPHAN["dec_median_deg"],
+            orphan_summary["ra_median_deg"],
+            orphan_summary["dec_median_deg"],
+        )
+    hjd_overlap = bool(
+        orphan_summary.get("row_count")
+        and max(G_BAND_ORPHAN["hjd_min"], orphan_summary["hjd_min"])
+        <= min(G_BAND_ORPHAN["hjd_max"], orphan_summary["hjd_max"])
+    )
+    cross_band_identity = bool(
+        target_summary.get("row_count") == 0
+        and orphan_summary.get("row_count") == TABLE2_TARGET["nr"]
+        and orphan_seq not in table2
+        and r_table2_separation is not None
+        and r_table2_separation <= 1.0
+        and g_table2_separation <= 1.0
+        and g_r_separation is not None
+        and g_r_separation <= 0.2
+        and abs(G_BAND_ORPHAN["gmag_mean"] - TABLE2_TARGET["gmag"]) <= 0.01
+        and abs(orphan_summary.get("rmag_mean_delta_from_table2", math.inf)) <= 0.01
+        and hjd_overlap
+    )
+
     if not errors and warnings:
         status = "DISCOVERY_COMPLETE_WITH_SOURCE_DISCREPANCIES"
     elif errors:
