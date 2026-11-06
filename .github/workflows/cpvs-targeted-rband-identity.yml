@@ -1,4 +1,4 @@
-name: CPVS Targeted r-Band Identity Discovery
+name: CPVS Targeted r-Band Identity and Count Reconciliation
 
 on:
   workflow_dispatch:
@@ -7,14 +7,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: cpvs-targeted-rband-identity-${{ github.ref }}
+  group: cpvs-targeted-rband-identity
   cancel-in-progress: false
 
 jobs:
   targeted-r-archive-scan:
-    name: Discover r-band evidence for Seq 615170 and 615172
+    name: Verify r-band archive and reconcile every Table 2 Seq
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - name: Check out source
         uses: actions/checkout@v7
@@ -40,21 +40,43 @@ jobs:
             --output "$RUNNER_TEMP/ztf2r.zip" \
             "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1"
 
-      - name: Scan r-band archive
+      - name: Download and verify CDS Table 2 and ReadMe
         shell: bash
         run: |
           set -euo pipefail
+          curl --fail --location --retry 6 --retry-all-errors --retry-delay 10 \
+            --output "$RUNNER_TEMP/table2.dat.gz" \
+            "https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/table2.dat.gz"
+          curl --fail --location --retry 6 --retry-all-errors --retry-delay 10 \
+            --output "$RUNNER_TEMP/ReadMe" \
+            "https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/ReadMe"
+          echo "56dc09d5e874c3acedea887d8f928accb4c344c4f354c274edb1af6f9a62e074  $RUNNER_TEMP/table2.dat.gz" | sha256sum --check -
+          echo "e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a  $RUNNER_TEMP/ReadMe" | sha256sum --check -
+          gzip --decompress --stdout "$RUNNER_TEMP/table2.dat.gz" > "$RUNNER_TEMP/table2.dat"
+          echo "2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881  $RUNNER_TEMP/table2.dat" | sha256sum --check -
+          test "$(stat -c %s "$RUNNER_TEMP/table2.dat")" = "178986858"
+
+      - name: Reconcile all r-band Seq counts against Table 2 Nr
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
           python scripts/diagnose_cpvs_rband_identity.py \
             --archive "$RUNNER_TEMP/ztf2r.zip" \
+            --table2 "$RUNNER_TEMP/table2.dat" \
+            --readme "$RUNNER_TEMP/ReadMe" \
             --target-seq 615170 \
             --orphan-seq 615172 \
-            --output "$RUNNER_TEMP/cpvs_rband_identity_discovery.json"
+            --output artifacts/cpvs_rband_identity_reconciliation.json \
+            --mismatches-output artifacts/cpvs_rband_seq_mismatches.tsv
 
-      - name: Upload bounded discovery report
+      - name: Upload bounded reconciliation evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: cpvs-rband-identity-discovery
-          path: ${{ runner.temp }}/cpvs_rband_identity_discovery.json
+          name: cpvs-rband-identity-reconciliation
+          path: |
+            artifacts/cpvs_rband_identity_reconciliation.json
+            artifacts/cpvs_rband_seq_mismatches.tsv
           if-no-files-found: warn
           retention-days: 30
