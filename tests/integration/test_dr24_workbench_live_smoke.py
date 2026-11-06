@@ -36,6 +36,10 @@ EXPECTED = {
         "epochs": 209, "flagged": 16, "clean": 193,
         "payload_sha256": "8fc2f95b389cb9cca129538f647dc83a1cf3b82cde37635a90f2d35ad9c596b8",
     },
+    289111400013506: {
+        "epochs": 24, "flagged": None, "clean": None,
+        "payload_sha256": None,
+    },
 }
 
 
@@ -99,10 +103,21 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                 summary = page.locator("#dr24Summary").inner_text()
                 assert f"OID {objectid}" in summary
                 assert f"epochs {expected['epochs']} / catalog {expected['epochs']}" in summary
-                assert expected["payload_sha256"] in summary
-                assert page.locator("#dr24Chart circle").count() == expected["epochs"]
-                assert page.locator('#dr24Chart circle[fill="#e0a34a"]').count() == expected["flagged"]
-                assert page.locator('#dr24Chart circle[fill="#55b8df"]').count() == expected["clean"]
+                payload_hash = summary.rsplit("payload SHA-256 ", 1)[1]
+                assert len(payload_hash) == 64
+                assert all(character in "0123456789abcdef" for character in payload_hash)
+                if expected["payload_sha256"] is not None:
+                    assert payload_hash == expected["payload_sha256"]
+                chart_points = page.locator("#dr24Chart circle").count()
+                flagged_points = page.locator('#dr24Chart circle[fill="#e0a34a"]').count()
+                clean_points = page.locator('#dr24Chart circle[fill="#55b8df"]').count()
+                unknown_points = page.locator('#dr24Chart circle[fill="#9aa4b2"]').count()
+                assert chart_points == expected["epochs"]
+                if expected["flagged"] is not None:
+                    assert flagged_points == expected["flagged"]
+                    assert clean_points == expected["clean"]
+                else:
+                    assert flagged_points + clean_points + unknown_points == expected["epochs"]
                 assert page.locator("#dr24EpochRows tr").count() == 50
 
                 provenance = json.loads(page.locator("#dr24Provenance").inner_text())
@@ -115,11 +130,16 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                     {
                         "objectid": objectid,
                         "epochs": expected["epochs"],
-                        "chart_points": page.locator("#dr24Chart circle").count(),
-                        "flagged_points": expected["flagged"],
-                        "clean_points": expected["clean"],
-                        "payload_sha256": expected["payload_sha256"],
-                        "payload_hash_match": True,
+                        "chart_points": chart_points,
+                        "flagged_points": flagged_points,
+                        "clean_points": clean_points,
+                        "unknown_flag_points": unknown_points,
+                        "payload_sha256": payload_hash,
+                        "payload_hash_validation": (
+                            "MATCHED_INDEPENDENT_HATS"
+                            if expected["payload_sha256"] is not None
+                            else "FORMAT_ONLY_NO_INDEPENDENT_REFERENCE"
+                        ),
                         "table_rows_rendered": 50,
                         "provenance_source": provenance["source"],
                     }
@@ -251,10 +271,10 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                 "fallback_used": False,
             },
             "limitations": [
-                "This verifies the DR24 Explorer UI for four pinned OIDs only.",
+                "This verifies the DR24 Explorer UI for five pinned OIDs only; four have independent HATS hash references and one has an availability-only reference.",
                 "The UI displays at most 50 raw epoch rows per OID.",
                 "No feature generation, inference, color correction, HMJD conversion, or quality filtering is performed.",
-                "This is not a 5–10 object application acceptance test or a 30–50 object Park demonstration.",
+                "The five OIDs represent three BTS-associated candidate targets and are not five confirmed astrophysical objects. This is not the 5–10 object application acceptance test or a 30–50 object Park demonstration.",
             ],
         }
         output = os.getenv("DR24_WORKBENCH_SMOKE_OUTPUT")
