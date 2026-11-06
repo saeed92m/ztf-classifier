@@ -40,6 +40,14 @@ EXPECTED = {
         "epochs": 24, "flagged": None, "clean": None,
         "payload_sha256": None,
     },
+    347104300029855: {
+        "epochs": 368, "flagged": None, "clean": None,
+        "payload_sha256": None,
+    },
+    725113200004086: {
+        "epochs": 1165, "flagged": None, "clean": None,
+        "payload_sha256": None,
+    },
 }
 
 
@@ -271,10 +279,10 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                 "fallback_used": False,
             },
             "limitations": [
-                "This verifies the DR24 Explorer UI for five pinned OIDs only; four have independent HATS hash references and one has an availability-only reference.",
+                "This verifies the DR24 Explorer UI for seven pinned OIDs; four have independent HATS hash references and three have availability-only references.",
                 "The UI displays at most 50 raw epoch rows per OID.",
                 "No feature generation, inference, color correction, HMJD conversion, or quality filtering is performed.",
-                "The five OIDs represent three BTS-associated candidate targets and are not five confirmed astrophysical objects. This is not the 5–10 object application acceptance test or a 30–50 object Park demonstration.",
+                "The seven OIDs represent five BTS-associated spatial candidates and are not seven confirmed astrophysical objects. This is not the 5–10 object application acceptance test or a 30–50 object Park demonstration.",
             ],
         }
         output = os.getenv("DR24_WORKBENCH_SMOKE_OUTPUT")
