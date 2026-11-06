@@ -118,7 +118,7 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                     assert clean_points == expected["clean"]
                 else:
                     assert flagged_points + clean_points + unknown_points == expected["epochs"]
-                assert page.locator("#dr24EpochRows tr").count() == 50
+                assert page.locator("#dr24EpochRows tr").count() == min(50, expected["epochs"])
 
                 provenance = json.loads(page.locator("#dr24Provenance").inner_text())
                 assert provenance["source"] == "IRSA ZTF DR24 Lightcurves HATS"
@@ -140,7 +140,7 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                             if expected["payload_sha256"] is not None
                             else "FORMAT_ONLY_NO_INDEPENDENT_REFERENCE"
                         ),
-                        "table_rows_rendered": 50,
+                        "table_rows_rendered": min(50, expected["epochs"]),
                         "provenance_source": provenance["source"],
                     }
                 )
