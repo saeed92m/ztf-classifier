@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-rband-identity-20261107",
+  "objective": "Run an independent bounded scan of the checksum-pinned Zenodo r-band archive to test the Seq 615170/615172 identity lead from the g-band diagnostic and discover any other SourceIDs within two arcseconds of the Table 2 target.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Zenodo DOI 10.5281/zenodo.3886372",
+      "status": "VERIFIED",
+      "detail": "The published record identifies ztf2r.zip and MD5 daa7bc45c67579253eebe6b1c09dfbd9."
+    },
+    {
+      "source": "PR #265 workflow 42063847111, artifact 13432972969",
+      "status": "VERIFIED",
+      "detail": "The g-band archive integrity checks passed. Seq 615170 has zero g rows; Seq 615172 has 132 rows with median separation 0.5202627 arcsec and mean g magnitude delta +0.00004545 mag."
+    },
+    {
+      "source": "Table 2 entry for Seq 615170",
+      "status": "VERIFIED",
+      "detail": "Table 2 reports Nr=113 and coordinates RA 307.36563 deg, Dec -13.42128 deg."
+    }
+  ],
+  "baseline": {
+    "scientific_baseline": "v0.2.0 immutable",
+    "cpvs_parent_count": 781602,
+    "cpvs_published_reference_count": 730184,
+    "cpvs_reconstructed_candidate_count": 741786,
+    "cpvs_candidate_only_count": 11602,
+    "selector": "unchanged"
+  },
+  "expected_improvement": [
+    "Acquire r-band evidence independent of the g-band archive.",
+    "Report row counts for Seq 615170 and Seq 615172 and all source IDs with rows within two arcseconds of the Table 2 target.",
+    "Record the r archive checksum, extracted-member SHA-256, byte count, row count, field distribution, and malformed-row count."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The identity lead is supported by g-band data only; the r-band archive has not been independently scanned.",
+        "after": "The r-band scan will compare the target and orphan Seq counts, coordinate separations, HJD, r magnitude, error and flags, while preserving all nearby SourceIDs as candidates."
+      },
+      "reproducibility": {
+        "before": "The Zenodo r archive MD5 is published, but no extracted-member hash, size or row count is pinned in the project evidence.",
+        "after": "The first run records independent extracted-member SHA-256, size and row count. These values remain discovery evidence until reviewed and pinned in a second reproducibility run."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_RUN",
+    "scientific_gate_affected": false,
+    "evidence": []
+  },
+  "failure_analysis": {
+    "status": "NOT_ASSESSED",
+    "hypothesis": "The 113 r-band rows associated with Table 2 Seq 615170 may be stored under a nearby orphan SourceID, potentially Seq 615172. This must be tested against the raw archive."
+  },
+  "knowledge_extraction": {
+    "status": "PENDING",
+    "findings": []
+  },
+  "regression": {
+    "status": "NOT_RUN",
+    "open_blockers": [
+      "Run the synthetic tests and the source-backed r archive scan.",
+      "Review the archive MD5, extracted-member SHA-256, size, row count, ZIP CRC and malformed-row count.",
+      "If the first scan is complete, pin the observed extracted-member SHA-256, size and row count and rerun independently.",
+      "Reconcile all r-band SourceID counts against Table 2 Nr; the targeted scan is not a full reconciliation.",
+      "Do not change the CPVS selector or infer a source-ID remapping from spatial proximity alone."
+    ]
+  },
+  "decision": "PENDING",
+  "knowledge_carried_forward": [
+    "The r-band scan is a discovery step; its first observed member hash/size/row count are not independently pinned.",
+    "The 2-arcsecond radius only retrieves candidate rows. It is not an identity rule.",
+    "Do not map SourceIDs automatically and do not claim that this scan resolves the 11,602 membership discrepancy.",
+    "Do not modify thresholds, selector, published reference, or frozen v0.2.0 artifacts."
+  ]
+}\n
