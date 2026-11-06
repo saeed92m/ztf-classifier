@@ -74,6 +74,15 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
     assert manifest["totals"]["catalog_epochs"] == sum(
         item["epochs"] for item in EXPECTED.values()
     )
+    manifest_hashes = {
+        int(item["objectid"]): item["independent_payload_hash"]
+        for target in manifest["targets"]
+        for item in target["oids"]
+    }
+    assert manifest_hashes == {
+        objectid: expected["payload_sha256"]
+        for objectid, expected in EXPECTED.items()
+    }
     from playwright.sync_api import sync_playwright
 
     settings = ApiSettings(
