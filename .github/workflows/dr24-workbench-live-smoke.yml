@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   live-browser-smoke:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     env:
       ZTF_DR24_WORKBENCH_LIVE_TEST: "1"
