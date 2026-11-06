@@ -119,3 +119,49 @@ def test_backend_reports_missing_oids_and_source_provenance() -> None:
     assert "per filter/field/quadrant" in interpretation["identity"]
     assert "multiple OIDs" in interpretation["identity"]
     assert result.provenance["epoch_count"] == 2
+
+
+
+def test_backend_rejects_catalog_epoch_count_mismatch() -> None:
+    class Collection:
+        all_indexes: ClassVar[dict[str, object]] = {"objectid": object()}
+
+    class Query:
+        def compute(self) -> pd.DataFrame:
+            return pd.DataFrame(
+                [
+                    {
+                        "objectid": 123,
+                        "filterid": 1,
+                        "fieldid": 100,
+                        "rcid": 4,
+                        "objra": 120.0,
+                        "objdec": -20.0,
+                        "nepochs": 3,
+                        "lightcurve": pd.DataFrame(
+                            {
+                                "hmjd": [60000.1, 60000.2],
+                                "mag": [18.2, 18.3],
+                                "magerr": [0.03, 0.04],
+                                "clrcoeff": [0.1, 0.1],
+                                "catflags": [0, 32768],
+                            }
+                        ),
+                    }
+                ]
+            )
+
+    class Catalog:
+        all_columns: ClassVar[set[str]] = {
+            "objectid", "filterid", "fieldid", "rcid", "objra", "objdec",
+            "nepochs", "lightcurve",
+        }
+        hc_collection: ClassVar[Collection] = Collection()
+
+        def id_search(self, *, values: dict[str, list[int]]) -> Query:
+            assert values == {"objectid": [123]}
+            return Query()
+
+    backend = DR24LightcurveBackend(lambda *_args, **_kwargs: Catalog())
+    with pytest.raises(DR24AcquisitionError, match="epoch-count mismatch"):
+        backend.acquire(DR24LightcurveRequest((123,)))
