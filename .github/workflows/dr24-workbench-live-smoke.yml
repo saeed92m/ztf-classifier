@@ -1,0 +1,69 @@
+name: DR24 Workbench Live Browser Smoke
+
+on:
+  push:
+    branches:
+      - research/dr24-workbench-live-smoke-20261105
+    paths:
+      - .github/workflows/dr24-workbench-live-smoke.yml
+      - src/ztf_classifier/web/static/app.js
+      - src/ztf_classifier/web/static/index.html
+      - tests/integration/test_dr24_workbench_live_smoke.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
+      - tests/test_dr24_lightcurve_backend.py
+  pull_request:
+    branches:
+      - feat/dr24-raw-workbench-view-20261105
+    paths:
+      - .github/workflows/dr24-workbench-live-smoke.yml
+      - src/ztf_classifier/web/static/app.js
+      - src/ztf_classifier/web/static/index.html
+      - tests/integration/test_dr24_workbench_live_smoke.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
+      - tests/test_dr24_lightcurve_backend.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dr24-workbench-live-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live-browser-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ZTF_DR24_WORKBENCH_LIVE_TEST: "1"
+      DR24_WORKBENCH_SMOKE_OUTPUT: reports/dr24_workbench_live_smoke.json
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install locked and DR24 dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e ".[dr24]"
+          python -m pip install playwright==1.56.0
+
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+
+      - name: Run live Workbench browser test
+        run: python -m pytest -q tests/integration/test_dr24_workbench_live_smoke.py
+
+      - name: Upload bounded browser evidence
+        if: always() && hashFiles('reports/dr24_workbench_live_smoke.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: dr24-workbench-live-smoke
+          path: reports/dr24_workbench_live_smoke.json
+          if-no-files-found: error
+          retention-days: 14
