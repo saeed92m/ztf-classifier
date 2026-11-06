@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-live-payload-probe-trigger-20261105",
+  "objective": "Enable one bounded live DR24 HATS payload probe from an isolated research-branch push, without requiring a browser session or changing the default-branch workflow behavior.",
+  "previous_knowledge_consumed": [
+    "The existing DR24 payload probe workflow supports workflow_dispatch and a hard maximum of five OIDs.",
+    "The probe uses the indexed objectid field and preserves raw payload values.",
+    "A prior independent DR24 source-backed run retrieved four OIDs and 626 epochs with matching payload hashes.",
+    "The current GitHub connector can update branches and create pull requests but does not expose a workflow_dispatch action.",
+    "A branch-scoped push trigger can provide a reproducible, authorized alternative to a manual UI dispatch."
+  ],
+  "baseline": {
+    "revision": "main@bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c",
+    "description": "A one-branch workflow trigger extension. The push trigger is restricted to research/dr24-live-payload-probe-20261105. Existing workflow_dispatch remains available. No runtime, model, feature, taxonomy, benchmark, or scientific threshold changes."
+  },
+  "expected_improvement": [
+    "reproducibility",
+    "correctness"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "MEASURED",
+        "before": "The registered probe workflow required workflow_dispatch for live retrieval.",
+        "after": "A push trigger restricted to one named research branch starts the same bounded probe. The default OID list is explicit and remains limited to three IDs."
+      },
+      "reproducibility": {
+        "status": "MEASURED",
+        "before": "A live rerun depended on a manual workflow dispatch.",
+        "after": "Workflow run 42061697065 completed. It returned all three requested OIDs and 417 epochs. Artifact 13432467426 was downloaded and its ZIP, epoch CSV, summary, and manifest hashes were recomputed."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The workflow retrieves raw payloads only. It does not test astrophysical identity, feature compatibility, model inference, calibration, or anomaly performance."
+      },
+      "reliability": {
+        "status": "MEASURED",
+        "before": "No source-backed result had been recorded for the isolated branch trigger.",
+        "after": "The run returned all three OIDs with no missing IDs. Per-OID payload counts match catalog nepochs. All 417 HMJD, magnitude, and magnitude-error values are finite; all magnitude errors are positive. The epoch CSV and summary hashes match the manifest."
+      }
+    },
+    "trade_off": "Use a branch-specific trigger to avoid manual UI access. Keep the trigger limited to the exact research branch and retain contents: read permissions."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Created isolated branch research/dr24-live-payload-probe-20261105 from main.",
+      "Added a push trigger limited to that branch and three explicit OIDs.",
+      "Preserved the existing workflow_dispatch input and the hard maximum of five OIDs.",
+      "The deterministic payload contract-tests job passed in workflow run 42061697065.",
+      "The source-backed payload-probe job completed successfully in workflow run 42061697065.",
+      "Artifact 13432467426 has SHA-256 dd472e43fb1bf2400a92f93169de3dc0c87d78fdd7d6a542706a1b3480e00cc5.",
+      "The epoch CSV has 417 rows and SHA-256 143bcd1e80473d01c7f66fd8c2380abc463cce690325ffaa54dbd445f18e6c77.",
+      "The summary JSON SHA-256 is 906a73dc5ff80d60f6af56e25ddee88c5905d64867367880b18865ce11ecc932; the manifest SHA-256 is 8072ef97f3f5e8d0d9b031ff9b4ee27a0332d82323a7528ef92a4bae5d021f84.",
+      "Returned OIDs were 264114400013085, 264214400000912, and 278115200026587; no missing OIDs were reported.",
+      "Per-OID epoch counts were 78, 123, and 216; all matched catalog nepochs.",
+      "catflags was preserved without filtering: 377 rows have value 0 and 40 rows have value 32768."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "No branch-scoped push trigger existed for this bounded probe workflow."
+    ],
+    "unresolved": [
+      "The source-backed run uses three OIDs, while the prior reference run uses four; the three shared OID payload hashes match, but the combined CSV hash differs because the fourth OID is absent.",
+      "The application API endpoint and Workbench UI remain outside this workflow's scope."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A narrowly scoped push trigger can run the existing source probe without manual workflow dispatch.",
+      "A workflow run is not evidence of successful retrieval until its job, artifact, schema, hashes, and object counts are inspected.",
+      "Keep the source probe separate from application integration and scientific validation."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Verify the current PR CI and lifecycle gates after the lifecycle record update.",
+      "The probe does not exercise PR #264's API endpoint or PR #267's Workbench UI.",
+      "Do not merge the workflow change unless the isolated trigger and all checks pass."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep the push trigger restricted to the exact research branch.",
+    "Do not increase the OID cap or broaden the retrieval scope.",
+    "Keep raw values and provenance unchanged.",
+    "Do not claim API/UI integration or scientific validation from this probe."
+  ]
+}
