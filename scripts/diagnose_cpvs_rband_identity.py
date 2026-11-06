@@ -435,12 +435,6 @@ def scan_archive(
     ]
     orphan_summary = summarize(orphan_rows)
     target_summary = summarize(target_rows)
-    identity_lead = bool(
-        orphan_summary.get("row_count") == TABLE2_TARGET["nr"]
-        and orphan_summary.get("nearest_coordinate_separation_arcsec", math.inf)
-        <= 1.0
-    )
-
     if not errors and warnings:
         status = "DISCOVERY_COMPLETE_WITH_SOURCE_DISCREPANCIES"
     elif errors:
@@ -460,6 +454,7 @@ def scan_archive(
         },
         "archive": {
             "filename": archive_path.name,
+            "size_bytes": archive_path.stat().st_size,
             "md5": archive_md5,
             "sha256": archive_sha256,
             "md5_verified": (
@@ -475,6 +470,11 @@ def scan_archive(
             "member_metadata": {
                 **member_metadata,
                 "central_directory_size_modulo_2_32_matches_actual": archive_size_modulo_matches,
+                "central_directory_size_interpretation": (
+                    "32-bit central-directory size equals the full streamed size modulo 2^32"
+                    if archive_size_modulo_matches
+                    else "central-directory size does not match streamed size modulo 2^32"
+                ),
             },
             "unzip_returncode": unzip_returncode,
             "unzip_stderr": unzip_stderr,
@@ -531,33 +531,14 @@ def scan_archive(
             "no_automatic_source_id_remap": True,
         },
         "source_count_reconciliation": reconciliation,
-        "comparison": {
-            "target_seq_rows_match_table2_nr": (
-                target_summary.get("row_count") == TABLE2_TARGET["nr"]
-            ),
-            "orphan_seq_rows_match_table2_nr": (
-                orphan_summary.get("row_count") == TABLE2_TARGET["nr"]
-            ),
-            "orphan_seq_nearest_separation_arcsec": orphan_summary.get(
-                "nearest_coordinate_separation_arcsec"
-            ),
-            "orphan_seq_matches_table2_nr_and_within_one_arcsec": identity_lead,
-            "interpretation": (
-                "STRONG_R_BAND_IDENTITY_LEAD"
-                if identity_lead else "R_BAND_IDENTITY_NOT_CONFIRMED"
-            ),
-            "nearby_source_ids": spatial_candidates,
-        },
-        "warnings": (
-            ["ZIP CRC does not match. The archive checksum and extracted-member hash/size are reported separately."]
-            if not crc_verified else []
-        ),
+        "nearby_source_ids": spatial_candidates,
         "limitations": [
-            "This is a discovery scan. The extracted-member SHA-256, byte count and row count are not pinned until this first result is reviewed.",
+            "The extracted-member hash, byte count and row count are pinned to the first source-backed scan as internal reproducibility references, not Zenodo-published checksums.",
+            "The CDS ReadMe r-band row count differs from the checksum-pinned archive stream and the Table 2 Nr sum; this remains a source metadata discrepancy.",
             "The 2-arcsecond search radius is a candidate-retrieval bound, not an identity rule.",
-            "A coordinate match is not an automatic SourceID correction.",
-            "This targeted scan does not reconcile every r-band SourceID against Table 2 Nr.",
-            "This scan does not explain the 11,602 candidate-only CPVS membership residuals.",
+            "A cross-band identity lead is not an automatic SourceID correction.",
+            "Per-Seq count mismatches require review before any SourceID mapping decision.",
+            "This archive audit does not explain the 11,602 candidate-only CPVS membership residuals.",
             "No CPVS selector, threshold, model, feature set, taxonomy or frozen v0.2.0 artifact is changed.",
         ],
     }
