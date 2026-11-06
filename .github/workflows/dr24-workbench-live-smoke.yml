@@ -9,6 +9,12 @@ on:
       - src/ztf_classifier/web/static/app.js
       - src/ztf_classifier/web/static/index.html
       - tests/integration/test_dr24_workbench_live_smoke.py
+  pull_request:
+    paths:
+      - .github/workflows/dr24-workbench-live-smoke.yml
+      - src/ztf_classifier/web/static/app.js
+      - src/ztf_classifier/web/static/index.html
+      - tests/integration/test_dr24_workbench_live_smoke.py
 
 permissions:
   contents: read
