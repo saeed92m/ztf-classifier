@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-workbench-live-browser-smoke-20261106",
+  "objective": "Extend the DR24 Explorer browser smoke to four pinned OIDs and test that missing catflags are displayed as unknown, not clean.",
+  "previous_knowledge_consumed": [
+    "PR #267 adds a raw-only DR24 Explorer that preserves HMJD, native photometry and catflags.",
+    "PR #270 verified FastAPI-to-HATS payload parity for three OIDs (417 epochs).",
+    "PR #259 verified a fourth OID payload as part of a four-OID HATS sample; its catalog nepochs matched 209 returned epochs.",
+    "The previous browser smoke verified three OIDs, 417 epochs, missing-OID behavior and source-failure behavior.",
+    "Missing catflags must not be interpreted as catflags=0."
+  ],
+  "baseline": {
+    "revision": "PR #267 branch feat/dr24-raw-workbench-view-20261105",
+    "description": "Test-only branch based on the Workbench implementation. No model, feature, taxonomy, benchmark, or release changes."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "before": "The browser smoke covered three OIDs and did not test missing catflags.",
+        "after": "The browser test now covers four OIDs (626 expected epochs) and includes a synthetic null-catflags case. Live execution is pending."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "before": "Browser evidence covered three OIDs.",
+        "after": "The expanded test compares four per-OID payload hashes and records raw-source provenance. Live execution is pending."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The browser view remains raw-only. It does not validate astrophysical identity, photometric normalization, feature generation, inference, calibration, OOD, or anomaly performance."
+      }
+    },
+    "trade_off": "Use four independently pinned OIDs. The fourth OID comes from the previously verified four-OID payload artifact. No additional source acquisition is required for this test revision."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Existing browser run 42073257588 passed for three OIDs and 417 epochs.",
+      "The independent HATS payload artifact from run 41674212725 contains four OIDs and 626 epochs; OID 278215200018105 has 209 epochs and canonical SHA-256 8fc2f95b389cb9cca129538f647dc83a1cf3b82cde37635a90f2d35ad9c596b8.",
+      "The new test adds a null-catflags UI fixture. It must render in a neutral unknown state, not as a clean epoch.",
+      "The new branch must pass the live browser workflow before this cycle can be marked verified."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "A prior rerun on ubuntu-latest failed before tests because Playwright 1.56 does not support the Ubuntu 26.04 runner image. The workflow is now pinned to ubuntu-24.04."
+    ],
+    "unresolved": [
+      "The four-OID browser rerun is pending.",
+      "A 5–10 object application acceptance test with source selection, QC, exports and a reproducibility bundle remains open.",
+      "The raw-only path does not validate feature generation or inference."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A null catflags value is unknown quality metadata and must not be colored as unflagged.",
+      "Bit 15 remains visible; this UI does not filter epochs.",
+      "The browser test must verify the exact API payload and its displayed representation."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the four-OID browser test on the supported Ubuntu runner.",
+      "Then build the separate 5–10 object application smoke with a valid source/identity/QC contract.",
+      "Then complete the 30–50 object guided Park demonstration."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep the DR24 Explorer raw-only and separate from frozen v0.2.0 inference.",
+    "Do not filter catflags or relabel HMJD.",
+    "Unknown catflags are not equivalent to zero or clean.",
+    "Do not claim Park MVP acceptance from this browser smoke."
+  ]
+}
