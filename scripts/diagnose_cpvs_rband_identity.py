@@ -518,6 +518,7 @@ def scan_archive(
             "expected_sha256": expected_data_sha256,
             "expected_rows": expected_total_rows,
             "first_discovery_reference": FIRST_DISCOVERY_REFERENCE,
+            "second_discovery_reference": SECOND_DISCOVERY_REFERENCE,
             "pinned_integrity_verified": (
                 expected_data_sha256 is not None and expected_data_size is not None
                 and expected_total_rows is not None
