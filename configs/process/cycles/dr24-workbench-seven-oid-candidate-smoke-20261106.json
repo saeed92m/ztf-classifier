@@ -21,19 +21,19 @@
   "measurement": {
     "metrics": {
       "correctness": {
-        "status": "NOT_MEASURED",
+        "status": "MEASURED",
         "before": "Five-OID browser smoke covered three BTS-associated candidate identifiers and 650 epochs.",
-        "after": "The seven-OID test covers five BTS-associated candidate identifiers and 2183 expected epochs. Four OIDs have independent payload hashes; three are checked for availability, epoch parity, chart count and SHA-256 format. Live rerun is pending."
+        "after": "Seven-OID browser workflow 42233590242 passed for 2183 epochs across five BTS-associated spatial candidate identifiers. Chart counts match epoch counts for all seven OIDs. Four OIDs matched independent HATS hashes; three OIDs passed availability, epoch-count, chart-count and SHA-256-format checks without independent payload-hash references."
       },
       "reproducibility": {
-        "status": "NOT_MEASURED",
+        "status": "MEASURED",
         "before": "Five-OID sample was not linked to a machine-readable candidate sample manifest.",
-        "after": "A versioned sample manifest records the BTS/DR24 source artifacts, hashes, candidate IDs, OIDs, filters, epoch counts, angular separations and explicit no-grouping policy. The test checks manifest/OID/hash consistency."
+        "after": "Artifact 13510103766, ZIP SHA-256 43a61483b10b0b158ac45d09713df02873643e6f924bfbcfc8b366bb3e0cc0f8. Report records PR head 90f6603d41f945589e46ebd368a8192964f5031d, base ed2ac91bf027b4081c727690ac0599acabe6f699, workflow revision e9811ab19641e209e04ac053b31117af4d05078f, per-OID counts, hashes, provenance and failure contracts. The browser test verifies the candidate manifest OID set, hash references, candidate-only status and totals."
       },
       "reliability": {
-        "status": "NOT_MEASURED",
+        "status": "MEASURED",
         "before": "Five-OID browser test passed.",
-        "after": "The test now covers 7 OIDs and verifies the 50-row cap, including the 24-row short curve and longer 368- and 1165-epoch curves. Live rerun is pending."
+        "after": "Seven OIDs returned and rendered: 78, 123, 216, 209, 24, 368 and 1165 points. Table rows were 50, 50, 50, 50, 24, 50 and 50. The null-catflags fixture rendered gray, not clean. Missing-OID and source-failure UI passed; no fallback was used."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
@@ -43,25 +43,31 @@
     "trade_off": "Use seven OIDs across five BTS-associated candidate IDs. This is a raw lookup sample, not a confirmed five-object scientific sample. Three OIDs lack independent payload-hash references."
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
-      "Candidate manifest: configs/samples/dr24_park_raw_candidate_sample_v0.1.json.",
-      "BTS-to-DR24 spatial recovery artifact 13179927852, ZIP SHA-256 dbbd39759d11645cfa044538d786960b3bf221d25a9b73b849f136a735e1f830.",
-      "DR24 lightcurve availability artifact 13184608092, ZIP SHA-256 84548734b39fa5e1639e6b06ed54d0630c23603b4c6a803b3e7c0935966de7e3.",
-      "Manifest totals: five candidate external IDs, seven OIDs, 2183 catalog epochs; four OIDs have independent HATS payload hashes and three do not.",
-      "The test verifies that the manifest OID set and hash-reference map exactly match the pinned browser test expectations.",
-      "The seven-OID live browser workflow must pass before this cycle is marked verified."
+      "Seven-OID browser workflow 42233590242 passed on PR head 90f6603d41f945589e46ebd368a8192964f5031d; base revision ed2ac91bf027b4081c727690ac0599acabe6f699; workflow revision e9811ab19641e209e04ac053b31117af4d05078f.",
+      "Artifact 13510103766: ZIP SHA-256 43a61483b10b0b158ac45d09713df02873643e6f924bfbcfc8b366bb3e0cc0f8.",
+      "Seven OIDs returned and rendered: 264114400013085 (78), 264214400000912 (123), 278115200026587 (216), 278215200018105 (209), 289111400013506 (24), 347104300029855 (368), 725113200004086 (1165). Total 2183 epochs.",
+      "All seven chart point counts matched epoch counts. Table rows were 50, 50, 50, 50, 24, 50 and 50, respecting the 50-row cap.",
+      "The first four canonical payload SHA-256 values matched independent HATS references. The last three have only availability evidence and recorded API hashes; they do not have independent payload-hash references.",
+      "Flagged/unflagged counts: 7/71, 8/115, 25/191, 16/193, 1/23, 36/332 and 84/1081.",
+      "The candidate manifest consistency checks passed: five unique BTS external IDs, seven OIDs, 2183 catalog epochs, exact OID set, exact independent-hash reference map, and candidate-only/no-grouping policy.",
+      "Synthetic catflags=null UI: PASS. The marker rendered gray (unknown), not blue (unflagged); the quality legend was visible.",
+      "Missing-OID UI: PASS. Source-failure UI: PASS. Silent ALeRCE fallback: false.",
+      "The five BTS external IDs are spatial candidates only. The test does not confirm physical identity or authorize OID grouping."
     ]
   },
   "failure_analysis": {
-    "status": "PARTIALLY_DIAGNOSED",
-    "root_causes": [],
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The first five-OID browser test failed because it expected 50 table rows for an OID with 24 epochs. The UI correctly rendered 24 rows. The assertion was corrected to min(50, epochs). The subsequent five-OID run passed, and the seven-OID expansion also passed."
+    ],
     "unresolved": [
-      "Run the seven-OID live browser workflow and inspect its evidence artifact.",
-      "Acquire independent payload-hash references for the three OIDs without them.",
-      "The five BTS identifiers remain spatial candidates; physical-source identity is not confirmed.",
-      "A 5–10 object application acceptance test still requires validated source mapping, descriptive QC, exports and a reproducibility bundle."
+      "The last three OIDs still need independent payload-hash references.",
+      "The five BTS external IDs remain spatial candidates; physical-source identity is not confirmed.",
+      "No general OID-to-source grouping or identity acceptance has been established.",
+      "The full 5–10 object application acceptance test still requires a source-target workflow, descriptive QC, exports and a complete reproducibility bundle."
     ]
   },
   "knowledge_extraction": {
@@ -73,21 +79,25 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "PASS",
     "open_blockers": [
-      "Pass the seven-OID browser rerun.",
-      "Independently verify the three additional payload hashes.",
-      "Do not use candidate associations as training labels or model evaluation ground truth.",
-      "Add descriptive raw QC diagnostics, exports and a complete reproducibility bundle.",
+      "Independently verify the payload hashes for the three OIDs without independent references.",
+      "Validate at least five astrophysical source targets with evidence-backed source identity before claiming the 5–10 object application acceptance test.",
+      "Add descriptive raw QC diagnostics that preserve all epochs and do not apply an unapproved quality mask.",
+      "Add catalog/report export and a complete reproducibility bundle.",
+      "Keep DR24 raw data separate from frozen v0.2.0 inference until time and photometry mapping are validated.",
       "Complete the 30–50 object guided Park demonstration."
     ]
   },
   "decision": "REVISE",
   "knowledge_carried_forward": [
-    "Keep the candidate sample raw-only and explicitly marked as spatial candidate associations.",
+    "Seven-OID raw Workbench smoke is verified for 2183 epochs; four payload hashes match independent HATS references and three do not have independent references.",
+    "The candidate manifest records five BTS spatial candidate IDs and seven OIDs, but it does not approve physical identity or grouping.",
+    "The 50-row table cap is a maximum; short light curves display all available rows.",
     "Do not count OIDs as astrophysical objects.",
-    "Do not group OIDs without independent identity evidence.",
+    "Missing catflags are unknown, not clean.",
+    "Keep DR24 raw exploration separate from frozen v0.2.0 inference.",
     "Do not filter catflags or relabel HMJD.",
-    "Keep DR24 raw exploration separate from frozen v0.2.0 inference."
+    "Do not claim Park MVP acceptance from this raw OID smoke."
   ]
 }
