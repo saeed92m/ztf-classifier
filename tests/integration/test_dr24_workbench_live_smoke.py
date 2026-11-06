@@ -171,6 +171,9 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
             )
             assert page.locator('#dr24Chart circle[fill="#9aa4b2"]').count() == 1
             assert page.locator('#dr24Chart circle[fill="#55b8df"]').count() == 0
+            assert page.get_by_text(
+                "Blue: bit 15 not set · amber: bit 15 set · gray: catflags unavailable"
+            ).is_visible()
 
             no_record_oid = 987654321
             no_record_payload = {
