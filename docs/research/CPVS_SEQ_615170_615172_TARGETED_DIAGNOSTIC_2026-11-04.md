@@ -142,7 +142,16 @@ The first source-backed r-band scan completed in [workflow 42311975704](https://
 - Streamed rows: \`109,971,576\`; zero malformed rows; all rows had seven fields.
 - The central-directory 32-bit size value was \`1,880,700,064\`, which equals the streamed size modulo \(2^{32}\). The same modulo pattern exists in the g archive. The full stream reached EOF and the CRC matched; do not interpret the 32-bit size field as the full uncompressed size.
 
-The extracted-member SHA-256, byte count and row count are pinned to this first run as internal reproducibility references. They are not Zenodo-published member checksums. The next run must reproduce them.
+An independent second run, [workflow 42311984342](https://github.com/saeed92m/ztf-classifier/actions/runs/42311984342), artifact 13548792994, reproduced the first run exactly:
+
+- Same archive MD5 and SHA-256.
+- Same ZIP member CRC-32.
+- Same extracted-member size: 6,175,667,360 bytes.
+- Same extracted-member SHA-256.
+- Same row count: 109,971,576.
+- Same target/orphan row counts and summary values.
+
+The two artifact ZIPs have different SHA-256 values because they are separate workflow artifacts. Both embedded JSON reports have the same SHA-256. The extracted-member SHA-256 is an internal reproducibility reference, not a Zenodo-published member checksum. The pinned full reconciliation run will verify these values again.
 
 ### Seq 615170 / 615172 cross-band identity evidence
 
