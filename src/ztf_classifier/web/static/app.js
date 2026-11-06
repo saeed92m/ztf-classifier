@@ -490,7 +490,8 @@ async function loadDR24Explorer() {
     '<button class="primary-button" id="dr24LoadButton" type="button">Load raw light curve</button>',
     '</div><p id="dr24Status" class="muted" role="status">No DR24 object loaded.</p></section>',
     '<section class="panel"><div class="panel-header"><div><div class="panel-title">Native DR24 light curve</div>',
-    '<div class="panel-subtitle">Time coordinate: HMJD · magnitude: native ZTF system</div></div></div>',
+    '<div class="panel-subtitle">Time coordinate: HMJD · magnitude: native ZTF system</div>', 
+    '<div class="panel-subtitle">Blue: bit 15 not set · amber: bit 15 set · gray: catflags unavailable</div></div></div>',
     '<div id="dr24Summary" class="muted">Load an OID to inspect its epochs.</div>',
     '<div class="chart" style="margin-top:16px"><svg id="dr24Chart" viewBox="0 0 900 280" preserveAspectRatio="none" role="img" aria-label="Native DR24 light curve"></svg>',
     '<div class="axis-label x">HMJD (HJD − 2400000.5) →</div><div class="axis-label y">mag</div></div></section>',
@@ -553,9 +554,12 @@ async function loadDR24Explorer() {
           const circles = points.map(point => {
             const x = 35 + ((point.x - xmin) / xspan) * 830;
             const y = 18 + ((point.y - ymin) / yspan) * 235;
-            const flagged = (Number(point.flags) & 32768) !== 0;
+            const flagsKnown = typeof point.flags === "number" &&
+              Number.isInteger(point.flags) && point.flags >= 0;
+            const flagged = flagsKnown && (point.flags & 32768) !== 0;
+            const fill = !flagsKnown ? "#9aa4b2" : (flagged ? "#e0a34a" : "#55b8df");
             return '<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) +
-              '" r="3" fill="' + (flagged ? "#e0a34a" : "#55b8df") +
+              '" r="3" fill="' + fill +
               '" fill-opacity="0.85"><title>HMJD ' + point.x + ', mag ' + point.y +
               ', catflags ' + escapeHtml(point.flags) + '</title></circle>';
           }).join("");
