@@ -174,3 +174,79 @@ Scientific evidence must be source-backed, reproducible, and provenance-complete
 ## 12. Permanent engineering rule
 
 No future Stage is allowed to start from a clean conceptual slate when relevant validated knowledge already exists. The inherited baseline, prior failures, benchmark lessons, regression history, and architectural decisions are inputs to the next Stage.
+
+
+## 2026-11-04 — DR24 raw acquisition and CPVS validation update
+
+This section supplements the existing v2.1 process controls. It does not change the frozen v0.2.0 scientific baseline.
+
+### Native ZTF DR24 acquisition
+
+The development branch adds an optional, bounded raw-data adapter for the official IRSA ZTF DR24 Lightcurves HATS catalog.
+
+- API: \`GET /v1/dr24/objects/{objectid}/lightcurve\`.
+- Optional installation: \`python -m pip install "ztf-classifier[dr24]"\`.
+- Backend request limit: 10 unique positive OIDs.
+- Lookup: indexed \`objectid\` search only; no full-catalog scan.
+- Provenance: requested/returned/missing OIDs, schema-column SHA-256, per-OID payload SHA-256, source metadata, and retrieval timestamp.
+- Failure behavior: explicit acquisition error; no ALeRCE fallback.
+
+The endpoint returns native DR24 data. It is not the normalized observation stream used by the frozen v0.2.0 feature and inference path.
+
+### Source semantics and scientific limits
+
+- \`hmjd\` is heliocentric Modified Julian Date (\`HJD - 2400000.5\`) at the exposure midpoint. Do not relabel it as geocentric MJD.
+- \`mag\` uses the native ZTF calibration with zero AB color (\`g-r=0\`) assumed.
+- \`magerr\` is the reported magnitude uncertainty and does not include all calibration/systematic terms.
+- \`clrcoeff\` is the native linear color term. No color correction is applied by the raw adapter.
+- \`catflags\` is preserved without a quality mask. Bit 15 (32768) marks cloud/moon-affected epochs; any production mask requires a versioned scientific contract.
+- \`filterid\` maps 1/2/3 to g/r/i.
+- A ZTF OID is defined per filter, field, and quadrant. One astrophysical source may have multiple OIDs. The adapter does not group or cross-match them.
+
+IRSA source documentation: https://caltech-ipac.github.io/irsa-tutorials/ztf-lightcurves/
+
+### DR24 acceptance status
+
+The raw adapter, API route, unit tests, and API/research documentation are present on the development branch. PR #264 is Draft and is not merged.
+
+Not yet verified:
+- live indexed HATS acquisition on a bounded 30–50 OID sample;
+- complete source-backed payload/schema/hash regression on a clean environment;
+- time-coordinate and photometric normalization policy;
+- versioned quality-flag policy;
+- AOIC cross-OID identity and cross-match policy;
+- normalized DR24-to-feature-to-inference execution;
+- independent benchmark, calibration, abstention, and OOD validation.
+
+A passing ordinary CI run is necessary but does not establish these scientific properties.
+
+### CPVS membership validation blocker
+
+The historical comparison remains:
+- Parent Table 2: 781,602 unique IDs.
+- Published reference: 730,184 unique IDs.
+- Reconstructed candidates: 741,786 IDs.
+- Candidate-only: 11,602.
+- Published-only: 0.
+
+Against published membership only, the object-level counts are TP=730,184, FP=11,602, FN=0, TN=39,816. These are membership-agreement metrics, not astrophysical ground-truth or model-performance metrics.
+
+The candidate/reference intersection equals the reference. The candidate ∩ four-field-positive Table 2 set also equals the reference, but the published method describes the two-band SNR threshold and common period from Table 2. It does not document the four-field-positive condition. All 11,602 candidate-only objects have a finite positive common `Per` value, so missing common period does not explain their exclusion. Table 2 reports `Ng=0` for 13 and `Nr=0` for 1 of these objects, despite qualifying raw-archive detections in both bands; this is another source-level count mismatch. Do not treat the four-field coincidence as the root cause.
+
+The 100- and 1,000-object diagnostic samples were independently reproduced exactly with the fixed SHA-256 seed. The 55 four-field-only controls have incomplete archived lightcurve coverage. A possible Seq 615170/615172 mismatch remains a hypothesis pending raw coordinate/time comparison.
+
+Research notes:
+- \`docs/research/CPVS_MEMBERSHIP_CONFUSION_MATRIX_2026-11-04.md\`
+- \`docs/research/CPVS_FIXED_SAMPLE_REPRODUCTION_2026-11-04.md\`
+- \`docs/research/CPVS_55_CONTROL_ARCHIVE_IDENTITY_LEAD_2026-11-04.md\`
+- \`docs/research/CPVS_VIZIER_SEPARATOR_PARSER_DIAGNOSTIC_2026-11-04.md\`
+
+Keep the CPVS blocker open until the parser regression passes, the independent membership crosswalk completes, and the 11,602 residuals have a reproducible source-level explanation.
+
+### Baseline and release controls
+
+- v0.2.0 feature, model, class order, and benchmark remain immutable.
+- ALeRCE labels remain benchmark/reference labels, not independent ground truth.
+- No release or tag was created.
+- PR #264 remains Draft. PR #244 remains Draft.
+- Do not merge or publish until current-head CI passes and the required scientific evidence is complete.

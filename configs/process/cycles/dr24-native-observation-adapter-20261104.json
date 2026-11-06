@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-native-observation-adapter-20261104",
+  "objective": "Add bounded, provenance-preserving native DR24 Lightcurves acquisition at the Observation Service and API boundary without changing the frozen v0.2.0 feature or model contracts.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Issue #253",
+      "status": "VERIFIED",
+      "detail": "The existing ObservationService uses ALeRCE; DR24 payload retrieval was previously isolated in a probe."
+    },
+    {
+      "source": "docs/research/DR24_LIGHTCURVE_PAYLOAD_MAPPING_NOTES.md",
+      "status": "VERIFIED",
+      "detail": "DR24 HMJD, photometry, color coefficient, catflags and OID partition metadata require explicit handling."
+    }
+  ],
+  "baseline": {
+    "main_sha": "bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "expected_improvement": [
+    "Add a bounded indexed DR24 objectid acquisition contract.",
+    "Expose source-native lightcurve payloads through the Observation Service and explicit API route.",
+    "Preserve OID, filter, field, readout-channel, schema and payload-hash provenance.",
+    "Keep scientific normalization blocked until source semantics are approved and validated."
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "No bounded native DR24 indexed lightcurve adapter was exposed by the Observation Service.",
+        "after": "The adapter requires indexed objectid lookup, rejects duplicate/unrequested OIDs, rejects non-integer/boolean/non-positive returned OIDs without lossy coercion, and rejects catalog nepochs/payload-row mismatches. Dedicated regression tests cover malformed OIDs and epoch-count mismatch."
+      },
+      "reproducibility": {
+        "before": "No per-OID canonical payload hash or catalog schema hash was recorded by the application path.",
+        "after": "The adapter records per-OID payload SHA-256, catalog schema SHA-256, requested/returned/missing OIDs, and native provenance. The dependent live API smoke verified exact payload-hash parity for three pinned OIDs (417 epochs); a seven-OID browser smoke is being extended on the dependent Workbench branch."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "scientific_gate_affected": false,
+    "status": "VERIFIED",
+    "evidence": [
+      "Current PR head 06669fe6c366771d5ff1c364c7c58815d1e1c03c passed workflow run 42232182784: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit and CI Gate all succeeded.",
+      "Test Suite: 655 passed, 10 skipped, 9 warnings, 0 failures.",
+      "CodeQL run 42232182802 passed.",
+      "Product Scope Audit run 42232182762 passed.",
+      "Scientific Validation contract run 42232182779 passed, but source-backed DR24/ALeRCE, StarEmbed, source-provenance and historical-reference jobs were skipped. This is not scientific validation.",
+      "Regression coverage rejects catalog nepochs/payload-row mismatches and rejects returned OID values that are non-integer, boolean, non-positive, or require lossy integer coercion.",
+      "Dependent API/HATS run 42063653144 verified three pinned OIDs and 417 epochs; all three canonical payload SHA-256 values matched independent HATS references. This run predates the latest strict-ID hardening commit.",
+      "Dependent five-OID Workbench run 42232639126 passed for 650 epochs, but it predates the latest strict-ID hardening commit. A seven-OID browser run is pending against the dependent Workbench branch.",
+      "The 10 skipped tests remain unresolved: 3 require frozen feature/raw-detection artifacts and 7 require the production v0.2.0 model artifact."
+    ]
+  },
+  "failure_analysis": {
+    "known_risks": [
+      "HMJD-to-MJD strategy is not approved.",
+      "DR24-to-ALeRCE photometric equivalence is not established.",
+      "Production catflags policy is not approved.",
+      "No general cross-OID identity rule is implemented."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "Raw DR24 acquisition can be implemented without changing the frozen v0.2.0 feature contract.",
+      "The raw source adapter must not imply that HMJD is MJD or that raw DR24 measurements are inference-ready."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [
+      "The 10 skipped tests still require frozen feature/raw-detection artifacts and the production model artifact. Provision them through a controlled, hash-verified test workflow before claiming inference-path coverage.",
+      "Rerun live API/HATS parity on the latest adapter commit 06669fe6c366771d5ff1c364c7c58815d1e1c03c. Existing API parity run predates the latest strict-ID hardening commit.",
+      "No validated DR24-to-source-neutral normalization, time-basis policy, photometric mapping, production quality policy, or general OID identity/grouping is implemented.",
+      "No DR24 feature generation or model inference is enabled; do not use native DR24 payloads with the frozen v0.2.0 model.",
+      "The 5–10 source-target application acceptance test, descriptive QC, exports, and full reproducibility bundle remain open.",
+      "The 30–50 source-target guided Park demonstration remains open."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep raw DR24 acquisition separate from normalized model observations until time, photometry, quality and identity contracts pass scientific validation.",
+    "Never silently substitute ALeRCE when DR24 acquisition fails.",
+    "IRSA documents ZTF object IDs as per-filter/field/quadrant identities; one astrophysical source may have multiple OIDs. Keep raw OIDs separate until AOIC cross-match is implemented and validated.",
+    "The versioned API contract in docs/api/API_V1.md now documents the raw DR24 endpoint, optional extra, request bounds, source-native response fields, error codes, and scientific/identity limitations.",
+    "The v2.1 handbook now includes a dated 2026-11-04 section for the DR24 raw endpoint, its source semantics and identity boundary, current acceptance blockers, CPVS membership status, and baseline/release controls.",
+    "The current handbook records that all 11602 CPVS candidate-only objects have a finite positive common Per value; missing common period does not explain the discrepancy. Table 2 Ng/Nr counts also require reconciliation with raw archive detections."
+  ]
+}

@@ -731,3 +731,33 @@ def test_application_settings_are_persisted_and_validated(tmp_path: Path) -> Non
     )
     assert invalid.status_code == 422
     assert client.get("/v1/settings").json() == saved.json()
+
+
+def test_dr24_native_endpoint_uses_observation_service_without_normalizing() -> None:
+    class FakeDR24ObservationService(FakeObservationService):
+        def get_dr24_native_lightcurve(self, objectid: int) -> dict[str, object]:
+            assert objectid == 123456
+            return {
+                "schema_version": "ztf-dr24-native-lightcurve-v1",
+                "records": [{"objectid": objectid, "epochs": [{"hmjd": 60000.1}]}],
+                "provenance": {"source": "IRSA ZTF DR24 Lightcurves HATS"},
+            }
+
+    client = TestClient(
+        create_app(
+            ApiSettings(),
+            observation_service=FakeDR24ObservationService(),  # type: ignore[arg-type]
+        )
+    )
+    response = client.get("/v1/dr24/objects/123456/lightcurve")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["records"][0]["epochs"][0]["hmjd"] == 60000.1
+    assert payload["provenance"]["source"] == "IRSA ZTF DR24 Lightcurves HATS"
+
+
+def test_dr24_native_endpoint_rejects_non_positive_objectid() -> None:
+    client = TestClient(create_app(ApiSettings()))
+    response = client.get("/v1/dr24/objects/0/lightcurve")
+    assert response.status_code == 422
+    assert response.json()["code"] == "dr24_objectid_invalid"

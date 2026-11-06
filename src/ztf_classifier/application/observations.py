@@ -15,17 +15,39 @@ from ztf_classifier.domain.observations import (
 from ztf_classifier.io.alerce import alerce_to_internal_lc_robust
 from ztf_classifier.io.alerce_detection import AlerceDetectionBackend
 from ztf_classifier.io.detection_acquisition import DetectionAcquisitionRequest
+from ztf_classifier.io.dr24_lightcurve import (
+    DR24LightcurveBackend,
+    DR24LightcurveRequest,
+)
 from ztf_classifier.io.parquet_detection_store import ParquetDetectionStore
 
 
 class ObservationService:
     """Retrieve and normalize ZTF observations through a source adapter."""
 
-    def __init__(self, client: object, cache_dir: Path) -> None:
+    def __init__(
+        self,
+        client: object,
+        cache_dir: Path,
+        *,
+        dr24_backend: DR24LightcurveBackend | None = None,
+    ) -> None:
         self._backend = AlerceDetectionBackend(
             client=client,
             store=ParquetDetectionStore(cache_dir),
         )
+        self._dr24_backend = dr24_backend or DR24LightcurveBackend()
+
+    def get_dr24_native_lightcurve(self, objectid: int) -> dict[str, object]:
+        """Acquire source-native DR24 epochs without model normalization.
+
+        This method deliberately does not convert HMJD to MJD, apply a
+        catflags mask, perform color correction, or merge survey OIDs.
+        """
+        result = self._dr24_backend.acquire(
+            DR24LightcurveRequest((objectid,))
+        )
+        return result.to_dict()
 
     def get_observations(
         self,

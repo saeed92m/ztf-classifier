@@ -58,6 +58,10 @@ web = [
     "plotly",
     "streamlit",
 ]
+dr24 = [
+    "lsdb==0.10.4",
+    "s3fs>=2026.9.0,<2027.0.0",
+]
 dev = [
     "pytest",
     "pytest-cov",
