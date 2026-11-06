@@ -1,6 +1,14 @@
 name: CPVS Targeted r-Band Identity Discovery
 
 on:
+  push:
+    branches:
+      - research/cpvs-seq-identity-20261104
+    paths:
+      - .github/workflows/cpvs-targeted-rband-identity.yml
+      - scripts/diagnose_cpvs_rband_identity.py
+      - tests/test_cpvs_rband_identity.py
+      - configs/process/cycles/cpvs-rband-identity-20261107.json
   pull_request:
     branches: [main]
     paths:
@@ -12,6 +20,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: cpvs-targeted-rband-identity-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   targeted-r-archive-scan:
