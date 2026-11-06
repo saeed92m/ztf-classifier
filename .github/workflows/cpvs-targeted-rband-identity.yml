@@ -29,6 +29,11 @@ jobs:
           python -m pip install --upgrade pip==26.2 setuptools==84.1.0 wheel==0.48.0
           python -m pip install -r requirements.lock
 
+      - name: Lint and format the diagnostic
+        run: |
+          python -m ruff check scripts/diagnose_cpvs_rband_identity.py tests/test_cpvs_rband_identity.py
+          python -m ruff format --check scripts/diagnose_cpvs_rband_identity.py tests/test_cpvs_rband_identity.py
+
       - name: Run synthetic regression tests
         run: python -m pytest -q tests/test_cpvs_rband_identity.py
 
