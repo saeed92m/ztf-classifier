@@ -37,7 +37,13 @@ FIRST_DISCOVERY_REFERENCE = {
     "artifact_id": 13550020720,
     "artifact_zip_sha256": "0d64d338998fc62694d0cc4527ed9cf95544bda5156168ab642ca3731602c80b",
     "report_sha256": "2c31b258dffddc3eff0cd6cdc70bb7bf743e180608004b4b808ec06d6710f3e8",
-    "interpretation": "First source-backed discovery run; member hashes are internal reproducibility references, not Zenodo-published checksums.",
+}
+SECOND_DISCOVERY_REFERENCE = {
+    "workflow_run_id": 42311984342,
+    "artifact_id": 13548792994,
+    "artifact_zip_sha256": "1f9342ba5b8b1fcc9fde17d4b24ff79a0eb00b45d386fb0487a5700662275d1e",
+    "report_sha256": "2c31b258dffddc3eff0cd6cdc70bb7bf743e180608004b4b808ec06d6710f3e8",
+    "interpretation": "Independent second run reproduced the first run's archive hash, member CRC, extracted member SHA-256, size, row count and target/orphan summaries. Member hash is an internal reproducibility reference, not a Zenodo-published checksum.",
 }
 G_BAND_ORPHAN = {
     "source_id": 615172,
