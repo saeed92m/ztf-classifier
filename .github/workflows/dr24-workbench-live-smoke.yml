@@ -10,6 +10,8 @@ on:
       - src/ztf_classifier/web/static/app.js
       - src/ztf_classifier/web/static/index.html
       - tests/integration/test_dr24_workbench_live_smoke.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
+      - tests/test_dr24_lightcurve_backend.py
   pull_request:
     branches:
       - feat/dr24-raw-workbench-view-20261105
@@ -18,6 +20,8 @@ on:
       - src/ztf_classifier/web/static/app.js
       - src/ztf_classifier/web/static/index.html
       - tests/integration/test_dr24_workbench_live_smoke.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
+      - tests/test_dr24_lightcurve_backend.py
 
 permissions:
   contents: read
