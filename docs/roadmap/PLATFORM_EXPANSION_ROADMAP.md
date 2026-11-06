@@ -1,6 +1,6 @@
 # Astronomical Data Analysis & Discovery Platform — Product Roadmap
 
-**Status date:** 2026-11-05  
+**Status date:** 2026-11-07  
 **Software release:** v1.0.1 (immutable)  
 **Park delivery tracker:** Issue #158  
 **DR24 application integration:** Issue #253  
@@ -23,11 +23,11 @@ Do not use an old readiness percentage as a current completion measure. A new pe
 ## P0 — Park MVP: DR24-backed exploratory workflow
 Acceptance target: a scientist can run a bounded, reproducible demonstration without terminal use for the normal workflow.
 
-1. Review the raw DR24 adapter in PR #264 and verify current-head checks.
+1. Review the raw DR24 adapter in PR #264. Its current-head CI passed; keep the PR unmerged until review and dependencies are resolved.
 2. Define a curated, evidence-backed OID mapping for the demo sample. Keep ambiguous identities separate.
 3. Complete source-aware acquisition behind the application service boundary. Keep ALeRCE as a separate source; never silently fall back.
 4. Define a versioned DR24 raw/QC contract. Preserve HMJD and native photometry; do not invent color correction or OID grouping.
-5. Complete a 5–10-object smoke test with per-object status, hashes, QC, plots, and manifest.
+5. Complete a 5–10-object smoke test with confirmed source identity, per-object status, hashes, QC, plots, and manifest. Component-level API and browser smoke tests pass, but this full acceptance test remains open.
 6. Integrate source selection, provenance, QC, missing-data reasons, and exports into the Workbench.
 7. Complete a 30–50-object guided demonstration and offline replay.
 8. Generate the Park report from actual run artifacts.
@@ -62,14 +62,29 @@ The published v1.0.1 package is not a self-contained desktop installer. Windows/
 | Gate | Exit evidence | Current status |
 |---|---|---|
 | M0 — frozen baseline | Artifact/schema/class-order integrity | Baseline definition preserved; local artifact verification still required |
-| M1 — raw DR24 adapter | Bounded indexed acquisition, schema and payload hashes | PARTIAL; PR #264 Draft |
-| M2 — normalized exploratory data | Versioned QC and identity policy, fixture tests | NOT ACCEPTED |
-| M3 — smoke test | 5–10 objects end-to-end with manifest | NOT VERIFIED |
+| M1 — raw DR24 adapter | Bounded indexed acquisition, schema and payload hashes | VERIFIED for tested OIDs; PR #264 remains under review |
+| M2 — normalized exploratory data | Versioned QC and identity policy, fixture tests | PARTIAL; descriptive QC/export pass, production selection and identity policy not accepted |
+| M3 — smoke test | 5–10 confirmed sources end-to-end with manifest | PARTIAL; component tests pass, complete acceptance workflow not verified |
 | M4 — guided demo | 30–50 objects, Workbench, exports, offline replay | NOT VERIFIED |
 | M5 — scientific model expansion | Labeled dataset and leakage-safe independent evaluation | NOT ACCEPTED |
 | M6 — distribution | Clean-machine platform packaging | NOT ACCEPTED |
 
 No milestone is complete because code exists. Require the stated evidence and recorded acceptance.
+
+
+## Evidence update — 2026-11-07
+
+The following component-level results are verified for the tested OIDs:
+
+- [Direct HATS probe](https://github.com/saeed92m/ztf-classifier/actions/runs/42061697065): 3 OIDs and 417 epochs; catalog `nepochs` matched returned rows; artifact 13432467426.
+- [Repeatability evidence, PR #269](https://github.com/saeed92m/ztf-classifier/pull/269): two four-OID runs, 626 epochs, matching epoch CSV and summary JSON hashes.
+- [FastAPI-to-HATS smoke](https://github.com/saeed92m/ztf-classifier/actions/runs/42063653144): one live test passed in 70.05 seconds; artifact 13430999878.
+- [API failure contracts](https://github.com/saeed92m/ztf-classifier/actions/runs/42065074402): passed.
+- [Workbench browser smoke](https://github.com/saeed92m/ztf-classifier/actions/runs/42275261463): one test passed in 86.93 seconds; seven OIDs, 2,183 epochs; artifact 13532578108.
+
+These tests establish bounded acquisition, API connectivity, raw-data display, descriptive QC and JSON export for their tested cases. They do not establish physical-source identity, cross-OID grouping, production QC selection, HMJD/photometric transformations, DR24 features, classifier inference or scientific validity.
+
+The seven-OID browser test is not the 5–10 confirmed-source end-to-end acceptance test. The 30–50 object guided demonstration remains NOT VERIFIED. Keep the next milestone focused on a complete, replayable 5–10 confirmed-source run.
 
 ## Next concrete action
 Complete PR #264 review and build the smallest end-to-end DR24 exploratory path. The first measurable proof is the 5–10-object smoke test. Do not start with bulk data acquisition, CIN runtime, or a new model.
