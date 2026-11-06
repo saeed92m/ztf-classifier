@@ -97,6 +97,18 @@ def _json_scalar(value: Any) -> Any:
     )
 
 
+def _positive_objectid(value: Any) -> int:
+    """Validate a returned catalog OID without lossy integer coercion."""
+    scalar = _json_scalar(value)
+    if (
+        not isinstance(scalar, int)
+        or isinstance(scalar, bool)
+        or scalar <= 0
+    ):
+        raise DR24AcquisitionError("DR24 returned an invalid objectid value.")
+    return scalar
+
+
 def _canonical_records(frame: pd.DataFrame) -> tuple[tuple[dict[str, Any], ...], str]:
     missing = sorted(set(PAYLOAD_COLUMNS) - set(frame.columns))
     if missing:
@@ -163,7 +175,9 @@ class DR24LightcurveBackend:
             if frame["objectid"].duplicated().any():
                 raise DR24AcquisitionError("DR24 returned duplicate objectid rows.")
 
-            returned = {int(value) for value in frame["objectid"].tolist()}
+            returned = {
+                _positive_objectid(value) for value in frame["objectid"].tolist()
+            }
             requested = set(request.objectids)
             unexpected = sorted(returned - requested)
             if unexpected:
@@ -190,6 +204,20 @@ class DR24LightcurveBackend:
                         f"Cannot decode nested payload for DR24 OID {oid}."
                     ) from exc
                 epochs, digest = _canonical_records(payload_frame)
+                catalog_nepochs = _json_scalar(row["nepochs"])
+                if (
+                    not isinstance(catalog_nepochs, int)
+                    or isinstance(catalog_nepochs, bool)
+                    or catalog_nepochs < 0
+                ):
+                    raise DR24AcquisitionError(
+                        f"DR24 OID {oid} has an invalid catalog epoch count."
+                    )
+                if catalog_nepochs != len(epochs):
+                    raise DR24AcquisitionError(
+                        f"DR24 OID {oid} epoch-count mismatch: "
+                        f"catalog={catalog_nepochs}, payload={len(epochs)}."
+                    )
                 records.append(
                     DR24LightcurveRecord(
                         objectid=oid,
@@ -198,7 +226,7 @@ class DR24LightcurveBackend:
                         rcid=int(row["rcid"]),
                         objra=float(row["objra"]),
                         objdec=float(row["objdec"]),
-                        catalog_nepochs=int(row["nepochs"]),
+                        catalog_nepochs=catalog_nepochs,
                         epochs=epochs,
                         payload_sha256=digest,
                     )
