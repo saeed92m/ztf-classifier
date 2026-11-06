@@ -190,6 +190,20 @@ class DR24LightcurveBackend:
                         f"Cannot decode nested payload for DR24 OID {oid}."
                     ) from exc
                 epochs, digest = _canonical_records(payload_frame)
+                catalog_nepochs = _json_scalar(row["nepochs"])
+                if (
+                    not isinstance(catalog_nepochs, int)
+                    or isinstance(catalog_nepochs, bool)
+                    or catalog_nepochs < 0
+                ):
+                    raise DR24AcquisitionError(
+                        f"DR24 OID {oid} has an invalid catalog epoch count."
+                    )
+                if catalog_nepochs != len(epochs):
+                    raise DR24AcquisitionError(
+                        f"DR24 OID {oid} epoch-count mismatch: "
+                        f"catalog={catalog_nepochs}, payload={len(epochs)}."
+                    )
                 records.append(
                     DR24LightcurveRecord(
                         objectid=oid,
@@ -198,7 +212,7 @@ class DR24LightcurveBackend:
                         rcid=int(row["rcid"]),
                         objra=float(row["objra"]),
                         objdec=float(row["objdec"]),
-                        catalog_nepochs=int(row["nepochs"]),
+                        catalog_nepochs=catalog_nepochs,
                         epochs=epochs,
                         payload_sha256=digest,
                     )
