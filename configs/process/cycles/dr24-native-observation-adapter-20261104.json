@@ -30,11 +30,11 @@
     "metrics": {
       "reliability": {
         "before": "No bounded native DR24 indexed lightcurve adapter was exposed by the Observation Service.",
-        "after": "A raw-only adapter accepts at most 10 unique OIDs and rejects unindexed broad scans."
+        "after": "The raw-only adapter accepts at most 10 unique positive OIDs, requires the objectid index, rejects duplicate/unrequested IDs, and now rejects any mismatch between catalog nepochs and nested payload row count."
       },
       "reproducibility": {
         "before": "No per-OID canonical payload hash or catalog schema hash was recorded by the application path.",
-        "after": "The adapter records per-OID payload SHA-256, catalog schema SHA-256, requested/returned/missing OIDs, and native provenance."
+        "after": "The adapter records per-OID payload SHA-256, catalog schema SHA-256, requested/returned/missing OIDs, and native provenance. The dependent live API smoke verified exact payload-hash parity for three pinned OIDs (417 epochs)."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED"
@@ -43,8 +43,17 @@
   },
   "validation": {
     "scientific_gate_affected": false,
-    "status": "NOT_VERIFIED",
-    "evidence": "Feature branch only; CI and source-backed runtime execution are pending."
+    "status": "VERIFIED",
+    "evidence": [
+      "Current-head CI run 42229309968 passed Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate.",
+      "Test Suite: 650 passed, 10 skipped, 9 warnings, 0 failures. The 10 skips remain unresolved for full product validation: 3 require frozen feature/raw detection artifacts and 7 require the production v0.2.0 model artifact, which is not present in the CI checkout.",
+      "CodeQL run 42229309863 passed.",
+      "Product Scope Audit run 42229310076 passed.",
+      "Scientific Validation contract run 42229310007 passed, but the source-backed DR24/ALeRCE, StarEmbed, source-provenance, and historical-reference jobs were skipped. This is not a scientific validation pass.",
+      "Dependent PR #270 live API run 42063653144 passed for three pinned OIDs and 417 epochs. All three API canonical payload SHA-256 values matched the independent HATS references; catalog epoch counts matched payload row counts.",
+      "Dependent PR #271 browser run 42073257588 passed for three OIDs and 417 plotted epochs. It verified raw rendering, provenance, 50-row table cap, bit-15 flag display, missing-OID behavior, source-failure behavior, and no ALeRCE fallback.",
+      "Added a regression test that rejects a catalog nepochs value that does not match the nested epoch payload row count."
+    ]
   },
   "failure_analysis": {
     "known_risks": [
@@ -62,11 +71,14 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "PASS",
     "open_blockers": [
-      "Current-head CI has not run.",
-      "The DR24 adapter has not been source-backed through the production environment.",
-      "No normalized DR24-to-feature-to-inference path is implemented."
+      "The 10 skipped tests still require the frozen feature/raw detection artifacts and production model artifact; these must be provisioned in a controlled, hash-verified test workflow before claiming full inference-path coverage.",
+      "Live API parity currently covers three pinned OIDs; expand the application-level smoke to at least five OIDs and retain an independent HATS evidence bundle.",
+      "No validated DR24-to-source-neutral normalization, time-basis policy, photometric mapping, production quality policy, or AOIC identity grouping is implemented.",
+      "No DR24 feature generation or model inference is enabled; do not use native DR24 payloads with the frozen v0.2.0 model.",
+      "The 5–10 object application acceptance test, exports, and full reproducibility bundle remain open.",
+      "The 30–50 object guided Park demonstration remains open."
     ]
   },
   "decision": "REVISE",
