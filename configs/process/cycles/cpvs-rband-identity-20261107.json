@@ -32,6 +32,11 @@
       "source": "CDS ReadMe J/ApJS/249/18",
       "status": "VERIFIED",
       "detail": "The ReadMe File Summary lists 89,697,393 rows for ztf2r.dat, which conflicts with both the sum of Table 2 Nr and the checksum-pinned Zenodo r archive stream."
+    },
+    {
+      "source": "Independent second r-band scan workflow 42311984342, artifact 13548792994",
+      "status": "VERIFIED",
+      "detail": "Independent run reproduced the first run's archive MD5/SHA-256, ZIP member CRC-32, extracted-member SHA-256, 6,175,667,360-byte size, 109,971,576 rows and target/orphan summaries."
     }
   ],
   "baseline": {
@@ -56,7 +61,7 @@
       },
       "reproducibility": {
         "before": "The Zenodo r archive MD5 is published, but no extracted-member hash, size or row count is pinned in the project evidence.",
-        "after": "The first r scan verified archive MD5 daa7bc45c67579253eebe6b1c09dfbd9, archive SHA-256 48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74, member CRC 225495a0, extracted member SHA-256 78df6d0b22099a7e5c6e74b897682c6ab94f90d5f9e887d4b0b3b152514e50fe, 6,175,667,360 bytes and 109,971,576 rows. These first-run values are pinned for the second run. CDS Table 2 and ReadMe hashes are pinned."
+        "after": "Two independent source-backed r-band scans (runs 42311975704 and 42311984342) reproduced the same archive MD5/SHA-256, member CRC, extracted-member SHA-256, 6,175,667,360-byte size, 109,971,576 rows and target/orphan summaries. These are internal reproducibility references; the extracted member hash is not a Zenodo-published checksum. The full per-Seq count reconciliation is implemented and pending."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED"
@@ -76,14 +81,14 @@
       "CDS ReadMe SHA-256 e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a; it lists 89697393 r rows, inconsistent with Table 2 sum Nr and Zenodo archive.",
       "Seq 615170 has zero r rows; Seq 615172 has 113 r rows. Median-coordinate separation from Table 2 is 0.5277981 arcsec; mean r magnitude delta is -0.0002832 mag.",
       "g/r median-coordinate separation for Seq 615172 is 0.0897550 arcsec; both bands have the Table 2 per-band counts under Seq 615172.",
-      "The full per-Seq r count reconciliation and second-run integrity verification have not yet completed."
+      "The full per-Seq r count reconciliation and second-run integrity verification have not yet completed.",
+      "Independent second scan workflow 42311984342, artifact 13548792994, reproduced the first run's archive MD5/SHA-256, member CRC, extracted member SHA-256, byte count, row count and target/orphan summaries."
     ]
   },
   "failure_analysis": {
     "status": "PARTIAL_ROOT_CAUSE_EVIDENCE",
     "hypothesis": "The g and r archive rows under Seq 615172 strongly match Table 2 Seq 615170 in per-band counts, position, mean magnitude and overlapping time coverage. Separately, the CDS ReadMe r row count appears inconsistent with the checksum-pinned Zenodo archive and the sum of Table 2 Nr. Full per-Seq reconciliation is required.",
     "unresolved": [
-      "The second r archive run must reproduce the first run's archive/member hashes, byte count, CRC and row count.",
       "The per-Seq r-band mismatch distribution is not yet measured.",
       "The 718-row difference between the Zenodo r archive total and summed Table 2 Nr is not yet explained.",
       "The 20,274,183-row difference from the CDS ReadMe r record count is a source metadata discrepancy; its cause is not yet formally resolved.",
@@ -97,14 +102,15 @@
       "The r archive member central-directory 32-bit size value equals the streamed size modulo 2^32; this is a size-field representation issue, not evidence of a truncated stream.",
       "The CDS ReadMe reports 89,697,393 r rows, while the sum of Table 2 Nr is 109,970,858 and the Zenodo r stream has 109,971,576 rows.",
       "Seq 615172 is a strong cross-band identity lead for Table 2 Seq 615170, but no automatic SourceID remapping is accepted.",
-      "The 718-row archive-versus-Table2 Nr residual and the full per-Seq mismatch distribution remain open."
+      "The 718-row archive-versus-Table2 Nr residual and the full per-Seq mismatch distribution remain open.",
+      "A second independent r archive scan reproduced the first scan's archive and extracted-member hashes, byte count, CRC, row count and target/orphan summaries."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
+      "Run the full pinned r archive scan with Table 2 and ReadMe and review the complete per-Seq mismatch TSV.",
       "Run synthetic regression tests for fixed-width Table 2 parsing and per-Seq count comparison.",
-      "Run the pinned second r archive scan and verify archive/member hashes, byte count, CRC and row count.",
       "Review the complete r-band per-Seq mismatch TSV, including deficits, surpluses, missing Seq IDs and archive-only IDs.",
       "Reconcile the 718-row archive-versus-Table2 Nr difference at object level.",
       "Investigate the ReadMe r-band record-count inconsistency.",
@@ -119,6 +125,7 @@
     "The full per-Seq r-band count comparison is the next required evidence step.",
     "Seq 615172 is a STRONG_CROSS_BAND_IDENTITY_LEAD for Table 2 Seq 615170; do not auto-remap.",
     "Do not claim that the 11,602 candidate-only membership discrepancy is resolved.",
-    "Do not modify thresholds, selector, published reference, or frozen v0.2.0 artifacts."
+    "Do not modify thresholds, selector, published reference, or frozen v0.2.0 artifacts.",
+    "The first r archive scan has been independently reproduced by workflow 42311984342; the full per-Seq Table 2 Nr comparison remains pending."
   ]
 }
