@@ -488,6 +488,7 @@ async function loadDR24Explorer() {
     '<div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding:12px 0">',
     '<label for="dr24ObjectId">DR24 objectid</label><input id="dr24ObjectId" type="number" min="1" step="1" inputmode="numeric" style="max-width:260px" />',
     '<button class="primary-button" id="dr24LoadButton" type="button">Load raw light curve</button>',
+    '<button id="dr24ExportButton" type="button" disabled>Download raw JSON + QC</button>',
     '</div><p id="dr24Status" class="muted" role="status">No DR24 object loaded.</p></section>',
     '<section class="panel"><div class="panel-header"><div><div class="panel-title">Native DR24 light curve</div>',
     '<div class="panel-subtitle">Time coordinate: HMJD · magnitude: native ZTF system</div>', 
@@ -499,6 +500,9 @@ async function loadDR24Explorer() {
     '<div class="panel-subtitle">Source values are preserved. The table shows at most the first 50 rows.</div></div></div>',
     '<div class="catalog-table-wrap"><table class="metadata"><thead><tr><th>HMJD</th><th>mag</th><th>magerr</th><th>clrcoeff</th><th>catflags</th></tr></thead>',
     '<tbody id="dr24EpochRows"><tr><td colspan="5">No data.</td></tr></tbody></table></div></section>',
+    '<section class="panel"><div class="panel-header"><div><div class="panel-title">Raw QC diagnostics · v0.1</div>',
+    '<div class="panel-subtitle">Descriptive counts only. No thresholds, quality mask, or epoch exclusion are applied.</div></div></div>',
+    '<pre id="dr24RawQc" class="report-content">No QC summary available.</pre></section>',
     '<section class="panel"><div class="panel-header"><div><div class="panel-title">Acquisition provenance</div>',
     '<div class="panel-subtitle">Source, schema, query, and payload hashes</div></div></div>',
     '<pre id="dr24Provenance" class="report-content">No acquisition performed.</pre></section>'
@@ -506,9 +510,13 @@ async function loadDR24Explorer() {
   setViewHeading("dr24");
   const input = document.getElementById("dr24ObjectId");
   const loadButton = document.getElementById("dr24LoadButton");
+  const exportButton = document.getElementById("dr24ExportButton");
+  let lastRawExport = null;
   if (params.get("objectid")) input.value = params.get("objectid");
   async function loadRaw() {
     const value = input.value.trim();
+    lastRawExport = null;
+    exportButton.disabled = true;
     if (!/^[1-9][0-9]*$/.test(value)) {
       document.getElementById("dr24Status").textContent = "Enter a positive integer objectid.";
       return;
@@ -525,9 +533,58 @@ async function loadDR24Explorer() {
         summary.textContent = "No catalog row returned for this OID. No alternate source was used.";
         document.getElementById("dr24EpochRows").innerHTML = '<tr><td colspan="5">No DR24 row.</td></tr>';
         document.getElementById("dr24Chart").innerHTML = "";
+        document.getElementById("dr24RawQc").textContent = "No QC summary: no catalog row was returned.";
       } else {
         const record = records[0];
         const epochs = record.epochs || [];
+        const finiteNumber = value => typeof value === "number" && Number.isFinite(value);
+        const finiteHmjd = epochs.filter(epoch => finiteNumber(epoch.hmjd)).length;
+        const finiteMag = epochs.filter(epoch => finiteNumber(epoch.mag)).length;
+        const finiteMagerr = epochs.filter(epoch => finiteNumber(epoch.magerr));
+        const validCatflags = epochs.filter(epoch =>
+          typeof epoch.catflags === "number" &&
+          Number.isInteger(epoch.catflags) &&
+          epoch.catflags >= 0
+        );
+        const missingCatflags = epochs.filter(
+          epoch => epoch.catflags === null || epoch.catflags === undefined
+        ).length;
+        const invalidCatflags = epochs.length - validCatflags.length - missingCatflags;
+        const bit15Set = validCatflags.filter(epoch => (epoch.catflags & 32768) !== 0).length;
+        const bit15NotSet = validCatflags.length - bit15Set;
+        const catflagsZero = validCatflags.filter(epoch => epoch.catflags === 0).length;
+        const rawQc = {
+          contract_version: "dr24-raw-qc-v0.1",
+          total_epochs: epochs.length,
+          finite_hmjd_count: finiteHmjd,
+          finite_mag_count: finiteMag,
+          finite_magerr_count: finiteMagerr.length,
+          positive_magerr_count: finiteMagerr.filter(epoch => epoch.magerr > 0).length,
+          zero_magerr_count: finiteMagerr.filter(epoch => epoch.magerr === 0).length,
+          negative_magerr_count: finiteMagerr.filter(epoch => epoch.magerr < 0).length,
+          nonfinite_magerr_count: epochs.length - finiteMagerr.length,
+          catflags_valid_count: validCatflags.length,
+          catflags_missing_count: missingCatflags,
+          catflags_invalid_count: invalidCatflags,
+          catflags_bit15_set_count: bit15Set,
+          catflags_bit15_not_set_count: bit15NotSet,
+          catflags_zero_count: catflagsZero,
+          catflags_other_nonzero_without_bit15_count: validCatflags.filter(
+            epoch => epoch.catflags !== 0 && (epoch.catflags & 32768) === 0
+          ).length,
+          epochs_excluded: 0,
+          filtering_applied: false,
+          interpretation: "Descriptive diagnostics only. No thresholds or quality mask are applied."
+        };
+        document.getElementById("dr24RawQc").textContent = JSON.stringify(rawQc, null, 2);
+        lastRawExport = {
+          export_schema_version: "ztf-dr24-raw-export-v0.1",
+          exported_at_utc: new Date().toISOString(),
+          source_payload: payload,
+          raw_qc: rawQc,
+          interpretation: "Raw source payload preserved. QC is descriptive only; no epochs were filtered."
+        };
+        exportButton.disabled = false;
         const filterName = ({1:"g",2:"r",3:"i"})[record.filterid] || "unknown";
         summary.textContent = "OID " + record.objectid + " · filter " + filterName +
           " · field " + record.fieldid + " · rcid " + record.rcid +
@@ -572,6 +629,9 @@ async function loadDR24Explorer() {
         "Raw DR24 response received. This view does not perform feature generation or inference.";
       setConnectionState("DR24 raw data loaded");
     } catch (error) {
+      lastRawExport = null;
+      exportButton.disabled = true;
+      document.getElementById("dr24RawQc").textContent = "QC unavailable: DR24 acquisition failed.";
       document.getElementById("dr24Status").textContent =
         "DR24 acquisition failed (" + (error.status || "network") + "). No fallback source was used.";
       setConnectionState("DR24 acquisition failed", false);
@@ -580,6 +640,21 @@ async function loadDR24Explorer() {
     }
   }
   loadButton.addEventListener("click", loadRaw);
+  exportButton.addEventListener("click", () => {
+    if (!lastRawExport) return;
+    const blob = new Blob([JSON.stringify(lastRawExport, null, 2)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ztf-dr24-" +
+      lastRawExport.source_payload.records[0].objectid + "-raw-export.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
   if (input.value) await loadRaw();
 }
 
