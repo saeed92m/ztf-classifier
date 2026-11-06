@@ -56,6 +56,24 @@ EXPECTED = {
     reason="Set ZTF_DR24_WORKBENCH_LIVE_TEST=1 to run the live browser test.",
 )
 def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> None:
+    manifest = json.loads(
+        Path("configs/samples/dr24_park_raw_candidate_sample_v0.1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    manifest_oids = {
+        int(item["objectid"])
+        for target in manifest["targets"]
+        for item in target["oids"]
+    }
+    assert manifest_oids == set(EXPECTED)
+    assert manifest["identity_policy"]["grouping_approved"] is False
+    assert manifest["identity_policy"]["physical_identity_confirmed"] is False
+    assert manifest["totals"]["candidate_external_ids"] == 5
+    assert manifest["totals"]["oids"] == 7
+    assert manifest["totals"]["catalog_epochs"] == sum(
+        item["epochs"] for item in EXPECTED.values()
+    )
     from playwright.sync_api import sync_playwright
 
     settings = ApiSettings(
