@@ -57,11 +57,13 @@
     "hypothesis": "The 113 r-band rows associated with Table 2 Seq 615170 may be stored under a nearby orphan SourceID, potentially Seq 615172. This must be tested against the raw archive."
   },
   "knowledge_extraction": {
-    "status": "PENDING",
-    "findings": []
+    "status": "HYPOTHESIS",
+    "findings": [
+      "The r-band source scan is pending. No source-backed r-band identity conclusion is available yet."
+    ]
   },
   "regression": {
-    "status": "NOT_RUN",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
       "Run the synthetic tests and the source-backed r archive scan.",
       "Review the archive MD5, extracted-member SHA-256, size, row count, ZIP CRC and malformed-row count.",
