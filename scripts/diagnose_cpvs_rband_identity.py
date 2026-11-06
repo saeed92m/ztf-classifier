@@ -114,7 +114,6 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-
 def parse_readme(
     path: Path,
     *,
