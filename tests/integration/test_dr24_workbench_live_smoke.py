@@ -234,7 +234,9 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
         report = {
             "schema_version": "ztf-dr24-workbench-live-smoke-v1",
             "status": "PASS",
-            "code_revision": os.getenv("GITHUB_SHA"),
+            "code_revision": os.getenv("DR24_WORKBENCH_HEAD_SHA") or os.getenv("GITHUB_SHA"),
+            "base_revision": os.getenv("DR24_WORKBENCH_BASE_SHA"),
+            "workflow_revision": os.getenv("DR24_WORKBENCH_WORKFLOW_SHA") or os.getenv("GITHUB_SHA"),
             "workflow_run_id": os.getenv("GITHUB_RUN_ID"),
             "source": "IRSA ZTF DR24 Lightcurves HATS",
             "tested_view": "DR24 Explorer (raw)",
@@ -244,6 +246,8 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
             "failure_contracts": {
                 "missing_oid_ui": "PASS",
                 "source_failure_ui": "PASS",
+                "unknown_catflags_ui": "PASS",
+                "unknown_catflags_not_clean": "PASS",
                 "fallback_used": False,
             },
             "limitations": [
