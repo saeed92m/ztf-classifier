@@ -1,6 +1,6 @@
 # Park MVP Delivery Plan and Acceptance Record
 
-**Status date:** 2026-11-05  
+**Status date:** 2026-11-07  
 **Delivery tracker:** Issue #158  
 **DR24 integration tracker:** Issue #253  
 **Scientific baseline:** v0.2.0 — frozen  
@@ -67,12 +67,12 @@ Any exclusion rule must have a version, rationale, and recorded effect on row co
 | Gate | Required evidence | Status on 2026-11-05 |
 |---|---|---|
 | G0 — frozen baseline protection | No change to v0.2.0 model, 42-feature contract, class order, or benchmark | PRESERVED by plan; verify each candidate PR |
-| G1 — bounded DR24 raw acquisition | Current-head tests plus successful source-backed indexed retrieval and hashes | PARTIAL; PR #264 is Draft |
+| G1 — bounded DR24 raw acquisition | Current-head tests plus successful source-backed indexed retrieval and hashes | VERIFIED for bounded retrieval; adapter remains under review |
 | G2 — OID identity and grouping | Curated mapping with evidence, ambiguity handling, regression tests | NOT ACCEPTED |
 | G3 — photometry/time/QC contract | Versioned transformations, source semantics, fixture tests, retained raw values | NOT ACCEPTED |
-| G4 — 5–10 object smoke test | End-to-end API/Workbench run with manifest and per-object status | NOT VERIFIED |
+| G4 — 5–10 object smoke test | End-to-end API/Workbench run with manifest and per-object status for confirmed sources | PARTIAL; component-level live tests pass, but the accepted 5–10 confirmed-source workflow is not complete |
 | G5 — 30–50 object demonstration | Reproducible run, visual inspection, exports, failure log | NOT VERIFIED |
-| G6 — scientist-facing workflow | Reviewer completes supported workflow without terminal use | PARTIAL; Workbench exists, guided flow not accepted |
+| G6 — scientist-facing workflow | Reviewer completes supported workflow without terminal use | PARTIAL; live browser smoke passes, guided scientist workflow not accepted |
 | G7 — scientific performance | Independent labeled evaluation, object-level and temporal leakage checks, metrics and calibration | NOT ACCEPTED |
 | G8 — Park handover package | Demo procedure, technical report, limitations, environment, evidence bundle | NOT ACCEPTED |
 
@@ -112,5 +112,55 @@ Build the larger labeled dataset only after licensing, taxonomy, identity, and p
 ## 8. Reporting rules
 Separate implementation, automated tests, live source-backed evidence, scientific validation, and user-facing acceptance. Do not publish a completion percentage without a defined weighting method and current evidence. Do not claim readiness until G0–G6 pass for the declared demo scope. Do not claim scientific performance until G7 passes.
 
-## 9. Immediate acceptance decision
+
+## 9. Evidence update — 2026-11-07
+
+The evidence below updates the 2026-11-05 planning baseline. It does not change the acceptance definition or the frozen scientific baseline.
+
+### Bounded DR24 source acquisition
+
+1. **Three-OID direct HATS probe:** [workflow 42061697065](https://github.com/saeed92m/ztf-classifier/actions/runs/42061697065) completed successfully. Three requested OIDs returned 417 epochs (78, 123 and 216). The payload counts matched catalog `nepochs`. Artifact 13432467426 was retained. This is raw-source evidence only.
+2. **Four-OID repeatability evidence:** [PR #269](https://github.com/saeed92m/ztf-classifier/pull/269) records two independent runs, 626 epochs across four OIDs, matching per-OID `nepochs`, and matching epoch CSV and summary JSON hashes across the two runs. The raw values were retained; no quality filtering or OID grouping was applied.
+3. **FastAPI-to-HATS live smoke:** [workflow 42063653144](https://github.com/saeed92m/ztf-classifier/actions/runs/42063653144) passed one live API test in 70.05 seconds. Artifact 13430999878 was uploaded. This is a bounded route test, not the full application acceptance test.
+4. **API failure contracts:** [workflow 42065074402](https://github.com/saeed92m/ztf-classifier/actions/runs/42065074402) passed the failure-contract job.
+5. **Workbench browser smoke:** [workflow 42275261463](https://github.com/saeed92m/ztf-classifier/actions/runs/42275261463) passed one browser test in 86.93 seconds. It exercised seven OIDs and 2,183 epochs, including descriptive QC, null-catflags handling, no epoch filtering, JSON export, and export-disabled behavior after missing/source failures. Artifact 13532578108 was retained.
+
+### What these results establish
+
+- Indexed HATS retrieval works for the listed OIDs.
+- Catalog epoch counts match returned rows for the tested OIDs.
+- Raw payloads and provenance can be retained in bounded artifacts.
+- The API route has passed a live smoke test.
+- The Workbench has passed a live browser interaction smoke test.
+- Descriptive QC and raw export have passed the tested browser assertions.
+
+### What these results do not establish
+
+- The tested OIDs are not all confirmed astrophysical-source identities.
+- No cross-OID grouping is accepted.
+- No production epoch-selection or quality policy is accepted.
+- No HMJD conversion, photometric color correction, DR24 feature contract, or classifier inference is validated.
+- The seven-OID browser test is not the 5–10 confirmed-source end-to-end acceptance test.
+- The 30–50 confirmed-source guided Park demonstration is not complete.
+- No scientific performance, calibration, OOD, anomaly-detection or astrophysical-discovery claim follows from these tests.
+
+### Revised acceptance status
+
+| Gate | Updated status | Evidence / remaining requirement |
+|---|---|---|
+| G0 — frozen baseline protection | PRESERVED | No model, feature, taxonomy, benchmark or cutoff change in the cited DR24 work. Continue checking each PR. |
+| G1 — bounded DR24 raw acquisition | VERIFIED for tested OIDs | Direct HATS, repeatability, API and browser smoke evidence above. This does not imply broad coverage. |
+| G2 — OID identity and grouping | NOT ACCEPTED | Curated, evidence-backed crosswalk and ambiguity handling remain required. |
+| G3 — photometry/time/QC contract | PARTIAL | Raw fields and descriptive QC are retained. Production transforms and selection policy are not validated. |
+| G4 — 5–10 object smoke test | PARTIAL | Component-level tests pass. Still need 5–10 confirmed sources through one complete app workflow and a reproducibility bundle. |
+| G5 — 30–50 object demonstration | NOT VERIFIED | Run and review the guided sample after G4 passes. |
+| G6 — scientist-facing workflow | PARTIAL | Browser smoke passes. A reviewer-led workflow without terminal use is not accepted. |
+| G7 — scientific performance | NOT ACCEPTED | Independent labels, leakage-safe splits, metrics, calibration and uncertainty evaluation are still required. |
+| G8 — Park handover package | NOT ACCEPTED | Requires actual demo outputs, limitations, runbook, environment and evidence bundle. |
+
+### Immediate next action
+
+Do not expand the sample yet. First select 5–10 objects with defensible source identity, freeze their OID manifest, run the complete API-to-Workbench-to-QC-to-export workflow, and retain a replayable evidence bundle. Expand to 30–50 objects only after this test passes.
+
+## 10. Immediate acceptance decision
 The repository is a useful engineering and scientific baseline. It is not yet an accepted DR24-backed Park demonstrator. The next decisive proof is a successful 5–10 object end-to-end run through the application with source identity, QC, visualization, exports, and a reproducibility manifest. The 30–50 object demonstration follows only after that smoke test passes.
