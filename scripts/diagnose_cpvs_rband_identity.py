@@ -22,14 +22,22 @@ from pathlib import Path
 from typing import Any
 
 ZENODO_MD5 = "daa7bc45c67579253eebe6b1c09dfbd9"
-EXPECTED_ARCHIVE_SHA256 = "48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74"
-EXPECTED_MEMBER_SHA256 = "78df6d0b22099a7e5c6e74b897682c6ab94f90d5f9e887d4b0b3b152514e50fe"
+EXPECTED_ARCHIVE_SHA256 = (
+    "48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74"
+)
+EXPECTED_MEMBER_SHA256 = (
+    "78df6d0b22099a7e5c6e74b897682c6ab94f90d5f9e887d4b0b3b152514e50fe"
+)
 EXPECTED_MEMBER_SIZE = 6175667360
 EXPECTED_MEMBER_ROWS = 109971576
-EXPECTED_TABLE2_SHA256 = "2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881"
+EXPECTED_TABLE2_SHA256 = (
+    "2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881"
+)
 EXPECTED_TABLE2_SIZE = 178986858
 EXPECTED_TABLE2_RECORDS = 781602
-EXPECTED_README_SHA256 = "e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a"
+EXPECTED_README_SHA256 = (
+    "e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a"
+)
 EXPECTED_README_SIZE = 12990
 FIRST_DISCOVERY_REFERENCE = {
     "workflow_run_id": 42311975704,
@@ -75,10 +83,10 @@ def digest_file(path: Path, algorithm: str) -> str:
     return digest.hexdigest()
 
 
-def angular_separation_arcsec(ra1: float, dec1: float, ra2: float, dec2: float) -> float:
-    ra1_rad, dec1_rad, ra2_rad, dec2_rad = map(
-        math.radians, (ra1, dec1, ra2, dec2)
-    )
+def angular_separation_arcsec(
+    ra1: float, dec1: float, ra2: float, dec2: float
+) -> float:
+    ra1_rad, dec1_rad, ra2_rad, dec2_rad = map(math.radians, (ra1, dec1, ra2, dec2))
     sin_dec = math.sin((dec2_rad - dec1_rad) / 2.0)
     sin_ra = math.sin((ra2_rad - ra1_rad) / 2.0)
     haversine = sin_dec**2 + math.cos(dec1_rad) * math.cos(dec2_rad) * sin_ra**2
@@ -163,7 +171,9 @@ def parse_table2(
                 rmag = float(line[96:102])
                 nr = int(line[136:140])
             except ValueError:
-                errors.append(f"Table 2 line {line_number} has invalid fixed-width fields")
+                errors.append(
+                    f"Table 2 line {line_number} has invalid fixed-width fields"
+                )
                 continue
             if seq in rows:
                 errors.append(f"Duplicate Table 2 Seq {seq}")
@@ -183,7 +193,9 @@ def parse_table2(
             f"Table 2 record count mismatch: {record_count} != {expected_records}"
         )
     if len(rows) != record_count:
-        errors.append(f"Table 2 unique Seq count mismatch: {len(rows)} != {record_count}")
+        errors.append(
+            f"Table 2 unique Seq count mismatch: {len(rows)} != {record_count}"
+        )
     return rows, {
         "source_url": "http://vizier.nao.ac.jp/ftp/cats/J/ApJS/249/18/table2.dat.gz",
         "size_bytes": size,
@@ -211,7 +223,16 @@ def reconcile_counts(
     with mismatch_output.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.writer(stream, delimiter="\t")
         writer.writerow(
-            ["status", "Seq", "Table2_Nr", "Archive_rows", "delta", "RAdeg", "DEdeg", "rmag"]
+            [
+                "status",
+                "Seq",
+                "Table2_Nr",
+                "Archive_rows",
+                "delta",
+                "RAdeg",
+                "DEdeg",
+                "rmag",
+            ]
         )
         for seq, reference in sorted(table2.items()):
             expected = reference["nr"]
@@ -237,8 +258,16 @@ def reconcile_counts(
             if expected > 0 and actual == 0:
                 missing_seq_count += 1
             writer.writerow(
-                ["COUNT_MISMATCH", seq, expected, actual, delta,
-                 reference["ra_deg"], reference["dec_deg"], reference["rmag"]]
+                [
+                    "COUNT_MISMATCH",
+                    seq,
+                    expected,
+                    actual,
+                    delta,
+                    reference["ra_deg"],
+                    reference["dec_deg"],
+                    reference["rmag"],
+                ]
             )
         archive_only = {
             seq: count for seq, count in actual_counts.items() if seq not in table2
@@ -334,7 +363,8 @@ def scan_archive(
 
     with zipfile.ZipFile(archive_path) as archive:
         members = [
-            name for name in archive.namelist()
+            name
+            for name in archive.namelist()
             if Path(name).name == "ztf2r" and "__MACOSX" not in name
         ]
         if len(members) != 1:
@@ -412,8 +442,10 @@ def scan_archive(
 
             actual_counts[source_id] += 1
             separation = angular_separation_arcsec(
-                TABLE2_TARGET["ra_deg"], TABLE2_TARGET["dec_deg"],
-                values["ra_deg"], values["dec_deg"],
+                TABLE2_TARGET["ra_deg"],
+                TABLE2_TARGET["dec_deg"],
+                values["ra_deg"],
+                values["dec_deg"],
             )
             if (
                 source_id in (target_seq, orphan_seq)
@@ -432,13 +464,9 @@ def scan_archive(
     crc_verified = actual_crc == expected_crc
     archive_size_modulo_matches = info.file_size == data_size % (2**32)
     if unzip_returncode:
-        errors.append(
-            f"Info-ZIP exit code {unzip_returncode}: {unzip_stderr[-500:]}"
-        )
+        errors.append(f"Info-ZIP exit code {unzip_returncode}: {unzip_stderr[-500:]}")
     if expected_total_rows is not None and data_rows != expected_total_rows:
-        errors.append(
-            f"Data row count mismatch: {data_rows} != {expected_total_rows}"
-        )
+        errors.append(f"Data row count mismatch: {data_rows} != {expected_total_rows}")
     if malformed_rows:
         errors.append(f"Malformed data rows: {malformed_rows}")
     if expected_data_size is not None and data_size != expected_data_size:
@@ -460,17 +488,20 @@ def scan_archive(
         for source_id, rows in sorted(selected.items())
     ]
     spatial_candidates = [
-        candidate for candidate in candidate_summaries
+        candidate
+        for candidate in candidate_summaries
         if candidate["nearest_coordinate_separation_arcsec"] <= spatial_radius_arcsec
     ]
     orphan_summary = summarize(orphan_rows)
     target_summary = summarize(target_rows)
     if orphan_summary.get("row_count"):
-        orphan_summary["median_coordinate_separation_arcsec"] = angular_separation_arcsec(
-            orphan_summary["ra_median_deg"],
-            orphan_summary["dec_median_deg"],
-            TABLE2_TARGET["ra_deg"],
-            TABLE2_TARGET["dec_deg"],
+        orphan_summary["median_coordinate_separation_arcsec"] = (
+            angular_separation_arcsec(
+                orphan_summary["ra_median_deg"],
+                orphan_summary["dec_median_deg"],
+                TABLE2_TARGET["ra_deg"],
+                TABLE2_TARGET["dec_deg"],
+            )
         )
         orphan_summary["rmag_mean_delta_from_table2"] = (
             orphan_summary["rmag_mean"] - TABLE2_TARGET["rmag"]
@@ -494,7 +525,10 @@ def scan_archive(
             "CDS ReadMe r-band record count differs from the Table 2 Nr sum and "
             "the checksum-pinned Zenodo archive."
         )
-    if reconciliation["mismatched_seq_count"] or reconciliation["archive_only_seq_count"]:
+    if (
+        reconciliation["mismatched_seq_count"]
+        or reconciliation["archive_only_seq_count"]
+    ):
         warnings.append(
             "Per-Seq r-band counts differ from Table 2 Nr; review the complete mismatch TSV."
         )
@@ -564,7 +598,8 @@ def scan_archive(
             ),
             "expected_sha256": expected_archive_sha256,
             "sha256_verified": (
-                expected_archive_sha256 is None or archive_sha256 == expected_archive_sha256
+                expected_archive_sha256 is None
+                or archive_sha256 == expected_archive_sha256
             ),
             "zip_member_crc32_expected": f"{expected_crc:08x}",
             "zip_member_crc32_actual": f"{actual_crc:08x}",
@@ -591,7 +626,8 @@ def scan_archive(
             "first_discovery_reference": FIRST_DISCOVERY_REFERENCE,
             "second_discovery_reference": SECOND_DISCOVERY_REFERENCE,
             "pinned_integrity_verified": (
-                expected_data_sha256 is not None and expected_data_size is not None
+                expected_data_sha256 is not None
+                and expected_data_size is not None
                 and expected_total_rows is not None
                 and data_sha256 == expected_data_sha256
                 and data_size == expected_data_size
@@ -624,11 +660,15 @@ def scan_archive(
             "g_median_coordinate_separation_from_table2_arcsec": g_table2_separation,
             "r_median_coordinate_separation_from_table2_arcsec": r_table2_separation,
             "g_r_median_coordinate_separation_arcsec": g_r_separation,
-            "g_mean_magnitude_delta_from_table2": G_BAND_ORPHAN["gmag_mean"] - TABLE2_TARGET["gmag"],
-            "r_mean_magnitude_delta_from_table2": orphan_summary.get("rmag_mean_delta_from_table2"),
+            "g_mean_magnitude_delta_from_table2": G_BAND_ORPHAN["gmag_mean"]
+            - TABLE2_TARGET["gmag"],
+            "r_mean_magnitude_delta_from_table2": orphan_summary.get(
+                "rmag_mean_delta_from_table2"
+            ),
             "hjd_ranges_overlap": hjd_overlap,
             "interpretation": (
-                "STRONG_CROSS_BAND_IDENTITY_LEAD" if cross_band_identity
+                "STRONG_CROSS_BAND_IDENTITY_LEAD"
+                if cross_band_identity
                 else "CROSS_BAND_IDENTITY_NOT_CONFIRMED"
             ),
             "no_automatic_source_id_remap": True,
