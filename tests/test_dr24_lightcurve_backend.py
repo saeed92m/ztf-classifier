@@ -10,6 +10,7 @@ from ztf_classifier.io.dr24_lightcurve import (
     DR24LightcurveBackend,
     DR24LightcurveRequest,
     _canonical_records,
+    _positive_objectid,
 )
 
 
@@ -165,3 +166,9 @@ def test_backend_rejects_catalog_epoch_count_mismatch() -> None:
     backend = DR24LightcurveBackend(lambda *_args, **_kwargs: Catalog())
     with pytest.raises(DR24AcquisitionError, match="epoch-count mismatch"):
         backend.acquire(DR24LightcurveRequest((123,)))
+
+
+@pytest.mark.parametrize("value", [123.5, 0, -1, True, "123"])
+def test_returned_objectid_rejects_lossy_or_invalid_values(value: object) -> None:
+    with pytest.raises(DR24AcquisitionError, match="invalid objectid"):
+        _positive_objectid(value)
