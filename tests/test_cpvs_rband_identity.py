@@ -37,7 +37,9 @@ def test_rband_scan_reconciles_seq_counts_and_cross_band_identity(
     rows.append("999999,307.36570,-13.42140,58600,15.1,0.08,0\n")
     data = "".join(rows).encode("utf-8")
     archive_path = tmp_path / "ztf2r.zip"
-    with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    with zipfile.ZipFile(
+        archive_path, "w", compression=zipfile.ZIP_DEFLATED
+    ) as archive:
         archive.writestr("ztf2r", data)
 
     table2_path = tmp_path / "table2.dat"
@@ -47,7 +49,9 @@ def test_rband_scan_reconciles_seq_counts_and_cross_band_identity(
         encoding="ascii",
     )
     readme_path = tmp_path / "ReadMe"
-    readme_path.write_text("ztf2r.dat       75   114    r band data\n", encoding="ascii")
+    readme_path.write_text(
+        "ztf2r.dat       75   114    r band data\n", encoding="ascii"
+    )
     mismatch_path = tmp_path / "mismatches.tsv"
 
     archive_bytes = archive_path.read_bytes()
