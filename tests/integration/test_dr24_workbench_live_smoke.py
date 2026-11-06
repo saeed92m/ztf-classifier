@@ -158,7 +158,28 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                     assert clean_points == expected["clean"]
                 else:
                     assert flagged_points + clean_points + unknown_points == expected["epochs"]
+                raw_qc = json.loads(page.locator("#dr24RawQc").inner_text())
+                assert raw_qc["contract_version"] == "dr24-raw-qc-v0.1"
+                assert raw_qc["total_epochs"] == expected["epochs"]
+                assert raw_qc["catflags_bit15_set_count"] == flagged_points
+                assert raw_qc["catflags_bit15_not_set_count"] == clean_points
+                assert raw_qc["catflags_missing_count"] + raw_qc["catflags_invalid_count"] == unknown_points
+                assert raw_qc["epochs_excluded"] == 0
+                assert raw_qc["filtering_applied"] is False
                 assert page.locator("#dr24EpochRows tr").count() == min(50, expected["epochs"])
+                if objectid == next(iter(EXPECTED)):
+                    assert not page.locator("#dr24ExportButton").is_disabled()
+                    with page.expect_download(timeout=10000) as download_info:
+                        page.locator("#dr24ExportButton").click()
+                    download = download_info.value
+                    assert download.suggested_filename == f"ztf-dr24-{objectid}-raw-export.json"
+                    exported = json.loads(
+                        Path(download.path()).read_text(encoding="utf-8")
+                    )
+                    assert exported["export_schema_version"] == "ztf-dr24-raw-export-v0.1"
+                    assert exported["source_payload"]["records"][0]["objectid"] == objectid
+                    assert exported["raw_qc"] == raw_qc
+                    assert exported["raw_qc"]["epochs_excluded"] == 0
 
                 provenance = json.loads(page.locator("#dr24Provenance").inner_text())
                 assert provenance["source"] == "IRSA ZTF DR24 Lightcurves HATS"
@@ -181,6 +202,7 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                             else "FORMAT_ONLY_NO_INDEPENDENT_REFERENCE"
                         ),
                         "table_rows_rendered": min(50, expected["epochs"]),
+                        "raw_qc": raw_qc,
                         "provenance_source": provenance["source"],
                     }
                 )
@@ -234,6 +256,11 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
             assert page.get_by_text(
                 "Blue: bit 15 not set · amber: bit 15 set · gray: catflags unavailable"
             ).is_visible()
+            null_qc = json.loads(page.locator("#dr24RawQc").inner_text())
+            assert null_qc["catflags_missing_count"] == 1
+            assert null_qc["catflags_valid_count"] == 0
+            assert null_qc["epochs_excluded"] == 0
+            assert null_qc["filtering_applied"] is False
 
             no_record_oid = 987654321
             no_record_payload = {
@@ -263,6 +290,7 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
             assert "No catalog row returned for this OID. No alternate source was used." in page.locator("#dr24Summary").inner_text()
             assert "No DR24 row." in page.locator("#dr24EpochRows").inner_text()
             assert page.locator("#dr24Chart circle").count() == 0
+            assert page.locator("#dr24ExportButton").is_disabled()
             no_record_provenance = json.loads(page.locator("#dr24Provenance").inner_text())
             assert no_record_provenance["missing_oids"] == [no_record_oid]
 
@@ -287,6 +315,7 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                 timeout=10_000,
             )
             assert "No fallback source was used." in page.locator("#dr24Status").inner_text()
+            assert page.locator("#dr24ExportButton").is_disabled()
             assert "DR24 acquisition failed" in page.locator(".connection-state").inner_text()
 
             browser.close()
@@ -308,6 +337,9 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                 "source_failure_ui": "PASS",
                 "unknown_catflags_ui": "PASS",
                 "unknown_catflags_not_clean": "PASS",
+                "raw_qc_contract": "dr24-raw-qc-v0.1",
+                "raw_json_export": "PASS",
+                "export_disabled_on_missing_or_failure": "PASS",
                 "fallback_used": False,
             },
             "limitations": [
