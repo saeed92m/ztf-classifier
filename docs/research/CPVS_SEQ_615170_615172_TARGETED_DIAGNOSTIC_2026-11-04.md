@@ -46,3 +46,40 @@ Only the small JSON diagnostic is uploaded as a GitHub Actions artifact. The raw
 - Run 8 (42062460017) is testing the revised scanner against the full checksum-pinned source archive. Its result is pending.
 - Scientific gate: unchanged and fail-closed.
 - Next step after a successful full-member integrity check: compare the raw coordinate/HJD evidence, then decide whether to run a separate targeted r-band check.
+
+
+## Verified source-backed result — 2026-11-05/06
+
+The corrected Info-ZIP scanner completed against the checksum-pinned Zenodo g-band archive in workflow [42063847111](https://github.com/saeed92m/ztf-classifier/actions/runs/42063847111), artifact `13432972969`. The downloaded artifact was independently inspected.
+
+### Integrity
+
+- Archive: `ztf2g.zip`, Zenodo DOI `10.5281/zenodo.3886372`.
+- Archive MD5: `850fcef561dd7407fbe8e19e99100d7a` — matched.
+- Archive SHA-256: `47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9` — matched.
+- ZIP member CRC-32: expected and actual `d2f33aa0` — matched.
+- Extracted member size: `5,034,066,142` bytes — matched.
+- Extracted member SHA-256: `366aaf3539f83955bb1e29799df9e63005a9eb682f4f56d0807545a3534b0f16` — matched.
+- Full scan: `89,697,393` data rows; zero malformed rows; all rows had seven fields.
+
+### Targeted identity lead
+
+- Table 2 Seq `615170`: RA 307.36563°, Dec −13.42128°, `gmag=14.886`, `Ng=132`, `Nr=113`.
+- Seq `615170`: zero g-band rows in the scanned archive.
+- Orphan Seq `615172`: 132 g-band rows.
+- Median orphan coordinates: RA 307.3656934°, Dec −13.4214107°.
+- Median angular separation from Table 2 Seq 615170: **0.5202627 arcsec**.
+- Orphan mean g magnitude: 14.88604545; difference from Table 2 `gmag`: **+0.00004545 mag**.
+- Orphan HJD range: 58254.44022–58657.48608.
+- g-flag counts: 130 rows with flag 0; 2 rows with flag 1.
+
+The result is a **STRONG_IDENTITY_LEAD**, not a confirmed ID correction. The scan covers only the g archive. It does not establish the r-band counterpart, explain the 11,602 candidate-only membership residuals, prove the publisher's selection rule, or resolve the 91 Seq-level g-band count mismatches and the 4,916-row Table 2/archive total difference.
+
+### Required next checks
+
+1. Inspect the r-band archive independently for Seq 615170, Seq 615172, and any coordinate-matched orphan rows. The Zenodo record lists `ztf2r.zip` (881.5 MB; MD5 `daa7bc45c67579253eebe6b1c09dfbd9`); its extracted content hash and row count must be measured, not assumed.
+2. Reconcile all r-band Seq counts against Table 2 `Nr`, as was done for the g archive.
+3. Investigate all 91 g-band per-Seq count mismatches, not only this one object.
+4. Keep the 11,602 membership residuals and the publisher-method interpretation open until a reproducible source-level explanation is established.
+
+The CPVS selector, SNR thresholds, published reference, model, features, class order, and frozen v0.2.0 baseline remain unchanged. The scientific gate remains fail-closed.
