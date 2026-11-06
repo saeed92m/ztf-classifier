@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import shutil
 import sys
 import zipfile
@@ -11,7 +12,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from diagnose_cpvs_rband_identity import scan_archive
+scan_archive = importlib.import_module("diagnose_cpvs_rband_identity").scan_archive
 
 
 def _table2_record(seq: int, ra: float, dec: float, rmag: float, nr: int) -> str:
