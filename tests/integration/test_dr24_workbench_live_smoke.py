@@ -122,30 +122,34 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                 )
 
 
-            const unknown_flags_oid = 987654323;
-            const unknown_flags_payload = {
+            unknown_flags_oid = 987654323
+            unknown_flags_payload = {
                 "schema_version": "ztf-dr24-native-lightcurve-v1",
-                "records": [{
-                    "objectid": unknown_flags_oid,
-                    "filterid": 1,
-                    "fieldid": 100,
-                    "rcid": 4,
-                    "catalog_nepochs": 1,
-                    "payload_sha256": "unknown-flags-test",
-                    "epochs": [{
-                        "hmjd": 60000.1,
-                        "mag": 18.2,
-                        "magerr": 0.03,
-                        "clrcoeff": 0.1,
-                        "catflags": None
-                    }]
-                }],
+                "records": [
+                    {
+                        "objectid": unknown_flags_oid,
+                        "filterid": 1,
+                        "fieldid": 100,
+                        "rcid": 4,
+                        "catalog_nepochs": 1,
+                        "payload_sha256": "unknown-flags-test",
+                        "epochs": [
+                            {
+                                "hmjd": 60000.1,
+                                "mag": 18.2,
+                                "magerr": 0.03,
+                                "clrcoeff": 0.1,
+                                "catflags": None,
+                            }
+                        ],
+                    }
+                ],
                 "provenance": {
                     "source": "IRSA ZTF DR24 Lightcurves HATS",
                     "query": {"index": "objectid", "objectids": [unknown_flags_oid]},
                     "returned_oids": [unknown_flags_oid],
-                    "missing_oids": []
-                }
+                    "missing_oids": [],
+                },
             }
             page.route(
                 f"**/v1/dr24/objects/{unknown_flags_oid}/lightcurve",
