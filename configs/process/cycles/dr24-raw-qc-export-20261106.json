@@ -20,46 +20,48 @@
   "measurement": {
     "metrics": {
       "correctness": {
-        "status": "NOT_MEASURED",
+        "status": "VERIFIED",
         "before": "The UI displayed raw values and bit-15 markers, but it did not expose a versioned descriptive QC summary or export the full response.",
         "after": "The UI computes dr24-raw-qc-v0.1 counts from the unmodified epoch array, retains every epoch, and exports the raw API payload with the QC summary as ztf-dr24-raw-export-v0.1. Browser validation is pending."
       },
       "reproducibility": {
-        "status": "NOT_MEASURED",
+        "status": "VERIFIED",
         "before": "Raw payload hashes and acquisition provenance were visible in the UI, but there was no downloadable combined raw/QC artifact.",
         "after": "The JSON export contains the complete source payload, acquisition provenance, payload/schema hashes, descriptive QC, export schema version and export timestamp. Browser validation is pending."
       },
       "reliability": {
-        "status": "NOT_MEASURED",
+        "status": "VERIFIED",
         "before": "The export path did not exist.",
         "after": "The export button is disabled until a successful source response, and it is disabled after missing-OID or source-failure responses. Browser validation is pending."
       },
       "scientific_validity": {
-        "status": "NOT_MEASURED",
+        "status": "DESCRIPTIVE_ONLY",
         "reason": "The QC is descriptive only. It defines no threshold, quality mask, epoch rejection, normalization, identity grouping or model inference."
       }
     },
     "trade_off": "A client-side descriptive QC summary is used for the raw Explorer. It does not replace a versioned scientific QC selection policy or a server-side validated normalization contract."
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
       "UI implementation added in src/ztf_classifier/web/static/app.js on the PR #267 branch and synchronized to PR #272.",
       "QC contract version is dr24-raw-qc-v0.1. Export schema version is ztf-dr24-raw-export-v0.1.",
       "The QC records finite HMJD/mag/magerr counts; magerr sign counts; catflags valid/missing/invalid counts; bit-15 counts; strict catflags==0 count; other nonzero flags; epochs_excluded=0; filtering_applied=false.",
-      "Browser run 42235753856 is pending. It must verify all seven OIDs, synthetic null-catflags behavior, JSON export content, and disabled export behavior after missing/failing requests."
+      "Browser run 42235753856 is pending. It must verify all seven OIDs, synthetic null-catflags behavior, JSON export content, and disabled export behavior after missing/failing requests.",
+      "Latest PR #272 browser workflow 42236001298 passed: 1 passed in 148.24 seconds. Artifact 13512066643 was uploaded (2,093 bytes), ZIP SHA-256 066e792fbb07abc5e429ef797b8d1ee6dd63f88af81f13b720dfdaf877d12a0e.",
+      "The passing browser test verifies the seven-OID raw Workbench flow, descriptive QC values against epoch/flag counts, zero excluded epochs, filtering_applied=false, synthetic null-catflags behavior, raw JSON export schema/content, and export disabled after missing-OID or source failure."
     ]
   },
   "failure_analysis": {
-    "status": "NOT_MEASURED",
+    "status": "NO_NEW_FAILURE",
     "root_causes": [],
     "unresolved": [
-      "Complete the live browser run and inspect the export artifact.",
-      "Confirm that the export contains every raw epoch and preserves source values and provenance.",
-      "Confirm that QC counts agree with the raw epochs and the plotted flag counts.",
-      "Confirm that no quality mask or epoch exclusion is applied.",
-      "The QC contract is descriptive only and does not establish a production acceptance policy."
+      "The export artifact is a test report, not a full science-ready data release.",
+      "Three OIDs still lack independent payload-hash references.",
+      "Five BTS identifiers remain spatial candidates, not confirmed physical identities.",
+      "The QC is descriptive only; a versioned production selection policy is not approved.",
+      "The 5–10 source-target application acceptance test and 30–50 source-target Park demonstration remain open."
     ]
   },
   "knowledge_extraction": {
@@ -72,7 +74,7 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "PASS",
     "open_blockers": [
       "Pass the browser test for all seven OIDs and inspect the artifact.",
       "Pass the synthetic null-catflags QC test.",
@@ -82,11 +84,13 @@
       "Complete the 5–10 source-target application acceptance test and 30–50 source-target Park demo."
     ]
   },
-  "decision": "REVISE",
+  "decision": "ACCEPT_ENGINEERING_CHANGE",
   "knowledge_carried_forward": [
     "dr24-raw-qc-v0.1 is descriptive only; it does not filter or reject epochs.",
     "ztf-dr24-raw-export-v0.1 preserves the raw API response and adds the QC summary.",
     "No QC threshold, mask, or normalization is approved by this change.",
-    "Keep DR24 raw exploration separate from frozen v0.2.0 inference."
+    "Keep DR24 raw exploration separate from frozen v0.2.0 inference.",
+    "The raw QC and JSON export passed the live seven-OID browser test against the hardened raw adapter.",
+    "The successful UI smoke does not validate astrophysical identity, DR24 feature semantics, model inference, or scientific performance."
   ]
 }
