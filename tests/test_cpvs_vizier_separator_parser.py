@@ -30,8 +30,7 @@ def test_published_membership_crosswalk_ignores_separator_rows(
     table2 = tmp_path / "table2.tsv"
     table4 = tmp_path / "table4.tsv"
     table2.write_text(
-        "ID\tSeq\n"
-        "ZTF J123456.78+123456.7\t4200\n",
+        "ID\tSeq\nZTF J123456.78+123456.7\t4200\n",
         encoding="utf-8",
     )
     table4.write_text(
