@@ -125,3 +125,63 @@ The g-band result is a strong identity lead only. The next diagnostic is deliber
 6. Perform full r-band SourceID-to-Table2 `Nr` reconciliation in a separate bounded workflow.
 
 The CPVS scientific blocker remains open until the full membership residual is explained.
+
+
+## r-band archive result and ReadMe discrepancy — 2026-11-07
+
+The first source-backed r-band scan completed in [workflow 42311975704](https://github.com/saeed92m/ztf-classifier/actions/runs/42311975704), artifact 13550020720. The artifact ZIP SHA-256 is \`0d64d338998fc62694d0cc4527ed9cf95544bda5156168ab642ca3731602c80b\`; the extracted JSON SHA-256 is \`2c31b258dffddc3eff0cd6cdc70bb7bf743e180608004b4b808ec06d6710f3e8\`.
+
+### Archive and extracted-member evidence
+
+- Zenodo archive: \`ztf2r.zip\`, DOI \`10.5281/zenodo.3886372\`.
+- Published archive MD5: \`daa7bc45c67579253eebe6b1c09dfbd9\`; observed value matched.
+- Observed archive SHA-256: \`48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74\`.
+- ZIP member CRC-32 expected and actual: \`225495a0\`; matched.
+- Info-ZIP streamed member size: \`6,175,667,360\` bytes.
+- Streamed member SHA-256: \`78df6d0b22099a7e5c6e74b897682c6ab94f90d5f9e887d4b0b3b152514e50fe\`.
+- Streamed rows: \`109,971,576\`; zero malformed rows; all rows had seven fields.
+- The central-directory 32-bit size value was \`1,880,700,064\`, which equals the streamed size modulo \(2^{32}\). The same modulo pattern exists in the g archive. The full stream reached EOF and the CRC matched; do not interpret the 32-bit size field as the full uncompressed size.
+
+The extracted-member SHA-256, byte count and row count are pinned to this first run as internal reproducibility references. They are not Zenodo-published member checksums. The next run must reproduce them.
+
+### Seq 615170 / 615172 cross-band identity evidence
+
+- Table 2 Seq \`615170\`: \`Nr=113\`, \`rmag=14.736\`, RA 307.36563°, Dec −13.42128°.
+- r-band rows under Seq \`615170\`: zero.
+- r-band rows under orphan Seq \`615172\`: 113.
+- Median coordinates for Seq 615172: RA 307.3656702°, Dec −13.4214213°.
+- Median-coordinate separation from Table 2: **0.5277981 arcsec**.
+- Closest individual r epoch separation: 0.4953828 arcsec.
+- Mean r magnitude: 14.7357168; delta from Table 2: **−0.0002832 mag**.
+- r HJD range: 58247.47634–58660.48647.
+- r flags: all 113 rows have flag 0.
+- g/r median-coordinate separation: **0.0897550 arcsec**.
+- The g-band archive independently has 132 rows under Seq 615172, equal to Table 2 \`Ng=132\`, and zero rows under Seq 615170.
+
+Disposition: **STRONG_CROSS_BAND_IDENTITY_LEAD**. The g and r archive records under Seq 615172 have matching per-band counts, sub-arcsecond positions, nearly identical mean magnitudes to Table 2, and overlapping time coverage. This is strong evidence of an archive SourceID mismatch for this one Table 2 object. It is not an automatic SourceID correction.
+
+### Newly identified r-band record-count discrepancy
+
+The authoritative [CDS ReadMe for J/ApJS/249/18](https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true) lists 89,697,393 records for both \`ztf2g.dat\` and \`ztf2r.dat\` (File Summary, lines 60–70). The checksum-pinned Zenodo r archive stream contains 109,971,576 rows.
+
+The independently hash-verified CDS \`table2.dat\` artifact from workflow 41367972395 has 781,602 unique Seq rows and a summed \`Nr\` of **109,970,858**. Therefore:
+
+- r archive rows minus Table 2 sum \`Nr\`: **+718**.
+- Table 2 sum \`Nr\` minus CDS ReadMe r row count: **+20,273,465**.
+- r archive rows minus CDS ReadMe r row count: **+20,274,183**.
+
+This indicates a ReadMe-versus-data count inconsistency for the r band. It does not yet establish whether the 718-row residual is caused by per-Seq deficits/surpluses, extra SourceIDs, or duplicates. The full per-Seq comparison is required.
+
+### Full r-band Seq reconciliation added
+
+The updated workflow downloads the checksum-pinned CDS Table 2 and ReadMe, verifies their hashes and sizes, then compares every r-band SourceID count with Table 2 \`Nr\`. It records matched, deficit, surplus and missing Seq counts, total deficit and surplus rows, archive-only Seq IDs, net row differences, and a complete TSV of all mismatches.
+
+The first scan is not the full reconciliation. The pinned second scan must pass before we accept its reproducibility. No raw photometry is uploaded.
+
+### Scientific boundaries
+
+- No automatic SourceID remapping.
+- No proximity-only identity decision.
+- No claim that the 11,602 candidate-only membership residuals are resolved.
+- No change to the CPVS selector, thresholds, published reference, model, features, taxonomy or frozen v0.2.0 baseline.
+- The CPVS scientific gate remains fail-closed.
