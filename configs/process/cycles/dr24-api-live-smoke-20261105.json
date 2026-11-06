@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-api-live-smoke-20261105",
+  "objective": "Verify the PR #264 FastAPI raw DR24 endpoint against the live HATS source for three OIDs and compare the API payload hashes with the independently verified probe artifact.",
+  "previous_knowledge_consumed": [
+    "The raw DR24 HATS probe returned three OIDs and 417 epochs in workflow run 42061697065.",
+    "The probe artifact contains per-OID canonical payload SHA-256 values for the three test OIDs.",
+    "PR #264 adds GET /v1/dr24/objects/{objectid}/lightcurve and a source-native ObservationService path.",
+    "The DR24 backend must preserve HMJD, mag, magerr, clrcoeff, and catflags without normalization.",
+    "The API test must not use the frozen v0.2.0 model or ALeRCE fallback."
+  ],
+  "baseline": {
+    "revision": "PR #264 head 02d96ce85b58d8a6ce5670a8833b2beb74d70b24",
+    "description": "This is a live integration test on a branch stacked on PR #264. It does not change the default branch or merge the adapter."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reproducibility",
+    "reliability"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "MEASURED",
+        "before": "PR #264 had deterministic adapter tests but no verified live API-to-HATS parity result.",
+        "after": "A live TestClient request to the API route is compared against the three independently verified per-OID payload hashes, catalog epoch counts, partition metadata, and catflags distributions."
+      },
+      "reproducibility": {
+        "status": "MEASURED",
+        "before": "The raw probe artifact verified HATS acquisition outside the application API.",
+        "after": "The API smoke test records code revision, workflow run, retrieval timestamps, per-OID payload hashes, and object-level counts in a compact artifact."
+      },
+      "reliability": {
+        "status": "MEASURED",
+        "before": "The API adapter had no live source-backed parity result.",
+        "after": "Workflow run 42063653144 completed successfully. The API returned 417 epochs for three OIDs. All three canonical payload SHA-256 values exactly matched the independent HATS probe artifact. Per-OID catalog_nepochs and returned epoch counts matched."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "Raw API parity does not validate physical-source identity, feature compatibility, classifier performance, calibration, OOD, or anomaly detection."
+      }
+    },
+    "trade_off": "Use three known OIDs and compare exact payload hashes. Do not expand the query or apply scientific transformations."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The test uses FastAPI TestClient and the real DR24LightcurveBackend.",
+      "The test compares per-OID canonical payload hashes with the independently verified probe artifact.",
+      "The test checks catalog_nepochs, returned epoch counts, filterid, fieldid, rcid, catflags counts, and source provenance.",
+      "The test is skipped in ordinary offline CI unless ZTF_DR24_LIVE_TEST=1 is set.",
+      "The branch-scoped workflow enables the live test and uploads only a compact JSON evidence artifact."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [],
+    "unresolved": [
+      "The Workbench browser view in PR #267 remains unverified against the live API.",
+      "A 5–10 object end-to-end application smoke test with UI, QC, exports, and reproducibility bundle remains open."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "The raw-source probe can be used as a byte-level reference for the API adapter.",
+      "Matching per-OID payload hashes provides a stronger parity check than matching only epoch counts.",
+      "The live test must remain separate from ordinary offline CI and must not invoke inference."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [
+      "Test the Workbench browser flow against the verified live API.",
+      "Test explicit missing-OID and source-failure behavior through the API.",
+      "Complete a 5–10 object end-to-end application smoke test with QC, visualization, exports, and a reproducibility bundle."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not merge PR #264 until live API parity and ordinary CI pass.",
+    "Do not merge PR #267 until browser interaction tests pass against the verified API.",
+    "Keep the raw DR24 path separate from the frozen v0.2.0 inference contract.",
+    "Do not claim Park MVP acceptance from this three-OID API smoke test."
+  ]
+}

@@ -1,0 +1,40 @@
+name: DR24 API Failure Contract Tests
+
+on:
+  push:
+    branches:
+      - research/dr24-api-live-smoke-20261105
+    paths:
+      - .github/workflows/dr24-api-failure-contract.yml
+      - tests/test_dr24_api_failure_modes.py
+      - src/ztf_classifier/api/app.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dr24-api-failure-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  failure-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Run DR24 API failure contract tests
+        run: python -m pytest -q tests/test_dr24_api_failure_modes.py
