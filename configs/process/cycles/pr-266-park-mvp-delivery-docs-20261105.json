@@ -87,7 +87,7 @@
     ]
   },
   "regression": {
-    "status": "PARTIAL",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
       "The 5–10 confirmed-source end-to-end application acceptance test remains open.",
       "A 30–50 confirmed-source guided demonstration and offline rehearsal remain open.",
