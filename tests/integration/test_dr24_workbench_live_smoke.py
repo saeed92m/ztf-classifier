@@ -120,6 +120,50 @@ def test_workbench_dr24_explorer_renders_live_hats_epochs(tmp_path: Path) -> Non
                         "provenance_source": provenance["source"],
                     }
                 )
+
+
+            const unknown_flags_oid = 987654323;
+            const unknown_flags_payload = {
+                "schema_version": "ztf-dr24-native-lightcurve-v1",
+                "records": [{
+                    "objectid": unknown_flags_oid,
+                    "filterid": 1,
+                    "fieldid": 100,
+                    "rcid": 4,
+                    "catalog_nepochs": 1,
+                    "payload_sha256": "unknown-flags-test",
+                    "epochs": [{
+                        "hmjd": 60000.1,
+                        "mag": 18.2,
+                        "magerr": 0.03,
+                        "clrcoeff": 0.1,
+                        "catflags": None
+                    }]
+                }],
+                "provenance": {
+                    "source": "IRSA ZTF DR24 Lightcurves HATS",
+                    "query": {"index": "objectid", "objectids": [unknown_flags_oid]},
+                    "returned_oids": [unknown_flags_oid],
+                    "missing_oids": []
+                }
+            }
+            page.route(
+                f"**/v1/dr24/objects/{unknown_flags_oid}/lightcurve",
+                lambda route: route.fulfill(
+                    status=200,
+                    content_type="application/json",
+                    body=json.dumps(unknown_flags_payload),
+                ),
+            )
+            page.locator("#dr24ObjectId").fill(str(unknown_flags_oid))
+            page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
+                timeout=10_000,
+            )
+            assert page.locator('#dr24Chart circle[fill="#9aa4b2"]').count() == 1
+            assert page.locator('#dr24Chart circle[fill="#55b8df"]').count() == 0
+
             no_record_oid = 987654321
             no_record_payload = {
                 "schema_version": "ztf-dr24-native-lightcurve-v1",
