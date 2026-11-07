@@ -489,12 +489,14 @@ def build_object_rows(
                 else raw_candidate and meta["four_field_positive"]
             ),
             "matches_historical_candidate": (
-                raw_candidate == meta["candidate"]
-                if meta["candidate"] is not None else None
+                None
+                if raw_candidate is None or meta["candidate"] is None
+                else raw_candidate == meta["candidate"]
             ),
             "matches_table4_with_snr_only": (
-                raw_candidate == meta["table4_member"]
-                if meta["table4_member"] is not None else None
+                None
+                if raw_candidate is None or meta["table4_member"] is None
+                else raw_candidate == meta["table4_member"]
             ),
             "matches_table4_with_four_field_gate": (
                 (raw_candidate and meta["four_field_positive"])
@@ -712,6 +714,21 @@ def main() -> int:
             for row in candidate_only_rows
             if row["rederived_candidate"] is None
         ],
+        "candidate_only_archive_rowcount_mismatches": [
+            {
+                "source_id": row["source_id"],
+                "ztf_name": row["ztf_name"],
+                "g_raw_rows": row["g"]["raw_row_count"],
+                "r_raw_rows": row["r"]["raw_row_count"],
+                "table2_ng": row["table2_ng"],
+                "table2_nr": row["table2_nr"],
+                "g_row_count_matches_table2": row["g_row_count_matches_table2"],
+                "r_row_count_matches_table2": row["r_row_count_matches_table2"],
+            }
+            for row in candidate_only_rows
+            if row["g_row_count_matches_table2"] is False
+            or row["r_row_count_matches_table2"] is False
+        ],
         "candidate_only_snr_disagreements": [
             {
                 "source_id": row["source_id"],
@@ -727,8 +744,7 @@ def main() -> int:
             }
             for row in candidate_only_rows
             if row["rederived_candidate"] is False
-            or row["g_row_count_matches_table2"] is False
-            or row["r_row_count_matches_table2"] is False
+            and row["candidate"] is True
         ],
         "metadata_field_gate_disagreements": [
             {
