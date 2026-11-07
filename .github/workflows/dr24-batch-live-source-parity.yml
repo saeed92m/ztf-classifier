@@ -11,17 +11,6 @@ on:
       - src/ztf_classifier/io/dr24_lightcurve.py
       - src/ztf_classifier/validation/dr24_quality.py
       - tests/test_dr24_batch_live_api.py
-  push:
-    branches:
-      - feat/dr24-bounded-batch-raw-api-20261107
-    paths:
-      - .github/workflows/dr24-batch-live-source-parity.yml
-      - src/ztf_classifier/api/app.py
-      - src/ztf_classifier/application/observations.py
-      - src/ztf_classifier/io/dr24_lightcurve.py
-      - src/ztf_classifier/validation/dr24_quality.py
-      - tests/test_dr24_batch_live_api.py
-
 permissions:
   contents: read
 
