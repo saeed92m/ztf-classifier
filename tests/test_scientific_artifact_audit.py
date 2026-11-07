@@ -6,6 +6,7 @@ from scripts.audit_scientific_artifacts import (
     LAB_ARTIFACT,
     PRODUCTION_ARTIFACT,
     audit,
+    TESTS,
 )
 
 
@@ -27,7 +28,7 @@ def test_lab_smoke_artifact_never_substitutes_for_production(tmp_path: Path) -> 
 
     report = audit(tmp_path, hash_data=False)
 
-    assert report["production_integration_tests_ready"] is False
+    assert report["integration_prerequisites_present"] is False
     assert report["production_model_artifact"]["exists"] is False
     assert report["lab_smoke_artifact"]["exists"] is True
     assert report["lab_smoke_artifact"]["production_eligible"] is False
@@ -57,12 +58,12 @@ def test_audit_reports_ready_only_when_all_prerequisites_exist(tmp_path: Path) -
             "reports/tables/final_model_config_v0.2.json",
             "data/raw/alerce/123_detections.parquet",
             "reports/tables/fold_assignments.parquet",
-        ),
+        ) + TESTS,
     )
 
     report = audit(tmp_path, hash_data=False)
 
-    assert report["production_integration_tests_ready"] is True
+    assert report["integration_prerequisites_present"] is True
     assert report["production_model_artifact"]["missing_required_files"] == []
     assert report["alerce_raw_detection_cache"]["parquet_file_count"] == 1
     assert report["fold_assignment_files"] == [
@@ -70,3 +71,4 @@ def test_audit_reports_ready_only_when_all_prerequisites_exist(tmp_path: Path) -
     ]
     assert report["safety"]["read_only"] is True
     assert report["safety"]["uploads_performed"] is False
+    assert report["missing_dependent_test_files"] == []
