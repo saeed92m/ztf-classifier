@@ -79,3 +79,25 @@ The Park acceptance authority must still confirm that this interpretation satisf
 - [Zubercal overview](https://irsa.ipac.caltech.edu/data/ZTF/zubercal/overview.pdf)
 - [LSDB Zubercal/PS1 tutorial](https://docs.lsdb.io/en/stable/tutorials/pre_executed/zubercal-ps1-snad.html)
 - [Zubercal DR20 HATS service](https://data.lsdb.io/hats/ztf_dr20/zubercal/)
+
+
+## 8. Bounded live Zubercal DR20 probe
+
+A bounded remote cone query was executed through the LSDB HATS endpoint.
+
+Evidence:
+- Workflow: [42350687356](https://github.com/saeed92m/ztf-classifier/actions/runs/42350687356)
+- Artifact: [zubercal-dr20-bounded-probe](https://github.com/saeed92m/ztf-classifier/actions/runs/42350687356/artifacts/13564968687)
+- ZTF OID: `264114400013085`
+- DR24 center: RA 142.59396362304688 deg, Dec -21.453134536743164 deg
+- Search radius: 1.2 arcsec
+- Returned Zubercal rows: 123
+- Bands: g and r
+- Candidate PS1 IDs: `82251425938786635`, `82251425941826616`
+- Maximum returned detection separation: 1.1841390371676082 arcsec
+- Match state: `AMBIGUOUS_MULTIPLE_PS1_IDS`
+- Canonical payload SHA-256: `4d59d7f90d8ced26a97b171d14a1271cf5adf04329b502df219b0fb531c74d4f`
+
+This probe verifies remote HATS access and the returned schema for one bounded query. It does **not** establish which PS1 ID is the correct astrophysical counterpart. The adapter must preserve both candidate IDs and report ambiguity. It must not select one candidate automatically.
+
+The probe also confirms that a 1.2-arcsecond cone can return more than one PS1 object ID for a single ZTF OID. Cross-match ambiguity is therefore a real observed condition, not only a theoretical risk.
