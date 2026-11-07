@@ -221,17 +221,18 @@ The retained \`candidate_only_11602_object_provenance.tsv\` partitions the 11,60
 - All 11,602 are marked \`g_snr=True\` and \`r_snr=True\` by the retained reconstruction diagnostics.
 - All 11,602 have a positive common \`Per\` value in Table 2.
 
-### Independent 55-object control evidence
+### Independent 55-object control archive coverage — correction
 
-The 55 Table 2 objects that pass the four-field completeness gate but are not in the reconstructed SNR candidate set were independently checked against raw g/r photometry:
+The retained raw-photometry audit is **PARTIAL**, not a complete SNR test of all 55 controls:
 
-- g-band: 1 passes and 54 fail the 2.5-sigma threshold.
-- r-band: 51 pass and 4 fail the 3-sigma threshold.
-- Both-band pass: zero objects.
+- g-band archive rows exist for only 1/55 controls; 54/55 have no g rows.
+- r-band archive rows exist for only 51/55 controls; 4/55 have no r rows.
+- No control has raw rows in both bands.
+- The earlier summary fields \`failed_g_snr=54\` and \`failed_r_snr=4\` count missing-band objects as not passing. They do not establish SNR failure for objects with zero archive rows.
 
-Thus every one of these 55 controls fails at least one band-specific SNR requirement. This supports the two-predicate partition:
+A missing raw light curve is an **UNKNOWN** SNR result, not a failed detection. Therefore this 55-object artifact does not independently show that the controls fail the two-band SNR criterion. It exposes a separate archive-to-Table2 row-coverage discrepancy.
 
-\`published membership = reconstructed two-band SNR candidates AND four-field completeness\`.
+The exact set intersection remains a full-set empirical identity, but the 55-control audit cannot be used as independent evidence for the two-predicate partition. The new raw SNR diagnostic must preserve tri-state outcomes (PASS / FAIL / UNKNOWN) and report per-band row-count mismatches separately.
 
 ### Provenance and hashes
 
