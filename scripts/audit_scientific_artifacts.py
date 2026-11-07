@@ -194,7 +194,8 @@ def audit(repo_root: Path, *, hash_data: bool) -> dict[str, Any]:
         blockers.append("No ALeRCE raw-detection Parquet cache was found.")
     if not fold_assignments:
         blockers.append(
-            "No fold-assignment artifact was found under data/processed or reports/tables."
+            "No fold-assignment artifact was found under data/processed "
+            "or reports/tables."
         )
 
     return {
