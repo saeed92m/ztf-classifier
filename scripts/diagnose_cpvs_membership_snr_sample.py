@@ -60,6 +60,10 @@ ARTIFACT_REFERENCE = {
             "sha256": "0a713379eb274d380f7a399d4a719cd3572113d6dc5184442124f8a9e59ed340",
             "size_bytes": 124564,
         },
+        "four_field_only_55.tsv": {
+            "sha256": "b7f712910467616919f616dfd5f9ddb94a4c6b819f973469eeeb704fae0e1ab6",
+            "size_bytes": 7063,
+        },
     },
 }
 
@@ -105,7 +109,27 @@ def read_tsv(path: Path) -> list[dict[str, str]]:
 def parse_photometry_line(raw_line: bytes) -> list[str]:
     """Parse one seven-column Zenodo row without assuming unquoted commas."""
     text = raw_line.decode("utf-8", errors="strict").rstrip("\r\n")
-    return [value.strip() for value in next(csv.reader([text], delimiter=","))]
+    if "\t" in text:
+        return [value.strip() for value in text.split("\t")]
+    if "," in text:
+        return [value.strip() for value in next(csv.reader([text], delimiter=","))]
+    return text.split()
+
+
+def verify_artifact_inputs(paths: dict[str, Path]) -> dict[str, Any]:
+    """Verify all TSV inputs against the retained workflow artifact manifest."""
+    observed = {}
+    errors = []
+    for name, path in paths.items():
+        expected = ARTIFACT_REFERENCE["files"][name]
+        size = path.stat().st_size
+        sha256 = digest_file(path, "sha256")
+        observed[name] = {"size_bytes": size, "sha256": sha256}
+        if size != expected["size_bytes"] or sha256 != expected["sha256"]:
+            errors.append(
+                f"{name} integrity mismatch: size={size}, sha256={sha256}"
+            )
+    return {"files": observed, "validation_errors": errors}
 
 
 def metadata_record(row: dict[str, str], source: str) -> dict[str, Any]:
@@ -577,12 +601,26 @@ def main() -> int:
     parser.add_argument("--objects-output", type=Path, required=True)
     args = parser.parse_args()
 
+    input_integrity = verify_artifact_inputs(
+        {
+            "candidate_only_11602_object_provenance.tsv": args.candidate_only,
+            "fixed_sample_100.tsv": args.sample_100,
+            "fixed_sample_1000.tsv": args.sample_1000,
+            "four_field_only_55.tsv": args.four_field_only,
+        }
+    )
+    if input_integrity["validation_errors"]:
+        raise ValueError("; ".join(input_integrity["validation_errors"]))
+
     metadata, input_report = load_metadata(
         args.candidate_only,
         args.sample_100,
         args.sample_1000,
         args.four_field_only,
     )
+    input_report["artifact_integrity"] = input_integrity
+    if input_report["metadata_conflicts"]:
+        raise ValueError("Conflicting source metadata across retained audit inputs")
     source_ids = set(metadata)
     g_report, g_metrics = scan_band_archive(args.g_archive, "g", source_ids)
     r_report, r_metrics = scan_band_archive(args.r_archive, "r", source_ids)
@@ -621,6 +659,7 @@ def main() -> int:
         ),
         "artifact_reference": ARTIFACT_REFERENCE,
         "input_manifest": input_report,
+        "input_artifact_integrity": input_integrity,
         "thresholds": {
             "g_approximate_snr": G_THRESHOLD,
             "r_approximate_snr": R_THRESHOLD,
