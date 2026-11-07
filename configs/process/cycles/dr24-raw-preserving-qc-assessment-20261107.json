@@ -51,12 +51,13 @@
     "trade_off": "The assessment adds a separate diagnostic payload and does not reduce raw data. It deliberately avoids selecting or deleting epochs."
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "PARTIALLY_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
       "Pure-function tests cover strict/likely-usable distinction, missing and invalid values, negative magerr, optional clrcoeff and raw immutability.",
       "ObservationService integration test verifies that QC is attached separately from raw epochs.",
-      "CI for this branch is pending."
+      "CI for this branch is pending.",
+      "Current-head CI run 42350826936 passed all eight jobs on f59c0234f6b30ae57b493ae4b2b168fa3ad5ff4f. Test Suite: 662 passed, 11 skipped, 9 warnings in 117.28s. Format, Lint, Lifecycle, Runtime Smoke, Build & Verify Package, Dependency Audit and CI Gate all passed. The 11 skips include one opt-in live HATS test that passed separately and 10 pre-existing artifact-dependent scientific/model tests."
     ]
   },
   "failure_analysis": {
@@ -82,7 +83,7 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Run full CI on the current branch head.",
+      "Ten pre-existing feature/model integration tests remain skipped because frozen v0.2 production artifacts and ALeRCE raw cache are not available in CI; use the local artifact audit workflow.",
       "Compare policy classifications against independent source examples and representative edge cases.",
       "Do not connect provisional candidates to v0.2 feature generation or inference without a separate accepted scientific contract."
     ]
