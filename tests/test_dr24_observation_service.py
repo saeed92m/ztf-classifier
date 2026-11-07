@@ -55,7 +55,7 @@ def test_observation_service_adds_separate_qc_without_mutating_raw_epochs(
 
     payload = service.get_dr24_native_lightcurves([123456])
 
-    assert payload["records"][0]["epochs"] == [
+    assert payload["records"][0]["epochs"] == (
         {
             "hmjd": 60000.1,
             "mag": 18.2,
@@ -70,7 +70,7 @@ def test_observation_service_adds_separate_qc_without_mutating_raw_epochs(
             "clrcoeff": 0.1,
             "catflags": 32768,
         },
-    ]
+    )
     assert payload["qc_assessments"][0]["objectid"] == 123456
     assert payload["qc_assessments"][0]["counts"]["strict_clean_epochs"] == 1
     assert payload["qc_assessments"][0]["counts"]["bit_15_flagged_epochs"] == 1
