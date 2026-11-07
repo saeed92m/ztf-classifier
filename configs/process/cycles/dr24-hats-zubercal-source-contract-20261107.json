@@ -50,11 +50,12 @@
     "trade_off": "The proposed dual-track architecture avoids falsely treating one source product as another, but may add implementation work if Zubercal is mandatory."
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "PARTIALLY_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
       "IRSA HATS tutorial and ZTF product catalog reviewed.",
-      "No source data were acquired or compared in this documentation cycle."
+      "No source data were acquired or compared in this documentation cycle.",
+      "Reviewed the official Zubercal overview and LSDB Zubercal/PS1 tutorial. Verified the DR20 HATS endpoint, PS1 objectid semantics, MJD(TDB), magerr scaling by 1e4, distinct flag/info fields, approximate 10 TB bulk size, and absence of sources without suitable PS1 matches. No data query or photometric parity test was run."
     ]
   },
   "failure_analysis": {
@@ -71,7 +72,10 @@
     "findings": [
       "HATS and Zubercal are distinct source products.",
       "ZTF OIDs are partitioned by filter, field and quadrant; they are not canonical astrophysical identities.",
-      "Source product identity must be explicit in data contracts and user-facing output."
+      "Source product identity must be explicit in data contracts and user-facing output.",
+      "Zubercal DR20 is PS1-matched; it cannot be the only discovery stream because PS1-unmatched transients are absent.",
+      "Zubercal DR20 objectid is a PS1 ID, not a ZTF OID; MJD(TDB), scaled magerr, flag and info require separate typed fields.",
+      "Recommended dual-stream design: DR24 HATS primary for transient discovery; Zubercal DR20 supplementary calibration stream."
     ]
   },
   "regression": {
@@ -79,7 +83,9 @@
     "open_blockers": [
       "Confirm the primary photometry product against the approved Park contract.",
       "If Zubercal is mandatory, implement its dedicated adapter and time-series reconstruction with parity tests.",
-      "If both are required, define a frozen comparison dataset and photometric validation protocol."
+      "If both are required, define a frozen comparison dataset and photometric validation protocol.",
+      "Run a bounded remote Zubercal DR20 HATS query for a pinned source and verify schema, units, match ambiguity and query cost before implementing the adapter.",
+      "Confirm the dual-stream interpretation with the Park acceptance authority."
     ]
   },
   "decision": "REVISE",
