@@ -831,10 +831,11 @@ def test_dr24_batch_endpoint_reports_source_failure_without_fallback() -> None:
         ) -> dict[str, object]:
             raise RuntimeError("simulated HATS failure")
 
+    failing_service = FailingDR24ObservationService()
     client = TestClient(
         create_app(
             ApiSettings(),
-            observation_service=FailingDR24ObservationService(),  # type: ignore[arg-type]
+            observation_service=failing_service,  # type: ignore[arg-type]
         )
     )
     response = client.post(
