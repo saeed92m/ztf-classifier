@@ -58,6 +58,19 @@ def test_zubercal_summary_preserves_multiple_ps1_candidates() -> None:
     assert payload["row_annotations"][0]["separation_arcsec"] > 0
     assert payload["semantics"]["magerr_conversion"] == "magerr_raw / 10000"
 
+    reversed_payload = summarize_zubercal_rows(
+        list(reversed(rows)),
+        ztf_objectid=264114400013085,
+        ra_deg=142.59396362304688,
+        dec_deg=-21.453134536743164,
+        radius_arcsec=1.2,
+    ).to_dict()
+    assert (
+        payload["provenance"]["payload_sha256"]
+        == reversed_payload["provenance"]["payload_sha256"]
+    )
+    assert reversed_payload["raw_rows"][0]["objectid"] == rows[1]["objectid"]
+
 
 def test_zubercal_summary_reports_no_match_without_inventing_candidates() -> None:
     result = summarize_zubercal_rows(
