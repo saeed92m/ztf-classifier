@@ -41,14 +41,30 @@ class ZubercalDR20Request:
     radius_arcsec: float = DEFAULT_MATCH_RADIUS_ARCSEC
 
     def __post_init__(self) -> None:
-        if isinstance(self.ztf_objectid, bool) or self.ztf_objectid <= 0:
+        if (
+            not isinstance(self.ztf_objectid, int)
+            or isinstance(self.ztf_objectid, bool)
+            or self.ztf_objectid <= 0
+        ):
             raise ValueError("ztf_objectid must be a positive integer.")
-        if not math.isfinite(self.ra_deg) or not 0.0 <= self.ra_deg < 360.0:
+        if (
+            not isinstance(self.ra_deg, (int, float))
+            or isinstance(self.ra_deg, bool)
+            or not math.isfinite(self.ra_deg)
+            or not 0.0 <= self.ra_deg < 360.0
+        ):
             raise ValueError("ra_deg must be finite and in [0, 360).")
-        if not math.isfinite(self.dec_deg) or not -90.0 <= self.dec_deg <= 90.0:
+        if (
+            not isinstance(self.dec_deg, (int, float))
+            or isinstance(self.dec_deg, bool)
+            or not math.isfinite(self.dec_deg)
+            or not -90.0 <= self.dec_deg <= 90.0
+        ):
             raise ValueError("dec_deg must be finite and in [-90, 90].")
         if (
-            not math.isfinite(self.radius_arcsec)
+            not isinstance(self.radius_arcsec, (int, float))
+            or isinstance(self.radius_arcsec, bool)
+            or not math.isfinite(self.radius_arcsec)
             or self.radius_arcsec <= 0.0
             or self.radius_arcsec > MAX_MATCH_RADIUS_ARCSEC
         ):
@@ -119,6 +135,12 @@ def summarize_zubercal_rows(
     from astropy import units as u
     from astropy.coordinates import SkyCoord
 
+    ZubercalDR20Request(
+        ztf_objectid=ztf_objectid,
+        ra_deg=ra_deg,
+        dec_deg=dec_deg,
+        radius_arcsec=radius_arcsec,
+    )
     center = SkyCoord(ra=ra_deg * u.deg, dec=dec_deg * u.deg, frame="icrs")
     normalized_rows: list[dict[str, Any]] = []
     row_annotations: list[dict[str, Any]] = []
@@ -136,6 +158,8 @@ def summarize_zubercal_rows(
             raise ValueError("Zubercal row has invalid objra/objdec.")
         coordinate = SkyCoord(ra=float(row_ra) * u.deg, dec=float(row_dec) * u.deg)
         separation = float(center.separation(coordinate).arcsec)
+        if separation > radius_arcsec + 1e-6:
+            raise ValueError("Zubercal row falls outside the requested cone.")
         distances.setdefault(ps1_id, []).append(separation)
         band = row.get("band")
         if isinstance(band, str):
