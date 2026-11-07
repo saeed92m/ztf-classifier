@@ -213,3 +213,10 @@ Request:
 The request accepts 1–10 unique positive integer OIDs. It rejects booleans, non-integer values, duplicates, zero, negative values, empty lists and lists longer than 10. The response preserves one record per returned OID and reports requested, returned and missing OIDs in provenance. It does not combine OIDs, infer astrophysical identity, normalize photometry, select quality epochs, generate features or run inference.
 
 The endpoint is an acquisition convenience only. It does not change the scientific acceptance state.
+
+
+## DR24 quality assessment
+
+The raw DR24 lightcurve response includes a separate `qc_assessments` collection. Each assessment is keyed by OID and contains per-epoch diagnostic flags and counts under `ztf-dr24-raw-qc-diagnostic-v1`.
+
+The assessment does not alter the `records[].epochs` raw payload. Its status is `DIAGNOSTIC_NOT_PRODUCTION_APPROVED`. It must not be used as an approved model-input mask or as evidence of scientific validation. See `docs/scientific/DR24_RAW_QC_ASSESSMENT_v1.md`.
