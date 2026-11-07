@@ -40,8 +40,8 @@
     },
     {
       "source": "Full CPVS membership audit artifacts: workflow 38635891449 / artifact 11935357767 and workflow 41367972395 / artifact 13108147605",
-      "status": "VERIFIED",
-      "detail": "Across all 781,602 parent IDs, reconstructed SNR candidates intersected with positive Table 2 gmag, rmag, Per-g and Per-r fields produce exactly the 730,184 Table 4 members. All 11,602 candidate-only IDs fail at least one of these four fields; the 55 four-field-positive noncandidate controls all fail at least one raw two-band SNR threshold."
+      "status": "PARTIAL",
+      "detail": "The full-set four-field intersection is verified. The 55-control raw-photometry audit is PARTIAL: only 1/55 controls has g rows, 51/55 has r rows, and none has both bands. Earlier failed_g_snr/failed_r_snr counters treated missing rows as non-passes; they must not be interpreted as SNR failures. The four-field root-cause hypothesis is therefore not independently confirmed by the 55 controls."
     }
   ],
   "baseline": {
@@ -102,7 +102,8 @@
       "The retained SNR flags for the 11602 candidate-only IDs are from the reconstructed candidate-selection artifact; fresh raw-photometry re-derivation is required for fixed 100- and 1000-object samples.",
       "The full r-band per-Seq count reconciliation must complete and the 718-row archive-versus-Table2 Nr residual must be explained.",
       "The ReadMe r-band count discrepancy remains unresolved.",
-      "The CPVS membership issue must remain open until the source-level criteria are independently verified."
+      "The CPVS membership issue must remain open until the source-level criteria are independently verified.",
+      "The 55-control raw-photometry audit has incomplete archive coverage (1/55 g, 51/55 r, zero both-band coverage); missing rows are UNKNOWN, not SNR failures. Reconcile archive-to-Table2 row provenance before using these controls to test the two-band SNR predicate."
     ]
   },
   "knowledge_extraction": {
@@ -117,7 +118,8 @@
       "Full-dataset set intersection: SNR candidates ∩ positive gmag/rmag/Per-g/Per-r = exactly the 730184 published Table 4 members.",
       "All 11602 candidate-only IDs fail at least one of the four Table 2 completeness fields; 11580 fail both field pairs, 17 have incomplete per-band periods only, and 5 have incomplete mean magnitudes only.",
       "The 55 four-field-positive noncandidate controls fail at least one raw SNR threshold; 0 pass both bands.",
-      "The four-field completeness gate is the strongest current root-cause candidate, but is not explicitly stated in the published selection description; do not change the selector until the 17 cases and author methodology are resolved."
+      "The four-field completeness gate is the strongest current root-cause candidate, but is not explicitly stated in the published selection description; do not change the selector until the 17 cases and author methodology are resolved.",
+      "Correction: 55-control raw-photometry audit is PARTIAL. Only 1/55 has g archive rows, 51/55 has r rows, and no control has both bands. Previous fail counters counted absent rows as failures; classify them UNKNOWN."
     ]
   },
   "regression": {
