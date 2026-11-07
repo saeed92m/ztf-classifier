@@ -106,6 +106,8 @@ The documentation update is under review in [PR #175](https://github.com/saeed92
 - Do not send native DR24 measurements to the frozen v0.2.0 model without a separately validated mapping.
 
 ### Park MVP: evidence and remaining acceptance work
+The original September 2026 institutional presentation and project proposal remain unchanged as submitted records. Their current technical claims are qualified in the Persian [Park Technical Status Addendum — 2026-11-07](acceptance/PARK_TECHNICAL_STATUS_ADDENDUM_2026-11-07.fa.md). Use the original PDFs together with this dated addendum; do not treat historical demo claims as current acceptance evidence.
+
 
 Verified component evidence, limited to the tested OIDs:
 
