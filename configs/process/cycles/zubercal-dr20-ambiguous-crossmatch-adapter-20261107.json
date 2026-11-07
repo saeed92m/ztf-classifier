@@ -56,11 +56,12 @@
     "trade_off": "The adapter preserves ambiguity and source-native data. It does not create a convenient but unverified single-source join."
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "PARTIALLY_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
       "Pure unit tests cover no-match, single/multiple PS1 IDs, input bounds and raw-row separation.",
-      "A live adapter parity workflow is added for the pinned ambiguous DR20 cone; it has not completed on the final head."
+      "A live adapter parity workflow is added for the pinned ambiguous DR20 cone; it has not completed on the final head.",
+      "Adapter-specific live parity workflow 42351130555 passed. The adapter returned 123 raw rows, 55 for PS1 ID 82251425938786635 and 68 for PS1 ID 82251425941826616, across g/r. It preserved both candidates, returned AMBIGUOUS_MULTIPLE_PS1_IDS and NOT_SELECTED, and uploaded artifact 13565513022. Canonical sorted-row SHA-256: 3ea97c3c220d5c7b6710cb912cd8ca61cf714bdf5737fb76e097c2512a185e4c."
     ]
   },
   "failure_analysis": {
@@ -86,7 +87,7 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Run unit tests and the live adapter parity workflow on the final branch head.",
+      "Run the full current-head unit and CI suite; live adapter parity passed on the same adapter code before the final base-only merge.",
       "Validate row counts, candidate IDs and raw payload hash against the bounded probe artifact.",
       "Do not integrate candidate PS1 IDs into source grouping or model inference until independent identity validation passes."
     ]
