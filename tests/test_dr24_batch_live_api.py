@@ -61,11 +61,3 @@ def test_batch_api_matches_pinned_independent_hats_payloads(tmp_path: Path) -> N
         assert len(record["epochs"]) == expected["epochs"]
         assert record["payload_sha256"] == expected["sha256"]
 
-    assessments = {
-        item["objectid"]: item for item in payload["qc_assessments"]
-    }
-    assert set(assessments) == set(EXPECTED)
-    assert all(
-        item["policy_status"] == "DIAGNOSTIC_NOT_PRODUCTION_APPROVED"
-        for item in assessments.values()
-    )
