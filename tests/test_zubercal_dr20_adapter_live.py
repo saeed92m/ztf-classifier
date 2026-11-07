@@ -44,4 +44,7 @@ def test_zubercal_adapter_preserves_observed_ps1_ambiguity(tmp_path: Path) -> No
         os.getenv("ZUBERCAL_ADAPTER_OUTPUT", tmp_path / "zubercal-adapter-live.json")
     )
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
