@@ -32,12 +32,12 @@
   ],
   "measurement": {
     "metrics": {
-      "source_identity": {
+      "correctness": {
         "status": "VERIFIED",
         "before": "DR24 HATS and Zubercal were referenced in project context without one consolidated decision record.",
         "after": "Separate source products and separate adapter requirement documented."
       },
-      "park_contract": {
+      "coverage": {
         "status": "NOT_MEASURED",
         "before": "The approved primary photometry product was not explicitly resolved.",
         "after": "Three contractual options recorded; confirmation remains open."
