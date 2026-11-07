@@ -99,6 +99,8 @@ class ZubercalDR20Result:
                 "row_count": len(self.raw_rows),
                 "candidate_ps1_id_count": len(self.candidate_summary),
                 "payload_sha256": self.payload_sha256,
+                "payload_hash_scope": "raw rows, canonical sorted order",
+                "payload_hash_algorithm": "SHA-256",
                 "raw_rows_preserved": True,
             },
             "semantics": {
@@ -196,8 +198,28 @@ def summarize_zubercal_rows(
         "center_dec_deg": dec_deg,
         "radius_arcsec": radius_arcsec,
     }
-    canonical = json.dumps(
+    hash_columns = (
+        "objectid",
+        "band",
+        "mjd",
+        "fieldid",
+        "rcidin",
+        "objra",
+        "objdec",
+        "mag",
+        "magerr",
+        "info",
+        "flag",
+    )
+    canonical_rows = sorted(
         normalized_rows,
+        key=lambda row: tuple(
+            (row.get(column) is None, row.get(column) if row.get(column) is not None else "")
+            for column in hash_columns
+        ),
+    )
+    canonical = json.dumps(
+        canonical_rows,
         sort_keys=True,
         separators=(",", ":"),
         allow_nan=False,
