@@ -55,7 +55,8 @@
     "evidence": [
       "IRSA HATS tutorial and ZTF product catalog reviewed.",
       "No source data were acquired or compared in this documentation cycle.",
-      "Reviewed the official Zubercal overview and LSDB Zubercal/PS1 tutorial. Verified the DR20 HATS endpoint, PS1 objectid semantics, MJD(TDB), magerr scaling by 1e4, distinct flag/info fields, approximate 10 TB bulk size, and absence of sources without suitable PS1 matches. No data query or photometric parity test was run."
+      "Reviewed the official Zubercal overview and LSDB Zubercal/PS1 tutorial. Verified the DR20 HATS endpoint, PS1 objectid semantics, MJD(TDB), magerr scaling by 1e4, distinct flag/info fields, approximate 10 TB bulk size, and absence of sources without suitable PS1 matches. No data query or photometric parity test was run.",
+      "Bounded Zubercal DR20 HATS probe passed in workflow 42350687356. For ZTF OID 264114400013085 at RA 142.59396362304688 deg, Dec -21.453134536743164 deg, a 1.2 arcsec cone returned 123 rows in g/r and two PS1 object IDs (82251425938786635 and 82251425941826616). Maximum returned detection separation was 1.1841390371676082 arcsec. Probe artifact 13564968687; canonical payload SHA-256 4d59d7f90d8ced26a97b171d14a1271cf5adf04329b502df219b0fb531c74d4f."
     ]
   },
   "failure_analysis": {
@@ -75,7 +76,8 @@
       "Source product identity must be explicit in data contracts and user-facing output.",
       "Zubercal DR20 is PS1-matched; it cannot be the only discovery stream because PS1-unmatched transients are absent.",
       "Zubercal DR20 objectid is a PS1 ID, not a ZTF OID; MJD(TDB), scaled magerr, flag and info require separate typed fields.",
-      "Recommended dual-stream design: DR24 HATS primary for transient discovery; Zubercal DR20 supplementary calibration stream."
+      "Recommended dual-stream design: DR24 HATS primary for transient discovery; Zubercal DR20 supplementary calibration stream.",
+      "One bounded Zubercal DR20 cone query for one ZTF OID returned two PS1 object IDs within the 1.2 arcsec search radius; preserve both candidates and report ambiguity."
     ]
   },
   "regression": {
@@ -84,8 +86,8 @@
       "Confirm the primary photometry product against the approved Park contract.",
       "If Zubercal is mandatory, implement its dedicated adapter and time-series reconstruction with parity tests.",
       "If both are required, define a frozen comparison dataset and photometric validation protocol.",
-      "Run a bounded remote Zubercal DR20 HATS query for a pinned source and verify schema, units, match ambiguity and query cost before implementing the adapter.",
-      "Confirm the dual-stream interpretation with the Park acceptance authority."
+      "Confirm the dual-stream interpretation with the Park acceptance authority.",
+      "Implement an ambiguity-preserving Zubercal adapter and test its row, unit, flag and candidate-summary contracts."
     ]
   },
   "decision": "REVISE",
