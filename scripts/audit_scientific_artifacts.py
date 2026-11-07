@@ -30,9 +30,18 @@ PRODUCTION_FILES = (
 
 KNOWN_LAB_HASHES = {
     "model.json": "96bbbd4643d073be574b0bb359062a31219417b2d857ac00e64a8c3f47e21a6c",
-    "feature_schema.parquet": "fed07fc291070ecbdc7bbc597fad5aac6a3f4a1746feb12a9f4c2407108af329",
-    "calibration.json": "8eaddb70ecaf02c10fe252d03337be484415e68dcce1fdb30f6fbf1fe25fb714",
-    "conformal.json": "d45ee30ba564f319d8599f3e18afd6ae9010ea0e41d1a301065acec0c9a6be8b",
+    "feature_schema.parquet": (
+        "fed07fc291070ecbdc7bbc597fad5aac"
+        "6a3f4a1746feb12a9f4c2407108af329"
+    ),
+    "calibration.json": (
+        "8eaddb70ecaf02c10fe252d03337be48"
+        "4415e68dcce1fdb30f6fbf1fe25fb714"
+    ),
+    "conformal.json": (
+        "d45ee30ba564f319d8599f3e18afd6ae"
+        "9010ea0e41d1a301065acec0c9a6be8b"
+    ),
 }
 
 FEATURE_FILES = (
@@ -110,7 +119,10 @@ def audit(repo_root: Path, *, hash_data: bool) -> dict[str, Any]:
         for item in production["files"]
     }
     production["required_files"] = {
-        name: production_files.get(name, {"path": str(PRODUCTION_ARTIFACT / name), "exists": False})
+        name: production_files.get(
+            name,
+            {"path": str(PRODUCTION_ARTIFACT / name), "exists": False},
+        )
         for name in PRODUCTION_FILES
     }
     production["missing_required_files"] = [
@@ -181,7 +193,9 @@ def audit(repo_root: Path, *, hash_data: bool) -> dict[str, Any]:
     if not alerce["parquet_file_count"]:
         blockers.append("No ALeRCE raw-detection Parquet cache was found.")
     if not fold_assignments:
-        blockers.append("No fold-assignment artifact was found under data/processed or reports/tables.")
+        blockers.append(
+            "No fold-assignment artifact was found under data/processed or reports/tables."
+        )
 
     return {
         "schema_version": "ztf-local-scientific-artifact-audit-v1",
@@ -224,7 +238,9 @@ def main() -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("reports/scientific_validation/local_scientific_artifact_audit.json"),
+        default=Path(
+            "reports/scientific_validation/local_scientific_artifact_audit.json"
+        ),
     )
     parser.add_argument(
         "--hash-data",
@@ -245,7 +261,9 @@ def main() -> int:
     )
     print(json.dumps({
         "output": str(output),
-        "production_integration_tests_ready": report["production_integration_tests_ready"],
+        "production_integration_tests_ready": (
+            report["production_integration_tests_ready"]
+        ),
         "blockers": report["blockers"],
     }, indent=2))
     return 0 if report["production_integration_tests_ready"] else 2
