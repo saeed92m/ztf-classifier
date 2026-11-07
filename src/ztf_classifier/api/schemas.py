@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 
 
 class ApplicationSettingsRequest(BaseModel):
@@ -17,6 +17,23 @@ class ApplicationSettingsRequest(BaseModel):
     max_import_bytes: int = Field(default=250 * 1024 * 1024, gt=0)
     day_start: str = Field(default="06:00", pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
     night_start: str = Field(default="18:00", pattern=r"^(?:[01]\d|2[0-3]):[0-5]\d$")
+
+
+class DR24LightcurveBatchRequest(BaseModel):
+    """Bounded request for raw native DR24 lightcurves."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    objectids: list[StrictInt] = Field(min_length=1, max_length=10)
+
+    @field_validator("objectids")
+    @classmethod
+    def validate_objectids(cls, values: list[int]) -> list[int]:
+        if any(value <= 0 for value in values):
+            raise ValueError("DR24 objectids must be positive integers.")
+        if len(values) != len(set(values)):
+            raise ValueError("Duplicate DR24 objectids are not allowed.")
+        return values
 
 
 class PredictionRequest(BaseModel):
