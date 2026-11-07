@@ -194,3 +194,74 @@ The first scan is not the full reconciliation. The pinned second scan must pass 
 - No claim that the 11,602 candidate-only membership residuals are resolved.
 - No change to the CPVS selector, thresholds, published reference, model, features, taxonomy or frozen v0.2.0 baseline.
 - The CPVS scientific gate remains fail-closed.
+
+
+## Membership discrepancy: exact four-field set intersection — 2026-11-07
+
+A full object-level comparison of the retained parent Table 2, reconstructed SNR candidate set and published Table 4 shows a strong new lead.
+
+### Exact set counts
+
+- Parent Table 2: 781,602 unique Seq/SourceIDs.
+- Published Table 4: 730,184 unique IDs.
+- Reconstructed two-band SNR candidates: 741,786 IDs.
+- Candidate-only residual: 11,602.
+- Published-only residual: zero.
+- Intersecting the reconstructed candidate set with positive, present values for all four Table 2 fields \`gmag\`, \`rmag\`, \`Per-g\`, and \`Per-r\` yields **exactly 730,184 IDs**, equal to the published Table 4 membership.
+
+This is a full-dataset set identity, not a sample estimate.
+
+### Candidate-only field partition
+
+The retained \`candidate_only_11602_object_provenance.tsv\` partitions the 11,602 candidate-only IDs as follows:
+
+- 11,580: both the mean-magnitude pair and per-band-period pair are incomplete.
+- 17: both mean magnitudes are present, but the per-band-period pair is incomplete.
+- 5: both per-band periods are present, but the mean-magnitude pair is incomplete.
+- All 11,602 are marked \`g_snr=True\` and \`r_snr=True\` by the retained reconstruction diagnostics.
+- All 11,602 have a positive common \`Per\` value in Table 2.
+
+### Independent 55-object control evidence
+
+The 55 Table 2 objects that pass the four-field completeness gate but are not in the reconstructed SNR candidate set were independently checked against raw g/r photometry:
+
+- g-band: 1 passes and 54 fail the 2.5-sigma threshold.
+- r-band: 51 pass and 4 fail the 3-sigma threshold.
+- Both-band pass: zero objects.
+
+Thus every one of these 55 controls fails at least one band-specific SNR requirement. This supports the two-predicate partition:
+
+\`published membership = reconstructed two-band SNR candidates AND four-field completeness\`.
+
+### Provenance and hashes
+
+- Heavy candidate-selection artifact: workflow 38635891449, artifact 11935357767.
+- \`selected.tsv.diagnostic.json\`: 2,098 bytes; SHA-256 \`7c6ae465f3316f1c9e547e56911abe63af709fc739434477f7fe62845201e965\`.
+- \`membership_audit.json\`: 1,004 bytes; SHA-256 \`4c1a082569820af26cbca80320a4913a00e1849446b0ca0205fc872b5ce89c5c\`.
+- Raw CDS reconciliation artifact: workflow 41367972395, artifact 13108147605.
+- \`candidate_only_11602_object_provenance.tsv\`: 1,753,019 bytes; SHA-256 \`35305bb61558660cebd439152691d5e008ee89fb8a88a52726de052c2015ac21\`.
+- \`four_field_only_55.tsv\`: 7,063 bytes; SHA-256 \`b7f712910467616919f616dfd5f9ddb94a4c6b819f973469eeeb704fae0e1ab6\`.
+- \`photometry55/per_band_snr_metrics.tsv\`: 6,957 bytes; SHA-256 \`5388d4f2b8bae524dbc0f96ccf1d74b4a0ef08e6ce0a7e52d0dd0eb0fdfb7002\`.
+- \`fixed_sample_100.tsv\`: 12,634 bytes; SHA-256 \`baf94d168b59b682d113015c8ab15a1d2e6ec414cb82e29875a13358f0e5b25b\`.
+- \`fixed_sample_1000.tsv\`: 124,564 bytes; SHA-256 \`0a713379eb274d380f7a399d4a719cd3572113d6dc5184442124f8a9e59ed340\`.
+
+### Interpretation and limits
+
+The strongest current explanation is that the reconstructed selector omitted a four-field completeness condition that the published data-processing pipeline applied, explicitly or implicitly. The exact set intersection explains all 11,602 excess IDs and preserves zero published-only IDs.
+
+However, do not declare the CPVS issue resolved yet:
+
+1. The published paper and Table 4 ReadMe describe the 2.5-sigma g / 3-sigma r detection requirement. The paper also uses the common period and the g-r mean-magnitude feature. The published text does not explicitly state that all four Table 2 fields must be positive.
+2. The common \`Per\` field is positive for all 11,602 candidate-only objects. The 17 objects with complete mean magnitudes but missing one per-band period therefore require specific explanation.
+3. The retained SNR flags for the 11,602 are from the reconstructed candidate-selection artifact. The independent raw-photometry audit currently covers the 55 controls, not all 11,602.
+4. The fixed 100- and 1,000-object files are reproducible metadata samples. They are not yet a fresh raw-photometry SNR re-derivation for those samples.
+
+### Required next validation
+
+- Re-derive exact g/r SNR, detection counts, flags and source provenance for the fixed 100- and 1,000-object samples directly from the checksum-pinned raw archives.
+- Include reference members, all four-field groups, candidate-only IDs and parent nonmembers.
+- Inspect all 17 magnitude-complete / per-band-period-incomplete cases.
+- Verify the four-field condition against the paper's actual preprocessing semantics or author code.
+- Only then decide whether the selector should add a versioned completeness gate. Do not change the frozen baseline or silently rewrite the historical selector.
+
+Current disposition: **ROOT-CAUSE CANDIDATE STRONGLY SUPPORTED; SCIENTIFIC CONFIRMATION PENDING**. Issue #170 remains open.
