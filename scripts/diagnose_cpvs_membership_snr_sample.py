@@ -102,6 +102,12 @@ def read_tsv(path: Path) -> list[dict[str, str]]:
     return rows
 
 
+def parse_photometry_line(raw_line: bytes) -> list[str]:
+    """Parse one seven-column Zenodo row without assuming unquoted commas."""
+    text = raw_line.decode("utf-8", errors="strict").rstrip("\r\n")
+    return [value.strip() for value in next(csv.reader([text], delimiter=","))]
+
+
 def metadata_record(row: dict[str, str], source: str) -> dict[str, Any]:
     source_id = int(row["SourceID"])
     gmag = parse_float(row.get("gmag"))
@@ -132,6 +138,7 @@ def metadata_record(row: dict[str, str], source: str) -> dict[str, Any]:
         "sample_100": source == "sample_100",
         "sample_1000": source == "sample_1000",
         "candidate_only": source == "candidate_only",
+        "four_field_only": source == "four_field_only",
         "historical_g_snr": parse_bool(row.get("g_snr")),
         "historical_r_snr": parse_bool(row.get("r_snr")),
         "historical_g_qualifying_detections": (
@@ -151,6 +158,7 @@ def load_metadata(
     candidate_only_path: Path,
     sample_100_path: Path,
     sample_1000_path: Path,
+    four_field_only_path: Path,
 ) -> tuple[dict[int, dict[str, Any]], dict[str, Any]]:
     metadata: dict[int, dict[str, Any]] = {}
     conflicts: list[dict[str, Any]] = []
@@ -158,6 +166,7 @@ def load_metadata(
         ("candidate_only", candidate_only_path),
         ("sample_100", sample_100_path),
         ("sample_1000", sample_1000_path),
+        ("four_field_only", four_field_only_path),
     ]
     input_counts = {}
     for source, path in inputs:
@@ -181,16 +190,23 @@ def load_metadata(
                 "candidate",
                 "table4_member",
             ):
-                if existing.get(key) != record.get(key):
+                previous = existing.get(key)
+                current = record.get(key)
+                if previous is not None and current is not None and previous != current:
                     conflicts.append(
                         {"source_id": source_id, "field": key,
-                         "first": existing.get(key), "next": record.get(key)}
+                         "first": previous, "next": current}
                     )
+                elif previous is None and current is not None:
+                    existing[key] = current
             existing["strata"].update(record["strata"])
             existing["sample_100"] = existing["sample_100"] or record["sample_100"]
             existing["sample_1000"] = existing["sample_1000"] or record["sample_1000"]
             existing["candidate_only"] = (
                 existing["candidate_only"] or record["candidate_only"]
+            )
+            existing["four_field_only"] = (
+                existing["four_field_only"] or record["four_field_only"]
             )
             for key in (
                 "historical_g_snr",
@@ -274,7 +290,11 @@ def scan_band_archive(
             actual_crc = zlib.crc32(raw_line, actual_crc)
             if not raw_line.strip() or raw_line.lstrip().startswith(b"#"):
                 continue
-            fields = raw_line.decode("utf-8", errors="replace").rstrip("\r\n").split(",")
+            try:
+                fields = parse_photometry_line(raw_line)
+            except (UnicodeDecodeError, csv.Error):
+                malformed_rows += 1
+                continue
             field_counts[len(fields)] += 1
             if len(fields) != 7:
                 malformed_rows += 1
@@ -552,12 +572,16 @@ def main() -> int:
     parser.add_argument("--candidate-only", type=Path, required=True)
     parser.add_argument("--sample-100", type=Path, required=True)
     parser.add_argument("--sample-1000", type=Path, required=True)
+    parser.add_argument("--four-field-only", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--objects-output", type=Path, required=True)
     args = parser.parse_args()
 
     metadata, input_report = load_metadata(
-        args.candidate_only, args.sample_100, args.sample_1000
+        args.candidate_only,
+        args.sample_100,
+        args.sample_1000,
+        args.four_field_only,
     )
     source_ids = set(metadata)
     g_report, g_metrics = scan_band_archive(args.g_archive, "g", source_ids)
@@ -570,7 +594,7 @@ def main() -> int:
     sample_100_rows = [row for row in object_rows if row["sample_100"]]
     sample_1000_rows = [row for row in object_rows if row["sample_1000"]]
     control_rows = [
-        row for row in sample_1000_rows if "four_field_only" in row["strata"]
+        row for row in object_rows if row["four_field_only"]
     ]
     period_only_rows = [
         row for row in candidate_only_rows
@@ -654,6 +678,7 @@ def main() -> int:
             for row in period_only_rows + magnitude_only_rows
         ],
         "object_result_count": len(object_rows),
+        "four_field_only_control_count": len(control_rows),
         "limitations": [
             "This is a raw-photometry diagnostic for the fixed samples and the 11,602 residual IDs, not a full 781,602-object candidate reconstruction.",
             "The SNR selector is reproduced as an explicit diagnostic; it is not silently substituted for the publisher's full method.",
