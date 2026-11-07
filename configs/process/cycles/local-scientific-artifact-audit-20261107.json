@@ -20,7 +20,7 @@
     }
   ],
   "baseline": {
-    "revision": "2c14b96e4566d8f316dd01da63002497e57d8680",
+    "revision": "cbc06f8e6d43e15b8b1984625596c1a177d1c415",
     "scientific_baseline": "v0.2.0 immutable",
     "feature_count": 42,
     "model_version": "baseline_v0.2"
