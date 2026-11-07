@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-bounded-batch-raw-api-20261107",
+  "objective": "Expose the existing bounded DR24 backend capability through a strict multi-OID raw API request, without identity grouping, normalization, feature generation or inference.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "PR #264",
+      "status": "VERIFIED",
+      "detail": "The DR24 backend already accepts up to ten unique positive OIDs and preserves per-OID payloads and provenance. The ObservationService and HTTP route exposed only one OID per request."
+    },
+    {
+      "source": "IRSA DR24 release notes",
+      "status": "VERIFIED",
+      "detail": "DR24 objectid identifies a per-filter/field/quadrant time series; HMJD, native photometry and catflags must remain source-native until separately validated."
+    }
+  ],
+  "baseline": {
+    "revision": "PR #264 head 8948f7af7dbb0a08c3a2454a8703276b6d2630b7",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "expected_improvement": [
+    "Expose bounded multi-OID raw retrieval at the application/API boundary",
+    "Reject malformed, duplicate, non-positive and over-limit requests",
+    "Preserve raw OID records and missing-OID provenance without cross-OID grouping"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "before": "The backend supported up to ten OIDs, but the service and HTTP endpoint accepted only one OID per request.",
+        "after": "A strict 1–10 OID POST contract, service method and API regression tests have been added; current-head CI is pending."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "before": "No multi-OID HTTP request contract existed.",
+        "after": "Validation and source-failure contracts are covered by deterministic tests; current-head CI is pending."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "This change is raw acquisition only. It does not approve source identity, time, photometry, QC, features or inference."
+      }
+    },
+    "trade_off": "Batching reduces request overhead while retaining separate OID records. It does not infer that multiple OIDs belong to one astrophysical source."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Code and deterministic API tests were added on a branch based on PR #264 head 8948f7af7dbb0a08c3a2454a8703276b6d2630b7.",
+      "Current-head CI and source-backed batch parity have not yet run."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The service wrapped every DR24 request as a single-element tuple, despite backend support for up to ten OIDs.",
+      "The HTTP API exposed only a path parameter for one OID."
+    ],
+    "unresolved": [
+      "No physical-source identity or OID grouping rule is implemented.",
+      "No approved DR24 time, photometry or quality-selection contract exists.",
+      "No DR24 feature mapping or model inference is enabled."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Bounded multi-OID retrieval is an engineering capability, not a source identity decision.",
+      "Every returned OID remains a separate source-native record.",
+      "Missing OIDs must remain explicit in provenance; no ALeRCE fallback is allowed."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run current-head CI and inspect every test result.",
+      "Run a bounded live batch request against pinned OIDs and compare per-OID hashes with independent HATS references.",
+      "Keep the batch endpoint raw-only until the scientific contracts are approved."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "The POST /v1/dr24/lightcurves endpoint accepts 1–10 unique positive integer OIDs.",
+    "The endpoint preserves separate raw OID records and missing-OID provenance.",
+    "No astrophysical grouping, photometric/time transformation, QC selection, feature generation or inference is performed."
+  ]
+}
