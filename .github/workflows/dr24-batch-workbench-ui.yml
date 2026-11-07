@@ -1,0 +1,49 @@
+name: DR24 Batch Workbench UI Contract
+
+on:
+  pull_request:
+    branches:
+      - feat/dr24-raw-preserving-qc-assessment-20261107
+    paths:
+      - .github/workflows/dr24-batch-workbench-ui.yml
+      - src/ztf_classifier/web/static/app.js
+      - src/ztf_classifier/web/static/index.html
+      - tests/integration/test_dr24_batch_workbench_ui.py
+  push:
+    branches:
+      - feat/dr24-batch-workbench-ui-20261107
+    paths:
+      - .github/workflows/dr24-batch-workbench-ui.yml
+      - src/ztf_classifier/web/static/app.js
+      - src/ztf_classifier/web/static/index.html
+      - tests/integration/test_dr24_batch_workbench_ui.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dr24-batch-workbench-ui-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deterministic-browser-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      ZTF_DR24_BATCH_UI_TEST: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+          python -m pip install playwright==1.56.0
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Run deterministic batch UI test
+        run: python -m pytest -q tests/integration/test_dr24_batch_workbench_ui.py
