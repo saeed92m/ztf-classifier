@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "zubercal-dr20-ambiguous-crossmatch-adapter-20261107",
+  "objective": "Implement a bounded Zubercal DR20 HATS adapter that preserves raw detections and reports all PS1 candidates without automatically selecting a physical counterpart.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "IRSA Zubercal overview",
+      "status": "VERIFIED",
+      "detail": "Zubercal DR20 uses PS1 IDs, MJD(TDB), scaled magerr and distinct flag/info fields; sources without PS1 matches are absent."
+    },
+    {
+      "source": "Bounded Zubercal DR20 probe workflow 42350687356",
+      "status": "VERIFIED",
+      "detail": "One 1.2 arcsec cone for ZTF OID 264114400013085 returned 123 rows and two PS1 IDs; ambiguity is observed."
+    },
+    {
+      "source": "PR #275",
+      "status": "SUPPORTED",
+      "detail": "The source-product contract recommends DR24 HATS as primary discovery and Zubercal as a supplementary calibration stream."
+    }
+  ],
+  "baseline": {
+    "revision": "726cf49fbc2c5f942c5ed0cf668b2963b822fe55",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "expected_improvement": [
+    "Provide a bounded remote Zubercal DR20 cone-query adapter",
+    "Preserve raw rows and raw magerr units",
+    "Report candidate PS1 IDs and match ambiguity",
+    "Prevent automatic cross-match selection"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "before": "A bounded probe accessed Zubercal directly, but no reusable project adapter existed.",
+        "after": "A typed request/result adapter returns raw rows, candidate summaries, row annotations, explicit match state and NOT_SELECTED decision."
+      },
+      "coverage": {
+        "status": "NOT_MEASURED",
+        "before": "The probe report held a single aggregate match state.",
+        "after": "Adapter exposes all candidate PS1 IDs, row counts, bands, separations and raw rows."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "before": "Probe evidence was stored as a workflow artifact.",
+        "after": "Adapter output includes canonical raw-payload SHA-256 and query provenance."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "No physical counterpart is selected and no DR24/Zubercal photometric parity is claimed."
+      }
+    },
+    "trade_off": "The adapter preserves ambiguity and source-native data. It does not create a convenient but unverified single-source join."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Pure unit tests cover no-match, single/multiple PS1 IDs, input bounds and raw-row separation.",
+      "A live adapter parity workflow is added for the pinned ambiguous DR20 cone; it has not completed on the final head.",
+      "Adapter-specific live parity workflow 42351130555 passed. The adapter returned 123 raw rows, 55 for PS1 ID 82251425938786635 and 68 for PS1 ID 82251425941826616, across g/r. It preserved both candidates, returned AMBIGUOUS_MULTIPLE_PS1_IDS and NOT_SELECTED, and uploaded artifact 13565513022. Canonical sorted-row SHA-256: 3ea97c3c220d5c7b6710cb912cd8ca61cf714bdf5737fb76e097c2512a185e4c."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "Zubercal objectid is a PS1 ID, not a ZTF OID.",
+      "The bounded probe returned two PS1 IDs for one ZTF OID within 1.2 arcsec."
+    ],
+    "unresolved": [
+      "Which PS1 ID is the correct astrophysical counterpart remains unresolved for the observed source.",
+      "The adapter has not been connected to a user-facing crossmatch decision workflow."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Never equate Zubercal PS1 objectid with ZTF OID.",
+      "Keep row-level angular separations separate from raw Zubercal records.",
+      "Multiple PS1 candidates must produce an explicit ambiguous state and NOT_SELECTED decision.",
+      "Keep MJD(TDB), scaled magerr, flag and info separate from DR24 HMJD, magerr and catflags."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the full current-head unit and CI suite; live adapter parity passed on the same adapter code before the final base-only merge.",
+      "Validate row counts, candidate IDs and raw payload hash against the bounded probe artifact.",
+      "Do not integrate candidate PS1 IDs into source grouping or model inference until independent identity validation passes."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Zubercal DR20 adapter is supplementary only.",
+    "No PS1 candidate is automatically selected.",
+    "Raw rows and match annotations are separate.",
+    "The v0.2.0 baseline remains unchanged."
+  ]
+}
