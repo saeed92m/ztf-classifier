@@ -52,12 +52,13 @@
     "trade_off": "The batch view reduces manual lookup effort but displays each OID separately; it does not infer physical-source identity."
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "PARTIALLY_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
       "A deterministic Playwright browser integration test and focused GitHub Actions workflow were added.",
       "The browser workflow uses a fake DR24 backend and tests input validation, rendering, provenance, raw export and separate QC.",
-      "CI for the current head is pending."
+      "CI for the current head is pending.",
+      "Deterministic Playwright browser workflow 42350007848 completed successfully on code/test head 7a37e07de151d6dc8321db6c53f187a37749e827. The subsequent head change added only the lifecycle record; UI, API, and test code were unchanged."
     ]
   },
   "failure_analysis": {
@@ -82,7 +83,7 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Run the new deterministic Playwright workflow and fix failures.",
+      "Confirm the deterministic browser workflow result against the final PR head; UI/test code was unchanged after the successful run.",
       "Run a bounded live HATS batch request against pinned independent OID references.",
       "Keep the batch Explorer experimental until source-backed evidence and scientific identity gates pass."
     ]
