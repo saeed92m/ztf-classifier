@@ -94,7 +94,9 @@ def test_rband_scan_reconciles_seq_counts_and_cross_band_identity(
 def test_rband_scan_fails_closed_on_archive_md5_mismatch(tmp_path: Path) -> None:
     data = b"615172,307.3656702,-13.4214213,58250,14.7357,0.04,0\n"
     archive_path = tmp_path / "ztf2r.zip"
-    with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    with zipfile.ZipFile(
+        archive_path, "w", compression=zipfile.ZIP_DEFLATED
+    ) as archive:
         archive.writestr("ztf2r", data)
     table2_path = tmp_path / "table2.dat"
     table2_path.write_text(
