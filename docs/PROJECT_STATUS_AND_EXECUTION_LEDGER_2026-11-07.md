@@ -85,6 +85,10 @@ Park documentation branch delivery/park-mvp-readiness-20261105:
 Therefore, engineering CI is green for that documentation branch. Full source-backed scientific validation is not established. PR #266 is still Draft/open/unmerged.
 
 ## Documentation synchronization
+## Institutional submission reconciliation
+
+The original 13-page Park presentation and 21-page project proposal were inspected. They remain unchanged as submitted records. A Persian technical status addendum was added at docs/acceptance/PARK_TECHNICAL_STATUS_ADDENDUM_2026-11-07.fa.md. It distinguishes the frozen v0.2.0 inference path from exploratory DR24 raw-data work, separates OOD from scientific anomaly detection, clarifies that the 5.32B figure is release scale rather than processed project volume, and records that the 5–10 and 30–50 object demos remain incomplete. Use the original PDFs with this dated addendum; create a formally revised PDF only as a separately versioned submission.
+
 
 - Handbook v2.9: this status date and current delivery/science boundaries.
 - Park delivery plan: docs/PARK_MVP_DELIVERY_PLAN_2026-11-05.md.
