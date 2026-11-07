@@ -53,6 +53,9 @@ def test_zubercal_summary_preserves_multiple_ps1_candidates() -> None:
     ] == [82251425938786635, 82251425941826616]
     assert payload["provenance"]["row_count"] == 2
     assert payload["raw_rows"][0]["magerr"] == 300
+    assert "separation_arcsec" not in payload["raw_rows"][0]
+    assert payload["row_annotations"][0]["ps1_objectid"] == 82251425938786635
+    assert payload["row_annotations"][0]["separation_arcsec"] > 0
     assert payload["semantics"]["magerr_conversion"] == "magerr_raw / 10000"
 
 
