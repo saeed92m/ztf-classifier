@@ -156,10 +156,12 @@ def summarize_zubercal_rows(
         row_dec = row.get("objdec")
         if not isinstance(ps1_id, int) or isinstance(ps1_id, bool) or ps1_id <= 0:
             raise ValueError("Zubercal row has an invalid PS1 objectid.")
+        if row_ra is None or row_dec is None:
+            raise ValueError("Zubercal row is missing objra/objdec.")
         if not isinstance(row_ra, (int, float)) or not isinstance(
             row_dec, (int, float)
         ):
-            raise ValueError("Zubercal row has invalid objra/objdec.")
+            raise TypeError("Zubercal row objra/objdec must be numeric.")
         coordinate = SkyCoord(ra=float(row_ra) * u.deg, dec=float(row_dec) * u.deg)
         separation = float(center.separation(coordinate).arcsec)
         if separation > radius_arcsec + 1e-6:
