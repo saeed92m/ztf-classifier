@@ -33,12 +33,12 @@
   ],
   "measurement": {
     "metrics": {
-      "raw_preservation": {
+      "correctness": {
         "status": "NOT_MEASURED",
         "before": "Raw DR24 epochs were returned without a versioned QC assessment.",
         "after": "Service adds a separate qc_assessments collection; deterministic regression test checks raw epochs remain unchanged."
       },
-      "qc_coverage": {
+      "coverage": {
         "status": "NOT_MEASURED",
         "before": "No shared DR24 QC assessment schema existed.",
         "after": "Versioned policy reports catflags bit 15, strict catflags==0, finite time/magnitude/error, negative magerr and provisional candidate counts."
