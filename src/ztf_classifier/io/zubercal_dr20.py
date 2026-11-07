@@ -62,6 +62,7 @@ class ZubercalDR20Result:
     ztf_objectid: int
     query: dict[str, Any]
     raw_rows: tuple[dict[str, Any], ...]
+    row_annotations: tuple[dict[str, Any], ...]
     candidate_summary: tuple[dict[str, Any], ...]
     match_state: str
     payload_sha256: str
@@ -76,6 +77,7 @@ class ZubercalDR20Result:
             "match_state": self.match_state,
             "crossmatch_decision": "NOT_SELECTED",
             "candidate_summary": [dict(item) for item in self.candidate_summary],
+            "row_annotations": [dict(item) for item in self.row_annotations],
             "raw_rows": [dict(row) for row in self.raw_rows],
             "provenance": {
                 "row_count": len(self.raw_rows),
@@ -119,6 +121,7 @@ def summarize_zubercal_rows(
 
     center = SkyCoord(ra=ra_deg * u.deg, dec=dec_deg * u.deg, frame="icrs")
     normalized_rows: list[dict[str, Any]] = []
+    row_annotations: list[dict[str, Any]] = []
     distances: dict[int, list[float]] = {}
     bands: dict[int, set[str]] = {}
 
@@ -137,8 +140,14 @@ def summarize_zubercal_rows(
         band = row.get("band")
         if isinstance(band, str):
             bands.setdefault(ps1_id, set()).add(band)
-        row["separation_arcsec"] = separation
         normalized_rows.append(row)
+        row_annotations.append(
+            {
+                "row_index": len(normalized_rows) - 1,
+                "ps1_objectid": ps1_id,
+                "separation_arcsec": separation,
+            }
+        )
 
     candidates = tuple(
         {
@@ -173,6 +182,7 @@ def summarize_zubercal_rows(
         ztf_objectid=ztf_objectid,
         query=query,
         raw_rows=tuple(normalized_rows),
+        row_annotations=tuple(row_annotations),
         candidate_summary=candidates,
         match_state=match_state,
         payload_sha256=hashlib.sha256(canonical).hexdigest(),
