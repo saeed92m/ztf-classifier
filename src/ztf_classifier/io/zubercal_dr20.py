@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Any
 
 ZUBERCAL_DR20_HATS_URL = "https://data.lsdb.io/hats/ztf_dr20/zubercal/"
@@ -156,7 +156,9 @@ def summarize_zubercal_rows(
         row_dec = row.get("objdec")
         if not isinstance(ps1_id, int) or isinstance(ps1_id, bool) or ps1_id <= 0:
             raise ValueError("Zubercal row has an invalid PS1 objectid.")
-        if not isinstance(row_ra, (int, float)) or not isinstance(row_dec, (int, float)):
+        if not isinstance(row_ra, (int, float)) or not isinstance(
+            row_dec, (int, float)
+        ):
             raise ValueError("Zubercal row has invalid objra/objdec.")
         coordinate = SkyCoord(ra=float(row_ra) * u.deg, dec=float(row_dec) * u.deg)
         separation = float(center.separation(coordinate).arcsec)
@@ -214,7 +216,10 @@ def summarize_zubercal_rows(
     canonical_rows = sorted(
         normalized_rows,
         key=lambda row: tuple(
-            (row.get(column) is None, row.get(column) if row.get(column) is not None else "")
+            (
+                row.get(column) is None,
+                row.get(column) if row.get(column) is not None else "",
+            )
             for column in hash_columns
         ),
     )
