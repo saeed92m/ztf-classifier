@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-hats-zubercal-source-contract-20261107",
+  "objective": "Document the verified distinction between native DR24 HATS lightcurves and Zubercal recalibrated PSF photometry, and keep the Park primary-product requirement open until the approved dossier is confirmed.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "IRSA DR24 HATS tutorial",
+      "status": "VERIFIED",
+      "detail": "The DR24 HATS lightcurve collection is a native time-series product with one row per ZTF OID and nested epochs."
+    },
+    {
+      "source": "IRSA ZTF product catalog",
+      "status": "VERIFIED",
+      "detail": "IRSA lists DR24 Objects/Lightcurves HATS separately from the Zubercal recalibrated PSF-photometry bulk download."
+    },
+    {
+      "source": "Project dossier and Park presentation",
+      "status": "USER_SOURCE_REVIEWED",
+      "detail": "The dossier refers to Zubercal/recalibrated photometry; equivalence to DR24 HATS is not established."
+    }
+  ],
+  "baseline": {
+    "revision": "247b119a847fe21ec46a305fe750178843e17ea2",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "expected_improvement": [
+    "Prevent mislabeling native DR24 HATS photometry as Zubercal",
+    "Separate source adapters and provenance",
+    "Make the primary-product acceptance decision explicit"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "VERIFIED",
+        "before": "DR24 HATS and Zubercal were referenced in project context without one consolidated decision record.",
+        "after": "Separate source products and separate adapter requirement documented."
+      },
+      "coverage": {
+        "status": "NOT_MEASURED",
+        "before": "The approved primary photometry product was not explicitly resolved.",
+        "after": "Three contractual options recorded; confirmation remains open."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "No HATS-versus-Zubercal parity or photometric comparison was performed."
+      }
+    },
+    "trade_off": "The proposed dual-track architecture avoids falsely treating one source product as another, but may add implementation work if Zubercal is mandatory."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "IRSA HATS tutorial and ZTF product catalog reviewed.",
+      "No source data were acquired or compared in this documentation cycle.",
+      "Reviewed the official Zubercal overview and LSDB Zubercal/PS1 tutorial. Verified the DR20 HATS endpoint, PS1 objectid semantics, MJD(TDB), magerr scaling by 1e4, distinct flag/info fields, approximate 10 TB bulk size, and absence of sources without suitable PS1 matches. No data query or photometric parity test was run.",
+      "Bounded Zubercal DR20 HATS probe passed in workflow 42350687356. For ZTF OID 264114400013085 at RA 142.59396362304688 deg, Dec -21.453134536743164 deg, a 1.2 arcsec cone returned 123 rows in g/r and two PS1 object IDs (82251425938786635 and 82251425941826616). Maximum returned detection separation was 1.1841390371676082 arcsec. Probe artifact 13564968687; canonical payload SHA-256 4d59d7f90d8ced26a97b171d14a1271cf5adf04329b502df219b0fb531c74d4f."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The current adapter points to the DR24 Lightcurves HATS collection, while the Park dossier names Zubercal/recalibrated photometry."
+    ],
+    "unresolved": [
+      "The Park acceptance authority must confirm whether HATS is acceptable as primary, Zubercal is mandatory, or both are required."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "HATS and Zubercal are distinct source products.",
+      "ZTF OIDs are partitioned by filter, field and quadrant; they are not canonical astrophysical identities.",
+      "Source product identity must be explicit in data contracts and user-facing output.",
+      "Zubercal DR20 is PS1-matched; it cannot be the only discovery stream because PS1-unmatched transients are absent.",
+      "Zubercal DR20 objectid is a PS1 ID, not a ZTF OID; MJD(TDB), scaled magerr, flag and info require separate typed fields.",
+      "Recommended dual-stream design: DR24 HATS primary for transient discovery; Zubercal DR20 supplementary calibration stream.",
+      "One bounded Zubercal DR20 cone query for one ZTF OID returned two PS1 object IDs within the 1.2 arcsec search radius; preserve both candidates and report ambiguity."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Confirm the primary photometry product against the approved Park contract.",
+      "If Zubercal is mandatory, implement its dedicated adapter and time-series reconstruction with parity tests.",
+      "If both are required, define a frozen comparison dataset and photometric validation protocol.",
+      "Confirm the dual-stream interpretation with the Park acceptance authority.",
+      "Implement an ambiguity-preserving Zubercal adapter and test its row, unit, flag and candidate-summary contracts."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "DR24 HATS remains the current raw lightcurve acquisition adapter.",
+    "Zubercal remains a separate source stream.",
+    "No equivalence claim and no baseline/model mapping is authorized."
+  ]
+}
