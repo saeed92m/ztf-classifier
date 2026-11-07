@@ -1,0 +1,57 @@
+name: CPVS Targeted Seq Identity Diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/cpvs-targeted-seq-identity.yml"
+      - "scripts/diagnose_cpvs_seq_identity.py"
+      - "scripts/diagnose_cpvs_seq_identity_unzip.py"
+      - "tests/test_cpvs_seq_identity_diagnostic.py"
+      - "tests/test_cpvs_seq_identity_unzip_diagnostic.py"
+      - "configs/process/cycles/cpvs-targeted-seq-identity-20261104.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  targeted-g-archive-scan:
+    name: Verify Seq 615170 versus orphan Seq 615172
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Download checksum-pinned Zenodo g archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 6 --retry-all-errors --retry-delay 10 \
+            --output "$RUNNER_TEMP/ztf2g.zip" \
+            "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1"
+
+      - name: Scan target and orphan identifiers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/diagnose_cpvs_seq_identity_unzip.py \
+            --archive "$RUNNER_TEMP/ztf2g.zip" \
+            --target-seq 615170 \
+            --orphan-seq 615172 \
+            --output "$RUNNER_TEMP/cpvs_seq_identity_diagnostic.json"
+
+      - name: Upload bounded diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-seq-identity-diagnostic
+          path: ${{ runner.temp }}/cpvs_seq_identity_diagnostic.json
+          if-no-files-found: warn
+          retention-days: 30
