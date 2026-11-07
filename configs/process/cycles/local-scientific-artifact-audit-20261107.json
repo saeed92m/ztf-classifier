@@ -36,12 +36,12 @@
       "correctness": {
         "status": "NOT_MEASURED",
         "before": "Missing artifacts were known from prior test skips, but there was no one-command local inventory.",
-        "after": "A read-only JSON audit checks the production artifact, feature files, ALeRCE Parquet cache and fold assignments."
+        "after": "The audit inventories required model, feature, ALeRCE cache, fold and dependent test paths. Its integration_prerequisites_present flag means path presence only; it does not certify artifact integrity or scientific validity."
       },
       "coverage": {
         "status": "NOT_MEASURED",
         "before": "No consolidated artifact readiness report existed.",
-        "after": "The report includes all required production model files, feature/config files, raw-cache counts, fold files and dependent test paths."
+        "after": "The report includes required production model files, feature/config files, raw-cache counts, fold files and explicit dependent-test existence checks."
       },
       "reliability": {
         "status": "NOT_MEASURED",
@@ -52,11 +52,12 @@
     "trade_off": "The audit requires one local execution because the original WSL filesystem is not accessible through repository tools. It does not upload or modify scientific data."
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "PENDING_REVALIDATION",
     "scientific_gate_affected": false,
     "evidence": [
       "A read-only audit script, documentation and deterministic unit tests were added.",
-      "The unit tests and actual local WSL audit have not yet run on the final branch head."
+      "The unit tests and actual local WSL audit have not yet run on the final branch head.",
+      "Review identified that the initial readiness flag did not require dependent test modules and could be misread as scientific validation; the audit contract is being tightened to report path prerequisites only."
     ]
   },
   "failure_analysis": {
@@ -80,7 +81,7 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Run the artifact audit in the user's WSL checkout and inspect the JSON report.",
+      "Run the corrected artifact audit in the user's WSL checkout and inspect the JSON report.",
       "If the frozen production artifact exists, verify its manifest and run the 10 dependent tests.",
       "If absent, recover it from its original authoritative source; do not rebuild or substitute without a separately approved scientific baseline procedure."
     ]
