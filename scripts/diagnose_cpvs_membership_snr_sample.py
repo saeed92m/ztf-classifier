@@ -128,7 +128,7 @@ def metadata_record(row: dict[str, str], source: str) -> dict[str, Any]:
         "stored_four_field_positive": parse_bool(row.get("four_field_positive")),
         "stored_mean_pair_positive": parse_bool(row.get("mean_magnitude_pair_positive")),
         "stored_period_pair_positive": parse_bool(row.get("band_period_pair_positive")),
-        "strata": {source},
+        "strata": {source} | ({row["stratum"]} if row.get("stratum") else set()),
         "sample_100": source == "sample_100",
         "sample_1000": source == "sample_1000",
         "candidate_only": source == "candidate_only",
