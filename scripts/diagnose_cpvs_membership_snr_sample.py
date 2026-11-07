@@ -355,7 +355,10 @@ def scan_band_archive(
 
             item["valid_photometry_rows"] += 1
             snr_approx = SNR_FACTOR / magerr
-            snr_exact = 1.0 / math.expm1(magerr * LN10_OVER_2P5)
+            try:
+                snr_exact = 1.0 / math.expm1(magerr * LN10_OVER_2P5)
+            except (OverflowError, ZeroDivisionError):
+                snr_exact = 0.0
             snr_inverse = 1.0 / magerr
             item["max_snr_approximate"] = max(
                 item["max_snr_approximate"] or 0.0, snr_approx
