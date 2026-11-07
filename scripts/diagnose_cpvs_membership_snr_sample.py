@@ -399,13 +399,18 @@ def scan_band_archive(
     for item in metrics.values():
         item["qualifying_flag_counts"] = dict(item["qualifying_flag_counts"])
         item["all_flag_counts"] = dict(item["all_flag_counts"])
-        item["passes_approximate_snr"] = (
-            item["qualifying_detections_approximate"] > 0
-        )
-        item["passes_exact_snr"] = item["qualifying_detections_exact"] > 0
-        item["passes_inverse_error_snr"] = (
-            item["qualifying_detections_inverse_error"] > 0
-        )
+        if item["raw_row_count"] == 0:
+            item["passes_approximate_snr"] = None
+            item["passes_exact_snr"] = None
+            item["passes_inverse_error_snr"] = None
+        else:
+            item["passes_approximate_snr"] = (
+                item["qualifying_detections_approximate"] > 0
+            )
+            item["passes_exact_snr"] = item["qualifying_detections_exact"] > 0
+            item["passes_inverse_error_snr"] = (
+                item["qualifying_detections_inverse_error"] > 0
+            )
 
     return {
         "band": band,
@@ -467,8 +472,10 @@ def build_object_rows(
     for source_id, meta in sorted(metadata.items()):
         g = g_metrics[source_id]
         r = r_metrics[source_id]
-        raw_candidate = bool(
-            g["passes_approximate_snr"] and r["passes_approximate_snr"]
+        g_pass = g["passes_approximate_snr"]
+        r_pass = r["passes_approximate_snr"]
+        raw_candidate = (
+            None if g_pass is None or r_pass is None else bool(g_pass and r_pass)
         )
         row = {
             **meta,
@@ -477,7 +484,9 @@ def build_object_rows(
             "r": r,
             "rederived_candidate": raw_candidate,
             "rederived_candidate_and_four_field": (
-                raw_candidate and meta["four_field_positive"]
+                None
+                if raw_candidate is None
+                else raw_candidate and meta["four_field_positive"]
             ),
             "matches_historical_candidate": (
                 raw_candidate == meta["candidate"]
@@ -508,11 +517,20 @@ def build_object_rows(
 def summarize_group(rows: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "count": len(rows),
-        "g_snr_pass": sum(row["g"]["passes_approximate_snr"] for row in rows),
-        "r_snr_pass": sum(row["r"]["passes_approximate_snr"] for row in rows),
-        "both_snr_pass": sum(row["rederived_candidate"] for row in rows),
+        "g_snr_pass": sum(row["g"]["passes_approximate_snr"] is True for row in rows),
+        "g_snr_fail": sum(row["g"]["passes_approximate_snr"] is False for row in rows),
+        "g_snr_unknown": sum(row["g"]["passes_approximate_snr"] is None for row in rows),
+        "r_snr_pass": sum(row["r"]["passes_approximate_snr"] is True for row in rows),
+        "r_snr_fail": sum(row["r"]["passes_approximate_snr"] is False for row in rows),
+        "r_snr_unknown": sum(row["r"]["passes_approximate_snr"] is None for row in rows),
+        "both_snr_pass": sum(row["rederived_candidate"] is True for row in rows),
+        "both_snr_fail": sum(row["rederived_candidate"] is False for row in rows),
+        "both_snr_unknown": sum(row["rederived_candidate"] is None for row in rows),
         "both_snr_and_four_field": sum(
-            row["rederived_candidate_and_four_field"] for row in rows
+            row["rederived_candidate_and_four_field"] is True for row in rows
+        ),
+        "both_snr_and_four_field_unknown": sum(
+            row["rederived_candidate_and_four_field"] is None for row in rows
         ),
         "table4_members": sum(row["table4_member"] is True for row in rows),
         "g_row_count_matches_table2": sum(
@@ -682,6 +700,18 @@ def main() -> int:
                 summarize_group(magnitude_only_rows)
             ),
         },
+        "candidate_only_snr_unknowns": [
+            {
+                "source_id": row["source_id"],
+                "ztf_name": row["ztf_name"],
+                "g_raw_rows": row["g"]["raw_row_count"],
+                "r_raw_rows": row["r"]["raw_row_count"],
+                "g_snr_status": row["g"]["passes_approximate_snr"],
+                "r_snr_status": row["r"]["passes_approximate_snr"],
+            }
+            for row in candidate_only_rows
+            if row["rederived_candidate"] is None
+        ],
         "candidate_only_snr_disagreements": [
             {
                 "source_id": row["source_id"],
@@ -696,7 +726,7 @@ def main() -> int:
                 "r_row_count_matches_table2": row["r_row_count_matches_table2"],
             }
             for row in candidate_only_rows
-            if not row["rederived_candidate"]
+            if row["rederived_candidate"] is False
             or row["g_row_count_matches_table2"] is False
             or row["r_row_count_matches_table2"] is False
         ],
@@ -719,6 +749,7 @@ def main() -> int:
         "object_result_count": len(object_rows),
         "four_field_only_control_count": len(control_rows),
         "limitations": [
+            "Zero raw rows in a band are UNKNOWN, not an SNR failure; confusion matrices exclude unknown predictions.",
             "This is a raw-photometry diagnostic for the fixed samples and the 11,602 residual IDs, not a full 781,602-object candidate reconstruction.",
             "The SNR selector is reproduced as an explicit diagnostic; it is not silently substituted for the publisher's full method.",
             "Nonzero flags are reported. No flag filter is applied.",
