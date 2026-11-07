@@ -1,0 +1,46 @@
+name: Zubercal DR20 Bounded Source Probe
+
+on:
+  pull_request:
+    branches:
+      - feat/dr24-raw-preserving-qc-assessment-20261107
+    paths:
+      - .github/workflows/zubercal-dr20-probe.yml
+      - tests/test_zubercal_dr20_probe.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zubercal-dr20-probe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bounded-zubercal-query:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      ZTF_ZUBERCAL_PROBE: "1"
+      ZUBERCAL_PROBE_OUTPUT: reports/scientific_validation/zubercal_dr20_probe.json
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install project and remote catalog dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e ".[dr24]"
+      - name: Run bounded Zubercal DR20 cone query
+        run: python -m pytest -q -s tests/test_zubercal_dr20_probe.py
+      - name: Upload probe evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zubercal-dr20-bounded-probe
+          path: reports/scientific_validation/zubercal_dr20_probe.json
+          if-no-files-found: warn
+          retention-days: 30
