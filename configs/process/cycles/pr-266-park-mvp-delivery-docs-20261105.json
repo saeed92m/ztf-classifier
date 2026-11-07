@@ -60,7 +60,11 @@
       "PR #269 records two independent four-OID probes with 626 epochs and matching epoch CSV and summary JSON hashes.",
       "DR24 FastAPI live smoke run 42063653144: one test passed in 70.05 seconds; artifact 13430999878.",
       "DR24 API failure contract run 42065074402 passed.",
-      "Workbench browser smoke run 42275261463: one test passed in 86.93 seconds; seven OIDs, 2,183 epochs; artifact 13532578108."
+      "Workbench browser smoke run 42275261463: one test passed in 86.93 seconds; seven OIDs, 2,183 epochs; artifact 13532578108.",
+      "Added Project Continuity Handbook v2.9 with current baseline, Park gate states, DR24 evidence boundaries, CPVS root-cause candidate limits, CIN proposal status, and CI/scientific-validation interpretation.",
+      "Added dated Project Status and Execution Ledger for 2026-11-07 with the current Park critical path and acceptance gates.",
+      "Updated README documentation navigation and cross-linked the current handbook, ledger, Park delivery plan, and product roadmap.",
+      "Updated the product roadmap navigation to reference the current handbook and execution ledger."
     ]
   },
   "failure_analysis": {
@@ -83,7 +87,9 @@
       "Bounded HATS retrieval, FastAPI live retrieval and Workbench browser interaction each have source-backed smoke evidence for specific OIDs.",
       "Raw source retention, descriptive QC and JSON export have passed the tested browser assertions.",
       "These tests do not establish physical source identity, production QC, scientific feature compatibility, classifier performance or Park acceptance.",
-      "The next decisive product gate is a 5–10 confirmed-source complete workflow with a replayable reproducibility bundle."
+      "The next decisive product gate is a 5–10 confirmed-source complete workflow with a replayable reproducibility bundle.",
+      "The Park MVP is the primary delivery track; CPVS and CIN remain separate workstreams outside its critical path.",
+      "The Park readiness percentage is intentionally not stated because no defensible weighted measurement basis exists; gate-level evidence is reported instead."
     ]
   },
   "regression": {
@@ -92,7 +98,8 @@
       "The 5–10 confirmed-source end-to-end application acceptance test remains open.",
       "A 30–50 confirmed-source guided demonstration and offline rehearsal remain open.",
       "OID crosswalk and production QC/time/photometry transformation contracts remain open.",
-      "Independent scientific evaluation and leakage-safe metrics remain open."
+      "Independent scientific evaluation and leakage-safe metrics remain open.",
+      "Review and merge the documentation PR after validating all cross-links and ensuring the new handbook does not conflict with the canonical Notion status."
     ]
   },
   "decision": "REVISE",
