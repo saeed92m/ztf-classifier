@@ -17,3 +17,6 @@
 | AD-PROD-005 | ADOPTED | Cross-match, similar-object search, human review, discovery ranking, and Real/Bogus are explicit architectural boundaries. | Ecosystem review identified these as reusable patterns with clear scientific semantics. | Discovery architecture, analysis modes |
 | AD-PROD-006 | ADOPTED | OOD, uncertainty, scientific anomaly, catalog evidence, and explainability remain separate evidence channels. | Prevents semantic overclaiming. | Result contracts, UI, validation |
 | AD-PROD-007 | ADOPTED | Future alert/streaming support must be enabled by contracts without weakening deterministic offline/batch workflows. | Preserves reproducibility while allowing operational scaling. | Ingestion, orchestration |
+
+
+| AD-DATA-001 | PROPOSED | Use DR24 HATS as the primary transient-discovery stream and Zubercal DR20 as a supplementary PS1-matched calibration stream. Keep separate adapters, IDs, times, flags, units and provenance. | DR24 HATS covers native ZTF OIDs; Zubercal DR20 uses PS1 object IDs, MJD(TDB), scaled magerr and does not contain sources without suitable PS1 matches. Park acceptance still requires confirmation. | DR24 ingestion, crossmatch, photometric validation, Park acceptance |
