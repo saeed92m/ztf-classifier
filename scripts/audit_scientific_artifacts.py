@@ -176,6 +176,8 @@ def audit(repo_root: Path, *, hash_data: bool) -> dict[str, Any]:
     ]
     fold_assignments = find_fold_assignments(repo_root)
 
+    missing_test_files = [item["path"] for item in test_files if not item["exists"]]
+
     blockers: list[str] = []
     if not production["ready"]:
         blockers.append(
@@ -197,6 +199,11 @@ def audit(repo_root: Path, *, hash_data: bool) -> dict[str, Any]:
             "No fold-assignment artifact was found under data/processed "
             "or reports/tables."
         )
+    if missing_test_files:
+        blockers.append(
+            "Required integration test modules are missing: "
+            + ", ".join(missing_test_files)
+        )
 
     return {
         "schema_version": "ztf-local-scientific-artifact-audit-v1",
@@ -212,11 +219,13 @@ def audit(repo_root: Path, *, hash_data: bool) -> dict[str, Any]:
         "alerce_raw_detection_cache": alerce,
         "fold_assignment_files": fold_assignments,
         "dependent_test_files": test_files,
-        "production_integration_tests_ready": (
+        "missing_dependent_test_files": missing_test_files,
+        "integration_prerequisites_present": (
             production["ready"]
             and not missing_features
             and bool(alerce["parquet_file_count"])
             and bool(fold_assignments)
+            and not missing_test_files
         ),
         "blockers": blockers,
         "safety": {
@@ -262,12 +271,12 @@ def main() -> int:
     )
     print(json.dumps({
         "output": str(output),
-        "production_integration_tests_ready": (
-            report["production_integration_tests_ready"]
+        "integration_prerequisites_present": (
+            report["integration_prerequisites_present"]
         ),
         "blockers": report["blockers"],
     }, indent=2))
-    return 0 if report["production_integration_tests_ready"] else 2
+    return 0 if report["integration_prerequisites_present"] else 2
 
 
 if __name__ == "__main__":
