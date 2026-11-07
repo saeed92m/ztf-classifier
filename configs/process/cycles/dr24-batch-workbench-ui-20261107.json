@@ -34,12 +34,12 @@
   ],
   "measurement": {
     "metrics": {
-      "ui_batch_support": {
+      "correctness": {
         "status": "NOT_MEASURED",
         "before": "The DR24 Explorer accepted one OID per lookup.",
         "after": "The Explorer sends a bounded batch POST and renders one panel per returned OID."
       },
-      "export_integrity": {
+      "coverage": {
         "status": "NOT_MEASURED",
         "before": "Single-OID raw JSON export only.",
         "after": "Batch export retains all raw records, QC assessments and provenance."
