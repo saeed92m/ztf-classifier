@@ -761,3 +761,89 @@ def test_dr24_native_endpoint_rejects_non_positive_objectid() -> None:
     response = client.get("/v1/dr24/objects/0/lightcurve")
     assert response.status_code == 422
     assert response.json()["code"] == "dr24_objectid_invalid"
+
+
+def test_dr24_batch_endpoint_preserves_raw_records_and_missing_oids() -> None:
+    from ztf_classifier.io.dr24_lightcurve import DR24LightcurveRequest
+
+    class FakeDR24ObservationService(FakeObservationService):
+        def __init__(self) -> None:
+            self.calls: list[tuple[int, ...]] = []
+
+        def get_dr24_native_lightcurves(
+            self,
+            objectids: list[int],
+        ) -> dict[str, object]:
+            request = DR24LightcurveRequest(tuple(objectids))
+            self.calls.append(request.objectids)
+            return {
+                "schema_version": "ztf-dr24-native-lightcurve-v1",
+                "records": [
+                    {"objectid": oid, "epochs": [{"hmjd": 60000.1}]}
+                    for oid in request.objectids
+                ],
+                "provenance": {
+                    "requested_oids": list(request.objectids),
+                    "returned_oids": list(request.objectids),
+                    "missing_oids": [999],
+                },
+            }
+
+    observation_service = FakeDR24ObservationService()
+    client = TestClient(
+        create_app(
+            ApiSettings(),
+            observation_service=observation_service,  # type: ignore[arg-type]
+        )
+    )
+    response = client.post(
+        "/v1/dr24/lightcurves",
+        json={"objectids": [123456, 789]},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert observation_service.calls == [(123456, 789)]
+    assert [record["objectid"] for record in payload["records"]] == [123456, 789]
+    assert payload["records"][0]["epochs"][0]["hmjd"] == 60000.1
+    assert payload["provenance"]["missing_oids"] == [999]
+
+
+def test_dr24_batch_endpoint_rejects_invalid_request_shapes() -> None:
+    client = TestClient(create_app(ApiSettings()))
+    invalid_payloads = (
+        {"objectids": []},
+        {"objectids": list(range(1, 12))},
+        {"objectids": [123, 123]},
+        {"objectids": [0]},
+        {"objectids": [True]},
+    )
+
+    for payload in invalid_payloads:
+        response = client.post("/v1/dr24/lightcurves", json=payload)
+        assert response.status_code == 422
+
+
+def test_dr24_batch_endpoint_reports_source_failure_without_fallback() -> None:
+    class FailingDR24ObservationService(FakeObservationService):
+        def get_dr24_native_lightcurves(
+            self,
+            objectids: list[int],
+        ) -> dict[str, object]:
+            raise RuntimeError("simulated HATS failure")
+
+    failing_service = FailingDR24ObservationService()
+    client = TestClient(
+        create_app(
+            ApiSettings(),
+            observation_service=failing_service,  # type: ignore[arg-type]
+        )
+    )
+    response = client.post(
+        "/v1/dr24/lightcurves",
+        json={"objectids": [123456]},
+    )
+
+    assert response.status_code == 502
+    assert response.json()["code"] == "dr24_acquisition_failed"
+    assert "No alternate source was used" in response.json()["message"]

@@ -22,6 +22,7 @@ from ztf_classifier.api.schemas import (
     AnalysisJobRequest,
     AnalysisJobResponse,
     ApplicationSettingsRequest,
+    DR24LightcurveBatchRequest,
     ErrorResponse,
     FeatureBackendListResponse,
     FeatureBackendResponse,
@@ -827,6 +828,29 @@ def create_app(
             observation_provenance=result["observation_provenance"],
             warnings=result["warnings"],
         )
+
+    @app.post(
+        "/v1/dr24/lightcurves",
+        tags=["observations"],
+    )
+    def dr24_native_lightcurves(
+        payload: DR24LightcurveBatchRequest,
+    ) -> dict[str, Any]:
+        """Return up to ten source-native DR24 OIDs without cross-OID grouping."""
+        try:
+            return observations.get_dr24_native_lightcurves(payload.objectids)
+        except ValueError as exc:
+            raise ApiContractError(
+                "dr24_request_invalid",
+                str(exc),
+                status_code=422,
+            ) from exc
+        except Exception as exc:
+            raise ApiContractError(
+                "dr24_acquisition_failed",
+                "DR24 light-curve acquisition failed. No alternate source was used.",
+                status_code=502,
+            ) from exc
 
     @app.get(
         "/v1/dr24/objects/{objectid}/lightcurve",
