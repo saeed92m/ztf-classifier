@@ -1,0 +1,50 @@
+name: DR24 Batch API Live Source Parity
+
+on:
+  pull_request:
+    branches:
+      - feat/dr24-raw-observation-adapter-20261104
+    paths:
+      - .github/workflows/dr24-batch-live-source-parity.yml
+      - src/ztf_classifier/api/app.py
+      - src/ztf_classifier/application/observations.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
+      - src/ztf_classifier/validation/dr24_quality.py
+      - tests/test_dr24_batch_live_api.py
+  push:
+    branches:
+      - feat/dr24-bounded-batch-raw-api-20261107
+    paths:
+      - .github/workflows/dr24-batch-live-source-parity.yml
+      - src/ztf_classifier/api/app.py
+      - src/ztf_classifier/application/observations.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
+      - src/ztf_classifier/validation/dr24_quality.py
+      - tests/test_dr24_batch_live_api.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dr24-batch-live-source-parity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bounded-live-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      ZTF_DR24_BATCH_LIVE_TEST: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install locked project and DR24 dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e ".[dr24]"
+      - name: Verify two pinned HATS OIDs through the batch HTTP API
+        run: python -m pytest -q tests/test_dr24_batch_live_api.py
