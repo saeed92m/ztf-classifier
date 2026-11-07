@@ -28,7 +28,8 @@ Clients never submit arbitrary artifact or registry filesystem paths.
 | POST | `/v1/batch` | Synchronous multi-row inference |
 | GET | `/v1/objects/{oid}` | Normalized object summary |
 | GET | `/v1/objects/{oid}/observations` | Normalized observation stream |
-| GET | `/v1/dr24/objects/{objectid}/lightcurve` | Raw, source-native DR24 light curve for one ZTF OID |\n| POST | `/v1/dr24/lightcurves` | Bounded raw, source-native DR24 lightcurves for 1–10 OIDs |
+| GET | `/v1/dr24/objects/{objectid}/lightcurve` | Raw, source-native DR24 light curve for one ZTF OID |
+| POST | `/v1/dr24/lightcurves` | Bounded raw, source-native DR24 lightcurves for 1–10 OIDs |
 | POST | `/v1/objects/{oid}/analysis` | Source-backed object analysis |
 | POST | `/v1/objects/{oid}/jobs` | Durable analysis job submission |
 | GET | `/v1/jobs` | Bounded durable analysis-job listing |
