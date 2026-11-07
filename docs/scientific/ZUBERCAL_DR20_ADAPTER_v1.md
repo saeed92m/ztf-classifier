@@ -54,3 +54,12 @@ The match state was `AMBIGUOUS_MULTIPLE_PS1_IDS`. The adapter's own live parity 
 - One 1.2-arcsecond query can return multiple PS1 IDs. The observed probe demonstrates this.
 - The adapter does not prove which PS1 object is the correct physical counterpart.
 - No DR24/Zubercal photometric parity or v0.2 feature mapping is claimed.
+
+
+### Adapter parity result
+
+The adapter-specific live workflow [42351130555](https://github.com/saeed92m/ztf-classifier/actions/runs/42351130555) passed. Its evidence artifact is [13565513022](https://github.com/saeed92m/ztf-classifier/actions/runs/42351130555/artifacts/13565513022).
+
+It returned 123 raw rows: 55 for PS1 ID `82251425938786635` and 68 for PS1 ID `82251425941826616`. Both candidates have g/r detections. The adapter retained `AMBIGUOUS_MULTIPLE_PS1_IDS` and `crossmatch_decision=NOT_SELECTED`.
+
+The canonical sorted-row SHA-256 is `3ea97c3c220d5c7b6710cb912cd8ca61cf714bdf5737fb76e097c2512a185e4c`. Raw row order is preserved in the response; the hash is calculated from a separately sorted copy to avoid order-dependent hashes.
