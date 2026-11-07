@@ -62,7 +62,7 @@
     "metrics": {
       "correctness": {
         "before": "The identity lead is supported by g-band data only; the r-band archive has not been independently scanned.",
-        "after": "The r-band identity lead and total-count discrepancy are recorded. A separate full object-level membership audit shows candidate ∩ four-field-positive Table 2 metadata = exactly 730,184 Table 4 IDs; the 11,602 candidate-only IDs all fail at least one of gmag/rmag/Per-g/Per-r. The 55 four-field-positive noncandidate controls all fail at least one raw SNR threshold. This strongly supports a missing completeness gate, but the source methodology and 17 period-only cases remain unresolved."
+        "after": "The full object-level set intersection is exact: reconstructed two-band SNR candidates ∩ positive Table 2 gmag/rmag/Per-g/Per-r = all 730,184 Table 4 IDs. The 11,602 candidate-only IDs all fail at least one of those four metadata fields. This is a strong empirical root-cause candidate, not proof of the publisher's method. The 55-control raw-photometry audit is PARTIAL: only 1/55 has g rows, 51/55 has r rows, and none has both bands. Missing rows are UNKNOWN, not SNR failures."
       },
       "reproducibility": {
         "before": "The Zenodo r archive MD5 is published, but no extracted-member hash, size or row count is pinned in the project evidence.",
@@ -90,20 +90,22 @@
       "Independent second scan workflow 42311984342, artifact 13548792994, reproduced the first run's archive MD5/SHA-256, member CRC, extracted member SHA-256, byte count, row count and target/orphan summaries.",
       "Full membership audit: candidate_count 741786, candidate_only 11602, published_count 730184, published_only 0; candidate ∩ four-field-positive Table 2 fields equals all 730184 Table 4 members.",
       "Candidate-only partition: 11580 fail both magnitude and per-band-period pairs; 17 have magnitudes but incomplete per-band periods; 5 have periods but incomplete mean magnitudes. All have positive common Per.",
-      "Independent raw-photometry audit of the 55 four-field-positive noncandidate controls: 1 g pass / 54 g fail; 51 r pass / 4 r fail; zero pass both bands."
+      "55-control archive coverage: g rows for 1/55; r rows for 51/55; no control has both bands. Earlier fail_g/fail_r counters treated zero-row objects as non-passes and must not be read as SNR failures.",
+      "A checksum-pinned raw SNR diagnostic was added for the 11,602 candidate-only IDs, fixed 100/1,000 samples and all 55 four-field-only controls. It preserves PASS/FAIL/UNKNOWN for band coverage and checks source artifact hashes. Synthetic regression coverage was extended; current-head CI is pending.",
+      "The raw two-band SNR scan has not been run against the full Zenodo archives. No new raw SNR results are claimed."
     ]
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_CANDIDATE_STRONGLY_SUPPORTED",
-    "hypothesis": "The reconstructed SNR selector omitted a four-field completeness condition. Intersecting the full 741786 reconstructed candidates with positive Table 2 gmag, rmag, Per-g and Per-r values yields exactly the 730184 published Table 4 members. The 11602 candidate-only IDs all fail at least one of those fields, while the 55 four-field-positive noncandidate controls all fail at least one raw two-band SNR threshold. This is a strong empirical explanation, but the published text describes SNR selection and does not explicitly state the four-field gate.",
+    "hypothesis": "The exact full-set intersection suggests that the reconstruction omitted a four-field Table 2 metadata-completeness predicate. However, the published method does not explicitly state this predicate. The 55-control audit cannot independently confirm the SNR part: only 1/55 controls has g archive rows, 51/55 has r rows, and none has both. Missing rows are UNKNOWN. The 17 magnitude-complete / per-band-period-incomplete candidate-only IDs still need explanation.",
     "unresolved": [
-      "The published paper and Table 4 ReadMe do not explicitly document the four-field completeness gate; verify author preprocessing semantics or source code.",
-      "The 17 candidate-only objects with complete gmag/rmag but incomplete Per-g/Per-r need a specific scientific explanation; all have positive common Per.",
-      "The retained SNR flags for the 11602 candidate-only IDs are from the reconstructed candidate-selection artifact; fresh raw-photometry re-derivation is required for fixed 100- and 1000-object samples.",
-      "The full r-band per-Seq count reconciliation must complete and the 718-row archive-versus-Table2 Nr residual must be explained.",
-      "The ReadMe r-band count discrepancy remains unresolved.",
-      "The CPVS membership issue must remain open until the source-level criteria are independently verified.",
-      "The 55-control raw-photometry audit has incomplete archive coverage (1/55 g, 51/55 r, zero both-band coverage); missing rows are UNKNOWN, not SNR failures. Reconcile archive-to-Table2 row provenance before using these controls to test the two-band SNR predicate."
+      "Verify the four-field completeness condition against the publisher's actual preprocessing code or authoritative methodology; do not infer it from the exact intersection alone.",
+      "Re-derive raw g/r SNR, row counts, flags and provenance for all 11,602 candidate-only IDs and the fixed 100-/1,000-object samples from checksum-pinned archives.",
+      "Inspect all 17 candidate-only objects with complete gmag/rmag but incomplete Per-g/Per-r; all have a positive common Per.",
+      "The 55 four-field-only controls have incomplete archive coverage (1/55 g, 51/55 r, zero both-band); missing data must remain UNKNOWN.",
+      "Complete the r-band per-Seq count reconciliation and inspect all mismatch rows.",
+      "Explain the 718-row archive-versus-Table2 sum-Nr residual and the ReadMe r-band count discrepancy.",
+      "Keep Issue #170 open and do not change the selector or frozen v0.2.0 baseline."
     ]
   },
   "knowledge_extraction": {
@@ -117,20 +119,21 @@
       "A second independent r archive scan reproduced the first scan's archive and extracted-member hashes, byte count, CRC, row count and target/orphan summaries.",
       "Full-dataset set intersection: SNR candidates ∩ positive gmag/rmag/Per-g/Per-r = exactly the 730184 published Table 4 members.",
       "All 11602 candidate-only IDs fail at least one of the four Table 2 completeness fields; 11580 fail both field pairs, 17 have incomplete per-band periods only, and 5 have incomplete mean magnitudes only.",
-      "The 55 four-field-positive noncandidate controls fail at least one raw SNR threshold; 0 pass both bands.",
       "The four-field completeness gate is the strongest current root-cause candidate, but is not explicitly stated in the published selection description; do not change the selector until the 17 cases and author methodology are resolved.",
-      "Correction: 55-control raw-photometry audit is PARTIAL. Only 1/55 has g archive rows, 51/55 has r rows, and no control has both bands. Previous fail counters counted absent rows as failures; classify them UNKNOWN."
+      "Correction: 55-control raw-photometry audit is PARTIAL. Only 1/55 has g archive rows, 51/55 has r rows, and no control has both bands. Previous fail counters counted absent rows as failures; classify them UNKNOWN.",
+      "55-control raw-photometry audit is PARTIAL: 1/55 has g archive rows, 51/55 has r rows, and no control has both bands. Missing rows are UNKNOWN, not SNR failures.",
+      "A new checksum-pinned raw SNR sample diagnostic and synthetic regression test preserve PASS/FAIL/UNKNOWN and verify the four retained input TSV hashes; the full raw archive scan remains unrun."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Re-run the fixed 100- and 1000-object samples against checksum-pinned raw g/r archives and independently recompute SNR, detection counts, flags and provenance.",
+      "Run the synthetic tests for the raw SNR diagnostic and verify current-head CI.",
+      "Execute the raw SNR scan against the checksum-pinned g/r archives for all 11,602 candidate-only IDs, fixed 100-/1,000-object samples, and all 55 controls.",
+      "Confirm zero-row bands remain UNKNOWN and are excluded from confusion-matrix FP/FN counts.",
       "Inspect all 17 magnitude-complete / per-band-period-incomplete candidate-only IDs.",
-      "Verify the four-field completeness condition against the paper's actual preprocessing semantics or author code.",
-      "Run the pinned full r-band per-Seq reconciliation and review the complete mismatch TSV.",
-      "Explain the 718-row r archive versus Table 2 sum-Nr residual.",
-      "Keep the 11602 membership issue open until all source-level criteria are independently verified."
+      "Verify the four-field completeness condition against the publisher's actual preprocessing semantics or code.",
+      "Complete the pinned full r-band per-Seq reconciliation and explain the 718-row residual."
     ]
   },
   "decision": "REVISE",
@@ -143,6 +146,9 @@
     "Do not modify thresholds, selector, published reference, or frozen v0.2.0 artifacts.",
     "The first r archive scan has been independently reproduced by workflow 42311984342; the full per-Seq Table 2 Nr comparison remains pending.",
     "A full set intersection strongly supports a missing four-field completeness gate as the explanation for the 11602 excess candidates; this is a root-cause candidate, not a final scientific resolution.",
-    "Do not change the selector or frozen v0.2.0 baseline until the four-field gate is verified against the published method and fresh raw-photometry sample diagnostics."
+    "Do not change the selector or frozen v0.2.0 baseline until the four-field gate is verified against the published method and fresh raw-photometry sample diagnostics.",
+    "Do not count absent raw photometry as an SNR failure. Preserve tri-state PASS/FAIL/UNKNOWN for each band and for the combined two-band predicate.",
+    "The 55-control raw audit has no two-band coverage for any control and cannot independently test the SNR predicate.",
+    "The full-set four-field intersection is exact, but it is not an established publisher rule; no selector change is allowed until source-level confirmation."
   ]
 }
