@@ -1,14 +1,13 @@
 name: Zubercal DR20 Bounded Source Probe
 
 on:
-  pull_request:
+  push:
     branches:
-      - feat/dr24-raw-preserving-qc-assessment-20261107
+      - docs/dr24-hats-zubercal-contract-20261107
     paths:
       - .github/workflows/zubercal-dr20-probe.yml
       - tests/test_zubercal_dr20_probe.py
       - src/ztf_classifier/io/dr24_lightcurve.py
-
 permissions:
   contents: read
 
