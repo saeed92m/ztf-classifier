@@ -45,11 +45,12 @@
     "trade_off": "Batching reduces request overhead while retaining separate OID records. It does not infer that multiple OIDs belong to one astrophysical source."
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "PARTIALLY_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
       "Code and deterministic API tests were added on a branch based on PR #264 head 8948f7af7dbb0a08c3a2454a8703276b6d2630b7.",
-      "Current-head CI and source-backed batch parity have not yet run."
+      "Current-head CI and source-backed batch parity have not yet run.",
+      "Live HATS batch API parity workflow 42350269655 passed on current head 85201bcd121912aa89f7017e0358c74478b4e574: 2 pinned OIDs retrieved through POST /v1/dr24/lightcurves; both epoch counts and payload SHA-256 values matched independent references; requested/returned/missing provenance assertions passed."
     ]
   },
   "failure_analysis": {
@@ -75,8 +76,8 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
+      "Repeat the live batch parity test across the remaining pinned OIDs and verify source-backed missing-OID behavior; current run covers two OIDs only.",
       "Run current-head CI and inspect every test result.",
-      "Run a bounded live batch request against pinned OIDs and compare per-OID hashes with independent HATS references.",
       "Keep the batch endpoint raw-only until the scientific contracts are approved."
     ]
   },
