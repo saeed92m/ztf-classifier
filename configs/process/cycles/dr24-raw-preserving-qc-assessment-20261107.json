@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-raw-preserving-qc-assessment-20261107",
+  "objective": "Add a versioned diagnostic assessment of DR24 epoch quality while preserving every raw epoch and keeping the assessment separate from model-input acceptance.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "IRSA ZTF DR24 release notes, section 13.6",
+      "status": "VERIFIED",
+      "detail": "DR24 documents catflags bit 15 (32768), HMJD, native magnitudes, clrcoeff and magerr caveats."
+    },
+    {
+      "source": "IRSA DR24 HATS tutorial",
+      "status": "VERIFIED",
+      "detail": "The official tutorial demonstrates catflags == 0 for strict clean-epoch plotting."
+    },
+    {
+      "source": "PR #273",
+      "status": "IMPLEMENTED_PENDING_CI",
+      "detail": "Bounded 1–10 OID raw endpoint; this branch is stacked on its head."
+    }
+  ],
+  "baseline": {
+    "revision": "e70eced624f0fe7aa74605418d36a00c2f2528c1",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "expected_improvement": [
+    "Provide per-epoch and aggregate DR24 QC diagnostics",
+    "Keep likely-usable and strict-clean flag interpretations separate",
+    "Preserve raw epoch values and ordering",
+    "Explicitly prevent diagnostic QC from being mistaken for production model-input selection"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "before": "Raw DR24 epochs were returned without a versioned QC assessment.",
+        "after": "Service adds a separate qc_assessments collection; deterministic regression test checks raw epochs remain unchanged."
+      },
+      "coverage": {
+        "status": "NOT_MEASURED",
+        "before": "No shared DR24 QC assessment schema existed.",
+        "after": "Versioned policy reports catflags bit 15, strict catflags==0, finite time/magnitude/error, negative magerr and provisional candidate counts."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The QC policy is explicitly diagnostic and is not approved for feature generation or model inference."
+      }
+    },
+    "trade_off": "The assessment adds a separate diagnostic payload and does not reduce raw data. It deliberately avoids selecting or deleting epochs."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Pure-function tests cover strict/likely-usable distinction, missing and invalid values, negative magerr, optional clrcoeff and raw immutability.",
+      "ObservationService integration test verifies that QC is attached separately from raw epochs.",
+      "CI for this branch is pending."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "Raw explorer previously exposed descriptive counts only; no reusable versioned server-side QC assessment existed."
+    ],
+    "unresolved": [
+      "Flag-to-feature policy needs independent validation.",
+      "Color correction, calibration systematics and time handling remain unresolved.",
+      "Astrophysical source identity/grouping remains unresolved."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "catflags==0 is the strict clean-epoch condition shown in the official HATS tutorial.",
+      "The DR24 documentation identifies bit 15 (32768) as cloud/moon-related; absence of this bit is a likely-usable diagnostic, not a clean-epoch guarantee.",
+      "Negative magerr is invalid; other photometric uncertainty components are not included in magerr.",
+      "QC diagnostics must not mutate raw epoch records."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run full CI on the current branch head.",
+      "Compare policy classifications against independent source examples and representative edge cases.",
+      "Do not connect provisional candidates to v0.2 feature generation or inference without a separate accepted scientific contract."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "QC policy id ztf-dr24-raw-qc-diagnostic-v1.",
+    "API returns separate qc_assessments keyed by OID; records[].epochs remain raw.",
+    "Policy status DIAGNOSTIC_NOT_PRODUCTION_APPROVED."
+  ]
+}

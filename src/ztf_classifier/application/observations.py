@@ -20,6 +20,7 @@ from ztf_classifier.io.dr24_lightcurve import (
     DR24LightcurveRequest,
 )
 from ztf_classifier.io.parquet_detection_store import ParquetDetectionStore
+from ztf_classifier.validation.dr24_quality import assess_dr24_epochs
 
 
 class ObservationService:
@@ -55,7 +56,15 @@ class ObservationService:
         result = self._dr24_backend.acquire(
             DR24LightcurveRequest(tuple(objectids))
         )
-        return result.to_dict()
+        payload = result.to_dict()
+        payload["qc_assessments"] = [
+            {
+                "objectid": record["objectid"],
+                **assess_dr24_epochs(record["epochs"]),
+            }
+            for record in payload["records"]
+        ]
+        return payload
 
     def get_observations(
         self,
