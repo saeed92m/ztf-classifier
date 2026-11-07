@@ -502,9 +502,11 @@ def build_object_rows(
                 else raw_candidate == meta["table4_member"]
             ),
             "matches_table4_with_four_field_gate": (
-                (raw_candidate and meta["four_field_positive"])
-                == meta["table4_member"]
-                if meta["table4_member"] is not None else None
+                None
+                if raw_candidate is None or meta["table4_member"] is None
+                else (
+                    raw_candidate and meta["four_field_positive"]
+                ) == meta["table4_member"]
             ),
             "g_row_count_matches_table2": (
                 g["raw_row_count"] == meta["table2_ng"]
