@@ -5,8 +5,8 @@ from pathlib import Path
 from scripts.audit_scientific_artifacts import (
     LAB_ARTIFACT,
     PRODUCTION_ARTIFACT,
-    audit,
     TESTS,
+    audit,
 )
 
 
