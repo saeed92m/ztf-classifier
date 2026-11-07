@@ -2,6 +2,13 @@
 
 A CPU-first Astronomical Data Analysis & Discovery Platform for Zwicky Transient Facility (ZTF) data, scientific feature generation, machine-learning and statistical analysis, uncertainty/OOD diagnostics, provenance, and discovery-oriented workflows.
 
+## Current project documentation
+
+- [Project Continuity Handbook v2.9](docs/HANDBOOK_UPDATED_v2.9.md)
+- [Project Status & Execution Ledger — 2026-11-07](docs/PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-07.md)
+- [Park MVP Delivery Plan](docs/PARK_MVP_DELIVERY_PLAN_2026-11-05.md)
+- [Platform Expansion Roadmap](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md)
+
 ## Project status
 
 **Version:** v1.0.1
