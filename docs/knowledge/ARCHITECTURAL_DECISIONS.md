@@ -19,4 +19,4 @@
 | AD-PROD-007 | ADOPTED | Future alert/streaming support must be enabled by contracts without weakening deterministic offline/batch workflows. | Preserves reproducibility while allowing operational scaling. | Ingestion, orchestration |
 
 
-| AD-DATA-001 | PROPOSED | DR24 Lightcurves HATS and Zubercal are distinct source products and require separate adapters and provenance. | IRSA DR24 HATS tutorial and ZTF product catalog identify HATS lightcurves and Zubercal recalibrated PSF photometry as separate products. The Park primary-product requirement remains to be confirmed. | DR24 ingestion, photometric validation, Park acceptance |
+| AD-DATA-001 | PROPOSED | Use DR24 HATS as the primary transient-discovery stream and Zubercal DR20 as a supplementary PS1-matched calibration stream. Keep separate adapters, IDs, times, flags, units and provenance. | DR24 HATS covers native ZTF OIDs; Zubercal DR20 uses PS1 object IDs, MJD(TDB), scaled magerr and does not contain sources without suitable PS1 matches. Park acceptance still requires confirmation. | DR24 ingestion, crossmatch, photometric validation, Park acceptance |
