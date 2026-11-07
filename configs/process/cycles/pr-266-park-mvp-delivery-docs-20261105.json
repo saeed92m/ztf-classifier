@@ -64,7 +64,10 @@
       "Added Project Continuity Handbook v2.9 with current baseline, Park gate states, DR24 evidence boundaries, CPVS root-cause candidate limits, CIN proposal status, and CI/scientific-validation interpretation.",
       "Added dated Project Status and Execution Ledger for 2026-11-07 with the current Park critical path and acceptance gates.",
       "Updated README documentation navigation and cross-linked the current handbook, ledger, Park delivery plan, and product roadmap.",
-      "Updated the product roadmap navigation to reference the current handbook and execution ledger."
+      "Updated the product roadmap navigation to reference the current handbook and execution ledger.",
+      "Inspected the submitted 13-page Park presentation and 21-page project proposal; preserved both original PDFs as submitted records.",
+      "Added docs/acceptance/PARK_TECHNICAL_STATUS_ADDENDUM_2026-11-07.fa.md to reconcile institutional claims with current evidence, including DR24 scope, OOD versus scientific anomaly, dataset scale, demo status, staffing and schedule.",
+      "Linked the Persian technical status addendum from the Park delivery plan, README, handbook, roadmap and project execution ledger."
     ]
   },
   "failure_analysis": {
@@ -89,7 +92,10 @@
       "These tests do not establish physical source identity, production QC, scientific feature compatibility, classifier performance or Park acceptance.",
       "The next decisive product gate is a 5–10 confirmed-source complete workflow with a replayable reproducibility bundle.",
       "The Park MVP is the primary delivery track; CPVS and CIN remain separate workstreams outside its critical path.",
-      "The Park readiness percentage is intentionally not stated because no defensible weighted measurement basis exists; gate-level evidence is reported instead."
+      "The Park readiness percentage is intentionally not stated because no defensible weighted measurement basis exists; gate-level evidence is reported instead.",
+      "The submitted Park presentation describes a live demo and a scientific anomaly flag; current evidence supports bounded raw DR24 acquisition and component-level API/Workbench behavior only. The addendum explicitly qualifies these claims.",
+      "The 5.32-billion figure is the cited DR24 release scale, not the number of light curves processed by this project.",
+      "The original institutional PDFs must remain unchanged; any revised submission must be separately versioned and dated."
     ]
   },
   "regression": {
@@ -99,7 +105,9 @@
       "A 30–50 confirmed-source guided demonstration and offline rehearsal remain open.",
       "OID crosswalk and production QC/time/photometry transformation contracts remain open.",
       "Independent scientific evaluation and leakage-safe metrics remain open.",
-      "Review and merge the documentation PR after validating all cross-links and ensuring the new handbook does not conflict with the canonical Notion status."
+      "Review and merge the documentation PR after validating all cross-links and ensuring the new handbook does not conflict with the canonical Notion status.",
+      "Attach the dated Persian technical status addendum to the original Park dossier before presenting it as a current status package.",
+      "Prepare a separately versioned revised presentation/proposal only after the 5–10 and 30–50 object acceptance evidence exists and the institution requires a revised submission."
     ]
   },
   "decision": "REVISE",
