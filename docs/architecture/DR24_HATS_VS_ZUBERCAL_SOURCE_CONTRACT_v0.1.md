@@ -1,6 +1,6 @@
 # DR24 HATS and Zubercal source-product contract v0.1
 
-**Status:** Proposed; requires confirmation against the approved Park deliverable  
+**Status:** Proposed architecture; Park primary-product acceptance requires confirmation  
 **Issue:** [#253](https://github.com/saeed92m/ztf-classifier/issues/253)  
 **Baseline:** software v1.0.1; scientific baseline v0.2.0 (immutable)
 
@@ -14,44 +14,68 @@ The project dossier and presentation also refer to Zubercal/recalibrated photome
 
 ## 2. Verified source facts
 
-1. IRSA's DR24 HATS tutorial identifies separate HATS collections for DR24 Lightcurves and the Objects Table.
-2. The DR24 Lightcurves HATS collection contains one row per ZTF OID and nested epoch data with `hmjd`, `mag`, `magerr`, `clrcoeff`, and `catflags`.
-3. IRSA describes Zubercal separately as a bulk download of recalibrated PSF photometry from ZTF science images.
-4. ZTF OIDs are defined per filter, field, and quadrant. One astrophysical source can therefore map to multiple OIDs.
-5. The HATS tutorial demonstrates indexed lookup by OID and `catflags == 0` for strict clean-epoch plotting.
+### DR24 Lightcurves HATS
 
-## 3. Proposed product split
+- One row per ZTF OID, with nested epoch arrays.
+- Epoch columns include `hmjd`, `mag`, `magerr`, `clrcoeff`, and `catflags`.
+- OIDs are defined per filter, field and quadrant. They are not canonical astrophysical source IDs.
+- DR24 native magnitudes assume AB color g-r=0. Color correction requires source color and the epoch color coefficient.
+- `HMJD` is heliocentric time (HJD - 2400000.5); it is not the same time scale as Zubercal MJD(TDB).
 
-### Track A — DR24 HATS (primary raw lightcurve adapter)
+### Zubercal DR20
 
-Use the HATS collection for bounded, indexed native-lightcurve acquisition and reproducible raw-data exploration. Preserve raw epoch values and source provenance. Keep its time and photometry semantics explicit.
+- IRSA lists Zubercal separately as recalibrated PSF photometry.
+- The available LSDB HATS endpoint is `https://data.lsdb.io/hats/ztf_dr20/zubercal/`.
+- The catalog `objectid` is a PS1 object ID, not a ZTF OID.
+- The catalog provides `mjd` in TDB, `mag`, `magerr`, `band`, `fieldid`, `rcidin`, `info`, and `flag`.
+- The stored Zubercal `magerr` is an integer scaled by 10,000. A derived magnitude error requires division by 10,000. Preserve the stored value in provenance.
+- Zubercal `flag` and `info` have their own definitions. They are not interchangeable with DR24 `catflags`.
+- The bulk DR20 product is approximately 10 TB. The HATS endpoint may support bounded remote queries, but query cost and latency still require measurement.
+- Zubercal matches ZTF detections to PS1 objects within a 1.2-arcsecond limit. Sources without a suitable PS1 match are not represented. This is a material limitation for transient discovery.
 
-### Track B — Zubercal (separate calibration-comparison adapter)
+## 3. Recommended architecture
 
-Treat Zubercal as a separate product and adapter. Do not merge it into the HATS record schema without an explicit mapping and provenance contract. Evaluate it as an independent recalibration/comparison source. If the Park deliverable requires Zubercal-derived lightcurves as the primary product, implement and validate a dedicated reconstruction path from the relevant per-exposure PSF-photometry product.
+Use **both products as separate streams**.
 
-## 4. Acceptance decision required
+### Track A — DR24 HATS (primary discovery and raw time-series stream)
 
-The current source evidence does not establish that DR24 HATS is an equivalent substitute for the Zubercal output named in the project dossier.
+Use HATS for broad ZTF lightcurve coverage, including objects without a suitable PS1 counterpart. Preserve native epoch values, OID metadata and source provenance. Keep the raw path independent of any Zubercal match.
 
-Before the final Park acceptance baseline is frozen, confirm one of these contractual interpretations:
+### Track B — Zubercal DR20 (supplementary calibration stream)
 
-- **Option A:** DR24 HATS is accepted as the primary raw time-series product; Zubercal is an optional comparison stream.
-- **Option B:** Zubercal is mandatory for the primary science workflow; a dedicated Zubercal adapter and time-series reconstruction are required.
-- **Option C:** both products are required and must be compared using a frozen source/version and photometric validation protocol.
+Use Zubercal for objects with a valid PS1 association. Query it through the LSDB HATS service where bounded access is practical. Keep PS1 IDs, match distance, band, MJD(TDB), magnitude, scaled error, `flag` and `info` separate from DR24 fields.
 
-Until that decision is recorded, the implementation must expose product identity and must not claim that the Zubercal deliverable is complete.
+A Zubercal match must be represented as a cross-reference with match method, radius, candidate count and ambiguity state. Do not equate PS1 `objectid` with ZTF OID. Do not discard DR24 sources that have no Zubercal counterpart.
 
-## 5. Non-negotiable scientific constraints
+## 4. Time and photometry contract
+
+- Keep DR24 HMJD and Zubercal MJD(TDB) as separate source-native fields.
+- Do not compare or merge epochs until a validated time conversion is implemented. A simple numeric offset is not sufficient.
+- Keep DR24 native magnitudes and Zubercal PS1-calibrated magnitudes in separate fields.
+- Preserve Zubercal raw `magerr`; derive physical magnitude error only through an explicit unit conversion.
+- Keep DR24 `catflags` and Zubercal `flag`/`info` separate.
+- Calibration uncertainty and PS1 matching uncertainty must not be hidden inside the per-epoch measurement error.
+- No cross-source data may enter the frozen v0.2.0 model until feature parity and leakage tests pass.
+
+## 5. Acceptance decision
+
+The recommended technical option is **Option C**: DR24 HATS is the primary discovery stream and Zubercal is a supplementary calibration stream.
+
+The Park acceptance authority must still confirm that this interpretation satisfies the approved dossier. If Zubercal is mandatory as the only primary stream, the project must document that PS1-unmatched transients are outside its coverage. That restriction is not acceptable for the platform's full transient-discovery objective.
+
+## 6. Non-negotiable scientific constraints
 
 - Do not change the frozen v0.2.0 baseline or its 42-feature schema.
 - Do not feed DR24 HATS or Zubercal values to the frozen model without an independently validated feature mapping and parity evidence.
 - Do not infer astrophysical identity from OID equality or coordinate proximity alone.
-- Preserve source-native values, source release, schema, query, hashes, and calibration semantics.
-- Treat photometric calibration uncertainty separately from per-epoch `magerr`.
+- Preserve source release, schema, query, hashes, units and calibration semantics.
+- Keep source-native records immutable.
 
-## 6. References
+## 7. References
 
 - [IRSA DR24 HATS Lightcurves tutorial](https://caltech-ipac.github.io/irsa-tutorials/ztf-lightcurves/)
 - [IRSA ZTF data products](https://irsa.ipac.caltech.edu/Missions/ztf.html)
 - [ZTF DR24 release notes](https://irsa.ipac.caltech.edu/data/ZTF/docs/releases/dr24/ztf_release_notes_dr24.pdf)
+- [Zubercal overview](https://irsa.ipac.caltech.edu/data/ZTF/zubercal/overview.pdf)
+- [LSDB Zubercal/PS1 tutorial](https://docs.lsdb.io/en/stable/tutorials/pre_executed/zubercal-ps1-snad.html)
+- [Zubercal DR20 HATS service](https://data.lsdb.io/hats/ztf_dr20/zubercal/)
