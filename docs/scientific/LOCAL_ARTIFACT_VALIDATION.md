@@ -35,11 +35,11 @@ It checks:
 - fold-assignment files;
 - the four test modules affected by the 10 skipped tests.
 
-The script is read-only. It does not upload or modify data. It does not hash large feature datasets unless `--hash-data` is supplied.
+The script does not modify or upload scientific inputs. It writes the JSON audit report. It does not hash large feature datasets unless `--hash-data` is supplied. The readiness field means that required paths exist; it does not validate model contents, manifest integrity, feature semantics or scientific performance.
 
 ## Run the skipped tests
 
-Run these tests only after the audit reports `production_integration_tests_ready: true`:
+Run these tests only after the audit reports `integration_prerequisites_present: true`:
 
 ```bash
 python -m pytest -q \
