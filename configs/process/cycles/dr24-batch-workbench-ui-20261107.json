@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-batch-workbench-ui-20261107",
+  "objective": "Connect the DR24 Explorer to the bounded multi-OID API and expose raw records, separate QC diagnostics, provenance and JSON export in a deterministic browser workflow.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "PR #273",
+      "status": "IMPLEMENTED_PENDING_CI",
+      "detail": "POST /v1/dr24/lightcurves accepts 1–10 unique positive OIDs and returns separate raw records."
+    },
+    {
+      "source": "PR #274",
+      "status": "IMPLEMENTED_PENDING_CI",
+      "detail": "ObservationService adds separate diagnostic QC assessments without mutating raw epochs."
+    },
+    {
+      "source": "PR #272",
+      "status": "RESEARCH_EVIDENCE",
+      "detail": "Existing single-OID Explorer and pinned HATS browser smoke evidence informed the UI implementation."
+    }
+  ],
+  "baseline": {
+    "revision": "247b119a847fe21ec46a305fe750178843e17ea2",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "expected_improvement": [
+    "Load 1–10 OIDs in one UI request",
+    "Render separate records without cross-OID grouping",
+    "Show separate raw-preserving QC and acquisition provenance",
+    "Export the complete batch response as JSON",
+    "Reject duplicate and over-limit input before network access"
+  ],
+  "measurement": {
+    "metrics": {
+      "ui_batch_support": {
+        "status": "NOT_MEASURED",
+        "before": "The DR24 Explorer accepted one OID per lookup.",
+        "after": "The Explorer sends a bounded batch POST and renders one panel per returned OID."
+      },
+      "export_integrity": {
+        "status": "NOT_MEASURED",
+        "before": "Single-OID raw JSON export only.",
+        "after": "Batch export retains all raw records, QC assessments and provenance."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The browser contract uses a deterministic fake backend. It does not establish live DR24 source validity."
+      }
+    },
+    "trade_off": "The batch view reduces manual lookup effort but displays each OID separately; it does not infer physical-source identity."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "A deterministic Playwright browser integration test and focused GitHub Actions workflow were added.",
+      "The browser workflow uses a fake DR24 backend and tests input validation, rendering, provenance, raw export and separate QC.",
+      "CI for the current head is pending.",
+      "Deterministic Playwright browser workflow 42350007848 completed successfully on code/test head 7a37e07de151d6dc8321db6c53f187a37749e827. The subsequent head change added only the lifecycle record; UI, API, and test code were unchanged."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The first Explorer supported only one OID per request and used a single-object GET route.",
+      "The bounded batch API and QC service response now exist in stacked PRs."
+    ],
+    "unresolved": [
+      "The complete UI path has not yet passed the new browser test.",
+      "No live source-backed multi-OID API/browser parity has been run."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "UI batch size is capped at 10 and duplicate IDs are rejected client-side and server-side.",
+      "Raw OID records and QC assessments remain separate.",
+      "The UI does not perform inference, grouping, normalization or filtering."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Confirm the deterministic browser workflow result against the final PR head; UI/test code was unchanged after the successful run.",
+      "Run a bounded live HATS batch request against pinned independent OID references.",
+      "Keep the batch Explorer experimental until source-backed evidence and scientific identity gates pass."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "The UI uses POST /v1/dr24/lightcurves.",
+    "The UI renders one panel per OID and exports the whole response.",
+    "QC remains diagnostic only; no epoch is removed or modified."
+  ]
+}
