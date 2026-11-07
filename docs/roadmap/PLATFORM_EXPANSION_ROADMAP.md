@@ -9,6 +9,8 @@
 **Current continuity record:** [Handbook v2.9](../HANDBOOK_UPDATED_v2.9.md) · [Project Status & Execution Ledger — 2026-11-07](../PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-07.md) · [Park MVP delivery plan](../PARK_MVP_DELIVERY_PLAN_2026-11-05.md)
 
 ## Executive status
+Institutional submission claims are reconciled in the Persian [Park Technical Status Addendum — 2026-11-07](../acceptance/PARK_TECHNICAL_STATUS_ADDENDUM_2026-11-07.fa.md). The original submitted PDFs remain unchanged; use the addendum when presenting current status.
+
 The repository has a released Python package, a frozen v0.2.0 scientific baseline, production inference interfaces, an API-backed Workbench, and bounded DR24 research evidence. It does not yet have an accepted DR24-backed 30–50-object end-to-end Park demonstration.
 
 Do not use an old readiness percentage as a current completion measure. A new percentage requires a defined weighting method and current evidence for every scored item.
