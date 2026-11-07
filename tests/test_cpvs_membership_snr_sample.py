@@ -202,6 +202,7 @@ def test_raw_snr_sample_rederivation_and_four_field_gate(
     assert by_id[4]["g"]["passes_approximate_snr"] is None
     assert by_id[4]["r"]["passes_approximate_snr"] is None
     assert by_id[4]["matches_historical_candidate"] is None
+    assert by_id[4]["matches_table4_with_four_field_gate"] is None
     assert by_id[2]["matches_historical_candidate"] is False
     assert by_id[1]["matches_table4_with_four_field_gate"] is True
     assert by_id[2]["matches_table4_with_four_field_gate"] is True
