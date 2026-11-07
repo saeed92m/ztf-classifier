@@ -8,6 +8,10 @@
 **Disposition:** NOT ACCEPTED — implementation and source-backed demonstration are incomplete.
 
 ## 1. Delivery objective
+## Institutional dossier reconciliation
+
+The original September 2026 Park presentation and project proposal remain unchanged as submitted records. A Persian technical status addendum dated 2026-11-07 has been prepared to qualify claims about live demonstration, DR24 classification, anomaly detection, dataset scale, staffing and schedule against current evidence: [PARK_TECHNICAL_STATUS_ADDENDUM_2026-11-07.fa.md](acceptance/PARK_TECHNICAL_STATUS_ADDENDUM_2026-11-07.fa.md). Attach this addendum when sharing the original dossier as a current status package. Do not silently replace the submitted PDFs.
+
 Deliver a real, bounded, reproducible ZTF analysis demonstration for the Tabriz Science and Technology Park. The first acceptance target is a working application workflow, not a claim that the complete scientific platform or a production DR24 classifier is finished.
 
 A reviewer must be able to select or load a supported sample, inspect source data and quality, run supported analysis, inspect provenance and limitations, and export results with a reproducibility record.
