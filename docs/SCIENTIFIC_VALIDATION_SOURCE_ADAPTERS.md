@@ -38,3 +38,8 @@ The derivation runner requires the parent evidence SHA and emits an immutable ev
 ## DR24 HATS versus Zubercal
 
 The DR24 Lightcurves HATS collection is a native DR24 time-series product. Zubercal is a separate recalibrated PSF-photometry product. They must have separate source adapters and provenance contracts. The project does not currently establish that HATS is an equivalent substitute for the Zubercal product named in the Park dossier. See [DR24 HATS and Zubercal source-product contract v0.1](../architecture/DR24_HATS_VS_ZUBERCAL_SOURCE_CONTRACT_v0.1.md). The primary-product decision remains open until it is confirmed against the approved deliverable.
+
+
+## DR24 HATS and Zubercal DR20
+
+These products are separate streams. DR24 HATS provides native ZTF lightcurves by ZTF OID. Zubercal DR20 provides PS1-matched recalibrated PSF detections; its `objectid` is a PS1 ID, its time field is MJD(TDB), and its stored `magerr` is scaled by 10,000. Zubercal does not cover sources without suitable PS1 matches. Use DR24 HATS as the primary discovery stream and Zubercal as a supplementary calibration stream. Preserve all source-native fields and match ambiguity. See [DR24 HATS and Zubercal source-product contract v0.1](../architecture/DR24_HATS_VS_ZUBERCAL_SOURCE_CONTRACT_v0.1.md).
