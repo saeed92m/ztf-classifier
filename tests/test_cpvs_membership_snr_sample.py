@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import importlib
 import shutil
@@ -14,10 +15,16 @@ import pytest
 audit = importlib.import_module("diagnose_cpvs_membership_snr_sample")
 
 
-def _archive(path: Path, member: str, data: bytes, band: str) -> None:
+def _archive(
+    path: Path,
+    member: str,
+    data: bytes,
+    band: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr(member, data)
-    audit.ARCHIVES[band] = {
+    monkeypatch.setitem(audit.ARCHIVES, band, {
         "member": member,
         "md5": hashlib.md5(path.read_bytes()).hexdigest(),
         "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
@@ -26,21 +33,21 @@ def _archive(path: Path, member: str, data: bytes, band: str) -> None:
         "member_rows": len(data.splitlines()),
         "member_crc32": f"{zlib.crc32(data) & 0xFFFFFFFF:08x}",
         "threshold": 2.5 if band == "g" else 3.0,
-    }
+    })
 
 
 def _write_tsv(path: Path, rows: list[dict[str, str]]) -> None:
     fields = list(rows[0])
     with path.open("w", encoding="utf-8", newline="") as stream:
-        import csv
-
         writer = csv.DictWriter(stream, fieldnames=fields, delimiter="\t")
         writer.writeheader()
         writer.writerows(rows)
 
 
 @pytest.mark.skipif(shutil.which("unzip") is None, reason="Info-ZIP is required")
-def test_raw_snr_sample_rederivation_and_four_field_gate(tmp_path: Path) -> None:
+def test_raw_snr_sample_rederivation_and_four_field_gate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     g_data = (
         b"1,10,10,59000,15.0,0.30,0\n"
         b"2,11,11,59001,16.0,0.30,0\n"
@@ -53,8 +60,8 @@ def test_raw_snr_sample_rederivation_and_four_field_gate(tmp_path: Path) -> None
     )
     g_archive = tmp_path / "ztf2g.zip"
     r_archive = tmp_path / "ztf2r.zip"
-    _archive(g_archive, "ztf2g", g_data, "g")
-    _archive(r_archive, "ztf2r", r_data, "r")
+    _archive(g_archive, "ztf2g", g_data, "g", monkeypatch)
+    _archive(r_archive, "ztf2r", r_data, "r", monkeypatch)
 
     candidate_only = tmp_path / "candidate_only.tsv"
     _write_tsv(
