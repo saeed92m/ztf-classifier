@@ -160,12 +160,37 @@ def test_raw_snr_sample_rederivation_and_four_field_gate(
         ],
     )
 
+    four_field_only = tmp_path / "four_field_only.tsv"
+    _write_tsv(
+        four_field_only,
+        [
+            {
+                "SourceID": "4",
+                "ZTF": "ZTF_TEST_4",
+                "gmag": "15.5",
+                "rmag": "14.5",
+                "Per-g": "1.2",
+                "Per-r": "1.3",
+                "Per": "1.2",
+                "Ng": "1",
+                "Nr": "1",
+                "candidate": "False",
+                "Table4_member": "False",
+                "four_field_positive": "True",
+            }
+        ],
+    )
+
     metadata, input_report = audit.load_metadata(
-        candidate_only, sample_100, sample_1000
+        candidate_only, sample_100, sample_1000, four_field_only
     )
     assert input_report["metadata_conflicts"] == []
     source_ids = set(metadata)
-    assert source_ids == {1, 2, 3}
+    assert source_ids == {1, 2, 3, 4}
+    assert metadata[4]["four_field_only"] is True
+    assert audit.parse_photometry_line(
+        b'4,10,10,59000,15.5,0.2,"flag,with,commas"\\n'
+    )[-1] == "flag,with,commas"
 
     g_report, g_metrics = audit.scan_band_archive(g_archive, "g", source_ids)
     r_report, r_metrics = audit.scan_band_archive(r_archive, "r", source_ids)
