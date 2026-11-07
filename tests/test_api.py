@@ -767,7 +767,8 @@ def test_dr24_batch_endpoint_preserves_raw_records_and_missing_oids() -> None:
     from ztf_classifier.io.dr24_lightcurve import DR24LightcurveRequest
 
     class FakeDR24ObservationService(FakeObservationService):
-        calls: list[tuple[int, ...]] = []
+        def __init__(self) -> None:
+            self.calls: list[tuple[int, ...]] = []
 
         def get_dr24_native_lightcurves(
             self,
