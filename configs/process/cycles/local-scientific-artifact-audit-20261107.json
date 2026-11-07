@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "local-scientific-artifact-audit-20261107",
+  "objective": "Provide a read-only local audit that identifies the exact frozen model, feature dataset, ALeRCE cache and fold artifacts required by the skipped scientific integration tests without substituting lab artifacts.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "PR #274 CI run 42350826936",
+      "status": "VERIFIED",
+      "detail": "662 tests passed and 11 skipped; 10 skips depend on missing v0.2 model/feature artifacts."
+    },
+    {
+      "source": "Local artifact discussion 2026-10-27",
+      "status": "VERIFIED",
+      "detail": "Original checkout contained a separate lab-smoke artifact with model/schema/calibration/conformal/OOD files. The production artifact path was missing. The lab artifact must not substitute for the frozen production artifact."
+    },
+    {
+      "source": "Dropbox artifact search and GitHub Actions artifact inspection",
+      "status": "VERIFIED",
+      "detail": "No frozen production model or feature dataset was found in accessible Dropbox or retained GitHub Actions artifacts."
+    }
+  ],
+  "baseline": {
+    "revision": "2c14b96e4566d8f316dd01da63002497e57d8680",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "expected_improvement": [
+    "Identify exact missing local artifacts",
+    "Verify known lab-smoke hashes while keeping that artifact ineligible for production inference",
+    "Provide a safe reproducible local audit command",
+    "Prevent accidental symlink/copy substitution of the lab model"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "before": "Missing artifacts were known from prior test skips, but there was no one-command local inventory.",
+        "after": "A read-only JSON audit checks the production artifact, feature files, ALeRCE Parquet cache and fold assignments."
+      },
+      "coverage": {
+        "status": "NOT_MEASURED",
+        "before": "No consolidated artifact readiness report existed.",
+        "after": "The report includes all required production model files, feature/config files, raw-cache counts, fold files and dependent test paths."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "before": "Lab and production artifacts could be confused by path substitution.",
+        "after": "The lab-smoke path is explicitly marked LAB_SMOKE_ONLY_NOT_A_PRODUCTION_SUBSTITUTE and never satisfies production readiness."
+      }
+    },
+    "trade_off": "The audit requires one local execution because the original WSL filesystem is not accessible through repository tools. It does not upload or modify scientific data."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "A read-only audit script, documentation and deterministic unit tests were added.",
+      "The unit tests and actual local WSL audit have not yet run on the final branch head."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The production model artifact is missing from the accessible repository/CI artifact sources.",
+      "The lab-smoke artifact exists in the original local checkout but is a separate run and cannot replace the frozen production model."
+    ],
+    "unresolved": [
+      "Actual current WSL artifact availability must be confirmed by running the audit script."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Never symlink or copy lab-smoke model weights into the frozen production artifact path.",
+      "Keep large scientific artifacts out of Git.",
+      "Use exact SHA-256 and immutable artifact manifests for any external artifact source."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the artifact audit in the user's WSL checkout and inspect the JSON report.",
+      "If the frozen production artifact exists, verify its manifest and run the 10 dependent tests.",
+      "If absent, recover it from its original authoritative source; do not rebuild or substitute without a separately approved scientific baseline procedure."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Local audit command: python scripts/audit_scientific_artifacts.py",
+    "Output: reports/scientific_validation/local_scientific_artifact_audit.json",
+    "Lab-smoke artifact remains separate and is never production-eligible."
+  ]
+}
