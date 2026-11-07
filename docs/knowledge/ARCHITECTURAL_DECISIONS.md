@@ -17,3 +17,6 @@
 | AD-PROD-005 | ADOPTED | Cross-match, similar-object search, human review, discovery ranking, and Real/Bogus are explicit architectural boundaries. | Ecosystem review identified these as reusable patterns with clear scientific semantics. | Discovery architecture, analysis modes |
 | AD-PROD-006 | ADOPTED | OOD, uncertainty, scientific anomaly, catalog evidence, and explainability remain separate evidence channels. | Prevents semantic overclaiming. | Result contracts, UI, validation |
 | AD-PROD-007 | ADOPTED | Future alert/streaming support must be enabled by contracts without weakening deterministic offline/batch workflows. | Preserves reproducibility while allowing operational scaling. | Ingestion, orchestration |
+
+
+| AD-DATA-001 | PROPOSED | DR24 Lightcurves HATS and Zubercal are distinct source products and require separate adapters and provenance. | IRSA DR24 HATS tutorial and ZTF product catalog identify HATS lightcurves and Zubercal recalibrated PSF photometry as separate products. The Park primary-product requirement remains to be confirmed. | DR24 ingestion, photometric validation, Park acceptance |
