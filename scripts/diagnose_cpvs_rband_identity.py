@@ -318,6 +318,7 @@ def reconcile_counts(
         "top_archive_only_seq_ids": top_archive_only,
     }
 
+
 def scan_archive(
     archive_path: Path,
     *,
