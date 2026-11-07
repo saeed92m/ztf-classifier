@@ -121,7 +121,7 @@ def test_zubercal_summary_rejects_invalid_ps1_identity_or_coordinates() -> None:
             dec_deg=-21.45,
             radius_arcsec=1.2,
         )
-    with pytest.raises(ValueError, match="objra/objdec"):
+    with pytest.raises(ValueError, match="missing objra/objdec"):
         summarize_zubercal_rows(
             [{**base, "objectid": 123, "objra": None}],
             ztf_objectid=1,
