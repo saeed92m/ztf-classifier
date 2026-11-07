@@ -189,7 +189,7 @@ def test_raw_snr_sample_rederivation_and_four_field_gate(
     assert source_ids == {1, 2, 3, 4}
     assert metadata[4]["four_field_only"] is True
     assert audit.parse_photometry_line(
-        b'4,10,10,59000,15.5,0.2,"flag,with,commas"\\n'
+        b'4,10,10,59000,15.5,0.2,"flag,with,commas"\n'
     )[-1] == "flag,with,commas"
 
     g_report, g_metrics = audit.scan_band_archive(g_archive, "g", source_ids)
