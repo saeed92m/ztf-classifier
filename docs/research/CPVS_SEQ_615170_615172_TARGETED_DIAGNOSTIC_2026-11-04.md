@@ -265,3 +265,16 @@ However, do not declare the CPVS issue resolved yet:
 - Only then decide whether the selector should add a versioned completeness gate. Do not change the frozen baseline or silently rewrite the historical selector.
 
 Current disposition: **ROOT-CAUSE CANDIDATE STRONGLY SUPPORTED; SCIENTIFIC CONFIRMATION PENDING**. Issue #170 remains open.
+
+
+### Published-method cross-check
+
+The original anomaly paper is available at [arXiv:2112.03306](https://arxiv.org/pdf/2112.03306):
+
+- Section 2.1 states that the 730,184 objects are selected by at least one 2.5-sigma g-band and 3-sigma r-band detection, then phase-folded with the **common** period from Table 2.
+- Section 2.3 defines the additional \`m_gr\` feature as the difference between the mean g- and r-band magnitudes.
+- The paper does not explicitly state that both per-band periods \`Per-g\` and \`Per-r\` must be positive.
+
+This creates a specific unresolved question. Missing \`gmag\` or \`rmag\` prevents calculation of \`m_gr\`; this supports a mean-magnitude completeness requirement. However, the 17 objects with both mean magnitudes present, positive common \`Per\`, and one missing per-band period are not excluded by the stated common-period procedure alone. Their exclusion needs another source-backed explanation.
+
+Therefore, the four-field intersection is a strong empirical match to Table 4, but it is not yet proof that the authors applied that exact four-field gate. The raw SNR re-derivation for these 17 objects and the fixed 100-/1,000-object samples is required before any selector change.
