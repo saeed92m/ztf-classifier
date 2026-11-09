@@ -271,7 +271,7 @@ def test_prediction_uses_server_side_model_selection(
     assert payload["predictions"][0]["data_adequacy"]["policy_version"] == (
         "coverage-only-v1"
     )
-    assert payload["predictions"][0]["ood"]["evaluation_status"] == (
+    assert payload["predictions"][0]["ood_evaluation_status"] == (
         "evaluated_complete_features"
     )
     assert payload["predictions"][0]["ood"]["input_observed_feature_count"] == 42
