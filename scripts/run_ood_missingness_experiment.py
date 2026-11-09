@@ -330,10 +330,7 @@ def build_feature_masking_scenarios(
 ) -> dict[str, dict[str, Any]]:
     """Build correlated missingness patterns from v0.2 extraction thresholds."""
 
-    members = {
-        name: set(definition["features"])
-        for name, definition in groups.items()
-    }
+    members = {name: set(definition["features"]) for name, definition in groups.items()}
     scenarios = {
         "g_periodicity_unavailable": (
             members["g_periodicity"],
@@ -371,15 +368,11 @@ def build_feature_masking_scenarios(
             "1-9 valid observations in both bands; cross-band features remain",
         ),
         "g_low_1_to_9_r_low_10_to_29": (
-            members["g_basic"]
-            | members["g_periodicity"]
-            | members["r_periodicity"],
+            members["g_basic"] | members["g_periodicity"] | members["r_periodicity"],
             "1-9 valid g observations and 10-29 valid r observations",
         ),
         "r_low_1_to_9_g_low_10_to_29": (
-            members["r_basic"]
-            | members["r_periodicity"]
-            | members["g_periodicity"],
+            members["r_basic"] | members["r_periodicity"] | members["g_periodicity"],
             "1-9 valid r observations and 10-29 valid g observations",
         ),
         "g_band_absent_r_low_10_to_29": (
@@ -404,9 +397,8 @@ def build_feature_masking_scenarios(
             "missing_features": ordered,
             "missing_feature_count": len(ordered),
             "observed_feature_count": len(V0_2_FEATURES) - len(ordered),
-            "coverage_fraction": (
-                len(V0_2_FEATURES) - len(ordered)
-            ) / len(V0_2_FEATURES),
+            "coverage_fraction": (len(V0_2_FEATURES) - len(ordered))
+            / len(V0_2_FEATURES),
             "interpretation": interpretation,
         }
     return result
@@ -433,8 +425,7 @@ def run_family_masking_sensitivity(
     baseline_scores = model.anomaly_scores(matrix)
     baseline_percentiles = reference.anomaly_percentile(baseline_scores)
     baseline_flags = {
-        threshold: baseline_percentiles >= threshold
-        for threshold in OOD_THRESHOLDS
+        threshold: baseline_percentiles >= threshold for threshold in OOD_THRESHOLDS
     }
 
     object_records: list[dict[str, Any]] = []
@@ -477,9 +468,7 @@ def run_family_masking_sensitivity(
                         baseline_percentiles[row_index]
                     ),
                     "masked_anomaly_percentile": float(percentiles[row_index]),
-                    "anomaly_percentile_delta": float(
-                        percentile_delta[row_index]
-                    ),
+                    "anomaly_percentile_delta": float(percentile_delta[row_index]),
                 }
             )
 
@@ -498,9 +487,7 @@ def run_family_masking_sensitivity(
             "p90_absolute_percentile_delta": float(
                 np.quantile(np.abs(percentile_delta), 0.90)
             ),
-            "median_signed_percentile_delta": float(
-                np.median(percentile_delta)
-            ),
+            "median_signed_percentile_delta": float(np.median(percentile_delta)),
             "mean_signed_percentile_delta": float(np.mean(percentile_delta)),
             "spearman_rank_correlation": _finite_or_none(
                 baseline_values.corr(masked_values, method="spearman")
@@ -510,12 +497,8 @@ def run_family_masking_sensitivity(
         for threshold in OOD_THRESHOLDS:
             baseline_flagged = baseline_flags[threshold]
             masked_flagged = percentiles >= threshold
-            suppressed = int(
-                np.logical_and(baseline_flagged, ~masked_flagged).sum()
-            )
-            newly_flagged = int(
-                np.logical_and(~baseline_flagged, masked_flagged).sum()
-            )
+            suppressed = int(np.logical_and(baseline_flagged, ~masked_flagged).sum())
+            newly_flagged = int(np.logical_and(~baseline_flagged, masked_flagged).sum())
             baseline_count = int(baseline_flagged.sum())
             summary[f"baseline_flagged_count_{int(threshold)}"] = baseline_count
             summary[f"masked_flagged_count_{int(threshold)}"] = int(
@@ -523,9 +506,7 @@ def run_family_masking_sensitivity(
             )
             summary[f"suppressed_flag_count_{int(threshold)}"] = suppressed
             summary[f"new_flag_count_{int(threshold)}"] = newly_flagged
-            summary[f"flag_flip_count_{int(threshold)}"] = (
-                suppressed + newly_flagged
-            )
+            summary[f"flag_flip_count_{int(threshold)}"] = suppressed + newly_flagged
             summary[f"suppressed_rate_of_baseline_flags_{int(threshold)}"] = (
                 float(suppressed / baseline_count) if baseline_count else None
             )
@@ -545,8 +526,7 @@ def build_natural_missingness_patterns(
 
     matrix = np.asarray(X, dtype=np.float64)
     scenario_sets = {
-        name: set(scenario["missing_features"])
-        for name, scenario in scenarios.items()
+        name: set(scenario["missing_features"]) for name, scenario in scenarios.items()
     }
     metadata_columns = (
         [
@@ -577,17 +557,18 @@ def build_natural_missingness_patterns(
             matches = [
                 name for name, expected in scenario_sets.items() if expected == missing
             ]
-            matched = matches[0] if len(matches) == 1 else (
-                "ambiguous" if matches else "unmatched"
+            matched = (
+                matches[0]
+                if len(matches) == 1
+                else ("ambiguous" if matches else "unmatched")
             )
         record: dict[str, Any] = {
             "oid": oid,
             "class": labels[row_index],
             "missing_feature_count": len(missing),
             "observed_feature_count": len(V0_2_FEATURES) - len(missing),
-            "coverage_fraction": (
-                len(V0_2_FEATURES) - len(missing)
-            ) / len(V0_2_FEATURES),
+            "coverage_fraction": (len(V0_2_FEATURES) - len(missing))
+            / len(V0_2_FEATURES),
             "matched_extraction_pattern": matched,
             "missing_features": json.dumps(
                 [feature for feature in V0_2_FEATURES if feature in missing]
@@ -596,9 +577,7 @@ def build_natural_missingness_patterns(
         if metadata is not None:
             for column in metadata_columns:
                 value = metadata.iloc[row_index][column]
-                record[column] = (
-                    value.item() if hasattr(value, "item") else value
-                )
+                record[column] = value.item() if hasattr(value, "item") else value
         records.append(record)
 
     result = pd.DataFrame(records)
@@ -606,9 +585,9 @@ def build_natural_missingness_patterns(
     summary = {
         "object_count": len(result),
         "exact_pattern_matches": int(
-            result["matched_extraction_pattern"].isin(
-                ["complete", *scenario_sets.keys()]
-            ).sum()
+            result["matched_extraction_pattern"]
+            .isin(["complete", *scenario_sets.keys()])
+            .sum()
         ),
         "unmatched_objects": int(
             (result["matched_extraction_pattern"] == "unmatched").sum()
