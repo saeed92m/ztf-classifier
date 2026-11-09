@@ -66,9 +66,71 @@ No bulk DR24 download is required. Do not feed raw DR24 measurements into the fr
 
 ## CPVS research lane — separate from Park delivery
 
-Issue #170 remains OPEN / UNRESOLVED. A retained full object-level audit reports 781,602 parent IDs, 730,184 published IDs, 741,786 reconstructed two-band SNR candidates, 11,602 candidate-only IDs and zero published-only IDs. Intersecting the candidate set with positive Table 2 gmag, rmag, Per-g and Per-r yields exactly the 730,184 published members. All 11,602 candidate-only IDs fail at least one of those four metadata fields. The independent 55-control raw-photometry audit found zero controls passing both band thresholds.
+Issue #170 remains **OPEN / SCIENTIFICALLY UNRESOLVED**. It is a claim-specific research blocker. It does not block the DR24-first Park delivery and it does not authorize changes to the production selector or the frozen v0.2.0 baseline.
 
-This is a strong root-cause candidate, not proof of author intent. The published paper does not explicitly state the four-field gate. The 17 objects with complete mean magnitudes but incomplete band periods remain unexplained. Raw-photometry re-derivation and verification against author preprocessing semantics are required. See PR #265. Do not change production criteria or the frozen baseline.
+The historical Seq-based comparison retained in repository evidence reports:
+
+| Set | Objects |
+|---|---:|
+| Parent Table 2 | 781,602 |
+| Published Table 4 | 730,184 |
+| Reconstructed two-band SNR candidates | 741,786 |
+| Candidate-only | 11,602 |
+| Published-only | 0 |
+
+The published-name to Table 2 Seq crosswalk is documented as 730,184 mapped and zero unmapped names. The 11,602 excess candidates remain unexplained by the published method. Zero published-only IDs does not explain the candidate-only set.
+
+### Corrected 55-control interpretation
+
+The retained raw-photometry archive evidence shows:
+
+- g-band rows exist for only 1 of 55 controls.
+- r-band rows exist for 51 of 55 controls.
+- No control has both bands represented in the retained attachments.
+
+Therefore, the earlier statement that zero of 55 controls passed both band SNR thresholds is **not supported**. The old per-band failure counters treated absent rows as failed SNR measurements. That interpretation is invalid.
+
+Missing raw photometry is `UNKNOWN`, not `FAIL`. The 55-control raw-photometry audit is PARTIAL. It does not independently validate the two-band SNR predicate for these controls.
+
+### New Master Handoff diagnostics — evidence still required
+
+The user-approved CPVS Master Handoff reports additional diagnostics:
+
+- Four-field-positive set: 730,239 objects.
+- Four-field-only relative to the published set: 55 objects.
+- Published-only relative to the four-field set: zero.
+- A separate `Ng >= 11` and `Nr >= 11` diagnostic: 730,229 candidates.
+- That observation-count diagnostic leaves 45 candidate-only objects and removes 11,557 of the 11,602 residuals.
+- The 45 residuals are reported in three groups: 17, 4 and 24 objects.
+- A separate 1,000-object control sample is required from the complete set of 51,418 parent nonmembers.
+
+These values are **reported by the approved handoff**. This ledger update does not claim that the ID lists, source files, hashes, commands and output artifacts have been independently re-run or verified.
+
+The handoff has an internal set-arithmetic inconsistency that must be resolved from the actual ID lists. It states `|F| = 730,239`, `|F \\ P| = 55` and `|P \\ F| = 0`, but also states `|C ∩ F| = 730,239` while asserting `C ∩ F = P` and `|P| = 730,184`. These statements cannot all be true with the same set definitions. Do not silently choose one number. Preserve the diagnostic as **UNVERIFIED** until the exact sets, definitions and hashes reconcile.
+
+The `Ng/Nr >= 11` test is a diagnostic hypothesis. It is not an approved publisher rule or production threshold. Do not apply it to production membership.
+
+### Other CPVS integrity findings
+
+- PR #244 is open and Draft. Its recorded base SHA is `4f98a06...`; current main is `bc85f6c...`. A current-head pull-request validation after rebase is not verified.
+- The fixed stratified 100/1,000 samples were reproduced from retained artifacts. They deliberately oversample discrepancy groups and are not prevalence estimates.
+- The separate 1,000-object nonmember control sample from all 51,418 nonmembers still requires its exact ID manifest, seed, sampling method and hashes.
+- Full MGPR diagnostics for the published controls, 11,602 candidate-only objects, 45 remaining objects and the defined control groups are not verified.
+- The g/r archive per-Seq reconciliation remains incomplete. The 91 g-band count mismatches and 4,916-row total difference remain separate archive-integrity issues.
+- Seq 615170 / 615172 remains a strong identity lead, not an approved SourceID remapping. Preserve both identifiers until full raw coordinate, time and band evidence supports a decision.
+
+### Required next evidence
+
+1. Reconcile the exact four-field ID sets and the arithmetic conflict in the Master Handoff.
+2. Produce a source-backed, hashed ID list for the `Ng/Nr >= 11` experiment. Record its full parent and reference definitions. Do not promote the rule to production.
+3. Generate and hash the separate 1,000-object nonmember control sample from all 51,418 parent nonmembers.
+4. Complete object-level raw g/r provenance for the required samples and the 11,602 residuals.
+5. Complete per-Seq archive reconciliation and the 615170/615172 identity investigation without automatic ID remapping.
+6. Run MGPR with explicit `PASS`, `FAIL`, `UNKNOWN` and `ERROR` states. Missing data and execution errors must not be counted as scientific failures.
+7. Rebase/rebuild PR #244 from current main and run CI on its exact final head.
+8. Keep the CPVS issue open until a reproducible root cause or a clearly source-supported limitation is established.
+
+No production selector, SNR threshold, model, feature set, class order, reference membership, scientific gate or v0.2.0 artifact is changed by this status correction.
 
 ## CIN workstream
 
