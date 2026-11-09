@@ -83,7 +83,11 @@
       "Artifact 13710761158 has SHA-256 bb12f5f6f511e27c4ab2f62c9c76e4825d4a08501ee0e2af96d6c6dc3c26546f.",
       "The frozen feature matrix SHA-256 is d08543cffe5db141d6a7e4ee429264acdaa50c6e4fd01f1b0fa2a36aa42a6a85.",
       "The frozen 42-feature schema SHA-256 is fed07fc291070ecbdc7bbc597fad5aac6a3f4a1746feb12a9f4c2407108af329.",
-      "The full repository CI on PR #280 is pending or was blocked by the missing lifecycle record. It must be rerun after this record is added.",
+      "Full repository CI on PR head b072d07c45ee12518ee288f7320b72927d00619d passed in both push run 42699459609 and pull-request run 42699475196. All eight jobs passed: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate.",
+      "The full test suite reported 648 passed, 10 skipped, 9 warnings, and 83% total coverage. The six new OOD missingness tests were present in the JUnit report.",
+      "CodeQL run 42699474886 passed.",
+      "Product Scope Audit run 42699475227 passed.",
+      "Scientific Validation run 42699475335 passed its benchmark and cumulative lifecycle contract checks. Source-backed DR24, ALeRCE, StarEmbed, and historical-reference jobs were skipped by the ordinary PR workflow conditions.",
       "The experiment reconstructs OODProductionModel from the frozen matrix and configuration. It does not load or byte-compare a persisted production artifact.",
       "The experiment reference scores are in-sample. No independent astrophysical OOD labels were used."
     ]
@@ -97,7 +101,6 @@
       "The persisted production OOD artifact is not available in the repository. The reconstructed model cannot establish byte-for-byte artifact parity."
     ],
     "unresolved": [
-      "Standard repository CI must pass on the final PR head.",
       "Production OOD artifact parity remains unverified.",
       "Independent astrophysical ID/OOD evaluation data are not available.",
       "A versioned, evidence-based OOD eligibility policy is not established."
@@ -119,7 +122,6 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Standard repository CI must pass on the final PR head.",
       "Production-artifact parity is not established.",
       "Independent astrophysical ID/OOD labels are not available.",
       "Production OOD eligibility criteria remain unvalidated."
