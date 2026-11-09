@@ -73,7 +73,9 @@
       "Updated the project ledger to correct the 55-control audit: g-band rows exist for 1/55, r-band rows for 51/55, and no control has both bands; missing photometry is UNKNOWN, not SNR FAIL.",
       "Updated README project status to 2026-11-10, removed superseded 2026-10-11 row-ordinal narrative and stale Handbook v2.8 link, and added links to Handbook v2.9, delivery ledger and full audit.",
       "Verified current PR branch is based directly on main@bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c and is not behind main.",
-      "Exact-head checks after the audit refresh: CodeQL passed; Product Scope Audit passed; Scientific Validation benchmark/lifecycle contracts passed. Four source-backed jobs were skipped by the ordinary pull-request event. Standard CI is running and must be checked on the final head."
+      "Exact-head checks after the audit refresh: CodeQL passed; Product Scope Audit passed; Scientific Validation benchmark/lifecycle contracts passed. Four source-backed jobs were skipped by the ordinary pull-request event. Standard CI is running and must be checked on the final head.",
+      "Updated Handbook v2.9 to correct the 55-control raw-photometry interpretation: missing g/r rows are UNKNOWN, not failed SNR measurements; added the Master Handoff set-arithmetic conflict and marked the Ng/Nr diagnostic as unverified and diagnostic-only.",
+      "Expanded the 2026-11-10 audit after inspecting the Nov 9 workflow ZIP artifacts: DR24 evidence is a lexicographically selected 150-row Objects Table HATS index subset (OID/coordinates/ngoodobsrel), ALeRCE is a 150-row live classifier-reference response, frozen ALeRCE is a manifest-only artifact, and StarEmbed has a null row_count."
     ]
   },
   "failure_analysis": {
@@ -110,7 +112,11 @@
       "The original institutional PDFs must remain unchanged; any revised submission must be separately versioned and dated.",
       "A successful scheduled Scientific Validation run on main (42611080798) acquired 150 DR24 source rows, 150 live ALeRCE reference rows, a frozen historical ALeRCE manifest and a StarEmbed source package; these artifacts prove bounded acquisition/provenance, not model performance or Park acceptance.",
       "The 2026-11-09 OOD missingness experiment (PR #280) is diagnostic only: 59 complete paired objects, reconstructed model rather than byte-for-byte production artifact replay, in-sample reference scores, no independent OOD labels.",
-      "The approved CPVS Master Handoff provides additional reported diagnostics, but its four-field set arithmetic conflicts and the Ng/Nr threshold test requires source-backed ID manifests and hashes before adoption even as a diagnostic conclusion."
+      "The approved CPVS Master Handoff provides additional reported diagnostics, but its four-field set arithmetic conflicts and the Ng/Nr threshold test requires source-backed ID manifests and hashes before adoption even as a diagnostic conclusion.",
+      "The 150-row DR24 artifact is Objects Table catalog metadata selected lexicographically by OID; it is not 150 raw epoch light curves and is not a representative sample.",
+      "The 150-row ALeRCE response is a classifier reference output and is not independent astrophysical ground truth.",
+      "The frozen ALeRCE workflow artifact contains only an evidence manifest; it does not contain the three archive payload members.",
+      "StarEmbed acquisition pinned revision 33046797fb619f93a991aa4e38a9dc36f27e2d24 and file hashes, but its manifest reports row_count=null and no benchmark model evaluation occurred."
     ]
   },
   "regression": {
@@ -126,7 +132,10 @@
       "Resolve the Master Handoff set arithmetic from the exact four-field ID lists before updating CPVS membership conclusions.",
       "Complete the independent nonmember control sample and full MGPR diagnostic before any CPVS root-cause acceptance.",
       "Recover the exact production model artifact through a controlled, hash-verified source or explicitly approve a new, separately versioned reproduction.",
-      "Complete DR24 identity, time, photometry and QC contracts and the 5–10 confirmed-source API/Workbench replay before expanding the Park demonstration."
+      "Complete DR24 identity, time, photometry and QC contracts and the 5–10 confirmed-source API/Workbench replay before expanding the Park demonstration.",
+      "Do not use the 150-row DR24 Objects Table subset as an epoch-level light-curve sample or as evidence of survey representativeness.",
+      "The frozen ALeRCE artifact manifest does not by itself provide the underlying publisher snapshot data for local pipeline reproduction.",
+      "Inspect and validate the pinned StarEmbed dataset schema, labels, and object identity before using it in performance claims."
     ]
   },
   "decision": "REVISE",
