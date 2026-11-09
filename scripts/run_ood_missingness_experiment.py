@@ -257,13 +257,18 @@ def build_feature_group_mapping() -> dict[str, dict[str, Any]]:
     g_periodicity = set(lomb_scargle_features(g_sample, "g"))
     r_periodicity = set(lomb_scargle_features(r_sample, "r"))
     cross_band = set(basic_cross_band_features(g_sample, r_sample))
+    cross_band_color = cross_band & {"mean_color_gr", "median_color_gr"}
+    g_variability_ratio = cross_band & {"g_variability_ratio"}
+    r_variability_ratio = cross_band & {"r_variability_ratio"}
 
     candidates = {
         "g_basic": g_basic,
         "g_periodicity": g_periodicity,
         "r_basic": r_basic,
         "r_periodicity": r_periodicity,
-        "cross_band": cross_band,
+        "cross_band_color": cross_band_color,
+        "g_variability_ratio": g_variability_ratio,
+        "r_variability_ratio": r_variability_ratio,
     }
     groups: dict[str, dict[str, Any]] = {}
     assigned: list[str] = []
@@ -299,12 +304,26 @@ def build_feature_group_mapping() -> dict[str, dict[str, Any]]:
                 "minimum_valid_observations": 30,
                 "eligibility": "r-band valid observation count >= 30",
             }
-        else:
+        elif name == "cross_band_color":
             metadata = {
                 "source_columns": ["mag"],
                 "band_selector": {"g": "fid == 1", "r": "fid == 2"},
-                "minimum_valid_observations": 1,
+                "minimum_valid_observations_per_band": 1,
                 "eligibility": "at least one valid observation in both bands",
+            }
+        elif name == "g_variability_ratio":
+            metadata = {
+                "source_columns": ["mag"],
+                "band_selector": "fid == 1",
+                "minimum_valid_observations": 2,
+                "eligibility": "both bands present and at least two valid g observations",
+            }
+        else:
+            metadata = {
+                "source_columns": ["mag"],
+                "band_selector": "fid == 2",
+                "minimum_valid_observations": 2,
+                "eligibility": "both bands present and at least two valid r observations",
             }
         groups[name] = {
             "features": selected,
@@ -344,48 +363,99 @@ def build_feature_masking_scenarios(
             members["g_periodicity"] | members["r_periodicity"],
             "10-29 valid observations in both bands",
         ),
-        "g_low_observation_1_to_9": (
+        "g_low_observation_2_to_9": (
             members["g_basic"] | members["g_periodicity"],
-            "1-9 valid g observations; r band remains available",
+            "2-9 valid g observations; r band remains available",
         ),
-        "r_low_observation_1_to_9": (
+        "r_low_observation_2_to_9": (
             members["r_basic"] | members["r_periodicity"],
-            "1-9 valid r observations; g band remains available",
+            "2-9 valid r observations; g band remains available",
+        ),
+        "g_single_observation": (
+            members["g_basic"]
+            | members["g_periodicity"]
+            | members["g_variability_ratio"],
+            "One valid g observation; r band remains available",
+        ),
+        "r_single_observation": (
+            members["r_basic"]
+            | members["r_periodicity"]
+            | members["r_variability_ratio"],
+            "One valid r observation; g band remains available",
         ),
         "g_band_absent": (
-            members["g_basic"] | members["g_periodicity"] | members["cross_band"],
+            members["g_basic"]
+            | members["g_periodicity"]
+            | members["cross_band_color"]
+            | members["g_variability_ratio"]
+            | members["r_variability_ratio"],
             "No valid g observations; r-band features remain available",
         ),
         "r_band_absent": (
-            members["r_basic"] | members["r_periodicity"] | members["cross_band"],
+            members["r_basic"]
+            | members["r_periodicity"]
+            | members["cross_band_color"]
+            | members["g_variability_ratio"]
+            | members["r_variability_ratio"],
             "No valid r observations; g-band features remain available",
         ),
-        "both_bands_low_observation_1_to_9": (
+        "both_bands_low_observation_2_to_9": (
             members["g_basic"]
             | members["r_basic"]
             | members["g_periodicity"]
             | members["r_periodicity"],
-            "1-9 valid observations in both bands; cross-band features remain",
+            "2-9 valid observations in both bands; all four cross-band features remain",
         ),
-        "g_low_1_to_9_r_low_10_to_29": (
-            members["g_basic"] | members["g_periodicity"] | members["r_periodicity"],
-            "1-9 valid g observations and 10-29 valid r observations",
+        "both_bands_single_observation": (
+            members["g_basic"]
+            | members["r_basic"]
+            | members["g_periodicity"]
+            | members["r_periodicity"]
+            | members["g_variability_ratio"]
+            | members["r_variability_ratio"],
+            "One valid observation in each band; only the two colors remain",
         ),
-        "r_low_1_to_9_g_low_10_to_29": (
-            members["r_basic"] | members["r_periodicity"] | members["g_periodicity"],
-            "1-9 valid r observations and 10-29 valid g observations",
+        "g_low_2_to_9_r_low_10_to_29": (
+            members["g_basic"]
+            | members["g_periodicity"]
+            | members["r_periodicity"],
+            "2-9 valid g observations and 10-29 valid r observations",
+        ),
+        "r_low_2_to_9_g_low_10_to_29": (
+            members["r_basic"]
+            | members["r_periodicity"]
+            | members["g_periodicity"],
+            "2-9 valid r observations and 10-29 valid g observations",
+        ),
+        "g_single_r_low_10_to_29": (
+            members["g_basic"]
+            | members["g_periodicity"]
+            | members["g_variability_ratio"]
+            | members["r_periodicity"],
+            "One valid g observation and 10-29 valid r observations",
+        ),
+        "r_single_g_low_10_to_29": (
+            members["r_basic"]
+            | members["r_periodicity"]
+            | members["r_variability_ratio"]
+            | members["g_periodicity"],
+            "One valid r observation and 10-29 valid g observations",
         ),
         "g_band_absent_r_low_10_to_29": (
             members["g_basic"]
             | members["g_periodicity"]
-            | members["cross_band"]
+            | members["cross_band_color"]
+            | members["g_variability_ratio"]
+            | members["r_variability_ratio"]
             | members["r_periodicity"],
             "No valid g observations and 10-29 valid r observations",
         ),
         "r_band_absent_g_low_10_to_29": (
             members["r_basic"]
             | members["r_periodicity"]
-            | members["cross_band"]
+            | members["cross_band_color"]
+            | members["g_variability_ratio"]
+            | members["r_variability_ratio"]
             | members["g_periodicity"],
             "No valid r observations and 10-29 valid g observations",
         ),
