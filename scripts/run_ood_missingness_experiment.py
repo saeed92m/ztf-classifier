@@ -416,15 +416,11 @@ def build_feature_masking_scenarios(
             "One valid observation in each band; only the two colors remain",
         ),
         "g_low_2_to_9_r_low_10_to_29": (
-            members["g_basic"]
-            | members["g_periodicity"]
-            | members["r_periodicity"],
+            members["g_basic"] | members["g_periodicity"] | members["r_periodicity"],
             "2-9 valid g observations and 10-29 valid r observations",
         ),
         "r_low_2_to_9_g_low_10_to_29": (
-            members["r_basic"]
-            | members["r_periodicity"]
-            | members["g_periodicity"],
+            members["r_basic"] | members["r_periodicity"] | members["g_periodicity"],
             "2-9 valid r observations and 10-29 valid g observations",
         ),
         "g_single_r_low_10_to_29": (
