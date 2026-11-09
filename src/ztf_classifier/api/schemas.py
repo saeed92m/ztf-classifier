@@ -37,13 +37,14 @@ class PredictionItem(BaseModel):
     probabilities: dict[str, float]
     conformal: list[dict[str, Any]] = Field(default_factory=list)
     ood: dict[str, Any] | None = None
+    data_adequacy: dict[str, Any] | None = None
     scientific_anomaly: dict[str, Any] | None = None
 
 
 class PredictionResponse(BaseModel):
     """Stable API response carrying predictions and provenance metadata."""
 
-    schema_version: str = "1.0"
+    schema_version: str = "1.1"
     model_version: str
     model_family: str
     sample_count: int
