@@ -232,8 +232,7 @@ def _serialize_prediction(
                 "interpretation": "descriptive_only_not_an_eligibility_decision",
             }
 
-        if ood is not None:
-            if result.data_adequacy is not None:
+        if ood is not None and result.data_adequacy is not None:
                 ood["input_feature_coverage_fraction"] = float(
                     result.data_adequacy.coverage_fraction[row_index]
                 )
