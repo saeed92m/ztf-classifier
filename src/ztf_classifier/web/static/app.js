@@ -158,15 +158,21 @@ function renderResult(record, durable = true) {
     record.model_version + " · " + (payload.model_family || "—");
   document.getElementById("calibrationValue").textContent =
     (payload.diagnostics || {}).calibration || "—";
-  document.getElementById("oodValue").textContent = (payload.diagnostics || {}).ood || "—";
+  const oodEvaluation = payload.prediction?.ood?.evaluation_status;
+  document.getElementById("oodValue").textContent = [
+    (payload.diagnostics || {}).ood || "—",
+    oodEvaluation || "evaluation state not reported",
+  ].join(" · ");
   document.getElementById("provenanceValue").textContent =
     payload.observation_provenance ? "source-backed" : "stored result";
   document.getElementById("calibrationState").textContent =
     (payload.diagnostics || {}).calibration || "—";
   document.getElementById("conformalState").textContent =
     (payload.diagnostics || {}).conformal || "—";
-  document.getElementById("oodState").textContent =
-    (payload.diagnostics || {}).ood || "—";
+  document.getElementById("oodState").textContent = [
+    (payload.diagnostics || {}).ood || "—",
+    oodEvaluation || "evaluation state not reported",
+  ].join(" · ");
   document.getElementById("datasetProvenance").textContent =
     payload.observation_provenance?.source || "—";
   document.getElementById("modelProvenance").textContent =
