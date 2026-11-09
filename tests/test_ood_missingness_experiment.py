@@ -10,6 +10,7 @@ from scripts.run_ood_missingness_experiment import (
     build_natural_missingness_patterns,
     run_family_masking_sensitivity,
     run_masking_sensitivity,
+    _spearman_or_none,
 )
 from ztf_classifier.models.config import OODConfig
 from ztf_classifier.models.ood_artifact import OODArtifact
@@ -194,3 +195,8 @@ def test_family_masking_is_deterministic_and_matches_natural_patterns() -> None:
         == "both_bands_low_observation_2_to_9"
     )
     assert summary["object_count"] == len(X)
+
+
+def test_spearman_helper_returns_none_for_constant_inputs() -> None:
+    assert _spearman_or_none([1.0, 1.0, 1.0], [1.0, 2.0, 3.0]) is None
+    assert _spearman_or_none([1.0, 2.0, 3.0], [2.0, 2.0, 2.0]) is None
