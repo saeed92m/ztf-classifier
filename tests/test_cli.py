@@ -180,6 +180,7 @@ def test_prediction_payload_falls_back_to_raw_predictions() -> None:
     assert payload["predictions"][0]["predicted_class"] == (MODEL_CLASSES[0])
 
     assert payload["predictions"][1]["predicted_class_index"] == 2
+    assert payload["predictions"][0]["ood_evaluation_status"] == "not_available"
 
 
 def test_prediction_payload_works_without_oid() -> None:
