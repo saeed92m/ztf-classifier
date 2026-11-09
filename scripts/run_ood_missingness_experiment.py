@@ -77,8 +77,7 @@ def run_masking_sensitivity(
     baseline_scores = model.anomaly_scores(matrix)
     baseline_percentiles = reference.anomaly_percentile(baseline_scores)
     baseline_flags = {
-        threshold: baseline_percentiles >= threshold
-        for threshold in OOD_THRESHOLDS
+        threshold: baseline_percentiles >= threshold for threshold in OOD_THRESHOLDS
     }
 
     records: list[dict[str, Any]] = []
@@ -124,9 +123,7 @@ def run_masking_sensitivity(
                     "class": labels[row_index],
                     "masked_feature_count": masked_count,
                     "observed_feature_count": int(observed[row_index]),
-                    "coverage_fraction": float(
-                        observed[row_index] / matrix.shape[1]
-                    ),
+                    "coverage_fraction": float(observed[row_index] / matrix.shape[1]),
                     "replicate": replicate,
                     "baseline_anomaly_score": float(baseline_scores[row_index]),
                     "masked_anomaly_score": float(scores[row_index]),
@@ -135,9 +132,7 @@ def run_masking_sensitivity(
                         baseline_percentiles[row_index]
                     ),
                     "masked_anomaly_percentile": float(percentiles[row_index]),
-                    "anomaly_percentile_delta": float(
-                        percentile_delta[row_index]
-                    ),
+                    "anomaly_percentile_delta": float(percentile_delta[row_index]),
                 }
                 for threshold in OOD_THRESHOLDS:
                     record[f"flag_flip_{int(threshold)}"] = bool(
@@ -148,9 +143,7 @@ def run_masking_sensitivity(
                 scenario_records.append(record)
 
         scenario = pd.DataFrame(scenario_records)
-        absolute_percentile_delta = scenario[
-            "anomaly_percentile_delta"
-        ].abs()
+        absolute_percentile_delta = scenario["anomaly_percentile_delta"].abs()
         absolute_score_delta = scenario["anomaly_score_delta"].abs()
 
         summary: dict[str, Any] = {
@@ -166,13 +159,9 @@ def run_masking_sensitivity(
             "p90_absolute_percentile_delta": float(
                 absolute_percentile_delta.quantile(0.90)
             ),
-            "max_absolute_percentile_delta": float(
-                absolute_percentile_delta.max()
-            ),
+            "max_absolute_percentile_delta": float(absolute_percentile_delta.max()),
             "median_absolute_score_delta": float(absolute_score_delta.median()),
-            "p90_absolute_score_delta": float(
-                absolute_score_delta.quantile(0.90)
-            ),
+            "p90_absolute_score_delta": float(absolute_score_delta.quantile(0.90)),
             "median_signed_percentile_delta": float(
                 scenario["anomaly_percentile_delta"].median()
             ),
@@ -275,14 +264,18 @@ def run_experiment(
     schema = pd.read_parquet(feature_schema_path)
 
     if dataset.shape != (150, 56):
-        raise ValueError(f"Expected frozen dataset shape (150, 56), got {dataset.shape}.")
+        raise ValueError(
+            f"Expected frozen dataset shape (150, 56), got {dataset.shape}."
+        )
     if not {"oid", "class"}.issubset(dataset.columns):
         raise ValueError("Frozen dataset must contain oid and class columns.")
     if dataset["oid"].isna().any() or dataset["oid"].astype(str).duplicated().any():
         raise ValueError("Frozen dataset OIDs must be present and unique.")
     class_counts = dataset["class"].astype(str).value_counts()
     if len(class_counts) != 15 or not (class_counts == 10).all():
-        raise ValueError("Frozen benchmark must contain 15 classes with 10 objects each.")
+        raise ValueError(
+            "Frozen benchmark must contain 15 classes with 10 objects each."
+        )
 
     required_schema_columns = {"feature_order", "feature"}
     if not required_schema_columns.issubset(schema.columns):
@@ -290,7 +283,9 @@ def run_experiment(
     schema = schema.sort_values("feature_order").reset_index(drop=True)
     feature_names = schema["feature"].astype(str).tolist()
     if len(feature_names) != 42 or len(set(feature_names)) != 42:
-        raise ValueError("Frozen feature schema must define 42 unique ordered features.")
+        raise ValueError(
+            "Frozen feature schema must define 42 unique ordered features."
+        )
     missing_columns = sorted(set(feature_names) - set(dataset.columns))
     if missing_columns:
         raise ValueError(f"Dataset is missing frozen features: {missing_columns}")
