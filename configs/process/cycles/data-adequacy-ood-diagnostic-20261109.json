@@ -27,12 +27,12 @@
   ],
   "measurement": {
     "metrics": {
-      "diagnostic_coverage": {
+      "coverage": {
         "before": "PredictionResult had no per-row data-adequacy result.",
         "after": "DataAdequacyResult reports observed_feature_count, missing_feature_count, coverage_fraction, missing_feature_names, status, reason_codes, and policy_version=coverage-only-v1.",
         "status": "IMPLEMENTED_NOT_YET_TEST_VERIFIED"
       },
-      "serialization": {
+      "reproducibility": {
         "before": "API, CLI, batch, web, and job outputs did not expose consistent row-level adequacy. The job payload omitted per-row OOD values.",
         "after": "Per-row adequacy and OOD evaluation state are added to API, CLI, batch Parquet, job payload, and web workbench.",
         "status": "IMPLEMENTED_NOT_YET_TEST_VERIFIED"
@@ -78,7 +78,7 @@
     ]
   },
   "regression": {
-    "status": "PENDING",
+    "status": "BLOCKED",
     "open_blockers": [
       "Verify Ruff format, Ruff lint, the full CI test suite, package build, and security audit on the final PR head.",
       "Review any failed and skipped tests. Do not weaken gates to obtain a green workflow.",
@@ -87,7 +87,7 @@
       "Run controlled masking experiments and define a versioned OOD eligibility policy before gating sparse rows."
     ]
   },
-  "decision": "PENDING_REVIEW",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "The new coverage diagnostic is descriptive only and uses policy_version coverage-only-v1.",
     "A one-feature row is labelled partial and its OOD output is labelled evaluated_with_missing_features.",
