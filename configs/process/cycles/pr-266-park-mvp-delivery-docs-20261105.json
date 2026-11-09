@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "stage_id": "park-mvp-delivery-docs-20261105",
-  "objective": "Maintain an evidence-based Park MVP delivery plan and acceptance gates, updated with the verified bounded DR24 HATS, API and Workbench browser smoke results as of 2026-11-07.",
+  "objective": "Maintain an evidence-based Park MVP delivery plan and current project integrity record, updated on 2026-11-10 with full repository, CPVS, DR24, OOD, model-artifact and documentation audit findings.",
   "previous_knowledge_consumed": [
     "Park MVP is the primary product delivery track under Issue #158.",
     "DR24 application integration is tracked by Issue #253; PR #264 is a raw-only adapter and remains Draft.",
@@ -10,8 +10,8 @@
     "Ordinary CI does not establish source-backed scientific validation."
   ],
   "baseline": {
-    "revision": "main@bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c; evidence update through 2026-11-07",
-    "description": "Documentation-only delivery-control update based on current repository state and Issue #158/#253 plus PR #264. No runtime, model, data, benchmark, feature schema, taxonomy, or scientific threshold changes."
+    "revision": "main@bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c; PR branch audit refresh through 2026-11-10",
+    "description": "Documentation-only audit and remediation update on the existing Park delivery documentation branch. No runtime, model, data, benchmark, feature schema, taxonomy, scientific threshold or production state change."
   },
   "expected_improvement": [
     "correctness",
@@ -23,7 +23,7 @@
       "correctness": {
         "status": "MEASURED",
         "before": "Quick Start, User Guide, Installation, and product roadmap contained stale v1.0.0/v1.0.1 statements or an obsolete 2026-10-11 roadmap.",
-        "after": "The delivery plan now distinguishes verified bounded raw HATS retrieval, API live smoke, API failure contracts and Workbench browser smoke from the still-unaccepted 5–10 confirmed-source end-to-end test and 30–50 object guided demonstration."
+        "after": "The delivery plan now distinguishes verified bounded raw HATS retrieval, API live smoke, API failure contracts and Workbench browser smoke from the still-unaccepted 5–10 confirmed-source end-to-end test and 30–50 object guided demonstration. The 2026-11-10 audit also corrected the CPVS 55-control interpretation and reconciled current README/Model Card release identity with v1.0.1."
       },
       "reliability": {
         "status": "NOT_MEASURED",
@@ -32,11 +32,11 @@
       "reproducibility": {
         "status": "MEASURED",
         "before": "The Park MVP acceptance scope and staged demonstration gates were spread across issues and audit notes.",
-        "after": "The plan records workflow IDs, tested object/epoch counts, artifact IDs, and the remaining identity, QC, transformation and replay requirements."
+        "after": "The plan records workflow IDs, tested object/epoch counts, artifact IDs, and the remaining identity, QC, transformation and replay requirements. The 2026-11-10 audit records exact main/PR revisions, workflow IDs, artifact IDs, hashes where available, and explicit missing evidence for CPVS and DR24."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
-        "reason": "No new scientific data acquisition, model evaluation, calibration, anomaly evaluation, or source-backed validation was performed."
+        "reason": "No new scientific algorithm, source acquisition, model evaluation or membership rule was accepted. The audit recorded unresolved evidence conflicts and retained fail-closed blockers."
       },
       "regression_protection_count": {
         "status": "NOT_MEASURED",
@@ -67,21 +67,33 @@
       "Updated the product roadmap navigation to reference the current handbook and execution ledger.",
       "Inspected the submitted 13-page Park presentation and 21-page project proposal; preserved both original PDFs as submitted records.",
       "Added docs/acceptance/PARK_TECHNICAL_STATUS_ADDENDUM_2026-11-07.fa.md to reconcile institutional claims with current evidence, including DR24 scope, OOD versus scientific anomaly, dataset scale, demo status, staffing and schedule.",
-      "Linked the Persian technical status addendum from the Park delivery plan, README, handbook, roadmap and project execution ledger."
+      "Linked the Persian technical status addendum from the Park delivery plan, README, handbook, roadmap and project execution ledger.",
+      "Added docs/PROJECT_AUDIT_AND_REMEDIATION_2026-11-10.md with current repository snapshot, model artifact limitation, Nov 9 scheduled evidence scope, DR24 PR stack, OOD experiment limitations, CPVS Master Handoff arithmetic conflict, corrected 55-control UNKNOWN interpretation, AOIC/CIN status and remediation sequence.",
+      "Updated Model Card software release identity from v1.0.0 to current immutable v1.0.1; scientific model identity remains baseline_v0.2.",
+      "Updated the project ledger to correct the 55-control audit: g-band rows exist for 1/55, r-band rows for 51/55, and no control has both bands; missing photometry is UNKNOWN, not SNR FAIL.",
+      "Updated README project status to 2026-11-10, removed superseded 2026-10-11 row-ordinal narrative and stale Handbook v2.8 link, and added links to Handbook v2.9, delivery ledger and full audit.",
+      "Verified current PR branch is based directly on main@bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c and is not behind main.",
+      "Exact-head checks after the audit refresh: CodeQL passed; Product Scope Audit passed; Scientific Validation benchmark/lifecycle contracts passed. Four source-backed jobs were skipped by the ordinary pull-request event. Standard CI is running and must be checked on the final head."
     ]
   },
   "failure_analysis": {
     "status": "PARTIALLY_DIAGNOSED",
     "root_causes": [
       "Documentation drift caused the user guide and quick start to describe v1.0.0 after v1.0.1 had been released.",
-      "The prior roadmap date and completion claims did not describe the current Park MVP delivery state."
+      "The prior roadmap date and completion claims did not describe the current Park MVP delivery state.",
+      "The CPVS retained audit summary previously counted absent raw band rows as failed SNR measurements. The 55-control evidence supports UNKNOWN for missing coverage, not FAIL.",
+      "The approved CPVS Master Handoff has inconsistent four-field set arithmetic: it reports F=730239, F\\P=55, P\\F=0, while also reporting C∩F=730239 and C∩F=P=730184. Actual ID lists and set definitions are required to resolve this conflict."
     ],
     "unresolved": [
       "No accepted 5–10 confirmed-source end-to-end API/Workbench/QC/export workflow exists yet.",
       "No 30–50 confirmed-source guided Park demonstration or offline rehearsal is verified.",
       "OID-to-physical-source crosswalk, production QC policy, HMJD/photometric transformations and DR24 feature/inference mapping remain unaccepted.",
       "Scientific performance, calibration, abstention, OOD and anomaly validation remain incomplete.",
-      "CPVS exact membership remains a separate scientific blocker."
+      "CPVS exact membership remains a separate scientific blocker.",
+      "The handoff's reported Ng>=11 and Nr>=11 diagnostic (730229 candidates / 45 residuals) has not been independently re-run from exact source bytes and hashed ID lists; it remains diagnostic only.",
+      "The separately required 1000-object nonmember control sample from all 51418 parent nonmembers, with exact seed, method, ID manifest and hashes, is not verified.",
+      "The complete MGPR diagnostic for all required reference, residual and control groups is not verified.",
+      "The exact original v0.2.0 production artifact remains unrecovered; ten data/model-dependent integration tests remain skipped until the exact hash-verified inputs are available."
     ]
   },
   "knowledge_extraction": {
@@ -95,7 +107,10 @@
       "The Park readiness percentage is intentionally not stated because no defensible weighted measurement basis exists; gate-level evidence is reported instead.",
       "The submitted Park presentation describes a live demo and a scientific anomaly flag; current evidence supports bounded raw DR24 acquisition and component-level API/Workbench behavior only. The addendum explicitly qualifies these claims.",
       "The 5.32-billion figure is the cited DR24 release scale, not the number of light curves processed by this project.",
-      "The original institutional PDFs must remain unchanged; any revised submission must be separately versioned and dated."
+      "The original institutional PDFs must remain unchanged; any revised submission must be separately versioned and dated.",
+      "A successful scheduled Scientific Validation run on main (42611080798) acquired 150 DR24 source rows, 150 live ALeRCE reference rows, a frozen historical ALeRCE manifest and a StarEmbed source package; these artifacts prove bounded acquisition/provenance, not model performance or Park acceptance.",
+      "The 2026-11-09 OOD missingness experiment (PR #280) is diagnostic only: 59 complete paired objects, reconstructed model rather than byte-for-byte production artifact replay, in-sample reference scores, no independent OOD labels.",
+      "The approved CPVS Master Handoff provides additional reported diagnostics, but its four-field set arithmetic conflicts and the Ng/Nr threshold test requires source-backed ID manifests and hashes before adoption even as a diagnostic conclusion."
     ]
   },
   "regression": {
@@ -107,7 +122,11 @@
       "Independent scientific evaluation and leakage-safe metrics remain open.",
       "Review and merge the documentation PR after validating all cross-links and ensuring the new handbook does not conflict with the canonical Notion status.",
       "Attach the dated Persian technical status addendum to the original Park dossier before presenting it as a current status package.",
-      "Prepare a separately versioned revised presentation/proposal only after the 5–10 and 30–50 object acceptance evidence exists and the institution requires a revised submission."
+      "Prepare a separately versioned revised presentation/proposal only after the 5–10 and 30–50 object acceptance evidence exists and the institution requires a revised submission.",
+      "Resolve the Master Handoff set arithmetic from the exact four-field ID lists before updating CPVS membership conclusions.",
+      "Complete the independent nonmember control sample and full MGPR diagnostic before any CPVS root-cause acceptance.",
+      "Recover the exact production model artifact through a controlled, hash-verified source or explicitly approve a new, separately versioned reproduction.",
+      "Complete DR24 identity, time, photometry and QC contracts and the 5–10 confirmed-source API/Workbench replay before expanding the Park demonstration."
     ]
   },
   "decision": "REVISE",
@@ -118,6 +137,10 @@
     "Do not claim a DR24 classifier, scientific performance, or Park acceptance without matching evidence.",
     "As of 2026-11-07, bounded raw HATS acquisition, a FastAPI live smoke, API failure-contract tests and a Workbench browser smoke are verified for their tested OIDs.",
     "Do not claim the 5–10 object acceptance test or 30–50 object Park demonstration is complete.",
-    "Keep the DR24 exploratory lane separate from frozen v0.2.0 reference inference."
+    "Keep the DR24 exploratory lane separate from frozen v0.2.0 reference inference.",
+    "As of 2026-11-10, the 55-control raw-photometry evidence is PARTIAL: missing band rows are UNKNOWN, not failed SNR measurements.",
+    "The four-field and Ng/Nr observation-count predicates remain diagnostics, not accepted publisher rules or production selection filters.",
+    "Main's default ObservationService still uses ALeRCE; the DR24 application adapter and its downstream UI/QC work remain unmerged.",
+    "The original v0.2.0 production artifact remains UNRECOVERED. A lab-smoke artifact must not replace it."
   ]
 }
