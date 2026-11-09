@@ -195,8 +195,7 @@ def _prediction_payload(
                 "interpretation": "descriptive_only_not_an_eligibility_decision",
             }
 
-        if result.ood is not None:
-            if result.data_adequacy is not None:
+        if result.ood is not None and result.data_adequacy is not None:
                 item["ood"]["input_feature_coverage_fraction"] = float(
                     result.data_adequacy.coverage_fraction[row_index]
                 )
