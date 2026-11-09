@@ -191,8 +191,30 @@ def _prediction_payload(
                     adequacy.missing_feature_names[row_index]
                 ),
                 "reason_codes": list(adequacy.reason_codes[row_index]),
+                "policy_version": adequacy.policy_version,
                 "interpretation": "descriptive_only_not_an_eligibility_decision",
             }
+
+        if result.ood is not None:
+            item["ood"]["evaluation_status"] = (
+                "evaluated_adequacy_unreported"
+                if result.data_adequacy is None
+                else (
+                    "evaluated_complete_features"
+                    if result.data_adequacy.status[row_index] == "complete"
+                    else "evaluated_with_missing_features"
+                )
+            )
+            if result.data_adequacy is not None:
+                item["ood"]["input_feature_coverage_fraction"] = float(
+                    result.data_adequacy.coverage_fraction[row_index]
+                )
+                item["ood"]["input_observed_feature_count"] = int(
+                    result.data_adequacy.observed_feature_count[row_index]
+                )
+                item["ood"]["input_missing_feature_count"] = int(
+                    result.data_adequacy.missing_feature_count[row_index]
+                )
 
         predictions.append(item)
 
