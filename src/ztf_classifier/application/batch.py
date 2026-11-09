@@ -184,8 +184,27 @@ class BatchInferenceService:
             output["data_adequacy_reason_codes"] = [
                 list(codes) for codes in adequacy.reason_codes
             ]
+            output["data_adequacy_policy_version"] = adequacy.policy_version
 
         if result.ood is not None:
+            if result.data_adequacy is None:
+                output["ood_evaluation_status"] = "evaluated_adequacy_unreported"
+            else:
+                output["ood_evaluation_status"] = [
+                    "evaluated_complete_features"
+                    if status == "complete"
+                    else "evaluated_with_missing_features"
+                    for status in result.data_adequacy.status
+                ]
+                output["ood_input_feature_coverage_fraction"] = (
+                    result.data_adequacy.coverage_fraction
+                )
+                output["ood_input_observed_feature_count"] = (
+                    result.data_adequacy.observed_feature_count
+                )
+                output["ood_input_missing_feature_count"] = (
+                    result.data_adequacy.missing_feature_count
+                )
             output["ood_anomaly_score"] = result.ood.anomaly_score
             output["ood_normality_score"] = result.ood.normality_score
             output["ood_anomaly_percentile"] = result.ood.anomaly_percentile
