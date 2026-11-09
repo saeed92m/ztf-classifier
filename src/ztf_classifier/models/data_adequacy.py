@@ -44,11 +44,11 @@ class DataAdequacyResult:
         object.__setattr__(self, "missing_feature_count", missing)
         object.__setattr__(self, "coverage_fraction", coverage)
 
+        if observed.ndim != 1 or missing.ndim != 1 or coverage.ndim != 1:
+            raise ValueError("Data adequacy arrays must be one-dimensional.")
         sample_count = len(observed)
         if self.feature_count != 42:
             raise ValueError("Data adequacy requires the frozen 42-feature schema.")
-        if observed.ndim != 1 or missing.ndim != 1 or coverage.ndim != 1:
-            raise ValueError("Data adequacy arrays must be one-dimensional.")
         if len(missing) != sample_count or len(coverage) != sample_count:
             raise ValueError("Data adequacy arrays must have equal lengths.")
         if len(self.status) != sample_count:
@@ -63,7 +63,8 @@ class DataAdequacyResult:
             raise ValueError("Observed feature counts are outside the valid range.")
         if ((missing < 0) | (missing > self.feature_count)).any():
             raise ValueError("Missing feature counts are outside the valid range.")
-        if not np.array_equal(observed + missing, np.full(sample_count, self.feature_count)):
+        expected_count = np.full(sample_count, self.feature_count)
+        if not np.array_equal(observed + missing, expected_count):
             raise ValueError("Observed and missing feature counts must sum to 42.")
         expected_coverage = observed / self.feature_count
         if not np.allclose(coverage, expected_coverage, rtol=0.0, atol=1e-12):
@@ -74,7 +75,9 @@ class DataAdequacyResult:
         )
         if self.status != expected_status:
             raise ValueError("Data adequacy status does not match feature coverage.")
-        if not all(isinstance(names, tuple) for names in self.missing_feature_names):
+        if not all(
+            isinstance(names, tuple) for names in self.missing_feature_names
+        ):
             raise TypeError("Missing feature names must be tuples.")
         if not all(isinstance(codes, tuple) for codes in self.reason_codes):
             raise TypeError("Reason codes must be tuples.")
@@ -104,10 +107,16 @@ class DataAdequacyResult:
         missing = 42 - observed
         coverage = observed.astype(np.float64) / 42.0
         missing_names = tuple(
-            tuple(name for name, is_finite in zip(names, row, strict=True) if not is_finite)
+            tuple(
+                name
+                for name, is_finite in zip(names, row, strict=True)
+                if not is_finite
+            )
             for row in finite
         )
-        status = tuple("complete" if count == 42 else "partial" for count in observed)
+        status = tuple(
+            "complete" if count == 42 else "partial" for count in observed
+        )
         reason_codes = tuple(
             () if count == 42 else ("MODEL_FEATURES_MISSING",)
             for count in observed
