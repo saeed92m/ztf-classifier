@@ -10,6 +10,7 @@ from ztf_classifier.models.classes import (
     MODEL_CLASSES,
     NUM_CLASSES,
 )
+from ztf_classifier.models.data_adequacy import DataAdequacyResult
 from ztf_classifier.models.ood import OODResult
 from ztf_classifier.models.production_conformal import (
     ProductionConformalDiagnostics,
@@ -32,6 +33,7 @@ class PredictionResult:
     conformal: ProductionConformalDiagnostics | None = None
     ood: OODResult | None = None
     scientific_anomaly: ScientificAnomalyResult | None = None
+    data_adequacy: DataAdequacyResult | None = None
     calibration_status: str = "unavailable"
     conformal_status: str = "unavailable"
     ood_status: str = "unavailable"
@@ -285,6 +287,14 @@ class PredictionResult:
         if self.ood is not None and self.ood.sample_count != self.sample_count:
             raise ValueError(
                 "OOD result sample count does not match prediction result."
+            )
+
+        if (
+            self.data_adequacy is not None
+            and self.data_adequacy.sample_count != self.sample_count
+        ):
+            raise ValueError(
+                "Data adequacy result sample count does not match prediction result."
             )
 
         if (
