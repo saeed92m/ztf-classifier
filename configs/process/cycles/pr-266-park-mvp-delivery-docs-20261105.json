@@ -75,7 +75,8 @@
       "Verified current PR branch is based directly on main@bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c and is not behind main.",
       "Exact-head checks after the audit refresh: CodeQL passed; Product Scope Audit passed; Scientific Validation benchmark/lifecycle contracts passed. Four source-backed jobs were skipped by the ordinary pull-request event. Standard CI is running and must be checked on the final head.",
       "Updated Handbook v2.9 to correct the 55-control raw-photometry interpretation: missing g/r rows are UNKNOWN, not failed SNR measurements; added the Master Handoff set-arithmetic conflict and marked the Ng/Nr diagnostic as unverified and diagnostic-only.",
-      "Expanded the 2026-11-10 audit after inspecting the Nov 9 workflow ZIP artifacts: DR24 evidence is a lexicographically selected 150-row Objects Table HATS index subset (OID/coordinates/ngoodobsrel), ALeRCE is a 150-row live classifier-reference response, frozen ALeRCE is a manifest-only artifact, and StarEmbed has a null row_count."
+      "Expanded the 2026-11-10 audit after inspecting the Nov 9 workflow ZIP artifacts: DR24 evidence is a lexicographically selected 150-row Objects Table HATS index subset (OID/coordinates/ngoodobsrel), ALeRCE is a 150-row live classifier-reference response, frozen ALeRCE is a manifest-only artifact, and StarEmbed has a null row_count.",
+      "Read-only compare checks found stale/diverged main-targeted branches: PR #244 199 ahead/8 behind, PR #246 46 ahead/8 behind, PR #247 20 ahead/8 behind and PR #252 41 ahead/6 behind current main. These branches require explicit refresh/reconciliation; no automatic rebase or merge was performed."
     ]
   },
   "failure_analysis": {
@@ -95,7 +96,8 @@
       "The handoff's reported Ng>=11 and Nr>=11 diagnostic (730229 candidates / 45 residuals) has not been independently re-run from exact source bytes and hashed ID lists; it remains diagnostic only.",
       "The separately required 1000-object nonmember control sample from all 51418 parent nonmembers, with exact seed, method, ID manifest and hashes, is not verified.",
       "The complete MGPR diagnostic for all required reference, residual and control groups is not verified.",
-      "The exact original v0.2.0 production artifact remains unrecovered; ten data/model-dependent integration tests remain skipped until the exact hash-verified inputs are available."
+      "The exact original v0.2.0 production artifact remains unrecovered; ten data/model-dependent integration tests remain skipped until the exact hash-verified inputs are available.",
+      "Several older main-targeted PR branches (#244, #246, #247, #252) are divergent from current main by 6–8 commits. Their unique changes must be reconciled with the active PR chains before merge; do not merge stale branches solely because old checks passed."
     ]
   },
   "knowledge_extraction": {
