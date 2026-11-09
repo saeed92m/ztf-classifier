@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 
 from ztf_classifier.models.classes import MODEL_CLASSES
-from ztf_classifier.models.data_adequacy import DataAdequacyResult
 from ztf_classifier.models.conformal import ConformalResult
+from ztf_classifier.models.data_adequacy import DataAdequacyResult
 from ztf_classifier.models.inference import InferenceResult
 from ztf_classifier.models.ood import OODResult
 from ztf_classifier.models.production_conformal import (
