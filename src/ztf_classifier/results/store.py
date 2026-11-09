@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-RESULT_SCHEMA_VERSION = "1.1"
+RESULT_SCHEMA_VERSION = "1.0"
 
 
 @dataclass(frozen=True)
