@@ -30,12 +30,12 @@
       "coverage": {
         "before": "PredictionResult had no per-row data-adequacy result.",
         "after": "DataAdequacyResult reports observed_feature_count, missing_feature_count, coverage_fraction, missing_feature_names, status, reason_codes, and policy_version=coverage-only-v1.",
-        "status": "IMPLEMENTED_NOT_YET_TEST_VERIFIED"
+        "status": "IMPLEMENTED_AND_CI_VERIFIED"
       },
       "reproducibility": {
         "before": "API, CLI, batch, web, and job outputs did not expose consistent row-level adequacy. The job payload omitted per-row OOD values.",
         "after": "Per-row adequacy and OOD evaluation state are added to API, CLI, batch Parquet, job payload, and web workbench.",
-        "status": "IMPLEMENTED_NOT_YET_TEST_VERIFIED"
+        "status": "IMPLEMENTED_AND_CI_VERIFIED"
       },
       "scientific_validity": {
         "before": "No validated coverage threshold or independent missingness robustness evidence.",
@@ -45,15 +45,23 @@
     }
   },
   "validation": {
-    "status": "PENDING_CI",
+    "status": "BLOCKED",
     "scientific_gate_affected": false,
     "evidence": [
-      "Unit tests cover complete rows, partial rows, one-finite-feature rows, infinities, schema validation, and immutable arrays.",
-      "Regression tests cover API, CLI, batch, job, and production inference contracts.",
-      "The production inference test explicitly records that one-feature OOD scoring remains ungated until an evidence-based policy is approved.",
-      "GitHub Actions CI, CodeQL, scientific validation, and product-scope audit must be checked on the final PR head."
+      "CI test suite: 648 passed, 10 skipped, 9 warnings in 74.74 seconds; total coverage 83%.",
+      "The five new DataAdequacyResult unit tests passed.",
+      "The one-finite-feature production inference regression test passed. It confirms that the row is labelled partial while the current OOD implementation still emits a score.",
+      "API prediction serialization, CLI diagnostics, batch Parquet contract, and source-backed job result tests passed.",
+      "Ruff format and Ruff lint passed.",
+      "Runtime smoke tests for CLI, API, and worker passed.",
+      "Package build, wheel installation, dependency verification, and package import passed.",
+      "Build-system isolation and dependency audit passed.",
+      "CodeQL passed.",
+      "P1-P6 Product Scope Audit passed.",
+      "Scientific validation contract tests and cumulative lifecycle contract tests passed.",
+      "Ten tests were skipped: three because the frozen feature artifact or raw detection cache was absent, and seven because the legacy v1.0 artifact or shared model inputs were unavailable. These skips are not scientific validation."
     ],
-    "blocker": "The exact frozen OOD reference matrix and verified feature-family mapping are required for controlled masking experiments and any production OOD eligibility threshold."
+    "blocker": "Production OOD eligibility remains blocked. The exact frozen OOD reference matrix and verified 42-feature family mapping are required for controlled masking experiments. CI success does not replace this evidence."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_CONFIRMED_FOR_INPUT_VALIDATION",
@@ -80,9 +88,7 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Verify Ruff format, Ruff lint, the full CI test suite, package build, and security audit on the final PR head.",
-      "Review any failed and skipped tests. Do not weaken gates to obtain a green workflow.",
-      "Run local artifact-dependent tests only against the exact frozen production artifact.",
+      "The full CI test suite passed, but 10 artifact-dependent tests were skipped because the frozen feature/raw-cache and legacy v1.0 artifacts were unavailable in GitHub Actions.",
       "Recover and hash the exact OOD reference training matrix and the frozen feature schema.",
       "Run controlled masking experiments and define a versioned OOD eligibility policy before gating sparse rows."
     ]
@@ -93,6 +99,7 @@
     "A one-feature row is labelled partial and its OOD output is labelled evaluated_with_missing_features.",
     "No OOD threshold is approved by this change.",
     "The v0.2.0 scientific baseline remains unchanged.",
-    "The CPVS 11,602 candidate-only discrepancy remains a separate unresolved scientific validation blocker."
+    "The CPVS 11,602 candidate-only discrepancy remains a separate unresolved scientific validation blocker.",
+    "Latest CI evidence: 648 passed, 10 skipped, 9 warnings; coverage 83%; runtime smoke tests, package build and installation, dependency audit, CodeQL, product-scope audit, and lifecycle validation passed."
   ]
 }
