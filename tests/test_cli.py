@@ -432,7 +432,6 @@ def test_cli_predict_e2e_with_diagnostics(
         "is_top_1pct_anomaly",
         "is_top_5pct_anomaly",
         "is_top_10pct_anomaly",
-        "evaluation_status",
         "input_feature_coverage_fraction",
         "input_observed_feature_count",
         "input_missing_feature_count",
@@ -444,7 +443,7 @@ def test_cli_predict_e2e_with_diagnostics(
     assert 0.0 <= adequacy["coverage_fraction"] <= 1.0
     assert adequacy["policy_version"] == "coverage-only-v1"
     assert adequacy["interpretation"] == "descriptive_only_not_an_eligibility_decision"
-    assert ood["evaluation_status"] == (
+    assert prediction["ood_evaluation_status"] == (
         "evaluated_complete_features"
         if adequacy["status"] == "complete"
         else "evaluated_with_missing_features"
