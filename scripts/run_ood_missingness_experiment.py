@@ -779,7 +779,7 @@ def run_experiment(
     family_summary.to_csv(family_summary_path, index=False)
     natural_patterns.to_csv(natural_patterns_path, index=False)
     natural_pattern_summary_path.write_text(
-        json.dumps(natural_pattern_summary, indent=2, sort_keys=True) + "\\n",
+        json.dumps(natural_pattern_summary, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     feature_group_mapping_path.write_text(
@@ -788,7 +788,7 @@ def run_experiment(
             indent=2,
             sort_keys=True,
         )
-        + "\\n",
+        + "\n",
         encoding="utf-8",
     )
 
