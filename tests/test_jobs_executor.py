@@ -153,6 +153,9 @@ def test_source_backed_executor_runs_full_contract(monkeypatch):
     assert result["schema_version"] == "1.1"
     assert result["prediction"]["data_adequacy"]["status"] == "partial"
     assert result["prediction"]["data_adequacy"]["observed_feature_count"] == 1
+    assert result["prediction"]["data_adequacy"]["policy_version"] == (
+        "coverage-only-v1"
+    )
     assert result["diagnostics"]["data_adequacy"] == "available"
     assert result["prediction"]["ood"]["evaluation_status"] == (
         "evaluated_with_missing_features"
