@@ -257,6 +257,9 @@ def test_prediction_uses_server_side_model_selection(
     assert payload["schema_version"] == "1.1"
     assert payload["predictions"][0]["data_adequacy"]["status"] == "complete"
     assert payload["predictions"][0]["data_adequacy"]["observed_feature_count"] == 42
+    assert payload["predictions"][0]["data_adequacy"]["policy_version"] == (
+        "coverage-only-v1"
+    )
     assert "/secret" not in response.text
     assert fake_service.calls[0][2] == "baseline_v0.2"
 
