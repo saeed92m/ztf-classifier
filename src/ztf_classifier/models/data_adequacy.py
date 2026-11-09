@@ -29,6 +29,7 @@ class DataAdequacyResult:
     missing_feature_names: tuple[tuple[str, ...], ...]
     reason_codes: tuple[tuple[str, ...], ...]
     feature_count: int = 42
+    policy_version: str = "coverage-only-v1"
 
     def __post_init__(self) -> None:
         observed = _readonly_array(
@@ -49,6 +50,8 @@ class DataAdequacyResult:
         sample_count = len(observed)
         if self.feature_count != 42:
             raise ValueError("Data adequacy requires the frozen 42-feature schema.")
+        if not self.policy_version:
+            raise ValueError("Data adequacy policy version must not be empty.")
         if len(missing) != sample_count or len(coverage) != sample_count:
             raise ValueError("Data adequacy arrays must have equal lengths.")
         if len(self.status) != sample_count:
