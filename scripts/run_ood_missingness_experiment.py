@@ -382,8 +382,8 @@ def run_experiment(
             "dataset_sha256": dataset_sha256,
             "schema_path": str(feature_schema_path),
             "schema_sha256": schema_sha256,
-            "object_count": int(len(dataset)),
-            "class_count": int(len(class_counts)),
+            "object_count": len(dataset),
+            "class_count": len(class_counts),
             "features": int(X.shape[1]),
             "complete_objects": int(complete_mask.sum()),
             "partial_objects": int((~complete_mask).sum()),
@@ -429,9 +429,7 @@ def run_experiment(
             "contamination": config.contamination,
             "random_state": config.random_state,
             "n_jobs": config.n_jobs,
-            "reference_score_count": int(
-                len(model.reference_anomaly_scores)
-            ),
+            "reference_score_count": len(model.reference_anomaly_scores),
             "thresholds_are_existing_reference_percentiles": list(
                 config.anomaly_thresholds
             ),
@@ -450,7 +448,7 @@ def run_experiment(
             "masked_feature_counts": list(masked_feature_counts),
             "replicates_per_level": replicates,
             "random_seed": random_seed,
-            "paired_complete_objects": int(len(complete_X)),
+            "paired_complete_objects": len(complete_X),
             "feature_family_masking": "NOT_RUN: no verified machine-readable family map",
             "production_eligibility_policy": "NOT_ESTABLISHED",
         },
