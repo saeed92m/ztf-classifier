@@ -405,7 +405,7 @@ def test_cli_predict_e2e_with_diagnostics(
 
     payload = json.loads(output_path.read_text())
 
-    assert payload["schema_version"] == "1.1"
+    assert payload["schema_version"] == "1.2"
     assert payload["sample_count"] > 0
     assert payload["has_conformal"] is True
     assert payload["has_ood"] is True
@@ -433,6 +433,12 @@ def test_cli_predict_e2e_with_diagnostics(
         "is_top_5pct_anomaly",
         "is_top_10pct_anomaly",
     }
+    adequacy = prediction["data_adequacy"]
+    assert adequacy["status"] in {"complete", "partial"}
+    assert 0 <= adequacy["observed_feature_count"] <= 42
+    assert adequacy["observed_feature_count"] + adequacy["missing_feature_count"] == 42
+    assert 0.0 <= adequacy["coverage_fraction"] <= 1.0
+    assert adequacy["interpretation"] == "descriptive_only_not_an_eligibility_decision"
 
 
 def test_cli_batch_e2e_parquet_contract(
