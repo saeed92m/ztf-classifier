@@ -139,7 +139,44 @@ class SourceBackedAnalysisExecutor:
                 "coverage_fraction": float(adequacy.coverage_fraction[0]),
                 "missing_feature_names": list(adequacy.missing_feature_names[0]),
                 "reason_codes": list(adequacy.reason_codes[0]),
+                "policy_version": adequacy.policy_version,
                 "interpretation": "descriptive_only_not_an_eligibility_decision",
+            }
+
+        if result.ood is not None:
+            prediction["ood"] = {
+                "anomaly_score": float(result.ood.anomaly_score[0]),
+                "normality_score": float(result.ood.normality_score[0]),
+                "anomaly_percentile": float(result.ood.anomaly_percentile[0]),
+                "isolation_forest_label": int(result.ood.isolation_forest_label[0]),
+                "anomaly_rank": int(result.ood.anomaly_rank[0]),
+                "is_top_1pct_anomaly": bool(result.ood.is_top_1pct_anomaly[0]),
+                "is_top_5pct_anomaly": bool(result.ood.is_top_5pct_anomaly[0]),
+                "is_top_10pct_anomaly": bool(result.ood.is_top_10pct_anomaly[0]),
+                "evaluation_status": (
+                    "evaluated_adequacy_unreported"
+                    if result.data_adequacy is None
+                    else (
+                        "evaluated_complete_features"
+                        if result.data_adequacy.status[0] == "complete"
+                        else "evaluated_with_missing_features"
+                    )
+                ),
+                "input_feature_coverage_fraction": (
+                    float(result.data_adequacy.coverage_fraction[0])
+                    if result.data_adequacy is not None
+                    else None
+                ),
+                "input_observed_feature_count": (
+                    int(result.data_adequacy.observed_feature_count[0])
+                    if result.data_adequacy is not None
+                    else None
+                ),
+                "input_missing_feature_count": (
+                    int(result.data_adequacy.missing_feature_count[0])
+                    if result.data_adequacy is not None
+                    else None
+                ),
             }
 
         model_provenance = prediction_response.provenance.to_dict()
