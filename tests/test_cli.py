@@ -499,6 +499,12 @@ def test_cli_batch_e2e_parquet_contract(
         "ood_is_top_1pct_anomaly",
         "ood_is_top_5pct_anomaly",
         "ood_is_top_10pct_anomaly",
+        "data_adequacy_status",
+        "data_adequacy_observed_feature_count",
+        "data_adequacy_missing_feature_count",
+        "data_adequacy_coverage_fraction",
+        "data_adequacy_missing_feature_names",
+        "data_adequacy_reason_codes",
     }
 
     assert required_columns.issubset(table.column_names)
