@@ -432,13 +432,23 @@ def test_cli_predict_e2e_with_diagnostics(
         "is_top_1pct_anomaly",
         "is_top_5pct_anomaly",
         "is_top_10pct_anomaly",
+        "evaluation_status",
+        "input_feature_coverage_fraction",
+        "input_observed_feature_count",
+        "input_missing_feature_count",
     }
     adequacy = prediction["data_adequacy"]
     assert adequacy["status"] in {"complete", "partial"}
     assert 0 <= adequacy["observed_feature_count"] <= 42
     assert adequacy["observed_feature_count"] + adequacy["missing_feature_count"] == 42
     assert 0.0 <= adequacy["coverage_fraction"] <= 1.0
+    assert adequacy["policy_version"] == "coverage-only-v1"
     assert adequacy["interpretation"] == "descriptive_only_not_an_eligibility_decision"
+    assert ood["evaluation_status"] == (
+        "evaluated_complete_features"
+        if adequacy["status"] == "complete"
+        else "evaluated_with_missing_features"
+    )
 
 
 def test_cli_batch_e2e_parquet_contract(
@@ -505,6 +515,11 @@ def test_cli_batch_e2e_parquet_contract(
         "data_adequacy_coverage_fraction",
         "data_adequacy_missing_feature_names",
         "data_adequacy_reason_codes",
+        "data_adequacy_policy_version",
+        "ood_evaluation_status",
+        "ood_input_feature_coverage_fraction",
+        "ood_input_observed_feature_count",
+        "ood_input_missing_feature_count",
     }
 
     assert required_columns.issubset(table.column_names)
