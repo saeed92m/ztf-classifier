@@ -233,15 +233,15 @@ def _serialize_prediction(
             }
 
         if ood is not None and result.data_adequacy is not None:
-                ood["input_feature_coverage_fraction"] = float(
-                    result.data_adequacy.coverage_fraction[row_index]
-                )
-                ood["input_observed_feature_count"] = int(
-                    result.data_adequacy.observed_feature_count[row_index]
-                )
-                ood["input_missing_feature_count"] = int(
-                    result.data_adequacy.missing_feature_count[row_index]
-                )
+            ood["input_feature_coverage_fraction"] = float(
+                result.data_adequacy.coverage_fraction[row_index]
+            )
+            ood["input_observed_feature_count"] = int(
+                result.data_adequacy.observed_feature_count[row_index]
+            )
+            ood["input_missing_feature_count"] = int(
+                result.data_adequacy.missing_feature_count[row_index]
+            )
 
         ood_evaluation_status = (
             "not_available"
