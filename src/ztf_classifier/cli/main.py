@@ -24,7 +24,7 @@ from ztf_classifier.io.parquet_detection_store import ParquetDetectionStore
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.pipeline.dataset import DatasetPipeline
 
-CLI_SCHEMA_VERSION = "1.1"
+CLI_SCHEMA_VERSION = "1.2"
 
 
 def _build_parser() -> argparse.ArgumentParser:
