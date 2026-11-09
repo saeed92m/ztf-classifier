@@ -539,7 +539,6 @@ def test_diagnostic_service_matches_direct_classification_inference(
     )
 
 
-
 def test_one_feature_row_is_explicitly_partial_but_not_yet_ood_gated(
     diagnostic_artifact: Path,
 ) -> None:
