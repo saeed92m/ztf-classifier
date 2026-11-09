@@ -87,7 +87,9 @@ def test_feature_groups_partition_the_frozen_v02_schema() -> None:
     from ztf_classifier.features.pipeline import V0_2_FEATURES
 
     groups = build_feature_group_mapping()
-    group_features = [feature for definition in groups.values() for feature in definition["features"]]
+    group_features = [
+        feature for definition in groups.values() for feature in definition["features"]
+    ]
 
     assert set(groups) == {
         "g_basic",
