@@ -212,6 +212,25 @@ def _serialize_prediction(
                 ),
             }
 
+        data_adequacy: dict[str, Any] | None = None
+        if result.data_adequacy is not None:
+            adequacy = result.data_adequacy
+            data_adequacy = {
+                "status": adequacy.status[row_index],
+                "observed_feature_count": int(
+                    adequacy.observed_feature_count[row_index]
+                ),
+                "missing_feature_count": int(
+                    adequacy.missing_feature_count[row_index]
+                ),
+                "coverage_fraction": float(adequacy.coverage_fraction[row_index]),
+                "missing_feature_names": list(
+                    adequacy.missing_feature_names[row_index]
+                ),
+                "reason_codes": list(adequacy.reason_codes[row_index]),
+                "interpretation": "descriptive_only_not_an_eligibility_decision",
+            }
+
         items.append(
             PredictionItem(
                 oid=oid,
@@ -223,6 +242,7 @@ def _serialize_prediction(
                 },
                 conformal=conformal,
                 ood=ood,
+                data_adequacy=data_adequacy,
                 scientific_anomaly=scientific_anomaly,
             )
         )
