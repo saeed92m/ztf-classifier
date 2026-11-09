@@ -63,10 +63,9 @@ def _write_schema_1_0_production_manifest(root: Path) -> None:
         "files": manifest_files,
     }
     (artifact / "artifact_manifest.json").write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\\n",
+        json.dumps(manifest, indent=2, sort_keys=True),
         encoding="utf-8",
     )
-
 
 def test_audit_reports_ready_for_schema_1_0_without_optional_diagnostics(
     tmp_path: Path,
