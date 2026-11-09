@@ -158,7 +158,7 @@ function renderResult(record, durable = true) {
     record.model_version + " · " + (payload.model_family || "—");
   document.getElementById("calibrationValue").textContent =
     (payload.diagnostics || {}).calibration || "—";
-  const oodEvaluation = payload.prediction?.ood?.evaluation_status;
+  const oodEvaluation = payload.prediction?.ood_evaluation_status;
   document.getElementById("oodValue").textContent = [
     (payload.diagnostics || {}).ood || "—",
     oodEvaluation || "evaluation state not reported",
