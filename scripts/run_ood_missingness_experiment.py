@@ -18,6 +18,10 @@ import pandas as pd
 import scipy
 import sklearn
 
+from ztf_classifier.features.basic import basic_band_features
+from ztf_classifier.features.cross_band import basic_cross_band_features
+from ztf_classifier.features.periodicity import lomb_scargle_features
+from ztf_classifier.features.pipeline import V0_2_FEATURES
 from ztf_classifier.models.config import OODConfig
 from ztf_classifier.models.ood_artifact import OODArtifact
 from ztf_classifier.models.ood_production import OODProductionModel
@@ -225,6 +229,394 @@ def run_masking_sensitivity(
         summary_records.append(summary)
 
     return pd.DataFrame(records), pd.DataFrame(summary_records)
+
+
+def build_feature_group_mapping() -> dict[str, dict[str, Any]]:
+    """Derive v0.2 feature families from the canonical extraction functions."""
+
+    time = np.linspace(0.0, 50.0, 60)
+    g_sample = pd.DataFrame(
+        {
+            "mjd": time,
+            "mag": 15.0 + 0.2 * np.sin(2.0 * np.pi * time / 1.7),
+            "magerr": np.full(len(time), 0.05),
+        }
+    )
+    r_sample = pd.DataFrame(
+        {
+            "mjd": time,
+            "mag": 15.5 + 0.15 * np.sin(2.0 * np.pi * time / 2.3),
+            "magerr": np.full(len(time), 0.06),
+        }
+    )
+
+    schema = tuple(V0_2_FEATURES)
+    basic_keys = set(basic_band_features(g_sample))
+    g_basic = {f"g_{name}" for name in basic_keys}
+    r_basic = {f"r_{name}" for name in basic_keys}
+    g_periodicity = set(lomb_scargle_features(g_sample, "g"))
+    r_periodicity = set(lomb_scargle_features(r_sample, "r"))
+    cross_band = set(basic_cross_band_features(g_sample, r_sample))
+
+    candidates = {
+        "g_basic": g_basic,
+        "g_periodicity": g_periodicity,
+        "r_basic": r_basic,
+        "r_periodicity": r_periodicity,
+        "cross_band": cross_band,
+    }
+    groups: dict[str, dict[str, Any]] = {}
+    assigned: list[str] = []
+
+    for name, candidate_features in candidates.items():
+        selected = [feature for feature in schema if feature in candidate_features]
+        assigned.extend(selected)
+        if name == "g_basic":
+            metadata = {
+                "source_columns": ["mjd", "mag", "magerr"],
+                "band_selector": "fid == 1",
+                "minimum_valid_observations": 10,
+                "eligibility": "g-band valid observation count >= 10",
+            }
+        elif name == "r_basic":
+            metadata = {
+                "source_columns": ["mjd", "mag", "magerr"],
+                "band_selector": "fid == 2",
+                "minimum_valid_observations": 10,
+                "eligibility": "r-band valid observation count >= 10",
+            }
+        elif name == "g_periodicity":
+            metadata = {
+                "source_columns": ["mjd", "mag", "magerr"],
+                "band_selector": "fid == 1",
+                "minimum_valid_observations": 30,
+                "eligibility": "g-band valid observation count >= 30",
+            }
+        elif name == "r_periodicity":
+            metadata = {
+                "source_columns": ["mjd", "mag", "magerr"],
+                "band_selector": "fid == 2",
+                "minimum_valid_observations": 30,
+                "eligibility": "r-band valid observation count >= 30",
+            }
+        else:
+            metadata = {
+                "source_columns": ["mag"],
+                "band_selector": {"g": "fid == 1", "r": "fid == 2"},
+                "minimum_valid_observations": 1,
+                "eligibility": "at least one valid observation in both bands",
+            }
+        groups[name] = {
+            "features": selected,
+            **metadata,
+            "missing_behavior": "NaN when the extraction eligibility rule is not met",
+        }
+
+    if len(assigned) != len(set(assigned)):
+        raise ValueError("A v0.2 feature was assigned to more than one family.")
+    if set(assigned) != set(schema):
+        missing = sorted(set(schema) - set(assigned))
+        extra = sorted(set(assigned) - set(schema))
+        raise ValueError(
+            f"Feature-family mapping does not partition v0.2 schema; "
+            f"missing={missing}, extra={extra}"
+        )
+
+    return groups
+
+
+def build_feature_masking_scenarios(
+    groups: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Build correlated missingness patterns from v0.2 extraction thresholds."""
+
+    members = {
+        name: set(definition["features"])
+        for name, definition in groups.items()
+    }
+    scenarios = {
+        "g_periodicity_unavailable": (
+            members["g_periodicity"],
+            "10-29 valid g observations; g basic and cross-band features remain",
+        ),
+        "r_periodicity_unavailable": (
+            members["r_periodicity"],
+            "10-29 valid r observations; r basic and cross-band features remain",
+        ),
+        "both_periodicity_unavailable": (
+            members["g_periodicity"] | members["r_periodicity"],
+            "10-29 valid observations in both bands",
+        ),
+        "g_low_observation_1_to_9": (
+            members["g_basic"] | members["g_periodicity"],
+            "1-9 valid g observations; r band remains available",
+        ),
+        "r_low_observation_1_to_9": (
+            members["r_basic"] | members["r_periodicity"],
+            "1-9 valid r observations; g band remains available",
+        ),
+        "g_band_absent": (
+            members["g_basic"] | members["g_periodicity"] | members["cross_band"],
+            "No valid g observations; r-band features remain available",
+        ),
+        "r_band_absent": (
+            members["r_basic"] | members["r_periodicity"] | members["cross_band"],
+            "No valid r observations; g-band features remain available",
+        ),
+        "both_bands_low_observation_1_to_9": (
+            members["g_basic"]
+            | members["r_basic"]
+            | members["g_periodicity"]
+            | members["r_periodicity"],
+            "1-9 valid observations in both bands; cross-band features remain",
+        ),
+        "g_low_1_to_9_r_low_10_to_29": (
+            members["g_basic"]
+            | members["g_periodicity"]
+            | members["r_periodicity"],
+            "1-9 valid g observations and 10-29 valid r observations",
+        ),
+        "r_low_1_to_9_g_low_10_to_29": (
+            members["r_basic"]
+            | members["r_periodicity"]
+            | members["g_periodicity"],
+            "1-9 valid r observations and 10-29 valid g observations",
+        ),
+        "g_band_absent_r_low_10_to_29": (
+            members["g_basic"]
+            | members["g_periodicity"]
+            | members["cross_band"]
+            | members["r_periodicity"],
+            "No valid g observations and 10-29 valid r observations",
+        ),
+        "r_band_absent_g_low_10_to_29": (
+            members["r_basic"]
+            | members["r_periodicity"]
+            | members["cross_band"]
+            | members["g_periodicity"],
+            "No valid r observations and 10-29 valid g observations",
+        ),
+    }
+    result = {}
+    for name, (missing_features, interpretation) in scenarios.items():
+        ordered = [feature for feature in V0_2_FEATURES if feature in missing_features]
+        result[name] = {
+            "missing_features": ordered,
+            "missing_feature_count": len(ordered),
+            "observed_feature_count": len(V0_2_FEATURES) - len(ordered),
+            "coverage_fraction": (
+                len(V0_2_FEATURES) - len(ordered)
+            ) / len(V0_2_FEATURES),
+            "interpretation": interpretation,
+        }
+    return result
+
+
+def run_family_masking_sensitivity(
+    X: np.ndarray,
+    oids: list[str],
+    labels: list[str],
+    model: OODProductionModel,
+    reference: OODArtifact,
+    scenarios: dict[str, dict[str, Any]],
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Evaluate physically motivated feature-group missingness patterns."""
+
+    matrix = np.asarray(X, dtype=np.float64)
+    if matrix.ndim != 2 or matrix.shape[1] != len(V0_2_FEATURES):
+        raise ValueError("Feature-family masking requires the frozen v0.2 schema.")
+    if not np.isfinite(matrix).all():
+        raise ValueError("Feature-family masking input must contain complete rows.")
+    if len(matrix) != len(oids) or len(matrix) != len(labels):
+        raise ValueError("OID, label, and feature row counts must match.")
+
+    baseline_scores = model.anomaly_scores(matrix)
+    baseline_percentiles = reference.anomaly_percentile(baseline_scores)
+    baseline_flags = {
+        threshold: baseline_percentiles >= threshold
+        for threshold in OOD_THRESHOLDS
+    }
+
+    object_records: list[dict[str, Any]] = []
+    summary_records: list[dict[str, Any]] = []
+
+    for scenario_name, scenario in scenarios.items():
+        missing_features = set(scenario["missing_features"])
+        indices = [
+            index
+            for index, feature in enumerate(V0_2_FEATURES)
+            if feature in missing_features
+        ]
+        masked = matrix.copy()
+        masked[:, indices] = np.nan
+        observed_counts = np.isfinite(masked).sum(axis=1)
+        expected_observed = scenario["observed_feature_count"]
+        if not np.all(observed_counts == expected_observed):
+            raise RuntimeError(f"Scenario {scenario_name} produced invalid coverage.")
+
+        scores = model.anomaly_scores(masked)
+        percentiles = reference.anomaly_percentile(scores)
+        percentile_delta = percentiles - baseline_percentiles
+        score_delta = scores - baseline_scores
+
+        for row_index, oid in enumerate(oids):
+            object_records.append(
+                {
+                    "scenario": scenario_name,
+                    "oid": oid,
+                    "class": labels[row_index],
+                    "masked_feature_count": len(indices),
+                    "observed_feature_count": int(observed_counts[row_index]),
+                    "coverage_fraction": float(
+                        observed_counts[row_index] / len(V0_2_FEATURES)
+                    ),
+                    "baseline_anomaly_score": float(baseline_scores[row_index]),
+                    "masked_anomaly_score": float(scores[row_index]),
+                    "anomaly_score_delta": float(score_delta[row_index]),
+                    "baseline_anomaly_percentile": float(
+                        baseline_percentiles[row_index]
+                    ),
+                    "masked_anomaly_percentile": float(percentiles[row_index]),
+                    "anomaly_percentile_delta": float(
+                        percentile_delta[row_index]
+                    ),
+                }
+            )
+
+        baseline_values = pd.Series(baseline_percentiles)
+        masked_values = pd.Series(percentiles)
+        summary: dict[str, Any] = {
+            "scenario": scenario_name,
+            "interpretation": scenario["interpretation"],
+            "masked_feature_count": len(indices),
+            "observed_feature_count": expected_observed,
+            "coverage_fraction": scenario["coverage_fraction"],
+            "reference_objects": len(matrix),
+            "median_absolute_percentile_delta": float(
+                np.median(np.abs(percentile_delta))
+            ),
+            "p90_absolute_percentile_delta": float(
+                np.quantile(np.abs(percentile_delta), 0.90)
+            ),
+            "median_signed_percentile_delta": float(
+                np.median(percentile_delta)
+            ),
+            "mean_signed_percentile_delta": float(np.mean(percentile_delta)),
+            "spearman_rank_correlation": _finite_or_none(
+                baseline_values.corr(masked_values, method="spearman")
+            ),
+            "median_absolute_score_delta": float(np.median(np.abs(score_delta))),
+        }
+        for threshold in OOD_THRESHOLDS:
+            baseline_flagged = baseline_flags[threshold]
+            masked_flagged = percentiles >= threshold
+            suppressed = int(
+                np.logical_and(baseline_flagged, ~masked_flagged).sum()
+            )
+            newly_flagged = int(
+                np.logical_and(~baseline_flagged, masked_flagged).sum()
+            )
+            baseline_count = int(baseline_flagged.sum())
+            summary[f"baseline_flagged_count_{int(threshold)}"] = baseline_count
+            summary[f"masked_flagged_count_{int(threshold)}"] = int(
+                masked_flagged.sum()
+            )
+            summary[f"suppressed_flag_count_{int(threshold)}"] = suppressed
+            summary[f"new_flag_count_{int(threshold)}"] = newly_flagged
+            summary[f"suppressed_rate_of_baseline_flags_{int(threshold)}"] = (
+                float(suppressed / baseline_count) if baseline_count else None
+            )
+        summary_records.append(summary)
+
+    return pd.DataFrame(object_records), pd.DataFrame(summary_records)
+
+
+def build_natural_missingness_patterns(
+    X: np.ndarray,
+    oids: list[str],
+    labels: list[str],
+    scenarios: dict[str, dict[str, Any]],
+    metadata: pd.DataFrame | None = None,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Match natural missing-feature sets to extraction-threshold patterns."""
+
+    matrix = np.asarray(X, dtype=np.float64)
+    scenario_sets = {
+        name: set(scenario["missing_features"])
+        for name, scenario in scenarios.items()
+    }
+    metadata_columns = (
+        [
+            column
+            for column in (
+                "n_g",
+                "n_r",
+                "has_g",
+                "has_r",
+                "has_both_bands",
+                "n_valid_total",
+            )
+            if metadata is not None and column in metadata.columns
+        ]
+        if metadata is not None
+        else []
+    )
+
+    records = []
+    for row_index, oid in enumerate(oids):
+        missing = {
+            V0_2_FEATURES[index]
+            for index in np.flatnonzero(~np.isfinite(matrix[row_index]))
+        }
+        if not missing:
+            matched = "complete"
+        else:
+            matches = [
+                name for name, expected in scenario_sets.items() if expected == missing
+            ]
+            matched = matches[0] if len(matches) == 1 else (
+                "ambiguous" if matches else "unmatched"
+            )
+        record: dict[str, Any] = {
+            "oid": oid,
+            "class": labels[row_index],
+            "missing_feature_count": len(missing),
+            "observed_feature_count": len(V0_2_FEATURES) - len(missing),
+            "coverage_fraction": (
+                len(V0_2_FEATURES) - len(missing)
+            ) / len(V0_2_FEATURES),
+            "matched_extraction_pattern": matched,
+            "missing_features": json.dumps(
+                [feature for feature in V0_2_FEATURES if feature in missing]
+            ),
+        }
+        if metadata is not None:
+            for column in metadata_columns:
+                value = metadata.iloc[row_index][column]
+                record[column] = (
+                    value.item() if hasattr(value, "item") else value
+                )
+        records.append(record)
+
+    result = pd.DataFrame(records)
+    counts = result["matched_extraction_pattern"].value_counts().to_dict()
+    summary = {
+        "object_count": len(result),
+        "exact_pattern_matches": int(
+            result["matched_extraction_pattern"].isin(
+                ["complete", *scenario_sets.keys()]
+            ).sum()
+        ),
+        "unmatched_objects": int(
+            (result["matched_extraction_pattern"] == "unmatched").sum()
+        ),
+        "ambiguous_objects": int(
+            (result["matched_extraction_pattern"] == "ambiguous").sum()
+        ),
+        "pattern_counts": {str(key): int(value) for key, value in counts.items()},
+        "metadata_columns_available": metadata_columns,
+    }
+    return result, summary
 
 
 def run_experiment(
