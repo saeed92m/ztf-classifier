@@ -127,7 +127,7 @@ class ObjectAnalysisRequest(BaseModel):
 class ObjectAnalysisResponse(BaseModel):
     """Complete source-backed scientific analysis for one object."""
 
-    schema_version: str = "1.0"
+    schema_version: str = "1.1"
     oid: str
     survey: str
     observation_count: int
@@ -160,7 +160,7 @@ class AnalysisJobRequest(BaseModel):
 class AnalysisJobResponse(BaseModel):
     """Persistent analysis job state."""
 
-    schema_version: str = "1.0"
+    schema_version: str = "1.1"
     job_id: str
     oid: str
     survey: str
