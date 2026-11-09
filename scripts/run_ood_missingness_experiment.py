@@ -173,6 +173,18 @@ def run_masking_sensitivity(
             "p90_absolute_score_delta": float(
                 absolute_score_delta.quantile(0.90)
             ),
+            "median_signed_percentile_delta": float(
+                scenario["anomaly_percentile_delta"].median()
+            ),
+            "mean_signed_percentile_delta": float(
+                scenario["anomaly_percentile_delta"].mean()
+            ),
+            "fraction_with_lower_percentile": float(
+                (scenario["anomaly_percentile_delta"] < 0).mean()
+            ),
+            "fraction_with_higher_percentile": float(
+                (scenario["anomaly_percentile_delta"] > 0).mean()
+            ),
             "median_spearman_rank_correlation": (
                 float(np.median(replicate_correlations))
                 if replicate_correlations
@@ -180,12 +192,43 @@ def run_masking_sensitivity(
             ),
         }
         for threshold in OOD_THRESHOLDS:
-            column = f"flag_flip_{int(threshold)}"
-            summary[f"flag_flip_rate_{int(threshold)}"] = float(
-                scenario[column].mean()
+            threshold_suffix = int(threshold)
+            baseline_flagged = baseline_flags[threshold]
+            masked_flagged = (
+                scenario["masked_anomaly_percentile"].to_numpy() >= threshold
             )
-            summary[f"flag_flip_count_{int(threshold)}"] = int(
-                scenario[column].sum()
+            baseline_flagged_evaluations = int(baseline_flagged.sum()) * replicates
+            masked_flagged_evaluations = int(masked_flagged.sum())
+            suppressed = int(
+                (
+                    scenario["baseline_anomaly_percentile"].to_numpy()
+                    >= threshold
+                ).__and__(~masked_flagged).sum()
+            )
+            newly_flagged = int(
+                (
+                    scenario["baseline_anomaly_percentile"].to_numpy()
+                    < threshold
+                ).__and__(masked_flagged).sum()
+            )
+            summary[f"flag_flip_rate_{threshold_suffix}"] = float(
+                scenario[f"flag_flip_{threshold_suffix}"].mean()
+            )
+            summary[f"flag_flip_count_{threshold_suffix}"] = int(
+                scenario[f"flag_flip_{threshold_suffix}"].sum()
+            )
+            summary[f"baseline_flagged_evaluations_{threshold_suffix}"] = (
+                baseline_flagged_evaluations
+            )
+            summary[f"masked_flagged_evaluations_{threshold_suffix}"] = (
+                masked_flagged_evaluations
+            )
+            summary[f"suppressed_flag_count_{threshold_suffix}"] = suppressed
+            summary[f"new_flag_count_{threshold_suffix}"] = newly_flagged
+            summary[f"suppressed_rate_of_baseline_flags_{threshold_suffix}"] = (
+                float(suppressed / baseline_flagged_evaluations)
+                if baseline_flagged_evaluations
+                else None
             )
         summary_records.append(summary)
 
@@ -344,6 +387,27 @@ def run_experiment(
             "feature_missing_cells": int(np.isnan(X).sum()),
             "feature_cell_count": int(X.size),
             "feature_missing_fraction": float(np.isnan(X).mean()),
+        },
+        "natural_missingness_association": {
+            "complete_objects": int(complete_mask.sum()),
+            "partial_objects": int((~complete_mask).sum()),
+            "median_ood_percentile_complete": float(
+                np.median(natural_percentiles[complete_mask])
+            ),
+            "median_ood_percentile_partial": float(
+                np.median(natural_percentiles[~complete_mask])
+            ),
+            "spearman_missing_count_vs_ood_percentile": _finite_or_none(
+                pd.Series(42 - natural_observed).corr(
+                    pd.Series(natural_percentiles),
+                    method="spearman",
+                )
+            ),
+            "interpretation": (
+                "Descriptive association on the fitted reference dataset. "
+                "It is confounded by object and feature-pattern differences "
+                "and is not a causal estimate."
+            ),
         },
         "model_state_basis": (
             "Reconstructed by fitting OODProductionModel to the exact frozen "
