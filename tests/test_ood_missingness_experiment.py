@@ -168,15 +168,23 @@ def test_family_masking_is_deterministic_and_matches_natural_patterns() -> None:
     natural[0, :] = np.nan
     natural[0, :4] = X[0, :4]
     natural[1, :] = np.nan
-    natural[1, [i for i in range(42) if i not in scenarios[
-        "both_bands_low_observation_1_to_9"
-    ]["missing_features"]]] = X[1, [
-        i for i in range(42) if i not in scenarios[
-            "both_bands_low_observation_1_to_9"
-        ]["missing_features"]
-    ]]
+    from ztf_classifier.features.pipeline import V0_2_FEATURES
+
+    missing_names = set(
+        scenarios["both_bands_low_observation_1_to_9"]["missing_features"]
+    )
+    observed_indices = [
+        index
+        for index, feature in enumerate(V0_2_FEATURES)
+        if feature not in missing_names
+    ]
+    natural[1, observed_indices] = X[1, observed_indices]
     patterns, summary = build_natural_missingness_patterns(
         natural, oids, labels, scenarios
     )
     assert patterns.iloc[0]["matched_extraction_pattern"] == "unmatched"
+    assert (
+        patterns.iloc[1]["matched_extraction_pattern"]
+        == "both_bands_low_observation_1_to_9"
+    )
     assert summary["object_count"] == len(X)
