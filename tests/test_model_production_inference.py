@@ -349,6 +349,10 @@ def test_diagnostic_artifact_returns_ood_outputs(
 
     assert result.ood is not None
     assert result.ood.sample_count == 150
+    assert result.data_adequacy is not None
+    assert result.data_adequacy.sample_count == 150
+    assert result.data_adequacy.feature_count == 42
+    assert set(result.data_adequacy.status).issubset({"complete", "partial"})
 
     assert result.ood.anomaly_score.shape == (150,)
     assert result.ood.normality_score.shape == (150,)
@@ -533,3 +537,31 @@ def test_diagnostic_service_matches_direct_classification_inference(
         result.raw_predicted_labels,
         direct.predicted_labels,
     )
+
+
+
+def test_one_feature_row_is_explicitly_partial_but_not_yet_ood_gated(
+    diagnostic_artifact: Path,
+) -> None:
+    """Coverage is reported without inventing an unvalidated OOD threshold."""
+    dataset = _load_dataset().copy()
+    service = _build_service(diagnostic_artifact)
+    engine = XGBoostInferenceEngine(
+        model=service.loaded_artifact.model_artifact.model,
+        feature_schema_path=(diagnostic_artifact / "feature_schema.parquet"),
+    )
+    features = engine.prepare_features(dataset)
+    feature_names = list(features.columns)
+    dataset.loc[dataset.index[0], feature_names] = np.nan
+    dataset.loc[dataset.index[0], feature_names[0]] = 1.0
+
+    result = service.predict(dataset)
+
+    assert result.data_adequacy is not None
+    assert result.data_adequacy.status[0] == "partial"
+    assert result.data_adequacy.observed_feature_count[0] == 1
+    assert result.data_adequacy.missing_feature_count[0] == 41
+    assert result.ood is not None
+    assert result.ood.sample_count == len(dataset)
+    assert np.isfinite(result.ood.anomaly_score[0])
+    assert result.raw_probabilities.shape[0] == len(dataset)
