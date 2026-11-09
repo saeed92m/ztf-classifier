@@ -107,8 +107,14 @@ def test_batch_preserves_oid_and_row_count(tmp_path: Path) -> None:
     assert result.model_family == "XGBoost"
     assert len(result.predictions) == 2
     assert list(result.predictions["oid"]) == ["ZTF001", "ZTF002"]
-    assert list(result.predictions["data_adequacy_status"]) == ["complete", "partial"]
-    assert list(result.predictions["data_adequacy_observed_feature_count"]) == [42, 1]
+    assert list(result.predictions["data_adequacy_status"]) == [
+        "complete",
+        "partial",
+    ]
+    assert list(result.predictions["data_adequacy_observed_feature_count"]) == [
+        42,
+        1,
+    ]
 
 
 def test_batch_contains_all_probability_columns(tmp_path: Path) -> None:
