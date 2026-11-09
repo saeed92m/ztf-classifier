@@ -70,12 +70,14 @@ The current `complete` and `partial` states describe coverage only. `insufficien
 
 ### 4.2 Per-object OOD evaluation state
 
-OOD evaluation needs a row-level state. At minimum:
+OOD evaluation needs a row-level state. The current serializers expose it as a separate prediction field, even when the OOD score object is absent:
 
-- `evaluated`
-- `not_evaluated_insufficient_data`
+- `evaluated_complete_features`
+- `evaluated_with_missing_features`
+- `evaluated_adequacy_unreported`
 - `not_available`
 
+The current implementation reports the evaluation basis. It does not yet decide whether missing-feature rows should be excluded from OOD evaluation.
 A row that is not evaluated must not receive fabricated score, percentile, rank, label, or anomaly flags. Serialized values should be null for unavailable numerical fields, with the reason carried separately.
 
 ### 4.3 Request-level diagnostic availability
@@ -174,7 +176,7 @@ The current feature branch adds a descriptive `DataAdequacyResult` before OOD pr
 
 The diagnostic is computed from the numeric, finite-value mask before median imputation. It is attached to `PredictionResult` and serialized through API, CLI, batch Parquet, object-job payloads, and the web workbench. The API, CLI, batch, and job payload versions are incremented where their serialized contracts changed.
 
-This diagnostic is descriptive only. It does not make a scientific eligibility decision. A one-feature row is explicitly labelled `partial`, and the OOD output is labelled `evaluated_with_missing_features`. The OOD model still produces a score for that row. This behavior is deliberately visible and remains a production validation blocker until an evidence-based threshold is approved. The API, CLI, batch, and job outputs carry the per-row OOD evaluation state and the input coverage values.
+This diagnostic is descriptive only. It does not make a scientific eligibility decision. A one-feature row is explicitly labelled `partial`, and the OOD output is labelled `evaluated_with_missing_features`. The OOD model still produces a score for that row. This behavior is deliberately visible and remains a production validation blocker until an evidence-based threshold is approved. The API, CLI, batch, and job outputs carry the per-row OOD evaluation state and the input coverage values. The state is a separate prediction field, so `not_available` is also explicit when an OOD artifact is absent.
 
 Do not implement a production OOD exclusion threshold until Sections 5 and 8 are resolved. Any non-gating diagnostic must not imply that a row is scientifically adequate merely because it has nonzero coverage.
 
