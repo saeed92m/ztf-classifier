@@ -75,10 +75,18 @@ The retained artifacts were inspected. Their actual scope is:
 |---|---|---|
 | `scientific-validation-provenance` | Reachability, HTTP status, response hashes for StarEmbed, CPVS Zenodo, DR24 and ALeRCE endpoints | Endpoint reachability and source-response provenance |
 | `frozen-reference-evidence-alerce_reference_frozen_20200609` | Immutable ALeRCE archive manifest, MD5/SHA-256 and required member list | Frozen publisher snapshot identity contract |
-| `scientific-validation-external-source-evidence` | 150-row DR24 source subset and 150-row live ALeRCE response, with query and content hashes | Bounded source acquisition and response provenance |
-| `scientific-validation-heavy` | StarEmbed train/test/validation/anomaly Parquet files and acquisition manifest | Independent source package acquisition |
+| `scientific-validation-external-source-evidence` | 150 DR24 Objects Table HATS records and 150 live ALeRCE reference-response rows, with query and content hashes | Bounded catalog/response acquisition and provenance; not epoch-level light curves or model evaluation |
+| `scientific-validation-heavy` | StarEmbed train/test/validation/anomaly Parquet files and acquisition manifest | Independent dataset package acquisition; no model training or evaluation was run |
 
-This run proves successful acquisition and evidence-contract execution for the stated scope. It does **not** prove DR24 model performance, full-population scientific validation, the 100,000-light-curve target, or Park acceptance. Its workflow conclusion must not be interpreted as a complete scientific acceptance decision.
+Important details from the retained manifests:
+
+- The DR24 query uses a deterministic lexicographic selection of 150 OIDs from the HATS secondary index. It returns object-catalog fields (`oid`, `ra`, `dec`, `ngoodobsrel`) and a partition manifest. It does not contain nested epoch photometry. It is a bounded engineering sample, not a representative survey sample.
+- The live ALeRCE response contains 150 top-ranked classifier-output rows. It is a reference-system response, not independent astrophysical ground truth.
+- The frozen ALeRCE artifact is represented in this run by an evidence manifest with the publisher archive MD5/SHA-256 and required member names. The archive members themselves were not included in that 487-byte manifest artifact.
+- The StarEmbed manifest pins revision `33046797fb619f93a991aa4e38a9dc36f27e2d24` and the five Parquet file hashes. Its `row_count` is `null`; the workflow verifies artifact presence and provenance, not row-level suitability or model performance.
+- The source-provenance probe records HTTP 200 reachability and response hashes. Its own text states that reachability is not benchmark validation or ground truth.
+
+This run proves successful acquisition and evidence-contract execution for the stated scope. It does **not** prove epoch-level DR24 acquisition for those 150 Objects Table records, DR24 model performance, StarEmbed model performance, full-population scientific validation, the 100,000-light-curve target, or Park acceptance. Its workflow conclusion must not be interpreted as a complete scientific acceptance decision.
 
 ### 4.2 OOD missingness experiment
 
@@ -206,7 +214,7 @@ The 5.32-billion figure in the Park dossier describes the DR24 release-scale lig
 ## 8. Documentation defects found and corrections in this PR
 
 1. `docs/MODEL_CARD.md` identified software release `v1.0.0` and repeated that stale milestone at the end. The current immutable software release is `v1.0.1`; the scientific model remains `baseline_v0.2`.
-2. The 2026-11-07 execution ledger described the 55-control audit as zero controls passing both band thresholds. This was corrected: missing band rows are UNKNOWN, not FAIL.
+2. The 2026-11-07 execution ledger and Handbook v2.9 contained an invalid interpretation of the 55-control audit. Both now state that g-band rows exist for 1/55, r-band rows for 51/55, and none has both bands. Missing rows are UNKNOWN, not SNR failure. The Handbook also records the Master Handoff's four-field set-arithmetic conflict and leaves the `Ng/Nr >= 11` result diagnostic-only.
 3. The README carried an obsolete 2026-10-11 status block, handbook v2.8 link and superseded row-ordinal narrative. This PR replaces it with the current evidence boundaries and links to the v2.9 handbook, execution ledger and this audit.
 4. The approved CPVS Master Handoff's conflicting set arithmetic and new 11-observation diagnostic are recorded as unresolved evidence-reconciliation items, not silently merged into old results.
 
