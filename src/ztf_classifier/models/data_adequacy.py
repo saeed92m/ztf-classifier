@@ -79,8 +79,17 @@ class DataAdequacyResult:
             isinstance(names, tuple) for names in self.missing_feature_names
         ):
             raise TypeError("Missing feature names must be tuples.")
-        if not all(isinstance(codes, tuple) for codes in self.reason_codes):
-            raise TypeError("Reason codes must be tuples.")
+        for index, names in enumerate(self.missing_feature_names):
+            if len(names) != int(missing[index]):
+                raise ValueError("Missing feature names do not match missing counts.")
+            if len(set(names)) != len(names):
+                raise ValueError("Missing feature names must be unique per row.")
+        expected_reasons = tuple(
+            () if count == 0 else ("MODEL_FEATURES_MISSING",)
+            for count in missing
+        )
+        if self.reason_codes != expected_reasons:
+            raise ValueError("Reason codes do not match feature missingness.")
 
     @property
     def sample_count(self) -> int:
