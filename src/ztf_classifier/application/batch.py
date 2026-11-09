@@ -186,16 +186,27 @@ class BatchInferenceService:
             ]
             output["data_adequacy_policy_version"] = adequacy.policy_version
 
-        if result.ood is not None:
-            if result.data_adequacy is None:
-                output["ood_evaluation_status"] = "evaluated_adequacy_unreported"
+        if result.data_adequacy is None:
+            if result.ood is None:
+                output["ood_evaluation_status"] = ["not_available"] * len(output)
             else:
                 output["ood_evaluation_status"] = [
+                    "evaluated_adequacy_unreported"
+                ] * len(output)
+        else:
+            output["ood_evaluation_status"] = [
+                "not_available"
+                if result.ood is None
+                else (
                     "evaluated_complete_features"
                     if status == "complete"
                     else "evaluated_with_missing_features"
-                    for status in result.data_adequacy.status
-                ]
+                )
+                for status in result.data_adequacy.status
+            ]
+
+        if result.ood is not None:
+            if result.data_adequacy is not None:
                 output["ood_input_feature_coverage_fraction"] = (
                     result.data_adequacy.coverage_fraction
                 )
