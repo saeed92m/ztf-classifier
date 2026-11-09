@@ -145,9 +145,11 @@ A full object-level audit of retained artifacts found:
 - Reconstructed two-band SNR candidates: 741,786 IDs.
 - Candidate-only residual: 11,602; published-only: zero.
 - Intersecting reconstructed candidates with positive `gmag`, `rmag`, `Per-g`, and `Per-r` values yields exactly 730,184 IDs.
-- The 11,602 candidate-only IDs fail at least one of those four fields. The 55 four-field-positive noncandidate controls all fail at least one raw two-band SNR threshold in the retained independent control audit.
+- The 11,602 candidate-only IDs fail at least one of those four fields. The 55 four-field-positive noncandidate controls are not independently classified by the retained raw-photometry audit: g-band archive rows exist for only 1/55, r-band rows exist for 51/55, and no control has both bands represented. Missing raw observations are `UNKNOWN`, not SNR `FAIL`. Earlier counters that treated absent rows as failed SNR measurements are invalid. This audit is PARTIAL and does not independently validate the two-band SNR predicate for these controls.
 
 This is a strong empirical root-cause candidate, not proof of the historical authors' exact selection procedure. The paper describes two-band SNR selection and common-period phase folding; it does not explicitly document the four-field completeness gate. The 17 objects with complete mean magnitudes but incomplete per-band periods remain a specific unresolved case. Fresh raw-photometry re-derivation and verification against author preprocessing semantics are still required.
+
+The approved 2026-11-10 CPVS Master Handoff also reports a four-field-positive set of 730,239 and an `Ng >= 11`, `Nr >= 11` diagnostic of 730,229 candidates with 45 residuals. These remain reported diagnostics, not independently re-run results or approved publisher predicates. The handoff's own set arithmetic is inconsistent: it reports `F = 730,239`, `F \\ P = 55`, `P \\ F = 0`, but also `C ∩ F = 730,239` while stating `C ∩ F = P = 730,184`. Resolve the exact ID lists, set definitions and hashes before using these results.
 
 See [research PR #265](https://github.com/saeed92m/ztf-classifier/pull/265) and [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Do not change the production selector, frozen baseline, or reference definition to force a match.
 
@@ -172,3 +174,7 @@ Use these terms precisely:
 - **Released:** an immutable release artifact was published.
 
 A green workflow, skipped test, matching count, or component smoke test must not be promoted to a broader acceptance claim.
+
+## Evidence refresh — 2026-11-10
+
+The CPVS control-sample correction and the Master Handoff set-arithmetic conflict are recorded in this handbook and in [the full project audit](PROJECT_AUDIT_AND_REMEDIATION_2026-11-10.md). Issue #170 remains OPEN / UNRESOLVED. The `Ng/Nr >= 11` predicate remains diagnostic only. Missing photometry remains UNKNOWN, not FAIL. No production selection rule, scientific threshold or v0.2.0 artifact has changed.
