@@ -49,7 +49,7 @@ The target contract should represent these dimensions independently.
 
 ### 4.1 Per-object data adequacy
 
-A future `DataAdequacyResult` should be row-aligned with classification results and contain, at minimum:
+`DataAdequacyResult` is now row-aligned with classification results. The descriptive coverage-only version contains:
 
 - `observed_feature_count`
 - `missing_feature_count`
@@ -57,7 +57,7 @@ A future `DataAdequacyResult` should be row-aligned with classification results 
 - `missing_feature_names` or a stable compact representation
 - `status`
 - `reason_codes`
-- `policy_version`
+- `policy_version` (`coverage-only-v1`)
 
 The status vocabulary should distinguish at least:
 
@@ -66,7 +66,7 @@ The status vocabulary should distinguish at least:
 - `insufficient`: an approved, versioned adequacy policy says the row does not support the requested evaluation.
 - `not_assessed`: the adequacy assessment could not be made.
 
-The exact status vocabulary and required fields must be finalized with the serialization contract before implementation.
+The current `complete` and `partial` states describe coverage only. `insufficient` and `not_assessed` remain reserved for a future evidence-based policy.
 
 ### 4.2 Per-object OOD evaluation state
 
@@ -174,7 +174,7 @@ The current feature branch adds a descriptive `DataAdequacyResult` before OOD pr
 
 The diagnostic is computed from the numeric, finite-value mask before median imputation. It is attached to `PredictionResult` and serialized through API, CLI, batch Parquet, object-job payloads, and the web workbench. The API, CLI, batch, and job payload versions are incremented where their serialized contracts changed.
 
-This diagnostic is descriptive only. It does not make a scientific eligibility decision. A one-feature row is explicitly labelled `partial`, but the current OOD model still produces a score for it. This behavior is deliberately visible and remains a production validation blocker until an evidence-based threshold is approved.
+This diagnostic is descriptive only. It does not make a scientific eligibility decision. A one-feature row is explicitly labelled `partial`, and the OOD output is labelled `evaluated_with_missing_features`. The OOD model still produces a score for that row. This behavior is deliberately visible and remains a production validation blocker until an evidence-based threshold is approved. The API, CLI, batch, and job outputs carry the per-row OOD evaluation state and the input coverage values.
 
 Do not implement a production OOD exclusion threshold until Sections 5 and 8 are resolved. Any non-gating diagnostic must not imply that a row is scientifically adequate merely because it has nonzero coverage.
 
