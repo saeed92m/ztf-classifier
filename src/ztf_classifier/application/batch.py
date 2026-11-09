@@ -168,6 +168,23 @@ class BatchInferenceService:
                     diagnostic.prediction_sets.sum(axis=1).astype("int64")
                 )
 
+        if result.data_adequacy is not None:
+            adequacy = result.data_adequacy
+            output["data_adequacy_status"] = adequacy.status
+            output["data_adequacy_observed_feature_count"] = (
+                adequacy.observed_feature_count
+            )
+            output["data_adequacy_missing_feature_count"] = (
+                adequacy.missing_feature_count
+            )
+            output["data_adequacy_coverage_fraction"] = adequacy.coverage_fraction
+            output["data_adequacy_missing_feature_names"] = [
+                list(names) for names in adequacy.missing_feature_names
+            ]
+            output["data_adequacy_reason_codes"] = [
+                list(codes) for codes in adequacy.reason_codes
+            ]
+
         if result.ood is not None:
             output["ood_anomaly_score"] = result.ood.anomaly_score
             output["ood_normality_score"] = result.ood.normality_score
