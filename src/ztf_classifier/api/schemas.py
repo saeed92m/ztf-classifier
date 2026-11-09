@@ -37,6 +37,7 @@ class PredictionItem(BaseModel):
     probabilities: dict[str, float]
     conformal: list[dict[str, Any]] = Field(default_factory=list)
     ood: dict[str, Any] | None = None
+    ood_evaluation_status: str = "not_available"
     data_adequacy: dict[str, Any] | None = None
     scientific_anomaly: dict[str, Any] | None = None
 
