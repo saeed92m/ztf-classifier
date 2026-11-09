@@ -97,6 +97,7 @@ function clearPrediction() {
   document.getElementById("probabilityList").innerHTML =
     '<div class="muted">No durable scientific result loaded.</div>';
   document.getElementById("featureSchema").textContent = "—";
+  document.getElementById("dataAdequacyValue").textContent = "—";
   document.getElementById("modelValue").textContent = "—";
   document.getElementById("calibrationValue").textContent = "—";
   document.getElementById("oodValue").textContent = "—";
@@ -135,6 +136,11 @@ function renderPrediction(prediction) {
     conformal.length && conformal[0].alpha != null
       ? "α = " + Number(conformal[0].alpha).toFixed(2)
       : "conformal coverage";
+  const adequacy = prediction.data_adequacy;
+  document.getElementById("dataAdequacyValue").textContent = adequacy
+    ? adequacy.status + " · " + adequacy.observed_feature_count + "/42 (" +
+      (Number(adequacy.coverage_fraction) * 100).toFixed(1) + "%)"
+    : "not reported";
   const ood = prediction.ood;
   document.getElementById("oodPercentile").textContent =
     ood && ood.anomaly_percentile != null ? Number(ood.anomaly_percentile).toFixed(1) : "—";
