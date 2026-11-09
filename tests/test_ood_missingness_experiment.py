@@ -4,10 +4,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from scripts.run_ood_missingness_experiment import run_masking_sensitivity
 from ztf_classifier.models.config import OODConfig
 from ztf_classifier.models.ood_artifact import OODArtifact
 from ztf_classifier.models.ood_production import OODProductionModel
-from scripts.run_ood_missingness_experiment import run_masking_sensitivity
 
 
 def _fitted_reference() -> tuple[np.ndarray, OODProductionModel, OODArtifact]:
