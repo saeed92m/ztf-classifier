@@ -16,7 +16,7 @@ from ztf_classifier.application.schemas import (
 from ztf_classifier.application.service import ApplicationService
 from ztf_classifier.models.classes import MODEL_CLASSES
 
-BATCH_SCHEMA_VERSION = "1.1"
+BATCH_SCHEMA_VERSION = "1.2"
 
 
 @dataclass(frozen=True)
