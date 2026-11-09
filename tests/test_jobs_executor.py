@@ -10,6 +10,7 @@ from ztf_classifier.jobs.errors import AnalysisJobExecutionError
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
 from ztf_classifier.jobs.store import JobRecord
 from ztf_classifier.models.data_adequacy import DataAdequacyResult
+from ztf_classifier.models.ood import OODResult
 from ztf_classifier.models.results import PredictionResult
 
 
@@ -62,7 +63,17 @@ class FakeApplicationService:
             raw_predicted_labels=("AGN",),
             calibration_status="available",
             conformal_status="unavailable",
-            ood_status="unavailable",
+            ood_status="available",
+            ood=OODResult(
+                anomaly_score=np.array([0.5]),
+                normality_score=np.array([-0.5]),
+                anomaly_percentile=np.array([90.0]),
+                isolation_forest_label=np.array([-1]),
+                anomaly_rank=np.array([1]),
+                is_top_1pct_anomaly=np.array([False]),
+                is_top_5pct_anomaly=np.array([False]),
+                is_top_10pct_anomaly=np.array([True]),
+            ),
             data_adequacy=DataAdequacyResult.from_matrix(
                 np.concatenate([np.ones(1), np.full(41, np.nan)]).reshape(1, 42),
                 tuple(f"feature_{index}" for index in range(42)),
@@ -143,6 +154,11 @@ def test_source_backed_executor_runs_full_contract(monkeypatch):
     assert result["prediction"]["data_adequacy"]["status"] == "partial"
     assert result["prediction"]["data_adequacy"]["observed_feature_count"] == 1
     assert result["diagnostics"]["data_adequacy"] == "available"
+    assert result["prediction"]["ood"]["evaluation_status"] == (
+        "evaluated_with_missing_features"
+    )
+    assert result["prediction"]["ood"]["input_observed_feature_count"] == 1
+    assert result["prediction"]["ood"]["anomaly_score"] == 0.5
     assert result["model_version"] == "baseline_v0.2"
     assert "/secret" not in str(result["model_provenance"])
 
