@@ -53,6 +53,12 @@ def test_masking_sensitivity_is_deterministic_and_does_not_mutate_input() -> Non
     assert np.isfinite(first_rows["masked_anomaly_score"]).all()
     assert np.isfinite(first_rows["masked_anomaly_percentile"]).all()
     assert set(first_summary["masked_feature_count"]) == {1, 41}
+    for threshold in (90, 95, 99):
+        assert (
+            first_summary[f"suppressed_flag_count_{threshold}"]
+            + first_summary[f"new_flag_count_{threshold}"]
+            == first_summary[f"flag_flip_count_{threshold}"]
+        ).all()
 
 
 def test_masking_sensitivity_rejects_incomplete_baseline_rows() -> None:
