@@ -423,11 +423,47 @@ The platform architecture now has executable domain contracts for external catal
 The current production model explicitly does **not** claim a scientific-anomaly detector: OOD diagnostics and scientific anomaly evidence are separate result channels. Scientific anomaly evidence remains `not_evaluated` until a dedicated analysis mode supplies and versions such evidence.
 
 
-## Current project roadmap and status (2026-10-11)
+## Current project roadmap and status (2026-11-10)
 
-- Current immutable software release: **v1.0.1**; frozen scientific baseline: **v0.2.0**.
-- Canonical continuity handbook: [HANDBOOK_UPDATED_v2.8.md](docs/HANDBOOK_UPDATED_v2.8.md).
-- Canonical cross-platform product roadmap: [PLATFORM_EXPANSION_ROADMAP.md](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md).
-- Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
-- Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
-- Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.
+- Current immutable software release: **v1.0.1**.
+- Frozen scientific baseline: **v0.2.0**.
+- Production model identity: **baseline_v0.2**.
+- Benchmark: 150 ZTF objects, 15 ALeRCE reference classes, 10 objects per class.
+- Frozen feature contract: 42 features in `final_feature_set_v0.2`.
+- Historical cutoff: `59447.224132`.
+- Current continuity handbook: [HANDBOOK_UPDATED_v2.9.md](docs/HANDBOOK_UPDATED_v2.9.md).
+- Current project execution ledger: [PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-07.md](docs/PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-07.md).
+- Current Park delivery plan: [PARK_MVP_DELIVERY_PLAN_2026-11-05.md](docs/PARK_MVP_DELIVERY_PLAN_2026-11-05.md).
+- Full integrity audit and remediation record: [PROJECT_AUDIT_AND_REMEDIATION_2026-11-10.md](docs/PROJECT_AUDIT_AND_REMEDIATION_2026-11-10.md).
+
+### Product delivery boundary
+
+The current `main` application observation service uses ALeRCE by default. DR24 HATS acquisition, multi-OID API work, raw-preserving QC diagnostics, Workbench exploration and the HATS/Zubercal source decision remain in open pull requests. They are not yet an accepted end-to-end DR24 production path.
+
+The latest scheduled source-backed workflow on main, [run 42611080798](https://github.com/saeed92m/ztf-classifier/actions/runs/42611080798), successfully acquired bounded DR24 and ALeRCE source evidence, the frozen historical ALeRCE reference manifest and the independent StarEmbed source package. These results verify source acquisition and evidence contracts for their declared scope. They do not establish DR24 model performance, a 100,000-light-curve dataset, a completed 5–10 object workflow, a 30–50 object demo, or Park acceptance.
+
+The original v0.2.0 production artifact at `runs/model_baseline_v0.2_production/artifact` is not present in the repository tree or the published wheel. Its current status is **UNRECOVERED**, not proven destroyed. A separate lab-smoke artifact is not an approved replacement. Large model and raw-data artifacts must remain outside Git and must be supplied through a controlled, hash-verified source.
+
+Do not publish a completion percentage unless the weighting method and current evidence are defined. Do not describe component smoke tests or skipped scientific jobs as scientific product acceptance.
+
+### CPVS historical reconstruction boundary
+
+[Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170) remains **OPEN / UNRESOLVED**. The retained Seq-based comparison reports 781,602 parent objects, 730,184 published reference members, 741,786 reconstructed candidates, 11,602 candidate-only and zero published-only objects.
+
+The four-field-positive and `Ng/Nr >= 11` results in the approved CPVS Master Handoff are diagnostic hypotheses. Their source ID lists and hashes still require reconciliation. The handoff contains an internal set-arithmetic inconsistency for the four-field intersection. Missing photometry is `UNKNOWN`, not SNR `FAIL`. No production predicate or threshold may be changed to force cardinality equality.
+
+CPVS remains a separate historical-research lane. It does not block the DR24-first product delivery and it is not resolved by product CI.
+
+### Separate architecture workstreams
+
+- AOIC: proposed canonical identity and cross-match architecture, tracked by [Issue #249](https://github.com/saeed92m/ztf-classifier/issues/249). A complete canonical identity registry is not yet merged.
+- CIN: optional human-in-the-loop architecture and staged plan, tracked by [Issue #251](https://github.com/saeed92m/ztf-classifier/issues/251) and [PR #252](https://github.com/saeed92m/ztf-classifier/pull/252). No production contributor network, annotation corpus or controlled pilot is claimed.
+- Cross-platform desktop installers: not yet verified on clean Windows, macOS and Linux machines. Release v1.0.1 is a Python package, not a self-contained installer.
+
+### Active delivery trackers
+
+- [Issue #158 — Park prototype and product delivery](https://github.com/saeed92m/ztf-classifier/issues/158)
+- [Issue #253 — DR24 application acquisition adapter](https://github.com/saeed92m/ztf-classifier/issues/253)
+- [Issue #170 — CPVS exact historical reconstruction](https://github.com/saeed92m/ztf-classifier/issues/170)
+- [PR #266 — Park plan, handbook and status synchronization](https://github.com/saeed92m/ztf-classifier/pull/266)
+
