@@ -57,17 +57,23 @@
     "evidence": [
       "A read-only audit script, documentation and deterministic unit tests were added.",
       "The unit tests and actual local WSL audit have not yet run on the final branch head.",
-      "Review identified that the initial readiness flag did not require dependent test modules and could be misread as scientific validation; the audit contract is being tightened to report path prerequisites only."
+      "Review identified that the initial readiness flag did not require dependent test modules and could be misread as scientific validation; the audit contract is being tightened to report path prerequisites only.",
+      "Inspected the canonical ModelArtifactLoader and ModelArtifactWriter contracts. The original v0.2.0 production artifact is schema 1.0; conformal.json, ood.json and ood_model.joblib are later diagnostic components and are not required for that frozen artifact.",
+      "Fixed the local audit script so schema-1.0 baseline readiness requires the baseline files and validates the manifest SHA-256 values; it reports conformal/OOD files as optional diagnostics.",
+      "Added regression coverage for a complete schema-1.0 production artifact without optional diagnostic files and for a manifest hash mismatch.",
+      "Corrected the test fixture to emit valid JSON for its synthetic artifact manifest. CI validation on the exact final PR head is pending."
     ]
   },
   "failure_analysis": {
     "status": "PARTIALLY_DIAGNOSED",
     "root_causes": [
       "The production model artifact is missing from the accessible repository/CI artifact sources.",
-      "The lab-smoke artifact exists in the original local checkout but is a separate run and cannot replace the frozen production model."
+      "The lab-smoke artifact exists in the original local checkout but is a separate run and cannot replace the frozen production model.",
+      "The initial PR #278 artifact audit incorrectly placed conformal.json, ood.json and ood_model.joblib in the unconditional required-file list. Those files are optional diagnostic components for the frozen schema-1.0 production artifact, so a valid original artifact could be falsely reported as incomplete."
     ],
     "unresolved": [
-      "Actual current WSL artifact availability must be confirmed by running the audit script."
+      "Actual current WSL artifact availability must be confirmed by running the audit script.",
+      "The local WSL artifact inventory has not yet been run. The original model remains UNRECOVERED until a hash-verified local audit or authoritative artifact source confirms its presence."
     ]
   },
   "knowledge_extraction": {
@@ -75,7 +81,8 @@
     "findings": [
       "Never symlink or copy lab-smoke model weights into the frozen production artifact path.",
       "Keep large scientific artifacts out of Git.",
-      "Use exact SHA-256 and immutable artifact manifests for any external artifact source."
+      "Use exact SHA-256 and immutable artifact manifests for any external artifact source.",
+      "Artifact audit readiness must follow the manifest schema and file declarations. Later optional OOD/conformal files must not be required for a valid frozen schema-1.0 baseline artifact."
     ]
   },
   "regression": {
@@ -83,7 +90,8 @@
     "open_blockers": [
       "Run the corrected artifact audit in the user's WSL checkout and inspect the JSON report.",
       "If the frozen production artifact exists, verify its manifest and run the 10 dependent tests.",
-      "If absent, recover it from its original authoritative source; do not rebuild or substitute without a separately approved scientific baseline procedure."
+      "If absent, recover it from its original authoritative source; do not rebuild or substitute without a separately approved scientific baseline procedure.",
+      "Pass the new schema-1.0/no-optional-diagnostics and manifest-hash-mismatch regression tests on the exact PR #278 head."
     ]
   },
   "decision": "REVISE",
