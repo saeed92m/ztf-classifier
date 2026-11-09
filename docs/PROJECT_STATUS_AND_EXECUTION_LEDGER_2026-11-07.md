@@ -1,6 +1,8 @@
 # ZTF Classifier — Project Status and Execution Ledger
 
-**Status date:** 2026-11-07  
+> Evidence refresh: 2026-11-10. The current CPVS control-sample, arithmetic-conflict, DR24 and model-artifact corrections are recorded in the audit report and the refreshed CPVS section below.
+
+**Status date:** 2026-11-07 (baseline snapshot; evidence refresh recorded 2026-11-10 below)  
 **Primary delivery:** Tabriz Science & Technology Park bounded prototype  
 **Delivery tracker:** https://github.com/saeed92m/ztf-classifier/issues/158  
 **DR24 integration:** https://github.com/saeed92m/ztf-classifier/issues/253  
