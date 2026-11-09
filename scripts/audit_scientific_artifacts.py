@@ -16,6 +16,9 @@ from typing import Any
 PRODUCTION_ARTIFACT = Path("runs/model_baseline_v0.2_production/artifact")
 LAB_ARTIFACT = Path("runs/lab-smoke-20261027T104951Z/artifact")
 
+# The frozen v0.2.0 production artifact is schema 1.0. Conformal and OOD
+# components were added to later schema 1.1 lab-smoke artifacts and are not
+# required for the original production artifact.
 PRODUCTION_FILES = (
     "model.json",
     "feature_schema.parquet",
@@ -23,10 +26,20 @@ PRODUCTION_FILES = (
     "model_contract.json",
     "provenance.json",
     "calibration.json",
+)
+OPTIONAL_DIAGNOSTIC_FILES = (
     "conformal.json",
     "ood.json",
     "ood_model.joblib",
 )
+MANIFEST_REQUIRED_KEYS = (
+    "model",
+    "model_contract",
+    "feature_schema",
+    "provenance",
+    "calibration",
+)
+SUPPORTED_ARTIFACT_SCHEMAS = {"1.0", "1.1"}
 
 KNOWN_LAB_HASHES = {
     "model.json": "96bbbd4643d073be574b0bb359062a31219417b2d857ac00e64a8c3f47e21a6c",
@@ -97,6 +110,121 @@ def describe_directory(path: Path, *, calculate_hash: bool) -> dict[str, Any]:
     return result
 
 
+def validate_production_manifest(directory: Path) -> dict[str, Any]:
+    """Validate the production manifest and every file hash it declares."""
+
+    manifest_path = directory / "artifact_manifest.json"
+    result: dict[str, Any] = {
+        "path": str(manifest_path),
+        "status": "MISSING",
+        "artifact_schema_version": None,
+        "hash_checks": {},
+        "errors": [],
+    }
+    if not manifest_path.is_file():
+        result["errors"].append("artifact_manifest.json is missing.")
+        return result
+
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        result["status"] = "ERROR"
+        result["errors"].append(f"Could not parse artifact manifest: {exc}")
+        return result
+
+    if not isinstance(manifest, dict):
+        result["status"] = "ERROR"
+        result["errors"].append("Artifact manifest must be a JSON object.")
+        return result
+
+    schema_version = manifest.get("artifact_schema_version")
+    result["artifact_schema_version"] = schema_version
+    if schema_version not in SUPPORTED_ARTIFACT_SCHEMAS:
+        result["errors"].append(
+            f"Unsupported artifact schema version: {schema_version!r}."
+        )
+
+    if manifest.get("model_version") != "baseline_v0.2":
+        result["errors"].append(
+            "Manifest model_version is not the frozen baseline_v0.2."
+        )
+    if manifest.get("feature_count") != 42:
+        result["errors"].append(
+            "Manifest feature_count is not the frozen 42-feature contract."
+        )
+
+    files = manifest.get("files")
+    if not isinstance(files, dict):
+        result["status"] = "ERROR"
+        result["errors"].append("Manifest files field must be an object.")
+        return result
+
+    missing_keys = sorted(set(MANIFEST_REQUIRED_KEYS) - set(files))
+    if missing_keys:
+        result["errors"].append(
+            "Manifest is missing required baseline file entries: "
+            + ", ".join(missing_keys)
+        )
+
+    for key, metadata in files.items():
+        if not isinstance(metadata, dict):
+            result["errors"].append(
+                f"Manifest file entry {key!r} must be an object."
+            )
+            continue
+
+        relative_path = metadata.get("path")
+        expected_hash = metadata.get("sha256")
+        if not isinstance(relative_path, str) or not relative_path.strip():
+            result["errors"].append(
+                f"Manifest file entry {key!r} has no valid path."
+            )
+            continue
+        candidate = (directory / relative_path).resolve()
+        try:
+            candidate.relative_to(directory.resolve())
+        except ValueError:
+            result["errors"].append(
+                f"Manifest path escapes the artifact directory: {relative_path!r}."
+            )
+            continue
+
+        check: dict[str, Any] = {
+            "path": relative_path,
+            "exists": candidate.is_file(),
+            "expected_sha256": expected_hash,
+            "actual_sha256": None,
+            "matches": False,
+        }
+        if not candidate.is_file():
+            result["errors"].append(
+                f"Manifest file {key!r} is missing: {relative_path}."
+            )
+        elif not isinstance(expected_hash, str) or len(expected_hash) != 64:
+            result["errors"].append(
+                f"Manifest file {key!r} has no valid SHA-256 digest."
+            )
+        else:
+            try:
+                int(expected_hash, 16)
+            except ValueError:
+                result["errors"].append(
+                    f"Manifest file {key!r} SHA-256 is not hexadecimal."
+                )
+            else:
+                actual_hash = sha256_file(candidate)
+                check["actual_sha256"] = actual_hash
+                check["matches"] = actual_hash == expected_hash
+                if actual_hash != expected_hash:
+                    result["errors"].append(
+                        f"Manifest SHA-256 mismatch for file {key!r}."
+                    )
+        result["hash_checks"][key] = check
+
+    result["status"] = "PASS" if not result["errors"] else "FAIL"
+    return result
+
+
 def find_fold_assignments(root: Path) -> list[str]:
     matches: set[Path] = set()
     for base in (root / "data/processed", root / "reports/tables"):
@@ -130,8 +258,23 @@ def audit(repo_root: Path, *, hash_data: bool) -> dict[str, Any]:
         for name, item in production["required_files"].items()
         if not item["exists"]
     ]
+    production["optional_diagnostic_files"] = {
+        name: {
+            "path": str(PRODUCTION_ARTIFACT / name),
+            "exists": production_files.get(name, {}).get("exists", False),
+        }
+        for name in OPTIONAL_DIAGNOSTIC_FILES
+    }
+    production["manifest_validation"] = validate_production_manifest(
+        production_dir
+    )
+    production["artifact_schema_version"] = production[
+        "manifest_validation"
+    ]["artifact_schema_version"]
     production["ready"] = (
-        production["exists"] and not production["missing_required_files"]
+        production["exists"]
+        and not production["missing_required_files"]
+        and production["manifest_validation"]["status"] == "PASS"
     )
 
     lab = describe_directory(lab_dir, calculate_hash=True)
