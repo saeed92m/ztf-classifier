@@ -155,7 +155,7 @@ class SourceBackedAnalysisExecutor:
                 value.pop("source_path", None)
 
         return {
-            "schema_version": "1.0",
+            "schema_version": "1.1",
             "oid": oid,
             "survey": survey,
             "observation_count": len(records),
