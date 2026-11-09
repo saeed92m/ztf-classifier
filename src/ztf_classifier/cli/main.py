@@ -196,15 +196,6 @@ def _prediction_payload(
             }
 
         if result.ood is not None:
-            item["ood"]["evaluation_status"] = (
-                "evaluated_adequacy_unreported"
-                if result.data_adequacy is None
-                else (
-                    "evaluated_complete_features"
-                    if result.data_adequacy.status[row_index] == "complete"
-                    else "evaluated_with_missing_features"
-                )
-            )
             if result.data_adequacy is not None:
                 item["ood"]["input_feature_coverage_fraction"] = float(
                     result.data_adequacy.coverage_fraction[row_index]
@@ -215,6 +206,20 @@ def _prediction_payload(
                 item["ood"]["input_missing_feature_count"] = int(
                     result.data_adequacy.missing_feature_count[row_index]
                 )
+
+        item["ood_evaluation_status"] = (
+            "not_available"
+            if result.ood is None
+            else (
+                "evaluated_adequacy_unreported"
+                if result.data_adequacy is None
+                else (
+                    "evaluated_complete_features"
+                    if result.data_adequacy.status[row_index] == "complete"
+                    else "evaluated_with_missing_features"
+                )
+            )
+        )
 
         predictions.append(item)
 
