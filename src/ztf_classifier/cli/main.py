@@ -176,6 +176,24 @@ def _prediction_payload(
                 ),
             }
 
+        if result.data_adequacy is not None:
+            adequacy = result.data_adequacy
+            item["data_adequacy"] = {
+                "status": adequacy.status[row_index],
+                "observed_feature_count": int(
+                    adequacy.observed_feature_count[row_index]
+                ),
+                "missing_feature_count": int(
+                    adequacy.missing_feature_count[row_index]
+                ),
+                "coverage_fraction": float(adequacy.coverage_fraction[row_index]),
+                "missing_feature_names": list(
+                    adequacy.missing_feature_names[row_index]
+                ),
+                "reason_codes": list(adequacy.reason_codes[row_index]),
+                "interpretation": "descriptive_only_not_an_eligibility_decision",
+            }
+
         predictions.append(item)
 
     return {
