@@ -15,6 +15,7 @@ from ztf_classifier.domain.observations import (
     ObservationProvenance,
 )
 from ztf_classifier.jobs import JobStore
+from ztf_classifier.models.data_adequacy import DataAdequacyResult
 from ztf_classifier.models.results import PredictionResult
 
 
@@ -39,6 +40,10 @@ class FakeApplicationService:
             calibration_status="available",
             conformal_status="unavailable",
             ood_status="unavailable",
+            data_adequacy=DataAdequacyResult.from_matrix(
+                np.ones((len(dataset), 42), dtype=np.float64),
+                tuple(f"feature_{index}" for index in range(42)),
+            ),
             model_version=model_version,
             artifact_schema_version="1.1",
             artifact_hash="a" * 64,
@@ -249,6 +254,9 @@ def test_prediction_uses_server_side_model_selection(
     payload = response.json()
     assert payload["model_version"] == "baseline_v0.2"
     assert payload["predictions"][0]["predicted_class"] == "AGN"
+    assert payload["schema_version"] == "1.1"
+    assert payload["predictions"][0]["data_adequacy"]["status"] == "complete"
+    assert payload["predictions"][0]["data_adequacy"]["observed_feature_count"] == 42
     assert "/secret" not in response.text
     assert fake_service.calls[0][2] == "baseline_v0.2"
 
