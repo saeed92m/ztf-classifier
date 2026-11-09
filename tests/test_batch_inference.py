@@ -131,6 +131,9 @@ def test_batch_preserves_oid_and_row_count(tmp_path: Path) -> None:
         "evaluated_with_missing_features",
     ]
     assert list(result.predictions["ood_input_observed_feature_count"]) == [42, 1]
+    assert result.predictions["data_adequacy_policy_version"].eq(
+        "coverage-only-v1"
+    ).all()
 
 
 def test_batch_contains_all_probability_columns(tmp_path: Path) -> None:
