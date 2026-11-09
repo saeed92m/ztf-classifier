@@ -199,17 +199,20 @@ def run_masking_sensitivity(
             )
             baseline_flagged_evaluations = int(baseline_flagged.sum()) * replicates
             masked_flagged_evaluations = int(masked_flagged.sum())
+            baseline_percentile_values = scenario[
+                "baseline_anomaly_percentile"
+            ].to_numpy()
             suppressed = int(
-                (
-                    scenario["baseline_anomaly_percentile"].to_numpy()
-                    >= threshold
-                ).__and__(~masked_flagged).sum()
+                np.logical_and(
+                    baseline_percentile_values >= threshold,
+                    ~masked_flagged,
+                ).sum()
             )
             newly_flagged = int(
-                (
-                    scenario["baseline_anomaly_percentile"].to_numpy()
-                    < threshold
-                ).__and__(masked_flagged).sum()
+                np.logical_and(
+                    baseline_percentile_values < threshold,
+                    masked_flagged,
+                ).sum()
             )
             summary[f"flag_flip_rate_{threshold_suffix}"] = float(
                 scenario[f"flag_flip_{threshold_suffix}"].mean()
