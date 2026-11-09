@@ -9,6 +9,7 @@ from ztf_classifier.features.contracts import FeatureProvenance, FeatureResult
 from ztf_classifier.jobs.errors import AnalysisJobExecutionError
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
 from ztf_classifier.jobs.store import JobRecord
+from ztf_classifier.models.data_adequacy import DataAdequacyResult
 from ztf_classifier.models.results import PredictionResult
 
 
@@ -62,6 +63,10 @@ class FakeApplicationService:
             calibration_status="available",
             conformal_status="unavailable",
             ood_status="unavailable",
+            data_adequacy=DataAdequacyResult.from_matrix(
+                np.concatenate([np.ones(1), np.full(41, np.nan)]).reshape(1, 42),
+                tuple(f"feature_{index}" for index in range(42)),
+            ),
             model_version="baseline_v0.2",
             artifact_schema_version="1.1",
             artifact_hash="b" * 64,
@@ -134,6 +139,10 @@ def test_source_backed_executor_runs_full_contract(monkeypatch):
     assert result["observation_count"] == 1
     assert result["feature_schema_version"] == "v0.2"
     assert result["prediction"]["predicted_class"] == "AGN"
+    assert result["schema_version"] == "1.1"
+    assert result["prediction"]["data_adequacy"]["status"] == "partial"
+    assert result["prediction"]["data_adequacy"]["observed_feature_count"] == 1
+    assert result["diagnostics"]["data_adequacy"] == "available"
     assert result["model_version"] == "baseline_v0.2"
     assert "/secret" not in str(result["model_provenance"])
 
