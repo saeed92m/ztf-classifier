@@ -33,6 +33,18 @@ No model, feature, class order, benchmark, production selector, scientific thres
 
 The main branch has not received a newer push in the inspected snapshot, although scheduled Scientific Validation ran on 2026-11-09. Several important changes remain in draft or stacked pull requests. A green check on a non-merged branch is not a released capability.
 
+A read-only compare against current main found several important main-targeted PR branches are based on older main revisions and have diverged:
+
+| PR | Recorded base SHA | Current main movement | Comparison result | Disposition |
+|---|---|---:|---|---|
+| #244 CPVS membership audit | `4f98a06...` | main is 8 commits ahead | 199 ahead / 8 behind; diverged | Rebuild on current main and rerun exact-head checks before scientific review |
+| #246 BTS-to-DR24 recovery | `4f98a06...` | main is 8 commits ahead | 46 ahead / 8 behind; diverged | Reconcile its evidence/tools with current DR24 adapter chain before reuse |
+| #247 documentation sync | `4f98a06...` | main is 8 commits ahead | 20 ahead / 8 behind; diverged | Treat as superseded by the newer Park documentation chain unless a unique change remains |
+| #252 CIN architecture | `764ed5d...` | main is 6 commits ahead | 41 ahead / 6 behind; diverged | Refresh before any review; keep CIN runtime out of the Park critical path |
+
+These comparisons establish branch drift. They do not, by themselves, prove merge conflicts or authorize merging. Stacked PRs such as #273–#277 intentionally target parent feature branches and must be evaluated in dependency order, not rebased blindly onto main.
+
+
 The GitHub integration could not read branch-protection settings (HTTP 403). It also did not provide a usable Dependabot-alert listing. These items are **not verified**; this report does not claim that no security alerts or protection gaps exist.
 
 ## 3. Scientific baseline and model-artifact availability
