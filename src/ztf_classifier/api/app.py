@@ -233,15 +233,6 @@ def _serialize_prediction(
             }
 
         if ood is not None:
-            ood["evaluation_status"] = (
-                "evaluated_adequacy_unreported"
-                if result.data_adequacy is None
-                else (
-                    "evaluated_complete_features"
-                    if result.data_adequacy.status[row_index] == "complete"
-                    else "evaluated_with_missing_features"
-                )
-            )
             if result.data_adequacy is not None:
                 ood["input_feature_coverage_fraction"] = float(
                     result.data_adequacy.coverage_fraction[row_index]
@@ -252,6 +243,20 @@ def _serialize_prediction(
                 ood["input_missing_feature_count"] = int(
                     result.data_adequacy.missing_feature_count[row_index]
                 )
+
+        ood_evaluation_status = (
+            "not_available"
+            if ood is None
+            else (
+                "evaluated_adequacy_unreported"
+                if result.data_adequacy is None
+                else (
+                    "evaluated_complete_features"
+                    if result.data_adequacy.status[row_index] == "complete"
+                    else "evaluated_with_missing_features"
+                )
+            )
+        )
 
         items.append(
             PredictionItem(
@@ -264,6 +269,7 @@ def _serialize_prediction(
                 },
                 conformal=conformal,
                 ood=ood,
+                ood_evaluation_status=ood_evaluation_status,
                 data_adequacy=data_adequacy,
                 scientific_anomaly=scientific_anomaly,
             )
