@@ -3,7 +3,6 @@ import pytest
 
 from ztf_classifier.models.data_adequacy import DataAdequacyResult
 
-
 FEATURES = tuple(f"feature_{index}" for index in range(42))
 
 
