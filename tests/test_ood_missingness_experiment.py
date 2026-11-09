@@ -4,7 +4,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from scripts.run_ood_missingness_experiment import run_masking_sensitivity
+from scripts.run_ood_missingness_experiment import (
+    build_feature_group_mapping,
+    build_feature_masking_scenarios,
+    build_natural_missingness_patterns,
+    run_family_masking_sensitivity,
+    run_masking_sensitivity,
+)
 from ztf_classifier.models.config import OODConfig
 from ztf_classifier.models.ood_artifact import OODArtifact
 from ztf_classifier.models.ood_production import OODProductionModel
@@ -75,3 +81,102 @@ def test_masking_sensitivity_rejects_incomplete_baseline_rows() -> None:
             masked_feature_counts=(1,),
             replicates=1,
         )
+
+
+def test_feature_groups_partition_the_frozen_v02_schema() -> None:
+    from ztf_classifier.features.pipeline import V0_2_FEATURES
+
+    groups = build_feature_group_mapping()
+    group_features = [
+        feature
+        for definition in groups.values()
+        for feature in definition["features"]
+    ]
+
+    assert set(groups) == {
+        "g_basic",
+        "g_periodicity",
+        "r_basic",
+        "r_periodicity",
+        "cross_band",
+    }
+    assert len(group_features) == len(set(group_features)) == 42
+    assert set(group_features) == set(V0_2_FEATURES)
+    assert {name: len(item["features"]) for name, item in groups.items()} == {
+        "g_basic": 13,
+        "g_periodicity": 6,
+        "r_basic": 13,
+        "r_periodicity": 6,
+        "cross_band": 4,
+    }
+    assert "g_variability_ratio" in groups["cross_band"]["features"]
+    assert "r_variability_ratio" in groups["cross_band"]["features"]
+
+
+def test_extraction_mask_scenarios_match_v02_eligibility_thresholds() -> None:
+    groups = build_feature_group_mapping()
+    scenarios = build_feature_masking_scenarios(groups)
+
+    expected = {
+        "g_periodicity_unavailable": 6,
+        "r_periodicity_unavailable": 6,
+        "both_periodicity_unavailable": 12,
+        "g_low_observation_1_to_9": 19,
+        "r_low_observation_1_to_9": 19,
+        "g_band_absent": 23,
+        "r_band_absent": 23,
+        "both_bands_low_observation_1_to_9": 38,
+        "g_low_1_to_9_r_low_10_to_29": 25,
+        "r_low_1_to_9_g_low_10_to_29": 25,
+        "g_band_absent_r_low_10_to_29": 29,
+        "r_band_absent_g_low_10_to_29": 29,
+    }
+    assert {
+        name: scenario["missing_feature_count"]
+        for name, scenario in scenarios.items()
+    } == expected
+
+
+def test_family_masking_is_deterministic_and_matches_natural_patterns() -> None:
+    X, model, reference = _fitted_reference()
+    groups = build_feature_group_mapping()
+    scenarios = build_feature_masking_scenarios(groups)
+    original = X.copy()
+    oids = [f"ZTF_TEST_{index:03d}" for index in range(len(X))]
+    labels = ["TEST"] * len(X)
+
+    first_rows, first_summary = run_family_masking_sensitivity(
+        X, oids, labels, model, reference, scenarios
+    )
+    second_rows, second_summary = run_family_masking_sensitivity(
+        X, oids, labels, model, reference, scenarios
+    )
+
+    pd.testing.assert_frame_equal(first_rows, second_rows)
+    pd.testing.assert_frame_equal(first_summary, second_summary)
+    np.testing.assert_array_equal(X, original)
+    assert len(first_summary) == len(scenarios)
+    assert len(first_rows) == len(X) * len(scenarios)
+    for threshold in (90, 95, 99):
+        assert (
+            first_summary[f"suppressed_flag_count_{threshold}"]
+            + first_summary[f"new_flag_count_{threshold}"]
+            == first_summary[f"flag_flip_count_{threshold}"]
+        ).all()
+
+    natural = X.copy()
+    natural[0, :] = np.nan
+    natural[0, :4] = X[0, :4]
+    natural[1, :] = np.nan
+    natural[1, [i for i in range(42) if i not in scenarios[
+        "both_bands_low_observation_1_to_9"
+    ]["missing_features"]]] = X[1, [
+        i for i in range(42) if i not in scenarios[
+            "both_bands_low_observation_1_to_9"
+        ]["missing_features"]
+    ]]
+    patterns, summary = build_natural_missingness_patterns(
+        natural, oids, labels, scenarios
+    )
+    assert patterns.iloc[0]["matched_extraction_pattern"] == "unmatched"
+    assert summary["object_count"] == len(X)
