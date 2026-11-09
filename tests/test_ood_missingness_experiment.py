@@ -87,11 +87,7 @@ def test_feature_groups_partition_the_frozen_v02_schema() -> None:
     from ztf_classifier.features.pipeline import V0_2_FEATURES
 
     groups = build_feature_group_mapping()
-    group_features = [
-        feature
-        for definition in groups.values()
-        for feature in definition["features"]
-    ]
+    group_features = [feature for definition in groups.values() for feature in definition["features"]]
 
     assert set(groups) == {
         "g_basic",
@@ -132,8 +128,7 @@ def test_extraction_mask_scenarios_match_v02_eligibility_thresholds() -> None:
         "r_band_absent_g_low_10_to_29": 29,
     }
     assert {
-        name: scenario["missing_feature_count"]
-        for name, scenario in scenarios.items()
+        name: scenario["missing_feature_count"] for name, scenario in scenarios.items()
     } == expected
 
 
