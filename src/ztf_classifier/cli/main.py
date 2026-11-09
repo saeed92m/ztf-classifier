@@ -196,15 +196,15 @@ def _prediction_payload(
             }
 
         if result.ood is not None and result.data_adequacy is not None:
-                item["ood"]["input_feature_coverage_fraction"] = float(
-                    result.data_adequacy.coverage_fraction[row_index]
-                )
-                item["ood"]["input_observed_feature_count"] = int(
-                    result.data_adequacy.observed_feature_count[row_index]
-                )
-                item["ood"]["input_missing_feature_count"] = int(
-                    result.data_adequacy.missing_feature_count[row_index]
-                )
+            item["ood"]["input_feature_coverage_fraction"] = float(
+                result.data_adequacy.coverage_fraction[row_index]
+            )
+            item["ood"]["input_observed_feature_count"] = int(
+                result.data_adequacy.observed_feature_count[row_index]
+            )
+            item["ood"]["input_missing_feature_count"] = int(
+                result.data_adequacy.missing_feature_count[row_index]
+            )
 
         item["ood_evaluation_status"] = (
             "not_available"
