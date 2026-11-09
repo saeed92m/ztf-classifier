@@ -51,6 +51,14 @@ def _finite_or_none(value: Any) -> float | None:
     return number if np.isfinite(number) else None
 
 
+def _spearman_or_none(left: Any, right: Any) -> float | None:
+    left_series = pd.Series(left)
+    right_series = pd.Series(right)
+    if left_series.nunique(dropna=True) < 2 or right_series.nunique(dropna=True) < 2:
+        return None
+    return _finite_or_none(left_series.corr(right_series, method="spearman"))
+
+
 def run_masking_sensitivity(
     X: np.ndarray,
     oids: list[str],
@@ -114,12 +122,9 @@ def run_masking_sensitivity(
             percentile_delta = percentiles - baseline_percentiles
             score_delta = scores - baseline_scores
 
-            correlation = pd.Series(baseline_percentiles).corr(
-                pd.Series(percentiles),
-                method="spearman",
-            )
-            if np.isfinite(correlation):
-                replicate_correlations.append(float(correlation))
+            correlation = _spearman_or_none(baseline_percentiles, percentiles)
+            if correlation is not None:
+                replicate_correlations.append(correlation)
 
             for row_index, oid in enumerate(oids):
                 record: dict[str, Any] = {
@@ -555,8 +560,8 @@ def run_family_masking_sensitivity(
             ),
             "median_signed_percentile_delta": float(np.median(percentile_delta)),
             "mean_signed_percentile_delta": float(np.mean(percentile_delta)),
-            "spearman_rank_correlation": _finite_or_none(
-                baseline_values.corr(masked_values, method="spearman")
+            "spearman_rank_correlation": _spearman_or_none(
+                baseline_values, masked_values
             ),
             "median_absolute_score_delta": float(np.median(np.abs(score_delta))),
         }
