@@ -473,7 +473,7 @@ def test_cli_batch_e2e_parquet_contract(
     metadata = schema.metadata or {}
 
     expected_metadata = {
-        b"ztf_classifier.schema_version": b"1.1",
+        b"ztf_classifier.schema_version": b"1.2",
         b"ztf_classifier.model_version": b"baseline_v0.2",
         b"ztf_classifier.model_family": b"XGBoost",
         b"ztf_classifier.has_calibration": b"true",
