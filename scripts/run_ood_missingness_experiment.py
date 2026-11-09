@@ -345,6 +345,17 @@ def run_experiment(
             "feature_cell_count": int(X.size),
             "feature_missing_fraction": float(np.isnan(X).mean()),
         },
+        "model_state_basis": (
+            "Reconstructed by fitting OODProductionModel to the exact frozen "
+            "v0.2 feature matrix with the frozen OODConfig. The persisted "
+            "production artifact was not loaded; this is not a byte-for-byte "
+            "artifact replay."
+        ),
+        "reference_scores_are_in_sample": True,
+        "benchmark_label_role": (
+            "ALeRCE reference labels; not independent astrophysical ground truth. "
+            "Labels are recorded for traceability and are not used by the masking experiment."
+        ),
         "ood_configuration": {
             "method": config.method,
             "n_estimators": config.n_estimators,
@@ -360,6 +371,15 @@ def run_experiment(
         },
         "experiment": {
             "masking_mechanism": "MCAR, uniformly sampled feature positions per object",
+            "masking_scope": (
+                "Controlled perturbation of complete rows only; does not model "
+                "correlated survey or feature-family missingness."
+            ),
+            "complete_subset_limitation": (
+                "Paired masking uses only complete rows from the 150-object "
+                "reference dataset; report the exact count and do not generalize "
+                "to the full ZTF population."
+            ),
             "masked_feature_counts": list(masked_feature_counts),
             "replicates_per_level": replicates,
             "random_seed": random_seed,
