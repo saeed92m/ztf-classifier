@@ -853,9 +853,10 @@ def run_experiment(
         "report_type": "v0.2_ood_missingness_sensitivity",
         "status": "DIAGNOSTIC_ONLY",
         "scientific_interpretation": (
-            "This experiment measures score and rank sensitivity to controlled "
-            "MCAR feature masking. It does not establish scientific OOD eligibility, "
-            "a calibrated probability, or a production rejection threshold."
+            "This experiment measures score and rank sensitivity to MCAR masking "
+            "and extraction-aligned correlated feature-family masks. It does not "
+            "establish scientific OOD eligibility, a calibrated probability, or "
+            "a production rejection threshold."
         ),
         "reference": {
             "dataset_path": str(dataset_path),
@@ -917,10 +918,12 @@ def run_experiment(
             ),
         },
         "experiment": {
-            "masking_mechanism": "MCAR, uniformly sampled feature positions per object",
+            "masking_mechanism": (
+                "MCAR random masks and separate extraction-aligned correlated masks"
+            ),
             "masking_scope": (
-                "Controlled perturbation of complete rows only; does not model "
-                "correlated survey or feature-family missingness."
+                "MCAR masks use complete rows only. Feature-family masks model "
+                "the canonical v0.2 extraction eligibility patterns."
             ),
             "complete_subset_limitation": (
                 "Paired masking uses only complete rows from the 150-object "
@@ -934,7 +937,8 @@ def run_experiment(
             "feature_family_masking": {
                 "method": (
                     "Correlated masks derived from canonical v0.2 extraction "
-                    "functions and their 10/30 observation eligibility rules."
+                    "functions, 10/30 observation thresholds, and 1/2 observation "
+                    "cross-band color and variability requirements."
                 ),
                 "scenarios": list(family_scenarios),
                 "scenario_missing_feature_counts": {
