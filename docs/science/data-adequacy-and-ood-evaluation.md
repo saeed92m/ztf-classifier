@@ -1,6 +1,6 @@
 # Data Adequacy and OOD Evaluation Contract
 
-**Status:** Scientific design decision pending validation  
+**Status:** Descriptive coverage diagnostic implemented; production OOD eligibility policy pending validation  
 **Date:** 2026-11-09  
 **Scope:** Production inference, persisted OOD diagnostics, API/CLI/batch/job outputs  
 **Baseline impact:** None. This document does not change the v0.2.0 classifier, its 42-feature schema, model artifact, class order, or acceptance criteria.
@@ -162,19 +162,21 @@ Do not change the frozen model artifact or its preprocessing state as part of th
 - The local benchmark audit previously reported missingness patterns, but those results must be re-run against the exact dataset and hash before they can support a production policy.
 - The current GitHub Actions environment may skip integration tests when scientific artifacts are not present. A green run with those tests skipped is not scientific validation.
 
-## 9. Implementation gate
+## 9. Implemented non-gating diagnostic
 
-Do not implement a production OOD exclusion threshold until Sections 5 and 8 are resolved.
+The current feature branch adds a descriptive `DataAdequacyResult` before OOD preprocessing. It reports, for each row:
 
-Safe work can proceed independently:
+- observed and missing counts across the 42 frozen features;
+- coverage fraction;
+- missing feature names;
+- `complete` or `partial` status;
+- a stable missing-feature reason code.
 
-- add a non-gating adequacy diagnostic that reports observed/missing feature counts and coverage;
-- preserve row alignment and provenance;
-- expose explicit per-row OOD evaluation state;
-- add tests for serialization and alignment;
-- keep OOD gating disabled until the policy is approved.
+The diagnostic is computed from the numeric, finite-value mask before median imputation. It is attached to `PredictionResult` and serialized through API, CLI, batch Parquet, object-job payloads, and the web workbench. The API, CLI, batch, and job payload versions are incremented where their serialized contracts changed.
 
-Any non-gating diagnostic must be clearly labelled as descriptive. It must not imply that a row is scientifically adequate merely because it has nonzero coverage.
+This diagnostic is descriptive only. It does not make a scientific eligibility decision. A one-feature row is explicitly labelled `partial`, but the current OOD model still produces a score for it. This behavior is deliberately visible and remains a production validation blocker until an evidence-based threshold is approved.
+
+Do not implement a production OOD exclusion threshold until Sections 5 and 8 are resolved. Any non-gating diagnostic must not imply that a row is scientifically adequate merely because it has nonzero coverage.
 
 ## 10. Acceptance criteria
 
