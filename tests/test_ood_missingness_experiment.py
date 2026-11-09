@@ -94,7 +94,9 @@ def test_feature_groups_partition_the_frozen_v02_schema() -> None:
         "g_periodicity",
         "r_basic",
         "r_periodicity",
-        "cross_band",
+        "cross_band_color",
+        "g_variability_ratio",
+        "r_variability_ratio",
     }
     assert len(group_features) == len(set(group_features)) == 42
     assert set(group_features) == set(V0_2_FEATURES)
@@ -103,10 +105,12 @@ def test_feature_groups_partition_the_frozen_v02_schema() -> None:
         "g_periodicity": 6,
         "r_basic": 13,
         "r_periodicity": 6,
-        "cross_band": 4,
+        "cross_band_color": 2,
+        "g_variability_ratio": 1,
+        "r_variability_ratio": 1,
     }
-    assert "g_variability_ratio" in groups["cross_band"]["features"]
-    assert "r_variability_ratio" in groups["cross_band"]["features"]
+    assert groups["g_variability_ratio"]["minimum_valid_observations"] == 2
+    assert groups["r_variability_ratio"]["minimum_valid_observations"] == 2
 
 
 def test_extraction_mask_scenarios_match_v02_eligibility_thresholds() -> None:
@@ -117,13 +121,18 @@ def test_extraction_mask_scenarios_match_v02_eligibility_thresholds() -> None:
         "g_periodicity_unavailable": 6,
         "r_periodicity_unavailable": 6,
         "both_periodicity_unavailable": 12,
-        "g_low_observation_1_to_9": 19,
-        "r_low_observation_1_to_9": 19,
+        "g_low_observation_2_to_9": 19,
+        "r_low_observation_2_to_9": 19,
+        "g_single_observation": 20,
+        "r_single_observation": 20,
         "g_band_absent": 23,
         "r_band_absent": 23,
-        "both_bands_low_observation_1_to_9": 38,
-        "g_low_1_to_9_r_low_10_to_29": 25,
-        "r_low_1_to_9_g_low_10_to_29": 25,
+        "both_bands_low_observation_2_to_9": 38,
+        "both_bands_single_observation": 40,
+        "g_low_2_to_9_r_low_10_to_29": 25,
+        "r_low_2_to_9_g_low_10_to_29": 25,
+        "g_single_r_low_10_to_29": 26,
+        "r_single_g_low_10_to_29": 26,
         "g_band_absent_r_low_10_to_29": 29,
         "r_band_absent_g_low_10_to_29": 29,
     }
@@ -166,7 +175,7 @@ def test_family_masking_is_deterministic_and_matches_natural_patterns() -> None:
     from ztf_classifier.features.pipeline import V0_2_FEATURES
 
     missing_names = set(
-        scenarios["both_bands_low_observation_1_to_9"]["missing_features"]
+        scenarios["both_bands_low_observation_2_to_9"]["missing_features"]
     )
     observed_indices = [
         index
@@ -180,6 +189,6 @@ def test_family_masking_is_deterministic_and_matches_natural_patterns() -> None:
     assert patterns.iloc[0]["matched_extraction_pattern"] == "unmatched"
     assert (
         patterns.iloc[1]["matched_extraction_pattern"]
-        == "both_bands_low_observation_1_to_9"
+        == "both_bands_low_observation_2_to_9"
     )
     assert summary["object_count"] == len(X)
