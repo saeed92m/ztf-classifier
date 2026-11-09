@@ -678,6 +678,10 @@ def run_experiment(
         raise ValueError(
             "Frozen feature schema must define 42 unique ordered features."
         )
+    if feature_names != list(V0_2_FEATURES):
+        raise ValueError(
+            "Parquet feature schema does not match the canonical v0.2 extraction order."
+        )
     missing_columns = sorted(set(feature_names) - set(dataset.columns))
     if missing_columns:
         raise ValueError(f"Dataset is missing frozen features: {missing_columns}")
@@ -737,15 +741,56 @@ def run_experiment(
         random_seed=random_seed,
     )
 
+    feature_groups = build_feature_group_mapping()
+    family_scenarios = build_feature_masking_scenarios(feature_groups)
+    family_rows, family_summary = run_family_masking_sensitivity(
+        complete_X,
+        complete_oids,
+        complete_labels,
+        model,
+        reference,
+        family_scenarios,
+    )
+    natural_patterns, natural_pattern_summary = build_natural_missingness_patterns(
+        X,
+        dataset["oid"].astype(str).tolist(),
+        dataset["class"].astype(str).tolist(),
+        family_scenarios,
+        metadata=dataset,
+    )
+
     output_dir.mkdir(parents=True, exist_ok=True)
     natural_path = output_dir / "natural_reference_ood_scores.csv"
     masked_path = output_dir / "masked_object_level_results.csv"
     summary_path = output_dir / "masked_sensitivity_summary.csv"
     feature_missingness_path = output_dir / "feature_missingness.csv"
+    family_rows_path = output_dir / "family_masked_object_level_results.csv"
+    family_summary_path = output_dir / "family_masking_summary.csv"
+    natural_patterns_path = output_dir / "natural_missingness_patterns.csv"
+    natural_pattern_summary_path = (
+        output_dir / "natural_missingness_pattern_summary.json"
+    )
+    feature_group_mapping_path = output_dir / "feature_group_mapping.json"
 
     natural_rows.to_csv(natural_path, index=False)
     masked_rows.to_csv(masked_path, index=False)
     masked_summary.to_csv(summary_path, index=False)
+    family_rows.to_csv(family_rows_path, index=False)
+    family_summary.to_csv(family_summary_path, index=False)
+    natural_patterns.to_csv(natural_patterns_path, index=False)
+    natural_pattern_summary_path.write_text(
+        json.dumps(natural_pattern_summary, indent=2, sort_keys=True) + "\\n",
+        encoding="utf-8",
+    )
+    feature_group_mapping_path.write_text(
+        json.dumps(
+            {"groups": feature_groups, "scenarios": family_scenarios},
+            indent=2,
+            sort_keys=True,
+        )
+        + "\\n",
+        encoding="utf-8",
+    )
 
     pd.DataFrame(
         {
@@ -799,6 +844,8 @@ def run_experiment(
                 "and is not a causal estimate."
             ),
         },
+        "feature_group_mapping": feature_groups,
+        "natural_missingness_pattern_summary": natural_pattern_summary,
         "model_state_basis": (
             "Reconstructed by fitting OODProductionModel to the exact frozen "
             "v0.2 feature matrix with the frozen OODConfig. The persisted "
@@ -836,7 +883,19 @@ def run_experiment(
             "replicates_per_level": replicates,
             "random_seed": random_seed,
             "paired_complete_objects": len(complete_X),
-            "feature_family_masking": "NOT_RUN: no verified machine-readable family map",
+            "feature_family_masking": {
+                "method": (
+                    "Correlated masks derived from canonical v0.2 extraction "
+                    "functions and their 10/30 observation eligibility rules."
+                ),
+                "scenarios": list(family_scenarios),
+                "scenario_missing_feature_counts": {
+                    name: scenario["missing_feature_count"]
+                    for name, scenario in family_scenarios.items()
+                },
+                "paired_complete_objects": len(complete_X),
+                "natural_pattern_summary": natural_pattern_summary,
+            },
             "production_eligibility_policy": "NOT_ESTABLISHED",
         },
         "environment": {
@@ -852,6 +911,13 @@ def run_experiment(
             "masked_object_level_results.csv": sha256_file(masked_path),
             "masked_sensitivity_summary.csv": sha256_file(summary_path),
             "feature_missingness.csv": sha256_file(feature_missingness_path),
+            "family_masked_object_level_results.csv": sha256_file(family_rows_path),
+            "family_masking_summary.csv": sha256_file(family_summary_path),
+            "natural_missingness_patterns.csv": sha256_file(natural_patterns_path),
+            "natural_missingness_pattern_summary.json": sha256_file(
+                natural_pattern_summary_path
+            ),
+            "feature_group_mapping.json": sha256_file(feature_group_mapping_path),
         },
     }
 
