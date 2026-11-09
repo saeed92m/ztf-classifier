@@ -523,6 +523,9 @@ def run_family_masking_sensitivity(
             )
             summary[f"suppressed_flag_count_{int(threshold)}"] = suppressed
             summary[f"new_flag_count_{int(threshold)}"] = newly_flagged
+            summary[f"flag_flip_count_{int(threshold)}"] = (
+                suppressed + newly_flagged
+            )
             summary[f"suppressed_rate_of_baseline_flags_{int(threshold)}"] = (
                 float(suppressed / baseline_count) if baseline_count else None
             )
