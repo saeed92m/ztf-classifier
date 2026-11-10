@@ -50,7 +50,7 @@ G1 DR24 acquisition: PARTIAL.
 G2 physical-source identity and OID grouping: NOT ACCEPTED.  
 G3 time/photometry/QC contract: NOT ACCEPTED.  
 G4 complete 5–10 source application flow: PARTIAL.  
-G5 guided 30–50 OID live Workbench demo: NOT ACCEPTED pending corrected live run and acceptance review.  
+G5 guided 30–50 OID live Workbench demo: PARTIAL. The 30-OID OID-level UI flow passed in three batches; the records are not confirmed physical sources and a 50-source demo is not complete.  
 G6 no-terminal user journey: PARTIAL.  
 G7 independent DR24 scientific validation: NOT ACCEPTED.  
 G8 Park handover package: NOT ACCEPTED.
@@ -59,9 +59,9 @@ G8 Park handover package: NOT ACCEPTED.
 
 Equal-weight evidence scoring: PASS/VERIFIED=1, PARTIAL=0.5, NOT VERIFIED/NOT ACCEPTED=0.
 
-- Active project: **46%**, mean of five active subsystems.
-- Raw-data pilot v0.3: **79%**, mean of eight demo subsystems.
-- Park MVP acceptance gates: **28%**, mean of nine gates under the stricter gate rubric.
+- Active project: **48%**, mean of five active subsystems.
+- Raw-data pilot v0.3: **82%**, mean of eight demo subsystems.
+- Park MVP acceptance gates: **33%**, mean of nine gates under the stricter gate rubric.
 
 These scores measure evidence completion only. They are not time-based estimates, forecast probabilities or historical trends. CPVS and CIN are excluded from the active project score because they are separate/deferred workstreams.
 
