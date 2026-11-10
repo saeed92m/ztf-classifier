@@ -6,10 +6,10 @@ import os
 import socket
 import threading
 import time
+import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.error import URLError
-import urllib.request
 
 import pytest
 import uvicorn
@@ -103,10 +103,17 @@ def test_live_dr24_hats_workbench_renders_and_exports_ten_oids(tmp_path: Path) -
             panels = page.locator("#dr24Results > .panel")
             assert panels.count() == 10
 
-            for index, (oid, epochs, digest) in enumerate(SAMPLE):
-                panel = panels.nth(index)
+            # HATS query results do not have to preserve request order. Match
+            # every panel by its OID label, not by its array position.
+            panel_texts = [panels.nth(index).inner_text() for index in range(panels.count())]
+            for oid, epochs, digest in SAMPLE:
+                matches = [
+                    index for index, panel_text in enumerate(panel_texts)
+                    if f"OID {oid} · filter g" in panel_text
+                ]
+                assert len(matches) == 1, f"Expected exactly one panel for OID {oid}"
+                panel = panels.nth(matches[0])
                 summary = panel.inner_text()
-                assert f"OID {oid} · filter g" in summary
                 assert f"epochs {epochs} / catalog {epochs}" in summary
                 assert digest in summary
                 assert panel.locator(".dr24-chart svg").count() == 1
