@@ -199,7 +199,7 @@ def test_live_dr24_hats_workbench_renders_and_exports_ten_oids(tmp_path: Path) -
             assert f"OID {r_oid} · filter r" in r_text
             assert f"epochs {r_epoch_count} / catalog {r_epoch_count}" in r_text
             assert r_payload_sha256 in r_text
-            assert "No cross-OID grouping" in r_text
+            assert "no cross-OID grouping" in r_text
             with page.expect_download(timeout=30_000) as r_download_info:
                 page.locator("#dr24ExportButton").click()
             r_export_path = out / "ztf-dr24-park-r-band-control-raw-export.json"
