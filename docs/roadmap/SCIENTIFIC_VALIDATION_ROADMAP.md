@@ -12,7 +12,7 @@ Scientific limits:
 
 The immutable 150-object / 15-class ALeRCE benchmark remains a reference benchmark. ALeRCE labels are not independent astrophysical ground truth. The CPVS membership discrepancy remains unresolved and is not a Park MVP gate.
 
-The corrected 30-OID Workbench test predicate passed ordinary CI at commit `82f0812d07005dd521361f127f3e9f7d493060af`. The corrected source-backed run #42830475350 was queued at this snapshot. Keep the guided UI gate unaccepted until the run completes successfully and its artifacts are reviewed.
+The corrected 30-OID Workbench test predicate passed ordinary CI at commit `82f0812d07005dd521361f127f3e9f7d493060af`. The corrected source-backed run [#42830475350](https://github.com/saeed92m/ztf-classifier/actions/runs/42830475350) completed successfully. It verifies 30 OID-level raw retrieval and browser rendering in three batches. It does not establish physical-source identity, feature compatibility, model inference, calibration, conformal coverage, OOD performance or anomaly discovery. Keep these scientific validation items open.
 
 
 ---
