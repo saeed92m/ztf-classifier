@@ -141,9 +141,8 @@ def test_live_30_oid_workbench_walkthrough_in_three_bounded_batches(
             page.goto(base_url + "/workbench", wait_until="domcontentloaded")
             page.locator('[data-view="dr24"]').click()
             page.locator("#dr24ObjectIds").wait_for(state="visible")
-            assert "IRSA" in page.locator("#dr24Source").inner_text() or page.locator(
-                "#dr24Source"
-            ).count() == 0
+            # Source provenance is asserted from each API response and export manifest.
+            # The UI does not expose a dedicated #dr24Source element.
 
             # The application enforces a maximum of 10 unique OIDs per request.
             # Use three consecutive, explicitly bounded user-interface requests.
