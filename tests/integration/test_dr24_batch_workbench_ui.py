@@ -35,22 +35,24 @@ class FakeDR24Backend:
                 rcid=4,
                 objra=120.0 + objectid / 1000,
                 objdec=-20.0,
-                catalog_nepochs=2,
-                epochs=(
+                catalog_nepochs=78 if objectid == 101 else 123,
+                epochs=tuple(
                     {
-                        "hmjd": 60000.1,
-                        "mag": 18.2,
-                        "magerr": 0.03,
+                        "hmjd": (
+                            None
+                            if objectid == 101 and index == 0
+                            else 60000.0 + index * (0.04 if objectid == 101 else 0.02)
+                        ),
+                        "mag": 18.0 + index * 0.01,
+                        "magerr": (
+                            -0.01
+                            if objectid == 101 and index == 1
+                            else 0.02 + (index % 3) * 0.001
+                        ),
                         "clrcoeff": 0.1,
-                        "catflags": 0,
-                    },
-                    {
-                        "hmjd": 60000.2,
-                        "mag": 18.3,
-                        "magerr": 0.04,
-                        "clrcoeff": 0.1,
-                        "catflags": 32768,
-                    },
+                        "catflags": 32768 if index in (2, 20) else 0,
+                    }
+                    for index in range(78 if objectid == 101 else 123)
                 ),
                 payload_sha256=f"{objectid:064x}",
             )
@@ -123,8 +125,33 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert page.locator("#dr24Results .panel").count() == 2
             assert page.get_by_text("OID 101 · filter g").is_visible()
             assert page.get_by_text("OID 202 · filter r").is_visible()
-            assert page.locator("#dr24Results svg circle").count() == 4
-            assert page.locator("#dr24Results .report-content").count() == 2
+
+            # Every finite raw HMJD/magnitude pair is plotted. Non-drawable raw
+            # rows remain in the table preview and complete JSON export.
+            assert page.locator("#dr24Results .dr24-data-point").count() == 200
+            assert page.locator("#dr24Results .dr24-error-bar").count() == 199
+            assert page.locator("#dr24Results .dr24-axis-labels text").count() == 10
+            assert page.locator("#dr24Results svg path").count() == 0
+            assert page.locator("#dr24Results .catalog-table-wrap tbody tr").count() == 100
+            assert "HMJD (HJD − 2400000.5)" in page.locator("#dr24Results").inner_text()
+            assert "Points only; no interpolation or smoothing" in page.locator(
+                "#dr24Results"
+            ).inner_text()
+            assert "first 50 of 78" in page.locator("#dr24Results").inner_text()
+            assert "first 50 of 123" in page.locator("#dr24Results").inner_text()
+
+            # Lower numerical magnitude must appear higher on the plot.
+            first_panel = page.locator("#dr24Results .panel").nth(0)
+            y_bright = float(
+                first_panel.locator('[data-epoch-index="1"].dr24-data-point').get_attribute("cy")
+            )
+            y_faint = float(
+                first_panel.locator('[data-epoch-index="2"].dr24-data-point').get_attribute("cy")
+            )
+            assert y_bright < y_faint
+            # A negative raw magerr is retained but does not receive an error bar.
+            assert first_panel.locator('.dr24-error-bar[data-epoch-index="1"]').count() == 0
+
             assert "DIAGNOSTIC_NOT_PRODUCTION_APPROVED" in page.locator(
                 "#dr24Results"
             ).inner_text()
@@ -143,6 +170,15 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 for record in exported["source_payload"]["records"]
             ] == [101, 202]
             assert len(exported["source_payload"]["qc_assessments"]) == 2
+            exported_records = {
+                record["objectid"]: record
+                for record in exported["source_payload"]["records"]
+            }
+            assert len(exported_records[101]["epochs"]) == 78
+            assert len(exported_records[202]["epochs"]) == 123
+            assert exported_records[101]["epochs"][0]["hmjd"] is None
+            assert exported_records[101]["epochs"][1]["magerr"] == -0.01
+            assert exported_records[101]["epochs"][1]["clrcoeff"] == 0.1
 
             page.locator("#dr24ObjectIds").fill("101,101")
             page.locator("#dr24LoadButton").click()
