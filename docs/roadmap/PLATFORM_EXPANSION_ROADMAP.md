@@ -14,9 +14,9 @@
 
 **Current acceptance boundary:** this is a raw-data explorer, not a DR24 classifier. It does not run v0.2.0 inference, derive the frozen 42 features from DR24, or validate DR24 classification/calibration/OOD performance.
 
-**Latest live UI evidence:** the 30-OID Workbench wait predicate was corrected in test code at commit `82f0812d07005dd521361f127f3e9f7d493060af`. Ordinary CI passed. Corrected source-backed workflow #42830475350 was queued at the time of this update; do not call G5 accepted until that run and the human demo review pass.
+**Latest live UI evidence:** the 30-OID Workbench test predicate was corrected at commit `82f0812d07005dd521361f127f3e9f7d493060af`. Live workflow [#42830475350](https://github.com/saeed92m/ztf-classifier/actions/runs/42830475350) completed successfully. It passed 10-OID repeatability, 30-OID source retrieval in three batches and the 30-OID Workbench/browser walkthrough in three batches; no console/page errors. This is an OID-level UI acceptance on the delivery branch, not proof of 30 distinct physical sources or scientific inference.
 
-**Progress scoring — 2026-11-10:** active project 46%; raw-data demo v0.3 79%; Park MVP acceptance gates 28%. These are equal-weight evidence-completion scores, not time estimates or historical trends. See [Park Pilot Readiness Report](../acceptance/PARK_PILOT_READINESS_2026-11-10.fa.md), [Acceptance Form Reconciliation](../acceptance/PARK_ACCEPTANCE_FORM_RECONCILIATION_2026-11-10.fa.md), [Handbook v3.0](../HANDBOOK_UPDATED_v3.0.md), and [Execution Ledger — 2026-11-10](../PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-10.md).
+**Progress scoring — 2026-11-10:** active project 48%; raw-data demo v0.3 82%; Park MVP acceptance gates 33%. These are equal-weight evidence-completion scores, not time estimates or historical trends. See [Park Pilot Readiness Report](../acceptance/PARK_PILOT_READINESS_2026-11-10.fa.md), [Acceptance Form Reconciliation](../acceptance/PARK_ACCEPTANCE_FORM_RECONCILIATION_2026-11-10.fa.md), [Handbook v3.0](../HANDBOOK_UPDATED_v3.0.md), and [Execution Ledger — 2026-11-10](../PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-10.md).
 
 The immutable v0.2.0 baseline is unchanged. CPVS remains a separate unresolved research workstream. CIN remains proposed and is not on the Park demo critical path.
 
@@ -83,7 +83,7 @@ The published v1.0.1 package is not a self-contained desktop installer. Windows/
 | M1 — raw DR24 adapter | Bounded indexed acquisition, schema and payload hashes | VERIFIED for tested OIDs; PR #264 remains under review |
 | M2 — normalized exploratory data | Versioned QC and identity policy, fixture tests | PARTIAL; descriptive QC/export pass, production selection and identity policy not accepted |
 | M3 — smoke test | 5–10 confirmed sources end-to-end with manifest | PARTIAL; component tests pass, complete acceptance workflow not verified |
-| M4 — guided demo | 30–50 objects, Workbench, exports, offline replay | NOT VERIFIED |
+| M4 — guided demo | 30–50 objects, Workbench, exports, offline replay | PARTIAL; 30 OID UI run passed, but source identity and full 30–50 guided acceptance remain open |
 | M5 — scientific model expansion | Labeled dataset and leakage-safe independent evaluation | NOT ACCEPTED |
 | M6 — distribution | Clean-machine platform packaging | NOT ACCEPTED |
 
@@ -102,7 +102,7 @@ The following component-level results are verified for the tested OIDs:
 
 These tests establish bounded acquisition, API connectivity, raw-data display, descriptive QC and JSON export for their tested cases. They do not establish physical-source identity, cross-OID grouping, production QC selection, HMJD/photometric transformations, DR24 features, classifier inference or scientific validity.
 
-The seven-OID browser test is not the 5–10 confirmed-source end-to-end acceptance test. The 30–50 object guided demonstration remains NOT VERIFIED. Keep the next milestone focused on a complete, replayable 5–10 confirmed-source run.
+The seven-OID and 30-OID browser tests are not a 5–10 confirmed-physical-source end-to-end acceptance test. The 30-OID OID-level UI is now verified, but the 30–50 physical-source guided demonstration remains PARTIAL until identity/cross-match and a broader user session are accepted. Keep the next milestone focused on a complete, replayable 5–10 confirmed-source run.
 
 ## Next concrete action
 Complete PR #264 review and build the smallest end-to-end DR24 exploratory path. The first measurable proof is the 5–10-object smoke test. Do not start with bulk data acquisition, CIN runtime, or a new model.
