@@ -34,8 +34,8 @@
 ## شواهد بسته v0.4
 
 - ZIP: `ZTF_Park_Pilot_v0.4_2026-11-10.zip`
-- SHA-256 بسته: `0f5f2f3863c76b59d9186a911bb46b63aa313b7920c291f73ec7428a1ba16f7a`
-- SHA-256 manifest: `b5bb94b66f0196d8e08f9fa480dbf46f54fe42d000739a391aaeacbc2bbb656a`
+- SHA-256 بسته: `2da1302ddc53dac505c07cf6cfba694a33c21c0a8de66e63b9b1e7cb316191ca`
+- SHA-256 manifest: `577dad9c39c559d385ee011f4dc4ba964f57ab5bea621f62f962e71aa9694c4e`
 - ۲۳ فایل در بسته
 - ۳۰ OID و ۴٬۰۴۶ epoch
 - ۱۴ فایل داده و شواهد در مقایسه بایت‌به‌بایت با بسته v0.3 بدون تغییر هستند.
