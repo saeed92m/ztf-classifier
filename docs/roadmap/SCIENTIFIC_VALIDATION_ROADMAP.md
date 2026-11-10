@@ -1,3 +1,22 @@
+## DR24 Park pilot evidence update — 2026-11-10
+
+The bounded raw-data explorer pilot has verified acquisition of 30 HATS OID records and 4,046 epoch rows in three requests. This is source-acquisition and raw-data-display evidence only.
+
+Scientific limits:
+- No physical-source identity is inferred between OIDs.
+- All 30 records in the guided sample are g-band, from one field/rcid partition.
+- HMJD and native magnitude/error/flags remain unchanged.
+- No production quality mask or time/photometric transform is approved by this pilot.
+- No v0.2.0 42-feature mapping or model inference has been performed on these DR24 rows.
+- No independent DR24 classification, calibration, conformal coverage, or anomaly evaluation has passed.
+
+The immutable 150-object / 15-class ALeRCE benchmark remains a reference benchmark. ALeRCE labels are not independent astrophysical ground truth. The CPVS membership discrepancy remains unresolved and is not a Park MVP gate.
+
+The corrected 30-OID Workbench test predicate passed ordinary CI at commit `82f0812d07005dd521361f127f3e9f7d493060af`. The corrected source-backed run #42830475350 was queued at this snapshot. Keep the guided UI gate unaccepted until the run completes successfully and its artifacts are reviewed.
+
+
+---
+
 # Scientific Validation Roadmap
 
 Scientific validation is a permanent Product-Level Gate for the final Astronomical Data Analysis & Discovery Platform. Historical external-benchmark reconstruction is a separate evidence scope and must not be conflated with the product execution path.
