@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/dr24-park-sample-live-validation.yml
       - tests/integration/test_dr24_park_sample_live.py
+      - tests/integration/test_dr24_park_workbench_live.py
       - src/ztf_classifier/api/**
       - src/ztf_classifier/application/observations.py
       - src/ztf_classifier/io/dr24_lightcurve.py
@@ -35,6 +36,7 @@ jobs:
     timeout-minutes: 30
     env:
       ZTF_DR24_PARK_SAMPLE_LIVE_TEST: "1"
+      ZTF_DR24_PARK_WORKBENCH_LIVE_TEST: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -46,9 +48,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.lock
           python -m pip install -e '.[dr24]'
+          python -m pip install playwright==1.56.0
+      - name: Install Chromium for live Workbench browser test
+        run: python -m playwright install --with-deps chromium
       - name: Run fixed 10-OID live source and repeatability test
         run: python -m pytest -q tests/integration/test_dr24_park_sample_live.py
-      - name: Upload raw payload and reproducibility manifest
+      - name: Run live DR24 Workbench browser acceptance test
+        run: python -m pytest -q tests/integration/test_dr24_park_workbench_live.py
+      - name: Upload raw payload, screenshots and reproducibility manifests
         if: always()
         uses: actions/upload-artifact@v6
         with:
