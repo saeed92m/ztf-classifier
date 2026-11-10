@@ -1,0 +1,58 @@
+name: DR24 Park 10-OID live source validation
+
+on:
+  push:
+    branches:
+      - delivery/park-dr24-lightcurve-acceptance-20261110
+    paths:
+      - .github/workflows/dr24-park-sample-live-validation.yml
+      - tests/integration/test_dr24_park_sample_live.py
+      - src/ztf_classifier/api/**
+      - src/ztf_classifier/application/observations.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
+      - src/ztf_classifier/validation/dr24_quality.py
+  pull_request:
+    branches:
+      - feat/dr24-batch-workbench-ui-20261107
+    paths:
+      - .github/workflows/dr24-park-sample-live-validation.yml
+      - tests/integration/test_dr24_park_sample_live.py
+      - src/ztf_classifier/api/**
+      - src/ztf_classifier/application/observations.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
+      - src/ztf_classifier/validation/dr24_quality.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dr24-park-live-sample-\${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bounded-live-source-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      ZTF_DR24_PARK_SAMPLE_LIVE_TEST: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install locked project and optional DR24 dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e '.[dr24]'
+      - name: Run fixed 10-OID live source and repeatability test
+        run: python -m pytest -q tests/integration/test_dr24_park_sample_live.py
+      - name: Upload raw payload and reproducibility manifest
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: dr24-park-10-oid-live-evidence
+          path: park-demo-evidence/
+          if-no-files-found: warn
+          retention-days: 30
