@@ -1,12 +1,26 @@
 # Astronomical Data Analysis & Discovery Platform — Product Roadmap
 
-**Status date:** 2026-11-07  
+**Status date:** 2026-11-10  
 **Software release:** v1.0.1 (immutable)  
 **Park delivery tracker:** Issue #158  
 **DR24 application integration:** Issue #253  
 **CPVS scientific blocker:** Issue #170
 
-**Current continuity record:** [Handbook v2.9](../HANDBOOK_UPDATED_v2.9.md) · [Project Status & Execution Ledger — 2026-11-07](../PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-07.md) · [Park MVP delivery plan](../PARK_MVP_DELIVERY_PLAN_2026-11-05.md)
+**Current continuity record:** [Handbook v3.0](../HANDBOOK_UPDATED_v3.0.md) · [Project Status & Execution Ledger — 2026-11-07](../PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-07.md) · [Park MVP delivery plan](../PARK_MVP_DELIVERY_PLAN_2026-11-05.md)
+
+## Evidence refresh — 2026-11-10
+
+**Park prototype status:** bounded raw ZTF DR24 HATS sample retrieved and packaged for offline inspection. The standalone v0.3 demo contains 30 OID records and 4,046 epochs. All 30 records are g-band records from one HATS field/rcid sample. They are not confirmed unique physical sources. The complete 150-row metadata snapshot file is not in the downloaded evidence bundle.
+
+**Current acceptance boundary:** this is a raw-data explorer, not a DR24 classifier. It does not run v0.2.0 inference, derive the frozen 42 features from DR24, or validate DR24 classification/calibration/OOD performance.
+
+**Latest live UI evidence:** the 30-OID Workbench wait predicate was corrected in test code at commit `82f0812d07005dd521361f127f3e9f7d493060af`. Ordinary CI passed. Corrected source-backed workflow #42830475350 was queued at the time of this update; do not call G5 accepted until that run and the human demo review pass.
+
+**Progress scoring — 2026-11-10:** active project 46%; raw-data demo v0.3 79%; Park MVP acceptance gates 28%. These are equal-weight evidence-completion scores, not time estimates or historical trends. See [Park Pilot Readiness Report](../acceptance/PARK_PILOT_READINESS_2026-11-10.fa.md), [Acceptance Form Reconciliation](../acceptance/PARK_ACCEPTANCE_FORM_RECONCILIATION_2026-11-10.fa.md), [Handbook v3.0](../HANDBOOK_UPDATED_v3.0.md), and [Execution Ledger — 2026-11-10](../PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-10.md).
+
+The immutable v0.2.0 baseline is unchanged. CPVS remains a separate unresolved research workstream. CIN remains proposed and is not on the Park demo critical path.
+
+---
 
 ## Executive status
 Institutional submission claims are reconciled in the Persian [Park Technical Status Addendum — 2026-11-07](../acceptance/PARK_TECHNICAL_STATUS_ADDENDUM_2026-11-07.fa.md). The original submitted PDFs remain unchanged; use the addendum when presenting current status.
