@@ -132,7 +132,9 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert page.locator("#dr24Results .dr24-error-bar").count() == 199
             assert page.locator("#dr24Results .dr24-axis-labels text").count() == 20
             assert page.locator("#dr24Results svg path").count() == 0
-            assert page.locator("#dr24Results .catalog-table-wrap tbody tr").count() == 100
+            for panel_index in range(2):
+                panel = page.locator("#dr24Results .panel").nth(panel_index)
+                assert panel.locator(".catalog-table-wrap").nth(2).locator("tbody tr").count() == 50
             assert "HMJD (HJD − 2400000.5)" in page.locator("#dr24Results").inner_text()
             assert "Points only; no interpolation or smoothing" in page.locator(
                 "#dr24Results"
