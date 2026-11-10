@@ -130,7 +130,7 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             # rows remain in the table preview and complete JSON export.
             assert page.locator("#dr24Results .dr24-data-point").count() == 200
             assert page.locator("#dr24Results .dr24-error-bar").count() == 199
-            assert page.locator("#dr24Results .dr24-axis-labels text").count() == 10
+            assert page.locator("#dr24Results .dr24-axis-labels text").count() == 20
             assert page.locator("#dr24Results svg path").count() == 0
             assert page.locator("#dr24Results .catalog-table-wrap tbody tr").count() == 100
             assert "HMJD (HJD − 2400000.5)" in page.locator("#dr24Results").inner_text()
