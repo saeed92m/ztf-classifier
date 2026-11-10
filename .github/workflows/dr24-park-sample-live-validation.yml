@@ -8,6 +8,7 @@ on:
       - .github/workflows/dr24-park-sample-live-validation.yml
       - tests/integration/test_dr24_park_sample_live.py
       - tests/integration/test_dr24_park_workbench_live.py
+      - tests/integration/test_dr24_park_30_oid_live.py
       - src/ztf_classifier/api/**
       - src/ztf_classifier/application/observations.py
       - src/ztf_classifier/io/dr24_lightcurve.py
@@ -37,6 +38,7 @@ jobs:
     env:
       ZTF_DR24_PARK_SAMPLE_LIVE_TEST: "1"
       ZTF_DR24_PARK_WORKBENCH_LIVE_TEST: "1"
+      ZTF_DR24_PARK_30OID_LIVE_TEST: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -53,6 +55,8 @@ jobs:
         run: python -m playwright install --with-deps chromium
       - name: Run fixed 10-OID live source and repeatability test
         run: python -m pytest -q tests/integration/test_dr24_park_sample_live.py
+      - name: Run fixed 30-OID guided source validation in three bounded batches
+        run: python -m pytest -q tests/integration/test_dr24_park_30_oid_live.py
       - name: Run live DR24 Workbench browser acceptance test
         run: python -m pytest -q tests/integration/test_dr24_park_workbench_live.py
       - name: Upload raw payload, screenshots and reproducibility manifests
