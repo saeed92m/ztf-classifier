@@ -13,7 +13,6 @@ from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.io.dr24_lightcurve import DR24LightcurveBackend
 
-
 # Fixed engineering sample drawn from the 2026-11-09, 150-row DR24 Objects
 # Table HATS snapshot. The source snapshot is lexicographically selected from
 # one partition and is not a sky-representative scientific sample.
