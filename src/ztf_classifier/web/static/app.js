@@ -523,50 +523,228 @@ async function loadDR24Explorer() {
   }
 
   function renderRecord(record, qc) {
-    const oid = Number(record.objectid);
+    const oid = record.objectid;
     const filterName = ({1:"g",2:"r",3:"i"})[record.filterid] || "unknown";
     const epochs = Array.isArray(record.epochs) ? record.epochs : [];
-    const points = epochs.map(epoch => ({
-      x: Number(epoch.hmjd),
-      y: Number(epoch.mag),
+    const isFiniteNumber = value =>
+      typeof value === "number" && Number.isFinite(value);
+    const formatNumber = (value, digits = 3) =>
+      isFiniteNumber(value) ? value.toFixed(digits) : "—";
+    const numericValues = key => epochs
+      .map(epoch => epoch[key])
+      .filter(isFiniteNumber);
+    const median = values => {
+      if (!values.length) return null;
+      const sorted = [...values].sort((a, b) => a - b);
+      const middle = Math.floor(sorted.length / 2);
+      return sorted.length % 2
+        ? sorted[middle]
+        : (sorted[middle - 1] + sorted[middle]) / 2;
+    };
+
+    // Keep source order and source values. Only finite HMJD/magnitude pairs
+    // can be drawn on a numerical plot; every raw row remains in the export.
+    const points = epochs.map((epoch, index) => ({
+      index,
+      x: epoch.hmjd,
+      y: epoch.mag,
+      error: epoch.magerr,
       flags: epoch.catflags
-    })).filter(point => Number.isFinite(point.x) && Number.isFinite(point.y));
+    })).filter(point =>
+      isFiniteNumber(point.x) && isFiniteNumber(point.y)
+    );
+    const validErrors = points.filter(point =>
+      isFiniteNumber(point.error) && point.error >= 0
+    );
+    const invalidCoordinates = epochs.length - points.length;
+    const invalidErrors = points.length - validErrors.length;
+    const bit15Count = epochs.filter(epoch =>
+      Number.isSafeInteger(epoch.catflags) &&
+      epoch.catflags >= 0 &&
+      (epoch.catflags & 32768) !== 0
+    ).length;
+    const strictCleanCount = epochs.filter(epoch =>
+      epoch.catflags === 0
+    ).length;
+    const unknownFlagsCount = epochs.filter(epoch =>
+      !Number.isSafeInteger(epoch.catflags) || epoch.catflags < 0
+    ).length;
+
     let chart = "";
     if (points.length) {
       const xs = points.map(point => point.x);
-      const ys = points.map(point => point.y);
-      const xmin = Math.min(...xs), xmax = Math.max(...xs);
-      const ymin = Math.min(...ys), ymax = Math.max(...ys);
-      const xspan = xmax - xmin || 1, yspan = ymax - ymin || 1;
+      const xMin = Math.min(...xs), xMax = Math.max(...xs);
+      const xSpan = xMax - xMin || 1;
+      const yBounds = points.flatMap(point => {
+        if (isFiniteNumber(point.error) && point.error >= 0) {
+          return [point.y - point.error, point.y + point.error];
+        }
+        return [point.y];
+      });
+      let yMin = Math.min(...yBounds), yMax = Math.max(...yBounds);
+      if (yMax === yMin) {
+        yMin -= 0.5;
+        yMax += 0.5;
+      }
+      const yPadding = (yMax - yMin) * 0.06;
+      yMin -= yPadding;
+      yMax += yPadding;
+
+      const left = 82, right = 870, top = 24, bottom = 300;
+      const width = right - left, height = bottom - top;
+      const xScale = value => left + ((value - xMin) / xSpan) * width;
+      // Astronomical magnitude convention: smaller (brighter) values are
+      // displayed toward the top of the plot.
+      const yScale = value => top + ((value - yMin) / (yMax - yMin)) * height;
+      const yGrid = [];
+      const yLabels = [];
+      const xGrid = [];
+      const xLabels = [];
+      for (let index = 0; index <= 4; index += 1) {
+        const fraction = index / 4;
+        const yValue = yMin + fraction * (yMax - yMin);
+        const yPixel = yScale(yValue);
+        yGrid.push(
+          '<line x1="' + left + '" y1="' + yPixel.toFixed(2) +
+          '" x2="' + right + '" y2="' + yPixel.toFixed(2) + '"/>'
+        );
+        yLabels.push(
+          '<text x="' + (left - 9) + '" y="' + (yPixel + 4).toFixed(2) +
+          '" text-anchor="end" font-size="11" fill="currentColor">' +
+          yValue.toFixed(2) + '</text>'
+        );
+        const xValue = xMin + fraction * (xMax - xMin);
+        const xPixel = left + fraction * width;
+        xGrid.push(
+          '<line x1="' + xPixel.toFixed(2) + '" y1="' + top +
+          '" x2="' + xPixel.toFixed(2) + '" y2="' + bottom + '"/>'
+        );
+        xLabels.push(
+          '<text x="' + xPixel.toFixed(2) + '" y="' + (bottom + 19) +
+          '" text-anchor="middle" font-size="11" fill="currentColor">' +
+          xValue.toFixed(3) + '</text>'
+        );
+      }
+
+      const errorBars = validErrors.map(point => {
+        const x = xScale(point.x);
+        const upperY = yScale(point.y - point.error);
+        const lowerY = yScale(point.y + point.error);
+        const cap = 3.5;
+        return [
+          '<g class="dr24-error-bar" data-epoch-index="' + point.index + '">',
+          '<line x1="' + x.toFixed(2) + '" y1="' + upperY.toFixed(2) +
+            '" x2="' + x.toFixed(2) + '" y2="' + lowerY.toFixed(2) + '"/>',
+          '<line x1="' + (x - cap).toFixed(2) + '" y1="' + upperY.toFixed(2) +
+            '" x2="' + (x + cap).toFixed(2) + '" y2="' + upperY.toFixed(2) + '"/>',
+          '<line x1="' + (x - cap).toFixed(2) + '" y1="' + lowerY.toFixed(2) +
+            '" x2="' + (x + cap).toFixed(2) + '" y2="' + lowerY.toFixed(2) + '"/>',
+          '</g>'
+        ].join("");
+      }).join("");
+
       const circles = points.map(point => {
-        const x = 35 + ((point.x - xmin) / xspan) * 830;
-        const y = 18 + ((point.y - ymin) / yspan) * 235;
-        const flagsKnown = typeof point.flags === "number" &&
-          Number.isInteger(point.flags) && point.flags >= 0;
+        const x = xScale(point.x), y = yScale(point.y);
+        const flagsKnown = Number.isSafeInteger(point.flags) && point.flags >= 0;
         const flagged = flagsKnown && (point.flags & 32768) !== 0;
         const fill = !flagsKnown ? "#9aa4b2" : (flagged ? "#e0a34a" : "#55b8df");
-        return '<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) +
-          '" r="3" fill="' + fill + '" fill-opacity="0.85"><title>HMJD ' +
-          point.x + ', mag ' + point.y + ', catflags ' + escapeHtml(point.flags) +
+        return '<circle class="dr24-data-point' +
+          (flagged ? ' dr24-bit15-point' : '') +
+          '" data-epoch-index="' + point.index +
+          '" data-hmjd="' + point.x +
+          '" data-mag="' + point.y +
+          '" cx="' + x.toFixed(2) +
+          '" cy="' + y.toFixed(2) +
+          '" r="3.2" fill="' + fill +
+          '" fill-opacity="0.9"><title>Epoch ' + (point.index + 1) +
+          ' · HMJD ' + point.x + ' · mag ' + point.y +
+          ' · magerr ' + escapeHtml(point.error) +
+          ' · catflags ' + escapeHtml(point.flags) +
           '</title></circle>';
       }).join("");
-      chart = '<div class="chart" style="margin-top:12px"><svg viewBox="0 0 900 280" ' +
-        'preserveAspectRatio="none" role="img" aria-label="DR24 light curve for OID ' +
-        oid + '"><g class="grid-lines"><line x1="0" y1="55" x2="900" y2="55"/>' +
-        '<line x1="0" y1="110" x2="900" y2="110"/><line x1="0" y1="165" x2="900" y2="165"/>' +
-        '<line x1="0" y1="220" x2="900" y2="220"/></g>' + circles + '</svg>' +
-        '<div class="axis-label x">HMJD (HJD − 2400000.5) →</div>' +
-        '<div class="axis-label y">mag</div></div>';
+
+      chart = [
+        '<div class="chart dr24-chart" style="height:360px;margin-top:12px">',
+        '<svg viewBox="0 0 900 360" preserveAspectRatio="none" role="img"',
+        ' aria-label="Unfolded raw ZTF DR24 light curve for OID ' + escapeHtml(oid) + '">',
+        '<g class="grid-lines">' + yGrid.join("") + xGrid.join("") + '</g>',
+        '<g class="dr24-axis-labels">' + yLabels.join("") + xLabels.join("") + '</g>',
+        errorBars,
+        '<g class="dr24-data-points">' + circles + '</g>',
+        '<line x1="' + left + '" y1="' + top + '" x2="' + left +
+          '" y2="' + bottom + '" stroke="currentColor" opacity="0.65"/>',
+        '<line x1="' + left + '" y1="' + bottom + '" x2="' + right +
+          '" y2="' + bottom + '" stroke="currentColor" opacity="0.65"/>',
+        '</svg>',
+        '<div class="axis-label x" style="bottom:-8px;right:2px">HMJD (HJD − 2400000.5), days →</div>',
+        '<div class="axis-label y">mag (native ZTF; smaller = brighter)</div>',
+        '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:15px;font-size:12px;color:var(--color-text-secondary)">',
+        '<span><span style="color:#55b8df">●</span> bit 15 clear / no cloud-moon flag</span>',
+        '<span><span style="color:#e0a34a">●</span> bit 15 set</span>',
+        '<span>Vertical bars: supplied ±1σ magerr</span>',
+        '<span>Points only; no interpolation or smoothing</span>',
+        '</div></div>'
+      ].join("");
     } else {
-      chart = '<p class="muted">No finite HMJD/magnitude pairs are available to plot.</p>';
+      chart = '<p class="muted">No finite HMJD/magnitude pairs are available to plot. Raw rows remain available in the export.</p>';
     }
-    const tableRows = epochs.slice(0, 50).map(epoch =>
-      "<tr><td>" + escapeHtml(epoch.hmjd) + "</td><td>" + escapeHtml(epoch.mag) +
-      "</td><td>" + escapeHtml(epoch.magerr) + "</td><td>" + escapeHtml(epoch.clrcoeff) +
-      "</td><td>" + escapeHtml(epoch.catflags) + "</td></tr>"
+
+    const hmjdValues = numericValues("hmjd");
+    const magnitudeValues = numericValues("mag");
+    const errorValues = numericValues("magerr").filter(value => value >= 0);
+    const timeMin = hmjdValues.length ? Math.min(...hmjdValues) : null;
+    const timeMax = hmjdValues.length ? Math.max(...hmjdValues) : null;
+    const magMin = magnitudeValues.length ? Math.min(...magnitudeValues) : null;
+    const magMax = magnitudeValues.length ? Math.max(...magnitudeValues) : null;
+    const magMedian = median(magnitudeValues);
+    const errorMedian = median(errorValues);
+    const timeSpan = timeMin !== null && timeMax !== null ? timeMax - timeMin : null;
+
+    const summaryRows = [
+      ["Raw epochs received", epochs.length],
+      ["Finite HMJD + mag plotted", points.length],
+      ["Rows not drawable (raw preserved)", invalidCoordinates],
+      ["Valid non-negative magerr", validErrors.length],
+      ["Invalid/missing magerr among plotted points", invalidErrors],
+      ["HMJD range", timeMin === null ? "—" : formatNumber(timeMin, 5) + " to " + formatNumber(timeMax, 5)],
+      ["Time span (days)", timeSpan === null ? "—" : formatNumber(timeSpan, 3)],
+      ["Magnitude min / median / max", magMin === null ? "—" :
+        formatNumber(magMin, 3) + " / " + formatNumber(magMedian, 3) + " / " + formatNumber(magMax, 3)],
+      ["Median non-negative magerr", errorMedian === null ? "—" : formatNumber(errorMedian, 4)],
+      ["catflags bit 15 set", bit15Count],
+      ["catflags exactly zero", strictCleanCount],
+      ["Missing/invalid catflags", unknownFlagsCount]
+    ];
+    const summaryTable = summaryRows.map(([label, value]) =>
+      "<tr><th>" + escapeHtml(label) + "</th><td>" + escapeHtml(value) + "</td></tr>"
     ).join("");
-    const qcText = qc ? JSON.stringify(qc, null, 2) :
-      "No server-side QC assessment was returned. Raw epochs are still preserved.";
+
+    const tableRows = epochs.slice(0, 50).map((epoch, index) =>
+      "<tr><td>" + (index + 1) + "</td><td>" + escapeHtml(epoch.hmjd) +
+      "</td><td>" + escapeHtml(epoch.mag) + "</td><td>" + escapeHtml(epoch.magerr) +
+      "</td><td>" + escapeHtml(epoch.clrcoeff) + "</td><td>" +
+      escapeHtml(epoch.catflags) + "</td></tr>"
+    ).join("");
+    const qcCounts = qc && qc.counts ? qc.counts : null;
+    const qcSummary = qcCounts ? [
+      ["Policy", qc.policy_id || "—"],
+      ["Policy status", qc.policy_status || "—"],
+      ["Total epochs", qcCounts.total_epochs],
+      ["Likely usable (bit 15 clear)", qcCounts.likely_usable_epochs],
+      ["Strict clean (catflags = 0)", qcCounts.strict_clean_epochs],
+      ["Photometry valid", qcCounts.photometry_valid_epochs],
+      ["Provisional diagnostic candidates", qcCounts.provisional_analysis_candidates],
+      ["Bit 15 flagged", qcCounts.bit_15_flagged_epochs],
+      ["Invalid catflags", qcCounts.invalid_catflags_epochs],
+      ["Invalid photometry", qcCounts.invalid_photometry_epochs]
+    ].map(([label, value]) =>
+      "<tr><th>" + escapeHtml(label) + "</th><td>" + escapeHtml(value) + "</td></tr>"
+    ).join("") : '<tr><td colspan="2">No server-side QC assessment was returned.</td></tr>';
+    const qcDetails = qc
+      ? '<details><summary>Show complete epoch-level QC assessment</summary><pre class="report-content">' +
+        escapeHtml(JSON.stringify(qc, null, 2)) + '</pre></details>'
+      : "";
+
     return [
       '<section class="panel"><div class="panel-header"><div><div class="panel-title">OID ',
       escapeHtml(oid), ' · filter ', escapeHtml(filterName), '</div>',
@@ -574,15 +752,32 @@ async function loadDR24Explorer() {
       ' · rcid ', escapeHtml(record.rcid), ' · epochs ', epochs.length,
       ' / catalog ', escapeHtml(record.catalog_nepochs),
       ' · payload SHA-256 ', escapeHtml(record.payload_sha256), '</div></div></div>',
-      '<div class="panel-subtitle">Time: HMJD · photometry: native ZTF system · no cross-OID grouping</div>',
+      '<div class="panel-subtitle">Source-native HMJD and mag. One panel per OID; no cross-OID grouping.</div>',
       chart,
-      '<div class="panel-title" style="margin-top:18px">Raw epoch records (first 50)</div>',
-      '<div class="catalog-table-wrap"><table class="metadata"><thead><tr><th>HMJD</th><th>mag</th>',
-      '<th>magerr</th><th>clrcoeff</th><th>catflags</th></tr></thead><tbody>',
-      tableRows || '<tr><td colspan="5">No epochs in payload.</td></tr>',
-      '</tbody></table></div>',
+      '<div class="panel-title" style="margin-top:22px">Measurement summary (computed from received raw rows)</div>',
+      '<div class="catalog-table-wrap"><table class="metadata"><tbody>',
+      summaryTable, '</tbody></table></div>',
       '<div class="panel-title" style="margin-top:18px">Raw-preserving QC assessment</div>',
-      '<pre class="report-content">', escapeHtml(qcText), '</pre></section>'
+      '<div class="catalog-table-wrap"><table class="metadata"><tbody>',
+      qcSummary, '</tbody></table></div>',
+      '<p class="muted">QC status: diagnostic only. It does not approve model-input epochs or delete observations.</p>',
+      qcDetails,
+      '<div class="panel-title" style="margin-top:18px">Raw epoch records — first ',
+      Math.min(50, epochs.length), ' of ', epochs.length, '</div>',
+      '<div class="catalog-table-wrap"><table class="metadata"><thead><tr><th>#</th><th>HMJD</th><th>mag</th>',
+      '<th>magerr</th><th>clrcoeff</th><th>catflags</th></tr></thead><tbody>',
+      tableRows || '<tr><td colspan="6">No epochs in payload.</td></tr>',
+      '</tbody></table></div>',
+      '<p class="muted">The table is a 50-row preview. The JSON export contains all ',
+      epochs.length, ' raw epoch rows in source order, including values that cannot be plotted.</p>',
+      '<div class="panel-title" style="margin-top:18px">Interpretation limits</div>',
+      '<ul class="muted">',
+      '<li>HMJD is HJD − 2400000.5; it is not relabeled as geocentric MJD.</li>',
+      '<li>DR24 mag is native ZTF photometry and assumes AB g−r = 0; no color correction is applied.</li>',
+      '<li>magerr is the supplied 1σ magnitude uncertainty and does not include all calibration/systematic uncertainty.</li>',
+      '<li>catflags are preserved. Bit 15 is shown separately; no epoch is removed from the raw export.</li>',
+      '<li>This is an OID-level exploratory view, not a confirmed physical-source grouping or DR24 classifier.</li>',
+      '</ul></section>'
     ].join("");
   }
 
