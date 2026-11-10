@@ -159,3 +159,59 @@ h1 { margin: 5px 0 4px; font-size: 22px; letter-spacing: -.02em; }
   white-space: pre-wrap;
   font: 0.86rem/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
+
+/* DR24 Explorer: keep raw data and QC tables readable in dark and light themes. */
+#dr24Results .panel-title {
+  color: var(--color-text-primary);
+}
+#dr24Results .panel-subtitle,
+#dr24Results .muted {
+  color: var(--color-text-secondary);
+}
+#dr24Results .dr24-chart {
+  color: var(--color-text-primary);
+}
+#dr24Results .dr24-error-bar line {
+  stroke: var(--color-text-secondary);
+}
+#dr24Results .dr24-axis-labels text {
+  fill: var(--color-text-secondary);
+}
+#dr24Results .catalog-table-wrap {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+#dr24Results .catalog-table-wrap table.metadata {
+  width: 100%;
+  color: var(--color-text-primary);
+  background: transparent;
+}
+#dr24Results .catalog-table-wrap table.metadata th,
+#dr24Results .catalog-table-wrap table.metadata td {
+  color: var(--color-text-primary);
+  background: transparent;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.65rem 0.8rem;
+  font-size: 11px;
+}
+#dr24Results .catalog-table-wrap table.metadata th {
+  color: var(--color-text-secondary);
+  font-weight: 650;
+}
+#dr24Results .catalog-table-wrap table.metadata tr:last-child th,
+#dr24Results .catalog-table-wrap table.metadata tr:last-child td {
+  border-bottom: 0;
+}
+#dr24Results details summary {
+  color: var(--color-accent);
+  cursor: pointer;
+}
+#dr24Results .report-content {
+  color: var(--color-text-primary);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
