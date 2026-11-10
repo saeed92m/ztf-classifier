@@ -149,15 +149,41 @@ def test_live_30_oid_workbench_walkthrough_in_three_bounded_batches(
             for batch_index in range(3):
                 batch = SAMPLE[batch_index * 10 : (batch_index + 1) * 10]
                 requested = [str(row[0]) for row in batch]
-                previous_status = page.locator("#dr24Status").inner_text()
                 page.locator("#dr24ObjectIds").fill(",".join(requested))
-                page.locator("#dr24LoadButton").click()
+                # The status text is intentionally identical for each successful
+                # 10-OID batch. Wait for the actual POST response and the exact OIDs
+                # rendered by the UI, not for a status-string change.
+                with page.expect_response(
+                    lambda response: (
+                        response.url.endswith("/v1/dr24/lightcurves")
+                        and response.request.method == "POST"
+                    ),
+                    timeout=60_000,
+                ) as response_info:
+                    page.locator("#dr24LoadButton").click()
+                api_response = response_info.value
+                assert api_response.status == 200, api_response.text()
+                api_payload = api_response.json()
+                api_records = api_payload.get("records", [])
+                assert sorted(int(record["objectid"]) for record in api_records) == sorted(
+                    int(value) for value in requested
+                )
+                assert api_payload.get("provenance", {}).get("missing_oids") == []
+
                 page.wait_for_function(
-                    """old => {
+                    """expected => {
                         const status = document.querySelector('#dr24Status')?.textContent || '';
-                        return status !== old && status.includes('Raw DR24 response received');
+                        if (!status.includes('Raw DR24 response received')) return false;
+                        const panels = Array.from(
+                            document.querySelectorAll('#dr24Results > .panel')
+                        );
+                        if (panels.length !== expected.length) return false;
+                        const panelText = panels.map(panel => panel.textContent || '');
+                        return expected.every(oid =>
+                            panelText.some(text => text.includes('OID ' + oid + ' · filter g'))
+                        );
                     }""",
-                    arg=previous_status,
+                    arg=requested,
                     timeout=60_000,
                 )
                 status = page.locator("#dr24Status").inner_text()
