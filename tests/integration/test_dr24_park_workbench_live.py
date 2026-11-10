@@ -180,7 +180,50 @@ def test_live_dr24_hats_workbench_renders_and_exports_ten_oids(tmp_path: Path) -
             assert orientation_verified
 
             page.screenshot(path=str(out / "ztf-dr24-park-10-oid-workbench-full.png"), full_page=True)
-            panels.nth(4).screenshot(path=str(out / "ztf-dr24-park-single-oid-lightcurve.png"))
+            panels.nth(4).screenshot(path=str(out / "ztf-dr24-park-single-g-oid-lightcurve.png"))
+
+            # Separate r-band control. It is a different OID record. This test
+            # deliberately does not claim that it is the same physical source
+            # as any g-band OID in the 10-record sample.
+            r_oid = 264214400000912
+            r_epoch_count = 123
+            r_payload_sha256 = "a37f6fa2ee91009805b6fab3a5563b793cba9e84f6a82ec333bae507442c70ae"
+            page.locator("#dr24ObjectIds").fill(str(r_oid))
+            page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
+                timeout=60_000,
+            )
+            r_panel = page.locator("#dr24Results > .panel").first
+            r_text = r_panel.inner_text()
+            assert f"OID {r_oid} · filter r" in r_text
+            assert f"epochs {r_epoch_count} / catalog {r_epoch_count}" in r_text
+            assert r_payload_sha256 in r_text
+            assert "No cross-OID grouping" in r_text
+            with page.expect_download(timeout=30_000) as r_download_info:
+                page.locator("#dr24ExportButton").click()
+            r_export_path = out / "ztf-dr24-park-r-band-control-raw-export.json"
+            r_download_info.value.save_as(str(r_export_path))
+            r_export = json.loads(r_export_path.read_text(encoding="utf-8"))
+            assert len(r_export["source_payload"]["records"]) == 1
+            r_record = r_export["source_payload"]["records"][0]
+            assert r_record["objectid"] == r_oid
+            assert r_record["filterid"] == 2
+            assert len(r_record["epochs"]) == r_epoch_count
+            assert r_record["payload_sha256"] == r_payload_sha256
+            r_drawable = [
+                row for row in r_record["epochs"]
+                if _finite(row.get("hmjd")) and _finite(row.get("mag"))
+            ]
+            r_errorbars = [
+                row for row in r_drawable
+                if _finite(row.get("magerr")) and row["magerr"] >= 0
+            ]
+            assert r_panel.locator(".dr24-data-point").count() == len(r_drawable)
+            assert r_panel.locator(".dr24-error-bar").count() == len(r_errorbars)
+            assert r_panel.locator(".dr24-chart svg path").count() == 0
+            r_panel.screenshot(path=str(out / "ztf-dr24-park-single-r-oid-lightcurve.png"))
+
             assert not page_errors, page_errors
             assert not console_errors, console_errors
 
@@ -214,6 +257,15 @@ def test_live_dr24_hats_workbench_renders_and_exports_ten_oids(tmp_path: Path) -
                     "console_errors": console_errors,
                 },
                 "objects": per_oid,
+                "separate_r_band_control": {
+                    "objectid": r_oid,
+                    "filterid": 2,
+                    "raw_rows": r_epoch_count,
+                    "payload_sha256": r_payload_sha256,
+                    "drawable_points": len(r_drawable),
+                    "valid_magerr_errorbars": len(r_errorbars),
+                    "identity_grouping_with_g_sample": "NOT_PERFORMED",
+                },
                 "limitations": [
                     "Ten OID records do not establish ten unique physical sources.",
                     "The 150-row metadata snapshot is lexicographic and from one HATS partition; it is not sky-representative.",
@@ -223,7 +275,8 @@ def test_live_dr24_hats_workbench_renders_and_exports_ten_oids(tmp_path: Path) -
                 "export": download_path.name,
                 "screenshots": [
                     "ztf-dr24-park-10-oid-workbench-full.png",
-                    "ztf-dr24-park-single-oid-lightcurve.png",
+                    "ztf-dr24-park-single-g-oid-lightcurve.png",
+                    "ztf-dr24-park-single-r-oid-lightcurve.png",
                 ],
             }
             (out / "ztf-dr24-park-live-workbench-manifest.json").write_text(
