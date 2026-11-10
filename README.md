@@ -5,10 +5,15 @@ A CPU-first Astronomical Data Analysis & Discovery Platform for Zwicky Transient
 ## Current project documentation
 - [Persian Park technical status addendum — 2026-11-07](docs/acceptance/PARK_TECHNICAL_STATUS_ADDENDUM_2026-11-07.fa.md)
 
-- [Project Continuity Handbook v2.9](docs/HANDBOOK_UPDATED_v2.9.md)
+- [Project Continuity Handbook v3.0](docs/HANDBOOK_UPDATED_v3.0.md)
 - [Project Status & Execution Ledger — 2026-11-07](docs/PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-07.md)
 - [Park MVP Delivery Plan](docs/PARK_MVP_DELIVERY_PLAN_2026-11-05.md)
 - [Platform Expansion Roadmap](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md)
+
+- [Project Continuity Handbook v3.0](docs/HANDBOOK_UPDATED_v3.0.md)
+- [Project Status & Execution Ledger — 2026-11-10](docs/PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-10.md)
+- [Park Pilot Readiness Report — 2026-11-10 (Persian)](docs/acceptance/PARK_PILOT_READINESS_2026-11-10.fa.md)
+- [Park Acceptance Form Reconciliation — 2026-11-10 (Persian)](docs/acceptance/PARK_ACCEPTANCE_FORM_RECONCILIATION_2026-11-10.fa.md)
 
 ## Project status
 
