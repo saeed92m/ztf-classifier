@@ -5,7 +5,7 @@
 **Main baseline:** `bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c` (2026-11-03)  
 **Park pilot branch:** `delivery/park-dr24-lightcurve-acceptance-20261110`  
 **Documentation PR:** #266 — Draft / open / unmerged  
-**Live DR24 rerun:** [workflow #42830475350](https://github.com/saeed92m/ztf-classifier/actions/runs/42830475350) — queued at snapshot time.
+**Live DR24 rerun:** [workflow #42830475350](https://github.com/saeed92m/ztf-classifier/actions/runs/42830475350) — completed successfully (run conclusion: success; 2026-11-10 14:08 UTC).
 
 ## 1. Executive disposition
 
@@ -44,14 +44,14 @@ The default application observation path on main remains ALeRCE. The DR24 featur
 | 10-OID source retrieval and repeatability | PASS | 10 OIDs / 688 epochs; same hashes across repeat requests |
 | 30-OID source retrieval | PASS | 30 OIDs / 4,046 epochs; three batches; no missing OIDs |
 | Small-sample Workbench browser test | PASS | Bounded browser test only |
-| 30-OID Workbench walkthrough, prior head | FAIL | Test timed out in second batch |
-| Test-harness correction | CI PASS | Commit `82f0812d07005dd521361f127f3e9f7d493060af`; replaces status-string change detection with exact API response and exact OID rendering checks |
-| Corrected live source + 30-OID browser rerun | QUEUED / NOT VERIFIED | Run #42830475350 was queued after the delivery branch was fast-forwarded |
+| 30-OID Workbench walkthrough, initial test | FAIL historical, corrected | The wait predicate expected the identical success status to change between batches; this was a test-harness defect |
+| Test-harness correction | CI PASS | Commit `82f0812d07005dd521361f127f3e9f7d493060af`; tests the actual POST response, exact returned OID set and exact rendered OID panels |
+| Corrected live source + 30-OID browser rerun | PASS | Run #42830475350: 10-OID repeatability, 30-OID acquisition in three batches, 30-OID Workbench in three batches and browser acceptance all passed; zero console/page errors; artifact 13771891432, SHA-256 `b2cd2885b6a1593404d8ad7c2ca15f2fa1a5effa06d7efec146972afdeb3532b` |
 | Local offline UI browser test in build container | NOT VERIFIED | Managed Chromium URLBlocklist blocks all URLs; system policy was not altered |
 | DR24 classifier inference | NOT RUN | No model inference on the 30-OID sample |
 | Independent DR24 scientific evaluation | NOT ACCEPTED | No qualifying temporal/object-disjoint labeled evaluation |
 
-The successful ordinary CI run for the test-only correction does not prove the source-backed browser workflow passed. The corrected live run must be inspected before changing G5.
+The source-backed UI run now passes on the dedicated delivery branch. It verifies the tested OID-based retrieval/display flow only; it does not establish physical-source identity or scientific classifier validity. The offline HTML was not browser-tested in the build container.
 
 ## 4. Protected scientific baseline
 
@@ -76,7 +76,7 @@ ALeRCE labels remain benchmark/reference labels, not independent astrophysical g
 | G2 — physical identity and OID grouping | NOT ACCEPTED | Crossmatch and ambiguity policy unresolved |
 | G3 — time, photometry and QC contract | NOT ACCEPTED | Preserve HMJD/native values; no approved production transform or selection policy |
 | G4 — 5–10 source application E2E | PARTIAL | Component tests exist; full accepted guided run needed |
-| G5 — 30–50 source live Workbench | NOT ACCEPTED | Corrected live browser workflow pending |
+| G5 — 30–50 source live Workbench | PARTIAL | 30 OID panels passed in three batches; OIDs are not confirmed physical sources and a 50-source guided demo has not been run |
 | G6 — no-terminal usage | PARTIAL | Offline package exists; local browser acceptance not run in build container |
 | G7 — independent DR24 scientific validation | NOT ACCEPTED | No feature mapping, labeled temporal test or calibrated DR24 evaluation |
 | G8 — Park handover package | NOT ACCEPTED | Form, presentation revision and accepted demonstration still needed |
@@ -85,17 +85,17 @@ ALeRCE labels remain benchmark/reference labels, not independent astrophysical g
 
 Method: equal-weight acceptance checklist. VERIFIED/PASS = 1.0; PARTIAL = 0.5; NOT VERIFIED/NOT STARTED/NOT ACCEPTED = 0. Scores indicate evidence completion, not elapsed time or probability of acceptance.
 
-### Active project: 46%
+### Active project: 48%
 
 | Subsystem | Score |
 |---|---:|
 | Scientific core and reference model | 50% |
 | Data acquisition and provenance | 60% |
-| API and Workbench | 50% |
+| API and Workbench | 60% |
 | Scientific validation, calibration and OOD | 20% |
 | Productization, installation and documentation | 50% |
 
-### Raw-data pilot v0.3: 79%
+### Raw-data pilot v0.3: 82%
 
 | Subsystem | Score |
 |---|---:|
@@ -104,11 +104,11 @@ Method: equal-weight acceptance checklist. VERIFIED/PASS = 1.0; PARTIAL = 0.5; N
 | Raw light-curve view | 85% |
 | Measurement summary and descriptive QC | 80% |
 | Sample catalog | 50% |
-| Live API and Workbench | 60% |
+| Live API and Workbench | 85% |
 | Full exports and provenance | 90% |
 | Offline package | 70% |
 
-### Park MVP gate readiness: 28%
+### Park MVP gate readiness: 33%
 
 This is calculated from nine gates using PASS=1, PARTIAL=0.5 and NOT ACCEPTED=0. It is not interchangeable with the raw-data pilot score.
 
@@ -118,13 +118,14 @@ This is calculated from nine gates using PASS=1, PARTIAL=0.5 and NOT ACCEPTED=0.
 - Built a standalone offline explorer with separate OID charts, error bars, measurement summaries, descriptive QC, catalog search, provenance and JSON/CSV exports.
 - Preserved all raw epoch rows and source-native HMJD/mag/magerr/clrcoeff/catflags.
 - Kept the independent r-band control separate.
+- Completed run #42830475350: fixed 10-OID source/repeatability, 30-OID source acquisition, three-batch 30-OID Workbench browser walkthrough, and small-sample Workbench browser acceptance all passed. Artifact 13771891432; SHA-256 `b2cd2885b6a1593404d8ad7c2ca15f2fa1a5effa06d7efec146972afdeb3532b`.
 - Added a test-only correction for the repeated status-string wait condition and passed ordinary CI.
 - Fast-forwarded the correction onto the dedicated Park delivery branch. Main and the immutable release were not changed.
 - Added the dated Park pilot readiness report and acceptance-form reconciliation to this documentation branch.
 
 ## 8. Remaining work and next actions
 
-1. Inspect live workflow #42830475350 and record the final status and evidence artifacts.
+1. Preserve the successful live workflow #42830475350 artifact in the Park evidence package and manually rehearse the offline ZIP on the actual presentation laptop.
 2. Retrieve the actual 150-row Objects Table artifact and include it only after hash verification.
 3. Complete the DR24 adapter in the application service without silent fallback to ALeRCE.
 4. Approve a versioned contract for OID, physical-source crossmatch, HMJD, photometry, catflags and QC.
