@@ -76,3 +76,49 @@ def test_iter_photometry_rows_uses_documented_headerless_schema(
     assert rows[0]["gmag"] == "18.0"
     assert rows[0]["e_gmag"] == "0.20"
     assert rows[0]["g_flag"] == "0"
+
+
+def test_summarize_band_marks_no_rows_as_unknown(tmp_path: pathlib.Path) -> None:
+    source = tmp_path / "g.tsv"
+    source.write_text(
+        "SourceID\\tgmag\\te_gmag\\tg_flag\\n"
+        "202\\t18.0\\t0.10\\t0\\n",
+        encoding="utf-8",
+    )
+    result = AUDIT.summarize_band(
+        source, {"101"}, "e_gmag", "gmag", ("g_flag", "catflags", "flag"), 2.5
+    )
+    assert result["101"]["row_count"] == 0
+    assert result["101"]["approximate_snr_status"] == "UNKNOWN"
+
+
+def test_summarize_band_marks_observed_nonqualifying_rows_as_fail(
+    tmp_path: pathlib.Path,
+) -> None:
+    source = tmp_path / "g.tsv"
+    source.write_text(
+        "SourceID\\tgmag\\te_gmag\\tg_flag\\n"
+        "101\\t19.0\\t0.80\\t0\\n",
+        encoding="utf-8",
+    )
+    result = AUDIT.summarize_band(
+        source, {"101"}, "e_gmag", "gmag", ("g_flag", "catflags", "flag"), 2.5
+    )
+    assert result["101"]["row_count"] == 1
+    assert result["101"]["approximate_snr_status"] == "FAIL"
+
+
+def test_joint_two_band_status_preserves_unknown_and_fail_semantics() -> None:
+    assert AUDIT.joint_two_band_status("PASS", "PASS") == "PASS"
+    assert AUDIT.joint_two_band_status("PASS", "UNKNOWN") == "UNKNOWN"
+    assert AUDIT.joint_two_band_status("UNKNOWN", "UNKNOWN") == "UNKNOWN"
+    assert AUDIT.joint_two_band_status("FAIL", "UNKNOWN") == "FAIL"
+    assert AUDIT.joint_two_band_status("FAIL", "PASS") == "FAIL"
+
+
+def test_status_counts_include_all_states() -> None:
+    assert AUDIT.status_counts(["PASS", "UNKNOWN", "PASS"]) == {
+        "PASS": 2,
+        "FAIL": 0,
+        "UNKNOWN": 1,
+    }
