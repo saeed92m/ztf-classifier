@@ -40,7 +40,9 @@ def test_lab_smoke_artifact_never_substitutes_for_production(tmp_path: Path) -> 
     assert any("Do not substitute" in blocker for blocker in report["blockers"])
 
 
-def _write_schema_1_0_production_manifest(root: Path) -> None:
+def _write_schema_1_0_production_manifest(
+    root: Path, *, schema_version: str = "1.0"
+) -> None:
     artifact = root / PRODUCTION_ARTIFACT
     files = {
         "model": "model.json",
@@ -57,7 +59,7 @@ def _write_schema_1_0_production_manifest(root: Path) -> None:
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         }
     manifest = {
-        "artifact_schema_version": "1.0",
+        "artifact_schema_version": schema_version,
         "model_version": "baseline_v0.2",
         "feature_count": 42,
         "files": manifest_files,
@@ -109,6 +111,41 @@ def test_audit_reports_ready_for_schema_1_0_without_optional_diagnostics(
     assert report["safety"]["read_only"] is True
     assert report["safety"]["uploads_performed"] is False
     assert report["missing_dependent_test_files"] == []
+
+
+def test_audit_rejects_schema_1_1_lab_smoke_as_production(tmp_path: Path) -> None:
+    required_production_files = (
+        "model.json",
+        "feature_schema.parquet",
+        "artifact_manifest.json",
+        "model_contract.json",
+        "provenance.json",
+        "calibration.json",
+    )
+    _write_files(
+        tmp_path,
+        tuple(str(PRODUCTION_ARTIFACT / name) for name in required_production_files)
+        + (
+            "data/processed/features_v0.2.parquet",
+            "reports/tables/final_feature_set_v0.2.parquet",
+            "reports/tables/final_model_config_v0.2.json",
+            "data/raw/alerce/123_detections.parquet",
+            "reports/tables/fold_assignments.parquet",
+        )
+        + TESTS,
+    )
+    _write_schema_1_0_production_manifest(tmp_path, schema_version="1.1")
+
+    report = audit(tmp_path, hash_data=False)
+
+    assert report["integration_prerequisites_present"] is False
+    artifact = report["production_model_artifact"]
+    assert artifact["manifest_validation"]["status"] == "FAIL"
+    assert artifact["ready"] is False
+    assert any(
+        "requires schema 1.0" in error
+        for error in artifact["manifest_validation"]["errors"]
+    )
 
 
 def test_audit_blocks_manifest_hash_mismatch(tmp_path: Path) -> None:
