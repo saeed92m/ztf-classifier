@@ -12,7 +12,7 @@ The 2026-10-27 lab-smoke artifact is:
 
 `runs/lab-smoke-20261027T104951Z/artifact/`
 
-**Do not use the lab-smoke artifact as a replacement for the frozen production artifact.** The lab artifact is a separate model run.
+**Do not use the lab-smoke artifact as a replacement for the frozen production artifact.** The lab artifact is a separate model run. The frozen production artifact requires artifact schema `1.0`; schema `1.1` lab-smoke artifacts are rejected even if copied into the production path. The audit checks internal manifest/file hash consistency, but it cannot authenticate the original artifact against a trusted external manifest hash that is not currently available.
 
 ## Run the audit in WSL
 
@@ -35,7 +35,7 @@ It checks:
 - fold-assignment files;
 - the four test modules affected by the 10 skipped tests.
 
-The script does not modify or upload scientific inputs. It writes the JSON audit report. It does not hash large feature datasets unless `--hash-data` is supplied. The readiness field means that required paths exist; it does not validate model contents, manifest integrity, feature semantics or scientific performance.
+The script does not modify or upload scientific inputs. It writes the JSON audit report. It does not hash large feature datasets unless `--hash-data` is supplied. The readiness field means that required paths exist and the artifact's internal manifest/file hashes are self-consistent. It does not authenticate the artifact against an independently pinned original manifest, validate model contents or feature semantics, or establish scientific performance.
 
 ## Run the skipped tests
 
