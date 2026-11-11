@@ -81,8 +81,8 @@ def test_iter_photometry_rows_uses_documented_headerless_schema(
 def test_summarize_band_marks_no_rows_as_unknown(tmp_path: pathlib.Path) -> None:
     source = tmp_path / "g.tsv"
     source.write_text(
-        "SourceID\\tgmag\\te_gmag\\tg_flag\\n"
-        "202\\t18.0\\t0.10\\t0\\n",
+        "SourceID\tgmag\te_gmag\tg_flag\n"
+        "202\t18.0\t0.10\t0\n",
         encoding="utf-8",
     )
     result = AUDIT.summarize_band(
@@ -97,8 +97,8 @@ def test_summarize_band_marks_observed_nonqualifying_rows_as_fail(
 ) -> None:
     source = tmp_path / "g.tsv"
     source.write_text(
-        "SourceID\\tgmag\\te_gmag\\tg_flag\\n"
-        "101\\t19.0\\t0.80\\t0\\n",
+        "SourceID\tgmag\te_gmag\tg_flag\n"
+        "101\t19.0\t0.80\t0\n",
         encoding="utf-8",
     )
     result = AUDIT.summarize_band(
