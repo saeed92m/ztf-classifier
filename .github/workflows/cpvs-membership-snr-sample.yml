@@ -15,7 +15,7 @@ permissions:
 
 concurrency:
   group: cpvs-membership-raw-snr-sample
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   raw-snr-sample-rederivation:
