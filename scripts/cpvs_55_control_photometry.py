@@ -26,6 +26,32 @@ def finite_float(value: object) -> float | None:
     return number if math.isfinite(number) else None
 
 
+def band_snr_status(metrics: dict[str, Any], pass_key: str) -> str:
+    """Return PASS, FAIL, or UNKNOWN for one band.
+
+    No archived rows mean that the SNR result is unknown. A failure requires
+    observed rows and no qualifying detection.
+    """
+    if int(metrics.get("row_count", 0)) == 0:
+        return "UNKNOWN"
+    return "PASS" if bool(metrics.get(pass_key, False)) else "FAIL"
+
+
+def joint_two_band_status(g_status: str, r_status: str) -> str:
+    """Evaluate the joint two-band rule without treating missing data as failure."""
+    statuses = {g_status, r_status}
+    if "FAIL" in statuses:
+        return "FAIL"
+    if g_status == "PASS" and r_status == "PASS":
+        return "PASS"
+    return "UNKNOWN"
+
+
+def status_counts(values: list[str]) -> dict[str, int]:
+    """Return stable counts for the supported tri-state values."""
+    return {status: values.count(status) for status in ("PASS", "FAIL", "UNKNOWN")}
+
+
 def read_controls(path: pathlib.Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as stream:
         reader = csv.DictReader(stream, delimiter="\t")
@@ -209,6 +235,13 @@ def summarize_band(
 
     for source_id, item in result.items():
         item["qualifying_flag_counts"] = dict(sorted(flags[source_id].items()))
+        item["approximate_snr_status"] = band_snr_status(
+            item, "passes_approximate_snr"
+        )
+        item["exact_snr_status"] = band_snr_status(item, "passes_exact_snr")
+        item["inverse_error_snr_status"] = band_snr_status(
+            item, "passes_inverse_error_snr"
+        )
     return result
 
 
@@ -232,6 +265,9 @@ def run_audit(
     for control in controls:
         source_id = control["SourceID"].strip()
         g_item, r_item = g[source_id], r[source_id]
+        g_status = g_item["approximate_snr_status"]
+        r_status = r_item["approximate_snr_status"]
+        two_band_status = joint_two_band_status(g_status, r_status)
         per_object.append(
             {
                 "SourceID": source_id,
@@ -246,14 +282,19 @@ def run_audit(
                 == int(float(control["Ng"])),
                 "r_row_count_matches_table2_Nr": r_item["row_count"]
                 == int(float(control["Nr"])),
-                "reconstructed_two_band_snr_candidate": (
-                    g_item["passes_approximate_snr"]
-                    and r_item["passes_approximate_snr"]
-                ),
+                "g_snr_status": g_status,
+                "r_snr_status": r_status,
+                "two_band_snr_status": two_band_status,
+                "reconstructed_two_band_snr_candidate": two_band_status == "PASS",
                 "failed_approximate_snr_bands": [
                     band
-                    for band, metrics in (("g", g_item), ("r", r_item))
-                    if not metrics["passes_approximate_snr"]
+                    for band, status in (("g", g_status), ("r", r_status))
+                    if status == "FAIL"
+                ],
+                "unknown_approximate_snr_bands": [
+                    band
+                    for band, status in (("g", g_status), ("r", r_status))
+                    if status == "UNKNOWN"
                 ],
             }
         )
@@ -276,6 +317,9 @@ def run_audit(
                             "passes_approximate_snr",
                             "passes_exact_snr",
                             "passes_inverse_error_snr",
+                            "approximate_snr_status",
+                            "exact_snr_status",
+                            "inverse_error_snr_status",
                             "max_approximate_snr",
                             "max_exact_snr",
                             "minimum_magnitude_error",
@@ -323,16 +367,28 @@ def run_audit(
             for item in per_object
             if item["reconstructed_two_band_snr_candidate"]
         ],
-        "failed_g_snr": sum(
-            "g" in item["failed_approximate_snr_bands"] for item in per_object
+        "g_snr_status_counts": status_counts(
+            [item["g_snr_status"] for item in per_object]
         ),
-        "failed_r_snr": sum(
-            "r" in item["failed_approximate_snr_bands"] for item in per_object
+        "r_snr_status_counts": status_counts(
+            [item["r_snr_status"] for item in per_object]
         ),
+        "two_band_snr_status_counts": status_counts(
+            [item["two_band_snr_status"] for item in per_object]
+        ),
+        "failed_g_snr": sum(item["g_snr_status"] == "FAIL" for item in per_object),
+        "unknown_g_snr": sum(item["g_snr_status"] == "UNKNOWN" for item in per_object),
+        "failed_r_snr": sum(item["r_snr_status"] == "FAIL" for item in per_object),
+        "unknown_r_snr": sum(item["r_snr_status"] == "UNKNOWN" for item in per_object),
         "all_controls_are_nonmembers": all(
             not item["historical_candidate_member"] and not item["Table4_member"]
             for item in per_object
         ),
+        "status_semantics": {
+            "PASS": "At least one valid archived row meets the band SNR threshold.",
+            "FAIL": "Archived rows exist, but no valid row meets the band SNR threshold.",
+            "UNKNOWN": "No archived rows are available for this object and band.",
+        },
         "limitations": [
             "This re-evaluates the historical per-band SNR predicate on the original archived light curves.",
             "It does not establish author intent for the four-field Table 2 metadata condition.",
