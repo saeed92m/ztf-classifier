@@ -39,7 +39,7 @@ MANIFEST_REQUIRED_KEYS = (
     "provenance",
     "calibration",
 )
-SUPPORTED_ARTIFACT_SCHEMAS = {"1.0", "1.1"}
+FROZEN_PRODUCTION_ARTIFACT_SCHEMA = "1.0"
 
 KNOWN_LAB_HASHES = {
     "model.json": "96bbbd4643d073be574b0bb359062a31219417b2d857ac00e64a8c3f47e21a6c",
@@ -139,9 +139,11 @@ def validate_production_manifest(directory: Path) -> dict[str, Any]:
 
     schema_version = manifest.get("artifact_schema_version")
     result["artifact_schema_version"] = schema_version
-    if schema_version not in SUPPORTED_ARTIFACT_SCHEMAS:
+    if schema_version != FROZEN_PRODUCTION_ARTIFACT_SCHEMA:
         result["errors"].append(
-            f"Unsupported artifact schema version: {schema_version!r}."
+            "Frozen v0.2.0 production artifact requires schema "
+            f"{FROZEN_PRODUCTION_ARTIFACT_SCHEMA}; got {schema_version!r}. "
+            "Later lab-smoke schema-1.1 artifacts are not production substitutes."
         )
 
     if manifest.get("model_version") != "baseline_v0.2":
