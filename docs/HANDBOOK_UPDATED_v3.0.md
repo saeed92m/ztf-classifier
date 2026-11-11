@@ -3,7 +3,7 @@
 **Status date:** 2026-11-10  
 **Software release:** v1.0.1 (immutable)  
 **Scientific baseline:** v0.2.0 (immutable)  
-**Park pilot:** ZTF Park Pilot v0.3 — offline raw DR24 explorer  
+**Park pilot:** ZTF Park Pilot v0.5 — offline raw DR24 explorer; UI remains v0.4  
 **Main HEAD snapshot:** `bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c`
 
 ## 2026-11-10 continuity update
@@ -277,3 +277,12 @@ A green workflow, skipped test, matching count, or component smoke test must not
 ## Evidence refresh — 2026-11-10
 
 The CPVS control-sample correction and the Master Handoff set-arithmetic conflict are recorded in this handbook and in [the full project audit](PROJECT_AUDIT_AND_REMEDIATION_2026-11-10.md). Issue #170 remains OPEN / UNRESOLVED. The `Ng/Nr >= 11` predicate remains diagnostic only. Missing photometry remains UNKNOWN, not FAIL. No production selection rule, scientific threshold or v0.2.0 artifact has changed.
+
+
+## Evidence update — 2026-11-11
+
+The current offline package is ZTF Park Pilot v0.5. The corrected ZIP contains 24 files and has SHA-256 `e8a25569e9cd0867c551a23e393b557d8765e28daec139c3f88ce6d2f42b93f5`. The final Persian README PDF is included inside the ZIP and its SHA-256 matches the separately delivered PDF: `8fbdb689fa0dde6866342411a448b7a4dd5a0e79617825df8c17f42a3d629723`.
+
+The package remains a raw-data explorer. It contains 30 OID records and 4,046 epochs, all from g-band, one partition, field 199 and rcid 32. No physical-source grouping or DR24 classifier inference is performed. The independent r-band control remains separate. The complete 150-row Objects Table is still unavailable in the archived evidence. The static HTML check found no external assets or network calls; direct local-file opening is the intended execution mode, without `python -m http.server`. Manual browser acceptance on the presentation laptop remains outstanding.
+
+See [the v0.5 evidence addendum](acceptance/PARK_PILOT_V0.5_EVIDENCE_2026-11-11.fa.md) and [the execution ledger](PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-10.md). This package update does not change main, v1.0.1, or the frozen v0.2.0 scientific baseline.
