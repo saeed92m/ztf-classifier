@@ -20,7 +20,7 @@ The experiment does not change the model, feature schema, classifier, class orde
 | Repository | `saeed92m/ztf-classifier` |
 | Branch | `science/ood-missingness-experiment-20261109` |
 | Experiment commit | `c99410d152530b2e78822b11913117a3286536da` |
-| GitHub Actions run | [42698425064](https://github.com/saeed92m/ztf-classifier/actions/runs/42697361269) |
+| GitHub Actions run | [42698425064](https://github.com/saeed92m/ztf-classifier/actions/runs/42698425064) |
 | Artifact ID | `13710761158` |
 | Artifact SHA-256 | `bb12f5f6f511e27c4ab2f62c9c76e4825d4a08501ee0e2af96d6c6dc3c26546f` |
 | Dataset | `data/processed/features_v0.2.parquet` |
