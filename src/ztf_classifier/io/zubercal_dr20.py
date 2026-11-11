@@ -158,11 +158,20 @@ def summarize_zubercal_rows(
             raise ValueError("Zubercal row has an invalid PS1 objectid.")
         if row_ra is None or row_dec is None:
             raise ValueError("Zubercal row is missing objra/objdec.")
-        if not isinstance(row_ra, (int, float)) or not isinstance(
-            row_dec, (int, float)
+        if (
+            isinstance(row_ra, bool)
+            or isinstance(row_dec, bool)
+            or not isinstance(row_ra, (int, float))
+            or not isinstance(row_dec, (int, float))
         ):
-            raise TypeError("Zubercal row objra/objdec must be numeric.")
-        coordinate = SkyCoord(ra=float(row_ra) * u.deg, dec=float(row_dec) * u.deg)
+            raise ValueError("Zubercal row objra/objdec must be numeric.")
+        row_ra = float(row_ra)
+        row_dec = float(row_dec)
+        if not math.isfinite(row_ra) or not 0.0 <= row_ra < 360.0:
+            raise ValueError("Zubercal row objra must be finite and in [0, 360).")
+        if not math.isfinite(row_dec) or not -90.0 <= row_dec <= 90.0:
+            raise ValueError("Zubercal row objdec must be finite and in [-90, 90].")
+        coordinate = SkyCoord(ra=row_ra * u.deg, dec=row_dec * u.deg)
         separation = float(center.separation(coordinate).arcsec)
         if separation > radius_arcsec + 1e-6:
             raise ValueError("Zubercal row falls outside the requested cone.")
@@ -246,8 +255,14 @@ class ZubercalDR20Backend:
     """Query the public Zubercal DR20 HATS catalog for one DR24 sky position."""
 
     def __init__(self, *, max_returned_rows: int = MAX_RETURNED_ROWS) -> None:
-        if max_returned_rows < 1:
-            raise ValueError("max_returned_rows must be positive.")
+        if (
+            not isinstance(max_returned_rows, int)
+            or isinstance(max_returned_rows, bool)
+            or not 1 <= max_returned_rows <= MAX_RETURNED_ROWS
+        ):
+            raise ValueError(
+                f"max_returned_rows must be an integer in [1, {MAX_RETURNED_ROWS}]."
+            )
         self.max_returned_rows = max_returned_rows
 
     def acquire(self, request: ZubercalDR20Request) -> ZubercalDR20Result:
