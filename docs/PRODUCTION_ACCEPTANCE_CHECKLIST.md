@@ -1,3 +1,5 @@
+> **Current status clarification — 2026-11-12:** This checklist contains historical P0/source-recovery claims from earlier revisions. Those statements do not mean the current DR24-first Park MVP is accepted. Issues [#158](https://github.com/saeed92m/ztf-classifier/issues/158) and [#253](https://github.com/saeed92m/ztf-classifier/issues/253) remain open. The raw DR24 adapter, multi-OID API, diagnostic QC and Explorer are merged, but the app-level DR24 observation path, 5–10 confirmed-source end-to-end acceptance, 30–50 source demonstration, labeled 100,000-lightcurve target, and scientific evaluation remain incomplete. The CPVS exact reconstruction remains a separate unresolved research question under [#170](https://github.com/saeed92m/ztf-classifier/issues/170). See [the current unified continuation point](PROJECT_MASTER_STATUS_AND_CONTINUATION_2026-11-12.md).
+
 # Production Acceptance Checklist
 
 Current evidence: P0 frozen-reference/source-backed validation evidence completed on `main` at `044e57af46201654061cbca2300ec384a113500a` (2026-10-04). The remaining unchecked items are final release-scope audits, not the former ALeRCE/CPVS recovery blocker.
