@@ -8,14 +8,6 @@ on:
       - "scripts/diagnose_cpvs_rband_identity.py"
       - "tests/test_cpvs_rband_identity.py"
       - "configs/process/cycles/cpvs-rband-identity-20261107.json"
-  push:
-    branches:
-      - research/cpvs-seq-identity-20261104
-    paths:
-      - .github/workflows/cpvs-targeted-rband-identity.yml
-      - scripts/diagnose_cpvs_rband_identity.py
-      - tests/test_cpvs_rband_identity.py
-      - configs/process/cycles/cpvs-rband-identity-20261107.json
   workflow_dispatch:
 
 permissions:
@@ -23,7 +15,7 @@ permissions:
 
 concurrency:
   group: cpvs-targeted-rband-identity
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   targeted-r-archive-scan:
