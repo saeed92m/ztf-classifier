@@ -49,6 +49,9 @@ jobs:
       - name: Run cumulative lifecycle contract tests
         run: python -m pytest -q tests/test_cumulative_lifecycle.py
 
+      - name: Run local scientific artifact audit regression tests
+        run: python -m pytest -q tests/test_scientific_artifact_audit.py
+
   independent-benchmark-acquisition:
     name: Acquire independent StarEmbed product benchmark evidence
     if: >-

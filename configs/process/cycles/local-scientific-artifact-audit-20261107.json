@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "local-scientific-artifact-audit-20261107",
+  "objective": "Provide a read-only local audit that identifies the exact frozen model, feature dataset, ALeRCE cache and fold artifacts required by the skipped scientific integration tests without substituting lab artifacts.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "PR #274 CI run 42350826936",
+      "status": "VERIFIED",
+      "detail": "662 tests passed and 11 skipped; 10 skips depend on missing v0.2 model/feature artifacts."
+    },
+    {
+      "source": "Local artifact discussion 2026-10-27",
+      "status": "VERIFIED",
+      "detail": "Original checkout contained a separate lab-smoke artifact with model/schema/calibration/conformal/OOD files. The production artifact path was missing. The lab artifact must not substitute for the frozen production artifact."
+    },
+    {
+      "source": "Dropbox artifact search and GitHub Actions artifact inspection",
+      "status": "VERIFIED",
+      "detail": "No frozen production model or feature dataset was found in accessible Dropbox or retained GitHub Actions artifacts."
+    }
+  ],
+  "baseline": {
+    "revision": "cbc06f8e6d43e15b8b1984625596c1a177d1c415",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "expected_improvement": [
+    "Identify exact missing local artifacts",
+    "Verify known lab-smoke hashes while keeping that artifact ineligible for production inference",
+    "Provide a safe reproducible local audit command",
+    "Prevent accidental symlink/copy substitution of the lab model"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "before": "Missing artifacts were known from prior test skips, but there was no one-command local inventory.",
+        "after": "The audit inventories required model, feature, ALeRCE cache, fold and dependent-test paths; it validates internal manifest/file hashes and requires frozen artifact schema 1.0. It does not authenticate the artifact against an independently pinned original manifest or establish scientific validity."
+      },
+      "coverage": {
+        "status": "NOT_MEASURED",
+        "before": "No consolidated artifact readiness report existed.",
+        "after": "The report includes required production model files, feature/config files, raw-cache counts, fold files and explicit dependent-test existence checks."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "before": "Lab and production artifacts could be confused by path substitution.",
+        "after": "The separate lab-smoke path is marked ineligible, and schema 1.1 is rejected if a later lab artifact is copied into the frozen production path. The original artifact identity remains unverified until an authoritative hash is recovered."
+      }
+    },
+    "trade_off": "The audit requires one local execution because the original WSL filesystem is not accessible through repository tools. It does not upload or modify scientific data."
+  },
+  "validation": {
+    "status": "PENDING_REVALIDATION",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "A read-only audit script, documentation and deterministic unit tests were added.",
+      "The unit tests and actual local WSL audit have not yet run on the final branch head.",
+      "Review identified that the initial readiness flag did not require dependent test modules and could be misread as scientific validation; the audit contract is being tightened to report path prerequisites only.",
+      "Inspected the canonical ModelArtifactLoader and ModelArtifactWriter contracts. The original v0.2.0 production artifact is schema 1.0; conformal.json, ood.json and ood_model.joblib are later diagnostic components and are not required for that frozen artifact.",
+      "Fixed the local audit script so schema-1.0 baseline readiness requires the baseline files and validates the manifest SHA-256 values; it reports conformal/OOD files as optional diagnostics.",
+      "Added regression coverage for a complete schema-1.0 production artifact without optional diagnostic files and for a manifest hash mismatch.",
+      "Corrected the test fixture to emit valid JSON for its synthetic artifact manifest. CI validation on the exact final PR head is pending.",
+      "Code review found that the initial audit accepted schema 1.1 even though the frozen v0.2.0 production artifact is schema 1.0; a copied schema-1.1 lab-smoke artifact could therefore satisfy the previous readiness check if its internal manifest hashes were self-consistent.",
+      "Restricted the frozen production artifact audit to schema 1.0 and added a regression test proving that schema 1.1 is rejected from the production path.",
+      "Clarified that internal manifest/hash consistency is not authentication against a trusted original artifact manifest; the original production artifact remains UNRECOVERED until an authoritative external hash/source is available.",
+      "Added the focused artifact-audit regression test module to the Scientific Validation contract workflow so it runs for stacked PRs whose base is not main; ordinary CI is configured for pull requests targeting main only."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The production model artifact is missing from the accessible repository/CI artifact sources.",
+      "The lab-smoke artifact exists in the original local checkout but is a separate run and cannot replace the frozen production model.",
+      "The initial PR #278 artifact audit incorrectly placed conformal.json, ood.json and ood_model.joblib in the unconditional required-file list. Those files are optional diagnostic components for the frozen schema-1.0 production artifact, so a valid original artifact could be falsely reported as incomplete.",
+      "The local audit initially allowed schema 1.1 for the frozen production path, despite the documented schema-1.0 baseline; this could allow a copied later lab-smoke artifact to be misclassified as eligible."
+    ],
+    "unresolved": [
+      "Actual current WSL artifact availability must be confirmed by running the audit script.",
+      "The local WSL artifact inventory has not yet been run. The original model remains UNRECOVERED until a hash-verified local audit or authoritative artifact source confirms its presence."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Never symlink or copy lab-smoke model weights into the frozen production artifact path.",
+      "Keep large scientific artifacts out of Git.",
+      "Use exact SHA-256 and immutable artifact manifests for any external artifact source.",
+      "Artifact audit readiness must follow the manifest schema and file declarations. Later optional OOD/conformal files must not be required for a valid frozen schema-1.0 baseline artifact.",
+      "The frozen v0.2.0 production artifact schema is 1.0; later schema-1.1 lab-smoke artifacts must fail the production readiness check even when copied into the expected path.",
+      "A self-consistent internal artifact manifest proves internal file integrity only. It does not authenticate the artifact against the original publisher/trusted baseline unless the manifest or artifact hash is independently pinned."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the corrected artifact audit in the user's WSL checkout and inspect the JSON report.",
+      "If the frozen production artifact exists, verify its manifest and run the 10 dependent tests.",
+      "If absent, recover it from its original authoritative source; do not rebuild or substitute without a separately approved scientific baseline procedure.",
+      "Pass the new schema-1.0/no-optional-diagnostics and manifest-hash-mismatch regression tests on the exact PR #278 head.",
+      "Pass the focused artifact-audit regression test in the Scientific Validation workflow and run full standard CI on the integrated main-based candidate."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Local audit command: python scripts/audit_scientific_artifacts.py",
+    "Output: reports/scientific_validation/local_scientific_artifact_audit.json",
+    "Lab-smoke artifact remains separate and is never production-eligible."
+  ]
+}
