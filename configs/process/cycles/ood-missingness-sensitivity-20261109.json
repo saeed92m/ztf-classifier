@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "ood-missingness-sensitivity-20261109",
+  "objective": "Measure the effect of missing feature values on the frozen v0.2 OOD score, derive feature-family missingness from canonical extraction functions, and preserve the result as a diagnostic without changing production eligibility or model behavior.",
+  "previous_knowledge_consumed": [
+    "The v0.2.0 baseline must preserve the 42-feature schema, feature order, model configuration, class order, and historical cutoff.",
+    "PR #279 exposes per-row feature coverage and OOD evaluation basis. It deliberately does not gate partial rows.",
+    "The frozen reference matrix has 150 objects, 15 ALeRCE reference classes, and 10 objects per class; 59 rows are complete and 91 are partial.",
+    "The feature pipeline uses 10 valid observations for basic per-band features and 30 for Lomb–Scargle features.",
+    "Cross-band colors require at least one valid observation in both bands. Sample-standard-deviation variability ratios require at least two observations in the relevant band and both bands must be present.",
+    "OOD reference scores are in-sample and reference-relative. They are not calibrated probabilities.",
+    "Issue #170 remains unresolved. The CPVS published-membership discrepancy is independent of this OOD work."
+  ],
+  "baseline": {
+    "revision": "main@bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c",
+    "scientific_baseline": "v0.2.0",
+    "feature_schema": "42 ordered features",
+    "reference_dataset": "data/processed/features_v0.2.parquet",
+    "model_configuration": "OODProductionModel; 300 estimators; contamination=auto; random_state=42",
+    "scope": "Diagnostic-only experiment. No production model, feature values, feature order, class order, cutoff, scientific gate, or CPVS selection criteria changed."
+  },
+  "change": {
+    "branch": "science/ood-missingness-experiment-20261109",
+    "pull_request": "https://github.com/saeed92m/ztf-classifier/pull/280",
+    "files": [
+      "scripts/run_ood_missingness_experiment.py",
+      "tests/test_ood_missingness_experiment.py",
+      ".github/workflows/ood-missingness-experiment.yml",
+      "docs/research/OOD_MISSINGNESS_SENSITIVITY_2026-11-09.md",
+      "configs/process/cycles/ood-missingness-sensitivity-20261109.json"
+    ],
+    "rationale": "Quantify OOD score sensitivity to random and extraction-aligned missingness. Verify whether natural missing-feature patterns match the canonical v0.2 extraction eligibility rules. Preserve all results without introducing an arbitrary coverage threshold."
+  },
+  "expected_improvement": [
+    "reproducibility",
+    "reliability",
+    "robustness",
+    "coverage",
+    "scientific_validity"
+  ],
+  "measurement": {
+    "metrics": {
+      "reproducibility": {
+        "before": "No pinned, hash-verified OOD missingness sensitivity experiment or machine-readable feature-family map.",
+        "after": "MCAR and extraction-aligned masking experiments record input hashes, runtime versions, model configuration, output hashes, and an artifact reference.",
+        "evidence": "Experiment run 42698425064; artifact 13710761158."
+      },
+      "coverage": {
+        "before": "Natural missing-feature patterns had not been matched against all canonical v0.2 extraction eligibility rules.",
+        "after": "150/150 rows match an exact extraction-aligned pattern; 91 partial rows have zero unmatched and zero ambiguous patterns.",
+        "evidence": "natural_missingness_pattern_summary.json in artifact 13710761158."
+      },
+      "robustness": {
+        "before": "The effect of missing features on OOD anomaly flags was not measured under MCAR or correlated extraction patterns.",
+        "after": "Eight MCAR levels and 17 extraction-aligned scenarios were measured on 59 complete rows. Missingness suppresses existing flags; no new flags were created in the 17 correlated scenarios.",
+        "evidence": "masked_sensitivity_summary.csv and family_masking_summary.csv in artifact 13710761158."
+      },
+      "reliability": {
+        "before": "A partial-row OOD score could be emitted without a quantitative description of its missing-feature sensitivity.",
+        "after": "The paired experiment shows downward percentile shifts and suppression of baseline anomaly flags, including complete suppression of all baseline 90th/95th/99th flags when both bands have 2–9 observations.",
+        "evidence": "PR #280 report and artifact 13710761158."
+      },
+      "regression_protection_count": {
+        "before": 0,
+        "after": 6,
+        "unit": "dedicated OOD missingness regression tests",
+        "evidence": "Dedicated experiment workflow run 42698425064; 6 tests passed."
+      },
+      "scientific_validity": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED",
+        "evidence": "No independent astrophysical ID/OOD labels or production-artifact byte comparison are available."
+      }
+    },
+    "trade_off": "The experiment demonstrates sensitivity and natural missingness provenance. It does not establish a production OOD eligibility threshold, calibrated probability, precision, recall, or population-level validity."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Dedicated OOD workflow run 42698425064 passed Ruff lint, Ruff format, six regression tests, the frozen v0.2 experiment, and artifact upload.",
+      "Artifact 13710761158 has SHA-256 bb12f5f6f511e27c4ab2f62c9c76e4825d4a08501ee0e2af96d6c6dc3c26546f.",
+      "The frozen feature matrix SHA-256 is d08543cffe5db141d6a7e4ee429264acdaa50c6e4fd01f1b0fa2a36aa42a6a85.",
+      "The frozen 42-feature schema SHA-256 is fed07fc291070ecbdc7bbc597fad5aac6a3f4a1746feb12a9f4c2407108af329.",
+      "Full repository CI on PR head b072d07c45ee12518ee288f7320b72927d00619d passed in both push run 42699459609 and pull-request run 42699475196. All eight jobs passed: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate.",
+      "The full test suite reported 648 passed, 10 skipped, 9 warnings, and 83% total coverage. The six new OOD missingness tests were present in the JUnit report.",
+      "CodeQL run 42699474886 passed.",
+      "Product Scope Audit run 42699475227 passed.",
+      "Scientific Validation run 42699475335 passed its benchmark and cumulative lifecycle contract checks. Source-backed DR24, ALeRCE, StarEmbed, and historical-reference jobs were skipped by the ordinary PR workflow conditions.",
+      "The experiment reconstructs OODProductionModel from the frozen matrix and configuration. It does not load or byte-compare a persisted production artifact.",
+      "The experiment reference scores are in-sample. No independent astrophysical OOD labels were used."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The 150-object frozen dataset's missing-feature patterns are fully explained by the canonical 10/30 observation thresholds and the 1/2 observation cross-band rules.",
+      "Median imputation followed by IsolationForest scoring can lower anomaly scores when feature groups are missing. The paired masking experiment shows that this can suppress baseline anomaly flags.",
+      "The current reference set is too small and lacks independent ID/OOD labels to define a general production eligibility policy.",
+      "The persisted production OOD artifact is not available in the repository. The reconstructed model cannot establish byte-for-byte artifact parity."
+    ],
+    "unresolved": [
+      "Production OOD artifact parity remains unverified.",
+      "Independent astrophysical ID/OOD evaluation data are not available.",
+      "A versioned, evidence-based OOD eligibility policy is not established."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "All 150 natural missing-feature patterns match the v0.2 extraction eligibility rules; no unmatched or ambiguous patterns remain.",
+      "The eight objects with 38 missing features have 2–9 valid observations in both bands and retain only four cross-band features.",
+      "MCAR and extraction-aligned masking can lower reference-relative OOD percentiles and suppress baseline anomaly flags.",
+      "Rank correlation can remain moderate while absolute OOD percentiles move downward. Rank stability alone is not enough to trust a threshold decision.",
+      "The 90th, 95th, and 99th percentile thresholds are reference-relative thresholds, not calibrated probabilities.",
+      "A partial-feature OOD score must remain explicitly labelled. It must not be presented as equivalent to a complete-feature evaluation.",
+      "No fixed coverage threshold is justified by this 150-object reference experiment.",
+      "ALeRCE labels are reference labels, not independent astrophysical ground truth."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Production-artifact parity is not established.",
+      "Independent astrophysical ID/OOD labels are not available.",
+      "Production OOD eligibility criteria remain unvalidated."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Keep PR #280 diagnostic-only. Do not change the production OOD model, imputer, scaler, classifier, feature schema, class order, or v0.2.0 baseline.",
+    "Keep per-row coverage and OOD evaluation-state reporting from PR #279.",
+    "Do not suppress partial-row scores or set a fixed coverage threshold without independent validation.",
+    "Do not treat OOD percentiles as calibrated probabilities.",
+    "Do not use ALeRCE labels as independent astrophysical ground truth.",
+    "Keep CPVS issue #170 as a separate unresolved scientific validation blocker."
+  ]
+}

@@ -1,0 +1,67 @@
+name: OOD Missingness Sensitivity
+
+on:
+  push:
+    branches:
+      - science/ood-missingness-experiment-20261109
+    paths:
+      - ".github/workflows/ood-missingness-experiment.yml"
+      - "scripts/run_ood_missingness_experiment.py"
+      - "tests/test_ood_missingness_experiment.py"
+      - "data/processed/features_v0.2.parquet"
+      - "reports/tables/final_feature_set_v0.2.parquet"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ood-missingness-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run-controlled-masking-experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact source revision
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.16"
+          cache: pip
+
+      - name: Install pinned experiment dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements.lock
+
+      - name: Lint and format-check experiment code
+        run: |
+          python -m ruff check scripts/run_ood_missingness_experiment.py tests/test_ood_missingness_experiment.py
+          python -m ruff format --check scripts/run_ood_missingness_experiment.py tests/test_ood_missingness_experiment.py
+
+      - name: Run deterministic regression tests
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m pytest tests/test_ood_missingness_experiment.py -q
+
+      - name: Run frozen v0.2 OOD masking experiment
+        env:
+          PYTHONPATH: src
+        run: |
+          python scripts/run_ood_missingness_experiment.py \
+            --dataset data/processed/features_v0.2.parquet \
+            --feature-schema reports/tables/final_feature_set_v0.2.parquet \
+            --output-dir artifacts/ood-missingness-experiment \
+            --replicates 20 \
+            --seed 20261109
+
+      - name: Upload reproducible experiment evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ood-missingness-experiment-${{ github.run_id }}
+          path: artifacts/ood-missingness-experiment/
+          if-no-files-found: error
+          retention-days: 30
