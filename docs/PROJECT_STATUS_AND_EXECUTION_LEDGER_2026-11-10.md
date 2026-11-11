@@ -3,7 +3,7 @@
 
 **Primary delivery:** Tabriz Science & Technology Park pilot  
 **Main baseline:** `bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c` (2026-11-03)  
-**Park pilot branch:** `delivery/park-dr24-lightcurve-acceptance-20261110`  
+**Park pilot documentation branch:** `delivery/park-mvp-readiness-20261105`  
 **Documentation PR:** #266 — Draft / open / unmerged  
 **Live DR24 rerun:** [workflow #42830475350](https://github.com/saeed92m/ztf-classifier/actions/runs/42830475350) — completed successfully (run conclusion: success; 2026-11-10 14:08 UTC).
 
@@ -140,3 +140,19 @@ This is calculated from nine gates using PASS=1, PARTIAL=0.5 and NOT ACCEPTED=0.
 
 - CPVS exact membership remains an independent scientific research blocker. Do not change filters or baseline to force the published count.
 - CIN remains a proposed human-in-the-loop architecture. Do not represent it as implemented or part of the current pilot.
+
+
+## 10. Evidence update — 2026-11-11
+
+The v0.5 offline Park package was independently inspected and its packaging corrected. The updated evidence record is [PARK_PILOT_V0.5_EVIDENCE_2026-11-11.fa.md](docs/acceptance/PARK_PILOT_V0.5_EVIDENCE_2026-11-11.fa.md).
+
+- Corrected package: `ZTF_Park_Pilot_v0.5_2026-11-11.zip` (24 files; ZIP integrity PASS).
+- Package SHA-256: `e8a25569e9cd0867c551a23e393b557d8765e28daec139c3f88ce6d2f42b93f5`.
+- Final README PDF is included inside the corrected ZIP and matches the separately delivered PDF byte-for-byte; its SHA-256 is `8fbdb689fa0dde6866342411a448b7a4dd5a0e79617825df8c17f42a3d629723`.
+- The v0.5 manifest records 30 OIDs and 4,046 raw epochs. All 30 are g-band records from one partition, field 199, rcid 32. They are not confirmed unique astrophysical sources.
+- Independent r-band control OID `264214400000912` (123 epochs) remains separate and has no physical cross-match to the g sample.
+- The full 150-row Objects Table is still absent; only its snapshot hash and sampling information are present.
+- Static inspection of `index.html` found no external script/style references, no `fetch()` calls and no external imports. The README states that no Python server is required. Manual browser acceptance on the presentation laptop remains open.
+- The live Workbench run `42830475350` remains PASS for its bounded 10-OID repeatability, 30-OID three-batch walkthrough and browser assertions. It does not establish physical identity or scientific classifier validity.
+
+This is a documentation/package correction only. It does not change main, software v1.0.1, scientific baseline v0.2.0, model artifacts, features, taxonomy, thresholds or scientific acceptance criteria. PR #266 remains Draft/open/unmerged.
