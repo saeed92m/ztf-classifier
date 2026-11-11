@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-targeted-seq-identity-20261104",
+  "objective": "Test the Seq 615170/615172 identity lead using the checksum-pinned original Zenodo g-band archive, preserve the result as a lead only, and identify the next independent r-band and full Seq reconciliation checks.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Issue #170 and retained CPVS Table 2 / archive audits",
+      "status": "VERIFIED",
+      "detail": "Seq 615170 is a four-field-positive noncandidate control; Table 2 reports Ng=132 and Nr=113, while the retained g/r archive audit reported zero rows under Seq 615170."
+    },
+    {
+      "source": "Zenodo DOI 10.5281/zenodo.3886372",
+      "status": "VERIFIED",
+      "detail": "The source record contains ztf2g.zip and ztf2r.zip; the g archive checksum and prior extracted-member integrity values are pinned."
+    },
+    {
+      "source": "PR #265 source-backed run 42063847111, artifact 13432972969",
+      "status": "VERIFIED",
+      "detail": "The corrected Info-ZIP scanner completed a full g archive scan and produced a targeted coordinate/photometry comparison for Seq 615170 and Seq 615172."
+    }
+  ],
+  "baseline": {
+    "scientific_baseline": "v0.2.0 immutable",
+    "cpvs_parent_count": 781602,
+    "cpvs_published_reference_count": 730184,
+    "cpvs_reconstructed_candidate_count": 741786,
+    "cpvs_candidate_only_count": 11602,
+    "selector": "unchanged"
+  },
+  "expected_improvement": [
+    "Verify the complete checksum-pinned g archive and inspect the suspected Seq mismatch using coordinates and photometry.",
+    "Preserve the identity result as a lead unless independent r-band evidence supports the same mapping.",
+    "Keep the membership and publisher-method blockers separate from the targeted archive identity question."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The Seq 615170/615172 relation was supported only by matching row counts and had no complete source scan.",
+        "after": "The full g archive passed archive MD5/SHA-256, ZIP CRC, extracted member SHA-256/size, row count, and malformed-row checks. Seq 615172 has 132 rows, median separation 0.5202627 arcsec, and mean g magnitude delta +0.00004545 mag from the Table 2 Seq 615170 target."
+      },
+      "reproducibility": {
+        "before": "Python ZipExtFile stopped early and did not produce a valid coordinate comparison.",
+        "after": "Info-ZIP scan in run 42063847111 verified 5,034,066,142 extracted bytes, SHA-256 366aaf3539f83955bb1e29799df9e63005a9eb682f4f56d0807545a3534b0f16, 89,697,393 rows, and zero malformed rows."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "PARTIAL_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Workflow 42063847111 and artifact 13432972969 were completed and independently inspected.",
+      "Archive MD5 850fcef561dd7407fbe8e19e99100d7a and SHA-256 47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9 matched.",
+      "ZIP member CRC-32 expected and actual d2f33aa0 matched.",
+      "Extracted member size 5034066142 bytes and SHA-256 366aaf3539f83955bb1e29799df9e63005a9eb682f4f56d0807545a3534b0f16 matched; 89697393 rows and zero malformed rows.",
+      "Seq 615170 has zero g rows; Seq 615172 has 132 g rows. Median angular separation is 0.5202627 arcsec; mean g magnitude delta is +0.00004545 mag.",
+      "The result supports STRONG_IDENTITY_LEAD only. The r archive and all other Seq mismatches remain unverified."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIAL_ROOT_CAUSE_EVIDENCE",
+    "root_causes": [
+      "The earlier Python ZipExtFile scanner returned a partial member. The Info-ZIP scanner now verifies the full extracted member independently and completed the g-band scan."
+    ],
+    "hypothesis": "The 132 g-band rows stored under Seq 615172 may belong to Table 2 Seq 615170. This is supported by matching row count, sub-arcsecond median coordinate separation, and near-identical mean magnitude, but it is not a confirmed ID correction.",
+    "unresolved": [
+      "The r-band archive has not been independently scanned for Seq 615170/615172 or coordinate-matched orphan records.",
+      "The 91 g-band Seq-level row-count mismatches remain unexplained.",
+      "The 4,916-row difference between summed Table 2 Ng and g archive row count remains a separate source-integrity issue.",
+      "The targeted identity lead does not explain the 11,602 candidate-only membership residuals or prove the publisher's selection rule."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Matching row counts alone are insufficient for identity; coordinates and photometry add independent support.",
+      "The g archive provides a strong targeted identity lead for Seq 615172 relative to Table 2 Seq 615170.",
+      "A corresponding r-band scan and full Seq-level reconciliation are required before any source-ID mapping is accepted."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [
+      "Add an independent r-band archive scan with source checksum, extracted-member SHA-256/size, row count, malformed-row count, Seq counts, coordinates, HJD, magnitudes and flags.",
+      "Reconcile all r-band Seq counts against Table 2 Nr.",
+      "Investigate all 91 g-band Seq-level count mismatches.",
+      "Run the fixed 100-object and 1,000-object CPVS membership diagnostics against immutable inputs and preserve provenance/hashes.",
+      "Establish the publisher's exact selection semantics from primary-source or author-method evidence; do not infer them from set equality alone."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not automatically remap Seq 615172 to Seq 615170. Preserve the relation as STRONG_IDENTITY_LEAD pending r-band corroboration.",
+    "Do not treat the targeted identity lead as an explanation for the 11,602 candidate-only membership residuals.",
+    "Do not change CPVS thresholds, selector, published reference, or frozen v0.2.0 baseline.",
+    "The g archive full-member integrity and targeted scan are verified; r-band and global Seq reconciliation remain open."
+  ]
+}
