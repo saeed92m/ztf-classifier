@@ -168,6 +168,69 @@ def test_backend_rejects_catalog_epoch_count_mismatch() -> None:
         backend.acquire(DR24LightcurveRequest((123,)))
 
 
+@pytest.mark.parametrize(
+    ("column", "value"),
+    [
+        ("filterid", 1.5),
+        ("filterid", 4),
+        ("fieldid", 100.5),
+        ("fieldid", 0),
+        ("rcid", 4.5),
+        ("rcid", -1),
+        ("rcid", 64),
+        ("objra", float("nan")),
+        ("objra", 360.0),
+        ("objdec", float("inf")),
+        ("objdec", 91.0),
+    ],
+)
+def test_backend_rejects_invalid_catalog_identity_metadata(
+    column: str,
+    value: object,
+) -> None:
+    row = {
+        "objectid": 123,
+        "filterid": 1,
+        "fieldid": 100,
+        "rcid": 4,
+        "objra": 120.0,
+        "objdec": -20.0,
+        "nepochs": 1,
+        "lightcurve": pd.DataFrame(
+            {
+                "hmjd": [60000.1],
+                "mag": [18.2],
+                "magerr": [0.03],
+                "clrcoeff": [0.1],
+                "catflags": [0],
+            }
+        ),
+    }
+    row[column] = value
+
+    class Collection:
+        all_indexes: ClassVar[dict[str, object]] = {"objectid": object()}
+
+    class Query:
+        def compute(self) -> pd.DataFrame:
+            return pd.DataFrame([row])
+
+    class Catalog:
+        all_columns: ClassVar[set[str]] = {
+            "objectid", "filterid", "fieldid", "rcid", "objra", "objdec",
+            "nepochs", "lightcurve",
+        }
+        hc_collection: ClassVar[Collection] = Collection()
+
+        def id_search(self, *, values: dict[str, list[int]]) -> Query:
+            assert values == {"objectid": [123]}
+            return Query()
+
+    backend = DR24LightcurveBackend(lambda *_args, **_kwargs: Catalog())
+    with pytest.raises(DR24AcquisitionError):
+        backend.acquire(DR24LightcurveRequest((123,)))
+
+
 @pytest.mark.parametrize("value", [123.5, 0, -1, True, "123"])
 def test_returned_objectid_rejects_lossy_or_invalid_values(value: object) -> None:
     with pytest.raises(DR24AcquisitionError, match="invalid objectid"):
