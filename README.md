@@ -3,6 +3,7 @@
 A CPU-first Astronomical Data Analysis & Discovery Platform for Zwicky Transient Facility (ZTF) data, scientific feature generation, machine-learning and statistical analysis, uncertainty/OOD diagnostics, provenance, and discovery-oriented workflows.
 
 ## Current project documentation
+- [Park Pilot v0.5 — verified package evidence (2026-11-11)](docs/acceptance/PARK_PILOT_V0.5_EVIDENCE_2026-11-11.fa.md)
 - [Persian Park technical status addendum — 2026-11-07](docs/acceptance/PARK_TECHNICAL_STATUS_ADDENDUM_2026-11-07.fa.md)
 
 - [Project Continuity Handbook v3.0](docs/HANDBOOK_UPDATED_v3.0.md)
