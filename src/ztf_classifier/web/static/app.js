@@ -250,6 +250,7 @@ const overviewMarkup = mainCanvas.innerHTML;
 const titles = {
   overview: ["Object analysis", "Scientific overview"],
   observations: ["Observations", "Normalized observation stream"],
+  dr24: ["DR24 Explorer", "Native DR24 light curve · raw data only"],
   features: ["Features", "Scientific Feature Engine output"],
   classification: ["Classification", "Model prediction and probabilities"],
   uncertainty: ["Uncertainty / OOD / Anomaly", "Independent diagnostic channels"],
@@ -476,10 +477,224 @@ async function loadValidationDashboard() {
   }
 }
 
+
+async function loadDR24Explorer() {
+  mainCanvas.innerHTML = [
+    '<div class="canvas-header"><div><div class="eyebrow">SOURCE EXPLORER · EXPERIMENTAL</div>',
+    '<h1 id="viewTitle">DR24 Explorer</h1>',
+    '<p id="viewSubtitle">Native DR24 data only. No feature normalization or model inference.</p></div></div>',
+    '<section class="panel"><div class="panel-header"><div><div class="panel-title">Indexed multi-OID lookup</div>',
+    '<div class="panel-subtitle">Enter 1–10 positive ZTF DR24 object IDs. Separate OIDs remain separate records; no broad catalog scan is performed.</div></div></div>',
+    '<div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding:12px 0">',
+    '<label for="dr24ObjectIds">DR24 object IDs</label>',
+    '<textarea id="dr24ObjectIds" rows="3" placeholder="One or more OIDs, separated by commas or spaces" style="min-width:min(100%,520px)"></textarea>',
+    '<button class="primary-button" id="dr24LoadButton" type="button">Load raw light curves</button>',
+    '<button id="dr24ExportButton" type="button" disabled>Download raw JSON + QC</button>',
+    '</div><p id="dr24Status" class="muted" role="status">No DR24 objects loaded.</p></section>',
+    '<div id="dr24Results"><section class="panel muted">Enter up to 10 OIDs to inspect native DR24 records.</section></div>',
+    '<section class="panel"><div class="panel-header"><div><div class="panel-title">Acquisition provenance</div>',
+    '<div class="panel-subtitle">Source, schema, query, missing OIDs and payload hashes</div></div></div>',
+    '<pre id="dr24Provenance" class="report-content">No acquisition performed.</pre></section>'
+  ].join("");
+  setViewHeading("dr24");
+  const input = document.getElementById("dr24ObjectIds");
+  const loadButton = document.getElementById("dr24LoadButton");
+  const exportButton = document.getElementById("dr24ExportButton");
+  let lastRawExport = null;
+  const initialIds = params.get("objectids") || params.get("objectid") || "";
+  if (initialIds) input.value = initialIds;
+
+  function parseObjectIds(value) {
+    const tokens = value.split(/[\s,;]+/).filter(Boolean);
+    if (tokens.length < 1 || tokens.length > 10) {
+      throw new Error("Enter between 1 and 10 object IDs.");
+    }
+    if (tokens.some(token => !/^[1-9][0-9]*$/.test(token))) {
+      throw new Error("Every object ID must be a positive integer.");
+    }
+    const ids = tokens.map(Number);
+    if (ids.some(id => !Number.isSafeInteger(id) || id <= 0)) {
+      throw new Error("Every object ID must be a safe positive integer.");
+    }
+    if (new Set(ids).size !== ids.length) {
+      throw new Error("Duplicate object IDs are not allowed.");
+    }
+    return ids;
+  }
+
+  function renderRecord(record, qc) {
+    const oid = Number(record.objectid);
+    const filterName = ({1:"g",2:"r",3:"i"})[record.filterid] || "unknown";
+    const epochs = Array.isArray(record.epochs) ? record.epochs : [];
+    // Keep missing or non-numeric source values out of the chart. In particular,
+    // Number(null) is zero and must not turn a missing HMJD/magnitude into a point.
+    const points = epochs.filter(epoch =>
+      typeof epoch.hmjd === "number" && Number.isFinite(epoch.hmjd) &&
+      typeof epoch.mag === "number" && Number.isFinite(epoch.mag)
+    ).map(epoch => ({
+      x: epoch.hmjd,
+      y: epoch.mag,
+      magerr: epoch.magerr,
+      flags: epoch.catflags
+    }));
+    let chart = "";
+    if (points.length) {
+      let xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+      for (const point of points) {
+        xmin = Math.min(xmin, point.x);
+        xmax = Math.max(xmax, point.x);
+        const hasError = typeof point.magerr === "number" &&
+          Number.isFinite(point.magerr) && point.magerr >= 0;
+        const error = hasError ? point.magerr : 0;
+        ymin = Math.min(ymin, point.y - error);
+        ymax = Math.max(ymax, point.y + error);
+      }
+      const xspan = xmax - xmin || 1, yspan = ymax - ymin || 1;
+      const errorBars = points.map(point => {
+        if (typeof point.magerr !== "number" ||
+            !Number.isFinite(point.magerr) || point.magerr < 0) return "";
+        const x = 35 + ((point.x - xmin) / xspan) * 830;
+        const y1 = 18 + ((point.y - point.magerr - ymin) / yspan) * 235;
+        const y2 = 18 + ((point.y + point.magerr - ymin) / yspan) * 235;
+        return '<line class="dr24-error-bar" x1="' + x.toFixed(2) +
+          '" x2="' + x.toFixed(2) + '" y1="' + y1.toFixed(2) +
+          '" y2="' + y2.toFixed(2) +
+          '" stroke="#aebdce" stroke-width="1.5"><title>magerr ' +
+          escapeHtml(point.magerr) + '</title></line>';
+      }).join("");
+      const circles = points.map(point => {
+        const x = 35 + ((point.x - xmin) / xspan) * 830;
+        const y = 18 + ((point.y - ymin) / yspan) * 235;
+        const flagsKnown = typeof point.flags === "number" &&
+          Number.isInteger(point.flags) && point.flags >= 0;
+        const flagged = flagsKnown && (point.flags & 32768) !== 0;
+        const fill = !flagsKnown ? "#9aa4b2" : (flagged ? "#e0a34a" : "#55b8df");
+        return '<circle cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) +
+          '" r="3" fill="' + fill + '" fill-opacity="0.85"><title>HMJD ' +
+          escapeHtml(point.x) + ', mag ' + escapeHtml(point.y) +
+          ', magerr ' + escapeHtml(point.magerr) + ', catflags ' +
+          escapeHtml(point.flags) + '</title></circle>';
+      }).join("");
+      chart = '<div class="chart" style="margin-top:12px"><svg viewBox="0 0 900 280" ' +
+        'preserveAspectRatio="none" role="img" aria-label="DR24 light curve for OID ' +
+        oid + '"><g class="grid-lines"><line x1="0" y1="55" x2="900" y2="55"/>' +
+        '<line x1="0" y1="110" x2="900" y2="110"/><line x1="0" y1="165" x2="900" y2="165"/>' +
+        '<line x1="0" y1="220" x2="900" y2="220"/></g>' +
+        errorBars + circles + '</svg>' +
+        '<div class="axis-label x">HMJD (HJD − 2400000.5) →</div>' +
+        '<div class="axis-label y">mag</div></div>';
+    } else {
+      chart = '<p class="muted">No finite numeric HMJD/magnitude pairs are available to plot. Raw rows remain available below and in the JSON export.</p>';
+    }
+    const tableRows = epochs.slice(0, 50).map(epoch =>
+      "<tr><td>" + escapeHtml(epoch.hmjd) + "</td><td>" + escapeHtml(epoch.mag) +
+      "</td><td>" + escapeHtml(epoch.magerr) + "</td><td>" + escapeHtml(epoch.clrcoeff) +
+      "</td><td>" + escapeHtml(epoch.catflags) + "</td></tr>"
+    ).join("");
+    const qcText = qc ? JSON.stringify(qc, null, 2) :
+      "No server-side QC assessment was returned. Raw epochs are still preserved.";
+    return [
+      '<section class="panel"><div class="panel-header"><div><div class="panel-title">OID ',
+      escapeHtml(oid), ' · filter ', escapeHtml(filterName), '</div>',
+      '<div class="panel-subtitle">Field ', escapeHtml(record.fieldid),
+      ' · rcid ', escapeHtml(record.rcid), ' · epochs ', epochs.length,
+      ' / catalog ', escapeHtml(record.catalog_nepochs),
+      ' · payload SHA-256 ', escapeHtml(record.payload_sha256), '</div></div></div>',
+      '<div class="panel-subtitle">Time: HMJD · native ZTF magnitude · vertical bars: reported magerr · no cross-OID grouping</div>',
+      chart,
+      '<div class="panel-title" style="margin-top:18px">Raw epoch records (first 50)</div>',
+      '<div class="catalog-table-wrap"><table class="metadata"><thead><tr><th>HMJD</th><th>mag</th>',
+      '<th>magerr</th><th>clrcoeff</th><th>catflags</th></tr></thead><tbody>',
+      tableRows || '<tr><td colspan="5">No epochs in payload.</td></tr>',
+      '</tbody></table></div>',
+      '<div class="panel-title" style="margin-top:18px">Raw-preserving QC assessment</div>',
+      '<pre class="report-content">', escapeHtml(qcText), '</pre></section>'
+    ].join("");
+  }
+
+  async function loadRaw() {
+    lastRawExport = null;
+    exportButton.disabled = true;
+    let objectids;
+    try {
+      objectids = parseObjectIds(input.value.trim());
+    } catch (error) {
+      document.getElementById("dr24Status").textContent = error.message;
+      return;
+    }
+    loadButton.disabled = true;
+    document.getElementById("dr24Status").textContent =
+      "Querying indexed DR24 source for " + objectids.length + " OID(s)…";
+    try {
+      const payload = await fetchJson("/v1/dr24/lightcurves", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ objectids })
+      });
+      const records = Array.isArray(payload.records) ? payload.records : [];
+      const qcByOid = new Map((payload.qc_assessments || []).map(item =>
+        [String(item.objectid), item]
+      ));
+      const provenance = payload.provenance || {};
+      document.getElementById("dr24Provenance").textContent =
+        JSON.stringify(provenance, null, 2);
+      const rendered = records.map(record =>
+        renderRecord(record, qcByOid.get(String(record.objectid)))
+      );
+      document.getElementById("dr24Results").innerHTML = rendered.join("") ||
+        '<section class="panel muted">No catalog rows were returned. No alternate source was used.</section>';
+      const missing = provenance.missing_oids || [];
+      const returned = provenance.returned_oids || records.map(record => record.objectid);
+      document.getElementById("dr24Status").textContent =
+        "Raw DR24 response received. Requested " + objectids.length +
+        " · returned " + returned.length + " · missing " + missing.length +
+        ". No feature generation or inference was performed.";
+      lastRawExport = {
+        export_schema_version: "ztf-dr24-raw-export-v0.2",
+        exported_at_utc: new Date().toISOString(),
+        source_payload: payload,
+        interpretation: "Raw source payload preserved. QC is diagnostic only; no epochs were filtered or grouped."
+      };
+      exportButton.disabled = false;
+      setConnectionState("DR24 raw data loaded");
+    } catch (error) {
+      document.getElementById("dr24Results").innerHTML =
+        '<section class="panel muted">DR24 acquisition failed. No fallback source was used.</section>';
+      document.getElementById("dr24Provenance").textContent =
+        "Unavailable: DR24 acquisition failed.";
+      document.getElementById("dr24Status").textContent =
+        "DR24 acquisition failed (" + (error.status || "network") +
+        "). No fallback source was used.";
+      setConnectionState("DR24 acquisition failed", false);
+    } finally {
+      loadButton.disabled = false;
+    }
+  }
+
+  loadButton.addEventListener("click", loadRaw);
+  exportButton.addEventListener("click", () => {
+    if (!lastRawExport) return;
+    const blob = new Blob([JSON.stringify(lastRawExport, null, 2)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ztf-dr24-batch-" +
+      (lastRawExport.source_payload.provenance.requested_oids || []).join("_") +
+      "-raw-export.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  if (input.value) await loadRaw();
+}
 async function showView(view) {
   document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
   const active = document.querySelector('.nav-item[data-view="' + view + '"]');
   if (active) active.classList.add("active");
+  if (view === "dr24") return loadDR24Explorer();
   if (view === "overview") {
     mainCanvas.innerHTML = overviewMarkup;
     bindOverviewActions();
