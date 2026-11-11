@@ -3,6 +3,8 @@ from __future__ import annotations
 import pytest
 
 from ztf_classifier.io.zubercal_dr20 import (
+    MAX_RETURNED_ROWS,
+    ZubercalDR20Backend,
     ZubercalDR20Request,
     summarize_zubercal_rows,
 )
@@ -100,6 +102,60 @@ def test_zubercal_request_rejects_invalid_bounds(kwargs: dict[str, object]) -> N
         ZubercalDR20Request(**kwargs)  # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize(
+    "value",
+    [0, -1, True, False, 1.5, "10", MAX_RETURNED_ROWS + 1],
+)
+def test_backend_rejects_invalid_returned_row_limits(value: object) -> None:
+    with pytest.raises(ValueError, match="max_returned_rows"):
+        ZubercalDR20Backend(max_returned_rows=value)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("column", "value"),
+    [
+        ("objra", float("nan")),
+        ("objra", float("inf")),
+        ("objra", -0.1),
+        ("objra", 360.0),
+        ("objra", True),
+        ("objra", "142.59395"),
+        ("objdec", float("nan")),
+        ("objdec", float("-inf")),
+        ("objdec", -90.1),
+        ("objdec", 90.1),
+        ("objdec", False),
+    ],
+)
+def test_zubercal_summary_rejects_invalid_row_coordinates(
+    column: str,
+    value: object,
+) -> None:
+    row = {
+        "objectid": 82251425938786635,
+        "mjd": 59000.1,
+        "band": "g",
+        "mag": 18.2,
+        "magerr": 300,
+        "fieldid": 100,
+        "rcidin": 4,
+        "info": 0,
+        "flag": 0,
+        "objra": 142.59395,
+        "objdec": -21.45313,
+    }
+    row[column] = value
+    expected_exception = TypeError if isinstance(value, (bool, str)) else ValueError
+    with pytest.raises(expected_exception):
+        summarize_zubercal_rows(
+            [row],
+            ztf_objectid=264114400013085,
+            ra_deg=142.59396362304688,
+            dec_deg=-21.453134536743164,
+            radius_arcsec=1.2,
+        )
+
+
 def test_zubercal_summary_rejects_invalid_ps1_identity_or_coordinates() -> None:
     base = {
         "mjd": 59000.1,
@@ -121,7 +177,7 @@ def test_zubercal_summary_rejects_invalid_ps1_identity_or_coordinates() -> None:
             dec_deg=-21.45,
             radius_arcsec=1.2,
         )
-    with pytest.raises(ValueError, match="objra/objdec"):
+    with pytest.raises(ValueError, match="missing objra/objdec"):
         summarize_zubercal_rows(
             [{**base, "objectid": 123, "objra": None}],
             ztf_objectid=1,
