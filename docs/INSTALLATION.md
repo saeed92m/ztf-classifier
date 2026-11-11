@@ -1,30 +1,40 @@
 # Installation
 
-## Requirements
+## Supported environment
+The released package requires Python 3.11. The current published software release is ztf-classifier==1.0.1.
 
-Python 3.11 is the supported release environment. A Linux/WSL environment is recommended for scientific workflows.
+## Linux / WSL
 
-## Install
-
-Create a virtual environment and install the published package:
-
-    python -m venv .venv
+    python3.11 -m venv .venv
     source .venv/bin/activate
     python -m pip install --upgrade pip
-    python -m pip install ztf-classifier==1.0.0
-
-Verify:
-
+    python -m pip install ztf-classifier==1.0.1
     ztf-classifier --help
 
-## Source installation
+## Windows PowerShell
 
-Clone the repository, create the environment, and install the project in editable mode when developing or extending the platform.
+    py -3.11 -m venv .venv
+    .\.venv\Scripts\Activate.ps1
+    python -m pip install --upgrade pip
+    python -m pip install ztf-classifier==1.0.1
+    ztf-classifier --help
 
-## Data
+## macOS
 
-The software does not require the complete ZTF archive to be stored locally. Use the documented acquisition and source contracts for targeted data retrieval.
+    python3.11 -m venv .venv
+    source .venv/bin/activate
+    python -m pip install --upgrade pip
+    python -m pip install ztf-classifier==1.0.1
+    ztf-classifier --help
 
-## Next step
+## Model artifact
+The wheel and source distribution do not include the frozen production model artifact. Obtain it through the project's controlled artifact workflow. Verify the manifest and hashes before loading it. Do not load untrusted model files.
 
-Continue with the Quick Start and API/Workbench documentation.
+## Development installation
+Clone the repository, create a Python 3.11 environment, and install the project in editable mode with the documented development dependencies. Use the lock file for reproducible development.
+
+## Important limitations
+- The Python package is not a self-contained desktop installer.
+- Native DR24 raw acquisition is under review in PR #264. It is not an accepted end-to-end DR24 inference workflow.
+- Do not download the complete DR24 archive for installation or first-run setup.
+- The frozen v0.2.0 inference path requires its exact 42-feature input contract and matching model artifact.
