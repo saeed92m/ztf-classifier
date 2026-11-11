@@ -1,12 +1,14 @@
 # ZTF Classifier
 
+> **Current continuation point (2026-11-12):** [Unified Project Baseline & Continuation Point](docs/PROJECT_MASTER_STATUS_AND_CONTINUATION_2026-11-12.md). This dated record supersedes older status summaries for current project state. Historical reports remain unchanged.
+
 A CPU-first Astronomical Data Analysis & Discovery Platform for Zwicky Transient Facility (ZTF) data, scientific feature generation, machine-learning and statistical analysis, uncertainty/OOD diagnostics, provenance, and discovery-oriented workflows.
 
 ## Project status
 
 **Version:** v1.0.1
 **Release:** `v1.0.1` (immutable)
-**Status:** v1.0.1 released and immutable; v1.0.0 remains immutable; Scientific Validation, CI, CodeQL, release publication, and artifact verification passed
+**Status:** v1.0.1 released and immutable. Its release checks passed at publication. This does not mean the later DR24-first Park prototype has passed acceptance; see the current continuation point.
 
 The v0.2 core pipeline includes:
 
@@ -128,7 +130,7 @@ The artifact includes:
 * conformal prediction diagnostics;
 * OOD diagnostics and production OOD model.
 
-The current artifact schema is **1.1** and remains backward-compatible with schema **1.0** artifacts.
+The application supports artifact schema **1.1** and compatible schema **1.0** artifacts. The frozen v0.2.0 production artifact is expected to use schema **1.0**. A later schema-1.1 lab-smoke artifact is not a replacement for the frozen production artifact.
 
 ## Conformal prediction
 
@@ -350,13 +352,13 @@ A benchmark is evidence about this system; it is not the system's architecture.
 |---|---:|
 | CPVS parent | 781,602 rows |
 | Published membership | 730,184 |
-| Current Seq-based candidates | 741,786 |
+| Retained historical Seq-based candidate set (not freshly re-derived on current main) | 741,786 |
 | Published ∩ candidate | 730,184 |
 | Published-only | 0 |
 | Candidate-only | 11,602 |
 | Duplicate / unmapped published names | 0 / 0 |
 
-The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) has completed derivation and an independent membership audit. All 730,184 published names map to actual Table2 Seq/SourceID values; the candidate set contains all published objects but 11,602 additional objects, so exact reconstruction remains **UNRESOLVED**. Earlier metrics 725,101 / 16,686 / 5,083 were invalid because they mapped names to row ordinals. The official CPVS ReadMe defines Table2 `Seq` at bytes 24–29 as the internal source identifier used by the lightcurve attachments. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
+The retained historical Seq-based run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) records a derivation and membership audit for its pinned revision. The 2026-11-11 review confirmed the source Table 2/Table 4 crosswalk and hashes, but the 741,786 candidate set used in the latest comparison is retained historical evidence, not a fresh derivation on current main. All 730,184 published names map to actual Table2 Seq/SourceID values; the candidate set contains all published objects but 11,602 additional objects, so exact reconstruction remains **UNRESOLVED**. Earlier metrics 725,101 / 16,686 / 5,083 were invalid because they mapped names to row ordinals. The official CPVS ReadMe defines Table2 `Seq` at bytes 24–29 as the internal source identifier used by the lightcurve attachments. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
 
 No threshold or predicate is to be introduced solely to force the candidate cardinality to 730,184 without independent scientific evidence.
 
@@ -375,7 +377,7 @@ An unresolved external reproduction claim must not silently become a product fai
 - Release infrastructure is event-driven from successful Scientific Validation and no longer depends on manual dispatch.
 - Curated release notes are mandatory for every future release.
 - The frozen scientific baseline remains v0.2.0 and the production model remains baseline_v0.2.
-- Exact CPVS reconstruction remains UNRESOLVED: the current Seq-based run finds 741,786 candidates, all 730,184 published objects, and 11,602 candidate-only objects with zero published-only or unmapped names. Selection semantics for the extra candidates remain under investigation; no threshold or flag rule may be tuned solely to force the published cardinality.
+- Exact CPVS reconstruction remains UNRESOLVED: the current Seq-based run finds 741,786 candidates, all 730,184 published objects, and 11,602 candidate-only objects with zero published-only or unmapped names in the retained historical candidate set. Selection semantics for the extra candidates remain under investigation; no threshold or flag rule may be tuned solely to force the published cardinality.
 - This reconstruction discrepancy is not an ML or production failure and must not be hidden or forced away by threshold tuning.
 
 The v1.0.1 software release is published and immutable. The broader discovery platform continues through documented product expansion and independent scientific benchmarking.
@@ -423,3 +425,10 @@ The current production model explicitly does **not** claim a scientific-anomaly 
 - Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
 - Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
 - Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.
+
+
+## Current DR24 product status — 2026-11-12
+
+The native DR24 HATS adapter, bounded multi-OID API, raw-preserving diagnostic QC, multi-OID Explorer, and separate Zubercal DR20 adapter are merged. These components provide source-native retrieval and inspection. They do not yet provide a complete normalized DR24 observation-to-feature-to-inference path in the application. The application observation service still needs an explicit selectable DR24 backend; do not silently fall back to ALeRCE. OID identity, approved photometric/time/QC rules, feature mapping, 5–10 confirmed-source end-to-end acceptance, and the Park dataset/evaluation remain open under [Issue #253](https://github.com/saeed92m/ztf-classifier/issues/253) and [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158).
+
+The historical CPVS candidate/reference comparison remains a deferred scientific research question. Its retained 11,602 residuals are not resolved. See [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). A matching object count is not proof of the publisher's method.
