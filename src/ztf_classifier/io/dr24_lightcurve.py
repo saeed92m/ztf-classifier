@@ -109,6 +109,53 @@ def _positive_objectid(value: Any) -> int:
     return scalar
 
 
+def _catalog_integer(
+    value: Any,
+    *,
+    column: str,
+    minimum: int,
+    maximum: int | None = None,
+) -> int:
+    """Validate integer catalog metadata without truncating floats or booleans."""
+    scalar = _json_scalar(value)
+    if (
+        not isinstance(scalar, int)
+        or isinstance(scalar, bool)
+        or scalar < minimum
+        or (maximum is not None and scalar > maximum)
+    ):
+        bounds = f"[{minimum}, {maximum}]" if maximum is not None else f">= {minimum}"
+        raise DR24AcquisitionError(
+            f"DR24 catalog column {column!r} must be an integer {bounds}."
+        )
+    return scalar
+
+
+def _catalog_float(
+    value: Any,
+    *,
+    column: str,
+    minimum: float,
+    maximum: float,
+    maximum_exclusive: bool = False,
+) -> float:
+    """Validate finite coordinate metadata and its declared physical range."""
+    scalar = _json_scalar(value)
+    if isinstance(scalar, bool) or not isinstance(scalar, (int, float)):
+        raise DR24AcquisitionError(
+            f"DR24 catalog column {column!r} must be a finite number."
+        )
+    numeric = float(scalar)
+    above_maximum = numeric >= maximum if maximum_exclusive else numeric > maximum
+    if not math.isfinite(numeric) or numeric < minimum or above_maximum:
+        upper = f"< {maximum}" if maximum_exclusive else f"<= {maximum}"
+        raise DR24AcquisitionError(
+            f"DR24 catalog column {column!r} must be within "
+            f"[{minimum}, {upper}]."
+        )
+    return numeric
+
+
 def _canonical_records(frame: pd.DataFrame) -> tuple[tuple[dict[str, Any], ...], str]:
     missing = sorted(set(PAYLOAD_COLUMNS) - set(frame.columns))
     if missing:
@@ -218,14 +265,36 @@ class DR24LightcurveBackend:
                         f"DR24 OID {oid} epoch-count mismatch: "
                         f"catalog={catalog_nepochs}, payload={len(epochs)}."
                     )
+                filterid = _catalog_integer(
+                    row["filterid"], column="filterid", minimum=1, maximum=3
+                )
+                fieldid = _catalog_integer(
+                    row["fieldid"], column="fieldid", minimum=1
+                )
+                rcid = _catalog_integer(
+                    row["rcid"], column="rcid", minimum=0, maximum=63
+                )
+                objra = _catalog_float(
+                    row["objra"],
+                    column="objra",
+                    minimum=0.0,
+                    maximum=360.0,
+                    maximum_exclusive=True,
+                )
+                objdec = _catalog_float(
+                    row["objdec"],
+                    column="objdec",
+                    minimum=-90.0,
+                    maximum=90.0,
+                )
                 records.append(
                     DR24LightcurveRecord(
                         objectid=oid,
-                        filterid=int(row["filterid"]),
-                        fieldid=int(row["fieldid"]),
-                        rcid=int(row["rcid"]),
-                        objra=float(row["objra"]),
-                        objdec=float(row["objdec"]),
+                        filterid=filterid,
+                        fieldid=fieldid,
+                        rcid=rcid,
+                        objra=objra,
+                        objdec=objdec,
                         catalog_nepochs=catalog_nepochs,
                         epochs=epochs,
                         payload_sha256=digest,
