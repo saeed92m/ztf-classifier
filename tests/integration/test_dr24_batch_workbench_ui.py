@@ -35,7 +35,7 @@ class FakeDR24Backend:
                 rcid=4,
                 objra=120.0 + objectid / 1000,
                 objdec=-20.0,
-                catalog_nepochs=2,
+                catalog_nepochs=3,
                 epochs=(
                     {
                         "hmjd": 60000.1,
@@ -50,6 +50,13 @@ class FakeDR24Backend:
                         "magerr": 0.04,
                         "clrcoeff": 0.1,
                         "catflags": 32768,
+                    },
+                    {
+                        "hmjd": None,
+                        "mag": 18.4,
+                        "magerr": 0.02,
+                        "clrcoeff": 0.1,
+                        "catflags": 0,
                     },
                 ),
                 payload_sha256=f"{objectid:064x}",
@@ -124,10 +131,15 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert page.get_by_text("OID 101 · filter g").is_visible()
             assert page.get_by_text("OID 202 · filter r").is_visible()
             assert page.locator("#dr24Results svg circle").count() == 4
+            assert page.locator("#dr24Results svg .dr24-error-bar").count() == 4
             assert page.locator("#dr24Results .report-content").count() == 2
             assert "DIAGNOSTIC_NOT_PRODUCTION_APPROVED" in page.locator(
                 "#dr24Results"
             ).inner_text()
+            assert '"invalid_photometry_epochs": 1' in page.locator(
+                "#dr24Results .report-content"
+            ).first.inner_text()
+            assert page.locator("#dr24Results tbody tr").count() == 6
             provenance = json.loads(page.locator("#dr24Provenance").inner_text())
             assert provenance["requested_oids"] == [101, 202]
             assert provenance["returned_oids"] == [101, 202]
@@ -143,6 +155,7 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 for record in exported["source_payload"]["records"]
             ] == [101, 202]
             assert len(exported["source_payload"]["qc_assessments"]) == 2
+            assert exported["source_payload"]["records"][0]["epochs"][2]["hmjd"] is None
 
             page.locator("#dr24ObjectIds").fill("101,101")
             page.locator("#dr24LoadButton").click()

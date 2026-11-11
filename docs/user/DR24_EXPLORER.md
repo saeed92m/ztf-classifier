@@ -12,22 +12,23 @@ The view is experimental. It is a data-inspection tool, not a DR24 classifier.
 
 1. Start the Workbench by using the documented application launch procedure.
 2. Open **DR24 Explorer**.
-3. Enter one positive ZTF DR24 `objectid`.
-4. Select **Load raw light curve**.
+3. Enter 1–10 unique positive ZTF DR24 `objectid` values. Separate values with commas or spaces.
+4. Select **Load raw light curves**.
 
-The API route retrieves one OID per lookup. The backend requires the indexed `objectid` index. It rejects invalid, duplicate, or unrequested IDs. It also checks the catalog epoch count against the returned payload row count.
+The Workbench sends one bounded batch request to `POST /v1/dr24/lightcurves`. The backend requires the indexed `objectid` index. It rejects invalid, duplicate, or unrequested IDs. It also checks each catalog epoch count against the returned payload row count. Missing OIDs remain explicit in provenance.
 
 ## Chart and raw records
 
-The chart uses the native DR24 values:
+The chart uses native DR24 values:
 
 - X axis: HMJD, which is HJD - 2400000.5.
 - Y axis: native ZTF magnitude.
-- Blue: bit 15 of `catflags` is not set.
-- Amber: bit 15 is set.
-- Gray: `catflags` is missing or invalid.
+- Vertical bars: reported `magerr`, when it is finite and non-negative.
+- Blue points: bit 15 of `catflags` is not set.
+- Amber points: bit 15 is set.
+- Gray points: `catflags` is missing or invalid.
 
-The chart does not remove flagged epochs.
+Only numeric, finite HMJD/magnitude pairs appear in the chart. Missing values such as JSON `null` do not become zero-valued points. Negative or missing `magerr` does not produce an error bar. No source row is removed from the raw table or JSON export. The chart does not remove flagged epochs.
 
 The raw table displays `hmjd`, `mag`, `magerr`, `clrcoeff`, and `catflags`. It displays up to 50 rows. The chart uses all finite HMJD/magnitude points returned by the source.
 
@@ -49,14 +50,14 @@ The current contract reports `epochs_excluded = 0` and `filtering_applied = fals
 
 **This is not a quality-selection policy.** It does not define a threshold or approve an epoch mask. It does not mark an object as scientifically valid. Keep all raw values.
 
-## JSON export: `ztf-dr24-raw-export-v0.1`
+## JSON export: `ztf-dr24-raw-export-v0.2`
 
-After a successful lookup, select **Download raw JSON + QC**.
+After a successful batch lookup, select **Download raw JSON + QC**.
 
 The file contains:
 
-- The complete raw API response.
-- Source and query provenance.
+- The complete raw API response for every returned OID.
+- Source and query provenance, including requested/returned/missing OIDs.
 - Catalog schema and per-OID payload hashes.
 - The `dr24-raw-qc-v0.1` summary.
 - Export schema version and export timestamp.
