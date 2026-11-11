@@ -119,6 +119,7 @@ def test_backend_rejects_invalid_returned_row_limits(value: object) -> None:
         ("objra", -0.1),
         ("objra", 360.0),
         ("objra", True),
+        ("objra", "142.59395"),
         ("objdec", float("nan")),
         ("objdec", float("-inf")),
         ("objdec", -90.1),
@@ -144,7 +145,8 @@ def test_zubercal_summary_rejects_invalid_row_coordinates(
         "objdec": -21.45313,
     }
     row[column] = value
-    with pytest.raises(ValueError):
+    expected_exception = TypeError if isinstance(value, (bool, str)) else ValueError
+    with pytest.raises(expected_exception):
         summarize_zubercal_rows(
             [row],
             ztf_objectid=264114400013085,
