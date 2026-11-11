@@ -64,7 +64,8 @@
       "Corrected the test fixture to emit valid JSON for its synthetic artifact manifest. CI validation on the exact final PR head is pending.",
       "Code review found that the initial audit accepted schema 1.1 even though the frozen v0.2.0 production artifact is schema 1.0; a copied schema-1.1 lab-smoke artifact could therefore satisfy the previous readiness check if its internal manifest hashes were self-consistent.",
       "Restricted the frozen production artifact audit to schema 1.0 and added a regression test proving that schema 1.1 is rejected from the production path.",
-      "Clarified that internal manifest/hash consistency is not authentication against a trusted original artifact manifest; the original production artifact remains UNRECOVERED until an authoritative external hash/source is available."
+      "Clarified that internal manifest/hash consistency is not authentication against a trusted original artifact manifest; the original production artifact remains UNRECOVERED until an authoritative external hash/source is available.",
+      "Added the focused artifact-audit regression test module to the Scientific Validation contract workflow so it runs for stacked PRs whose base is not main; ordinary CI is configured for pull requests targeting main only."
     ]
   },
   "failure_analysis": {
@@ -98,7 +99,7 @@
       "If the frozen production artifact exists, verify its manifest and run the 10 dependent tests.",
       "If absent, recover it from its original authoritative source; do not rebuild or substitute without a separately approved scientific baseline procedure.",
       "Pass the new schema-1.0/no-optional-diagnostics and manifest-hash-mismatch regression tests on the exact PR #278 head.",
-      "Pass the new schema-1.1 rejection regression test and current-head CI; authenticate the original artifact only when a trusted external manifest/hash is available."
+      "Pass the focused artifact-audit regression test in the Scientific Validation workflow and run full standard CI on the integrated main-based candidate."
     ]
   },
   "decision": "REVISE",
