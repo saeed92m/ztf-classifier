@@ -24,7 +24,7 @@ from ztf_classifier.io.parquet_detection_store import ParquetDetectionStore
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.pipeline.dataset import DatasetPipeline
 
-CLI_SCHEMA_VERSION = "1.1"
+CLI_SCHEMA_VERSION = "1.2"
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -175,6 +175,50 @@ def _prediction_payload(
                     result.ood.is_top_10pct_anomaly[row_index]
                 ),
             }
+
+        if result.data_adequacy is not None:
+            adequacy = result.data_adequacy
+            item["data_adequacy"] = {
+                "status": adequacy.status[row_index],
+                "observed_feature_count": int(
+                    adequacy.observed_feature_count[row_index]
+                ),
+                "missing_feature_count": int(
+                    adequacy.missing_feature_count[row_index]
+                ),
+                "coverage_fraction": float(adequacy.coverage_fraction[row_index]),
+                "missing_feature_names": list(
+                    adequacy.missing_feature_names[row_index]
+                ),
+                "reason_codes": list(adequacy.reason_codes[row_index]),
+                "policy_version": adequacy.policy_version,
+                "interpretation": "descriptive_only_not_an_eligibility_decision",
+            }
+
+        if result.ood is not None and result.data_adequacy is not None:
+            item["ood"]["input_feature_coverage_fraction"] = float(
+                result.data_adequacy.coverage_fraction[row_index]
+            )
+            item["ood"]["input_observed_feature_count"] = int(
+                result.data_adequacy.observed_feature_count[row_index]
+            )
+            item["ood"]["input_missing_feature_count"] = int(
+                result.data_adequacy.missing_feature_count[row_index]
+            )
+
+        item["ood_evaluation_status"] = (
+            "not_available"
+            if result.ood is None
+            else (
+                "evaluated_adequacy_unreported"
+                if result.data_adequacy is None
+                else (
+                    "evaluated_complete_features"
+                    if result.data_adequacy.status[row_index] == "complete"
+                    else "evaluated_with_missing_features"
+                )
+            )
+        )
 
         predictions.append(item)
 

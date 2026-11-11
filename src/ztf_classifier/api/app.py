@@ -213,6 +213,51 @@ def _serialize_prediction(
                 ),
             }
 
+        data_adequacy: dict[str, Any] | None = None
+        if result.data_adequacy is not None:
+            adequacy = result.data_adequacy
+            data_adequacy = {
+                "status": adequacy.status[row_index],
+                "observed_feature_count": int(
+                    adequacy.observed_feature_count[row_index]
+                ),
+                "missing_feature_count": int(
+                    adequacy.missing_feature_count[row_index]
+                ),
+                "coverage_fraction": float(adequacy.coverage_fraction[row_index]),
+                "missing_feature_names": list(
+                    adequacy.missing_feature_names[row_index]
+                ),
+                "reason_codes": list(adequacy.reason_codes[row_index]),
+                "policy_version": adequacy.policy_version,
+                "interpretation": "descriptive_only_not_an_eligibility_decision",
+            }
+
+        if ood is not None and result.data_adequacy is not None:
+            ood["input_feature_coverage_fraction"] = float(
+                result.data_adequacy.coverage_fraction[row_index]
+            )
+            ood["input_observed_feature_count"] = int(
+                result.data_adequacy.observed_feature_count[row_index]
+            )
+            ood["input_missing_feature_count"] = int(
+                result.data_adequacy.missing_feature_count[row_index]
+            )
+
+        ood_evaluation_status = (
+            "not_available"
+            if ood is None
+            else (
+                "evaluated_adequacy_unreported"
+                if result.data_adequacy is None
+                else (
+                    "evaluated_complete_features"
+                    if result.data_adequacy.status[row_index] == "complete"
+                    else "evaluated_with_missing_features"
+                )
+            )
+        )
+
         items.append(
             PredictionItem(
                 oid=oid,
@@ -224,6 +269,8 @@ def _serialize_prediction(
                 },
                 conformal=conformal,
                 ood=ood,
+                ood_evaluation_status=ood_evaluation_status,
+                data_adequacy=data_adequacy,
                 scientific_anomaly=scientific_anomaly,
             )
         )

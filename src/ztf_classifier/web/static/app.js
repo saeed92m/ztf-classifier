@@ -97,6 +97,7 @@ function clearPrediction() {
   document.getElementById("probabilityList").innerHTML =
     '<div class="muted">No durable scientific result loaded.</div>';
   document.getElementById("featureSchema").textContent = "—";
+  document.getElementById("dataAdequacyValue").textContent = "—";
   document.getElementById("modelValue").textContent = "—";
   document.getElementById("calibrationValue").textContent = "—";
   document.getElementById("oodValue").textContent = "—";
@@ -135,6 +136,11 @@ function renderPrediction(prediction) {
     conformal.length && conformal[0].alpha != null
       ? "α = " + Number(conformal[0].alpha).toFixed(2)
       : "conformal coverage";
+  const adequacy = prediction.data_adequacy;
+  document.getElementById("dataAdequacyValue").textContent = adequacy
+    ? adequacy.status + " · " + adequacy.observed_feature_count + "/42 (" +
+      (Number(adequacy.coverage_fraction) * 100).toFixed(1) + "%)"
+    : "not reported";
   const ood = prediction.ood;
   document.getElementById("oodPercentile").textContent =
     ood && ood.anomaly_percentile != null ? Number(ood.anomaly_percentile).toFixed(1) : "—";
@@ -152,15 +158,21 @@ function renderResult(record, durable = true) {
     record.model_version + " · " + (payload.model_family || "—");
   document.getElementById("calibrationValue").textContent =
     (payload.diagnostics || {}).calibration || "—";
-  document.getElementById("oodValue").textContent = (payload.diagnostics || {}).ood || "—";
+  const oodEvaluation = payload.prediction?.ood_evaluation_status;
+  document.getElementById("oodValue").textContent = [
+    (payload.diagnostics || {}).ood || "—",
+    oodEvaluation || "evaluation state not reported",
+  ].join(" · ");
   document.getElementById("provenanceValue").textContent =
     payload.observation_provenance ? "source-backed" : "stored result";
   document.getElementById("calibrationState").textContent =
     (payload.diagnostics || {}).calibration || "—";
   document.getElementById("conformalState").textContent =
     (payload.diagnostics || {}).conformal || "—";
-  document.getElementById("oodState").textContent =
-    (payload.diagnostics || {}).ood || "—";
+  document.getElementById("oodState").textContent = [
+    (payload.diagnostics || {}).ood || "—",
+    oodEvaluation || "evaluation state not reported",
+  ].join(" · ");
   document.getElementById("datasetProvenance").textContent =
     payload.observation_provenance?.source || "—";
   document.getElementById("modelProvenance").textContent =

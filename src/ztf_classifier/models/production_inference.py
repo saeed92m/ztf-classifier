@@ -14,6 +14,7 @@ from ztf_classifier.models.artifact_io import (
     ModelArtifactLoader,
 )
 from ztf_classifier.models.calibration import TemperatureScaler
+from ztf_classifier.models.data_adequacy import DataAdequacyResult
 from ztf_classifier.models.inference import XGBoostInferenceEngine
 from ztf_classifier.models.ood import OODResult
 from ztf_classifier.models.production_conformal import (
@@ -64,6 +65,12 @@ class ProductionInferenceService:
 
         conformal = None
         ood = None
+        features = engine.prepare_features(dataset)
+        feature_matrix = features.to_numpy(dtype=np.float64)
+        data_adequacy = DataAdequacyResult.from_matrix(
+            feature_matrix,
+            tuple(features.columns),
+        )
 
         if self.loaded_artifact.conformal is not None:
             conformal = ProductionConformalDiagnostics.predict(
@@ -75,9 +82,6 @@ class ProductionInferenceService:
             self.loaded_artifact.ood is not None
             and self.loaded_artifact.ood_model is not None
         ):
-            features = engine.prepare_features(dataset)
-            feature_matrix = features.to_numpy(dtype=np.float64)
-
             ood_model = self.loaded_artifact.ood_model
 
             anomaly_score = ood_model.anomaly_scores(feature_matrix)
@@ -122,6 +126,7 @@ class ProductionInferenceService:
             calibrated_probabilities=calibrated_probabilities,
             conformal=conformal,
             ood=ood,
+            data_adequacy=data_adequacy,
             calibration_status=calibration_status,
             conformal_status=("available" if conformal is not None else "unavailable"),
             ood_status="available" if ood is not None else "unavailable",
