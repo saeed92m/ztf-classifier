@@ -29,6 +29,7 @@ Clients never submit arbitrary artifact or registry filesystem paths.
 | GET | `/v1/objects/{oid}` | Normalized object summary |
 | GET | `/v1/objects/{oid}/observations` | Normalized observation stream |
 | GET | `/v1/dr24/objects/{objectid}/lightcurve` | Raw, source-native DR24 light curve for one ZTF OID |
+| POST | `/v1/dr24/lightcurves` | Bounded raw, source-native DR24 lightcurves for 1–10 OIDs |
 | POST | `/v1/objects/{oid}/analysis` | Source-backed object analysis |
 | POST | `/v1/objects/{oid}/jobs` | Durable analysis job submission |
 | GET | `/v1/jobs` | Bounded durable analysis-job listing |
@@ -178,7 +179,7 @@ The endpoint returns:
 - a canonical SHA-256 hash for each OID's epoch payload;
 - acquisition provenance, requested/returned/missing OIDs, schema-column hash, and field interpretation notes.
 
-The backend enforces a maximum of 10 unique positive OIDs per request and requires the indexed `objectid` column. The HTTP route accepts one OID per request.
+The backend and batch HTTP route enforce a maximum of 10 unique positive OIDs per request and require the indexed `objectid` column. The single-OID GET route remains available. The batch POST body is `{"objectids":[123456,789]}`. Missing OIDs remain explicit in provenance; returned records are not grouped by astrophysical source.
 
 ### Scientific and identity boundaries
 
@@ -195,3 +196,20 @@ The backend enforces a maximum of 10 unique positive OIDs per request and requir
 - `502 dr24_acquisition_failed`: indexed source acquisition or schema validation failed. No alternate source was used.
 
 This endpoint remains an experimental raw-source interface until bounded live acquisition, source-backed regression, and downstream scientific normalization are independently validated.
+
+
+### Bounded multi-OID raw acquisition
+
+**POST** `/v1/dr24/lightcurves`
+
+Request:
+
+```json
+{
+  "objectids": [123456, 789]
+}
+```
+
+The request accepts 1–10 unique positive integer OIDs. It rejects booleans, non-integer values, duplicates, zero, negative values, empty lists and lists longer than 10. The response preserves one record per returned OID and reports requested, returned and missing OIDs in provenance. It does not combine OIDs, infer astrophysical identity, normalize photometry, select quality epochs, generate features or run inference.
+
+The endpoint is an acquisition convenience only. It does not change the scientific acceptance state.

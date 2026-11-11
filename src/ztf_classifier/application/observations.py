@@ -39,13 +39,21 @@ class ObservationService:
         self._dr24_backend = dr24_backend or DR24LightcurveBackend()
 
     def get_dr24_native_lightcurve(self, objectid: int) -> dict[str, object]:
-        """Acquire source-native DR24 epochs without model normalization.
+        """Acquire one source-native DR24 lightcurve without normalization."""
+        return self.get_dr24_native_lightcurves((objectid,))
+
+    def get_dr24_native_lightcurves(
+        self,
+        objectids: tuple[int, ...] | list[int],
+    ) -> dict[str, object]:
+        """Acquire a bounded set of source-native DR24 OIDs without grouping.
 
         This method deliberately does not convert HMJD to MJD, apply a
         catflags mask, perform color correction, or merge survey OIDs.
+        Missing OIDs remain explicit in the returned provenance.
         """
         result = self._dr24_backend.acquire(
-            DR24LightcurveRequest((objectid,))
+            DR24LightcurveRequest(tuple(objectids))
         )
         return result.to_dict()
 
