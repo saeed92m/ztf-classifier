@@ -367,7 +367,72 @@ Exit: non-developer scientist can complete the declared workflow without Python,
 ### Phase H — CIN and broader survey integrations
 Deliver only after governance, user need, operating cost, and independent validation justify them. Keep CIN modular and separate from the scientific core. Treat TESS, Gaia, Rubin/LSST, JWST and other surveys as future adapters, not current capabilities or partnerships.
 
-## 12. Immediate next actions
+## 12. Institutional proposal, business model, and commercialization boundary
+
+The two submitted Persian institutional documents define the original positioning and proposed business path. They are planning evidence. They do not prove current customers, revenue, grants, market validation, or completed product acceptance.
+
+### 12.1 Institutional positioning
+
+The proposal was prepared for **Pishgaman Novandish Fanavargostar Keyhan LLC**, the East Azerbaijan Science and Technology Park, and the Innovation and Prosperity Fund. It positions the product as software for astronomical data analysis and discovery using public ZTF data. It does not require the company to own or operate a telescope.
+
+The value proposition is not to replace global brokers such as ALeRCE or SNAD. It is to provide an inspectable analysis layer with calibrated confidence, uncertainty, explicit abstention, anomaly investigation, provenance, and reproducible reports.
+
+Public data can remove telescope acquisition costs. It does not remove staff, compute, storage, networking, maintenance, data-rights review, or support costs.
+
+### 12.2 Target customers and market path
+
+The dossier identifies:
+- Primary segment: domestic astronomical research groups, universities, and scientific data centers.
+- Secondary segment: international astronomical brokers, surveys, and research consortia, including future ZTF/Rubin-related workflows where compatible.
+- Early value: targeted scientific analysis, classification and uncertainty assessment, candidate prioritization, and reproducible custom reports.
+
+These are target segments, not verified demand or signed partnerships. This review found no evidence of a customer contract, paid pilot, letter of intent, or institutional partnership.
+
+### 12.3 Proposed revenue channels
+
+The business plan proposes:
+1. Custom research and data-analysis services.
+2. Machine-learning and scientific-data consulting.
+3. Subscription or recurring service access.
+4. Maintenance and support contracts.
+5. Research collaborations and service agreements.
+
+The dossier sets a **month 16–18 target** of at least one revenue-generating contract or cooperation memorandum. This is a planning target, not an achieved outcome.
+
+The proposed institutional path begins with a prototype/incubation-stage company. The plan allows a later move toward a service-oriented classification after stable revenue. Any knowledge-based-company classification, park support, loan, guarantee, or Innovation Fund facility depends on separate assessment and current call conditions. No funding award is established by this review.
+
+### 12.4 Team, schedule, and financial assumptions
+
+The technical dossier uses a **four-to-five-person team** as a six-month planning assumption. It identifies technical staffing as the largest relative cost category (about 50% in the planning model). Other cost categories cover infrastructure, compute/hosting, administration, and establishment costs. These are relative assumptions. They are not current payroll, a verified budget, or guaranteed prices.
+
+The proposed break-even definition is monthly contract revenue sufficient to cover fixed team and infrastructure costs. Customer acquisition cost (CAC) and customer lifetime value (LTV) are proposed measures. They cannot be calculated until actual sales, retention, pricing, and delivery-cost data exist.
+
+### 12.5 Commercialization risks and controls
+
+The proposal identifies a small team, limited compute, no exclusive observational data, dependence on public sources, international competition, funding delays, and the need to establish scientific credibility as risks.
+
+Controls:
+- Start with a narrow and reproducible DR24 workflow. Do not claim that the current product processes the full ZTF archive in production.
+- Demonstrate value through uncertainty, traceability, and source-backed evidence. Do not make unsupported accuracy comparisons.
+- Validate customer needs before finalizing pricing.
+- Track delivery, network, storage, compute, and support costs for each pilot.
+- Do not describe public data as zero-cost operations.
+- Do not announce funding, partnerships, paid customers, or revenue without documentary evidence.
+- Define every service by source, population, version, input contract, output, limitations, and acceptance criteria.
+
+### 12.6 Commercialization acceptance gates
+
+A credible commercial milestone should contain:
+- A reproducible demonstration for a defined customer workflow.
+- A written scope, user/customer, data rights, delivery terms, and acceptance criteria.
+- A documented price and cost basis.
+- Measured delivery and support effort.
+- A signed contract, paid pilot, or formal cooperation record before reporting commercial traction.
+- Security, privacy, data-retention, and service-support terms where customer data or accounts are involved.
+
+Keep the original PDFs as immutable institutional proposal records. Use dated addenda when the product scope or evidence changes. Do not silently rewrite submitted documents to make proposed capabilities appear implemented.
+
+## 13. Immediate next actions
 
 1. Run the local v0.2 artifact audit in WSL and return only its JSON result.
 2. Inspect the actual application observation-service implementation and define the DR24 backend selection contract.
@@ -378,7 +443,7 @@ Deliver only after governance, user need, operating cost, and independent valida
 7. Update the Notion Handbook/Knowledge Base from this dated source. Preserve old pages as historical versions.
 8. Keep the 16-role think tank attached to every architecture, science, product, and release decision.
 
-## 13. Acceptance and change control
+## 14. Acceptance and change control
 
 No percentage-complete figure is assigned in this document. The current evidence does not support one consistent denominator across product, scientific, infrastructure, and research scope.
 
