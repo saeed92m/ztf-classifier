@@ -36,7 +36,7 @@
       "correctness": {
         "status": "NOT_MEASURED",
         "before": "Missing artifacts were known from prior test skips, but there was no one-command local inventory.",
-        "after": "The audit inventories required model, feature, ALeRCE cache, fold and dependent test paths. Its integration_prerequisites_present flag means path presence only; it does not certify artifact integrity or scientific validity."
+        "after": "The audit inventories required model, feature, ALeRCE cache, fold and dependent-test paths; it validates internal manifest/file hashes and requires frozen artifact schema 1.0. It does not authenticate the artifact against an independently pinned original manifest or establish scientific validity."
       },
       "coverage": {
         "status": "NOT_MEASURED",
@@ -46,7 +46,7 @@
       "reliability": {
         "status": "NOT_MEASURED",
         "before": "Lab and production artifacts could be confused by path substitution.",
-        "after": "The lab-smoke path is explicitly marked LAB_SMOKE_ONLY_NOT_A_PRODUCTION_SUBSTITUTE and never satisfies production readiness."
+        "after": "The separate lab-smoke path is marked ineligible, and schema 1.1 is rejected if a later lab artifact is copied into the frozen production path. The original artifact identity remains unverified until an authoritative hash is recovered."
       }
     },
     "trade_off": "The audit requires one local execution because the original WSL filesystem is not accessible through repository tools. It does not upload or modify scientific data."
@@ -61,7 +61,10 @@
       "Inspected the canonical ModelArtifactLoader and ModelArtifactWriter contracts. The original v0.2.0 production artifact is schema 1.0; conformal.json, ood.json and ood_model.joblib are later diagnostic components and are not required for that frozen artifact.",
       "Fixed the local audit script so schema-1.0 baseline readiness requires the baseline files and validates the manifest SHA-256 values; it reports conformal/OOD files as optional diagnostics.",
       "Added regression coverage for a complete schema-1.0 production artifact without optional diagnostic files and for a manifest hash mismatch.",
-      "Corrected the test fixture to emit valid JSON for its synthetic artifact manifest. CI validation on the exact final PR head is pending."
+      "Corrected the test fixture to emit valid JSON for its synthetic artifact manifest. CI validation on the exact final PR head is pending.",
+      "Code review found that the initial audit accepted schema 1.1 even though the frozen v0.2.0 production artifact is schema 1.0; a copied schema-1.1 lab-smoke artifact could therefore satisfy the previous readiness check if its internal manifest hashes were self-consistent.",
+      "Restricted the frozen production artifact audit to schema 1.0 and added a regression test proving that schema 1.1 is rejected from the production path.",
+      "Clarified that internal manifest/hash consistency is not authentication against a trusted original artifact manifest; the original production artifact remains UNRECOVERED until an authoritative external hash/source is available."
     ]
   },
   "failure_analysis": {
@@ -69,7 +72,8 @@
     "root_causes": [
       "The production model artifact is missing from the accessible repository/CI artifact sources.",
       "The lab-smoke artifact exists in the original local checkout but is a separate run and cannot replace the frozen production model.",
-      "The initial PR #278 artifact audit incorrectly placed conformal.json, ood.json and ood_model.joblib in the unconditional required-file list. Those files are optional diagnostic components for the frozen schema-1.0 production artifact, so a valid original artifact could be falsely reported as incomplete."
+      "The initial PR #278 artifact audit incorrectly placed conformal.json, ood.json and ood_model.joblib in the unconditional required-file list. Those files are optional diagnostic components for the frozen schema-1.0 production artifact, so a valid original artifact could be falsely reported as incomplete.",
+      "The local audit initially allowed schema 1.1 for the frozen production path, despite the documented schema-1.0 baseline; this could allow a copied later lab-smoke artifact to be misclassified as eligible."
     ],
     "unresolved": [
       "Actual current WSL artifact availability must be confirmed by running the audit script.",
@@ -82,7 +86,9 @@
       "Never symlink or copy lab-smoke model weights into the frozen production artifact path.",
       "Keep large scientific artifacts out of Git.",
       "Use exact SHA-256 and immutable artifact manifests for any external artifact source.",
-      "Artifact audit readiness must follow the manifest schema and file declarations. Later optional OOD/conformal files must not be required for a valid frozen schema-1.0 baseline artifact."
+      "Artifact audit readiness must follow the manifest schema and file declarations. Later optional OOD/conformal files must not be required for a valid frozen schema-1.0 baseline artifact.",
+      "The frozen v0.2.0 production artifact schema is 1.0; later schema-1.1 lab-smoke artifacts must fail the production readiness check even when copied into the expected path.",
+      "A self-consistent internal artifact manifest proves internal file integrity only. It does not authenticate the artifact against the original publisher/trusted baseline unless the manifest or artifact hash is independently pinned."
     ]
   },
   "regression": {
@@ -91,7 +97,8 @@
       "Run the corrected artifact audit in the user's WSL checkout and inspect the JSON report.",
       "If the frozen production artifact exists, verify its manifest and run the 10 dependent tests.",
       "If absent, recover it from its original authoritative source; do not rebuild or substitute without a separately approved scientific baseline procedure.",
-      "Pass the new schema-1.0/no-optional-diagnostics and manifest-hash-mismatch regression tests on the exact PR #278 head."
+      "Pass the new schema-1.0/no-optional-diagnostics and manifest-hash-mismatch regression tests on the exact PR #278 head.",
+      "Pass the new schema-1.1 rejection regression test and current-head CI; authenticate the original artifact only when a trusted external manifest/hash is available."
     ]
   },
   "decision": "REVISE",
