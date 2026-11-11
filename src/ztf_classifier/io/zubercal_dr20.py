@@ -164,7 +164,7 @@ def summarize_zubercal_rows(
             or not isinstance(row_ra, (int, float))
             or not isinstance(row_dec, (int, float))
         ):
-            raise ValueError("Zubercal row objra/objdec must be numeric.")
+            raise TypeError("Zubercal row objra/objdec must be numeric.")
         row_ra = float(row_ra)
         row_dec = float(row_dec)
         if not math.isfinite(row_ra) or not 0.0 <= row_ra < 360.0:
