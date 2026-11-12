@@ -24,13 +24,15 @@
     "Preserve provenance and supersession references.",
     "Prevent final unmatched, ambiguous, rejected or confirmed decisions from being recorded without evidence; allow DEFERRED_REVIEW to represent work not yet adjudicated.",
     "Require every association evidence record to identify a declared source-native survey object and the exact candidate source; require a confirmed source record to point to its confirmation association.",
-    "Reject boolean values where integer or floating-point measurements/partition identifiers are expected."
+    "Reject boolean values where integer or floating-point measurements/partition identifiers are expected.",
+    "For final multi-object decisions, require evidence for every declared survey-object and candidate-source pair; for unmatched decisions, require a no-candidate evidence record for every declared survey object.",
+    "A non-confirmed source record cannot carry a confirmation association reference."
   ],
   "measurement": {
     "metrics": {
       "correctness": {
         "before": "The domain layer had normalized Observation contracts and catalog context records, but no dedicated source identity/association lifecycle types.",
-        "after": "New frozen dataclasses define survey object, catalog entry, astrophysical source reference, association evidence and source association decision states. Association evidence now uses a stable full survey-object reference key and must cover exactly the declared candidates for confirmed, ambiguous and rejected decisions; unmatched evidence must use an explicit no-candidate sentinel. Confirmed source records require a confirmation association ID."
+        "after": "New frozen dataclasses define survey object, catalog entry, astrophysical source reference, association evidence and source association decision states. Association evidence now uses a stable full survey-object reference key and must cover exactly the declared candidates for confirmed, ambiguous and rejected decisions; unmatched evidence must use an explicit no-candidate sentinel. Confirmed source records require a confirmation association ID. For CONFIRMED_MATCH, AMBIGUOUS_MATCH and REJECTED_MATCH, the evidence relation now requires the complete Cartesian coverage of declared survey-object references and candidate-source references. UNMATCHED requires no-candidate evidence for every declared survey object. Non-CONFIRMED source records cannot carry confirmation_association_id."
       },
       "reproducibility": {
         "status": "NOT_MEASURED",
@@ -66,7 +68,12 @@
       "Corrected the focused test module import in commit a6c7a7c816fe6a191f6676a4fbb4b0ab3ec56570. A new current-head CI run is required; no focused/full test result is yet claimed.",
       "CI run 43243039733 executed the full repository suite on head cc0cad44beabf78c837c9d3d171ecf7fbf08028c: 731 passed, 1 failed, 13 skipped, 9 warnings. The sole failure was test_confirmed_association_requires_supporting_evidence. The test expected the specific message 'supporting evidence', but a generic no-evidence guard raised first.",
       "The root cause was validation-ordering: the generic empty-evidence guard executed before the CONFIRMED_MATCH-specific validation. In commit 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2, the CONFIRMED_MATCH branch now validates confirmed_source_id first and then emits the dedicated supporting-evidence error; the generic guard applies only to other non-deferred states.",
-      "A fresh current-head CI run is required. No test pass is claimed for commit 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2 yet."
+      "A fresh current-head CI run is required. No test pass is claimed for commit 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2 yet.",
+      "A second Red Team review found that set-level source and candidate coverage still allowed a multi-OID association to cite evidence for only one OID. This could support an unsupported claim that multiple survey-native objects belong to one astrophysical source.",
+      "The association contract now requires exact evidence-pair coverage for every declared survey-object/candidate-source combination in confirmed, ambiguous and rejected decisions. An unmatched decision requires a no-candidate evidence record for each declared survey object.",
+      "Added regression tests for missing r-band evidence in a confirmed two-OID association, incomplete OID/candidate evidence matrix in an ambiguous association, incomplete unmatched evidence, and confirmation references on non-confirmed source records. The focused test module now contains 34 test functions.",
+      "The confirmation_association_id field now rejects non-string values and is valid only when identity_status is CONFIRMED.",
+      "The prior head cc0cad44beabf78c837c9d3d171ecf7fbf08028c had 731 passed, 1 failed, 13 skipped. The failure was a test-message ordering mismatch and was patched at source commit 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2. A subsequent workflow started on the intermediate head 8c5a02da824b3db6f3849ad8d69b97255d74a336, but it was superseded by the additional multi-OID evidence coverage changes; do not use it to validate the newest head."
     ],
     "blocker": "Fresh current-head CI is required after this lifecycle schema correction. The initial validator failure is retained and is not reported as a pass."
   },
@@ -79,7 +86,8 @@
       "Current lifecycle validation failed because the cycle JSON used unsupported metric name 'regression', regression.status='PENDING_CI', and decision='PENDING_REVIEW'. The repository validator accepts regression statuses PASS/FAIL/BLOCKED/NOT_VERIFIED and decisions ACCEPT/REVISE/BLOCKED.",
       "The original association contract checked only that evidence was non-empty. It did not link source_ref to a declared survey object, candidate_ref to the actual candidate set, or CONFIRMED source identity to a confirmation association.",
       "The first CI run after adding confirmation-reference tests exposed a missing test-module import for validate_source_confirmation. The test function was present but Ruff correctly rejected the unresolved symbol; the import was added.",
-      "The Test Suite failure on head cc0cad44beabf78c837c9d3d171ecf7fbf08028c was a validation-order mismatch: the generic non-DEFERRED_REVIEW evidence guard masked the CONFIRMED_MATCH-specific 'supporting evidence' error expected by regression test test_confirmed_association_requires_supporting_evidence. The guard was moved into the non-confirmed branch."
+      "The Test Suite failure on head cc0cad44beabf78c837c9d3d171ecf7fbf08028c was a validation-order mismatch: the generic non-DEFERRED_REVIEW evidence guard masked the CONFIRMED_MATCH-specific 'supporting evidence' error expected by regression test test_confirmed_association_requires_supporting_evidence. The guard was moved into the non-confirmed branch.",
+      "The earlier evidence check compared the set of candidate IDs but did not verify every survey-object/candidate pair. A confirmed multi-OID association could therefore lack evidence for one declared OID. This was corrected by requiring complete pair coverage for final decisions."
     ],
     "unresolved": [
       "No source matching algorithm is implemented.",
@@ -100,16 +108,17 @@
       "A raw matching score is not a probability. Calibrated probability requires a calibration version and bounded value.",
       "This contract is additive and must not change the frozen v0.2.0 baseline or historical identifiers.",
       "A confirmed source identity must point to a specific confirmed association decision, not only a general provenance reference.",
-      "Association evidence must be referentially consistent with the source objects and candidate IDs in the decision. Non-empty but unrelated evidence is insufficient."
+      "Association evidence must be referentially consistent with the source objects and candidate IDs in the decision. Non-empty but unrelated evidence is insufficient.",
+      "For a decision that claims multiple survey OIDs belong to one source, evidence coverage must exist for every declared survey-object/candidate-source pair. Checking the set of OIDs and candidate IDs independently is not sufficient."
     ]
   },
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Fresh current-head CI must pass the 30 focused source identity tests and the full repository test suite.",
-      "Runtime smoke, package build, dependency audit, and CI Gate must complete successfully on the same final head.",
-      "API serialization and compatibility of confirmation_association_id and evidence reference keys require review before application integration.",
-      "Scientific matching, source identity adjudication and persistence are outside this domain-contract change."
+      "Run fresh Format, Lint, all 34 focused identity tests, and the full repository test suite on the latest current head.",
+      "Runtime smoke, package build, dependency audit and CI Gate must pass on the same final head.",
+      "Review API serialization and storage compatibility of confirmation_association_id and full OID/candidate evidence-pair references before application integration.",
+      "Independent adjudicated astrophysical cross-match validation is still required; domain-contract tests do not prove physical identity."
     ]
   },
   "decision": "BLOCKED",
@@ -122,6 +131,7 @@
     "PR #283 Red Team review identified and patched evidence-linkage gaps; the current branch contains 30 focused source identity tests, pending CI.",
     "The domain contract now checks references and decision consistency but does not prove the astrophysical correctness of evidence or implement a matcher.",
     "PR #283 run 43242293772 failed before tests due to missing import validate_source_confirmation in the new test module; import fix commit a6c7a7c816fe6a191f6676a4fbb4b0ab3ec56570 must be validated by fresh CI.",
-    "PR #283 CI run 43243039733: 731 passed, 1 failed, 13 skipped; one regression test failed only because the generic no-evidence validation error masked the dedicated confirmed-match supporting-evidence error. Fixed in 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2; fresh CI pending."
+    "PR #283 CI run 43243039733: 731 passed, 1 failed, 13 skipped; one regression test failed only because the generic no-evidence validation error masked the dedicated confirmed-match supporting-evidence error. Fixed in 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2; fresh CI pending.",
+    "Latest domain contract adds complete multi-OID evidence matrix validation and non-confirmed confirmation-reference rejection. Focused module: 34 test functions. Current branch head must be checked and CI rerun before acceptance."
   ]
 }
