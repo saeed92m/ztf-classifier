@@ -61,7 +61,9 @@
       "The domain contract was tightened: SurveyObjectRef provides a deterministic reference key from survey, release, object ID, band, field and RCID; final association evidence must point to a declared survey object and exactly cover declared candidate IDs; unmatched decisions require explicit no-candidate evidence.",
       "AstrophysicalSourceRef with CONFIRMED identity now requires a confirmation_association_id. validate_source_confirmation() checks that the referenced association is a CONFIRMED_MATCH for the same source.",
       "Boolean values are now rejected for numeric field/rcid, score and separation values because Python bool is a subclass of int.",
-      "Added regression coverage for source confirmation links, evidence-to-source links, candidate evidence coverage, no-candidate unmatched decisions, full survey reference identity and boolean numeric inputs. The focused test module currently contains 30 test functions; execution is pending on the fresh head."
+      "Added regression coverage for source confirmation links, evidence-to-source links, candidate evidence coverage, no-candidate unmatched decisions, full survey reference identity and boolean numeric inputs. The focused test module currently contains 30 test functions; execution is pending on the fresh head.",
+      "Fresh CI run 43242293772 failed in Ruff with two F821 undefined-name findings because the new tests called validate_source_confirmation without importing it from ztf_classifier.domain.",
+      "Corrected the focused test module import in commit a6c7a7c816fe6a191f6676a4fbb4b0ab3ec56570. A new current-head CI run is required; no focused/full test result is yet claimed."
     ],
     "blocker": "Fresh current-head CI is required after this lifecycle schema correction. The initial validator failure is retained and is not reported as a pass."
   },
@@ -72,7 +74,8 @@
       "Without explicit association status, downstream code could treat source-native survey IDs as physical-source IDs.",
       "First CI Lint run failed on Ruff SIM102 in the nested separation_arcsec validation condition. The condition was combined into one boolean expression in commit 6e33ba811ac49dea6b328b9e5eb8fb80077828b3.",
       "Current lifecycle validation failed because the cycle JSON used unsupported metric name 'regression', regression.status='PENDING_CI', and decision='PENDING_REVIEW'. The repository validator accepts regression statuses PASS/FAIL/BLOCKED/NOT_VERIFIED and decisions ACCEPT/REVISE/BLOCKED.",
-      "The original association contract checked only that evidence was non-empty. It did not link source_ref to a declared survey object, candidate_ref to the actual candidate set, or CONFIRMED source identity to a confirmation association."
+      "The original association contract checked only that evidence was non-empty. It did not link source_ref to a declared survey object, candidate_ref to the actual candidate set, or CONFIRMED source identity to a confirmation association.",
+      "The first CI run after adding confirmation-reference tests exposed a missing test-module import for validate_source_confirmation. The test function was present but Ruff correctly rejected the unresolved symbol; the import was added."
     ],
     "unresolved": [
       "No source matching algorithm is implemented.",
@@ -99,9 +102,9 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Run fresh formatting, lint, focused source identity tests, full repository tests, package build and CI on the updated head.",
-      "Review API serialization and compatibility of the new confirmation_association_id and evidence-reference contract before application integration.",
-      "Scientific matching, physical-source identity validation and persistence remain out of scope."
+      "Run fresh format, Ruff, focused 30-test source identity suite, full repository test suite, runtime smoke tests, package build and dependency audit on the current head.",
+      "Review API serialization and compatibility of confirmation_association_id and evidence reference keys before application integration.",
+      "Scientific matching, source identity adjudication and persistence are not implemented by this contract."
     ]
   },
   "decision": "BLOCKED",
@@ -112,6 +115,7 @@
     "DR24 raw acquisition remains separate from model-ready normalized observations.",
     "Initial CI run 43181774988 failed only at lifecycle-record validation before the test suite; exact cause and correction are recorded above. A fresh current-head CI run is required.",
     "PR #283 Red Team review identified and patched evidence-linkage gaps; the current branch contains 30 focused source identity tests, pending CI.",
-    "The domain contract now checks references and decision consistency but does not prove the astrophysical correctness of evidence or implement a matcher."
+    "The domain contract now checks references and decision consistency but does not prove the astrophysical correctness of evidence or implement a matcher.",
+    "PR #283 run 43242293772 failed before tests due to missing import validate_source_confirmation in the new test module; import fix commit a6c7a7c816fe6a191f6676a4fbb4b0ab3ec56570 must be validated by fresh CI."
   ]
 }
