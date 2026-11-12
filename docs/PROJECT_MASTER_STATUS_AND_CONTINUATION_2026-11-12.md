@@ -434,7 +434,7 @@ Keep the original PDFs as immutable institutional proposal records. Use dated ad
 
 ## 13. Immediate next actions
 
-1. Run the local v0.2 artifact audit in WSL and return only its JSON result.
+1. Recover and independently authenticate the frozen v0.2.0 production artifact through the controlled recovery tracker [Issue #282](https://github.com/saeed92m/ztf-classifier/issues/282). Use a local read-only inventory only if the artifact is known to exist solely in a local checkout; it is not a routine prerequisite for continuing repository-side work.
 2. Inspect the actual application observation-service implementation and define the DR24 backend selection contract.
 3. Create a pinned 5–10 confirmed-source E2E manifest with exact IDs, filters, source version, query parameters, and expected outcomes.
 4. Validate raw-source handling, QC semantics, HMJD and photometry contracts without changing the frozen model.
