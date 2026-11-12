@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-bounded-current-branch-acceptance-20261112",
+  "objective": "Enable the existing bounded DR24 HATS batch parity test, deterministic multi-OID Workbench browser test, and bounded Zubercal DR20 ambiguity parity test on a dedicated CI branch without changing runtime code, scientific processing, or frozen baselines.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "main commit f681408fae8d8062dd72ff74791872c1590f6ee8",
+      "status": "VERIFIED",
+      "detail": "Inspected existing DR24 and Zubercal adapters, test fixtures, source contracts and current workflow branch filters."
+    },
+    {
+      "source": "Issue #253 and docs/MASTER_EXECUTION_ROADMAP_2026-11-12.md",
+      "status": "VERIFIED",
+      "detail": "DR24 raw acquisition is distinct from normalized observations and inference. Source selection and provenance must remain explicit."
+    },
+    {
+      "source": "Existing bounded source tests",
+      "status": "VERIFIED",
+      "detail": "The DR24 API test uses two pinned OIDs and expected epoch counts and SHA-256 values. The UI test uses a deterministic fake backend. The Zubercal test performs one bounded 1.2-arcsecond query and expects the previously observed two-candidate ambiguity."
+    }
+  ],
+  "baseline": {
+    "revision": "f681408fae8d8062dd72ff74791872c1590f6ee8",
+    "scientific_baseline": "v0.2.0 immutable",
+    "software_release": "v1.0.1 immutable",
+    "model_version": "baseline_v0.2",
+    "feature_count": 42
+  },
+  "expected_improvement": [
+    "Run existing bounded source and deterministic browser tests against the current main code without relying on obsolete feature branch filters.",
+    "Collect exact current-branch test results and preserve the resulting workflow evidence.",
+    "Avoid full-archive retrieval, large model downloads, production data changes, or changes to scientific acceptance criteria."
+  ],
+  "measurement": {
+    "metrics": {
+      "coverage": {
+        "before": "The three existing source/UI workflows were constrained to historical feature branch names. Current PR and branch runs did not execute these opt-in tests.",
+        "after": "All three bounded tests ran on the dedicated branch: DR24 batch API live parity, deterministic Workbench browser contract, and Zubercal DR20 ambiguity-preserving live parity. All three test jobs passed."
+      },
+      "reproducibility": {
+        "before": "Pinned DR24 OID hashes, deterministic fake-browser tests, and a fixed Zubercal ambiguity test already exist, but current-branch execution was not recorded.",
+        "after": "DR24 API: 1 passed in 28.37s; the two pinned OIDs matched 78 and 123 epochs and their expected SHA-256 values. Workbench UI: 1 passed in 3.70s. Zubercal: 1 passed in 13.74s; 123 raw rows, 49 g and 74 r, two candidate PS1 IDs, ambiguity preserved, no match selected. Evidence artifacts and run logs were inspected."
+      },
+      "reliability": {
+        "before": "A skipped live test did not establish current source parity.",
+        "after": "All three focused jobs completed successfully. The Zubercal artifact ZIP SHA-256 matched the GitHub artifact digest. No runtime code, raw survey data, source mapping, or frozen baseline was changed."
+      }
+    },
+    "trade_off": "This adds branch-trigger coverage to three test workflows. It does not change runtime code or scientific data handling."
+  },
+  "validation": {
+    "status": "VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Dedicated branch created from main SHA f681408fae8d8062dd72ff74791872c1590f6ee8.",
+      "DR24 Batch API Live Source Parity run 43180970933 / job 131056570476: SUCCESS. `tests/test_dr24_batch_live_api.py`: 1 passed, 1 warning in 28.37s.",
+      "Pinned OID 264114400013085 returned 78 epochs and SHA-256 735ee15135670a1a28b03b76edfb394e9c0c193d528f3da56ebb593468baf2a0.",
+      "Pinned OID 264214400000912 returned 123 epochs and SHA-256 a37f6fa2ee91009805b6fab3a5563b793cba9e84f6a82ec333bae507442c70ae.",
+      "DR24 Batch Workbench UI Contract run 43180998574 / job 131056659731: SUCCESS. `tests/integration/test_dr24_batch_workbench_ui.py`: 1 passed in 3.70s using the deterministic fake backend.",
+      "Zubercal DR20 Adapter Live Parity run 43181021520 / job 131056732813: SUCCESS. `tests/test_zubercal_dr20_adapter_live.py`: 1 passed in 13.74s.",
+      "Zubercal evidence artifact 13925104998 (`zubercal-dr20-adapter-live-parity`) was downloaded and inspected. ZIP SHA-256 542bca594bc47753dded72f9c5720805ed10dc58dac3d9646c3e190fd891481f matches the GitHub artifact digest.",
+      "The artifact JSON records 123 raw rows, 49 g and 74 r, two PS1 candidates (55 and 68 rows), `AMBIGUOUS_MULTIPLE_PS1_IDS`, `NOT_SELECTED`, source release Zubercal DR20, and native PS1/MJD(TDB)/magerr-scale semantics. JSON SHA-256 82e7457ae5a59682c99027981e11d28a4991ff6b7e381c175a136719f1aac804.",
+      "This evidence verifies bounded source access and declared adapter/UI contracts only. It does not establish physical source identity, HATS-Zubercal photometric parity, model compatibility, or scientific acceptance.",
+      "The full PR #284 CI run 43181490615 completed all eight engineering jobs successfully: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit and CI Gate.",
+      "The full Test Suite job 131059729763 reported 702 passed, 13 skipped, zero failures and 9 warnings in 99.30 seconds.",
+      "CodeQL run 43181490689 and Product Scope Audit run 43181490710 both completed successfully.",
+      "The bounded DR24 HATS batch API live parity test passed in run 43180970933: 1 passed, 1 warning; pinned OIDs 264114400013085 (78 epochs) and 264214400000912 (123 epochs) matched their expected SHA-256 hashes.",
+      "The deterministic multi-OID Workbench UI test passed in run 43180998574: 1 passed using the fake backend.",
+      "The bounded Zubercal DR20 adapter live parity test passed in run 43181021520: 1 passed; 123 rows (49 g, 74 r), two PS1 candidates preserved as AMBIGUOUS_MULTIPLE_PS1_IDS and NOT_SELECTED. Evidence artifact 13925104998 ZIP SHA-256 542bca594bc47753dded72f9c5720805ed10dc58dac3d9646c3e190fd891481f verified.",
+      "These results validate only the declared bounded acquisition/API/UI adapter contracts. They do not validate physical identity, HATS-Zubercal photometric parity, HMJD/MJD(TDB) conversion, DR24 normalization, v0.2.0 feature parity, classifier inference or scientific discovery."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "DR24 and Zubercal workflow triggers were restricted to historical feature branch names, so current branch runs skipped the corresponding opt-in tests."
+    ],
+    "unresolved": [
+      "The broader DR24 inference path remains unimplemented and is tracked separately under Issue #253.",
+      "Issue #253 remains open: standard application analysis still uses the ALeRCE-backed normalized observation service. Explicit DR24 application source selection, no-fallback behavior, normalized observation/time/photometry/QC contracts, AOIC identity, and pinned 5–10 confirmed-source API-to-Workbench end-to-end acceptance remain outstanding.",
+      "The Park dossier's primary source-product choice (Zubercal emphasis versus repository HATS-primary design) remains unresolved. HATS and Zubercal must remain distinct until the approved deliverable is reconciled."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Live-source tests should run on an explicit bounded validation branch rather than depend on stale feature branch names.",
+      "A live-source test pass verifies only its declared pinned source contract; it does not establish physical source identity, photometric parity, model validity, or full scientific acceptance.",
+      "The UI fake-backend test establishes deterministic interaction behavior only."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [],
+    "evidence": [
+      "DR24 batch live API test passed on two pinned OIDs.",
+      "Deterministic Workbench multi-OID test passed.",
+      "Bounded Zubercal DR20 ambiguity-preserving test passed and its uploaded artifact digest was verified.",
+      "Full PR #284 engineering CI passed all eight jobs.",
+      "Three bounded DR24 API, Workbench UI and Zubercal adapter tests passed with their pinned evidence."
+    ]
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "The three existing opt-in workflows can be run on ci/dr24-bounded-acceptance-20261112.",
+    "Pinned DR24 API payload hashes currently match the two recorded expected values for the declared test OIDs.",
+    "The deterministic Workbench contract preserves raw payload/provenance and rejects duplicate or over-limit requests.",
+    "The bounded Zubercal result retains two PS1 candidates and explicitly does not select either one.",
+    "These results are bounded integration evidence only; they do not validate DR24 normalization, cross-survey photometric parity, the frozen v0.2 model, or full scientific discovery.",
+    "PR #284 full current-head engineering CI run 43181490615 passed all eight jobs; full suite 702 passed, 13 skipped, zero failed, 9 warnings.",
+    "All three bounded live/contract workflows passed: DR24 HATS API (43180970933), deterministic Workbench UI (43180998574), Zubercal DR20 ambiguity parity (43181021520).",
+    "This cycle is VERIFIED and ACCEPTED only for enabling and executing the three bounded tests. It does not close Issue #253 or establish DR24 model inference or scientific acceptance."
+  ]
+}
