@@ -389,7 +389,7 @@ def test_association_rejects_evidence_for_unrelated_survey_object() -> None:
 
 
 def test_confirmed_association_rejects_evidence_for_different_candidate() -> None:
-    with pytest.raises(ValueError, match="cover exactly the declared candidate"):
+    with pytest.raises(ValueError, match="every declared survey-object/candidate pair"):
         SourceAssociation(
             association_id="association-wrong-candidate",
             schema_version="1.0",
@@ -404,7 +404,7 @@ def test_confirmed_association_rejects_evidence_for_different_candidate() -> Non
 
 
 def test_ambiguous_association_requires_evidence_for_every_candidate() -> None:
-    with pytest.raises(ValueError, match="cover exactly the declared candidate"):
+    with pytest.raises(ValueError, match="every declared survey-object/candidate pair"):
         SourceAssociation(
             association_id="association-partial-ambiguity",
             schema_version="1.0",
