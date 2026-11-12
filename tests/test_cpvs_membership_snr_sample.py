@@ -181,6 +181,13 @@ def test_raw_snr_sample_rederivation_and_four_field_gate(
         candidate_only, sample_100, sample_1000, four_field_only
     )
     assert input_report["metadata_conflicts"] == []
+    assert all(
+        count == 0 for count in input_report["within_file_duplicate_rows"].values()
+    )
+    assert (
+        input_report["cross_file_overlaps"]["candidate_only__sample_1000"]["count"]
+        == 1
+    )
     source_ids = set(metadata)
     assert source_ids == {1, 2, 3, 4}
     assert metadata[4]["four_field_only"] is True
