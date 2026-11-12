@@ -1,0 +1,149 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "minimum-source-identity-contract-20261112",
+  "objective": "Add an immutable, evidence-bearing domain contract that separates survey-native object identifiers from astrophysical source identities and records explicit association states. No cross-match algorithm, automatic merge, persistence layer, or inference behavior is introduced.",
+  "previous_knowledge_consumed": [
+    "docs/architecture/AOIC_IDENTITY_AND_CROSSMATCH_ARCHITECTURE_v0.1.md",
+    "docs/architecture/ARCHITECTURE_v0.3.md",
+    "docs/THINK_TANK_MASTER_REVIEW_2026-11-12.md on the documentation branch",
+    "Issue #249 and Issue #253 source identity and DR24 application boundaries",
+    "Existing domain Observation, CatalogMatch, CatalogContext and DiscoveryCandidate contracts."
+  ],
+  "baseline": {
+    "revision": "main@f681408fae8d8062dd72ff74791872c1590f6ee8",
+    "scientific_baseline": "v0.2.0 immutable",
+    "software_release": "v1.0.1 immutable",
+    "description": "Additive domain contract only. No existing observation, model, feature, taxonomy, benchmark, data or inference behavior changes."
+  },
+  "expected_improvement": [
+    "Make survey object and astrophysical source identity distinct in typed domain records.",
+    "Preserve survey, release, OID, band, field and rcid without rewriting native identifiers.",
+    "Represent confirmed, ambiguous, unmatched, rejected and deferred associations explicitly.",
+    "Require evidence and policy versions for confirmed associations.",
+    "Distinguish raw match scores from calibrated probabilities.",
+    "Preserve provenance and supersession references.",
+    "Prevent final unmatched, ambiguous, rejected or confirmed decisions from being recorded without evidence; allow DEFERRED_REVIEW to represent work not yet adjudicated.",
+    "Require every association evidence record to identify a declared source-native survey object and the exact candidate source; require a confirmed source record to point to its confirmation association.",
+    "Reject boolean values where integer or floating-point measurements/partition identifiers are expected.",
+    "For final multi-object decisions, require evidence for every declared survey-object and candidate-source pair; for unmatched decisions, require a no-candidate evidence record for every declared survey object.",
+    "A non-confirmed source record cannot carry a confirmation association reference."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The domain layer had normalized Observation contracts and catalog context records, but no dedicated source identity/association lifecycle types.",
+        "after": "New frozen dataclasses define survey object, catalog entry, astrophysical source reference, association evidence and source association decision states. Association evidence now uses a stable full survey-object reference key and must cover exactly the declared candidates for confirmed, ambiguous and rejected decisions; unmatched evidence must use an explicit no-candidate sentinel. Confirmed source records require a confirmation association ID. For CONFIRMED_MATCH, AMBIGUOUS_MATCH and REJECTED_MATCH, the evidence relation now requires the complete Cartesian coverage of declared survey-object references and candidate-source references. UNMATCHED requires no-candidate evidence for every declared survey object. Non-CONFIRMED source records cannot carry confirmation_association_id."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "No matching algorithm, source registry persistence or external data execution is included."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The contracts do not establish physical identity. No adjudicated matching sample or independent cross-match evaluation is run."
+      }
+    },
+    "trade_off": "The first implementation intentionally stops at immutable records and validation. It does not calculate matches, merge OIDs, assign physical identity, or feed grouped observations to the model."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Added src/ztf_classifier/domain/source_identity.py with enum and frozen dataclass contracts.",
+      "Exported the new types from ztf_classifier.domain.",
+      "Added tests/test_source_identity_contracts.py covering native OID preservation, band-specific OID separation, catalog release scoping, provenance, association-state invariants and calibrated-score semantics.",
+      "No runtime call sites were changed.",
+      "Added 20 focused unit tests covering source-native OID preservation, distinct band-specific OIDs, catalog release scoping, source provenance, supersession lineage, score/probability semantics, confirmed/ambiguous/unmatched/rejected states, competing candidates, duplicate refs and self-supersession.",
+      "First CI run on the initial source identity head exposed one Ruff SIM102 lint finding; it was fixed in commit 6e33ba811ac49dea6b328b9e5eb8fb80077828b3. The corrected head requires a fresh full CI run.",
+      "Extended the contract to require evidence for all final association outcomes except DEFERRED_REVIEW, and to reject self-supersession of a source record.",
+      "Added three more tests: final association decisions require evidence; deferred review may wait for evidence; source records cannot supersede themselves.",
+      "CI run 43181774988 reached the cumulative lifecycle validator and failed before test execution. Exact validator output: unsupported metric name 'regression'; regression.status must be PASS, FAIL, BLOCKED or NOT_VERIFIED; decision must be ACCEPT, REVISE or BLOCKED.",
+      "Root cause was the lifecycle record schema, not a reported unit-test failure: regression was incorrectly duplicated under measurement.metrics, and PENDING_CI/PENDING_REVIEW are not accepted lifecycle values. The record is corrected by removing the unsupported metric entry and recording an honest BLOCKED state pending a fresh run.",
+      "Red Team review found two fail-open cases: a source could be marked CONFIRMED with only generic provenance, and association evidence could refer to a different survey object or candidate than the decision.",
+      "The domain contract was tightened: SurveyObjectRef provides a deterministic reference key from survey, release, object ID, band, field and RCID; final association evidence must point to a declared survey object and exactly cover declared candidate IDs; unmatched decisions require explicit no-candidate evidence.",
+      "AstrophysicalSourceRef with CONFIRMED identity now requires a confirmation_association_id. validate_source_confirmation() checks that the referenced association is a CONFIRMED_MATCH for the same source.",
+      "Boolean values are now rejected for numeric field/rcid, score and separation values because Python bool is a subclass of int.",
+      "Added regression coverage for source confirmation links, evidence-to-source links, candidate evidence coverage, no-candidate unmatched decisions, full survey reference identity and boolean numeric inputs. The focused test module currently contains 30 test functions; execution is pending on the fresh head.",
+      "Fresh CI run 43242293772 failed in Ruff with two F821 undefined-name findings because the new tests called validate_source_confirmation without importing it from ztf_classifier.domain.",
+      "Corrected the focused test module import in commit a6c7a7c816fe6a191f6676a4fbb4b0ab3ec56570. A new current-head CI run is required; no focused/full test result is yet claimed.",
+      "CI run 43243039733 executed the full repository suite on head cc0cad44beabf78c837c9d3d171ecf7fbf08028c: 731 passed, 1 failed, 13 skipped, 9 warnings. The sole failure was test_confirmed_association_requires_supporting_evidence. The test expected the specific message 'supporting evidence', but a generic no-evidence guard raised first.",
+      "The root cause was validation-ordering: the generic empty-evidence guard executed before the CONFIRMED_MATCH-specific validation. In commit 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2, the CONFIRMED_MATCH branch now validates confirmed_source_id first and then emits the dedicated supporting-evidence error; the generic guard applies only to other non-deferred states.",
+      "A fresh current-head CI run is required. No test pass is claimed for commit 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2 yet.",
+      "A second Red Team review found that set-level source and candidate coverage still allowed a multi-OID association to cite evidence for only one OID. This could support an unsupported claim that multiple survey-native objects belong to one astrophysical source.",
+      "The association contract now requires exact evidence-pair coverage for every declared survey-object/candidate-source combination in confirmed, ambiguous and rejected decisions. An unmatched decision requires a no-candidate evidence record for each declared survey object.",
+      "Added regression tests for missing r-band evidence in a confirmed two-OID association, incomplete OID/candidate evidence matrix in an ambiguous association, incomplete unmatched evidence, and confirmation references on non-confirmed source records. The focused test module now contains 34 test functions.",
+      "The confirmation_association_id field now rejects non-string values and is valid only when identity_status is CONFIRMED.",
+      "The prior head cc0cad44beabf78c837c9d3d171ecf7fbf08028c had 731 passed, 1 failed, 13 skipped. The failure was a test-message ordering mismatch and was patched at source commit 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2. A subsequent workflow started on the intermediate head 8c5a02da824b3db6f3849ad8d69b97255d74a336, but it was superseded by the additional multi-OID evidence coverage changes; do not use it to validate the newest head.",
+      "Current-head CI on d9e17467ce9a3dca17116d6fa609a17f1c75b2fc completed with 734 passed, 2 failed, 13 skipped, and 9 warnings. Both failures were stale expected-message assertions in tests/test_source_identity_contracts.py after the evidence rule was intentionally strengthened to require every declared survey-object/candidate pair.",
+      "The actual runtime error was the new pair-coverage guard: 'association evidence must cover every declared survey-object/candidate pair.' The domain behavior was correct. Two tests still expected the previous set-level wording ('cover exactly the declared candidate').",
+      "Updated exactly those two stale regex expectations in commit 44369783e1b28248cf6e93832e1472a87540f09f. The 34-test focused module remains unchanged in test count. A fresh run on the new head is required.",
+      "Fresh current-head engineering CI run 43282419204 completed all eight jobs successfully on head 90b6026e62e41bdff4d33c251ec2f0e1cbbb7ba9: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit and CI Gate all PASS.",
+      "JUnit result for this run: 736 passed, 13 skipped, zero failures, zero errors and 9 warnings. The focused source identity module contains 34 test functions. Total line statements reported by coverage: 7962; missed: 1321; reported coverage 83%. Branch coverage was not reported.",
+      "CodeQL run 43282418876 and Product Scope Audit run 43282418791 passed. Scientific Validation run 43282418767 passed its benchmark/lifecycle contract job.",
+      "The four source-backed scientific jobs remain SKIPPED: DR24/ALeRCE source-backed evidence, immutable historical ALeRCE reference, source provenance acquisition and independent StarEmbed benchmark. The CI result is an engineering PASS, not an astrophysical identity validation.",
+      "Build & Verify Package, Dependency Audit and CI Gate were subsequently confirmed PASS in the same run.",
+      "Latest current-head PR #283 CI run 43284976844 completed all eight engineering jobs successfully on head 988e3c5537a0278119b680d98e40d9978092ba3a: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit and CI Gate all PASS.",
+      "Current-head JUnit result: 736 passed, 13 skipped, zero failures, zero errors and 9 warnings. Coverage: 7,962 total statements, 1,321 missed, 83% line coverage as rounded by CI; branch coverage was not reported.",
+      "CodeQL run 43284976807 and Product Scope Audit run 43284976781 passed. Scientific Validation run 43284977182 passed the benchmark/lifecycle contract job.",
+      "Four source-backed scientific jobs remain SKIPPED: source provenance acquisition, independent StarEmbed product benchmark, DR24/ALeRCE source-backed evidence and immutable historical ALeRCE reference. This is an engineering PASS, not scientific validation of physical source identity.",
+      "PR #283 remains OPEN / DRAFT / UNMERGED. API request/response serialization and persistence compatibility, implementation of a matcher/ledger, and independent adjudicated association validation remain open."
+    ],
+    "blocker": "Engineering regression is verified on current PR head 988e3c5537a0278119b680d98e40d9978092ba3a. Overall acceptance remains BLOCKED because API serialization and persistence compatibility have not been reviewed, no matcher or persistent identity ledger is implemented, and independent adjudicated astrophysical association validation has not been run. The source-backed scientific workflow jobs were skipped."
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED_AND_PATCHED",
+    "root_causes": [
+      "Existing Observation.oid and CatalogMatch records do not represent a complete canonical identity lifecycle.",
+      "Without explicit association status, downstream code could treat source-native survey IDs as physical-source IDs.",
+      "First CI Lint run failed on Ruff SIM102 in the nested separation_arcsec validation condition. The condition was combined into one boolean expression in commit 6e33ba811ac49dea6b328b9e5eb8fb80077828b3.",
+      "Current lifecycle validation failed because the cycle JSON used unsupported metric name 'regression', regression.status='PENDING_CI', and decision='PENDING_REVIEW'. The repository validator accepts regression statuses PASS/FAIL/BLOCKED/NOT_VERIFIED and decisions ACCEPT/REVISE/BLOCKED.",
+      "The original association contract checked only that evidence was non-empty. It did not link source_ref to a declared survey object, candidate_ref to the actual candidate set, or CONFIRMED source identity to a confirmation association.",
+      "The first CI run after adding confirmation-reference tests exposed a missing test-module import for validate_source_confirmation. The test function was present but Ruff correctly rejected the unresolved symbol; the import was added.",
+      "The Test Suite failure on head cc0cad44beabf78c837c9d3d171ecf7fbf08028c was a validation-order mismatch: the generic non-DEFERRED_REVIEW evidence guard masked the CONFIRMED_MATCH-specific 'supporting evidence' error expected by regression test test_confirmed_association_requires_supporting_evidence. The guard was moved into the non-confirmed branch.",
+      "The earlier evidence check compared the set of candidate IDs but did not verify every survey-object/candidate pair. A confirmed multi-OID association could therefore lack evidence for one declared OID. This was corrected by requiring complete pair coverage for final decisions.",
+      "After pairwise OID/candidate evidence coverage was added, two tests retained assertions for the prior set-level error message. CI confirmed the strengthened validation path behaved as intended; the tests failed because their expected text was stale."
+    ],
+    "unresolved": [
+      "Review API request/response serialization and compatibility of confirmation_association_id and the full survey-object/candidate evidence-pair references before application integration.",
+      "No association matcher, persistent identity decision ledger, source registry or automatic OID grouping is implemented.",
+      "The contract checks references and decision consistency. It does not prove scientific validity or authenticity of matching evidence. Independent adjudicated cross-match data and a validated association policy are required.",
+      "PR #283 remains Draft and unmerged pending review of API/persistence implications and separate scientific acceptance planning."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A survey object OID is a source-native catalog identifier, not proof of physical source identity.",
+      "A confirmed association requires explicit source ID, supporting evidence and policy version.",
+      "Ambiguous, unmatched, rejected and deferred associations must remain explicit.",
+      "A raw matching score is not a probability. Calibrated probability requires a calibration version and bounded value.",
+      "This contract is additive and must not change the frozen v0.2.0 baseline or historical identifiers.",
+      "A confirmed source identity must point to a specific confirmed association decision, not only a general provenance reference.",
+      "Association evidence must be referentially consistent with the source objects and candidate IDs in the decision. Non-empty but unrelated evidence is insufficient.",
+      "For a decision that claims multiple survey OIDs belong to one source, evidence coverage must exist for every declared survey-object/candidate-source pair. Checking the set of OIDs and candidate IDs independently is not sufficient."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Issue #249 remains the canonical source identity/AOIC tracker.",
+    "The new contracts do not implement or claim source matching.",
+    "No OID may be merged solely by angular proximity.",
+    "DR24 raw acquisition remains separate from model-ready normalized observations.",
+    "Initial CI run 43181774988 failed only at lifecycle-record validation before the test suite; exact cause and correction are recorded above. A fresh current-head CI run is required.",
+    "PR #283 Red Team review identified and patched evidence-linkage gaps; the current branch contains 30 focused source identity tests, pending CI.",
+    "The domain contract now checks references and decision consistency but does not prove the astrophysical correctness of evidence or implement a matcher.",
+    "PR #283 run 43242293772 failed before tests due to missing import validate_source_confirmation in the new test module; import fix commit a6c7a7c816fe6a191f6676a4fbb4b0ab3ec56570 must be validated by fresh CI.",
+    "PR #283 CI run 43243039733: 731 passed, 1 failed, 13 skipped; one regression test failed only because the generic no-evidence validation error masked the dedicated confirmed-match supporting-evidence error. Fixed in 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2; fresh CI pending.",
+    "Latest domain contract adds complete multi-OID evidence matrix validation and non-confirmed confirmation-reference rejection. Focused module: 34 test functions. Current branch head must be checked and CI rerun before acceptance.",
+    "PR #283 runs 43244871653 and 43244896597 each reported 734 passed, 2 failed, 13 skipped, 9 warnings. Both failures were stale regex assertions after the full pair-coverage invariant was introduced. Assertions were corrected in 44369783e1b28248cf6e93832e1472a87540f09f; fresh CI is pending.",
+    "Latest tested PR #283 head 90b6026e62e41bdff4d33c251ec2f0e1cbbb7ba9 passed all eight engineering CI jobs in run 43282419204: 736 passed, 13 skipped, zero failures, 9 warnings; 83% line coverage rounded, branch coverage not measured.",
+    "The current source identity contract's engineering regression suite is PASS. API serialization, persistence and independent astrophysical association validation remain separate blockers.",
+    "Latest current-head PR #283 head 988e3c5537a0278119b680d98e40d9978092ba3a passed all eight engineering CI jobs in run 43284976844: 736 passed, 13 skipped, zero failures, 9 warnings; line coverage 83% rounded, branch coverage not reported.",
+    "CodeQL and Product Scope Audit passed. Scientific Validation passed only its benchmark/lifecycle contract; the four source-backed scientific jobs were skipped.",
+    "The cycle's regression status is PASS, but overall decision remains BLOCKED pending API/persistence review and independent scientific association validation."
+  ]
+}
