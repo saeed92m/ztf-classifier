@@ -125,7 +125,8 @@
       "The historical raw CDS reconciliation on 2026-11-02 verified raw Table 2/Table 4 against publisher MRT with zero mismatches and a complete 730,184 name-to-Seq crosswalk. The historical four-field diagnostic reproduced Table 4 membership on the retained artifact, but the publisher's exact rule remains unproven.",
       "The 11,557-object reduction under Ng>=11 and Nr>=11 leaves 45 residuals and is a diagnostic clue, not a documented selection rule.",
       "Direct MGPR testing remains an explicit CPVS research requirement; execution status must use PASS/FAIL/UNKNOWN/ERROR and preserve numerical diagnostics.",
-      "Scientific Validation Source Adapters now classify StarEmbed as a candidate external benchmark blocked by source/split audit, and ALeRCE as a reference-system output/weak-label source, not independent astrophysical ground truth."
+      "Scientific Validation Source Adapters now classify StarEmbed as a candidate external benchmark blocked by source/split audit, and ALeRCE as a reference-system output/weak-label source, not independent astrophysical ground truth.",
+      "The submitted Park dossier emphasizes Zubercal recalibrated PSF photometry, while the current source-product contract treats DR24 HATS as primary and Zubercal as supplementary. The primary product decision must be confirmed against the approved Park deliverable; HATS and Zubercal are not interchangeable."
     ]
   },
   "regression": {
@@ -160,6 +161,7 @@
     "StarEmbed leakage blocker: Issue #210 / PR #211; exact failure keys are recorded.",
     "Multi-source validation status: Issue #188; DR24 smoke results are not production model validation.",
     "Historical CPVS raw CDS reconciliation and MGPR requirement are documented in docs/SCIENTIFIC_METHODOLOGY.md and the Notion CPVS audit page.",
-    "Independent validation blockers: Issue #188 (DR24 smoke only; model inference NOT_RUN) and Issue #210 (StarEmbed train/test identity leakage)."
+    "Independent validation blockers: Issue #188 (DR24 smoke only; model inference NOT_RUN) and Issue #210 (StarEmbed train/test identity leakage).",
+    "Park source-product decision remains open: confirm HATS versus Zubercal primary role against the approved deliverable; keep separate adapters and provenance."
   ]
 }
