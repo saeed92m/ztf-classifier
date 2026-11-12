@@ -44,7 +44,7 @@
     "metrics": {
       "regression_protection_count": {
         "before": "The diagnostic derived a two-band candidate set from approximate SNR only; within-file duplicates and pairwise cross-file overlaps were not reported.",
-        "after": "The code now defines separate approximate, exact and inverse-error two-band candidate states and reports within-file duplicate rows/IDs plus pairwise cross-file overlap counts and hashes. New synthetic regression cases were added; current-head CI remains pending.",
+        "after": "The code now defines separate approximate, exact and inverse-error two-band candidate states and reports within-file duplicate rows/IDs plus pairwise cross-file overlap counts and hashes. Two additional synthetic regression test functions were added; the existing end-to-end fixture was extended. Current-head CI remains pending.",
         "status": "PARTIAL"
       },
       "scientific_validity": {
@@ -62,7 +62,7 @@
       "New branch created from main SHA f681408fae8d8062dd72ff74791872c1590f6ee8.",
       "Only the raw-SNR diagnostic script and its synthetic test module have been ported; the old branch's automatic multi-gigabyte workflow was not copied.",
       "The script now emits separate approximate, exact and inverse-error two-band results and explicit within-file duplicate/cross-file overlap accounting.",
-      "Five additional test cases are intended to cover formula separation and duplicate/overlap accounting; current-head CI is pending."
+      "Two additional synthetic regression test functions were added: one separates two-band formula membership/confusion results; one checks within-file duplicate and pairwise cross-file overlap reporting. The existing end-to-end fixture now asserts expected overlap accounting and zero within-file duplicates. Current-head CI is pending."
     ],
     "blocker": "Fresh Ruff format/lint, focused synthetic tests, full CI, lifecycle validation and review are required. Raw g/r archive scans and MGPR are not run in this cycle."
   },
