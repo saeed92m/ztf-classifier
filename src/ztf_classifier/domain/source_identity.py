@@ -203,16 +203,21 @@ class SourceAssociation:
             raise TypeError("evidence must contain AssociationEvidence values.")
         if self.reviewer_ref is not None and not self.reviewer_ref.strip():
             raise ValueError("reviewer_ref must be non-empty when provided.")
-        if self.supersedes_association_id is not None and not self.supersedes_association_id.strip():
-            raise ValueError("supersedes_association_id must be non-empty when provided.")
+        if self.supersedes_association_id is not None:
+            if not self.supersedes_association_id.strip():
+                raise ValueError("supersedes_association_id must be non-empty when provided.")
+            if self.supersedes_association_id == self.association_id:
+                raise ValueError("an association cannot supersede itself.")
 
         if self.status is AssociationStatus.CONFIRMED_MATCH:
             if not self.confirmed_source_id or not self.confirmed_source_id.strip():
                 raise ValueError("confirmed matches require confirmed_source_id.")
             if not self.evidence:
                 raise ValueError("confirmed matches require supporting evidence.")
-            if self.confirmed_source_id not in self.candidate_source_ids:
-                raise ValueError("confirmed_source_id must be one of candidate_source_ids.")
+            if self.candidate_source_ids != (self.confirmed_source_id,):
+                raise ValueError(
+                    "confirmed matches must contain exactly the confirmed source ID."
+                )
         elif self.confirmed_source_id is not None:
             raise ValueError("only confirmed matches may set confirmed_source_id.")
 
