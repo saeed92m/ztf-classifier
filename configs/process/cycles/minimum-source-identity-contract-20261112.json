@@ -51,7 +51,8 @@
       "Added src/ztf_classifier/domain/source_identity.py with enum and frozen dataclass contracts.",
       "Exported the new types from ztf_classifier.domain.",
       "Added tests/test_source_identity_contracts.py covering native OID preservation, band-specific OID separation, catalog release scoping, provenance, association-state invariants and calibrated-score semantics.",
-      "No runtime call sites were changed."
+      "No runtime call sites were changed.",
+      "Added 17 focused unit tests covering source-native OID preservation, distinct band-specific OIDs, catalog release scoping, source provenance, supersession lineage, score/probability semantics, confirmed/ambiguous/unmatched/rejected states, competing candidates, duplicate refs and self-supersession."
     ],
     "blocker": "Run formatting, focused tests, full test suite, package build, CodeQL and Product Scope Audit on this branch."
   },
@@ -84,7 +85,8 @@
       "All new source identity contract tests must pass.",
       "Full CI, formatting, package build, CodeQL and Product Scope Audit must pass.",
       "Review public API naming and compatibility before integrating these contracts into ObservationService or DR24 application requests.",
-      "Identity matching, persistence, merge/split lifecycle and scientific validation remain separate future work."
+      "Identity matching, persistence, merge/split lifecycle and scientific validation remain separate future work.",
+      "Run all 17 focused source identity contract tests and the full repository CI suite."
     ]
   },
   "decision": "PENDING_REVIEW",
