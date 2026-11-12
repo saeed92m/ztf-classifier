@@ -2,6 +2,17 @@
 
 > **Current continuation point (2026-11-12):** [Unified Project Baseline & Continuation Point](docs/PROJECT_MASTER_STATUS_AND_CONTINUATION_2026-11-12.md). This dated record supersedes older status summaries for current project state. Historical reports remain unchanged.
 
+## Project governance and execution
+
+The current dated project record is supported by these review documents:
+
+- [16-Expert Think Tank Master Review](docs/THINK_TANK_MASTER_REVIEW_2026-11-12.md)
+- [Master Defect and Risk Register](docs/MASTER_DEFECT_REGISTER_2026-11-12.md)
+- [Master Execution Roadmap](docs/MASTER_EXECUTION_ROADMAP_2026-11-12.md)
+- [Open Pull Request Triage](docs/OPEN_PR_TRIAGE_2026-11-12.md)
+
+These are dated snapshots. They distinguish verified implementation, historical evidence, proposals, and unresolved scientific or product blockers. A green engineering workflow does not establish Scientific-PASS.
+
 A CPU-first Astronomical Data Analysis & Discovery Platform for Zwicky Transient Facility (ZTF) data, scientific feature generation, machine-learning and statistical analysis, uncertainty/OOD diagnostics, provenance, and discovery-oriented workflows.
 
 ## Project status
