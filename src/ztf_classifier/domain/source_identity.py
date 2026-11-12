@@ -156,9 +156,10 @@ class AssociationEvidence:
                 raise ValueError("calibrated probability must be between 0 and 1.")
             if not self.calibration_version or not self.calibration_version.strip():
                 raise ValueError("calibrated probability requires calibration_version.")
-        if self.separation_arcsec is not None:
-            if not isfinite(self.separation_arcsec) or self.separation_arcsec < 0:
-                raise ValueError("separation_arcsec must be finite and non-negative.")
+        if self.separation_arcsec is not None and (
+            not isfinite(self.separation_arcsec) or self.separation_arcsec < 0
+        ):
+            raise ValueError("separation_arcsec must be finite and non-negative.")
         if self.content_hash is not None and not self.content_hash.strip():
             raise ValueError("content_hash must be non-empty when provided.")
 
