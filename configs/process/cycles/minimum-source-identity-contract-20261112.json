@@ -37,16 +37,12 @@
       "scientific_validity": {
         "status": "NOT_MEASURED",
         "reason": "The contracts do not establish physical identity. No adjudicated matching sample or independent cross-match evaluation is run."
-      },
-      "regression": {
-        "status": "PENDING_CI",
-        "reason": "Dedicated unit tests cover contract invariants; CI has not yet completed."
       }
     },
     "trade_off": "The first implementation intentionally stops at immutable records and validation. It does not calculate matches, merge OIDs, assign physical identity, or feed grouped observations to the model."
   },
   "validation": {
-    "status": "PENDING_CI",
+    "status": "NOT_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
       "Added src/ztf_classifier/domain/source_identity.py with enum and frozen dataclass contracts.",
@@ -56,16 +52,19 @@
       "Added 20 focused unit tests covering source-native OID preservation, distinct band-specific OIDs, catalog release scoping, source provenance, supersession lineage, score/probability semantics, confirmed/ambiguous/unmatched/rejected states, competing candidates, duplicate refs and self-supersession.",
       "First CI run on the initial source identity head exposed one Ruff SIM102 lint finding; it was fixed in commit 6e33ba811ac49dea6b328b9e5eb8fb80077828b3. The corrected head requires a fresh full CI run.",
       "Extended the contract to require evidence for all final association outcomes except DEFERRED_REVIEW, and to reject self-supersession of a source record.",
-      "Added three more tests: final association decisions require evidence; deferred review may wait for evidence; source records cannot supersede themselves."
+      "Added three more tests: final association decisions require evidence; deferred review may wait for evidence; source records cannot supersede themselves.",
+      "CI run 43181774988 reached the cumulative lifecycle validator and failed before test execution. Exact validator output: unsupported metric name 'regression'; regression.status must be PASS, FAIL, BLOCKED or NOT_VERIFIED; decision must be ACCEPT, REVISE or BLOCKED.",
+      "Root cause was the lifecycle record schema, not a reported unit-test failure: regression was incorrectly duplicated under measurement.metrics, and PENDING_CI/PENDING_REVIEW are not accepted lifecycle values. The record is corrected by removing the unsupported metric entry and recording an honest BLOCKED state pending a fresh run."
     ],
-    "blocker": "Run formatting, focused tests, full test suite, package build, CodeQL and Product Scope Audit on this branch."
+    "blocker": "Fresh current-head CI is required after this lifecycle schema correction. The initial validator failure is retained and is not reported as a pass."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED_AND_PATCHED",
     "root_causes": [
       "Existing Observation.oid and CatalogMatch records do not represent a complete canonical identity lifecycle.",
       "Without explicit association status, downstream code could treat source-native survey IDs as physical-source IDs.",
-      "First CI Lint run failed on Ruff SIM102 in the nested separation_arcsec validation condition. The condition was combined into one boolean expression in commit 6e33ba811ac49dea6b328b9e5eb8fb80077828b3."
+      "First CI Lint run failed on Ruff SIM102 in the nested separation_arcsec validation condition. The condition was combined into one boolean expression in commit 6e33ba811ac49dea6b328b9e5eb8fb80077828b3.",
+      "Current lifecycle validation failed because the cycle JSON used unsupported metric name 'regression', regression.status='PENDING_CI', and decision='PENDING_REVIEW'. The repository validator accepts regression statuses PASS/FAIL/BLOCKED/NOT_VERIFIED and decisions ACCEPT/REVISE/BLOCKED."
     ],
     "unresolved": [
       "No source matching algorithm is implemented.",
@@ -85,22 +84,19 @@
     ]
   },
   "regression": {
-    "status": "PENDING_CI",
+    "status": "BLOCKED",
     "open_blockers": [
-      "All new source identity contract tests must pass.",
-      "Full CI, formatting, package build, CodeQL and Product Scope Audit must pass.",
-      "Review public API naming and compatibility before integrating these contracts into ObservationService or DR24 application requests.",
-      "Identity matching, persistence, merge/split lifecycle and scientific validation remain separate future work.",
-      "Run all 17 focused source identity contract tests and the full repository CI suite.",
-      "Re-run lint and full CI after the SIM102 correction; do not accept the earlier failed run.",
-      "Re-run CI after the evidence-required state invariants and three new tests are added."
+      "Corrected lifecycle record must pass cumulative validation on a fresh current-head CI run.",
+      "The 20 focused source-identity contract tests and full CI suite must pass on the corrected head.",
+      "Public API naming and compatibility require review before integration into ObservationService or DR24 application requests."
     ]
   },
-  "decision": "PENDING_REVIEW",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Issue #249 remains the canonical source identity/AOIC tracker.",
     "The new contracts do not implement or claim source matching.",
     "No OID may be merged solely by angular proximity.",
-    "DR24 raw acquisition remains separate from model-ready normalized observations."
+    "DR24 raw acquisition remains separate from model-ready normalized observations.",
+    "Initial CI run 43181774988 failed only at lifecycle-record validation before the test suite; exact cause and correction are recorded above. A fresh current-head CI run is required."
   ]
 }
