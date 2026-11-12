@@ -56,7 +56,7 @@ The frozen production artifact is expected at:
 
 Its artifact schema is 1.0. A read-only local audit script is available at `scripts/audit_scientific_artifacts.py`. The audit checks declared paths and internal manifest/file hashes. It does not authenticate the artifact against an independently pinned original hash or establish scientific performance.
 
-As of 2026-11-12, the local WSL audit output has not been reviewed in this status snapshot. Therefore the original production artifact remains **UNRECOVERED / NOT AUTHENTICATED** from the accessible evidence. Do not infer availability from the presence of the audit script or a successful test fixture.
+As of 2026-11-12, a prior WSL audit summary from 2026-11-09 has been recovered from project conversation history. It reported the frozen production path absent, the separate schema-1.1 lab-smoke artifact present, the ALeRCE raw-detection cache absent, and processed feature/config artifacts plus four dependent test modules present. The exact historical JSON report and complete per-file path list are not mounted in the current project sources. The original production artifact remains **UNRECOVERED / NOT AUTHENTICATED**. Do not ask the user to repeat the same inventory before remote recovery sources are exhausted. Do not infer availability from the presence of the audit script or a successful test fixture.
 
 The separate 2026-10-27 lab-smoke artifact is a different run and uses schema 1.1. It is not eligible for production inference and must not be copied, symlinked, or renamed into the frozen production path.
 
