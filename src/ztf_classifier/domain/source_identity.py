@@ -150,10 +150,18 @@ class AstrophysicalSourceRef:
                 raise ValueError("a source record cannot supersede itself.")
         elif self.superseded_by is not None:
             raise ValueError("superseded_by is only valid for superseded records.")
-        if self.confirmation_association_id is not None and not (
-            self.confirmation_association_id.strip()
+        if self.confirmation_association_id is not None and (
+            not isinstance(self.confirmation_association_id, str)
+            or not self.confirmation_association_id.strip()
         ):
-            raise ValueError("confirmation_association_id must be non-empty.")
+            raise ValueError("confirmation_association_id must be a non-empty string.")
+        if (
+            self.identity_status is not IdentityStatus.CONFIRMED
+            and self.confirmation_association_id is not None
+        ):
+            raise ValueError(
+                "confirmation_association_id is only valid for confirmed source identities."
+            )
         if (
             self.identity_status is IdentityStatus.CONFIRMED
             and self.confirmation_association_id is None
@@ -330,24 +338,37 @@ class SourceAssociation:
             f"astrophysical-source:{source_id}"
             for source_id in self.candidate_source_ids
         }
-        evidence_candidate_refs = {
-            item.candidate_ref for item in self.evidence
+        evidence_pairs = {
+            (item.source_ref, item.candidate_ref) for item in self.evidence
         }
         if self.status in {
             AssociationStatus.CONFIRMED_MATCH,
             AssociationStatus.AMBIGUOUS_MATCH,
             AssociationStatus.REJECTED_MATCH,
-        } and evidence_candidate_refs != expected_candidate_refs:
-            raise ValueError(
-                "association evidence must cover exactly the declared candidate source IDs."
-            )
-        if self.status is AssociationStatus.UNMATCHED and any(
-            item.candidate_ref != NO_CANDIDATE_REFERENCE
-            for item in self.evidence
-        ):
-            raise ValueError(
-                "unmatched evidence must use the no-candidate reference."
-            )
+        }:
+            expected_pairs = {
+                (source_ref, candidate_ref)
+                for source_ref in survey_reference_keys
+                for candidate_ref in expected_candidate_refs
+            }
+            if evidence_pairs != expected_pairs:
+                raise ValueError(
+                    "association evidence must cover every declared "
+                    "survey-object/candidate pair."
+                )
+        if self.status is AssociationStatus.UNMATCHED:
+            if any(
+                item.candidate_ref != NO_CANDIDATE_REFERENCE
+                for item in self.evidence
+            ):
+                raise ValueError(
+                    "unmatched evidence must use the no-candidate reference."
+                )
+            evidence_source_refs = {item.source_ref for item in self.evidence}
+            if evidence_source_refs != survey_reference_keys:
+                raise ValueError(
+                    "unmatched evidence must cover every declared survey object."
+                )
 
 
 def validate_source_confirmation(
