@@ -76,3 +76,10 @@ Every register update must include:
 - disposition and approver.
 
 Never close a blocker because a document was updated, a test was skipped, a count matches, or a workflow is green.
+
+
+## 5. Think Tank Session 05 — source identity contract and current evidence
+
+[Session 05](think-tank/THINK_TANK_SESSION_2026-11-12_SOURCE_IDENTITY_CONTRACT_REVIEW.md) reviewed Draft PR #283 with a focused 8-role panel and independent Red Team pass. The contract now requires exact evidence coverage for each declared survey-object/candidate-source pair and a no-candidate evidence record for every declared survey object in an unmatched decision.
+
+The branch has 34 focused test functions. On the latest inspected head `90b6026e62e41bdff4d33c251ec2f0e1cbbb7ba9`, the full Test Suite passed 736 tests, skipped 13, and had zero failures and 9 warnings. Runtime Smoke, format, lint and lifecycle checks passed. Package build was still in progress; source-backed scientific jobs were skipped. The contract does not implement matching, persist identity decisions or prove astrophysical identity. Keep ZTF-001 OPEN until API/persistence compatibility and independent adjudicated association validation pass.
