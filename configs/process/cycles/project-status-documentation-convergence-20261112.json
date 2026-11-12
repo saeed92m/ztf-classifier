@@ -37,7 +37,9 @@
     "Record the submitted institutional and commercialization plan without presenting targets as achievements.",
     "Preserve the 16-role think-tank method as ongoing project governance.",
     "Keep raw research questions and frozen production baselines unchanged.",
-    "Create a read-only inventory and safe triage plan for all open pull requests, preserving unique research evidence and avoiding mass merges or closures."
+    "Create a read-only inventory and safe triage plan for all open pull requests, preserving unique research evidence and avoiding mass merges or closures.",
+    "Convert the supplied 16-role review into a current, evidence-based master review, defect register and gated execution roadmap.",
+    "Make minimum source identity and association semantics an explicit P0 dependency alongside DR24 application integration."
   ],
   "measurement": {
     "metrics": {
@@ -113,7 +115,11 @@
       "A 16-role structured think-tank review was completed and recorded. It distinguishes simulated expert-role review from actual participation by external human experts.",
       "Joint think-tank decision: prioritize DR24-first Park MVP; preserve v0.2.0/v1.0.1; keep CPVS unresolved and separate; keep CIN optional; do not connect DR24 to model inference before time, photometry, QC, identity and feature-parity gates pass.",
       "GitHub returned 29 open PRs on 2026-11-12. Many are historical or stacked on old bases; open state and a mergeable flag do not establish review or acceptance.",
-      "A dedicated OPEN_PR_TRIAGE_2026-11-12.md records active review candidates, historical/stacked PRs, current issue trackers and a no-mass-merge/no-mass-close protocol."
+      "A dedicated OPEN_PR_TRIAGE_2026-11-12.md records active review candidates, historical/stacked PRs, current issue trackers and a no-mass-merge/no-mass-close protocol.",
+      "The original think-tank source identifies source identity as a P0 dependency: OID, observation, astrophysical source, catalog object and candidate association must remain distinct.",
+      "The target product requires separate classification, uncertainty, anomaly/novelty, scientific-context and discovery-prioritization outputs.",
+      "The original think-tank review identifies 18 defect/risk domains and a seven-phase roadmap; they are now captured in dated repository documents.",
+      "The minimum source identity/association contract is P0 alongside DR24 application integration. Full AOIC can be phased, but model-ready multi-OID data requires explicit association evidence and ambiguity states."
     ]
   },
   "regression": {
@@ -140,6 +146,10 @@
     "Historical local WSL artifact audit dated 2026-11-09 is already known; do not request a duplicate local audit as the next action.",
     "Artifact recovery tracker: Issue #282.",
     "Sixteen-role think-tank review and joint decision are recorded in section 17 of the master continuation document and in the Notion master page.",
-    "Open PR inventory and safe triage: docs/OPEN_PR_TRIAGE_2026-11-12.md."
+    "Open PR inventory and safe triage: docs/OPEN_PR_TRIAGE_2026-11-12.md.",
+    "Canonical 16-role review: docs/THINK_TANK_MASTER_REVIEW_2026-11-12.md.",
+    "Defect/risk register: docs/MASTER_DEFECT_REGISTER_2026-11-12.md.",
+    "Gated execution roadmap: docs/MASTER_EXECUTION_ROADMAP_2026-11-12.md.",
+    "Open PR triage: docs/OPEN_PR_TRIAGE_2026-11-12.md."
   ]
 }
