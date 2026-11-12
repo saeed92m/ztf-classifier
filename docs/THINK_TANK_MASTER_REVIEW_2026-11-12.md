@@ -219,3 +219,8 @@ This is a conceptual target architecture, not a claim that all layers are implem
 This review combines the supplied original think-tank report and current repository/status evidence. It is not a line-by-line audit of every source module, a fresh full-dataset scientific rerun, a complete installer test across operating systems, or a certificate of production readiness.
 
 Every historical measurement must retain its date, source hash and execution context. New measurements must be recorded separately.
+
+
+## 10. Continuing session record
+
+The 2026-11-12 follow-up review of DR24 application integration, AOIC identity, and the Park source-product conflict is recorded in [Think Tank Session 02](think-tank/THINK_TANK_SESSION_2026-11-12_DR24_APPLICATION_INTEGRATION.md). It is a required review input for changes to observation acquisition, source normalization, OID grouping, feature generation, and inference. The review approves explicit source selection and separate adapters, but blocks a Park primary-product choice and DR24-to-v0.2.0 inference until the dossier conflict and scientific contracts are resolved.
