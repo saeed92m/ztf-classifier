@@ -76,7 +76,12 @@
       "The prior head cc0cad44beabf78c837c9d3d171ecf7fbf08028c had 731 passed, 1 failed, 13 skipped. The failure was a test-message ordering mismatch and was patched at source commit 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2. A subsequent workflow started on the intermediate head 8c5a02da824b3db6f3849ad8d69b97255d74a336, but it was superseded by the additional multi-OID evidence coverage changes; do not use it to validate the newest head.",
       "Current-head CI on d9e17467ce9a3dca17116d6fa609a17f1c75b2fc completed with 734 passed, 2 failed, 13 skipped, and 9 warnings. Both failures were stale expected-message assertions in tests/test_source_identity_contracts.py after the evidence rule was intentionally strengthened to require every declared survey-object/candidate pair.",
       "The actual runtime error was the new pair-coverage guard: 'association evidence must cover every declared survey-object/candidate pair.' The domain behavior was correct. Two tests still expected the previous set-level wording ('cover exactly the declared candidate').",
-      "Updated exactly those two stale regex expectations in commit 44369783e1b28248cf6e93832e1472a87540f09f. The 34-test focused module remains unchanged in test count. A fresh run on the new head is required."
+      "Updated exactly those two stale regex expectations in commit 44369783e1b28248cf6e93832e1472a87540f09f. The 34-test focused module remains unchanged in test count. A fresh run on the new head is required.",
+      "Fresh current-head engineering CI run 43282419204 completed all eight jobs successfully on head 90b6026e62e41bdff4d33c251ec2f0e1cbbb7ba9: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit and CI Gate all PASS.",
+      "JUnit result for this run: 736 passed, 13 skipped, zero failures, zero errors and 9 warnings. The focused source identity module contains 34 test functions. Total line statements reported by coverage: 7962; missed: 1321; reported coverage 83%. Branch coverage was not reported.",
+      "CodeQL run 43282418876 and Product Scope Audit run 43282418791 passed. Scientific Validation run 43282418767 passed its benchmark/lifecycle contract job.",
+      "The four source-backed scientific jobs remain SKIPPED: DR24/ALeRCE source-backed evidence, immutable historical ALeRCE reference, source provenance acquisition and independent StarEmbed benchmark. The CI result is an engineering PASS, not an astrophysical identity validation.",
+      "Build & Verify Package, Dependency Audit and CI Gate were subsequently confirmed PASS in the same run."
     ],
     "blocker": "Fresh current-head CI is required after this lifecycle schema correction. The initial validator failure is retained and is not reported as a pass."
   },
@@ -94,13 +99,10 @@
       "After pairwise OID/candidate evidence coverage was added, two tests retained assertions for the prior set-level error message. CI confirmed the strengthened validation path behaved as intended; the tests failed because their expected text was stale."
     ],
     "unresolved": [
-      "No source matching algorithm is implemented.",
-      "No append-only identity decision ledger or persistence store is implemented.",
-      "No adjudicated astrometric cross-match dataset or calibration study exists.",
-      "No DR24 application source selection or multi-OID grouping behavior is changed.",
-      "Fresh current-head CI must execute all 30 focused source identity contract tests and the full repository suite.",
-      "The new reference-key and confirmation-link contract requires API/serialization review before integration into application or storage layers.",
-      "The contract does not verify the scientific validity or authenticity of matching evidence; that requires an adjudicated independent sample and a separately validated association policy."
+      "Review API request/response serialization and compatibility of confirmation_association_id and the full survey-object/candidate evidence-pair references before application integration.",
+      "No association matcher, persistent identity decision ledger, source registry or automatic OID grouping is implemented.",
+      "The contract checks references and decision consistency. It does not prove scientific validity or authenticity of matching evidence. Independent adjudicated cross-match data and a validated association policy are required.",
+      "PR #283 remains Draft and unmerged pending review of API/persistence implications and separate scientific acceptance planning."
     ]
   },
   "knowledge_extraction": {
@@ -117,13 +119,8 @@
     ]
   },
   "regression": {
-    "status": "BLOCKED",
-    "open_blockers": [
-      "Run fresh Format, Lint, all 34 focused identity tests, and the full repository test suite on the updated head 44369783e1b28248cf6e93832e1472a87540f09f.",
-      "Runtime smoke, package build, dependency audit and CI Gate must pass on the same final head.",
-      "Review API serialization and storage compatibility of confirmation_association_id and full OID/candidate evidence-pair references before application integration.",
-      "Independent adjudicated astrophysical cross-match validation is required; domain-contract tests do not prove physical identity."
-    ]
+    "status": "PASS",
+    "open_blockers": []
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
@@ -137,6 +134,8 @@
     "PR #283 run 43242293772 failed before tests due to missing import validate_source_confirmation in the new test module; import fix commit a6c7a7c816fe6a191f6676a4fbb4b0ab3ec56570 must be validated by fresh CI.",
     "PR #283 CI run 43243039733: 731 passed, 1 failed, 13 skipped; one regression test failed only because the generic no-evidence validation error masked the dedicated confirmed-match supporting-evidence error. Fixed in 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2; fresh CI pending.",
     "Latest domain contract adds complete multi-OID evidence matrix validation and non-confirmed confirmation-reference rejection. Focused module: 34 test functions. Current branch head must be checked and CI rerun before acceptance.",
-    "PR #283 runs 43244871653 and 43244896597 each reported 734 passed, 2 failed, 13 skipped, 9 warnings. Both failures were stale regex assertions after the full pair-coverage invariant was introduced. Assertions were corrected in 44369783e1b28248cf6e93832e1472a87540f09f; fresh CI is pending."
+    "PR #283 runs 43244871653 and 43244896597 each reported 734 passed, 2 failed, 13 skipped, 9 warnings. Both failures were stale regex assertions after the full pair-coverage invariant was introduced. Assertions were corrected in 44369783e1b28248cf6e93832e1472a87540f09f; fresh CI is pending.",
+    "Latest tested PR #283 head 90b6026e62e41bdff4d33c251ec2f0e1cbbb7ba9 passed all eight engineering CI jobs in run 43282419204: 736 passed, 13 skipped, zero failures, 9 warnings; 83% line coverage rounded, branch coverage not measured.",
+    "The current source identity contract's engineering regression suite is PASS. API serialization, persistence and independent astrophysical association validation remain separate blockers."
   ]
 }
