@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-bounded-current-branch-acceptance-20261112",
+  "objective": "Enable the existing bounded DR24 HATS batch parity test, deterministic multi-OID Workbench browser test, and bounded Zubercal DR20 ambiguity parity test on a dedicated CI branch without changing runtime code, scientific processing, or frozen baselines.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "main commit f681408fae8d8062dd72ff74791872c1590f6ee8",
+      "status": "VERIFIED",
+      "detail": "Inspected existing DR24 and Zubercal adapters, test fixtures, source contracts and current workflow branch filters."
+    },
+    {
+      "source": "Issue #253 and docs/MASTER_EXECUTION_ROADMAP_2026-11-12.md",
+      "status": "VERIFIED",
+      "detail": "DR24 raw acquisition is distinct from normalized observations and inference. Source selection and provenance must remain explicit."
+    },
+    {
+      "source": "Existing bounded source tests",
+      "status": "VERIFIED",
+      "detail": "The DR24 API test uses two pinned OIDs and expected epoch counts and SHA-256 values. The UI test uses a deterministic fake backend. The Zubercal test performs one bounded 1.2-arcsecond query and expects the previously observed two-candidate ambiguity."
+    }
+  ],
+  "baseline": {
+    "revision": "f681408fae8d8062dd72ff74791872c1590f6ee8",
+    "scientific_baseline": "v0.2.0 immutable",
+    "software_release": "v1.0.1 immutable",
+    "model_version": "baseline_v0.2",
+    "feature_count": 42
+  },
+  "expected_improvement": [
+    "Run existing bounded source and deterministic browser tests against the current main code without relying on obsolete feature branch filters.",
+    "Collect exact current-branch test results and preserve the resulting workflow evidence.",
+    "Avoid full-archive retrieval, large model downloads, production data changes, or changes to scientific acceptance criteria."
+  ],
+  "measurement": {
+    "metrics": {
+      "coverage": {
+        "before": "The three existing source/UI workflows were constrained to historical feature branch names. Current PR and branch runs did not execute these opt-in tests.",
+        "after": "The workflow definitions will also accept one dedicated bounded validation branch. Actual test execution remains pending."
+      },
+      "reproducibility": {
+        "before": "Pinned DR24 OID hashes, deterministic fake-browser tests, and a fixed Zubercal ambiguity test already exist, but current-branch execution was not recorded.",
+        "after": "The same existing test contracts will run on a dedicated branch and retain their CI logs and any configured evidence artifact."
+      },
+      "reliability": {
+        "before": "A skipped live test did not establish current source parity.",
+        "after": "Pending exact workflow outcomes; no result is assumed."
+      }
+    },
+    "trade_off": "This adds branch-trigger coverage to three test workflows. It does not change runtime code or scientific data handling."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The dedicated branch was created from main SHA f681408fae8d8062dd72ff74791872c1590f6ee8.",
+      "No test result is claimed before the updated workflow definitions trigger and finish."
+    ],
+    "blocker": "Await bounded DR24 API parity, deterministic Workbench browser, and Zubercal ambiguity workflow results on the dedicated branch."
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "DR24 and Zubercal workflow triggers were restricted to historical feature branch names, so current branch runs skipped the corresponding opt-in tests."
+    ],
+    "unresolved": [
+      "Whether the current live DR24 HATS payloads still match the pinned epochs and SHA-256 values.",
+      "Whether the deterministic Workbench browser workflow passes with the current UI and API.",
+      "Whether the bounded Zubercal DR20 query still returns the expected two-PS1 ambiguity."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Live-source tests should run on an explicit bounded validation branch rather than depend on stale feature branch names.",
+      "A live-source test pass verifies only its declared pinned source contract; it does not establish physical source identity, photometric parity, model validity, or full scientific acceptance.",
+      "The UI fake-backend test establishes deterministic interaction behavior only."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the DR24 two-OID live HATS API parity test.",
+      "Run the deterministic multi-OID Workbench browser test.",
+      "Run the one-position bounded Zubercal DR20 ambiguity test.",
+      "Inspect the complete job logs and artifacts; preserve skips and failures."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Dedicated validation branch: ci/dr24-bounded-acceptance-20261112.",
+    "Frozen v0.2.0 and v1.0.1 remain unchanged.",
+    "No DR24-to-model normalization is introduced by this workflow-only validation."
+  ]
+}
