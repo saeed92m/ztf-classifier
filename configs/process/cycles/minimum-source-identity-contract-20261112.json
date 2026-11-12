@@ -21,7 +21,8 @@
     "Represent confirmed, ambiguous, unmatched, rejected and deferred associations explicitly.",
     "Require evidence and policy versions for confirmed associations.",
     "Distinguish raw match scores from calibrated probabilities.",
-    "Preserve provenance and supersession references."
+    "Preserve provenance and supersession references.",
+    "Prevent final unmatched, ambiguous, rejected or confirmed decisions from being recorded without evidence; allow DEFERRED_REVIEW to represent work not yet adjudicated."
   ],
   "measurement": {
     "metrics": {
@@ -52,8 +53,10 @@
       "Exported the new types from ztf_classifier.domain.",
       "Added tests/test_source_identity_contracts.py covering native OID preservation, band-specific OID separation, catalog release scoping, provenance, association-state invariants and calibrated-score semantics.",
       "No runtime call sites were changed.",
-      "Added 17 focused unit tests covering source-native OID preservation, distinct band-specific OIDs, catalog release scoping, source provenance, supersession lineage, score/probability semantics, confirmed/ambiguous/unmatched/rejected states, competing candidates, duplicate refs and self-supersession.",
-      "First CI run on the initial source identity head exposed one Ruff SIM102 lint finding; it was fixed in commit 6e33ba811ac49dea6b328b9e5eb8fb80077828b3. The corrected head requires a fresh full CI run."
+      "Added 20 focused unit tests covering source-native OID preservation, distinct band-specific OIDs, catalog release scoping, source provenance, supersession lineage, score/probability semantics, confirmed/ambiguous/unmatched/rejected states, competing candidates, duplicate refs and self-supersession.",
+      "First CI run on the initial source identity head exposed one Ruff SIM102 lint finding; it was fixed in commit 6e33ba811ac49dea6b328b9e5eb8fb80077828b3. The corrected head requires a fresh full CI run.",
+      "Extended the contract to require evidence for all final association outcomes except DEFERRED_REVIEW, and to reject self-supersession of a source record.",
+      "Added three more tests: final association decisions require evidence; deferred review may wait for evidence; source records cannot supersede themselves."
     ],
     "blocker": "Run formatting, focused tests, full test suite, package build, CodeQL and Product Scope Audit on this branch."
   },
@@ -89,7 +92,8 @@
       "Review public API naming and compatibility before integrating these contracts into ObservationService or DR24 application requests.",
       "Identity matching, persistence, merge/split lifecycle and scientific validation remain separate future work.",
       "Run all 17 focused source identity contract tests and the full repository CI suite.",
-      "Re-run lint and full CI after the SIM102 correction; do not accept the earlier failed run."
+      "Re-run lint and full CI after the SIM102 correction; do not accept the earlier failed run.",
+      "Re-run CI after the evidence-required state invariants and three new tests are added."
     ]
   },
   "decision": "PENDING_REVIEW",
