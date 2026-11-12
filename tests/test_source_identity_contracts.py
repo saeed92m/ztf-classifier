@@ -23,14 +23,24 @@ def _survey_object(*, band: str = "g", object_id: str = "ZTF-OID-1") -> SurveyOb
     )
 
 
-def _evidence(*, score: float = 0.7) -> AssociationEvidence:
+def _evidence(
+    *,
+    score: float = 0.7,
+    survey_object: SurveyObjectRef | None = None,
+    candidate_source_id: str | None = "source-1",
+) -> AssociationEvidence:
+    source_object = survey_object or _survey_object()
     return AssociationEvidence(
-        evidence_id="evidence-1",
+        evidence_id=f"evidence-{candidate_source_id or 'none'}",
         method="astrometric-likelihood",
         method_version="1.0",
         policy_version="policy-1",
-        source_ref="ztf:DR24:ZTF-OID-1",
-        candidate_ref="internal:source-1",
+        source_ref=source_object.reference_key,
+        candidate_ref=(
+            f"astrophysical-source:{candidate_source_id}"
+            if candidate_source_id is not None
+            else "no-candidate"
+        ),
         score=score,
         score_kind="raw_score",
         separation_arcsec=0.4,
@@ -170,7 +180,10 @@ def test_ambiguous_association_preserves_candidates_without_forcing_a_match() ->
         status=AssociationStatus.AMBIGUOUS_MATCH,
         survey_objects=(_survey_object(),),
         candidate_source_ids=("source-1", "source-2"),
-        evidence=(_evidence(),),
+        evidence=(
+            _evidence(candidate_source_id="source-1"),
+            _evidence(candidate_source_id="source-2"),
+        ),
         decision_policy_version="policy-1",
         decided_at="2026-11-12T00:00:00Z",
     )
@@ -291,4 +304,127 @@ def test_source_record_cannot_supersede_itself() -> None:
             created_at="2026-11-12T00:00:00Z",
             provenance_refs=("manifest:1",),
             superseded_by="source-1",
+        )
+
+
+
+def test_survey_object_reference_key_includes_full_partition_identity() -> None:
+    g_ref = _survey_object(band="g", object_id="ZTF-OID-1")
+    r_ref = _survey_object(band="r", object_id="ZTF-OID-1")
+
+    assert g_ref.reference_key != r_ref.reference_key
+
+
+def test_confirmed_source_requires_association_reference() -> None:
+    with pytest.raises(ValueError, match="confirmation association ID"):
+        AstrophysicalSourceRef(
+            source_id="source-1",
+            entity_kind=EntityKind.POINT_SOURCE,
+            identity_status=IdentityStatus.CONFIRMED,
+            created_at="2026-11-12T00:00:00Z",
+            provenance_refs=("manifest:1",),
+        )
+
+
+def _confirmed_association() -> SourceAssociation:
+    return SourceAssociation(
+        association_id="association-confirmed",
+        schema_version="1.0",
+        status=AssociationStatus.CONFIRMED_MATCH,
+        survey_objects=(_survey_object(),),
+        candidate_source_ids=("source-1",),
+        evidence=(_evidence(candidate_source_id="source-1"),),
+        decision_policy_version="policy-1",
+        decided_at="2026-11-12T00:00:00Z",
+        confirmed_source_id="source-1",
+    )
+
+
+def test_confirmed_source_reference_must_match_confirmed_association() -> None:
+    source = AstrophysicalSourceRef(
+        source_id="source-1",
+        entity_kind=EntityKind.POINT_SOURCE,
+        identity_status=IdentityStatus.CONFIRMED,
+        created_at="2026-11-12T00:00:00Z",
+        provenance_refs=("manifest:1",),
+        confirmation_association_id="association-confirmed",
+    )
+
+    validate_source_confirmation(source, _confirmed_association())
+
+
+def test_confirmed_source_rejects_association_for_another_source() -> None:
+    source = AstrophysicalSourceRef(
+        source_id="source-2",
+        entity_kind=EntityKind.POINT_SOURCE,
+        identity_status=IdentityStatus.CONFIRMED,
+        created_at="2026-11-12T00:00:00Z",
+        provenance_refs=("manifest:1",),
+        confirmation_association_id="association-confirmed",
+    )
+
+    with pytest.raises(ValueError, match="different source"):
+        validate_source_confirmation(source, _confirmed_association())
+
+
+def test_association_rejects_evidence_for_unrelated_survey_object() -> None:
+    with pytest.raises(ValueError, match="must match a declared survey object"):
+        SourceAssociation(
+            association_id="association-wrong-source",
+            schema_version="1.0",
+            status=AssociationStatus.CONFIRMED_MATCH,
+            survey_objects=(_survey_object(),),
+            candidate_source_ids=("source-1",),
+            evidence=(
+                _evidence(
+                    survey_object=_survey_object(object_id="ZTF-OID-OTHER"),
+                    candidate_source_id="source-1",
+                ),
+            ),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+            confirmed_source_id="source-1",
+        )
+
+
+def test_confirmed_association_rejects_evidence_for_different_candidate() -> None:
+    with pytest.raises(ValueError, match="cover exactly the declared candidate"):
+        SourceAssociation(
+            association_id="association-wrong-candidate",
+            schema_version="1.0",
+            status=AssociationStatus.CONFIRMED_MATCH,
+            survey_objects=(_survey_object(),),
+            candidate_source_ids=("source-1",),
+            evidence=(_evidence(candidate_source_id="source-2"),),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+            confirmed_source_id="source-1",
+        )
+
+
+def test_ambiguous_association_requires_evidence_for_every_candidate() -> None:
+    with pytest.raises(ValueError, match="cover exactly the declared candidate"):
+        SourceAssociation(
+            association_id="association-partial-ambiguity",
+            schema_version="1.0",
+            status=AssociationStatus.AMBIGUOUS_MATCH,
+            survey_objects=(_survey_object(),),
+            candidate_source_ids=("source-1", "source-2"),
+            evidence=(_evidence(candidate_source_id="source-1"),),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+        )
+
+
+def test_unmatched_association_evidence_must_record_no_candidate() -> None:
+    with pytest.raises(ValueError, match="no-candidate reference"):
+        SourceAssociation(
+            association_id="association-unmatched-wrong-evidence",
+            schema_version="1.0",
+            status=AssociationStatus.UNMATCHED,
+            survey_objects=(_survey_object(),),
+            candidate_source_ids=(),
+            evidence=(_evidence(candidate_source_id="source-1"),),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
         )
