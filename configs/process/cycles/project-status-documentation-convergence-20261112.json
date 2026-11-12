@@ -121,7 +121,11 @@
       "The original think-tank review identifies 18 defect/risk domains and a seven-phase roadmap; they are now captured in dated repository documents.",
       "The minimum source identity/association contract is P0 alongside DR24 application integration. Full AOIC can be phased, but model-ready multi-OID data requires explicit association evidence and ambiguity states.",
       "Issue #210 records a concrete StarEmbed source audit failure: duplicate_sourceids_within_split:train:1 and object_id_overlap_between_splits:train__test:1. StarEmbed metrics remain ineligible as independent evidence until identity/split leakage is resolved.",
-      "Issue #188 records a historical DR24 smoke run: 12 candidates from a pinned 150-row subset; 7 feature-engine executions succeeded and 5 failed due no g/r rows after filter normalization; 0/12 had 30+ valid points in both bands; model inference was NOT_RUN. This is smoke evidence only."
+      "Issue #188 records a historical DR24 smoke run: 12 candidates from a pinned 150-row subset; 7 feature-engine executions succeeded and 5 failed due no g/r rows after filter normalization; 0/12 had 30+ valid points in both bands; model inference was NOT_RUN. This is smoke evidence only.",
+      "The historical raw CDS reconciliation on 2026-11-02 verified raw Table 2/Table 4 against publisher MRT with zero mismatches and a complete 730,184 name-to-Seq crosswalk. The historical four-field diagnostic reproduced Table 4 membership on the retained artifact, but the publisher's exact rule remains unproven.",
+      "The 11,557-object reduction under Ng>=11 and Nr>=11 leaves 45 residuals and is a diagnostic clue, not a documented selection rule.",
+      "Direct MGPR testing remains an explicit CPVS research requirement; execution status must use PASS/FAIL/UNKNOWN/ERROR and preserve numerical diagnostics.",
+      "Scientific Validation Source Adapters now classify StarEmbed as a candidate external benchmark blocked by source/split audit, and ALeRCE as a reference-system output/weak-label source, not independent astrophysical ground truth."
     ]
   },
   "regression": {
@@ -154,6 +158,8 @@
     "Gated execution roadmap: docs/MASTER_EXECUTION_ROADMAP_2026-11-12.md.",
     "Open PR triage: docs/OPEN_PR_TRIAGE_2026-11-12.md.",
     "StarEmbed leakage blocker: Issue #210 / PR #211; exact failure keys are recorded.",
-    "Multi-source validation status: Issue #188; DR24 smoke results are not production model validation."
+    "Multi-source validation status: Issue #188; DR24 smoke results are not production model validation.",
+    "Historical CPVS raw CDS reconciliation and MGPR requirement are documented in docs/SCIENTIFIC_METHODOLOGY.md and the Notion CPVS audit page.",
+    "Independent validation blockers: Issue #188 (DR24 smoke only; model inference NOT_RUN) and Issue #210 (StarEmbed train/test identity leakage)."
   ]
 }
