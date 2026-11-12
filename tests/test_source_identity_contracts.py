@@ -464,3 +464,76 @@ def test_association_evidence_rejects_boolean_score_and_separation() -> None:
             candidate_ref="astrophysical-source:source-1",
             separation_arcsec=True,
         )
+
+
+
+def test_confirmed_association_requires_evidence_for_every_survey_object() -> None:
+    g_ref = _survey_object(band="g", object_id="ZTF-G-1")
+    r_ref = _survey_object(band="r", object_id="ZTF-R-1")
+
+    with pytest.raises(ValueError, match="every declared survey-object/candidate pair"):
+        SourceAssociation(
+            association_id="association-missing-r-evidence",
+            schema_version="1.0",
+            status=AssociationStatus.CONFIRMED_MATCH,
+            survey_objects=(g_ref, r_ref),
+            candidate_source_ids=("source-1",),
+            evidence=(
+                _evidence(survey_object=g_ref, candidate_source_id="source-1"),
+            ),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+            confirmed_source_id="source-1",
+        )
+
+
+def test_ambiguous_association_requires_every_object_candidate_pair() -> None:
+    g_ref = _survey_object(band="g", object_id="ZTF-G-1")
+    r_ref = _survey_object(band="r", object_id="ZTF-R-1")
+
+    with pytest.raises(ValueError, match="every declared survey-object/candidate pair"):
+        SourceAssociation(
+            association_id="association-partial-pair-evidence",
+            schema_version="1.0",
+            status=AssociationStatus.AMBIGUOUS_MATCH,
+            survey_objects=(g_ref, r_ref),
+            candidate_source_ids=("source-1", "source-2"),
+            evidence=(
+                _evidence(survey_object=g_ref, candidate_source_id="source-1"),
+                _evidence(survey_object=g_ref, candidate_source_id="source-2"),
+                _evidence(survey_object=r_ref, candidate_source_id="source-1"),
+            ),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+        )
+
+
+def test_unmatched_association_requires_evidence_for_every_survey_object() -> None:
+    g_ref = _survey_object(band="g", object_id="ZTF-G-1")
+    r_ref = _survey_object(band="r", object_id="ZTF-R-1")
+
+    with pytest.raises(ValueError, match="cover every declared survey object"):
+        SourceAssociation(
+            association_id="association-partial-unmatched-evidence",
+            schema_version="1.0",
+            status=AssociationStatus.UNMATCHED,
+            survey_objects=(g_ref, r_ref),
+            candidate_source_ids=(),
+            evidence=(
+                _evidence(survey_object=g_ref, candidate_source_id=None),
+            ),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+        )
+
+
+def test_nonconfirmed_source_cannot_reference_confirmation_association() -> None:
+    with pytest.raises(ValueError, match="only valid for confirmed source identities"):
+        AstrophysicalSourceRef(
+            source_id="source-provisional",
+            entity_kind=EntityKind.POINT_SOURCE,
+            identity_status=IdentityStatus.PROVISIONAL,
+            created_at="2026-11-12T00:00:00Z",
+            provenance_refs=("manifest:1",),
+            confirmation_association_id="association-1",
+        )
