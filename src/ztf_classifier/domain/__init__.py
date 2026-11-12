@@ -4,11 +4,11 @@ from ztf_classifier.domain.source_identity import (
     AssociationEvidence,
     AssociationStatus,
     AstrophysicalSourceRef,
+    CatalogEntryRef,
     EntityKind,
     IdentityStatus,
     SourceAssociation,
     SurveyObjectRef,
-    CatalogEntryRef,
 )
 
 __all__ = [
