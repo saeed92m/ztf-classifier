@@ -108,7 +108,9 @@
       "Keep proposed business targets, customer segments, revenue models, and grants separate from documented achievements.",
       "A prior local WSL artifact inventory was already recorded on 2026-11-09: production artifact path absent, lab-smoke artifact present but ineligible, ALeRCE raw cache absent, processed feature/config artifacts and dependent test modules present.",
       "The 2026-11-09 summary of nine missing production files predates the corrected audit contract. Current schema-1.0 production readiness requires six core files; three conformal/OOD diagnostics are optional.",
-      "The user's local audit should not be repeated merely to advance repository-side work; use the existing evidence and continue remote recovery first."
+      "The user's local audit should not be repeated merely to advance repository-side work; use the existing evidence and continue remote recovery first.",
+      "A 16-role structured think-tank review was completed and recorded. It distinguishes simulated expert-role review from actual participation by external human experts.",
+      "Joint think-tank decision: prioritize DR24-first Park MVP; preserve v0.2.0/v1.0.1; keep CPVS unresolved and separate; keep CIN optional; do not connect DR24 to model inference before time, photometry, QC, identity and feature-parity gates pass."
     ]
   },
   "regression": {
@@ -133,6 +135,7 @@
     "CI artifact 13899457586 contains pytest-report.xml and coverage.xml.",
     "Scientific-PASS remains blocked by missing frozen production artifact and skipped source-backed evidence.",
     "Historical local WSL artifact audit dated 2026-11-09 is already known; do not request a duplicate local audit as the next action.",
-    "Artifact recovery tracker: Issue #282."
+    "Artifact recovery tracker: Issue #282.",
+    "Sixteen-role think-tank review and joint decision are recorded in section 17 of the master continuation document and in the Notion master page."
   ]
 }
