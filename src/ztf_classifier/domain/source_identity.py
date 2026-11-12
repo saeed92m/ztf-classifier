@@ -104,8 +104,8 @@ class AstrophysicalSourceRef:
             raise TypeError("entity_kind must be an EntityKind.")
         if not isinstance(self.identity_status, IdentityStatus):
             raise TypeError("identity_status must be an IdentityStatus.")
-        if not isinstance(self.provenance_refs, tuple):
-            raise TypeError("provenance_refs must be a tuple.")
+        if not isinstance(self.provenance_refs, tuple) or not self.provenance_refs:
+            raise ValueError("provenance_refs must be a non-empty tuple.")
         if any(not isinstance(ref, str) or not ref.strip() for ref in self.provenance_refs):
             raise ValueError("provenance_refs must contain non-empty strings.")
         if self.identity_status is IdentityStatus.SUPERSEDED:
@@ -221,3 +221,5 @@ class SourceAssociation:
 
         if self.status is AssociationStatus.AMBIGUOUS_MATCH and not self.candidate_source_ids:
             raise ValueError("ambiguous associations require at least one candidate source ID.")
+        if self.status is AssociationStatus.REJECTED_MATCH and not self.candidate_source_ids:
+            raise ValueError("rejected matches require the rejected candidate source ID.")
