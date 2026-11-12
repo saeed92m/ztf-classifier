@@ -732,12 +732,14 @@ The repository Pull Request template now requires Think Tank traceability for ma
 
 ### PR #285 — current-main CPVS SNR formula audit
 
-- Head: `af342dcf637d43ac05312b9f7ed85156c64c07e5`; PR OPEN / DRAFT / NOT MERGED.
-- Fresh branch from current main `f681408fae8d8062dd72ff74791872c1590f6ee8`; 8 commits, 4 changed files.
-- Format and Lint passed on at least one current-head check run; lifecycle, CodeQL and Product Scope Audit are running or have completed successfully. Full CI is still IN PROGRESS at this snapshot.
-- Scientific Validation benchmark/lifecycle contract: PASS; four source-backed scientific jobs: SKIPPED.
-- No raw g/r archives are downloaded by this PR or its ordinary CI.
-- The PR separates approximate, exact and inverse-error two-band candidate calculations and adds duplicate/overlap accounting. It does not resolve the 11,602 discrepancy.
+- Latest head: `1da8b4ecbe9ea9ef3afb1b5d566f07d5105998f6`; PR OPEN / DRAFT / NOT MERGED; 16 commits, 4 changed files.
+- Fresh branch from current main `f681408fae8d8062dd72ff74791872c1590f6ee8`.
+- CI run [43296412454](https://github.com/saeed92m/ztf-classifier/actions/runs/43296412454): all eight engineering jobs PASS.
+- Test Suite: 706 passed, 13 skipped, zero failures, 9 warnings; 7,761 statements, 1,293 missed, 83% line coverage.
+- CodeQL, Product Scope Audit and Scientific Validation benchmark/lifecycle contract: PASS; four source-backed scientific jobs: SKIPPED.
+- The cycle record accepts the diagnostic code for engineering use only; scientific validity remains NOT_MEASURED.
+- No raw g/r archives were downloaded by this PR or ordinary CI. The >11.2 GB source scan and MGPR remain unrun.
+- The PR separates approximate, exact and inverse-error two-band candidate calculations, adds within-file duplicate and cross-file overlap accounting, formula-specific UNKNOWN output and persisted input-failure evidence. It does not resolve the 11,602 discrepancy.
 
 ## 26. CPVS workflow state
 

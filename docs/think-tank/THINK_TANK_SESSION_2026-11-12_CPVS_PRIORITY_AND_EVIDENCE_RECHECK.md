@@ -219,3 +219,17 @@ Do not trigger duplicate multi-gigabyte downloads or repeated long-running Actio
 - CPVS scientific research priority: **P0**.
 
 This session updates priority and evidence traceability. It does not resolve the scientific discrepancy or authorize a production algorithm change.
+
+
+## 11. Implementation follow-up — PR #285
+
+The P0-R diagnostic corrections requested by this session are implemented in [PR #285](https://github.com/saeed92m/ztf-classifier/pull/285), on a fresh branch based on current main.
+
+Current head `1da8b4ecbe9ea9ef3afb1b5d566f07d5105998f6` passed all eight engineering CI jobs in run 43296412454:
+- 706 passed, 13 skipped, zero failures, 9 warnings.
+- 83% line coverage (7,761 statements; 1,293 missed).
+- Format, Lint, Lifecycle, Test Suite, Runtime Smoke, Build, Dependency Audit and CI Gate: PASS.
+- CodeQL, Product Scope Audit and benchmark/lifecycle contract: PASS.
+- Four source-backed scientific jobs: SKIPPED.
+
+The diagnostic code cycle is accepted for engineering use only. No raw archive SNR or MGPR was executed. The 11,602 root cause remains unresolved. PR #285 remains Draft and unmerged.

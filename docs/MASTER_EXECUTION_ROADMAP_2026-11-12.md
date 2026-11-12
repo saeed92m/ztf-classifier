@@ -249,7 +249,7 @@ Every target must define whether it counts OIDs, light curves, observations, or 
 3. Continue remote artifact recovery and authentication under #282.
 4. Define the minimum source-identity and explicit DR24 selection contract under #249/#253.
 5. Prepare the pinned 5–10 confirmed-source E2E manifest.
-6. Continue CPVS P0 scientific research through fresh-main PR #285: verify formula-specific synthetic tests and duplicate/overlap accounting before any raw archive run. Keep StarEmbed evidence on its own validation track.
+6. Continue CPVS P0 scientific research through fresh-main PR #285. Its diagnostic code and synthetic regression contract now pass all eight engineering CI jobs (706 passed, 13 skipped, zero failures). Next: review the PR, then obtain separate compute/cost approval before any >11.2 GB raw archive scan. Keep StarEmbed evidence on its own validation track.
 7. Update this roadmap only when a milestone has evidence and an accepted disposition.
 
 
@@ -277,3 +277,8 @@ CPVS remains the highest-priority unresolved scientific research question. This 
 - PR #283 engineering CI passed on head `4570072319254d2bde94b975664e4c593f0a325f` with 741 passed, 13 skipped, zero failures. API/persistence and scientific identity gates remain open.
 - PR #284 bounded DR24 HATS API, Workbench UI and Zubercal DR20 tests passed; product integration Issue #253 remains open.
 - PR #285 isolates the CPVS SNR formula and input accounting corrections on current main. Full CI is in progress; raw archives are not downloaded.
+
+
+### PR #285 diagnostic code verification
+
+PR #285 current head `1da8b4ecbe9ea9ef3afb1b5d566f07d5105998f6` passed all eight engineering CI jobs. The code cycle is accepted for diagnostic engineering only. The scientific validity metric remains NOT_MEASURED; no raw archive or MGPR execution occurred.

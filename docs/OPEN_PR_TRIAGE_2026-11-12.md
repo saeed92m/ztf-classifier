@@ -48,7 +48,7 @@ GitHub returned **29 open PRs**. Many are historical, stacked on old branches, o
 | #177 | CPVS extra-member diagnosis and artifact trim | false | Historical stacked diagnostic; preserve artifacts and methods, do not merge as a stack. |
 | #176 | CPVS membership by ZTF name and heavy readiness | false | Historical stacked implementation; review against current Seq parser and fail-closed workflow. |
 
-| #285 | CPVS raw-SNR formula aggregation and input accounting | Draft; fresh current-main branch; full CI in progress; no raw archive transfer | Review separate approximate/exact/inverse-error two-band results, duplicate and overlap accounting, synthetic tests and lifecycle record. Do not run >11.2 GB raw archives without separate approval. |
+| #285 | CPVS raw-SNR formula aggregation and input accounting | Draft; fresh current-main branch; all 8 engineering CI jobs PASS (706 passed, 13 skipped); no raw archive transfer | Review separate approximate/exact/inverse-error two-band results, duplicate and overlap accounting, UNKNOWN/failure reports and lifecycle record. Code cycle accepted for engineering only. Do not run >11.2 GB raw archives without separate approval. |
 
 ## Cross-cutting observations
 

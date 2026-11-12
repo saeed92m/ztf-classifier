@@ -263,3 +263,14 @@ The review found malformed optional string fields that could raise incidental ru
 Current-head CI run 43290188071 passed all eight engineering jobs: 741 passed, 13 skipped, zero failures and 9 warnings. CodeQL, Product Scope Audit and the Scientific Validation benchmark/lifecycle contract passed. The four source-backed scientific jobs remain skipped.
 
 This is domain-contract hardening only. API/persistence compatibility and independent adjudicated physical-identity validation remain open. PR #283 remains Draft and unmerged.
+
+
+## 14. Session 07 implementation follow-up — PR #285
+
+The diagnostic implementation requested by Session 07 is now isolated on a fresh branch from current main in [PR #285](https://github.com/saeed92m/ztf-classifier/pull/285).
+
+Current head `1da8b4ecbe9ea9ef3afb1b5d566f07d5105998f6` passed all eight engineering CI jobs in run 43296412454. The suite reported 706 passed, 13 skipped, zero failures and 9 warnings; line coverage was 83%.
+
+The PR separates approximate, exact and inverse-error two-band candidate calculations; reports per-formula confusion and UNKNOWN states; reports within-file duplicates and pairwise cross-file overlaps; and persists an input-integrity failure report before fail-closed exit.
+
+The cycle record is ACCEPTED for the diagnostic code only. Scientific validity remains NOT_MEASURED. No raw archive scan or MGPR was performed. The 11,602 discrepancy remains unresolved and CPVS remains P0 research, not a Park product gate.
