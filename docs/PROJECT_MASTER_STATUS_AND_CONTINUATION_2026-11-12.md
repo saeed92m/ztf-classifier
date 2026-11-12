@@ -500,3 +500,39 @@ A prior WSL audit was recorded in the project conversation on 2026-11-09. It rep
 - A search of accessible Git history and the `release/recover-v1.0.1` branch path did not recover the original production files.
 
 The exact historical JSON report and its full nine-path list are not available in the current mounted project sources. This section preserves the recorded summary and does not claim a fresh filesystem read in this session. The recovery tracker is [Issue #282](https://github.com/saeed92m/ztf-classifier/issues/282). Do not ask the user to repeat the same local inventory unless a new, specific validation requirement arises after remote recovery sources have been exhausted.
+
+
+## 17. Sixteen-role think-tank review — 2026-11-12
+
+This review uses the 16 proposed expert roles as a structured review method. It does not claim that 16 external human experts participated.
+
+| Role | Review finding | Required control |
+|---|---|---|
+| Chief Scientist / PI | No Scientific-PASS is established. | No discovery or accuracy claim without independent evidence. |
+| ZTF Survey & Data Specialist | DR24 HATS and Zubercal DR20 are distinct products; HMJD and MJD(TDB) differ. | Preserve raw release, band, field, rcid, time basis and hashes. |
+| Time-Domain Astrophysicist | A ZTF OID is not necessarily one physical source. | Never merge OIDs without versioned, evidence-backed identity. |
+| Statistics / Time-Series Specialist | Irregular sampling, time conversion and photometry need separate contracts. | Validate HMJD, QC and normalization before inference. |
+| Astroinformatics / Big Data Architect | Bounded indexed retrieval is preferable to full-archive acquisition. | Keep requests bounded, pinned and reproducible. |
+| Catalog / Cross-Match Specialist | Zubercal probe returned multiple PS1 candidates for one position. | Preserve ambiguity; no automatic nearest-match selection. |
+| Chief AI / ML Scientist | Frozen v0.2.0 and baseline_v0.2 remain the reference. | ALeRCE remains weak/reference labels; preserve unknown and abstention. |
+| Scientific Validation Scientist | 13 tests skipped; source-backed validation jobs skipped. | Green CI is not Scientific-PASS. |
+| Principal Software Architect | Raw DR24 adapter is separate from the normalized ALeRCE service. | Add explicit versioned source selection; no silent fallback. |
+| Backend / Platform Engineer | Raw DR24 endpoints exist; standard object analysis remains ALeRCE-backed. | Connect application only after time, photometry and QC contracts pass. |
+| DevOps / MLOps / Security | Engineering CI passed on the previously tested head; production model absent from accessible repo/release assets. | Recover artifact through trusted source; keep large data out of Git. |
+| QA / Reliability | 715 tests, 0 failures, 13 skips; line coverage 83.34%. | Investigate skips; branch coverage is unmeasured. |
+| Scientific UX/UI | Multi-OID Explorer supports raw inspection, not full scientific analysis. | Display source, release, filters, counts, missingness and ambiguity. |
+| Product Manager / Commercialization | Park MVP is the priority; CIN is not on its critical path. | Keep 5–10 OID, 30–50 object demo and 100k lightcurve target as separate gates. |
+| Documentation Lead | Current status and historical records are now linked through a dated master source. | Record each decision with date, SHA, evidence and disposition. |
+| Independent Evaluator / Red Team | Main risk is treating skipped tests or lab artifacts as production evidence. | Do not weaken acceptance gates or overstate results. |
+
+### Joint decision
+
+1. Prioritize the DR24-first Park MVP; defer CIN runtime and optional expansion until MVP acceptance.
+2. Keep DR24 raw acquisition separate from DR24 model inference. Validate time, photometry, QC, source identity and feature parity independently.
+3. Preserve v0.2.0, its 42-feature contract, 150-object/15-class benchmark and v1.0.1 software release.
+4. Recover and authenticate the schema-1.0 production artifact through Issue #282. Never substitute schema-1.1 lab-smoke files.
+5. Keep the CPVS 11,602 discrepancy unresolved and separate. Do not promote the four-field diagnostic to a production selector.
+6. Keep CIN optional; human contributions require governance, privacy, QC and independent evaluation before they can enter research or training datasets.
+7. Preserve all CI skips and scientific blockers in the status report. Do not weaken gates to obtain a green workflow.
+
+**Disposition:** development may continue within these boundaries. DR24 inference, scientific acceptance, artifact readiness and discovery claims remain BLOCKED until their own acceptance gates pass.
