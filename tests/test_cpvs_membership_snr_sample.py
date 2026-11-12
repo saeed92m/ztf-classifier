@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import importlib
+import json
 import shutil
 import zipfile
 import zlib
@@ -206,6 +207,8 @@ def test_raw_snr_sample_rederivation_and_four_field_gate(
     assert by_id[2]["rederived_candidate"] is False
     assert by_id[3]["rederived_candidate"] is False
     assert by_id[4]["rederived_candidate"] is None
+    assert by_id[4]["rederived_candidate_exact"] is None
+    assert by_id[4]["rederived_candidate_inverse_error"] is None
     assert by_id[4]["g"]["passes_approximate_snr"] is None
     assert by_id[4]["r"]["passes_approximate_snr"] is None
     assert by_id[4]["matches_historical_candidate"] is None
@@ -225,7 +228,45 @@ def test_raw_snr_sample_rederivation_and_four_field_gate(
     assert summary["both_snr_and_four_field_unknown"] == 1
     assert summary["g_snr_unknown"] == 1
     assert summary["r_snr_unknown"] == 1
+    assert summary["snr_formulae"]["exact"]["both_snr_unknown"] == 1
+    assert summary["snr_formulae"]["inverse_error"]["both_snr_unknown"] == 1
     assert summary["table4_members"] == 1
+
+    objects_output = tmp_path / "objects.tsv"
+    audit.write_objects_tsv(objects_output, objects)
+    with objects_output.open(encoding="utf-8", newline="") as stream:
+        exported = list(csv.DictReader(stream, delimiter="\\t"))
+    exported_by_id = {int(row["SourceID"]): row for row in exported}
+    assert "g_max_snr_inverse_error" in exported_by_id[1]
+    assert exported_by_id[4]["rederived_candidate_exact"] == ""
+    assert exported_by_id[4]["rederived_candidate_inverse_error"] == ""
+
+
+def test_input_failure_report_preserves_integrity_evidence(tmp_path: Path) -> None:
+    output = tmp_path / "reports" / "input_failure.json"
+    input_integrity = {"validation_errors": ["pinned hash mismatch"]}
+    input_manifest = {
+        "within_file_duplicate_rows": {"candidate_only": 2},
+        "within_file_duplicate_source_ids": {
+            "candidate_only": {"count": 1, "examples": [123]}
+        },
+    }
+
+    audit.write_input_failure_report(
+        output,
+        input_integrity,
+        input_manifest,
+        ["Duplicate SourceIDs within a single CPVS input file"],
+    )
+
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["status"] == "INPUT_INTEGRITY_FAILED"
+    assert report["scientific_validation_status"] == "NOT_VALIDATED"
+    assert report["raw_archive_scan_started"] is False
+    assert report["input_manifest"]["within_file_duplicate_rows"]["candidate_only"] == 2
+    assert report["integrity_errors"] == [
+        "Duplicate SourceIDs within a single CPVS input file"
+    ]
 
 
 def test_two_band_candidate_membership_is_reported_for_each_snr_formula() -> None:
