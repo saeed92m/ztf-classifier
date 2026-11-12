@@ -11,6 +11,7 @@
 | TT-2026-11-12-04 | 2026-11-12 | CPVS 11,602 residuals, raw-SNR diagnostic, samples, r-band and Seq identity. | All 16 simulated roles plus Red Team. | Diagnostic design conditionally supported; scientific cause unproven; raw workflows queued. | [Session 04](THINK_TANK_SESSION_2026-11-12_CPVS_MEMBERSHIP_REVIEW.md) |
 | TT-2026-11-12-05 | 2026-11-12 | Minimum source-identity domain contract, pairwise OID evidence coverage and CI regression. | Focused 8-role panel plus Red Team. | Contract design supported with conditions; engineering CI passed on head 90b6026; API/serialization and independent scientific identity validation remain open. | [Session 05](THINK_TANK_SESSION_2026-11-12_SOURCE_IDENTITY_CONTRACT_REVIEW.md) |
 | TT-2026-11-12-06 | 2026-11-12 | Integrate original Think Tank Project Sources, project chats, GitHub controls and Notion entry point. | All 16 simulated specialist seats plus independent Red Team. | Governance design approved; engineering CI passed on head 585d393; newer documentation commits require fresh CI. | [Session 06](THINK_TANK_SESSION_2026-11-12_GOVERNANCE_INTEGRATION.md) |
+| TT-2026-11-12-08 | 2026-11-12 | Source identity contract type safety and deferred-evidence integrity. | All 16 simulated specialist seats plus independent Red Team. | Narrow hardening implemented; current-head CI pending; scientific identity validation remains open. | [Session 08](THINK_TANK_SESSION_2026-11-12_SOURCE_IDENTITY_TYPE_SAFETY.md) |
 | TT-2026-11-12-07 | 2026-11-12 | CPVS research priority, retained artifact recheck, cost boundary and diagnostic execution plan. | All 16 simulated specialist seats plus independent Red Team. | P0 scientific research reaffirmed; not a Park MVP/release gate; root cause unresolved. | [Session 07](THINK_TANK_SESSION_2026-11-12_CPVS_PRIORITY_AND_EVIDENCE_RECHECK.md) |
 
 ## Workstream mapping
@@ -18,7 +19,7 @@
 | Workstream | Required sessions | Required roles |
 |---|---|---|
 | DR24 application and Park MVP | TT-02, TT-03 | 01, 02, 03, 04, 06, 08, 09, 10, 11, 12, 14, 15, 16 |
-| AOIC / source identity | TT-02, TT-05 | 01, 02, 03, 04, 06, 08, 09, 10, 11, 12, 16 |
+| AOIC / source identity | TT-02, TT-05, TT-08 | 01, 02, 03, 04, 06, 08, 09, 10, 11, 12, 16 |
 | CPVS discrepancy and research priority | TT-04, TT-07 | All 16 seats plus Red Team |
 | CIN / collective data generation | CIN canonical source; create a dedicated session before implementation | 01, 06, 07, 08, 10, 11, 12, 13, 14, 15, 16 |
 | CI, packaging and release | Relevant subsystem session; stage/release review where required | 09, 10, 11, 12, 15, 16; all 16 for major scientific or product release gates |
