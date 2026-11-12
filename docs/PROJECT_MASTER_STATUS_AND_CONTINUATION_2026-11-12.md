@@ -574,3 +574,50 @@ These tracks are separate from CPVS membership and the DR24 Park MVP. They suppo
 The submitted Park technical/business dossier describes ZTF DR24 HATS/Parquet and also emphasizes Zubercal's recalibrated PSF photometry as a route to more homogeneous measurements. The current repository source-product contract treats DR24 HATS as the primary discovery stream and Zubercal DR20 as supplementary calibration. These are separate products with different identifiers, time bases and photometry semantics.
 
 **Decision remains OPEN:** confirm the primary data product against the approved Park deliverable before finalizing the application source contract. Do not silently equate HATS with Zubercal or substitute one for the other. Keep separate adapters, native fields, provenance and validation. See [DR24 HATS vs Zubercal source contract](architecture/DR24_HATS_VS_ZUBERCAL_SOURCE_CONTRACT_v0.1.md) and Issue #253.
+
+
+## 16. Final documentation-PR validation — 2026-11-12
+
+The latest current PR head is `62bf4600a6df4ed04a16b2b6830ea823b67e50a5`; base remains `f681408fae8d8062dd72ff74791872c1590f6ee8`. GitHub reports the branch as 40 commits ahead and zero behind; the compared diff contains 15 documentation/process files. The PR is open and mergeable. It is not yet merged.
+
+### 16.1 Exact current-head CI result
+
+CI run [43180573715](https://github.com/saeed92m/ztf-classifier/actions/runs/43180573715) completed successfully. Its JUnit report was downloaded from artifact [13926735814](https://github.com/saeed92m/ztf-classifier/actions/runs/43180573715/artifacts/13926735814) and parsed directly:
+
+- Total test cases: 715.
+- Passed: 702.
+- Skipped: 13.
+- Failed: 0.
+- Errors: 0.
+- Line coverage: 6,468 / 7,761 = 83.34%.
+- Branch coverage: not measured (0 valid branches reported).
+
+Skip breakdown:
+- 7 production inference tests: original frozen schema-1.0 artifact or shared model inputs unavailable in the CI runner.
+- 1 deterministic browser test: opt-in flag not enabled.
+- 1 live DR24 HATS parity test: opt-in flag not enabled.
+- 1 live Zubercal adapter parity test: opt-in flag not enabled.
+- 3 collection skips.
+
+All CI stages passed: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests (CLI/API/worker), Build & Verify Package, Dependency Audit, and CI Gate. Separate workflows passed: Product Scope Audit and CodeQL Python. Scientific Validation contract tests also passed.
+
+The source-backed validation jobs for provenance acquisition, DR24/ALeRCE evidence, independent StarEmbed benchmark and immutable historical ALeRCE remained SKIPPED. Thus this PR has an engineering/documentation PASS, not a scientific validation PASS.
+
+### 16.2 Companion governance documents included in this PR
+
+The diff also includes:
+- `docs/THINK_TANK_MASTER_REVIEW_2026-11-12.md` — the 16 simulated expert perspectives, joint findings and limitations.
+- `docs/MASTER_DEFECT_REGISTER_2026-11-12.md` — 18 tracked product/scientific risks, including P0 identity, DR24 application integration, frozen artifact recovery and Park acceptance.
+- `docs/MASTER_EXECUTION_ROADMAP_2026-11-12.md` — phase-based plan from scientific recovery through cross-platform product release.
+- `docs/OPEN_PR_TRIAGE_2026-11-12.md` — read-only disposition plan for 29 open PRs; no PRs are bulk-merged or closed.
+- `docs/architecture/ARCHITECTURE_v0.3.md` — target layered contracts; it remains a draft architecture contract, not a statement that all layers are implemented.
+
+### 16.3 Remaining independent blockers
+
+1. **Frozen production artifact — Issue #282:** no schema-1.0 production artifact was found in the inspected repository tree, release assets, retained CI artifact, or Dropbox search results. This does not establish whether it exists in local WSL or another unsearched storage location. Seven production inference tests remain skipped. Do not rebuild or substitute the lab schema-1.1 artifact.
+2. **StarEmbed independent benchmark — Issue #210:** the earlier source audit found one duplicate SourceID within train and one train/test object-ID overlap. Independent benchmark claims remain blocked until identity and split leakage are resolved.
+3. **DR24 source-backed product validation — Issue #188:** the prior bounded smoke test was acquisition/feature-engine smoke only; model inference was NOT_RUN. Keep it distinct from Park acceptance.
+4. **Park MVP — Issues #158/#253:** explicit DR24 backend integration, source identity, and the pinned confirmed-source end-to-end flow remain open.
+5. **CPVS — Issues #170/#180:** the 11,602 residuals remain unexplained and deferred from the Park critical path.
+
+The documentary consolidation can be accepted as complete while these separate scientific/product blockers remain open. PR #281 is ready for review, but merge remains subject to the repository's separate approval rule.
