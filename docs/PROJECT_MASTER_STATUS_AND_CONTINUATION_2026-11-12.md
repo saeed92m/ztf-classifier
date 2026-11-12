@@ -578,7 +578,7 @@ The submitted Park technical/business dossier describes ZTF DR24 HATS/Parquet an
 
 ## 16. Final documentation-PR validation — 2026-11-12
 
-The latest current PR head is `62bf4600a6df4ed04a16b2b6830ea823b67e50a5`; base remains `f681408fae8d8062dd72ff74791872c1590f6ee8`. GitHub reports the branch as 40 commits ahead and zero behind; the compared diff contains 15 documentation/process files. The PR is open and mergeable. It is not yet merged.
+The fully inspected test artifact described below was produced by CI run `43180573715` on branch commit `62bf4600a6df4ed04a16b2b6830ea823b67e50a5`. The cycle record was subsequently updated to ACCEPT/PASS with the independent blockers retained, which advanced the documentation branch and triggered a fresh current-head CI run. The PR base remains `f681408fae8d8062dd72ff74791872c1590f6ee8`. Use the live [PR #281 checks](https://github.com/saeed92m/ztf-classifier/pull/281) for the final current-head result. The PR remains unmerged.
 
 ### 16.1 Exact current-head CI result
 
