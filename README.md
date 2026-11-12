@@ -128,20 +128,9 @@ reports/tables/final_feature_set_v0.2.parquet
 
 ## Model and calibration
 
-The production model uses the frozen v0.2 model configuration and persists the complete inference artifact.
+The frozen production inference contract expects a complete schema-1.0 artifact with model configuration, trained classifier, preprocessing state, feature schema, calibration, provenance, conformal diagnostics and OOD state.
 
-The artifact includes:
-
-* model configuration;
-* trained classifier;
-* preprocessing state;
-* feature schema;
-* probability calibration;
-* provenance information;
-* conformal prediction diagnostics;
-* OOD diagnostics and production OOD model.
-
-The application supports artifact schema **1.1** and compatible schema **1.0** artifacts. The frozen v0.2.0 production artifact is expected to use schema **1.0**. A later schema-1.1 lab-smoke artifact is not a replacement for the frozen production artifact.
+The application supports schema **1.1** and compatible schema **1.0** artifacts. The frozen v0.2.0 production artifact is expected to use schema **1.0**. The original artifact has not been recovered or independently authenticated in the accessible repository, v0.2.0 tag tree, v1.0.1 release assets, retained CI artifacts or connected Dropbox search. A prior local WSL audit also reported the production directory absent. Track recovery in [Issue #282](https://github.com/saeed92m/ztf-classifier/issues/282). The separate schema-1.1 lab-smoke artifact is not a production substitute.
 
 ## Conformal prediction
 
