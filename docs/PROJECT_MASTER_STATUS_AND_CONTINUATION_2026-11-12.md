@@ -559,3 +559,11 @@ The original supplied think-tank source proposed three durable project artifacts
 These are dated snapshots and must be updated from new evidence, not treated as immutable status. The original source files remain preserved in Project Sources.
 
 **P0 correction:** minimum source identity and association semantics are a critical dependency alongside DR24 application integration. Full AOIC can be staged, but model-ready multi-OID data must not be produced without explicit association evidence and ambiguity states.
+
+
+## 20. Additional independent validation trackers
+
+- [Issue #188 — multi-source astronomical validation](https://github.com/saeed92m/ztf-classifier/issues/188): historical DR24 smoke only. The recorded 12-object run had 7 feature-engine successes, 5 failures after filter normalization, 0/12 objects with 30+ valid points in both bands, and model inference NOT_RUN. This is not a production E2E or performance result.
+- [Issue #210 — parallel independent-dataset and StarEmbed validation](https://github.com/saeed92m/ztf-classifier/issues/210): source audit failed closed with one duplicate SourceID in the training split and one object identity overlap between train and test. StarEmbed is not accepted as an independent benchmark until the identity/split problem is resolved and revalidated.
+
+These tracks are separate from CPVS membership and the DR24 Park MVP. They support the broader discovery-platform claim but cannot be closed by the documentation PR or by contract-only CI checks.
