@@ -536,3 +536,12 @@ This review uses the 16 proposed expert roles as a structured review method. It 
 7. Preserve all CI skips and scientific blockers in the status report. Do not weaken gates to obtain a green workflow.
 
 **Disposition:** development may continue within these boundaries. DR24 inference, scientific acceptance, artifact readiness and discovery claims remain BLOCKED until their own acceptance gates pass.
+
+
+## 18. Open PR inventory and triage
+
+The read-only GitHub snapshot on 2026-11-12 returned 29 open PRs. Many are historical, stacked on old bases, or duplicate work later integrated through newer PRs. No PR was mass-merged or closed.
+
+See [OPEN_PR_TRIAGE_2026-11-12.md](OPEN_PR_TRIAGE_2026-11-12.md) for the full inventory, current review groups, mergeable flags, dependencies and safe disposition protocol.
+
+The current critical path remains #158/#253; CPVS #170/#180; AOIC #249; CIN #251/#252; artifact recovery #282; documentation convergence #281. Open state and GitHub's mergeable flag do not establish review, validation or acceptance.
