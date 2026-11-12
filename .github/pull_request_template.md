@@ -54,3 +54,19 @@
 - [ ] Roadmap/architecture updated where required
 - [ ] No important unresolved regression silently accepted
 - [ ] Next-stage impact recorded
+
+
+## Think Tank Traceability (required for material changes)
+- Think Tank Session ID(s):
+- Session record link(s):
+- Charter stage(s) covered (0–11):
+- Active specialist seats (1–16) and reason:
+- Project Source(s) and prior decisions consumed:
+- Evidence ledger / exact commit and artifact hashes:
+- Recommendation: APPROVE / APPROVE_WITH_CONDITIONS / REVISE / BLOCK / DEFER
+- Implementation state: NOT_STARTED / IN_PROGRESS / IMPLEMENTED / TESTED / VALIDATED / RELEASED
+- Independent Red Team findings:
+- Unresolved disagreement or blocker:
+- Project Owner approval needed? State the exact decision.
+
+Routine low-risk changes may use a focused specialist panel. Use all 16 seats for major scientific, source-identity, benchmark, security, product-acceptance and release gates. Do not claim 16-role participation when a smaller panel reviewed the change.
