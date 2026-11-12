@@ -51,7 +51,7 @@ Cross-file overlaps are expected because the fixed samples intentionally draw fr
 
 ### Output
 
-The JSON report contains all formula summaries for each sample stratum. The per-object TSV includes all three g/r formula states and all three two-band candidate results. Missing raw observations remain UNKNOWN.
+The JSON report contains all formula summaries for each sample stratum. The per-object TSV includes all three g/r formula states, two-band candidate results and formula-specific comparisons. Candidate-only rows are listed when any formula is UNKNOWN. Input-integrity failures are written to a compact JSON report before the program exits; raw archive scanning does not start. Missing raw observations remain UNKNOWN.
 
 ## 3. Inputs and execution boundary
 
