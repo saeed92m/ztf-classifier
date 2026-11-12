@@ -39,18 +39,19 @@
     "Keep raw research questions and frozen production baselines unchanged.",
     "Create a read-only inventory and safe triage plan for all open pull requests, preserving unique research evidence and avoiding mass merges or closures.",
     "Convert the supplied 16-role review into a current, evidence-based master review, defect register and gated execution roadmap.",
-    "Make minimum source identity and association semantics an explicit P0 dependency alongside DR24 application integration."
+    "Make minimum source identity and association semantics an explicit P0 dependency alongside DR24 application integration.",
+    "Review and record the explicit application source-selection boundary across ALeRCE detections, native DR24 HATS and Zubercal DR20, with independent think-tank review and a proposed ADR."
   ],
   "measurement": {
     "metrics": {
       "coverage": {
         "before": "No single dated 2026-11-12 master status document existed on main; current status was distributed across older status reports, repository docs, Notion pages and attached project sources.",
-        "after": "One 452-line master continuation document was added; eight additional canonical/documentation files were aligned; the report is linked from README and Knowledge Base."
+        "after": "One 452-line master continuation document was added; eight additional canonical/documentation files were aligned; the report is linked from README and Knowledge Base. A third 16-role think-tank session and a proposed explicit-source-selection ADR were added; both are indexed from the master review and continuation report."
       },
       "correctness": {
         "status": "NOT_MEASURED",
         "before": "No single consistent denominator existed for counting every documentation conflict across all historical sources.",
-        "after": "Selected high-impact conflicts were corrected with dated evidence. Full line-by-line audit of every historical handbook and every source-code module remains outside this documentation cycle."
+        "after": "Selected high-impact conflicts were corrected with dated evidence. Full line-by-line audit of every historical handbook and every source-code module remains outside this documentation cycle. A code-level review now records that existing v1 analysis remains ALeRCE-backed, DR24 HATS and Zubercal are native-only paths, and no approved source normalization/feature bridge exists."
       },
       "reproducibility": {
         "status": "NOT_MEASURED",
@@ -94,7 +95,11 @@
       "Current-head skip breakdown: seven production-inference tests require the unavailable legacy production artifact or shared model inputs; three collection skips require frozen benchmark/features or raw detections; one deterministic browser test and two live-source parity tests were opt-in and not enabled.",
       "Scientific Validation run 43236966676: benchmark/lifecycle contract passed; DR24/ALeRCE source-backed evidence, immutable historical ALeRCE, provenance acquisition, and independent StarEmbed evidence jobs were skipped.",
       "Product Scope Audit run 43236966212 and CodeQL run 43236966693 passed on the same head.",
-      "PR #281 remains open, Draft and unmerged. GitHub compare reports 46 commits ahead of main and zero behind. No scientific/product blockers were closed."
+      "PR #281 remains open, Draft and unmerged. GitHub compare reports 46 commits ahead of main and zero behind. No scientific/product blockers were closed.",
+      "Think Tank Session 03 used 16 simulated specialist roles plus an independent Red Team pass to review source selection and native observation boundaries. The result is recorded at docs/think-tank/THINK_TANK_SESSION_2026-11-12_EXPLICIT_SOURCE_SELECTION.md.",
+      "Proposed ADR docs/architecture/ADR_EXPLICIT_OBSERVATION_SOURCE_SELECTION_v0.1.md defines explicit source identifiers, source-native result contracts, no-silent-fallback behavior, backward compatibility and the model-readiness gate. It does not authorize runtime implementation or choose the Park primary product.",
+      "The current source review found no source selector in ObjectAnalysisRequest or AnalysisJobRequest and no source field in persistent JobRecord; SourceBackedAnalysisExecutor still calls the ALeRCE-backed normalized get_observations path.",
+      "The ADR preserves AD-DATA-001 as PROPOSED. Park primary data product selection remains open and DR24/Zubercal remain blocked from the frozen v0.2.0 inference path."
     ],
     "blocker": "Documentation PR engineering CI is green. Scientific acceptance remains blocked: the frozen production artifact is unavailable in accessible CI/repository sources, source-backed scientific jobs were skipped, DR24 live-source parity was not run, and Park MVP end-to-end acceptance remains incomplete."
   },
@@ -147,7 +152,9 @@
       "Architecture v0.3 now distinguishes a source-native survey object/OID from a physical astrophysical source and defines explicit association states. The legacy CanonicalObject wording is constrained to survey-object semantics until a versioned identity contract is implemented.",
       "The source adapter registry now treats StarEmbed as a candidate external benchmark blocked by identity/split audit and ALeRCE as reference-system output/weak labels rather than independent astrophysical ground truth.",
       "Scientific Methodology now includes the historical raw CDS Table2/Table4 hash reconciliation, exact historical four-field diagnostic, 55 controls, 11,557/45 observation-count clue and outstanding MGPR protocol.",
-      "The Park dossier's emphasis on Zubercal photometry and the repository contract's HATS-primary design are not yet reconciled; primary product choice remains OPEN."
+      "The Park dossier's emphasis on Zubercal photometry and the repository contract's HATS-primary design are not yet reconciled; primary product choice remains OPEN.",
+      "A new source-selection API must not collapse ALeRCE, DR24 HATS and Zubercal DR20 into one normalized observation shape because they use different time scales, photometry/error semantics and external identifiers.",
+      "Native data acquisition and model analysis require separate capability gates. An unsupported source/model pairing must fail closed and must not fall back to another source."
     ]
   },
   "regression": {
@@ -189,6 +196,8 @@
     "Latest tested PR head: b1bbab8fb2c6f2ae384ba37e1012141d777a9bb3; CI run 43236966192 is green with 715 tests (702 passed, 13 skipped, zero failures/errors), 83.34% line coverage and no branch coverage measurement.",
     "Current exact skip breakdown is recorded in docs/PROJECT_MASTER_STATUS_AND_CONTINUATION_2026-11-12.md section 16.4; missing frozen production artifacts and source-backed skips remain blockers.",
     "Latest PR #281 snapshot: 46 commits ahead, zero behind main, 16 changed files; open, Draft and unmerged.",
-    "Think Tank Session 02 is a required review input before changing source selection, native observation pathways, OID association, normalization or inference."
+    "Think Tank Session 02 is a required review input before changing source selection, native observation pathways, OID association, normalization or inference.",
+    "Think Tank Session 03 and proposed ADR: docs/think-tank/THINK_TANK_SESSION_2026-11-12_EXPLICIT_SOURCE_SELECTION.md and docs/architecture/ADR_EXPLICIT_OBSERVATION_SOURCE_SELECTION_v0.1.md.",
+    "Source selection is a design proposal only. Existing v1 behavior remains unchanged; no HATS/Zubercal normalization, identity matching, OID grouping or inference is authorized by the ADR."
   ]
 }
