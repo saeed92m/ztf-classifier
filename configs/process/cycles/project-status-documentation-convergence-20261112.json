@@ -99,7 +99,12 @@
       "Think Tank Session 03 used 16 simulated specialist roles plus an independent Red Team pass to review source selection and native observation boundaries. The result is recorded at docs/think-tank/THINK_TANK_SESSION_2026-11-12_EXPLICIT_SOURCE_SELECTION.md.",
       "Proposed ADR docs/architecture/ADR_EXPLICIT_OBSERVATION_SOURCE_SELECTION_v0.1.md defines explicit source identifiers, source-native result contracts, no-silent-fallback behavior, backward compatibility and the model-readiness gate. It does not authorize runtime implementation or choose the Park primary product.",
       "The current source review found no source selector in ObjectAnalysisRequest or AnalysisJobRequest and no source field in persistent JobRecord; SourceBackedAnalysisExecutor still calls the ALeRCE-backed normalized get_observations path.",
-      "The ADR preserves AD-DATA-001 as PROPOSED. Park primary data product selection remains open and DR24/Zubercal remain blocked from the frozen v0.2.0 inference path."
+      "The ADR preserves AD-DATA-001 as PROPOSED. Park primary data product selection remains open and DR24/Zubercal remain blocked from the frozen v0.2.0 inference path.",
+      "Think Tank Session 04 reviewed Issue #170, PR #265, the CPVS raw-SNR diagnostic, checksum-pinned archive workflow and retained artifact evidence using 16 simulated specialist perspectives plus an independent Red Team pass.",
+      "The four-field intersection remains a root-cause candidate, not proof of the publisher's selection method. The 11,602 candidate-only set is reconstructed from retained artifacts and has not yet been freshly re-derived from raw photometry.",
+      "Current PR #265 raw-SNR run 43097116480, r-band reconciliation run 43097116394 and targeted Seq run 43097116446 were checked on 2026-11-12; all remain QUEUED and have no jobs, so no new scan result exists.",
+      "Red Team review found that the diagnostic currently combines only approximate SNR at object-membership level; it needs separate complete two-band candidate sets for approximate, exact and inverse-error alternatives. It also needs per-stratum sample summaries and explicit duplicate/overlap reporting.",
+      "PR #265 branch compares 80 commits ahead / 92 commits behind current main, merge base bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c; the Draft PR must not be merged as-is."
     ],
     "blocker": "Documentation PR engineering CI is green. Scientific acceptance remains blocked: the frozen production artifact is unavailable in accessible CI/repository sources, source-backed scientific jobs were skipped, DR24 live-source parity was not run, and Park MVP end-to-end acceptance remains incomplete."
   },
@@ -198,6 +203,9 @@
     "Latest PR #281 snapshot: 46 commits ahead, zero behind main, 16 changed files; open, Draft and unmerged.",
     "Think Tank Session 02 is a required review input before changing source selection, native observation pathways, OID association, normalization or inference.",
     "Think Tank Session 03 and proposed ADR: docs/think-tank/THINK_TANK_SESSION_2026-11-12_EXPLICIT_SOURCE_SELECTION.md and docs/architecture/ADR_EXPLICIT_OBSERVATION_SOURCE_SELECTION_v0.1.md.",
-    "Source selection is a design proposal only. Existing v1 behavior remains unchanged; no HATS/Zubercal normalization, identity matching, OID grouping or inference is authorized by the ADR."
+    "Source selection is a design proposal only. Existing v1 behavior remains unchanged; no HATS/Zubercal normalization, identity matching, OID grouping or inference is authorized by the ADR.",
+    "Think Tank Session 04: docs/think-tank/THINK_TANK_SESSION_2026-11-12_CPVS_MEMBERSHIP_REVIEW.md. Issue #170 remains open and unresolved.",
+    "The queued raw-SNR workflow is a bounded diagnostic for 11,602 residual IDs, 100/1,000 stratified samples and 55 controls, not a full 781,602-object reconstruction.",
+    "Before interpreting outputs, add full two-band formula alternatives, per-stratum sample summaries and duplicate/overlap audit. Keep zero-row band status UNKNOWN."
   ]
 }
