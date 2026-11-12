@@ -224,3 +224,20 @@ Every historical measurement must retain its date, source hash and execution con
 ## 10. Continuing session record
 
 The 2026-11-12 follow-up review of DR24 application integration, AOIC identity, and the Park source-product conflict is recorded in [Think Tank Session 02](think-tank/THINK_TANK_SESSION_2026-11-12_DR24_APPLICATION_INTEGRATION.md). It is a required review input for changes to observation acquisition, source normalization, OID grouping, feature generation, and inference. The review approves explicit source selection and separate adapters, but blocks a Park primary-product choice and DR24-to-v0.2.0 inference until the dossier conflict and scientific contracts are resolved.
+
+
+## 11. Canonical Think Tank governance and source traceability
+
+The project's original 16-seat proposal and Master Prompt are now operationalized in version-controlled form:
+
+- [Think Tank Charter and Operating Protocol](think-tank/CHARTER.md) — 16 permanent seats, meeting composition, Project Owner authority, evidence states and the complete 12-stage review process.
+- [Think Tank Session Register](think-tank/SESSION_REGISTER.md) — stable session IDs, workstream mapping and required specialist roles.
+- [Project Think Tank Source Index](../sources/think_tank/PROJECT_SOURCE_INDEX.md) — maps the uploaded Project Sources and conversation records to their governing use.
+
+These documents preserve the original meeting design: 7–9 seats for routine decision sessions, 3–5 for focused specialist panels, 6–10 for cross-disciplinary brainstorming, and all 16 seats for major stage or release-gate reviews. The Founder / Project Owner remains the separate final decision authority.
+
+The project Pull Request template now requires a Think Tank Session ID, active roles, source references, charter stages, evidence, Red Team findings and approval state for material changes.
+
+### Session 05 — minimum source identity contract
+
+[Session 05 — Minimum Source Identity Contract and Multi-OID Evidence Review](think-tank/THINK_TANK_SESSION_2026-11-12_SOURCE_IDENTITY_CONTRACT_REVIEW.md) records the focused 8-role review and Red Team analysis of PR #283. The recommendation supports the stronger domain invariants with conditions. The contract does not implement matching or prove physical identity.
