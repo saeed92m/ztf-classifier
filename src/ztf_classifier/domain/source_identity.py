@@ -63,12 +63,22 @@ class SurveyObjectRef:
             for value in (self.survey, self.release, self.object_id)
         ):
             raise ValueError("survey, release and object_id are required.")
-        if self.field is not None and self.field < 0:
-            raise ValueError("field must be non-negative.")
-        if self.rcid is not None and self.rcid < 0:
-            raise ValueError("rcid must be non-negative.")
-        if self.band is not None and not self.band.strip():
-            raise ValueError("band must be non-empty when provided.")
+        if self.field is not None and (
+            not isinstance(self.field, int)
+            or isinstance(self.field, bool)
+            or self.field < 0
+        ):
+            raise ValueError("field must be a non-negative integer.")
+        if self.rcid is not None and (
+            not isinstance(self.rcid, int)
+            or isinstance(self.rcid, bool)
+            or self.rcid < 0
+        ):
+            raise ValueError("rcid must be a non-negative integer.")
+        if self.band is not None and (
+            not isinstance(self.band, str) or not self.band.strip()
+        ):
+            raise ValueError("band must be a non-empty string when provided.")
 
     @property
     def reference_key(self) -> str:
@@ -184,17 +194,26 @@ class AssociationEvidence:
             )
         if self.score_kind not in {"raw_score", "calibrated_probability"}:
             raise ValueError("score_kind must be raw_score or calibrated_probability.")
-        if self.score is not None and not isfinite(self.score):
-            raise ValueError("score must be finite.")
+        if self.score is not None and (
+            isinstance(self.score, bool)
+            or not isinstance(self.score, (int, float))
+            or not isfinite(self.score)
+        ):
+            raise ValueError("score must be a finite number.")
         if self.score_kind == "calibrated_probability":
             if self.score is None or not 0.0 <= self.score <= 1.0:
                 raise ValueError("calibrated probability must be between 0 and 1.")
             if not self.calibration_version or not self.calibration_version.strip():
                 raise ValueError("calibrated probability requires calibration_version.")
         if self.separation_arcsec is not None and (
-            not isfinite(self.separation_arcsec) or self.separation_arcsec < 0
+            isinstance(self.separation_arcsec, bool)
+            or not isinstance(self.separation_arcsec, (int, float))
+            or not isfinite(self.separation_arcsec)
+            or self.separation_arcsec < 0
         ):
-            raise ValueError("separation_arcsec must be finite and non-negative.")
+            raise ValueError(
+                "separation_arcsec must be a finite, non-negative number."
+            )
         if self.content_hash is not None and not self.content_hash.strip():
             raise ValueError("content_hash must be non-empty when provided.")
 
