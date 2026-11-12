@@ -552,6 +552,7 @@ The current critical path remains #158/#253; CPVS #170/#180; AOIC #249; CIN #251
 The original supplied think-tank source proposed three durable project artifacts. They are now represented by dated, evidence-based repository documents:
 
 - [16-Expert Think Tank Master Review](THINK_TANK_MASTER_REVIEW_2026-11-12.md) — roles, consensus, target architecture and scientific/product boundaries.
+- [Think Tank Session 02 — DR24 Application Integration](think-tank/THINK_TANK_SESSION_2026-11-12_DR24_APPLICATION_INTEGRATION.md) — mandatory review for changes to data-source selection, native observation payloads, OID association, normalization and model inference.
 - [Master Defect and Risk Register](MASTER_DEFECT_REGISTER_2026-11-12.md) — 18 tracked risk areas with evidence, status, closure criteria and issue links.
 - [Master Execution Roadmap](MASTER_EXECUTION_ROADMAP_2026-11-12.md) — seven gated phases from scientific integrity/recovery through final product acceptance, plus separate optional CIN track.
 - [Open PR Triage](OPEN_PR_TRIAGE_2026-11-12.md) — 29 open PR snapshot and safe disposition protocol.
@@ -621,3 +622,18 @@ The diff also includes:
 5. **CPVS — Issues #170/#180:** the 11,602 residuals remain unexplained and deferred from the Park critical path.
 
 The documentary consolidation can be accepted as complete while these separate scientific/product blockers remain open. PR #281 is ready for review, but merge remains subject to the repository's separate approval rule.
+
+
+## 16.4 Latest current-head validation — 2026-11-12
+
+PR #281 head `b1bbab8fb2c6f2ae384ba37e1012141d777a9bb3` was checked after the documentation-cycle correction and after Think Tank Session 02 was added.
+
+- PR state: OPEN, Draft, unmerged; 46 commits ahead of `main`, 0 behind.
+- CI run [43236966192](https://github.com/saeed92m/ztf-classifier/actions/runs/43236966192): all 8 jobs passed (Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, CI Gate).
+- JUnit artifact [13952487957](https://github.com/saeed92m/ztf-classifier/actions/runs/43236966192/artifacts/13952487957) was downloaded and parsed: 715 tests, 702 passed, 13 skipped, 0 failed, 0 errors.
+- Coverage: 6,468 / 7,761 lines = 83.34%; branch coverage was not measured. The test run reported 9 warnings.
+- Exact skip breakdown: 7 production-inference tests require the unavailable legacy v1.0/schema-1.0 artifact or shared model inputs; 3 collection skips require a frozen feature/benchmark artifact or raw detection cache; 1 deterministic DR24 browser test, 1 live DR24 HATS parity test, and 1 live Zubercal adapter parity test were opt-in and not enabled.
+- Scientific Validation run [43236966676](https://github.com/saeed92m/ztf-classifier/actions/runs/43236966676): benchmark/lifecycle contract job PASS; source-backed DR24/ALeRCE, immutable historical ALeRCE, provenance acquisition, and independent StarEmbed jobs SKIPPED.
+- Product Scope Audit run [43236966212](https://github.com/saeed92m/ztf-classifier/actions/runs/43236966212) and CodeQL run [43236966693](https://github.com/saeed92m/ztf-classifier/actions/runs/43236966693): PASS.
+
+This is an engineering and documentation PASS for the tested PR head. It is not a full scientific validation or Park MVP acceptance. The frozen production artifact, StarEmbed split integrity, DR24 source-backed tests, Park source-product decision, AOIC identity contract and CPVS residual remain open. The PR remains Draft and unmerged.
