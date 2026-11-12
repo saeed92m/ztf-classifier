@@ -428,3 +428,38 @@ def test_unmatched_association_evidence_must_record_no_candidate() -> None:
             decision_policy_version="policy-1",
             decided_at="2026-11-12T00:00:00Z",
         )
+
+
+
+def test_survey_object_rejects_boolean_field_and_rcid() -> None:
+    with pytest.raises(ValueError, match="field must be a non-negative integer"):
+        SurveyObjectRef(
+            survey="ZTF", release="DR24", object_id="OID-1", field=True
+        )
+    with pytest.raises(ValueError, match="rcid must be a non-negative integer"):
+        SurveyObjectRef(
+            survey="ZTF", release="DR24", object_id="OID-1", rcid=True
+        )
+
+
+def test_association_evidence_rejects_boolean_score_and_separation() -> None:
+    with pytest.raises(ValueError, match="score must be a finite number"):
+        AssociationEvidence(
+            evidence_id="e1",
+            method="test",
+            method_version="1",
+            policy_version="p1",
+            source_ref=_survey_object().reference_key,
+            candidate_ref="astrophysical-source:source-1",
+            score=True,
+        )
+    with pytest.raises(ValueError, match="separation_arcsec must be a finite"):
+        AssociationEvidence(
+            evidence_id="e2",
+            method="test",
+            method_version="1",
+            policy_version="p1",
+            source_ref=_survey_object().reference_key,
+            candidate_ref="astrophysical-source:source-1",
+            separation_arcsec=True,
+        )
