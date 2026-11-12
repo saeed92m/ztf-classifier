@@ -9,6 +9,7 @@ from ztf_classifier.domain import (
     IdentityStatus,
     SourceAssociation,
     SurveyObjectRef,
+    validate_source_confirmation,
 )
 
 
