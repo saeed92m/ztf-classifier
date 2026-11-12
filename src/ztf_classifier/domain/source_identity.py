@@ -143,8 +143,12 @@ class AstrophysicalSourceRef:
             for ref in self.provenance_refs
         ):
             raise ValueError("provenance_refs must contain non-empty strings.")
+        if self.superseded_by is not None and (
+            not isinstance(self.superseded_by, str) or not self.superseded_by.strip()
+        ):
+            raise ValueError("superseded_by must be a non-empty string when provided.")
         if self.identity_status is IdentityStatus.SUPERSEDED:
-            if not self.superseded_by or not self.superseded_by.strip():
+            if self.superseded_by is None:
                 raise ValueError("superseded source records require superseded_by.")
             if self.superseded_by == self.source_id:
                 raise ValueError("a source record cannot supersede itself.")
@@ -200,7 +204,10 @@ class AssociationEvidence:
             raise ValueError(
                 "association evidence identity and version fields are required."
             )
-        if self.score_kind not in {"raw_score", "calibrated_probability"}:
+        if not isinstance(self.score_kind, str) or self.score_kind not in {
+            "raw_score",
+            "calibrated_probability",
+        }:
             raise ValueError("score_kind must be raw_score or calibrated_probability.")
         if self.score is not None and (
             isinstance(self.score, bool)
@@ -208,10 +215,15 @@ class AssociationEvidence:
             or not isfinite(self.score)
         ):
             raise ValueError("score must be a finite number.")
+        if self.calibration_version is not None and (
+            not isinstance(self.calibration_version, str)
+            or not self.calibration_version.strip()
+        ):
+            raise ValueError("calibration_version must be a non-empty string when provided.")
         if self.score_kind == "calibrated_probability":
             if self.score is None or not 0.0 <= self.score <= 1.0:
                 raise ValueError("calibrated probability must be between 0 and 1.")
-            if not self.calibration_version or not self.calibration_version.strip():
+            if self.calibration_version is None:
                 raise ValueError("calibrated probability requires calibration_version.")
         if self.separation_arcsec is not None and (
             isinstance(self.separation_arcsec, bool)
@@ -222,8 +234,10 @@ class AssociationEvidence:
             raise ValueError(
                 "separation_arcsec must be a finite, non-negative number."
             )
-        if self.content_hash is not None and not self.content_hash.strip():
-            raise ValueError("content_hash must be non-empty when provided.")
+        if self.content_hash is not None and (
+            not isinstance(self.content_hash, str) or not self.content_hash.strip()
+        ):
+            raise ValueError("content_hash must be a non-empty string when provided.")
 
 
 @dataclass(frozen=True)
@@ -274,18 +288,29 @@ class SourceAssociation:
             raise TypeError("evidence must be a tuple.")
         if any(not isinstance(item, AssociationEvidence) for item in self.evidence):
             raise TypeError("evidence must contain AssociationEvidence values.")
-        if self.reviewer_ref is not None and not self.reviewer_ref.strip():
-            raise ValueError("reviewer_ref must be non-empty when provided.")
+        if self.reviewer_ref is not None and (
+            not isinstance(self.reviewer_ref, str) or not self.reviewer_ref.strip()
+        ):
+            raise ValueError("reviewer_ref must be a non-empty string when provided.")
         if self.supersedes_association_id is not None:
-            if not self.supersedes_association_id.strip():
+            if (
+                not isinstance(self.supersedes_association_id, str)
+                or not self.supersedes_association_id.strip()
+            ):
                 raise ValueError(
-                    "supersedes_association_id must be non-empty when provided."
+                    "supersedes_association_id must be a non-empty string when provided."
                 )
             if self.supersedes_association_id == self.association_id:
                 raise ValueError("an association cannot supersede itself.")
 
+        if self.confirmed_source_id is not None and (
+            not isinstance(self.confirmed_source_id, str)
+            or not self.confirmed_source_id.strip()
+        ):
+            raise ValueError("confirmed_source_id must be a non-empty string when provided.")
+
         if self.status is AssociationStatus.CONFIRMED_MATCH:
-            if not self.confirmed_source_id or not self.confirmed_source_id.strip():
+            if self.confirmed_source_id is None:
                 raise ValueError("confirmed matches require confirmed_source_id.")
             if not self.evidence:
                 raise ValueError("confirmed matches require supporting evidence.")
@@ -338,6 +363,16 @@ class SourceAssociation:
             f"astrophysical-source:{source_id}"
             for source_id in self.candidate_source_ids
         }
+        if self.status is AssociationStatus.DEFERRED_REVIEW:
+            allowed_candidate_refs = expected_candidate_refs | {NO_CANDIDATE_REFERENCE}
+            if any(
+                item.candidate_ref not in allowed_candidate_refs
+                for item in self.evidence
+            ):
+                raise ValueError(
+                    "deferred review evidence must reference a declared candidate "
+                    "or the no-candidate reference."
+                )
         evidence_pairs = {
             (item.source_ref, item.candidate_ref) for item in self.evidence
         }
