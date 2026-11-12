@@ -271,7 +271,7 @@ def load_metadata(
     for left_index, left in enumerate(source_names):
         for right in source_names[left_index + 1 :]:
             overlap = input_id_sets[left] & input_id_sets[right]
-            encoded_ids = "\\n".join(str(value) for value in sorted(overlap)).encode(
+            encoded_ids = chr(10).join(str(value) for value in sorted(overlap)).encode(
                 "ascii"
             )
             cross_file_overlaps[f"{left}__{right}"] = {
@@ -290,7 +290,7 @@ def load_metadata(
             name: {
                 "count": len(ids),
                 "sha256": hashlib.sha256(
-                    "\\n".join(str(value) for value in sorted(ids)).encode("ascii")
+                    chr(10).join(str(value) for value in sorted(ids)).encode("ascii")
                 ).hexdigest(),
                 "examples": sorted(ids)[:20],
             }
@@ -699,7 +699,7 @@ def write_objects_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
         "matches_table4_with_four_field_gate",
     ]
     with path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=fields, delimiter="\\t")
+        writer = csv.DictWriter(stream, fieldnames=fields, delimiter=chr(9))
         writer.writeheader()
         for row in rows:
             writer.writerow(
