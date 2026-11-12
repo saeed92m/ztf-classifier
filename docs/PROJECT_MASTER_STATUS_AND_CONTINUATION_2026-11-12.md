@@ -450,3 +450,40 @@ No percentage-complete figure is assigned in this document. The current evidence
 A milestone is complete only when its exact acceptance criteria, source versions, run artifacts, hashes, test results, known limitations, and approval are recorded. Code presence, a green CI badge, a matching row count, model confidence, or an OOD flag cannot independently establish scientific success.
 
 No changes in this documentation update modify production selection rules, thresholds, model weights, features, taxonomy, class order, benchmark membership, v0.2.0, or v1.0.1.
+
+
+## 15. Verified CI evidence for this documentation convergence PR
+
+**PR head tested:** `3241955ebb918bd79f9b15263d16f6bf541f00e9`  
+**CI run:** [43118116290](https://github.com/saeed92m/ztf-classifier/actions/runs/43118116290)  
+**Scientific Validation run:** [43118116243](https://github.com/saeed92m/ztf-classifier/actions/runs/43118116243)  
+**Product Scope Audit:** [43118116301](https://github.com/saeed92m/ztf-classifier/actions/runs/43118116301)  
+**CodeQL:** [43118116285](https://github.com/saeed92m/ztf-classifier/actions/runs/43118116285)
+
+The completed CI jobs report:
+- Format Check: PASS.
+- Lint: PASS.
+- Cumulative Lifecycle Gate: PASS.
+- Test Suite: PASS — 715 collected tests, 0 failures, 0 errors, 13 skipped; runtime 101.819 seconds.
+- Runtime Smoke Tests: PASS.
+- Build & Verify Package: PASS.
+- Dependency Audit: PASS.
+- CI Gate: PASS.
+- Product Scope Audit: PASS.
+- CodeQL Python: PASS.
+- Scientific benchmark and cumulative lifecycle contract: PASS.
+
+The retained pytest XML report records 13 skips:
+1. Collection skipped: `test_feature_pipeline_parity`.
+2. Collection skipped: `test_offline_feature_dataset_reproduction`.
+3. Collection skipped: `test_raw_dataset_validation_integration`.
+4. DR24 multi-OID workbench browser test requires `ZTF_DR24_BATCH_UI_TEST=1`.
+5. Live DR24 HATS parity requires `ZTF_DR24_BATCH_LIVE_TEST=1`.
+6–12. Seven production-inference tests skipped because the frozen legacy production artifact or shared model inputs are unavailable.
+13. Live Zubercal DR20 adapter parity requires `ZTF_ZUBERCAL_ADAPTER_LIVE_TEST=1`.
+
+Coverage report: 6,468 / 7,761 executable lines, 83.34% line coverage. Branch coverage was not measured (zero branch opportunities were reported by the XML export); do not interpret this as 100% branch coverage.
+
+The four source-backed Scientific Validation jobs for source provenance, DR24/ALeRCE evidence, independent StarEmbed evidence, and frozen historical ALeRCE verification were SKIPPED. This documentation PR therefore has a green engineering CI result, but it does not establish Scientific-PASS, model artifact readiness, DR24 live-source parity, or end-to-end Park MVP acceptance.
+
+The missing frozen v0.2.0 production artifact remains a separate blocker. The repository audit contract expects `runs/model_baseline_v0.2_production/artifact/`, schema 1.0, model version `baseline_v0.2`, 42 frozen features, and manifest-declared file hashes. The schema-1.1 lab-smoke artifact is not a substitute. An independently pinned original artifact hash is still unavailable. See `docs/scientific/LOCAL_ARTIFACT_VALIDATION.md` and `configs/process/cycles/local-scientific-artifact-audit-20261107.json`.
