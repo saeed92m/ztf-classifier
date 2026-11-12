@@ -81,9 +81,14 @@
       "JUnit result for this run: 736 passed, 13 skipped, zero failures, zero errors and 9 warnings. The focused source identity module contains 34 test functions. Total line statements reported by coverage: 7962; missed: 1321; reported coverage 83%. Branch coverage was not reported.",
       "CodeQL run 43282418876 and Product Scope Audit run 43282418791 passed. Scientific Validation run 43282418767 passed its benchmark/lifecycle contract job.",
       "The four source-backed scientific jobs remain SKIPPED: DR24/ALeRCE source-backed evidence, immutable historical ALeRCE reference, source provenance acquisition and independent StarEmbed benchmark. The CI result is an engineering PASS, not an astrophysical identity validation.",
-      "Build & Verify Package, Dependency Audit and CI Gate were subsequently confirmed PASS in the same run."
+      "Build & Verify Package, Dependency Audit and CI Gate were subsequently confirmed PASS in the same run.",
+      "Latest current-head PR #283 CI run 43284976844 completed all eight engineering jobs successfully on head 988e3c5537a0278119b680d98e40d9978092ba3a: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit and CI Gate all PASS.",
+      "Current-head JUnit result: 736 passed, 13 skipped, zero failures, zero errors and 9 warnings. Coverage: 7,962 total statements, 1,321 missed, 83% line coverage as rounded by CI; branch coverage was not reported.",
+      "CodeQL run 43284976807 and Product Scope Audit run 43284976781 passed. Scientific Validation run 43284977182 passed the benchmark/lifecycle contract job.",
+      "Four source-backed scientific jobs remain SKIPPED: source provenance acquisition, independent StarEmbed product benchmark, DR24/ALeRCE source-backed evidence and immutable historical ALeRCE reference. This is an engineering PASS, not scientific validation of physical source identity.",
+      "PR #283 remains OPEN / DRAFT / UNMERGED. API request/response serialization and persistence compatibility, implementation of a matcher/ledger, and independent adjudicated association validation remain open."
     ],
-    "blocker": "Fresh current-head CI is required after this lifecycle schema correction. The initial validator failure is retained and is not reported as a pass."
+    "blocker": "Engineering regression is verified on current PR head 988e3c5537a0278119b680d98e40d9978092ba3a. Overall acceptance remains BLOCKED because API serialization and persistence compatibility have not been reviewed, no matcher or persistent identity ledger is implemented, and independent adjudicated astrophysical association validation has not been run. The source-backed scientific workflow jobs were skipped."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED_AND_PATCHED",
@@ -136,6 +141,9 @@
     "Latest domain contract adds complete multi-OID evidence matrix validation and non-confirmed confirmation-reference rejection. Focused module: 34 test functions. Current branch head must be checked and CI rerun before acceptance.",
     "PR #283 runs 43244871653 and 43244896597 each reported 734 passed, 2 failed, 13 skipped, 9 warnings. Both failures were stale regex assertions after the full pair-coverage invariant was introduced. Assertions were corrected in 44369783e1b28248cf6e93832e1472a87540f09f; fresh CI is pending.",
     "Latest tested PR #283 head 90b6026e62e41bdff4d33c251ec2f0e1cbbb7ba9 passed all eight engineering CI jobs in run 43282419204: 736 passed, 13 skipped, zero failures, 9 warnings; 83% line coverage rounded, branch coverage not measured.",
-    "The current source identity contract's engineering regression suite is PASS. API serialization, persistence and independent astrophysical association validation remain separate blockers."
+    "The current source identity contract's engineering regression suite is PASS. API serialization, persistence and independent astrophysical association validation remain separate blockers.",
+    "Latest current-head PR #283 head 988e3c5537a0278119b680d98e40d9978092ba3a passed all eight engineering CI jobs in run 43284976844: 736 passed, 13 skipped, zero failures, 9 warnings; line coverage 83% rounded, branch coverage not reported.",
+    "CodeQL and Product Scope Audit passed. Scientific Validation passed only its benchmark/lifecycle contract; the four source-backed scientific jobs were skipped.",
+    "The cycle's regression status is PASS, but overall decision remains BLOCKED pending API/persistence review and independent scientific association validation."
   ]
 }
