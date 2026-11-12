@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-snr-formula-audit-20261112",
+  "objective": "Correct the CPVS raw-SNR diagnostic's object-level formula aggregation and input duplicate/overlap accounting on a branch based on current main, without downloading raw archives or changing production selection.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Think Tank Session TT-2026-11-12-07",
+      "status": "VERIFIED",
+      "detail": "Required separate approximate, exact and inverse-error two-band results; explicit duplicate/overlap accounting; per-stratum reporting; and a cost gate for >11.2 GB archive processing."
+    },
+    {
+      "source": "PR #265 branch research/cpvs-seq-identity-20261104",
+      "status": "VERIFIED",
+      "detail": "Inspected the raw-SNR script and tests. The script computed all three per-band formulas but used only approximate SNR for the two-band candidate set and confusion matrix. The branch has 80 commits and 14 files and is not based on current main."
+    },
+    {
+      "source": "Retained CPVS artifact 13108147605 from run 41367972395",
+      "status": "VERIFIED",
+      "detail": "Independent artifact-level membership arithmetic and fixed sample strata were rechecked in Session 07. No fresh raw g/r SNR or MGPR result is claimed."
+    }
+  ],
+  "baseline": {
+    "revision": "f681408fae8d8062dd72ff74791872c1590f6ee8",
+    "scientific_baseline": "v0.2.0 immutable",
+    "software_release": "v1.0.1 immutable",
+    "cpvs_parent_count": 781602,
+    "cpvs_published_reference_count": 730184,
+    "cpvs_candidate_count_historical": 741786,
+    "cpvs_candidate_only_count": 11602,
+    "selector": "unchanged"
+  },
+  "change": {
+    "scope": "Port only the CPVS membership raw-SNR diagnostic and its synthetic tests to a fresh current-main branch. Add separate two-band candidate sets and confusion summaries for approximate, exact and inverse-error formulas; add within-file duplicate and pairwise cross-file overlap accounting; fail closed on within-file duplicates.",
+    "rationale": "The old stacked branch is stale, and its current two-band result hides the differences between formula alternatives. Input overlap and duplicate counts must be explicit before a costly raw scan."
+  },
+  "expected_improvement": [
+    "Formula-specific two-band candidate sets",
+    "Explicit per-band and two-band PASS/FAIL/UNKNOWN states",
+    "Within-file duplicate accounting",
+    "Pairwise cross-file overlap counts and hashes",
+    "Reproducible compact output with pinned input hashes"
+  ],
+  "measurement": {
+    "metrics": {
+      "formula_coverage": {
+        "before": "Per-band qualifying detection counts existed for approximate, exact and inverse-error formulas, but the two-band candidate and confusion summary used only approximate SNR.",
+        "after": "The new object-level builder creates separate two-band candidate states and Table 4 confusion summaries for all three formulas.",
+        "status": "PARTIAL"
+      },
+      "input_integrity": {
+        "before": "Input record counts and metadata conflicts were reported; within-file duplicate IDs and pairwise cross-file overlaps were not explicitly reported.",
+        "after": "Within-file duplicate rows/IDs and pairwise cross-file overlap counts, hashes and examples are reported. Within-file duplicates fail closed.",
+        "status": "PARTIAL"
+      },
+      "scientific_validity": {
+        "before": "Historical candidate membership remains unresolved.",
+        "after": "No raw archive scan or MGPR execution is part of this code-only cycle.",
+        "status": "NOT_MEASURED"
+      }
+    },
+    "trade_off": "This change improves the diagnostic contract but does not run the >11.2 GB raw archive scan. Synthetic CI does not establish source-backed scientific validity."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "New branch created from main SHA f681408fae8d8062dd72ff74791872c1590f6ee8.",
+      "Only the raw-SNR diagnostic script and its synthetic test module have been ported; the old branch's automatic multi-gigabyte workflow was not copied.",
+      "The script now emits separate approximate, exact and inverse-error two-band results and explicit within-file duplicate/cross-file overlap accounting.",
+      "Five additional test cases are intended to cover formula separation and duplicate/overlap accounting; current-head CI is pending."
+    ],
+    "blocker": "Fresh Ruff format/lint, focused synthetic tests, full CI, lifecycle validation and review are required. Raw g/r archive scans and MGPR are not run in this cycle."
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The old script calculated all three per-band SNR variants but build_object_rows and summarize_group derived only one two-band candidate set from approximate SNR.",
+      "The input loader merged repeated SourceIDs across input files but did not report within-file duplicates or pairwise cross-file overlaps."
+    ],
+    "unresolved": [
+      "Current-head CI has not yet validated the ported script and new tests.",
+      "No raw archive scan has been run on this branch.",
+      "The 11,602 candidate-only membership discrepancy remains unresolved.",
+      "The exact publisher selection method and MGPR result remain unknown."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Per-band formula alternatives must remain separate through the object-level two-band membership calculation.",
+      "Cross-file overlap is expected for stratified diagnostic samples; within-file duplicate IDs are a separate integrity defect.",
+      "The inverse-error alternative must be labelled diagnostic, not physical SNR equivalence.",
+      "Missing raw observations remain UNKNOWN."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run current-head focused tests and full CI.",
+      "Verify formula-specific PASS/FAIL/UNKNOWN and confusion counts with synthetic cases.",
+      "Verify within-file duplicate detection and pairwise overlap hashes/counts."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Branch is based on current main and intentionally excludes the old PR #265 stack.",
+    "No raw g/r archive downloads are triggered by this branch.",
+    "No CPVS selector, threshold, source ID, model, feature, taxonomy, benchmark or baseline change is made.",
+    "Raw source-backed execution requires separate explicit compute/cost approval."
+  ]
+}
