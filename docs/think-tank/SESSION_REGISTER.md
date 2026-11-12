@@ -5,8 +5,6 @@
 **Project Source index:** [PROJECT_SOURCE_INDEX.md](../../sources/think_tank/PROJECT_SOURCE_INDEX.md)
 | Session ID | Date | Scope | Review form | Decision status | Record |
 |---|---|---|---|---|---|
-| Session ID | Date | Scope | Review form | Decision status | Record |
-|---|---|---|---|---|---|
 | TT-BASELINE-2026-11-12 | 2026-11-12 | Project-wide science, product, architecture and execution baseline. | 16 simulated specialist perspectives and independent limitations review. | Baseline recorded; no full scientific or product acceptance. | [Master Review](../THINK_TANK_MASTER_REVIEW_2026-11-12.md) |
 | TT-2026-11-12-02 | 2026-11-12 | DR24 application, AOIC identity and Park source-product conflict. | 16 simulated roles plus Red Team. | Explicit source selection and separate adapters supported as design principles; Park primary-source choice and DR24 inference blocked. | [Session 02](THINK_TANK_SESSION_2026-11-12_DR24_APPLICATION_INTEGRATION.md) |
 | TT-2026-11-12-03 | 2026-11-12 | ALeRCE, DR24 HATS and Zubercal source-selection boundaries. | 16 simulated roles plus Red Team. | Design accepted for planning; runtime implementation and model compatibility blocked. | [Session 03](THINK_TANK_SESSION_2026-11-12_EXPLICIT_SOURCE_SELECTION.md) · [Proposed ADR](../architecture/ADR_EXPLICIT_OBSERVATION_SOURCE_SELECTION_v0.1.md) |
