@@ -651,3 +651,16 @@ Verified code finding: the standard analysis path still uses the ALeRCE-backed n
 Session decision: approve explicit source identifiers, separate source-native payload contracts, no silent fallback, and a model-compatibility gate. Block normalization or inference from DR24/Zubercal until source semantics, identity association, QC and feature compatibility are validated. Keep existing v1 behavior during migration. Keep the Park primary-source decision OPEN; `AD-DATA-001` remains PROPOSED.
 
 No runtime code or frozen scientific baseline was changed. PR #283 identity-contract review and the Park dossier reconciliation remain gates before source-selection implementation.
+
+
+## 23. Think Tank Session 04 — CPVS membership and raw-SNR diagnostics
+
+- [Session 04 — CPVS Membership and Raw-SNR Diagnostic Review](think-tank/THINK_TANK_SESSION_2026-11-12_CPVS_MEMBERSHIP_REVIEW.md)
+
+The 16-role review inspected Issue #170, PR #265, the raw-SNR diagnostic, checksum-pinned archive workflow, r-band reconciliation and retained CPVS artifacts. It confirms that the four-field intersection is a strong root-cause candidate but does not prove the publisher used that rule. The 11,602 candidate-only set remains historically reconstructed, not freshly re-derived from raw data.
+
+Red Team findings: the diagnostic combines only the approximate SNR formula at object-membership level; exact and inverse-error formulas are currently calculated per band but not compared as complete two-band candidate sets. The 100/1,000 samples need explicit per-stratum reports and overlap/duplicate accounting. Missing band data must remain UNKNOWN. Full parent reconstruction and all-Seq r-band count reconciliation remain separate gates.
+
+Current source-backed workflow runs 43097116480 (raw-SNR re-derivation), 43097116394 (r-band reconciliation) and 43097116446 (Seq identity diagnostic) remain QUEUED with no jobs created. No fresh raw-SNR result is claimed. PR #265 remains Draft; it is 80 commits ahead and 92 behind current main and must not be merged without branch reconciliation and evidence review.
+
+No selector, SourceID mapping, threshold, model, feature, taxonomy or v0.2.0 baseline changed. Issue #170 remains OPEN / UNRESOLVED.
