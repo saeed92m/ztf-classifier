@@ -221,3 +221,33 @@ def test_duplicate_survey_object_refs_are_rejected() -> None:
             decision_policy_version="policy-1",
             decided_at="2026-11-12T00:00:00Z",
         )
+
+
+def test_confirmed_association_cannot_leave_competing_candidates() -> None:
+    with pytest.raises(ValueError, match="exactly the confirmed source ID"):
+        SourceAssociation(
+            association_id="association-6",
+            schema_version="1.0",
+            status=AssociationStatus.CONFIRMED_MATCH,
+            survey_objects=(_survey_object(),),
+            candidate_source_ids=("source-1", "source-2"),
+            evidence=(_evidence(),),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+            confirmed_source_id="source-1",
+        )
+
+
+def test_association_cannot_supersede_itself() -> None:
+    with pytest.raises(ValueError, match="cannot supersede itself"):
+        SourceAssociation(
+            association_id="association-7",
+            schema_version="1.0",
+            status=AssociationStatus.UNMATCHED,
+            survey_objects=(_survey_object(),),
+            candidate_source_ids=(),
+            evidence=(),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+            supersedes_association_id="association-7",
+        )
