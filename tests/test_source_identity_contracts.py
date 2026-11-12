@@ -187,7 +187,7 @@ def test_unmatched_association_cannot_contain_candidate_source_ids() -> None:
             status=AssociationStatus.UNMATCHED,
             survey_objects=(_survey_object(),),
             candidate_source_ids=("source-1",),
-            evidence=(),
+            evidence=(_evidence(),),
             decision_policy_version="policy-1",
             decided_at="2026-11-12T00:00:00Z",
         )
@@ -250,4 +250,45 @@ def test_association_cannot_supersede_itself() -> None:
             decision_policy_version="policy-1",
             decided_at="2026-11-12T00:00:00Z",
             supersedes_association_id="association-7",
+        )
+
+
+def test_final_association_decisions_require_evidence() -> None:
+    with pytest.raises(ValueError, match="require evidence"):
+        SourceAssociation(
+            association_id="association-8",
+            schema_version="1.0",
+            status=AssociationStatus.UNMATCHED,
+            survey_objects=(_survey_object(),),
+            candidate_source_ids=(),
+            evidence=(),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+        )
+
+
+def test_deferred_review_may_wait_for_evidence() -> None:
+    association = SourceAssociation(
+        association_id="association-9",
+        schema_version="1.0",
+        status=AssociationStatus.DEFERRED_REVIEW,
+        survey_objects=(_survey_object(),),
+        candidate_source_ids=(),
+        evidence=(),
+        decision_policy_version="policy-1",
+        decided_at="2026-11-12T00:00:00Z",
+    )
+
+    assert association.status is AssociationStatus.DEFERRED_REVIEW
+
+
+def test_source_record_cannot_supersede_itself() -> None:
+    with pytest.raises(ValueError, match="cannot supersede itself"):
+        AstrophysicalSourceRef(
+            source_id="source-1",
+            entity_kind=EntityKind.POINT_SOURCE,
+            identity_status=IdentityStatus.SUPERSEDED,
+            created_at="2026-11-12T00:00:00Z",
+            provenance_refs=("manifest:1",),
+            superseded_by="source-1",
         )
