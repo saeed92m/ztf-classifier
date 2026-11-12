@@ -545,3 +545,17 @@ The read-only GitHub snapshot on 2026-11-12 returned 29 open PRs. Many are histo
 See [OPEN_PR_TRIAGE_2026-11-12.md](OPEN_PR_TRIAGE_2026-11-12.md) for the full inventory, current review groups, mergeable flags, dependencies and safe disposition protocol.
 
 The current critical path remains #158/#253; CPVS #170/#180; AOIC #249; CIN #251/#252; artifact recovery #282; documentation convergence #281. Open state and GitHub's mergeable flag do not establish review, validation or acceptance.
+
+
+## 19. Canonical think-tank, defect and execution documents
+
+The original supplied think-tank source proposed three durable project artifacts. They are now represented by dated, evidence-based repository documents:
+
+- [16-Expert Think Tank Master Review](THINK_TANK_MASTER_REVIEW_2026-11-12.md) — roles, consensus, target architecture and scientific/product boundaries.
+- [Master Defect and Risk Register](MASTER_DEFECT_REGISTER_2026-11-12.md) — 18 tracked risk areas with evidence, status, closure criteria and issue links.
+- [Master Execution Roadmap](MASTER_EXECUTION_ROADMAP_2026-11-12.md) — seven gated phases from scientific integrity/recovery through final product acceptance, plus separate optional CIN track.
+- [Open PR Triage](OPEN_PR_TRIAGE_2026-11-12.md) — 29 open PR snapshot and safe disposition protocol.
+
+These are dated snapshots and must be updated from new evidence, not treated as immutable status. The original source files remain preserved in Project Sources.
+
+**P0 correction:** minimum source identity and association semantics are a critical dependency alongside DR24 application integration. Full AOIC can be staged, but model-ready multi-OID data must not be produced without explicit association evidence and ambiguity states.
