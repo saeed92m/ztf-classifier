@@ -537,3 +537,104 @@ def test_nonconfirmed_source_cannot_reference_confirmation_association() -> None
             provenance_refs=("manifest:1",),
             confirmation_association_id="association-1",
         )
+
+
+def test_source_identity_rejects_non_string_superseded_by() -> None:
+    with pytest.raises(ValueError, match="superseded_by must be a non-empty string"):
+        AstrophysicalSourceRef(
+            source_id="source-1",
+            entity_kind=EntityKind.POINT_SOURCE,
+            identity_status=IdentityStatus.SUPERSEDED,
+            created_at="2026-11-12T00:00:00Z",
+            provenance_refs=("manifest:1",),
+            superseded_by=123,  # type: ignore[arg-type]
+        )
+
+
+def test_association_evidence_rejects_non_string_score_kind() -> None:
+    with pytest.raises(ValueError, match="score_kind must be"):
+        AssociationEvidence(
+            evidence_id="e-type-score-kind",
+            method="test",
+            method_version="1",
+            policy_version="p1",
+            source_ref=_survey_object().reference_key,
+            candidate_ref="astrophysical-source:source-1",
+            score_kind=[],  # type: ignore[arg-type]
+        )
+
+
+def test_association_evidence_rejects_non_string_optional_metadata() -> None:
+    with pytest.raises(ValueError, match="calibration_version must be"):
+        AssociationEvidence(
+            evidence_id="e-type-calibration",
+            method="test",
+            method_version="1",
+            policy_version="p1",
+            source_ref=_survey_object().reference_key,
+            candidate_ref="astrophysical-source:source-1",
+            calibration_version=1,  # type: ignore[arg-type]
+        )
+    with pytest.raises(ValueError, match="content_hash must be"):
+        AssociationEvidence(
+            evidence_id="e-type-hash",
+            method="test",
+            method_version="1",
+            policy_version="p1",
+            source_ref=_survey_object().reference_key,
+            candidate_ref="astrophysical-source:source-1",
+            content_hash=123,  # type: ignore[arg-type]
+        )
+
+
+def test_source_association_rejects_non_string_optional_references() -> None:
+    with pytest.raises(ValueError, match="reviewer_ref must be"):
+        SourceAssociation(
+            association_id="association-reviewer-type",
+            schema_version="1.0",
+            status=AssociationStatus.DEFERRED_REVIEW,
+            survey_objects=(_survey_object(),),
+            candidate_source_ids=(),
+            evidence=(),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+            reviewer_ref=123,  # type: ignore[arg-type]
+        )
+    with pytest.raises(ValueError, match="supersedes_association_id must be"):
+        SourceAssociation(
+            association_id="association-supersedes-type",
+            schema_version="1.0",
+            status=AssociationStatus.DEFERRED_REVIEW,
+            survey_objects=(_survey_object(),),
+            candidate_source_ids=(),
+            evidence=(),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+            supersedes_association_id=123,  # type: ignore[arg-type]
+        )
+    with pytest.raises(ValueError, match="confirmed_source_id must be"):
+        SourceAssociation(
+            association_id="association-confirmed-source-type",
+            schema_version="1.0",
+            status=AssociationStatus.CONFIRMED_MATCH,
+            survey_objects=(_survey_object(),),
+            candidate_source_ids=("source-1",),
+            evidence=(_evidence(),),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+            confirmed_source_id=123,  # type: ignore[arg-type]
+        )
+
+
+def test_deferred_review_rejects_evidence_for_undeclared_candidate() -> None:
+    with pytest.raises(ValueError, match="deferred review evidence must reference"):
+        SourceAssociation(
+            association_id="association-deferred-wrong-candidate",
+            schema_version="1.0",
+            status=AssociationStatus.DEFERRED_REVIEW,
+            survey_objects=(_survey_object(),),
+            candidate_source_ids=("source-1",),
+            evidence=(_evidence(candidate_source_id="source-2"),),
+            decision_policy_version="policy-1",
+            decided_at="2026-11-12T00:00:00Z",
+        )
