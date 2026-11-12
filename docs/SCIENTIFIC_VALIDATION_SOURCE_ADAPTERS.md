@@ -5,18 +5,19 @@ repository stores the **source contract**, not mutable external benchmark data.
 
 | ID | Source | Role | Evidence requirement |
 |---|---|---|---|
-| `star_embed_ztf_40k` | StarEmbed ZTF_40k | ground truth | immutable dataset/split/schema hashes |
+| `star_embed_ztf_40k` | StarEmbed ZTF_40k | candidate external benchmark; not accepted until identity/split audit passes | immutable dataset/split/schema hashes + object/source-level disjointness evidence |
 | `ztf_periodic_781k` | ZTF CPVS / DR2 | parent catalogue / source reference | Zenodo attachment and catalog hashes |
 | `ztf_periodic_730k` | published 730,184-object quality subset | published membership reference (not independent astrophysical ground truth) | immutable membership hash + explicit name-to-Seq crosswalk |
 | `ztf_dr24_source_subset` | official ZTF DR24 | source-backed | release metadata + query/artifact hashes |
-| `alerce_reference` | ALeRCE TAP | independent reference | query + response hashes + schema |
+| `alerce_reference` | ALeRCE TAP | reference-system output / weak labels; not independent astrophysical ground truth | query + response hashes + schema + explicit reference-label semantics |
 
 The 730k **published membership** is now pinned separately to Zenodo 5764899. It is the exact historical membership benchmark. The existing deterministic derivation from the 781,602-parent snapshot remains valuable, but is explicitly diagnostic: a current-source reconstruction is not allowed to replace the published membership when validating the historical release.
 
 ALeRCE now has two distinct lanes: the live TAP adapter remains useful for current-source drift monitoring, while Zenodo 4279623 is the immutable historical reference snapshot for the 2020-06-09 classifier/features/output state.
 
-ALeRCE remains an independent reference system. Its predictions cannot satisfy
-ground-truth provenance requirements.
+ALeRCE remains a useful reference system for drift and comparison. Its predictions and labels are not independent astrophysical ground truth and cannot satisfy independent-ground-truth provenance requirements.
+
+StarEmbed's current source audit failed closed on a duplicate source ID within the training split and an object-identity overlap between train and test. Keep it out of independent benchmark claims until Issue #210 and PR #211 resolve the identity/split problem and the audit passes on a pinned revision.
 
 ## Completion contract
 
