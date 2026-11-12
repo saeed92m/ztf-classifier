@@ -114,6 +114,8 @@ class AstrophysicalSourceRef:
         if self.identity_status is IdentityStatus.SUPERSEDED:
             if not self.superseded_by or not self.superseded_by.strip():
                 raise ValueError("superseded source records require superseded_by.")
+            if self.superseded_by == self.source_id:
+                raise ValueError("a source record cannot supersede itself.")
         elif self.superseded_by is not None:
             raise ValueError("superseded_by is only valid for superseded records.")
 
@@ -221,6 +223,14 @@ class SourceAssociation:
                 )
             if self.supersedes_association_id == self.association_id:
                 raise ValueError("an association cannot supersede itself.")
+
+        if (
+            self.status is not AssociationStatus.DEFERRED_REVIEW
+            and not self.evidence
+        ):
+            raise ValueError(
+                "association decisions require evidence except deferred review."
+            )
 
         if self.status is AssociationStatus.CONFIRMED_MATCH:
             if not self.confirmed_source_id or not self.confirmed_source_id.strip():
