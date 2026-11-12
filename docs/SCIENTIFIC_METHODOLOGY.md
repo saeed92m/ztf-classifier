@@ -48,6 +48,14 @@ Latest retained historical set comparison reviewed on 2026-11-11:
 
 The four-field predicate yields an exact empirical intersection on the retained historical identifiers. It is not established as the publisher's documented selection rule. The paper and Table 4 ReadMe do not explicitly require all four fields to be positive. The diagnostic must not become a production selector without primary-source or author evidence.
 
+Historical source-backed reconciliation on 2026-11-02 (workflow run 38635891449) verified the raw CDS tables against publisher MRT files with zero row mismatches. Raw Table 2 SHA-256: `2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881`; raw Table 4 SHA-256: `4fa96379d47f851db7ecd80a83986d82201e8718f12ab727b5348a3914374e7d`. The Table 4 ZTF-name-to-Table2-Seq crosswalk mapped all 730,184 names with zero unmapped names or ID/Seq mismatches. For that exact historical artifact, applying the four-field diagnostic to the retained 741,786 candidate IDs left 730,184 and exactly matched Table 4 at object level. The 55 four-field-positive controls were outside the historical candidate set. All 11,602 candidate-only objects had historical `snr_exact=true` and qualifying detections in both bands, so the finite-SNR guard had zero membership delta on that residual set.
+
+This is a verified historical diagnostic reconstruction, not a fresh derivation on current main and not proof that the publisher used the four-field predicate. The official paper documents at least one 2.5σ g-band and one 3σ r-band detection, but does not explicitly state that both mean magnitudes and both per-band periods must be positive. The raw Table 4 file was verified in that historical run; the current-main derivation and all associated hashes must be rerun before making a current reproduction claim.
+
+A separate historical `Ng >= 11 AND Nr >= 11` diagnostic removed 11,557 of the 11,602 candidate-only objects and left 45 while preserving all published members. This is a strong sampling clue, not a documented selection rule and must not enter production selection.
+
+Direct MGPR/Gaussian Process testing remains outstanding. The planned cohort includes reference members, all 11,602 candidate-only objects where feasible, the 45 residual cases, nonmember controls, flagged objects and incomplete-data objects. Record input counts, kernel, optimizer, convergence, likelihood, covariance/numerical diagnostics, versions, hashes and runtime. Use PASS/FAIL/UNKNOWN/ERROR; execution errors and missing inputs are not scientific FAIL.
+
 The 55-control raw-photometry audit was corrected on 2026-11-11. Missing archive rows are UNKNOWN, not SNR FAIL:
 
 - g band: PASS 1, FAIL 0, UNKNOWN 54.
