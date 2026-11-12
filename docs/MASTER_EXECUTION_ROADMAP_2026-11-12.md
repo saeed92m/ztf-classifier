@@ -28,7 +28,7 @@
 - Recover and independently authenticate the original schema-1.0 production model artifact (#282).
 - Preserve the prior 2026-11-09 local audit findings; do not ask for a duplicate inventory before remote recovery sources are exhausted.
 - Resolve StarEmbed train/test identity overlap and split leakage.
-- Continue CPVS root-cause work (#170/#180) as a separate research stream.
+- Treat CPVS (#170/#180) as P0 scientific research and the highest-priority unresolved scientific discrepancy. Keep it separate from the DR24-first Park MVP critical path. Complete artifact-level traceability, then fresh raw SNR, fixed-sample raw coverage, MGPR and root-cause analysis; do not change selectors or baselines without proof.
 - Establish source identity concepts and association states for DR24 OIDs (#249).
 - Confirm data license and redistribution constraints for all current sources.
 - Define source-backed validation inputs, hashes, retrieval versions and expected results.
@@ -90,7 +90,7 @@
 - Keep calibration and conformal prediction tied to a declared reference population.
 - Keep OOD, scientific anomaly and novelty as separate engines.
 - Add unknown/abstention semantics and data-adequacy outputs.
-- Run CPVS diagnostics including raw provenance, fixed samples, SNR and MGPR; keep this separate from Park acceptance.
+- Run CPVS diagnostics at P0 research priority: raw provenance, fixed samples, all-formula SNR, duplicate/overlap accounting and MGPR. Keep this separate from Park product acceptance and do not trigger >11.2 GB archive jobs without approval.
 
 ### Exit gate
 
@@ -265,3 +265,8 @@ Current required links:
 - Material PR evidence: the Think Tank traceability block in `.github/pull_request_template.md`.
 
 A Think Tank recommendation does not authorize a baseline change, PR merge or release. Preserve the separate Project Owner approval gate.
+
+
+## CPVS P0 research lane — Think Tank Session 07
+
+CPVS remains the highest-priority unresolved scientific research question. This does not make it a Park MVP or product-release gate. The retained artifact has been independently rechecked, but fresh raw-light-curve SNR derivation and MGPR are still not executed. Keep all hypotheses diagnostic only. See [Session 07](think-tank/THINK_TANK_SESSION_2026-11-12_CPVS_PRIORITY_AND_EVIDENCE_RECHECK.md).
