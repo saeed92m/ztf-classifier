@@ -62,7 +62,7 @@ Current continuation point: [PROJECT_MASTER_STATUS_AND_CONTINUATION_2026-11-12.m
 - Software release v1.0.1 and scientific baseline v0.2.0 remain immutable. — VERIFIED
 - PRs #264, #273, #274, #275, #276, #277 and #278 are merged. Their scope is bounded raw retrieval, API, diagnostic QC, Explorer, separate Zubercal adapter and local artifact audit. — VERIFIED
 - Product acceptance for the DR24-first Park MVP remains open under Issues #158 and #253. The application observation service still requires explicit DR24 backend integration. — VERIFIED / OPEN
-- The v0.2 frozen production artifact local audit has not yet been supplied; the artifact is not authenticated by the presence of the audit script. — UNKNOWN / BLOCKED
+- A prior local WSL audit summary from 2026-11-09 was recovered from project conversation history: the frozen production path and ALeRCE raw cache were absent; the schema-1.1 lab-smoke artifact and processed feature/config artifacts were present. The exact JSON report is not currently mounted. The production artifact remains UNRECOVERED / NOT AUTHENTICATED; see Issue #282. — HISTORICAL USER-PROVIDED EVIDENCE / BLOCKED
 - CPVS retained historical comparison: parent 781,602; published 730,184; retained candidate set 741,786; candidate-only 11,602; published-only 0. The candidate list is not freshly derived on current main. — VERIFIED historical evidence / UNRESOLVED method
 - Four-field CPVS predicate remains diagnostic, not an adopted selection rule. Missing raw archive data is UNKNOWN, not FAIL. — VERIFIED
 - AOIC and CIN remain proposed; no production runtime is claimed. — PROPOSED
