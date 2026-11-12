@@ -42,19 +42,14 @@
   ],
   "measurement": {
     "metrics": {
-      "formula_coverage": {
-        "before": "Per-band qualifying detection counts existed for approximate, exact and inverse-error formulas, but the two-band candidate and confusion summary used only approximate SNR.",
-        "after": "The new object-level builder creates separate two-band candidate states and Table 4 confusion summaries for all three formulas.",
-        "status": "PARTIAL"
-      },
-      "input_integrity": {
-        "before": "Input record counts and metadata conflicts were reported; within-file duplicate IDs and pairwise cross-file overlaps were not explicitly reported.",
-        "after": "Within-file duplicate rows/IDs and pairwise cross-file overlap counts, hashes and examples are reported. Within-file duplicates fail closed.",
+      "regression_protection_count": {
+        "before": "The diagnostic derived a two-band candidate set from approximate SNR only; within-file duplicates and pairwise cross-file overlaps were not reported.",
+        "after": "The code now defines separate approximate, exact and inverse-error two-band candidate states and reports within-file duplicate rows/IDs plus pairwise cross-file overlap counts and hashes. New synthetic regression cases were added; current-head CI remains pending.",
         "status": "PARTIAL"
       },
       "scientific_validity": {
-        "before": "Historical candidate membership remains unresolved.",
-        "after": "No raw archive scan or MGPR execution is part of this code-only cycle.",
+        "before": "The 11,602 candidate-only discrepancy remains unresolved.",
+        "after": "No raw archive scan or MGPR execution is included in this code-only cycle. Synthetic tests do not establish source-backed scientific validity.",
         "status": "NOT_MEASURED"
       }
     },
