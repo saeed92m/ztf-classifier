@@ -487,3 +487,16 @@ Coverage report: 6,468 / 7,761 executable lines, 83.34% line coverage. Branch co
 The four source-backed Scientific Validation jobs for source provenance, DR24/ALeRCE evidence, independent StarEmbed evidence, and frozen historical ALeRCE verification were SKIPPED. This documentation PR therefore has a green engineering CI result, but it does not establish Scientific-PASS, model artifact readiness, DR24 live-source parity, or end-to-end Park MVP acceptance.
 
 The missing frozen v0.2.0 production artifact remains a separate blocker. The repository audit contract expects `runs/model_baseline_v0.2_production/artifact/`, schema 1.0, model version `baseline_v0.2`, 42 frozen features, and manifest-declared file hashes. The schema-1.1 lab-smoke artifact is not a substitute. An independently pinned original artifact hash is still unavailable. See `docs/scientific/LOCAL_ARTIFACT_VALIDATION.md` and `configs/process/cycles/local-scientific-artifact-audit-20261107.json`.
+
+
+## 16. Historical local artifact inventory — 2026-11-09
+
+A prior WSL audit was recorded in the project conversation on 2026-11-09. It reported:
+- The frozen production artifact directory was absent in the inspected checkout.
+- The separate 2026-10-27 lab-smoke artifact was present, but it is schema 1.1 and is not eligible to replace the schema-1.0 production artifact.
+- The ALeRCE raw-detection Parquet cache was absent.
+- The processed feature/config artifacts and four dependent test modules were present.
+- The then-current audit summary reported nine production artifact paths missing. The later corrected audit contract requires six core production files and treats three conformal/OOD diagnostics as optional. The older nine-file count must not be interpreted as the current required-file contract.
+- A search of accessible Git history and the `release/recover-v1.0.1` branch path did not recover the original production files.
+
+The exact historical JSON report and its full nine-path list are not available in the current mounted project sources. This section preserves the recorded summary and does not claim a fresh filesystem read in this session. The recovery tracker is [Issue #282](https://github.com/saeed92m/ztf-classifier/issues/282). Do not ask the user to repeat the same local inventory unless a new, specific validation requirement arises after remote recovery sources have been exhausted.
