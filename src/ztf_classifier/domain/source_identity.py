@@ -7,6 +7,7 @@ perform cross-matching, merge OIDs, or infer source identity.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from enum import Enum
 from math import isfinite
@@ -42,6 +43,9 @@ class AssociationStatus(str, Enum):
     DEFERRED_REVIEW = "deferred_review"
 
 
+NO_CANDIDATE_REFERENCE = "no-candidate"
+
+
 @dataclass(frozen=True)
 class SurveyObjectRef:
     """A source-native survey object, not a physical-source identity."""
@@ -65,6 +69,23 @@ class SurveyObjectRef:
             raise ValueError("rcid must be non-negative.")
         if self.band is not None and not self.band.strip():
             raise ValueError("band must be non-empty when provided.")
+
+    @property
+    def reference_key(self) -> str:
+        """Return a stable, unambiguous key for this survey-native object."""
+        payload = json.dumps(
+            [
+                self.survey,
+                self.release,
+                self.object_id,
+                self.band,
+                self.field,
+                self.rcid,
+            ],
+            ensure_ascii=True,
+            separators=(",", ":"),
+        )
+        return f"survey-object:{payload}"
 
 
 @dataclass(frozen=True)
@@ -93,6 +114,7 @@ class AstrophysicalSourceRef:
     created_at: str
     provenance_refs: tuple[str, ...]
     superseded_by: str | None = None
+    confirmation_association_id: str | None = None
 
     def __post_init__(self) -> None:
         if not all(
@@ -118,6 +140,17 @@ class AstrophysicalSourceRef:
                 raise ValueError("a source record cannot supersede itself.")
         elif self.superseded_by is not None:
             raise ValueError("superseded_by is only valid for superseded records.")
+        if self.confirmation_association_id is not None and not (
+            self.confirmation_association_id.strip()
+        ):
+            raise ValueError("confirmation_association_id must be non-empty.")
+        if (
+            self.identity_status is IdentityStatus.CONFIRMED
+            and self.confirmation_association_id is None
+        ):
+            raise ValueError(
+                "confirmed source identity requires a confirmation association ID."
+            )
 
 
 @dataclass(frozen=True)
@@ -263,3 +296,51 @@ class SourceAssociation:
             raise ValueError(
                 "rejected matches require the rejected candidate source ID."
             )
+
+        survey_reference_keys = {
+            item.reference_key for item in self.survey_objects
+        }
+        if any(
+            item.source_ref not in survey_reference_keys for item in self.evidence
+        ):
+            raise ValueError(
+                "association evidence source_ref must match a declared survey object."
+            )
+
+        expected_candidate_refs = {
+            f"astrophysical-source:{source_id}"
+            for source_id in self.candidate_source_ids
+        }
+        evidence_candidate_refs = {
+            item.candidate_ref for item in self.evidence
+        }
+        if self.status in {
+            AssociationStatus.CONFIRMED_MATCH,
+            AssociationStatus.AMBIGUOUS_MATCH,
+            AssociationStatus.REJECTED_MATCH,
+        } and evidence_candidate_refs != expected_candidate_refs:
+            raise ValueError(
+                "association evidence must cover exactly the declared candidate source IDs."
+            )
+        if self.status is AssociationStatus.UNMATCHED and any(
+            item.candidate_ref != NO_CANDIDATE_REFERENCE
+            for item in self.evidence
+        ):
+            raise ValueError(
+                "unmatched evidence must use the no-candidate reference."
+            )
+
+
+def validate_source_confirmation(
+    source: AstrophysicalSourceRef,
+    association: SourceAssociation,
+) -> None:
+    """Validate that a confirmed source points to its matching association."""
+    if source.identity_status is not IdentityStatus.CONFIRMED:
+        raise ValueError("source identity is not confirmed.")
+    if source.confirmation_association_id != association.association_id:
+        raise ValueError("confirmation association ID does not match.")
+    if association.status is not AssociationStatus.CONFIRMED_MATCH:
+        raise ValueError("confirmation association is not a confirmed match.")
+    if association.confirmed_source_id != source.source_id:
+        raise ValueError("confirmed association points to a different source.")
