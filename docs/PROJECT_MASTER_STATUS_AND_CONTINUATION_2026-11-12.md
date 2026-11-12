@@ -18,7 +18,7 @@ ZTF Classifier is a CPU-first, cross-platform Astronomical Data Analysis & Disco
 
 The next product acceptance action is a bounded, pinned end-to-end run for 5–10 confirmed astrophysical sources. The run must preserve native data, identity state, QC decisions, provenance, export, hashes, and offline replay. After that, run the 30–50 source guided demonstration. These tests do not replace the separate Park target of at least 100,000 provenance-recorded labeled light curves.
 
-CPVS exact historical reconstruction remains unresolved and is deferred research. It is not a blocker for the DR24-first Park MVP. The exact v0.2.0 baseline, feature schema, class order, model identity, reference labels, and release artifacts remain unchanged.
+CPVS is the P0 scientific research workstream and the highest-priority unresolved scientific discrepancy. It remains separate from the DR24-first Park MVP and is not a product/release gate. This resolves the priority distinction: research priority is P0; product critical-path priority is separate. The exact v0.2.0 baseline, feature schema, class order, model identity, reference labels, and release artifacts remain unchanged.
 
 AOIC and CIN are proposed, separately staged subsystems. Neither has a production runtime. CIN must not delay the Park MVP.
 
@@ -169,8 +169,8 @@ The bounded engineering sequence is separate:
 ### 6.1 CPVS disposition
 
 **Issues:** [#170](https://github.com/saeed92m/ztf-classifier/issues/170) and [#180](https://github.com/saeed92m/ztf-classifier/issues/180)  
-**Disposition:** OPEN / UNRESOLVED / DEFERRED RESEARCH  
-**Product impact:** not on the DR24-first Park critical path.
+**Disposition:** OPEN / UNRESOLVED / P0 SCIENTIFIC RESEARCH  
+**Product impact:** not on the DR24-first Park critical path; not a Park MVP or product-release gate.
 
 The latest 2026-11-11 independent re-analysis verified the raw CDS Table 2 and Table 4 file hashes:
 
@@ -217,6 +217,23 @@ Separate archive-integrity leads remain:
 Older run records contain 11,604 extras. That figure belongs to an earlier revision/input space and must not replace the current retained 11,602 comparison. Do not merge figures from different source hashes or code revisions.
 
 No CPVS selector, threshold, class rule, model, feature, v0.2.0 baseline, or release was changed.
+
+### 6.1.1 Independent retained-artifact recheck — 2026-11-12
+
+The retained raw-CDS reconciliation artifact from run [41367972395](https://github.com/saeed92m/ztf-classifier/actions/runs/41367972395), artifact ID `13108147605`, was downloaded and independently rechecked in this session.
+
+- Artifact ZIP: 177,453,581 bytes; SHA-256 `130f3db65827afd83f5050e7eb91eb1cf7f6432e85456fd16586c8000a9aa6be`.
+- Table 2 raw bytes: 178,986,858; SHA-256 `2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881`.
+- Table 4 raw bytes: 46,650,697; SHA-256 `4fa96379d47f851db7ecd80a83986d82201e8718f12ab727b5348a3914374e7d`.
+- Independently parsed Table 2: 781,602 unique Seq; zero duplicate Seq.
+- Independently parsed Table 4: 730,184 unique Seq.
+- Candidate-only provenance TSV: 11,602 unique IDs, zero overlap with Table 4, all present in Table 2.
+- Reconstructed retained set: 741,786; published-only: 0; candidate-only: 11,602.
+- Four-field-positive set: 730,239; C∩F: 730,184; F−C: 55; all 55 IDs match the retained control TSV.
+- Of the 11,602 residuals, 45 have both Ng and Nr at least 11; 11,557 have at least one band below 11 (11,443 g below 11; 114 r below 11).
+- Fixed sample strata were rechecked: 100-object sample = 50/25/15/10; 1,000-object sample = 500/250/195/55 for reference-candidate/candidate-only/parent-neither/four-field-only.
+
+**Evidence boundary:** this is an independent recheck of a retained November 2 artifact. It is not a fresh current-main candidate derivation, raw g/r SNR re-execution, or MGPR run. The root cause remains unresolved. The four-field and 11-observation rules remain diagnostic only.
 
 ### 6.2 Product scientific-validation gate
 
@@ -681,22 +698,39 @@ The repository Pull Request template now requires Think Tank traceability for ma
 
 ### PR #281 — Think Tank charter and source index integration
 
-- Latest inspected head: `28228e3c689a2655dccc8ae12fcd4f4e4a880563`.
+- Latest fully tested head before Session 07 documentation additions: `585d393c274d0599e9bf46a5b09f2ef87d226aa4`.
 - PR: OPEN / DRAFT / NOT MERGED.
-- The branch now contains the canonical charter, session register, Project Source index, Session 05, and Think Tank traceability fields in `.github/pull_request_template.md`.
-- CI for this latest head was running at last inspection. Format Check, CodeQL, Product Scope Audit and the Scientific Validation benchmark/lifecycle contract had passed; Lint was still running. Source-backed DR24/ALeRCE, historical ALeRCE, provenance and StarEmbed jobs remained SKIPPED.
-- The immediately preceding head `15ce624fa29449d5c5437f7ac20e114a6a01abe4` completed all eight engineering CI jobs successfully in run [43243888984](https://github.com/saeed92m/ztf-classifier/actions/runs/43243888984): 702 passed, 13 skipped, zero failures, 9 warnings. Line coverage: 6,468/7,761 = 83.34%; branch coverage was not measured. This earlier result does not validate the new charter/template commit.
+- The branch contains the canonical charter, source index, session register, Sessions 02–07 and mandatory Think Tank traceability fields in `.github/pull_request_template.md`.
+- CI run [43285200369](https://github.com/saeed92m/ztf-classifier/actions/runs/43285200369): all eight engineering jobs PASS.
+- Test Suite: 702 passed, 13 skipped, zero failures, 9 warnings. Line coverage 6,468/7,761 = 83.34%; branch coverage not measured.
+- Runtime Smoke, Build & Verify Package, Dependency Audit and CI Gate: PASS.
+- CodeQL, Product Scope Audit and Scientific Validation benchmark/lifecycle contract: PASS.
+- DR24/ALeRCE source-backed, historical ALeRCE, provenance and StarEmbed scientific jobs: SKIPPED.
+- Session 07 and its register/documentation updates were added after this successful run. A fresh CI run is required for the final updated head.
 
 ### PR #283 — minimum source identity contract
 
-- Latest inspected head: `90b6026e62e41bdff4d33c251ec2f0e1cbbb7ba9`.
+- Latest inspected head: `988e3c5537a0278119b680d98e40d9978092ba3a`.
 - PR: OPEN / DRAFT / NOT MERGED.
-- The updated Test Suite passed: 736 passed, 13 skipped, zero failures, 9 warnings. Total line statements: 7,962; missed: 1,321; rounded coverage reported by CI: 83%. Branch coverage was not reported.
-- Format Check, Lint, Cumulative Lifecycle Gate, Runtime Smoke Tests, CodeQL, Product Scope Audit and the Scientific Validation benchmark/lifecycle contract passed. Build & Verify Package was still in progress at last inspection; Dependency Audit and final CI Gate were not yet confirmed.
-- Scientific source-backed jobs for DR24/ALeRCE, historical ALeRCE, provenance and StarEmbed remained SKIPPED. This is not scientific validation of source identity.
-
-The earlier two Test Suite failures on head `d9e17467...` were stale error-message assertions after pairwise evidence coverage was strengthened. The assertions were corrected in `44369783e1b28248cf6e93832e1472a87540f09f`; the later suite passed.
+- CI run [43284976844](https://github.com/saeed92m/ztf-classifier/actions/runs/43284976844): all eight engineering jobs PASS.
+- Test Suite: 736 passed, 13 skipped, zero failures, 9 warnings. Total line statements 7,962; missed 1,321; rounded coverage 83%. Branch coverage not reported.
+- CodeQL, Product Scope Audit and Scientific Validation benchmark/lifecycle contract: PASS.
+- DR24/ALeRCE source-backed, historical ALeRCE, provenance and StarEmbed scientific jobs: SKIPPED.
+- The contract validates referential consistency and pairwise evidence coverage. It does not implement a matcher, persistent identity ledger, automatic OID grouping or prove astrophysical identity.
+- API serialization/persistence compatibility and independent adjudicated association validation remain open.
 
 ## 26. CPVS workflow state
 
-The raw-SNR re-derivation run `43097116480`, r-band reconciliation run `43097116394`, and targeted Seq diagnostic run `43097116446` were rechecked. All three remain QUEUED, with no jobs created and no current raw-archive result. Do not launch duplicate multi-gigabyte archive scans while these runs remain queued. Issue #170 remains OPEN / UNRESOLVED; the four-field predicate remains a hypothesis, not an established publisher rule.
+The raw-SNR re-derivation run `43097116480`, r-band reconciliation run `43097116394`, and targeted Seq diagnostic run `43097116446` were rechecked. All three remain QUEUED, with no jobs created and no current raw-archive result. The pinned raw-SNR workflow expands to more than 11.2 GB across g/r archive members and has a 120-minute job limit. Do not launch duplicate transfers or long-running Actions jobs without an explicit compute/cost decision. Issue #170 remains OPEN / UNRESOLVED / P0 scientific research; the four-field predicate and Ng/Nr threshold remain hypotheses, not established publisher rules. CPVS does not block the DR24-first Park MVP.
+
+## 27. Think Tank Session 07 — CPVS priority and retained-artifact recheck
+
+Session [TT-2026-11-12-07](think-tank/THINK_TANK_SESSION_2026-11-12_CPVS_PRIORITY_AND_EVIDENCE_RECHECK.md) used all 16 simulated specialist seats plus an independent Red Team pass.
+
+Joint decision:
+- CPVS is P0 for scientific research and root-cause work.
+- CPVS is not a product/release gate and does not block the DR24-first Park MVP.
+- The retained artifact counts and fixed sample strata were independently rechecked; no fresh raw SNR or MGPR execution is claimed.
+- The 11,602 discrepancy remains unresolved.
+- PR #265 is an 80-commit, 14-file Draft research branch with a stale base snapshot. Do not merge or extend it until unique changes are isolated against current main.
+- The raw archive workflows remain queued with no jobs created. Do not repeat >11.2 GB downloads without approval.
