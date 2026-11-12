@@ -126,7 +126,12 @@
       "The 11,557-object reduction under Ng>=11 and Nr>=11 leaves 45 residuals and is a diagnostic clue, not a documented selection rule.",
       "Direct MGPR testing remains an explicit CPVS research requirement; execution status must use PASS/FAIL/UNKNOWN/ERROR and preserve numerical diagnostics.",
       "Scientific Validation Source Adapters now classify StarEmbed as a candidate external benchmark blocked by source/split audit, and ALeRCE as a reference-system output/weak-label source, not independent astrophysical ground truth.",
-      "The submitted Park dossier emphasizes Zubercal recalibrated PSF photometry, while the current source-product contract treats DR24 HATS as primary and Zubercal as supplementary. The primary product decision must be confirmed against the approved Park deliverable; HATS and Zubercal are not interchangeable."
+      "The submitted Park dossier emphasizes Zubercal recalibrated PSF photometry, while the current source-product contract treats DR24 HATS as primary and Zubercal as supplementary. The primary product decision must be confirmed against the approved Park deliverable; HATS and Zubercal are not interchangeable.",
+      "README now links the dated master status, 16-role review, defect register, execution roadmap and open PR triage.",
+      "Architecture v0.3 now distinguishes a source-native survey object/OID from a physical astrophysical source and defines explicit association states. The legacy CanonicalObject wording is constrained to survey-object semantics until a versioned identity contract is implemented.",
+      "The source adapter registry now treats StarEmbed as a candidate external benchmark blocked by identity/split audit and ALeRCE as reference-system output/weak labels rather than independent astrophysical ground truth.",
+      "Scientific Methodology now includes the historical raw CDS Table2/Table4 hash reconciliation, exact historical four-field diagnostic, 55 controls, 11,557/45 observation-count clue and outstanding MGPR protocol.",
+      "The Park dossier's emphasis on Zubercal photometry and the repository contract's HATS-primary design are not yet reconciled; primary product choice remains OPEN."
     ]
   },
   "regression": {
@@ -162,6 +167,9 @@
     "Multi-source validation status: Issue #188; DR24 smoke results are not production model validation.",
     "Historical CPVS raw CDS reconciliation and MGPR requirement are documented in docs/SCIENTIFIC_METHODOLOGY.md and the Notion CPVS audit page.",
     "Independent validation blockers: Issue #188 (DR24 smoke only; model inference NOT_RUN) and Issue #210 (StarEmbed train/test identity leakage).",
-    "Park source-product decision remains open: confirm HATS versus Zubercal primary role against the approved deliverable; keep separate adapters and provenance."
+    "Park source-product decision remains open: confirm HATS versus Zubercal primary role against the approved deliverable; keep separate adapters and provenance.",
+    "Architecture v0.3 source identity correction: docs/architecture/ARCHITECTURE_v0.3.md.",
+    "Current benchmark source semantics: docs/SCIENTIFIC_VALIDATION_SOURCE_ADAPTERS.md.",
+    "Expanded CPVS historical and MGPR evidence: docs/SCIENTIFIC_METHODOLOGY.md and Notion CPVS audit."
   ]
 }
