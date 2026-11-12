@@ -637,3 +637,17 @@ PR #281 head `b1bbab8fb2c6f2ae384ba37e1012141d777a9bb3` was checked after the do
 - Product Scope Audit run [43236966212](https://github.com/saeed92m/ztf-classifier/actions/runs/43236966212) and CodeQL run [43236966693](https://github.com/saeed92m/ztf-classifier/actions/runs/43236966693): PASS.
 
 This is an engineering and documentation PASS for the tested PR head. It is not a full scientific validation or Park MVP acceptance. The frozen production artifact, StarEmbed split integrity, DR24 source-backed tests, Park source-product decision, AOIC identity contract and CPVS residual remain open. The PR remains Draft and unmerged.
+
+
+## 22. Think Tank Session 03 — explicit source selection
+
+A new 16-role simulated-specialist review inspected the current source code, the DR24 HATS and Zubercal DR20 adapters, the application observation service, API/job schemas, source-identity work and Issues #158/#249/#253.
+
+- [Session 03 — Explicit Source Selection and Native Observation Boundaries](think-tank/THINK_TANK_SESSION_2026-11-12_EXPLICIT_SOURCE_SELECTION.md)
+- [ADR — Explicit Observation Source Selection v0.1](architecture/ADR_EXPLICIT_OBSERVATION_SOURCE_SELECTION_v0.1.md)
+
+Verified code finding: the standard analysis path still uses the ALeRCE-backed normalized observation service. DR24 HATS and Zubercal remain separate native-data paths. The current Observation contract does not preserve all native time/photometry semantics for those products.
+
+Session decision: approve explicit source identifiers, separate source-native payload contracts, no silent fallback, and a model-compatibility gate. Block normalization or inference from DR24/Zubercal until source semantics, identity association, QC and feature compatibility are validated. Keep existing v1 behavior during migration. Keep the Park primary-source decision OPEN; `AD-DATA-001` remains PROPOSED.
+
+No runtime code or frozen scientific baseline was changed. PR #283 identity-contract review and the Park dossier reconciliation remain gates before source-selection implementation.
