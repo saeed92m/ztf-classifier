@@ -88,8 +88,9 @@
       "The first documentation PR omitted the mandatory machine-readable cumulative cycle record. The repository workflow correctly failed closed."
     ],
     "unresolved": [
-      "Recover and independently authenticate the frozen production model artifact; current repository tree and retained CI artifact contain test reports only, not the production model.",
-      "Run the skipped production inference tests after authoritative artifact recovery.",
+      "The prior 2026-11-09 WSL audit already reported the frozen production artifact path absent and the ALeRCE raw-detection cache absent; the exact historical JSON and full per-file path list are not in the currently accessible Project files.",
+      "Recover and independently authenticate the original schema-1.0 production artifact through a controlled authoritative source; do not ask the user to repeat the prior inventory before remote recovery sources are exhausted.",
+      "Run the seven production inference tests after authoritative artifact and shared model inputs are recovered.",
       "Run live DR24 HATS, DR24 UI and Zubercal parity tests with pinned source data.",
       "The Park MVP still requires explicit DR24 application integration and confirmed-source end-to-end testing.",
       "The CPVS 11,602 residual explanation remains unresolved; the retained candidate set has not been freshly re-derived on current main."
@@ -104,14 +105,17 @@
       "Treat missing raw observations as UNKNOWN unless observed evidence supports FAIL.",
       "Do not equate merged raw adapters or green engineering CI with end-to-end scientific acceptance.",
       "Keep the 16-role think-tank process active, and identify it as a governance method rather than claiming 16 external experts are engaged.",
-      "Keep proposed business targets, customer segments, revenue models, and grants separate from documented achievements."
+      "Keep proposed business targets, customer segments, revenue models, and grants separate from documented achievements.",
+      "A prior local WSL artifact inventory was already recorded on 2026-11-09: production artifact path absent, lab-smoke artifact present but ineligible, ALeRCE raw cache absent, processed feature/config artifacts and dependent test modules present.",
+      "The 2026-11-09 summary of nine missing production files predates the corrected audit contract. Current schema-1.0 production readiness requires six core files; three conformal/OOD diagnostics are optional.",
+      "The user's local audit should not be repeated merely to advance repository-side work; use the existing evidence and continue remote recovery first."
     ]
   },
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
       "Recover and authenticate the frozen schema-1.0 baseline_v0.2 production artifact using an authoritative source and independently pinned hash; never substitute schema-1.1 lab-smoke files.",
-      "Run the read-only local artifact inventory and the seven production inference tests when the correct artifact and shared model inputs are available.",
+      "Run the seven production inference tests and dependent feature/ALeRCE integration tests after authoritative artifact and shared inputs are recovered.",
       "Run the three live-source checks under their documented opt-in controls with pinned immutable inputs: DR24 batch UI, DR24 HATS parity, and Zubercal DR20 adapter parity.",
       "Resolve or explicitly justify the three collection-skipped integration groups for feature pipeline parity, offline feature dataset reproduction, and raw dataset validation.",
       "Keep source-backed ALeRCE, DR24, StarEmbed and provenance jobs marked SKIPPED until their immutable external evidence is available; do not report Scientific-PASS."
@@ -127,6 +131,8 @@
     "No scientific or production baseline changes are part of this cycle.",
     "Verified CI report for documentation PR head 3241955ebb918bd79f9b15263d16f6bf541f00e9: 715 tests, 0 failures, 13 skips; 83.34% line coverage; all engineering workflows passed.",
     "CI artifact 13899457586 contains pytest-report.xml and coverage.xml.",
-    "Scientific-PASS remains blocked by missing frozen production artifact and skipped source-backed evidence."
+    "Scientific-PASS remains blocked by missing frozen production artifact and skipped source-backed evidence.",
+    "Historical local WSL artifact audit dated 2026-11-09 is already known; do not request a duplicate local audit as the next action.",
+    "Artifact recovery tracker: Issue #282."
   ]
 }
