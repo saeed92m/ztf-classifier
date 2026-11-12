@@ -91,13 +91,31 @@ A canonical observation represents one astronomical observation and must preserv
 
 The contract may include MJD, flux or magnitude, uncertainty, filter or band, quality information, coordinates, and source metadata.
 
-### 5.2 Canonical Object Contract
+### 5.2 Canonical Survey Object Contract
 
-A canonical object groups observations belonging to a single astronomical source and provides a stable object identifier together with object-level metadata.
+A canonical survey object represents one source-native catalogue identifier, such as a ZTF OID, and groups observations under that identifier. It does **not** assert that the survey object is one unique physical astrophysical source. Preserve the original survey identifier, filter/band, field, quadrant/rcid, release, time basis and source provenance.
 
-### 5.3 Dataset Contract
+For backward compatibility, any existing `CanonicalObject` type must be interpreted as a survey-object record until a versioned source-association contract is implemented. Do not silently reinterpret historical object IDs as physical-source IDs.
 
-A dataset is a versioned collection of canonical objects with explicit schema, provenance, validation status, and deterministic identity.
+### 5.3 Astrophysical Source and Association Contract
+
+An astrophysical source is a physical-source hypothesis supported by observations and catalog evidence. It may have multiple survey-object records, catalog aliases or detections. A source association links these records but must remain separate from the source-native observation identity.
+
+The association record must preserve:
+- source-native survey object IDs and catalog identifiers;
+- association method and contract version;
+- coordinates, epoch, astrometric uncertainty and matching radius;
+- photometric/time evidence where relevant;
+- candidate associations and score/evidence components;
+- decision state: `CONFIRMED`, `AMBIGUOUS`, `UNMATCHED`, `REJECTED` or `SUPERSEDED`;
+- reviewer or automated process provenance;
+- reversible merge/split lineage.
+
+Angular proximity alone is not sufficient to confirm physical identity. Ambiguous and unmatched associations must remain explicit. No automatic OID merge is allowed without a validated, versioned decision rule.
+
+### 5.4 Dataset Contract
+
+A dataset is a versioned collection of survey-object records and/or explicitly associated astrophysical-source groups. It must declare its unit of identity, schema, provenance, validation status, and deterministic identity. Object counts must state whether they count OIDs, observations, catalog objects, or physical-source groups.
 
 ## 6. Validation Contract
 

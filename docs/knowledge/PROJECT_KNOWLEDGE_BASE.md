@@ -52,3 +52,20 @@ Every implementation cycle consumes validated prior knowledge, records its inher
 2. Never tune a scientific selection predicate to reproduce a published row count.
 3. Never allow a reference-system prediction to satisfy an independent-ground-truth requirement.
 4. Every immutable external archive used for release validation must be hash-verified and provenance-recorded.
+
+
+## Current unified status — 2026-11-12
+
+Current continuation point: [PROJECT_MASTER_STATUS_AND_CONTINUATION_2026-11-12.md](../PROJECT_MASTER_STATUS_AND_CONTINUATION_2026-11-12.md).
+
+- Current main at review: `f681408fae8d8062dd72ff74791872c1590f6ee8`. — VERIFIED
+- Software release v1.0.1 and scientific baseline v0.2.0 remain immutable. — VERIFIED
+- PRs #264, #273, #274, #275, #276, #277 and #278 are merged. Their scope is bounded raw retrieval, API, diagnostic QC, Explorer, separate Zubercal adapter and local artifact audit. — VERIFIED
+- Product acceptance for the DR24-first Park MVP remains open under Issues #158 and #253. The application observation service still requires explicit DR24 backend integration. — VERIFIED / OPEN
+- A prior local WSL audit summary from 2026-11-09 was recovered from project conversation history: the frozen production path and ALeRCE raw cache were absent; the schema-1.1 lab-smoke artifact and processed feature/config artifacts were present. The exact JSON report is not currently mounted. The production artifact remains UNRECOVERED / NOT AUTHENTICATED; see Issue #282. — HISTORICAL USER-PROVIDED EVIDENCE / BLOCKED
+- CPVS retained historical comparison: parent 781,602; published 730,184; retained candidate set 741,786; candidate-only 11,602; published-only 0. The candidate list is not freshly derived on current main. — VERIFIED historical evidence / UNRESOLVED method
+- Four-field CPVS predicate remains diagnostic, not an adopted selection rule. Missing raw archive data is UNKNOWN, not FAIL. — VERIFIED
+- AOIC and CIN remain proposed; no production runtime is claimed. — PROPOSED
+- The 16-role think tank is a standing review method, not a claim that 16 external experts are engaged. — GOVERNANCE RULE
+
+Evidence precedence: raw source bytes and independent artifacts, then exact code/revision/workflow, then dated issue/PR evidence, then canonical docs/Notion, then old reports and conversation summaries. Do not promote hypotheses to rules. Do not close a blocker because CI is green if the required source-backed jobs were skipped.
