@@ -315,6 +315,7 @@ def empty_band_metrics() -> dict[str, Any]:
         "qualifying_detections_inverse_error": 0,
         "max_snr_approximate": None,
         "max_snr_exact": None,
+        "max_snr_inverse_error": None,
         "minimum_qualifying_magerr": None,
         "qualifying_flag_counts": Counter(),
         "all_flag_counts": Counter(),
@@ -418,6 +419,9 @@ def scan_band_archive(
                 item["max_snr_approximate"] or 0.0, snr_approx
             )
             item["max_snr_exact"] = max(item["max_snr_exact"] or 0.0, snr_exact)
+            item["max_snr_inverse_error"] = max(
+                item["max_snr_inverse_error"] or 0.0, snr_inverse
+            )
 
             if snr_approx >= config["threshold"]:
                 item["qualifying_detections_approximate"] += 1
@@ -687,16 +691,21 @@ def write_objects_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
         "four_field_positive", "gmag", "rmag", "Per", "Per-g", "Per-r",
         "Ng", "Nr", "g_rows", "g_valid",
         "g_qualifying_approx", "g_qualifying_exact", "g_qualifying_inverse_error",
-        "g_max_snr_approx", "g_max_snr_exact", "g_pass_approx", "g_pass_exact",
+        "g_max_snr_approx", "g_max_snr_exact", "g_max_snr_inverse_error",
+        "g_pass_approx", "g_pass_exact",
         "g_pass_inverse_error", "g_row_count_match",
         "r_rows", "r_valid", "r_qualifying_approx", "r_qualifying_exact",
         "r_qualifying_inverse_error", "r_max_snr_approx", "r_max_snr_exact",
-        "r_pass_approx", "r_pass_exact", "r_pass_inverse_error",
+        "r_max_snr_inverse_error", "r_pass_approx", "r_pass_exact", "r_pass_inverse_error",
         "r_row_count_match", "rederived_candidate",
         "rederived_candidate_exact", "rederived_candidate_inverse_error",
         "candidate_approximate_four_field", "candidate_exact_four_field",
         "candidate_inverse_error_four_field", "matches_historical_candidate",
+        "matches_historical_candidate_exact", "matches_historical_candidate_inverse_error",
+        "matches_table4_with_snr_only_exact", "matches_table4_with_snr_only_inverse_error",
         "matches_table4_with_four_field_gate",
+        "matches_table4_with_four_field_gate_exact",
+        "matches_table4_with_four_field_gate_inverse_error",
     ]
     with path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields, delimiter=chr(9))
@@ -724,6 +733,7 @@ def write_objects_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
                     "g_qualifying_inverse_error": row["g"]["qualifying_detections_inverse_error"],
                     "g_max_snr_approx": row["g"]["max_snr_approximate"],
                     "g_max_snr_exact": row["g"]["max_snr_exact"],
+                    "g_max_snr_inverse_error": row["g"]["max_snr_inverse_error"],
                     "g_pass_approx": row["g"]["passes_approximate_snr"],
                     "g_pass_exact": row["g"]["passes_exact_snr"],
                     "g_pass_inverse_error": row["g"]["passes_inverse_error_snr"],
@@ -735,6 +745,7 @@ def write_objects_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
                     "r_qualifying_inverse_error": row["r"]["qualifying_detections_inverse_error"],
                     "r_max_snr_approx": row["r"]["max_snr_approximate"],
                     "r_max_snr_exact": row["r"]["max_snr_exact"],
+                    "r_max_snr_inverse_error": row["r"]["max_snr_inverse_error"],
                     "r_pass_approx": row["r"]["passes_approximate_snr"],
                     "r_pass_exact": row["r"]["passes_exact_snr"],
                     "r_pass_inverse_error": row["r"]["passes_inverse_error_snr"],
@@ -746,9 +757,40 @@ def write_objects_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
                     "candidate_exact_four_field": row["rederived_candidate_exact_and_four_field"],
                     "candidate_inverse_error_four_field": row["rederived_candidate_inverse_error_and_four_field"],
                     "matches_historical_candidate": row["matches_historical_candidate"],
+                    "matches_historical_candidate_exact": row["matches_historical_candidate_exact"],
+                    "matches_historical_candidate_inverse_error": row["matches_historical_candidate_inverse_error"],
+                    "matches_table4_with_snr_only_exact": row["matches_table4_with_snr_only_exact"],
+                    "matches_table4_with_snr_only_inverse_error": row["matches_table4_with_snr_only_inverse_error"],
                     "matches_table4_with_four_field_gate": row["matches_table4_with_four_field_gate"],
+                    "matches_table4_with_four_field_gate_exact": row["matches_table4_with_four_field_gate_exact"],
+                    "matches_table4_with_four_field_gate_inverse_error": row["matches_table4_with_four_field_gate_inverse_error"],
                 }
             )
+
+
+def write_input_failure_report(
+    output_path: Path,
+    input_integrity: dict[str, Any],
+    input_manifest: dict[str, Any] | None,
+    errors: list[str],
+) -> None:
+    """Persist compact input-integrity evidence before fail-closed exit."""
+    report = {
+        "schema_version": "1.0",
+        "status": "INPUT_INTEGRITY_FAILED",
+        "scientific_validation_status": "NOT_VALIDATED",
+        "objective": "Audit the pinned CPVS inputs before any raw archive scan.",
+        "input_artifact_integrity": input_integrity,
+        "input_manifest": input_manifest or {},
+        "integrity_errors": errors,
+        "raw_archive_scan_started": False,
+        "limitations": [
+            "No raw g/r archive scan was started because the retained inputs failed integrity checks.",
+            "This failure report is diagnostic evidence, not scientific validation.",
+        ],
+    }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\\n")
 
 
 def main() -> int:
@@ -772,6 +814,12 @@ def main() -> int:
         }
     )
     if input_integrity["validation_errors"]:
+        write_input_failure_report(
+            args.output,
+            input_integrity,
+            None,
+            input_integrity["validation_errors"],
+        )
         raise ValueError("; ".join(input_integrity["validation_errors"]))
 
     metadata, input_report = load_metadata(
@@ -781,10 +829,19 @@ def main() -> int:
         args.four_field_only,
     )
     input_report["artifact_integrity"] = input_integrity
+    metadata_errors = []
     if any(input_report["within_file_duplicate_rows"].values()):
-        raise ValueError("Duplicate SourceIDs within a single CPVS input file")
+        metadata_errors.append("Duplicate SourceIDs within a single CPVS input file")
     if input_report["metadata_conflicts"]:
-        raise ValueError("Conflicting source metadata across retained audit inputs")
+        metadata_errors.append("Conflicting source metadata across retained audit inputs")
+    if metadata_errors:
+        write_input_failure_report(
+            args.output,
+            input_integrity,
+            input_report,
+            metadata_errors,
+        )
+        raise ValueError("; ".join(metadata_errors))
     source_ids = set(metadata)
     g_report, g_metrics = scan_band_archive(args.g_archive, "g", source_ids)
     r_report, r_metrics = scan_band_archive(args.r_archive, "r", source_ids)
@@ -875,7 +932,10 @@ def main() -> int:
                 },
             }
             for row in candidate_only_rows
-            if row["rederived_candidate"] is None
+            if any(
+                row[f"rederived_candidate_{formula}"] is None
+                for formula in SNR_PASS_FIELDS
+            )
         ],
         "candidate_only_archive_rowcount_mismatches": [
             {
