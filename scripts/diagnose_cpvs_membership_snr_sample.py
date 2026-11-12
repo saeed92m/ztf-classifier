@@ -790,7 +790,7 @@ def write_input_failure_report(
         ],
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\\n")
+    output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + chr(10))
 
 
 def main() -> int:
