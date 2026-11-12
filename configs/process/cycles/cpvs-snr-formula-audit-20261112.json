@@ -56,15 +56,19 @@
     "trade_off": "This change improves the diagnostic contract but does not run the >11.2 GB raw archive scan. Synthetic CI does not establish source-backed scientific validity."
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
       "New branch created from main SHA f681408fae8d8062dd72ff74791872c1590f6ee8.",
       "Only the raw-SNR diagnostic script and its synthetic test module have been ported; the old branch's automatic multi-gigabyte workflow was not copied.",
       "The script now emits separate approximate, exact and inverse-error two-band results and explicit within-file duplicate/cross-file overlap accounting.",
-      "Three additional synthetic regression test functions are now included: formula-specific two-band membership/confusion results; within-file duplicate and pairwise cross-file overlap reporting; and input-failure evidence persistence. The existing end-to-end fixture asserts expected overlap accounting and zero within-file duplicates. Current-head CI remains pending."
-    ],
-    "blocker": "Fresh Ruff format/lint, focused synthetic tests, full CI, lifecycle validation and review are required. Raw g/r archive scans and MGPR are not run in this cycle."
+      "Three additional synthetic regression test functions are now included: formula-specific two-band membership/confusion results; within-file duplicate and pairwise cross-file overlap reporting; and input-failure evidence persistence. The existing end-to-end fixture asserts expected overlap accounting and zero within-file duplicates. Current-head CI remains pending.",
+      "Current PR #285 head 9e4b59f521a8318daaa7e456dbd0f90654d1e2d7 passed all eight engineering CI jobs in run 43294538781: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit and CI Gate.",
+      "Current-head Test Suite: 706 passed, 13 skipped, zero failures, 9 warnings in 100.19 seconds. Coverage: 7,761 statements, 1,293 missed, 83% line coverage.",
+      "CodeQL run 43294543988 and Product Scope Audit run 43294544114 passed. Scientific Validation run 43294543992 passed the benchmark/lifecycle contract.",
+      "The four source-backed scientific jobs remain SKIPPED: immutable historical ALeRCE, independent StarEmbed benchmark, source provenance acquisition and DR24/ALeRCE source-backed evidence.",
+      "This cycle is VERIFIED and ACCEPTED only for the diagnostic code and synthetic regression contract. No raw archive scan or MGPR execution was performed."
+    ]
   },
   "failure_analysis": {
     "status": "PARTIALLY_DIAGNOSED",
@@ -73,10 +77,10 @@
       "The input loader merged repeated SourceIDs across input files but did not report within-file duplicates or pairwise cross-file overlaps."
     ],
     "unresolved": [
-      "Current-head CI has not yet validated the ported script and new tests.",
-      "No raw archive scan has been run on this branch.",
-      "The 11,602 candidate-only membership discrepancy remains unresolved.",
-      "The exact publisher selection method and MGPR result remain unknown."
+      "The CPVS 11,602 candidate-only membership discrepancy remains unresolved. The retained artifact recheck is not a fresh raw-light-curve derivation.",
+      "No raw g/r archive scan or MGPR execution was performed in this cycle.",
+      "The publisher's exact selection method remains unknown; four-field positivity and Ng/Nr thresholds remain diagnostic only.",
+      "A raw source-backed run requires separate explicit compute/cost approval because the pinned archive members expand to more than 11.2 GB."
     ]
   },
   "knowledge_extraction": {
@@ -89,19 +93,22 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
-    "open_blockers": [
-      "Run current-head focused tests and full CI.",
-      "Verify formula-specific PASS/FAIL/UNKNOWN and confusion counts with synthetic cases.",
-      "Verify within-file duplicate detection and pairwise overlap hashes/counts."
+    "status": "PASS",
+    "open_blockers": [],
+    "evidence": [
+      "The full current-head test suite passed with 706 passed, 13 skipped, zero failures and 9 warnings.",
+      "Formula-specific approximate/exact/inverse-error two-band summaries, per-formula UNKNOWN reporting, TSV output, within-file duplicate accounting, cross-file overlap hashes and persisted input-failure reports are covered by synthetic regression tests.",
+      "Full eight-job engineering CI passed in run 43294538781."
     ]
   },
-  "decision": "BLOCKED",
+  "decision": "ACCEPT",
   "knowledge_carried_forward": [
     "Branch is based on current main and intentionally excludes the old PR #265 stack.",
     "No raw g/r archive downloads are triggered by this branch.",
     "No CPVS selector, threshold, source ID, model, feature, taxonomy, benchmark or baseline change is made.",
     "Raw source-backed execution requires separate explicit compute/cost approval.",
-    "Input-integrity failures must be persisted as compact evidence before fail-closed exit; do not discard duplicate/overlap findings when refusing the raw scan."
+    "Input-integrity failures must be persisted as compact evidence before fail-closed exit; do not discard duplicate/overlap findings when refusing the raw scan.",
+    "PR #285 current head 9e4b59f521a8318daaa7e456dbd0f90654d1e2d7 passed all eight engineering CI jobs: 706 passed, 13 skipped, zero failures, 9 warnings; 83% line coverage.",
+    "The diagnostic code cycle is ACCEPTED for engineering use only. Scientific validity remains NOT_MEASURED, and the 11,602 root cause remains open."
   ]
 }
