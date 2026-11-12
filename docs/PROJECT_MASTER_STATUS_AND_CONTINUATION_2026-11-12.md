@@ -664,3 +664,39 @@ Red Team findings: the diagnostic combines only the approximate SNR formula at o
 Current source-backed workflow runs 43097116480 (raw-SNR re-derivation), 43097116394 (r-band reconciliation) and 43097116446 (Seq identity diagnostic) remain QUEUED with no jobs created. No fresh raw-SNR result is claimed. PR #265 remains Draft; it is 80 commits ahead and 92 behind current main and must not be merged without branch reconciliation and evidence review.
 
 No selector, SourceID mapping, threshold, model, feature, taxonomy or v0.2.0 baseline changed. Issue #170 remains OPEN / UNRESOLVED.
+
+
+## 24. Think Tank charter, source register and mandatory PR traceability — 2026-11-12
+
+The original Project Source `تعیین اعضای اتاق فکر.txt` and the project's 16-expert Master Prompt are now linked to a version-controlled operating protocol:
+
+- [Think Tank Charter](think-tank/CHARTER.md) — retains the original 16 specialist seats, meeting sizes, separate Project Owner authority, evidence classifications and 12-stage process.
+- [Session Register](think-tank/SESSION_REGISTER.md) — indexes the baseline review and Sessions 02–05; maps workstreams to specialist roles.
+- [Project Source Index](../sources/think_tank/PROJECT_SOURCE_INDEX.md) — indexes the Project Sources and project conversation references.
+- [Session 05](think-tank/THINK_TANK_SESSION_2026-11-12_SOURCE_IDENTITY_CONTRACT_REVIEW.md) — focused review of the minimum source identity contract and multi-OID evidence completeness.
+
+The repository Pull Request template now requires Think Tank traceability for material changes. This is an engineering governance control; it does not imply human experts participated. The current 16 seats are simulated specialist perspectives.
+
+## 25. Latest PR and CI snapshot after Think Tank source integration
+
+### PR #281 — Think Tank charter and source index integration
+
+- Latest inspected head: `28228e3c689a2655dccc8ae12fcd4f4e4a880563`.
+- PR: OPEN / DRAFT / NOT MERGED.
+- The branch now contains the canonical charter, session register, Project Source index, Session 05, and Think Tank traceability fields in `.github/pull_request_template.md`.
+- CI for this latest head was running at last inspection. Format Check, CodeQL, Product Scope Audit and the Scientific Validation benchmark/lifecycle contract had passed; Lint was still running. Source-backed DR24/ALeRCE, historical ALeRCE, provenance and StarEmbed jobs remained SKIPPED.
+- The immediately preceding head `15ce624fa29449d5c5437f7ac20e114a6a01abe4` completed all eight engineering CI jobs successfully in run [43243888984](https://github.com/saeed92m/ztf-classifier/actions/runs/43243888984): 702 passed, 13 skipped, zero failures, 9 warnings. Line coverage: 6,468/7,761 = 83.34%; branch coverage was not measured. This earlier result does not validate the new charter/template commit.
+
+### PR #283 — minimum source identity contract
+
+- Latest inspected head: `90b6026e62e41bdff4d33c251ec2f0e1cbbb7ba9`.
+- PR: OPEN / DRAFT / NOT MERGED.
+- The updated Test Suite passed: 736 passed, 13 skipped, zero failures, 9 warnings. Total line statements: 7,962; missed: 1,321; rounded coverage reported by CI: 83%. Branch coverage was not reported.
+- Format Check, Lint, Cumulative Lifecycle Gate, Runtime Smoke Tests, CodeQL, Product Scope Audit and the Scientific Validation benchmark/lifecycle contract passed. Build & Verify Package was still in progress at last inspection; Dependency Audit and final CI Gate were not yet confirmed.
+- Scientific source-backed jobs for DR24/ALeRCE, historical ALeRCE, provenance and StarEmbed remained SKIPPED. This is not scientific validation of source identity.
+
+The earlier two Test Suite failures on head `d9e17467...` were stale error-message assertions after pairwise evidence coverage was strengthened. The assertions were corrected in `44369783e1b28248cf6e93832e1472a87540f09f`; the later suite passed.
+
+## 26. CPVS workflow state
+
+The raw-SNR re-derivation run `43097116480`, r-band reconciliation run `43097116394`, and targeted Seq diagnostic run `43097116446` were rechecked. All three remain QUEUED, with no jobs created and no current raw-archive result. Do not launch duplicate multi-gigabyte archive scans while these runs remain queued. Issue #170 remains OPEN / UNRESOLVED; the four-field predicate remains a hypothesis, not an established publisher rule.
