@@ -276,14 +276,6 @@ class SourceAssociation:
             if self.supersedes_association_id == self.association_id:
                 raise ValueError("an association cannot supersede itself.")
 
-        if (
-            self.status is not AssociationStatus.DEFERRED_REVIEW
-            and not self.evidence
-        ):
-            raise ValueError(
-                "association decisions require evidence except deferred review."
-            )
-
         if self.status is AssociationStatus.CONFIRMED_MATCH:
             if not self.confirmed_source_id or not self.confirmed_source_id.strip():
                 raise ValueError("confirmed matches require confirmed_source_id.")
@@ -293,8 +285,16 @@ class SourceAssociation:
                 raise ValueError(
                     "confirmed matches must contain exactly the confirmed source ID."
                 )
-        elif self.confirmed_source_id is not None:
-            raise ValueError("only confirmed matches may set confirmed_source_id.")
+        else:
+            if self.confirmed_source_id is not None:
+                raise ValueError("only confirmed matches may set confirmed_source_id.")
+            if (
+                self.status is not AssociationStatus.DEFERRED_REVIEW
+                and not self.evidence
+            ):
+                raise ValueError(
+                    "association decisions require evidence except deferred review."
+                )
 
         if self.status is AssociationStatus.UNMATCHED and self.candidate_source_ids:
             raise ValueError(
