@@ -9,6 +9,7 @@ from ztf_classifier.domain.source_identity import (
     IdentityStatus,
     SourceAssociation,
     SurveyObjectRef,
+    validate_source_confirmation,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "IdentityStatus",
     "SourceAssociation",
     "SurveyObjectRef",
+    "validate_source_confirmation",
 ]
