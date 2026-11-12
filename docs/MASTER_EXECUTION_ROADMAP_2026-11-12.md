@@ -251,3 +251,17 @@ Every target must define whether it counts OIDs, light curves, observations, or 
 5. Prepare the pinned 5–10 confirmed-source E2E manifest.
 6. Keep CPVS and StarEmbed research evidence on their own validation tracks.
 7. Update this roadmap only when a milestone has evidence and an accepted disposition.
+
+
+## Think Tank governance and work traceability
+
+Material roadmap tasks must link to the relevant Think Tank Session ID and charter stage. Use the [16-seat Charter](think-tank/CHARTER.md) and [Session Register](think-tank/SESSION_REGISTER.md) to select review roles. Routine low-risk work may use a focused 3–5 role panel; cross-cutting work uses a 7–9 role core and Red Team; major scientific, identity, benchmark, security, product-acceptance and release gates use all 16 seats.
+
+Current required links:
+
+- DR24 application and Park source choice: Sessions 02 and 03.
+- AOIC/source identity: Sessions 02 and 05.
+- CPVS discrepancy: Session 04.
+- Material PR evidence: the Think Tank traceability block in `.github/pull_request_template.md`.
+
+A Think Tank recommendation does not authorize a baseline change, PR merge or release. Preserve the separate Project Owner approval gate.
