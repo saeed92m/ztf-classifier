@@ -235,7 +235,7 @@ def test_raw_snr_sample_rederivation_and_four_field_gate(
     objects_output = tmp_path / "objects.tsv"
     audit.write_objects_tsv(objects_output, objects)
     with objects_output.open(encoding="utf-8", newline="") as stream:
-        exported = list(csv.DictReader(stream, delimiter="\\t"))
+        exported = list(csv.DictReader(stream, delimiter=chr(9)))
     exported_by_id = {int(row["SourceID"]): row for row in exported}
     assert "g_max_snr_inverse_error" in exported_by_id[1]
     assert exported_by_id[4]["rederived_candidate_exact"] == ""
