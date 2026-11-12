@@ -17,7 +17,7 @@ GitHub returned **29 open PRs**. Many are historical, stacked on old branches, o
 | #280 | v0.2 OOD sensitivity to missing features | Draft; based on older main snapshot; mergeable flag true | Rebase; review as diagnostic experiment only. Do not set production OOD thresholds from reconstructed artifacts. |
 | #279 | Per-row data adequacy and OOD basis | Draft; based on older main snapshot; mergeable flag true | Rebase; review data adequacy and OOD semantics separately. No inference that data adequacy equals anomaly. |
 | #266 | Park MVP delivery plan and acceptance gates | Draft; older base; mergeable flag true | Rebase and reconcile Persian Park addendum with current #158/#253 evidence. Retain only unique, current acceptance material. |
-| #265 | CPVS Seq 615170/615172 archive identity | Draft; current research branch; mergeable flag true | Continue as bounded CPVS research. Preserve both IDs and raw provenance; do not infer identity from proximity alone. |
+| #265 | CPVS Seq 615170/615172 archive identity | Draft; 80 commits / 14 files; head `64ed7ec`; base snapshot `bc85f6c` predates current main `f681408`; mergeable flag true but stale | Do not merge or extend this stacked branch. Extract unique code/tests to a current-main-based research branch after review. Preserve both IDs. Three associated raw workflows remain queued with no jobs. Raw SNR transfer expands beyond 11.2 GB; do not rerun without approval. |
 | #263 | Bounded BTS-to-DR24 recovery tooling | Open, non-draft; mergeable flag true; last updated Nov 3 | Review unique tooling and tests against merged DR24 adapter chain; decide whether to retain or supersede. |
 | #268 | Bounded live DR24 payload probe | Draft; older main snapshot | Compare against current merged probe workflows and retain only unique reproducible evidence. |
 | #269 | DR24 HATS payload evidence documentation | Draft; older main snapshot | Check whether current docs already contain its evidence; avoid duplicate status documents. |
@@ -71,3 +71,8 @@ For each old PR, before any merge or closure:
 - Close only after a documented disposition and owner review.
 
 **No PR is merged or closed by this triage document.** It records a read-only snapshot and a safe order for future review.
+
+
+## Session 07 — CPVS research priority and artifact recheck
+
+CPVS is P0 scientific research but not a product/release gate. The retained raw-CDS artifact was independently rechecked; no fresh raw SNR or MGPR run is claimed. PR #265 is stale and remains Draft. See [Session 07](think-tank/THINK_TANK_SESSION_2026-11-12_CPVS_PRIORITY_AND_EVIDENCE_RECHECK.md).
