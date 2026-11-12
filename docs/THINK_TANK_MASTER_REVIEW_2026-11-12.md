@@ -241,3 +241,14 @@ The project Pull Request template now requires a Think Tank Session ID, active r
 ### Session 05 — minimum source identity contract
 
 [Session 05 — Minimum Source Identity Contract and Multi-OID Evidence Review](think-tank/THINK_TANK_SESSION_2026-11-12_SOURCE_IDENTITY_CONTRACT_REVIEW.md) records the focused 8-role review and Red Team analysis of PR #283. The recommendation supports the stronger domain invariants with conditions. The contract does not implement matching or prove physical identity.
+
+
+## 12. Think Tank Session 07 — CPVS research priority and evidence recheck
+
+The full 16-seat review and independent Red Team pass are recorded in [Session 07](think-tank/THINK_TANK_SESSION_2026-11-12_CPVS_PRIORITY_AND_EVIDENCE_RECHECK.md).
+
+The joint decision reconciles the original approved CPVS handoff with the current GitHub disposition: CPVS is the highest-priority unresolved scientific research workstream (P0-R), but it is not a Park MVP or product-release gate. Product delivery and scientific research remain separate lanes.
+
+The retained artifact from run 41367972395 was independently rechecked on 2026-11-12. Its SHA-256 is `130f3db65827afd83f5050e7eb91eb1cf7f6432e85456fd16586c8000a9aa6be`. Table 2, Table 4, candidate-only IDs, four-field controls and fixed sample strata reproduced the retained counts. This is an artifact-level recheck, not a fresh raw-light-curve SNR derivation or MGPR run. The 11,602 discrepancy remains unresolved.
+
+The raw-SNR, r-band and Seq workflows remain queued with no jobs created. Their raw archive processing exceeds 11.2 GB uncompressed and must not be repeated without an explicit compute/cost decision. No production selector, threshold or v0.2.0 baseline was changed.
