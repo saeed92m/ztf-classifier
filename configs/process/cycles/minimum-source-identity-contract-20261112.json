@@ -73,7 +73,10 @@
       "The association contract now requires exact evidence-pair coverage for every declared survey-object/candidate-source combination in confirmed, ambiguous and rejected decisions. An unmatched decision requires a no-candidate evidence record for each declared survey object.",
       "Added regression tests for missing r-band evidence in a confirmed two-OID association, incomplete OID/candidate evidence matrix in an ambiguous association, incomplete unmatched evidence, and confirmation references on non-confirmed source records. The focused test module now contains 34 test functions.",
       "The confirmation_association_id field now rejects non-string values and is valid only when identity_status is CONFIRMED.",
-      "The prior head cc0cad44beabf78c837c9d3d171ecf7fbf08028c had 731 passed, 1 failed, 13 skipped. The failure was a test-message ordering mismatch and was patched at source commit 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2. A subsequent workflow started on the intermediate head 8c5a02da824b3db6f3849ad8d69b97255d74a336, but it was superseded by the additional multi-OID evidence coverage changes; do not use it to validate the newest head."
+      "The prior head cc0cad44beabf78c837c9d3d171ecf7fbf08028c had 731 passed, 1 failed, 13 skipped. The failure was a test-message ordering mismatch and was patched at source commit 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2. A subsequent workflow started on the intermediate head 8c5a02da824b3db6f3849ad8d69b97255d74a336, but it was superseded by the additional multi-OID evidence coverage changes; do not use it to validate the newest head.",
+      "Current-head CI on d9e17467ce9a3dca17116d6fa609a17f1c75b2fc completed with 734 passed, 2 failed, 13 skipped, and 9 warnings. Both failures were stale expected-message assertions in tests/test_source_identity_contracts.py after the evidence rule was intentionally strengthened to require every declared survey-object/candidate pair.",
+      "The actual runtime error was the new pair-coverage guard: 'association evidence must cover every declared survey-object/candidate pair.' The domain behavior was correct. Two tests still expected the previous set-level wording ('cover exactly the declared candidate').",
+      "Updated exactly those two stale regex expectations in commit 44369783e1b28248cf6e93832e1472a87540f09f. The 34-test focused module remains unchanged in test count. A fresh run on the new head is required."
     ],
     "blocker": "Fresh current-head CI is required after this lifecycle schema correction. The initial validator failure is retained and is not reported as a pass."
   },
@@ -87,7 +90,8 @@
       "The original association contract checked only that evidence was non-empty. It did not link source_ref to a declared survey object, candidate_ref to the actual candidate set, or CONFIRMED source identity to a confirmation association.",
       "The first CI run after adding confirmation-reference tests exposed a missing test-module import for validate_source_confirmation. The test function was present but Ruff correctly rejected the unresolved symbol; the import was added.",
       "The Test Suite failure on head cc0cad44beabf78c837c9d3d171ecf7fbf08028c was a validation-order mismatch: the generic non-DEFERRED_REVIEW evidence guard masked the CONFIRMED_MATCH-specific 'supporting evidence' error expected by regression test test_confirmed_association_requires_supporting_evidence. The guard was moved into the non-confirmed branch.",
-      "The earlier evidence check compared the set of candidate IDs but did not verify every survey-object/candidate pair. A confirmed multi-OID association could therefore lack evidence for one declared OID. This was corrected by requiring complete pair coverage for final decisions."
+      "The earlier evidence check compared the set of candidate IDs but did not verify every survey-object/candidate pair. A confirmed multi-OID association could therefore lack evidence for one declared OID. This was corrected by requiring complete pair coverage for final decisions.",
+      "After pairwise OID/candidate evidence coverage was added, two tests retained assertions for the prior set-level error message. CI confirmed the strengthened validation path behaved as intended; the tests failed because their expected text was stale."
     ],
     "unresolved": [
       "No source matching algorithm is implemented.",
@@ -115,10 +119,10 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Run fresh Format, Lint, all 34 focused identity tests, and the full repository test suite on the latest current head.",
+      "Run fresh Format, Lint, all 34 focused identity tests, and the full repository test suite on the updated head 44369783e1b28248cf6e93832e1472a87540f09f.",
       "Runtime smoke, package build, dependency audit and CI Gate must pass on the same final head.",
       "Review API serialization and storage compatibility of confirmation_association_id and full OID/candidate evidence-pair references before application integration.",
-      "Independent adjudicated astrophysical cross-match validation is still required; domain-contract tests do not prove physical identity."
+      "Independent adjudicated astrophysical cross-match validation is required; domain-contract tests do not prove physical identity."
     ]
   },
   "decision": "BLOCKED",
@@ -132,6 +136,7 @@
     "The domain contract now checks references and decision consistency but does not prove the astrophysical correctness of evidence or implement a matcher.",
     "PR #283 run 43242293772 failed before tests due to missing import validate_source_confirmation in the new test module; import fix commit a6c7a7c816fe6a191f6676a4fbb4b0ab3ec56570 must be validated by fresh CI.",
     "PR #283 CI run 43243039733: 731 passed, 1 failed, 13 skipped; one regression test failed only because the generic no-evidence validation error masked the dedicated confirmed-match supporting-evidence error. Fixed in 4da922540f5cfaacd4e8a2a6a1a28542fe84eed2; fresh CI pending.",
-    "Latest domain contract adds complete multi-OID evidence matrix validation and non-confirmed confirmation-reference rejection. Focused module: 34 test functions. Current branch head must be checked and CI rerun before acceptance."
+    "Latest domain contract adds complete multi-OID evidence matrix validation and non-confirmed confirmation-reference rejection. Focused module: 34 test functions. Current branch head must be checked and CI rerun before acceptance.",
+    "PR #283 runs 43244871653 and 43244896597 each reported 734 passed, 2 failed, 13 skipped, 9 warnings. Both failures were stale regex assertions after the full pair-coverage invariant was introduced. Assertions were corrected in 44369783e1b28248cf6e93832e1472a87540f09f; fresh CI is pending."
   ]
 }
