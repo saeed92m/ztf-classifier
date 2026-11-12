@@ -694,30 +694,50 @@ The original Project Source `تعیین اعضای اتاق فکر.txt` and the 
 
 The repository Pull Request template now requires Think Tank traceability for material changes. This is an engineering governance control; it does not imply human experts participated. The current 16 seats are simulated specialist perspectives.
 
-## 25. Latest PR and CI snapshot after Think Tank source integration
+## 25. Latest PR and CI snapshot — 2026-11-12
 
 ### PR #281 — Think Tank charter and source index integration
 
-- Latest fully tested head before Session 07 documentation additions: `585d393c274d0599e9bf46a5b09f2ef87d226aa4`.
-- PR: OPEN / DRAFT / NOT MERGED.
-- The branch contains the canonical charter, source index, session register, Sessions 02–07 and mandatory Think Tank traceability fields in `.github/pull_request_template.md`.
-- CI run [43285200369](https://github.com/saeed92m/ztf-classifier/actions/runs/43285200369): all eight engineering jobs PASS.
+- Latest tested head: `6490b5122ad544f785adf0f89dd045fef23a2ad9`.
+- PR: OPEN / DRAFT / NOT MERGED; 79 commits, 27 changed files.
+- CI run [43290320820](https://github.com/saeed92m/ztf-classifier/actions/runs/43290320820): all eight engineering jobs PASS.
 - Test Suite: 702 passed, 13 skipped, zero failures, 9 warnings. Line coverage 6,468/7,761 = 83.34%; branch coverage not measured.
 - Runtime Smoke, Build & Verify Package, Dependency Audit and CI Gate: PASS.
 - CodeQL, Product Scope Audit and Scientific Validation benchmark/lifecycle contract: PASS.
 - DR24/ALeRCE source-backed, historical ALeRCE, provenance and StarEmbed scientific jobs: SKIPPED.
-- Session 07 and its register/documentation updates were added after this successful run. A fresh CI run is required for the final updated head.
+- Session 08 and the reordered register are recorded on this tested head. The next master-status documentation update is newer and requires fresh CI.
+- No scientific or product blocker is closed by this documentation PR.
 
 ### PR #283 — minimum source identity contract
 
-- Latest inspected head: `988e3c5537a0278119b680d98e40d9978092ba3a`.
-- PR: OPEN / DRAFT / NOT MERGED.
-- CI run [43284976844](https://github.com/saeed92m/ztf-classifier/actions/runs/43284976844): all eight engineering jobs PASS.
-- Test Suite: 736 passed, 13 skipped, zero failures, 9 warnings. Total line statements 7,962; missed 1,321; rounded coverage 83%. Branch coverage not reported.
+- Latest tested head: `4570072319254d2bde94b975664e4c593f0a325f`.
+- PR: OPEN / DRAFT / NOT MERGED; 35 commits, 4 changed files.
+- CI run [43290188071](https://github.com/saeed92m/ztf-classifier/actions/runs/43290188071): all eight engineering jobs PASS.
+- Test Suite: 741 passed, 13 skipped, zero failures, 9 warnings. Total line statements 7,972; missed 1,317; 83% line coverage; branch coverage not reported.
 - CodeQL, Product Scope Audit and Scientific Validation benchmark/lifecycle contract: PASS.
 - DR24/ALeRCE source-backed, historical ALeRCE, provenance and StarEmbed scientific jobs: SKIPPED.
-- The contract validates referential consistency and pairwise evidence coverage. It does not implement a matcher, persistent identity ledger, automatic OID grouping or prove astrophysical identity.
-- API serialization/persistence compatibility and independent adjudicated association validation remain open.
+- Session 08 hardening is included: 39 focused source-identity test functions, explicit optional-string type checks and deferred-evidence candidate-reference validation.
+- The contract does not implement a matcher, persistent identity ledger, automatic OID grouping or prove astrophysical identity. API serialization/persistence compatibility and independent adjudicated association validation remain open.
+
+### PR #284 — bounded DR24 and Zubercal acceptance workflow
+
+- Latest tested head: `42bf72353bcd02410e79b643872836a65c9c7d6e`.
+- PR: OPEN / DRAFT / NOT MERGED; 6 commits, 4 changed files.
+- CI run [43291034588](https://github.com/saeed92m/ztf-classifier/actions/runs/43291034588): all eight engineering jobs PASS.
+- Test Suite: 702 passed, 13 skipped, zero failures, 9 warnings.
+- CodeQL and Product Scope Audit: PASS; Scientific Validation benchmark/lifecycle contract: PASS.
+- Bounded DR24 HATS API, deterministic Workbench UI and Zubercal DR20 live adapter tests all passed in runs 43180970933, 43180998574 and 43181021520.
+- These results validate bounded acquisition/API/UI behavior and preservation of PS1 ambiguity. They do not prove physical identity, HATS–Zubercal photometric parity, time-system conversion, DR24 normalization, v0.2.0 feature parity, inference or scientific discovery.
+- Issue #253 remains OPEN / P0. The standard application analysis path remains ALeRCE-backed. Explicit source selection, no-fallback behavior, normalized contracts, AOIC and confirmed-source E2E acceptance remain open.
+
+### PR #285 — current-main CPVS SNR formula audit
+
+- Head: `af342dcf637d43ac05312b9f7ed85156c64c07e5`; PR OPEN / DRAFT / NOT MERGED.
+- Fresh branch from current main `f681408fae8d8062dd72ff74791872c1590f6ee8`; 8 commits, 4 changed files.
+- Format and Lint passed on at least one current-head check run; lifecycle, CodeQL and Product Scope Audit are running or have completed successfully. Full CI is still IN PROGRESS at this snapshot.
+- Scientific Validation benchmark/lifecycle contract: PASS; four source-backed scientific jobs: SKIPPED.
+- No raw g/r archives are downloaded by this PR or its ordinary CI.
+- The PR separates approximate, exact and inverse-error two-band candidate calculations and adds duplicate/overlap accounting. It does not resolve the 11,602 discrepancy.
 
 ## 26. CPVS workflow state
 
@@ -734,3 +754,14 @@ Joint decision:
 - The 11,602 discrepancy remains unresolved.
 - PR #265 is an 80-commit, 14-file Draft research branch with a stale base snapshot. Do not merge or extend it until unique changes are isolated against current main.
 - The raw archive workflows remain queued with no jobs created. Do not repeat >11.2 GB downloads without approval.
+
+
+## 28. Think Tank Session 08 — source identity type safety
+
+[Session TT-2026-11-12-08](think-tank/THINK_TANK_SESSION_2026-11-12_SOURCE_IDENTITY_TYPE_SAFETY.md) reviewed PR #283 with all 16 simulated specialist seats plus independent Red Team.
+
+The review found malformed optional string fields that could produce incidental runtime exceptions and a `DEFERRED_REVIEW` evidence path that could reference an undeclared candidate. Narrow additive validation and five regression test functions were added. The focused module now has 39 test functions.
+
+Current-head run [43290188071](https://github.com/saeed92m/ztf-classifier/actions/runs/43290188071) passed all eight engineering jobs: 741 passed, 13 skipped, zero failures, 9 warnings. CodeQL, Product Scope Audit and the benchmark/lifecycle contract passed. Source-backed scientific jobs remain skipped.
+
+API serialization/persistence compatibility and independent adjudicated association validation remain open. No matcher, source registry, ledger, OID grouping, model inference or baseline change was made.

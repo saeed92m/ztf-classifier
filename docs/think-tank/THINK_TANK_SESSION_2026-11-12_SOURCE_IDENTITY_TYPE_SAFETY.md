@@ -107,10 +107,13 @@ Conditions:
 
 - Implementation: **IMPLEMENTED** on the two listed commits.
 - Focused test count: **39 test functions**.
-- Current-head test result: **PENDING**.
-- Prior CI result: 736 passed, 13 skipped, zero failures on the pre-hardening head only.
+- Current-head PR #283 head: `4570072319254d2bde94b975664e4c593f0a325f`.
+- Current-head CI run [43290188071](https://github.com/saeed92m/ztf-classifier/actions/runs/43290188071): all eight engineering jobs PASS.
+- Test Suite: 741 passed, 13 skipped, zero failures, 9 warnings; 7,972 statements, 1,317 missed, 83% line coverage; branch coverage not reported.
+- CodeQL, Product Scope Audit and Scientific Validation benchmark/lifecycle contract: PASS.
+- Source provenance, StarEmbed, DR24/ALeRCE and historical ALeRCE source-backed jobs: SKIPPED.
 - Scientific identity validation: **NOT VERIFIED**.
 - API/persistence compatibility: **NOT REVIEWED**.
 - v0.2.0 and v1.0.1: unchanged.
 
-This session closes only the identified input-validation gaps if the new current-head CI passes. It does not close Issue #249 or prove that any OIDs represent the same physical astrophysical source.
+This session closes only the identified input-validation gaps at the domain-contract level; it does not close the broader source-identity workstream. It does not close Issue #249 or prove that any OIDs represent the same physical astrophysical source.

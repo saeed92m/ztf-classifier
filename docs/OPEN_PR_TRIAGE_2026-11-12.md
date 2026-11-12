@@ -48,10 +48,12 @@ GitHub returned **29 open PRs**. Many are historical, stacked on old branches, o
 | #177 | CPVS extra-member diagnosis and artifact trim | false | Historical stacked diagnostic; preserve artifacts and methods, do not merge as a stack. |
 | #176 | CPVS membership by ZTF name and heavy readiness | false | Historical stacked implementation; review against current Seq parser and fail-closed workflow. |
 
+| #285 | CPVS raw-SNR formula aggregation and input accounting | Draft; fresh current-main branch; full CI in progress; no raw archive transfer | Review separate approximate/exact/inverse-error two-band results, duplicate and overlap accounting, synthetic tests and lifecycle record. Do not run >11.2 GB raw archives without separate approval. |
+
 ## Cross-cutting observations
 
 1. Current product critical path remains Issues #158 and #253.
-2. CPVS research remains under Issues #170 and #180; it is not a Park MVP gate.
+2. CPVS research remains P0 under Issues #170 and #180; it is not a Park MVP gate. PR #285 is the fresh-main diagnostic correction branch.
 3. AOIC remains a design tracker under Issue #249.
 4. CIN remains proposed under Issue #251 and PR #252.
 5. Artifact recovery is tracked in Issue #282.
@@ -76,3 +78,7 @@ For each old PR, before any merge or closure:
 ## Session 07 — CPVS research priority and artifact recheck
 
 CPVS is P0 scientific research but not a product/release gate. The retained raw-CDS artifact was independently rechecked; no fresh raw SNR or MGPR run is claimed. PR #265 is stale and remains Draft. See [Session 07](think-tank/THINK_TANK_SESSION_2026-11-12_CPVS_PRIORITY_AND_EVIDENCE_RECHECK.md).
+
+## Session 08 — source identity type safety
+
+PR #283 current-head engineering CI passed: 741 passed, 13 skipped, zero failures, 9 warnings. The five new regression functions cover optional string type safety and deferred evidence candidate-reference integrity. Keep the PR Draft; API/persistence and independent physical identity validation remain open. See [Session 08](think-tank/THINK_TANK_SESSION_2026-11-12_SOURCE_IDENTITY_TYPE_SAFETY.md).

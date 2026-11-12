@@ -252,3 +252,14 @@ The joint decision reconciles the original approved CPVS handoff with the curren
 The retained artifact from run 41367972395 was independently rechecked on 2026-11-12. Its SHA-256 is `130f3db65827afd83f5050e7eb91eb1cf7f6432e85456fd16586c8000a9aa6be`. Table 2, Table 4, candidate-only IDs, four-field controls and fixed sample strata reproduced the retained counts. This is an artifact-level recheck, not a fresh raw-light-curve SNR derivation or MGPR run. The 11,602 discrepancy remains unresolved.
 
 The raw-SNR, r-band and Seq workflows remain queued with no jobs created. Their raw archive processing exceeds 11.2 GB uncompressed and must not be repeated without an explicit compute/cost decision. No production selector, threshold or v0.2.0 baseline was changed.
+
+
+## 13. Think Tank Session 08 — source identity type safety and deferred evidence
+
+[Session 08](think-tank/THINK_TANK_SESSION_2026-11-12_SOURCE_IDENTITY_TYPE_SAFETY.md) used all 16 simulated specialist seats plus an independent Red Team pass to review PR #283.
+
+The review found malformed optional string fields that could raise incidental runtime exceptions and a `DEFERRED_REVIEW` path that could carry evidence for an undeclared candidate. The PR now validates optional string types before string operations and requires deferred evidence to reference a declared candidate or the no-candidate sentinel. Five regression test functions were added; the focused module contains 39 functions.
+
+Current-head CI run 43290188071 passed all eight engineering jobs: 741 passed, 13 skipped, zero failures and 9 warnings. CodeQL, Product Scope Audit and the Scientific Validation benchmark/lifecycle contract passed. The four source-backed scientific jobs remain skipped.
+
+This is domain-contract hardening only. API/persistence compatibility and independent adjudicated physical-identity validation remain open. PR #283 remains Draft and unmerged.
