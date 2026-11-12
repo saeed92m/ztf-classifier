@@ -567,3 +567,10 @@ These are dated snapshots and must be updated from new evidence, not treated as 
 - [Issue #210 — parallel independent-dataset and StarEmbed validation](https://github.com/saeed92m/ztf-classifier/issues/210): source audit failed closed with one duplicate SourceID in the training split and one object identity overlap between train and test. StarEmbed is not accepted as an independent benchmark until the identity/split problem is resolved and revalidated.
 
 These tracks are separate from CPVS membership and the DR24 Park MVP. They support the broader discovery-platform claim but cannot be closed by the documentation PR or by contract-only CI checks.
+
+
+## 21. Park proposal and source-product alignment
+
+The submitted Park technical/business dossier describes ZTF DR24 HATS/Parquet and also emphasizes Zubercal's recalibrated PSF photometry as a route to more homogeneous measurements. The current repository source-product contract treats DR24 HATS as the primary discovery stream and Zubercal DR20 as supplementary calibration. These are separate products with different identifiers, time bases and photometry semantics.
+
+**Decision remains OPEN:** confirm the primary data product against the approved Park deliverable before finalizing the application source contract. Do not silently equate HATS with Zubercal or substitute one for the other. Keep separate adapters, native fields, provenance and validation. See [DR24 HATS vs Zubercal source contract](architecture/DR24_HATS_VS_ZUBERCAL_SOURCE_CONTRACT_v0.1.md) and Issue #253.
