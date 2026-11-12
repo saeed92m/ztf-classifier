@@ -22,7 +22,7 @@
 | ZTF-003 | Multi-OID source grouping and model readiness | Critical / P0 | Multi-OID retrieval exists; current 30-OID demo is not 30 confirmed physical sources. **OPEN** | Source-level grouping evidence; filter/field/rcid preservation; validated multi-band association; model-ready lightcurve contract. | #158, #253, #249 |
 | ZTF-004 | Benchmark scale and label independence | High | Frozen 150-object/15-class ALeRCE benchmark is useful as baseline, not population-representative ground truth. **OPEN research limitation** | Independent labels or carefully defined external reference; object/source-level splits; temporal/external validation; class coverage and bias report. | #158 |
 | ZTF-005 | StarEmbed train/test source overlap | Critical | Prior review reported duplicate sourceid and source overlap across train/test. Independent benchmark status is not accepted. **OPEN** | Full identity and duplicate audit; group-aware split reconstruction; leakage tests; independent source-backed evaluation. | [Issue #210](https://github.com/saeed92m/ztf-classifier/issues/210) / PR #211 |
-| ZTF-006 | CPVS 11,602 candidate-only membership discrepancy | High / Scientific blocker | Historical counts: parent 781,602; reference 730,184; candidate 741,786; candidate-only 11,602; published-only 0. Root cause unproven. **OPEN / DEFERRED RESEARCH** | Fresh current-main derivation; hash-pinned inputs; full object-level provenance; fixed 100/1,000 samples; raw photometry and MGPR diagnostics; independent root cause. | #170, #180 |
+| ZTF-006 | CPVS 11,602 candidate-only membership discrepancy | P0-R / Scientific research blocker | Retained artifact independently rechecked 2026-11-12; historical counts remain parent 781,602; reference 730,184; candidate 741,786; candidate-only 11,602; published-only 0. Root cause unproven. **OPEN / P0 RESEARCH / NOT A PRODUCT GATE** | Fresh current-main derivation; hash-pinned inputs; full object-level provenance; fixed 100/1,000 samples; all-formula raw SNR diagnostics; MGPR; independent root cause. | #170, #180; TT-2026-11-12-07 |
 | ZTF-007 | Fixed taxonomy and unknown-class handling | High | Frozen 15-class taxonomy is protected; long-term transient science may need versioned expansion. **DESIGN REQUIRED** | Taxonomy versioning, unknown/abstain semantics, migration and independent label validation. | #158 |
 | ZTF-008 | Independent scientific anomaly engine | High | Existing OOD and classification outputs do not constitute a validated scientific anomaly detector. **FUTURE DESIGN** | Separate scientific question, features, controls, false-positive analysis, astrophysical review and benchmark. | Roadmap |
 | ZTF-009 | Generalization to the wider ZTF population | Critical | 150-object benchmark and bounded demos do not establish population-wide performance. **OPEN** | Temporal and external validation on pinned, representative data; selection-bias analysis; calibrated performance intervals. | #158 |
@@ -38,7 +38,7 @@
 
 ## CPVS sub-register
 
-The CPVS discrepancy must remain separate from the product P0 work:
+The CPVS discrepancy is P0 for scientific research, but remains separate from the DR24/Park product critical path:
 - `C` candidate set: 741,786.
 - `P` published reference: 730,184.
 - `C - P`: 11,602.
@@ -59,7 +59,7 @@ Do not change production selectors, thresholds, model or benchmark to reproduce 
 2. **P0 Frozen artifact recovery:** #282; do not rebuild or substitute.
 3. **P0 Park MVP acceptance:** #158/#253; pinned 5–10 confirmed-source E2E, then 30–50-source demo with source identity evidence.
 4. **P1 Independent benchmark/leakage:** StarEmbed and temporal/external evaluation.
-5. **P1 CPVS research:** #170/#180; fixed samples, raw provenance and MGPR.
+5. **P0-R CPVS scientific research:** #170/#180; artifact recheck completed, but fresh raw SNR, fixed-sample raw coverage, MGPR and root-cause analysis remain outstanding. This is separate from the Park product critical path.
 6. **P1 Desktop, reliability, security and cross-platform acceptance.**
 7. **Future discovery engines and CIN:** only after their scientific and governance gates are defined.
 
@@ -83,3 +83,8 @@ Never close a blocker because a document was updated, a test was skipped, a coun
 [Session 05](think-tank/THINK_TANK_SESSION_2026-11-12_SOURCE_IDENTITY_CONTRACT_REVIEW.md) reviewed Draft PR #283 with a focused 8-role panel and independent Red Team pass. The contract now requires exact evidence coverage for each declared survey-object/candidate-source pair and a no-candidate evidence record for every declared survey object in an unmatched decision.
 
 The branch has 34 focused test functions. On the latest inspected head `90b6026e62e41bdff4d33c251ec2f0e1cbbb7ba9`, the full Test Suite passed 736 tests, skipped 13, and had zero failures and 9 warnings. Runtime Smoke, format, lint and lifecycle checks passed. Package build was still in progress; source-backed scientific jobs were skipped. The contract does not implement matching, persist identity decisions or prove astrophysical identity. Keep ZTF-001 OPEN until API/persistence compatibility and independent adjudicated association validation pass.
+
+
+## Think Tank Session 07 — CPVS priority and evidence recheck
+
+The retained artifact recheck independently confirmed the historical set arithmetic and sample strata. It did not derive the candidate set afresh from raw photometry. The CPVS issue remains open and is P0 for research, but not a Park MVP/release gate. See [Session 07](think-tank/THINK_TANK_SESSION_2026-11-12_CPVS_PRIORITY_AND_EVIDENCE_RECHECK.md).
