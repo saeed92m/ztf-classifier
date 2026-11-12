@@ -84,7 +84,10 @@
       "Exact JUnit artifact 13926735814 was downloaded and parsed: 715 test cases, 702 passed, 13 skipped, zero failures, zero errors.",
       "Coverage artifact reports 6,468 of 7,761 lines covered (83.34%); branch coverage was not measured.",
       "Product Scope Audit, CodeQL Python, and Scientific Validation contract tests all passed on the latest head.",
-      "Source-backed provenance, DR24/ALeRCE, StarEmbed and historical ALeRCE jobs remained skipped; the result is not a Scientific-PASS."
+      "Source-backed provenance, DR24/ALeRCE, StarEmbed and historical ALeRCE jobs remained skipped; the result is not a Scientific-PASS.",
+      "Current-head CI run 43235940260 exposed a lifecycle-record inconsistency: decision=ACCEPT was combined with non-empty regression.open_blockers, which the repository validator correctly rejects.",
+      "Corrected the documentation-cycle scope: independent scientific/product blockers remain in failure_analysis.unresolved and knowledge_carried_forward, not as regressions of this documentation-only cycle. The cycle acceptance decision is limited to documentation convergence and does not close project blockers.",
+      "Re-run is required on the corrected cycle record; the prior failed lifecycle gate is retained as evidence and is not reported as a passing run."
     ],
     "blocker": "Documentation PR engineering CI is green. Scientific acceptance remains blocked: the frozen production artifact is unavailable in accessible CI/repository sources, source-backed scientific jobs were skipped, DR24 live-source parity was not run, and Park MVP end-to-end acceptance remains incomplete."
   },
@@ -93,7 +96,8 @@
     "root_causes": [
       "Project state was spread across older repository documents, Notion handbooks, issue/PR updates and attached proposal files.",
       "Some current docs contained stale or ambiguous claims, including software release version, CPVS residual count, membership-reference semantics, and product versus Park acceptance scope.",
-      "The first documentation PR omitted the mandatory machine-readable cumulative cycle record. The repository workflow correctly failed closed."
+      "The first documentation PR omitted the mandatory machine-readable cumulative cycle record. The repository workflow correctly failed closed.",
+      "The cycle record incorrectly placed independent project-level blockers in regression.open_blockers while setting decision=ACCEPT. The validator correctly enforces that an accepted cycle has no open regressions. The project blockers are real but are outside the acceptance scope of this documentation-only cycle."
     ],
     "unresolved": [
       "The prior 2026-11-09 WSL audit already reported the frozen production artifact path absent and the ALeRCE raw-detection cache absent; the exact historical JSON and full per-file path list are not in the currently accessible Project files.",
@@ -141,12 +145,7 @@
   },
   "regression": {
     "status": "PASS",
-    "open_blockers": [
-      "The original frozen production artifact remains unavailable in the inspected remote sources; recover and independently authenticate it under Issue #282 before closing the seven skipped production inference tests.",
-      "Run source-backed DR24, independent StarEmbed and historical ALeRCE validations under Issues #188 and #210 using pinned data and hashes.",
-      "Complete the DR24 application integration and confirmed-source end-to-end acceptance under Issues #158 and #253.",
-      "Continue CPVS root-cause investigation under Issues #170 and #180; the 11,602 candidate-only residuals remain unresolved."
-    ]
+    "open_blockers": []
   },
   "decision": "ACCEPT",
   "knowledge_carried_forward": [
@@ -178,6 +177,7 @@
     "Latest PR head: 62bf4600a6df4ed04a16b2b6830ea823b67e50a5; 40 commits ahead and 0 behind main; 15 documentation/process files in the diff.",
     "CI run 43180573715: 702 passed, 13 skipped, 0 failed/errors; line coverage 83.34%; branch coverage not measured.",
     "Engineering validation PASS applies only to the documentation/candidate branch; source-backed scientific jobs remain SKIPPED and independent product/scientific blockers remain open.",
-    "Companion documents: THINK_TANK_MASTER_REVIEW_2026-11-12.md, MASTER_DEFECT_REGISTER_2026-11-12.md, MASTER_EXECUTION_ROADMAP_2026-11-12.md, OPEN_PR_TRIAGE_2026-11-12.md, architecture/ARCHITECTURE_v0.3.md."
+    "Companion documents: THINK_TANK_MASTER_REVIEW_2026-11-12.md, MASTER_DEFECT_REGISTER_2026-11-12.md, MASTER_EXECUTION_ROADMAP_2026-11-12.md, OPEN_PR_TRIAGE_2026-11-12.md, architecture/ARCHITECTURE_v0.3.md.",
+    "CI run 43235940260 failed at the cumulative lifecycle gate because decision=ACCEPT conflicted with non-empty regression.open_blockers. The record was corrected by separating documentation-cycle regressions from independent product/scientific blockers; those blockers remain open in the defect register and issues."
   ]
 }
