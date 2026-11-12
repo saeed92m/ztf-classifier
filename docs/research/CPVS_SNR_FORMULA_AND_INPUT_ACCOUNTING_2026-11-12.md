@@ -82,3 +82,16 @@ Before this branch can be considered engineering-ready:
 6. Full repository CI and lifecycle validation pass.
 
 A separate raw source-backed execution must verify archive checksums, extracted-member hashes, row counts, malformed-row counts, per-formula results, per-stratum results and output hashes. Do not claim scientific validation from synthetic tests.
+
+
+## 6. Current-head engineering verification — 2026-11-12
+
+PR #285 current head `9e4b59f521a8318daaa7e456dbd0f90654d1e2d7` passed all eight engineering CI jobs in run [43294538781](https://github.com/saeed92m/ztf-classifier/actions/runs/43294538781).
+
+- Test Suite: 706 passed, 13 skipped, zero failures, 9 warnings in 100.19 seconds.
+- Line coverage: 7,761 statements, 1,293 missed, 83%; branch coverage not reported.
+- Format, Lint, Lifecycle Gate, Runtime Smoke, Build & Verify Package, Dependency Audit and CI Gate: PASS.
+- CodeQL, Product Scope Audit and Scientific Validation benchmark/lifecycle contract: PASS.
+- Four source-backed scientific jobs: SKIPPED.
+
+This is engineering verification of the diagnostic tool. It is not a raw archive SNR result, MGPR result or scientific resolution of the 11,602 discrepancy.
