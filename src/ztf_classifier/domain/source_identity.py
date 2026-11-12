@@ -106,7 +106,10 @@ class AstrophysicalSourceRef:
             raise TypeError("identity_status must be an IdentityStatus.")
         if not isinstance(self.provenance_refs, tuple) or not self.provenance_refs:
             raise ValueError("provenance_refs must be a non-empty tuple.")
-        if any(not isinstance(ref, str) or not ref.strip() for ref in self.provenance_refs):
+        if any(
+            not isinstance(ref, str) or not ref.strip()
+            for ref in self.provenance_refs
+        ):
             raise ValueError("provenance_refs must contain non-empty strings.")
         if self.identity_status is IdentityStatus.SUPERSEDED:
             if not self.superseded_by or not self.superseded_by.strip():
@@ -141,7 +144,9 @@ class AssociationEvidence:
             self.candidate_ref,
         )
         if not all(isinstance(value, str) and value.strip() for value in required):
-            raise ValueError("association evidence identity and version fields are required.")
+            raise ValueError(
+                "association evidence identity and version fields are required."
+            )
         if self.score_kind not in {"raw_score", "calibrated_probability"}:
             raise ValueError("score_kind must be raw_score or calibrated_probability.")
         if self.score is not None and not isfinite(self.score):
@@ -182,7 +187,9 @@ class SourceAssociation:
             self.decided_at,
         )
         if not all(isinstance(value, str) and value.strip() for value in required):
-            raise ValueError("association identity, schema, policy and timestamp are required.")
+            raise ValueError(
+                "association identity, schema, policy and timestamp are required."
+            )
         if not isinstance(self.status, AssociationStatus):
             raise TypeError("status must be an AssociationStatus.")
         if not isinstance(self.survey_objects, tuple) or not self.survey_objects:
@@ -193,7 +200,10 @@ class SourceAssociation:
             raise ValueError("survey_objects must not contain duplicates.")
         if not isinstance(self.candidate_source_ids, tuple):
             raise TypeError("candidate_source_ids must be a tuple.")
-        if any(not isinstance(value, str) or not value.strip() for value in self.candidate_source_ids):
+        if any(
+            not isinstance(value, str) or not value.strip()
+            for value in self.candidate_source_ids
+        ):
             raise ValueError("candidate_source_ids must contain non-empty strings.")
         if len(set(self.candidate_source_ids)) != len(self.candidate_source_ids):
             raise ValueError("candidate_source_ids must be unique.")
@@ -205,7 +215,9 @@ class SourceAssociation:
             raise ValueError("reviewer_ref must be non-empty when provided.")
         if self.supersedes_association_id is not None:
             if not self.supersedes_association_id.strip():
-                raise ValueError("supersedes_association_id must be non-empty when provided.")
+                raise ValueError(
+                    "supersedes_association_id must be non-empty when provided."
+                )
             if self.supersedes_association_id == self.association_id:
                 raise ValueError("an association cannot supersede itself.")
 
@@ -222,9 +234,21 @@ class SourceAssociation:
             raise ValueError("only confirmed matches may set confirmed_source_id.")
 
         if self.status is AssociationStatus.UNMATCHED and self.candidate_source_ids:
-            raise ValueError("unmatched associations cannot contain candidate source IDs.")
+            raise ValueError(
+                "unmatched associations cannot contain candidate source IDs."
+            )
 
-        if self.status is AssociationStatus.AMBIGUOUS_MATCH and not self.candidate_source_ids:
-            raise ValueError("ambiguous associations require at least one candidate source ID.")
-        if self.status is AssociationStatus.REJECTED_MATCH and not self.candidate_source_ids:
-            raise ValueError("rejected matches require the rejected candidate source ID.")
+        if (
+            self.status is AssociationStatus.AMBIGUOUS_MATCH
+            and not self.candidate_source_ids
+        ):
+            raise ValueError(
+                "ambiguous associations require at least one candidate source ID."
+            )
+        if (
+            self.status is AssociationStatus.REJECTED_MATCH
+            and not self.candidate_source_ids
+        ):
+            raise ValueError(
+                "rejected matches require the rejected candidate source ID."
+            )
