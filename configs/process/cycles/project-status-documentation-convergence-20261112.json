@@ -36,7 +36,8 @@
     "Align README, Model Card, Scientific Methodology, benchmark source semantics, Knowledge Base index, roadmap, and acceptance checklist.",
     "Record the submitted institutional and commercialization plan without presenting targets as achievements.",
     "Preserve the 16-role think-tank method as ongoing project governance.",
-    "Keep raw research questions and frozen production baselines unchanged."
+    "Keep raw research questions and frozen production baselines unchanged.",
+    "Create a read-only inventory and safe triage plan for all open pull requests, preserving unique research evidence and avoiding mass merges or closures."
   ],
   "measurement": {
     "metrics": {
@@ -110,7 +111,9 @@
       "The 2026-11-09 summary of nine missing production files predates the corrected audit contract. Current schema-1.0 production readiness requires six core files; three conformal/OOD diagnostics are optional.",
       "The user's local audit should not be repeated merely to advance repository-side work; use the existing evidence and continue remote recovery first.",
       "A 16-role structured think-tank review was completed and recorded. It distinguishes simulated expert-role review from actual participation by external human experts.",
-      "Joint think-tank decision: prioritize DR24-first Park MVP; preserve v0.2.0/v1.0.1; keep CPVS unresolved and separate; keep CIN optional; do not connect DR24 to model inference before time, photometry, QC, identity and feature-parity gates pass."
+      "Joint think-tank decision: prioritize DR24-first Park MVP; preserve v0.2.0/v1.0.1; keep CPVS unresolved and separate; keep CIN optional; do not connect DR24 to model inference before time, photometry, QC, identity and feature-parity gates pass.",
+      "GitHub returned 29 open PRs on 2026-11-12. Many are historical or stacked on old bases; open state and a mergeable flag do not establish review or acceptance.",
+      "A dedicated OPEN_PR_TRIAGE_2026-11-12.md records active review candidates, historical/stacked PRs, current issue trackers and a no-mass-merge/no-mass-close protocol."
     ]
   },
   "regression": {
@@ -136,6 +139,7 @@
     "Scientific-PASS remains blocked by missing frozen production artifact and skipped source-backed evidence.",
     "Historical local WSL artifact audit dated 2026-11-09 is already known; do not request a duplicate local audit as the next action.",
     "Artifact recovery tracker: Issue #282.",
-    "Sixteen-role think-tank review and joint decision are recorded in section 17 of the master continuation document and in the Notion master page."
+    "Sixteen-role think-tank review and joint decision are recorded in section 17 of the master continuation document and in the Notion master page.",
+    "Open PR inventory and safe triage: docs/OPEN_PR_TRIAGE_2026-11-12.md."
   ]
 }
