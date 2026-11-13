@@ -21,6 +21,16 @@ A second important observation is that 14 residual objects have raw archive row 
 
 **Joint decision: retain NOT_VALIDATED. Do not change the production selector, thresholds, SourceID mapping, model, feature set, taxonomy, benchmark or v0.2.0 baseline.**
 
+## Scope boundary for the wider ZTF project
+
+The submitted science-park proposal and technical/business plan define the product vision and prototype context. The Cosmic Intelligence Network (CIN) and collective data-generation documents define a proposed, separate human-in-the-loop subsystem. They are available as strategic context, but they are not evidence for CPVS membership selection.
+
+For this session:
+- CPVS membership and the 11,602 discrepancy are the only scientific investigation target.
+- CIN remains a proposed extension; it must not alter the frozen benchmark, production model or CPVS source labels.
+- Crowdsourced annotations are not ground truth and must not be used to resolve this catalog discrepancy.
+- Product and institutional claims in the proposal do not replace scientific source verification.
+
 ## 2. Source-backed execution evidence
 
 ### GitHub Actions
