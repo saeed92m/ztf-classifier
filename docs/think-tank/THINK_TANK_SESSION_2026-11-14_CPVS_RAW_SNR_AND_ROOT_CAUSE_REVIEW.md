@@ -204,6 +204,8 @@ The Zenodo record for Chen et al. (2020) identifies `ztf2g` and `ztf2r` as singl
 - r: `SourceID, RAdeg, DEdeg, HJD, rmag, e_rmag, r_flag`
 
 The same Zenodo record explicitly states that `SourceID` is the internal source identifier that joins these attachments to Table 2, and gives the example ZTFJ000000.19+320847.2 with `SourceID=3`. This makes a wholesale identifier-namespace mismatch less likely, although the project must still validate its full object-level join.
+The CDS Table 4 ReadMe describes 730,184 records as all periodic variables ranked by Cartesian latent-space anomaly score. Table 4 contains only ZTF name, internal ID, class, coordinates and score; it does not publish the feature values used to select or score each object. Its stated selection description is the two-band 2.5σ/3σ detection condition. This is why the exact four-field rule must be treated as an inferred downstream completeness condition, not a directly documented Table 4 filter.
+
 The pinned source-reconciliation report provides the full crosswalk evidence:
 - Table 2: 781,602 unique `Seq` values and 781,602 unique ZTF names.
 - Table 4: 730,184 unique ZTF names; zero unmapped names.
