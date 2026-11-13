@@ -14,7 +14,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: cpvs-phasefold-coverage-\${{ github.ref }}
+  group: cpvs-phasefold-coverage-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -49,9 +49,9 @@ jobs:
         with:
           name: scientific-validation-heavy
           path: inputs
-          repository: \${{ github.repository }}
+          repository: ${{ github.repository }}
           run-id: 38635891449
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download checksum-pinned Zenodo raw photometry
         shell: bash
