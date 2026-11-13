@@ -123,6 +123,7 @@ Interpretation:
 - The completed flag-policy re-scan [run 43525513465](https://github.com/saeed92m/ztf-classifier/actions/runs/43525513465) confirms:
   - all 11,602 residuals pass under both `flag < 32768` and the literal `flag != 32768` rule;
   - no raw row in the candidate-only scan has flag value 32,768; all observed values are below 32,768;
+  - in the 11,602 residual cohort, g contains 67,682 rows with flag values only 0, 1, 16, 32, 256, 4096 and 4128; r contains 1,503,643 rows with flag values only 0, 1, 4, 8, 16, 32, 48, 256, 516, 532, 4096, 4097, 4112 and 4128. The maximum observed value is 4128. Nonzero flags occur in 171 objects in g and 680 in r.
   - strict `flag == 0` leaves 11,513 residuals and rejects 89, but it is not the documented usable-epoch rule and the full-parent ablation loses 5,472 published members;
   - row-count matches remain 11,588 in g and 11,599 in r under both non-strict policies, so flags do not explain the 14 row-count mismatches;
   - the 14 mismatching objects have raw flag values 0, except SourceID 265675 with 4096; none has 32,768.
