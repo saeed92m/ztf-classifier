@@ -176,6 +176,7 @@ The original Table 2 ReadMe marks `gmag`, `rmag`, `Per-g` and `Per-r` with `?=0`
 
 Primary sources:
 - Chan et al. 2022, Section 2.1: https://doi.org/10.3847/1538-4357/ac69d4
+- Chan et al. 2021 arXiv full text (same anomaly-detection methodology): https://arxiv.org/abs/2112.03306 — Sections II.1–II.3 and Table 1 describe two-band MGPR, `m_gr`, common period, and the `tau_g`/`tau_r` correlation features.
 - CDS ReadMe for Chan et al. Table 4: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJ/932/118?format=html&tex=true
 - Chen et al. 2020 ZTF CPVS Zenodo record and raw-file schema: https://zenodo.org/records/3886372
 - VizieR Table 2 field metadata: https://vizier.cfa.harvard.edu/viz-bin/VizieR-3?-source=J%2FApJS%2F249%2F18%2Ftable2
