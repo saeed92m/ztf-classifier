@@ -188,6 +188,14 @@ The Zenodo record for Chen et al. (2020) identifies `ztf2g` and `ztf2r` as singl
 - r: `SourceID, RAdeg, DEdeg, HJD, rmag, e_rmag, r_flag`
 
 The same Zenodo record explicitly states that `SourceID` is the internal source identifier that joins these attachments to Table 2, and gives the example ZTFJ000000.19+320847.2 with `SourceID=3`. This makes a wholesale identifier-namespace mismatch less likely, although the project must still validate its full object-level join.
+The pinned source-reconciliation report provides the full crosswalk evidence:
+- Table 2: 781,602 unique `Seq` values and 781,602 unique ZTF names.
+- Table 4: 730,184 unique ZTF names; zero unmapped names.
+- Table 4 internal ID equals Table 2 parent `Seq` for all 730,184 records; zero mismatches.
+- Table 4 and the Zenodo published-membership set match exactly; zero Table4-only and zero Zenodo-only IDs.
+- The sequence range 1–781,604 has two missing values (`615171`, `615172`); this is a sequence gap, not a duplicate or a membership mismatch.
+- Sorted candidate-only ID SHA-256: `b891e2ef5a79841f23a7d4c8f5d45087280ba5de515d3f39463d9c1465286643`.
+- Sorted full candidate ID SHA-256: `4e784952ac7a41f08ae78e04415f5b1dc4e5162d38091838c8725212ea7fe9fe`.
 
 The original Table 2 ReadMe marks `gmag`, `rmag`, `Per-g` and `Per-r` with `?=0`, so zero is the catalogue's missing-value sentinel for these fields. It defines `log(FAP-g)` and `log(FAP-r)` on a range ending at 0; a reported value of 0.0 is `log(FAP)=0` (FAP=1), not a zero false-alarm probability. The 17-object missing-period cohort includes both zero and negative log-FAP values. VizieR defines `Ng` and `Nr` as the number of detections in each band. The current scan counts all rows with valid magnitude/error and reports flags without filtering. It therefore does not yet reproduce Chen et al.'s stated quality cuts. The `INFOBITS` field is not present in the Zenodo archive. The exact equivalence of Zenodo `g_flag`/`r_flag` to the `catflags` named in Chen et al. must be verified before applying that criterion as a faithful reproduction. The official ZTF DR2 release notes distinguish image-level `INFOBITS < 33,554,432` from light-curve epoch-level `catflags < 32,768`; they describe `catflags=0` as a stricter, perfectly-clean extraction. Chen et al.'s literal `catflags != 32,768` is not identical to the official `catflags < 32,768` rule. The 14 Table 2/raw-row count mismatches may require image-level INFOBITS, which the Zenodo archive does not contain.
 
