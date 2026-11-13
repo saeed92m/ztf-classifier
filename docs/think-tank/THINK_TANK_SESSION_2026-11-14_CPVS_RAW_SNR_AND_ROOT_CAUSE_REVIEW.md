@@ -89,7 +89,31 @@ None of the 11,602 residual objects passes all four conditions. All 11,602 are r
 
 This is an exact empirical discriminator for this residual cohort. It is **not** evidence that Chan et al. or Chen et al. prescribed this as the membership rule. Do not convert this diagnostic into a production selector.
 
-## 5. Fixed sample results
+## 5. Historical selection ablations and the strongest new lead
+
+The pinned heavy-run artifact `scientific-validation-heavy` from run 38635891449 contains independent ablations over the full 781,602-object parent set. These are diagnostic results, not production changes.
+
+| Diagnostic | Candidate count | Candidate-only | Published intersection | Published-only |
+|---|---:|---:|---:|---:|
+| Baseline rowwise SNR | 741,786 | 11,602 | 730,184 | 0 |
+| Flag < 32,768 in each band | 741,786 | 11,602 | 730,184 | 0 |
+| Flag == 0 in each band | 736,225 | 11,513 | 724,712 | 5,472 |
+| Add positive parent gmag and rmag | 730,201 | 17 | 730,184 | 0 |
+| Exact magnitude-error SNR + positive gmag/rmag | 730,201 | 17 | 730,184 | 0 |
+| Positive gmag, rmag, Per-g and Per-r | 730,184 intersection | 0 residual after intersection | 730,184 | 0 |
+
+Interpretation:
+- The tested `flag < 32768` policy does not reduce the 11,602 residuals. This argues against that flag rule as the root cause.
+- The strict `flag == 0` policy is not acceptable: it removes 5,472 published members. Do not use it.
+- Requiring both parent mean magnitudes to be positive removes 11,585 of the 11,602 residuals and leaves only 17. The published intersection remains complete.
+- The remaining 17 have both mean magnitudes, but one of `Per-g` or `Per-r` is missing. In the retained diagnostics, the missing band's FAP is 0.0; the other band supplies the common `Per`. Their per-band observation counts are substantial (approximately 50–245), so simple low-count rejection does not explain these 17.
+- All 17 have a common period `Per`; the missing value is the band-specific period.
+
+The Chan et al. (2022) paper explicitly uses the color feature `m_gr = <m_g> - <m_r>` in its Isolation Forest input. This requires both mean magnitudes. Its Table 1 also lists `tau_g` and `tau_r` among the features used in the correlation analysis. This provides a source-backed reason that missing per-band mean magnitudes matter to the downstream analysis, but it does not by itself prove the full four-field gate was the authors' membership selector.
+
+**Strongest current explanation:** the 11,602 residuals are not explained by the numeric SNR threshold or by the tested flag rule. They are strongly associated with incomplete two-band fit products in Table 2. Both mean magnitudes account for 11,585 residuals; the remaining 17 also lack one band-specific period. This is the leading mechanism, not yet a fully documented publisher rule.
+
+## 6. Fixed sample results
 
 | Cohort | Objects | Both-band SNR PASS | Both-band UNKNOWN | Four-field + SNR PASS |
 |---|---:|---:|---:|---:|
@@ -132,7 +156,7 @@ This is now a high-priority investigation branch. It may reveal a quality-filter
 
 Chen et al. (2020), Section III, describes the parent-catalogue processing: at least 20 detections; poor-quality images and photometry excluded using `INFOBITS < 33,554,432` and `catflags != 32,768`; and periodic candidates accepted if the light curve in one band met all period-search conditions. It also describes later period redetermination using photometry within 1 arcsecond of the source position.
 
-Chan et al. (2022), Section 2.1, states that the 730,184 selected light curves contain at least one 2.5σ detection in g and one 3σ detection in r, and that both bands are phase-folded using the common period in Table 2. The paper does not provide a full row-level formula for the detection in that paragraph.
+Chan et al. (2022), Section 2.1, states that the 730,184 selected light curves contain at least one 2.5σ detection in g and one 3σ detection in r, and that both bands are phase-folded using the common period in Table 2. Section 2.3 also adds the color feature `m_gr = <m_g> - <m_r>` to the Isolation Forest input; this requires both mean magnitudes. Table 1 lists the per-band periods `tau_g` and `tau_r` among the features used for its correlation analysis. The paper does not provide a full row-level formula for the detection or explicitly state that all four Table 2 fields must be positive.
 
 The Zenodo record for Chen et al. (2020) identifies `ztf2g` and `ztf2r` as single-exposure photometry files, with columns:
 - g: `SourceID, RAdeg, DEdeg, HJD, gmag, e_gmag, g_flag`
@@ -246,4 +270,4 @@ The workflow file was changed to upload only five explicit evidence files. That 
 - Issue #170: **KEEP OPEN**.
 - PR #285: **KEEP DRAFT; DO NOT MERGE ON THIS EVIDENCE ALONE**.
 
-**Root-cause conclusion:** not yet established. The highest-value next step is to test whether the raw archive flags and source-ID semantics explain the 14 Table 2 row-count mismatches and whether a faithful detection-quality predicate changes the 11,602 membership result.
+**Root-cause conclusion:** not yet established. The strongest current lead is incomplete two-band fit metadata: positive `gmag` and `rmag` remove 11,585 residuals; the remaining 17 all have one missing band-specific period while retaining a common period. The tested `flag < 32768` diagnostic leaves all 11,602 residuals unchanged, and strict zero-flag filtering removes 5,472 published members. The next work must explain why the Chan et al. pipeline requires both mean magnitudes and, for the remaining 17, both band-specific periods, or identify another rule that yields the same partition. The 14 raw/Table 2 row-count mismatches remain a separate provenance/quality investigation.
