@@ -106,8 +106,8 @@ Interpretation:
 - The tested `flag < 32768` policy does not reduce the 11,602 residuals. This argues against that flag rule as the root cause.
 - The strict `flag == 0` policy is not acceptable: it removes 5,472 published members. Do not use it.
 - Requiring both parent mean magnitudes to be positive removes 11,585 of the 11,602 residuals and leaves only 17. The published intersection remains complete.
-- The remaining 17 have both mean magnitudes, but one of `Per-g` or `Per-r` is missing. In the retained diagnostics, the missing band's `log(FAP)` is 0.0 (FAP≈1, no significant period); the other band supplies the common `Per`. Their per-band observation counts are substantial (approximately 50–245), so simple low-count rejection does not explain these 17.
-- The 17 SourceIDs are: `9877, 120746, 127012, 151010, 191955, 281946, 287003, 307249, 378719, 385223, 409233, 429716, 440167, 471637, 518053, 657950, 732333`. Each has a common `Per`, but one band-specific period is absent and that band's `log(FAP)` is 0.0 (FAP≈1, no significant period).
+- The remaining 17 have both mean magnitudes, but one of `Per-g` or `Per-r` is missing. In the original Table 2 rows, the missing band's `Per-g` or `Per-r` is the zero sentinel. Its `log(FAP)` is not uniform: 10 of the 17 have `log(FAP)=0.0`, while 7 have negative values from -2.497 to -23.842. Therefore, a missing per-band period cannot be explained by a single FAP threshold; the period-fit rejection or output rule needs investigation. The other band supplies the common `Per`. Their per-band observation counts are substantial (approximately 50–245), so simple low-count rejection does not explain these 17.
+- The 17 SourceIDs are: `9877, 120746, 127012, 151010, 191955, 281946, 287003, 307249, 378719, 385223, 409233, 429716, 440167, 471637, 518053, 657950, 732333`. Each has a common `Per`, but one band-specific period is absent. The missing band's `log(FAP)` varies: 10 are 0.0 and 7 are negative (-2.497 to -23.842).
 - All 17 have a common period `Per`; the missing value is the band-specific period.
 
 The Chan et al. (2022) paper explicitly uses the color feature `m_gr = <m_g> - <m_r>` in its Isolation Forest input. This requires both mean magnitudes. Its Table 1 also lists `tau_g` and `tau_r` among the features used in the correlation analysis. This provides a source-backed reason that missing per-band mean magnitudes matter to the downstream analysis, but it does not by itself prove the full four-field gate was the authors' membership selector.
@@ -166,7 +166,7 @@ The Zenodo record for Chen et al. (2020) identifies `ztf2g` and `ztf2r` as singl
 
 The same Zenodo record explicitly states that `SourceID` is the internal source identifier that joins these attachments to Table 2, and gives the example ZTFJ000000.19+320847.2 with `SourceID=3`. This makes a wholesale identifier-namespace mismatch less likely, although the project must still validate its full object-level join.
 
-The original Table 2 ReadMe marks `gmag`, `rmag`, `Per-g` and `Per-r` with `?=0`, so zero is the catalogue's missing-value sentinel for these fields. It defines `log(FAP-g)` and `log(FAP-r)` on a range ending at 0; therefore a reported value of 0.0 is `log(FAP)=0` (FAP=1), not a zero false-alarm probability. VizieR defines `Ng` and `Nr` as the number of detections in each band. The current scan counts all rows with valid magnitude/error and reports flags without filtering. It therefore does not yet reproduce Chen et al.'s stated quality cuts. The `INFOBITS` field is not present in the Zenodo archive. The exact equivalence of Zenodo `g_flag`/`r_flag` to the `catflags` named in Chen et al. must be verified before applying that criterion as a faithful reproduction.
+The original Table 2 ReadMe marks `gmag`, `rmag`, `Per-g` and `Per-r` with `?=0`, so zero is the catalogue's missing-value sentinel for these fields. It defines `log(FAP-g)` and `log(FAP-r)` on a range ending at 0; a reported value of 0.0 is `log(FAP)=0` (FAP=1), not a zero false-alarm probability. The 17-object missing-period cohort includes both zero and negative log-FAP values. VizieR defines `Ng` and `Nr` as the number of detections in each band. The current scan counts all rows with valid magnitude/error and reports flags without filtering. It therefore does not yet reproduce Chen et al.'s stated quality cuts. The `INFOBITS` field is not present in the Zenodo archive. The exact equivalence of Zenodo `g_flag`/`r_flag` to the `catflags` named in Chen et al. must be verified before applying that criterion as a faithful reproduction.
 
 Primary sources:
 - Chan et al. 2022, Section 2.1: https://doi.org/10.3847/1538-4357/ac69d4
@@ -240,7 +240,7 @@ For each of the 14 row-count mismatch IDs and a matched control set:
 ### P0-D — Investigate the 17 remaining objects
 
 - inspect all 17 records against the original Table 2 bytes and ReadMe;
-- confirm the missing `Per-g`/`Per-r` sentinel and `log(FAP)=0` in the failed band;
+- confirm the missing `Per-g`/`Per-r` zero sentinel and inspect the full range of missing-band `log(FAP)` values;
 - determine whether the 17 were excluded because a valid per-band period was required, because MGPR failed, or because of another fit-quality condition;
 - check the role of `tau_g`/`tau_r` in the published correlation analysis and whether complete-case filtering was applied before Table 4 generation;
 - verify the requirement for `m_gr` using the two mean magnitudes;
