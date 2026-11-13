@@ -316,7 +316,7 @@ A later push produced standard CI run [43474444378](https://github.com/saeed92m/
 
 The first raw-SNR run 43463184881 uploaded the entire `reports/` directory and included unrelated historical reports and tables; it did not upload raw g/r archives. The workflow now uses a five-file allowlist, and the completed follow-up run 43525513465 verifies that boundary.
 The flag-policy scan [run 43525513465](https://github.com/saeed92m/ztf-classifier/actions/runs/43525513465) completed successfully. Setup, synthetic regression tests, pinned-input retrieval, both checksum-pinned archive downloads, raw scan and artifact upload all passed. Its artifact (ID 14085318178, SHA-256 `198ad0becaae7cc752e34fd34ae6e269ae49a73b255afc6a3773d651f26e6088`) contains exactly five allowlisted files; no unrelated reports or raw archives were uploaded. The artifact contains 7,074,893 uncompressed bytes and expires 2026-11-27.
-On the latest documentation head `908399bb`, standard CI is pending/queued (runs 43527840761 and 43527833461); Scientific Validation (43527840591), CodeQL (43527840550) and Product Scope Audit (43527840824) are in progress. No fresh green CI result is claimed.
+On the current documentation head `e40ed37`, standard CI (runs 43527887971 and 43527880965), Scientific Validation (43527887940), CodeQL (43527888110) and Product Scope Audit (43527887953) are in progress. No fresh green CI result is claimed.
 
 ## 13. Joint decision and current status
 
