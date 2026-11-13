@@ -24,6 +24,32 @@ SNR_PASS_FIELDS = {
     "exact": "passes_exact_snr",
     "inverse_error": "passes_inverse_error_snr",
 }
+FLAG_POLICIES = {
+    "not_equal_32768": "flag != 32768 (literal condition stated in Chen et al. 2020)",
+    "below_32768": "flag < 32768 (bit-15-clear diagnostic)",
+    "zero_only": "flag == 0 (strict diagnostic)",
+}
+
+
+def parse_flag(value: Any) -> int | None:
+    try:
+        return int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def flag_policy_accepts(value: Any, policy: str) -> bool | None:
+    """Evaluate a diagnostic flag policy; None means the flag is unavailable."""
+    flag = parse_flag(value)
+    if flag is None:
+        return None
+    if policy == "not_equal_32768":
+        return flag != 32768
+    if policy == "below_32768":
+        return flag < 32768
+    if policy == "zero_only":
+        return flag == 0
+    raise ValueError(f"Unknown flag policy: {policy}")
 
 ARCHIVES = {
     "g": {
@@ -319,6 +345,16 @@ def empty_band_metrics() -> dict[str, Any]:
         "minimum_qualifying_magerr": None,
         "qualifying_flag_counts": Counter(),
         "all_flag_counts": Counter(),
+        "flag_policy_metrics": {
+            policy: {
+                "flag_known_rows": 0,
+                "eligible_rows": 0,
+                "qualifying_detections_approximate": 0,
+                "qualifying_detections_exact": 0,
+                "qualifying_detections_inverse_error": 0,
+            }
+            for policy in FLAG_POLICIES
+        },
     }
 
 
@@ -393,6 +429,15 @@ def scan_band_archive(
             magerr = parse_float(fields[5])
             flag_text = fields[6].strip()
             item["all_flag_counts"][flag_text] += 1
+            flag_value = parse_flag(flag_text)
+            accepted_policies = {}
+            for policy in FLAG_POLICIES:
+                accepted = flag_policy_accepts(flag_value, policy)
+                accepted_policies[policy] = accepted
+                if accepted is not None:
+                    item["flag_policy_metrics"][policy]["flag_known_rows"] += 1
+                if accepted:
+                    item["flag_policy_metrics"][policy]["eligible_rows"] += 1
 
             if mag is None or mag == 0:
                 item["invalid_mag_rows"] += 1
@@ -434,6 +479,16 @@ def scan_band_archive(
                 item["qualifying_detections_exact"] += 1
             if snr_inverse >= config["threshold"]:
                 item["qualifying_detections_inverse_error"] += 1
+            for policy, accepted in accepted_policies.items():
+                if not accepted:
+                    continue
+                policy_metrics = item["flag_policy_metrics"][policy]
+                if snr_approx >= config["threshold"]:
+                    policy_metrics["qualifying_detections_approximate"] += 1
+                if snr_exact >= config["threshold"]:
+                    policy_metrics["qualifying_detections_exact"] += 1
+                if snr_inverse >= config["threshold"]:
+                    policy_metrics["qualifying_detections_inverse_error"] += 1
 
         returncode = process.wait()
         stderr_file.seek(0)
@@ -472,6 +527,21 @@ def scan_band_archive(
             item["passes_inverse_error_snr"] = (
                 item["qualifying_detections_inverse_error"] > 0
             )
+        for policy, policy_metrics in item["flag_policy_metrics"].items():
+            if policy_metrics["flag_known_rows"] == 0:
+                policy_metrics["passes_approximate_snr"] = None
+                policy_metrics["passes_exact_snr"] = None
+                policy_metrics["passes_inverse_error_snr"] = None
+            else:
+                policy_metrics["passes_approximate_snr"] = (
+                    policy_metrics["qualifying_detections_approximate"] > 0
+                )
+                policy_metrics["passes_exact_snr"] = (
+                    policy_metrics["qualifying_detections_exact"] > 0
+                )
+                policy_metrics["passes_inverse_error_snr"] = (
+                    policy_metrics["qualifying_detections_inverse_error"] > 0
+                )
 
     return {
         "band": band,
@@ -591,6 +661,30 @@ def build_object_rows(
             if meta["table2_nr"] is not None
             else None
         )
+        for policy in FLAG_POLICIES:
+            g_policy = g["flag_policy_metrics"][policy]
+            r_policy = r["flag_policy_metrics"][policy]
+            row[f"g_rows_match_table2_{policy}"] = (
+                g_policy["eligible_rows"] == meta["table2_ng"]
+                if meta["table2_ng"] is not None
+                else None
+            )
+            row[f"r_rows_match_table2_{policy}"] = (
+                r_policy["eligible_rows"] == meta["table2_nr"]
+                if meta["table2_nr"] is not None
+                else None
+            )
+            for formula in SNR_PASS_FIELDS:
+                g_pass = g_policy[f"passes_{formula}_snr"]
+                r_pass = r_policy[f"passes_{formula}_snr"]
+                candidate = (
+                    None if g_pass is None or r_pass is None
+                    else bool(g_pass and r_pass)
+                )
+                row[f"rederived_candidate_{formula}_{policy}"] = candidate
+                row[f"rederived_candidate_{formula}_{policy}_and_four_field"] = (
+                    None if candidate is None else candidate and meta["four_field_positive"]
+                )
         results.append(row)
     return results
 
@@ -644,8 +738,38 @@ def summarize_group(rows: list[dict[str, Any]]) -> dict[str, Any]:
             ),
         }
 
+    flag_policy_summaries: dict[str, dict[str, Any]] = {}
+    for policy in FLAG_POLICIES:
+        for_formula = {}
+        for formula in SNR_PASS_FIELDS:
+            candidate_key = f"rederived_candidate_{formula}_{policy}"
+            for_formula[formula] = {
+                "g_object_pass": sum(
+                    row["g"]["flag_policy_metrics"][policy][f"passes_{formula}_snr"] is True
+                    for row in rows
+                ),
+                "r_object_pass": sum(
+                    row["r"]["flag_policy_metrics"][policy][f"passes_{formula}_snr"] is True
+                    for row in rows
+                ),
+                "both_band_pass": sum(row[candidate_key] is True for row in rows),
+                "both_band_unknown": sum(row[candidate_key] is None for row in rows),
+                "candidate_vs_table4": confusion_summary(rows, candidate_key),
+            }
+        flag_policy_summaries[policy] = {
+            "definition": FLAG_POLICIES[policy],
+            "g_row_count_matches_table2": sum(
+                row[f"g_rows_match_table2_{policy}"] is True for row in rows
+            ),
+            "r_row_count_matches_table2": sum(
+                row[f"r_rows_match_table2_{policy}"] is True for row in rows
+            ),
+            "formulae": for_formula,
+        }
+
     approximate = formula_summaries["approximate"]
     summary = {
+        "flag_policies": flag_policy_summaries,
         "count": len(rows),
         "table4_members": sum(row["table4_member"] is True for row in rows),
         "g_row_count_matches_table2": sum(
@@ -707,12 +831,24 @@ def write_objects_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
         "matches_table4_with_four_field_gate_exact",
         "matches_table4_with_four_field_gate_inverse_error",
     ]
+    for band in ("g", "r"):
+        fields.append(f"{band}_flag_counts")
+        for policy in FLAG_POLICIES:
+            fields.extend([
+                f"{band}_rows_{policy}",
+                f"{band}_qualifying_approx_{policy}",
+                f"{band}_qualifying_exact_{policy}",
+                f"{band}_qualifying_inverse_error_{policy}",
+                f"{band}_pass_approx_{policy}",
+                f"{band}_pass_exact_{policy}",
+                f"{band}_pass_inverse_error_{policy}",
+                f"{band}_row_count_match_{policy}",
+            ])
     with path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields, delimiter=chr(9))
         writer.writeheader()
         for row in rows:
-            writer.writerow(
-                {
+            record = {
                     "SourceID": row["source_id"],
                     "ZTF": row["ztf_name"],
                     "strata": ",".join(row["strata"]),
@@ -765,7 +901,21 @@ def write_objects_tsv(path: Path, rows: list[dict[str, Any]]) -> None:
                     "matches_table4_with_four_field_gate_exact": row["matches_table4_with_four_field_gate_exact"],
                     "matches_table4_with_four_field_gate_inverse_error": row["matches_table4_with_four_field_gate_inverse_error"],
                 }
-            )
+            for band in ("g", "r"):
+                record[f"{band}_flag_counts"] = json.dumps(
+                    row[band]["all_flag_counts"], sort_keys=True
+                )
+                for policy in FLAG_POLICIES:
+                    metrics = row[band]["flag_policy_metrics"][policy]
+                    record[f"{band}_rows_{policy}"] = metrics["eligible_rows"]
+                    record[f"{band}_qualifying_approx_{policy}"] = metrics["qualifying_detections_approximate"]
+                    record[f"{band}_qualifying_exact_{policy}"] = metrics["qualifying_detections_exact"]
+                    record[f"{band}_qualifying_inverse_error_{policy}"] = metrics["qualifying_detections_inverse_error"]
+                    record[f"{band}_pass_approx_{policy}"] = metrics["passes_approximate_snr"]
+                    record[f"{band}_pass_exact_{policy}"] = metrics["passes_exact_snr"]
+                    record[f"{band}_pass_inverse_error_{policy}"] = metrics["passes_inverse_error_snr"]
+                    record[f"{band}_row_count_match_{policy}"] = row[f"{band}_rows_match_table2_{policy}"]
+            writer.writerow(record)
 
 
 def write_input_failure_report(
@@ -886,8 +1036,20 @@ def main() -> int:
             "r": R_THRESHOLD,
             "selection_rule": (
                 "At least one valid non-zero-magnitude row with SNR at or above "
-                "the band threshold in both g and r. Flags are reported, not filtered."
+                "the band threshold in both g and r. Flag policies are evaluated "
+                "separately as diagnostics; no policy is promoted to production."
             ),
+        },
+        "flag_policy_diagnostics": {
+            policy: {
+                "definition": definition,
+                "caveat": (
+                    "The Zenodo schema calls this field g_flag/r_flag. Its exact "
+                    "equivalence to the catflags field named in Chen et al. (2020) "
+                    "must be established before treating the paper's condition as reproduced."
+                ),
+            }
+            for policy, definition in FLAG_POLICIES.items()
         },
         "snr_formulae": {
             "approximate": {
@@ -1018,7 +1180,9 @@ def main() -> int:
             "Cross-file ID overlap is reported with counts and hashes because fixed samples intentionally overlap source cohorts; duplicate IDs within a single input file fail closed.",
             "This is a raw-photometry diagnostic for the fixed samples and the 11,602 residual IDs, not a full 781,602-object candidate reconstruction.",
             "The SNR selector is reproduced as an explicit diagnostic; it is not silently substituted for the publisher's full method.",
-            "Nonzero flags are reported. No flag filter is applied.",
+            "Raw flag values are retained and three candidate flag policies are tested separately: flag != 32768, flag < 32768, and flag == 0.",
+            "The Zenodo g_flag/r_flag field must be proven equivalent to Chen et al. catflags before the paper's stated condition is treated as reproduced.",
+            "INFOBITS is not present in the Zenodo single-exposure archive and cannot be tested by this scan.",
             "No SourceID remapping, selector change, threshold change or frozen v0.2.0 baseline change is made.",
         ],
     }
