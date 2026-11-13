@@ -1,4 +1,3 @@
-import math
 import unittest
 
 from scripts.diagnose_cpvs_phasefold_coverage import num, phase_metrics, positive
@@ -18,7 +17,7 @@ class PhaseFoldCoverageTests(unittest.TestCase):
         self.assertIsNone(result["max_circular_phase_gap"])
 
     def test_phase_metric_wraps_values(self):
-        result = phase_metrics([-0.01, 1.01, 2.01])
+        result = phase_metrics([-0.01, 0.99, 1.99])
         self.assertEqual(result["unique_phases"], 1)
         self.assertEqual(result["occupied_bins_160"], 1)
         self.assertEqual(result["max_circular_phase_gap"], 1.0)
