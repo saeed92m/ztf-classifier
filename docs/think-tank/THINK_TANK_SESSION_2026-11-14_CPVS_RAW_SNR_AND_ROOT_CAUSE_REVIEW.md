@@ -203,15 +203,15 @@ Primary sources:
 
 ## 10. Red Team objections
 
-1. **Detection semantics:** The script currently does not filter `g_flag` or `r_flag`. A row passing the numerical SNR threshold may still be rejected by the original catalogue pipeline.
+1. **Detection semantics:** The first raw SNR scan did not filter `g_flag`/`r_flag`. The expanded diagnostic now tests three candidate policies separately. None is a confirmed source rule until the field mapping to Chen et al.'s `catflags` is established.
 2. **Identity semantics:** Zenodo documents SourceID as the internal identifier joining the raw attachments to Table 2. Confirm that the candidate provenance file uses this same identifier and verify the complete join; do not invent a remapping.
 3. **Table 2 counts:** The 14 mismatches mean raw row count cannot be treated as equivalent to `Ng`/`Nr` without understanding the source filters.
 4. **Metadata gate:** Four-field positivity exactly separates the residual cohort, but this remains a diagnostic correlation.
 5. **Sample design:** The 100 and 1,000 samples are stratified and overlapping; do not interpret pooled metrics as random population estimates.
 6. **Flags and errors:** The current calculation uses magnitude error and magnitude validity. It does not apply any quality-flag policy.
 7. **R² semantics:** Chen et al.'s Section III adjusted-R² rejection text does not reproduce the Table 4 split when applied directly to Table 2 `R2-g`/`R2-r`; do not use it as a membership filter without establishing the processing stage and exact logic.
-7. **Formula interpretation:** The inverse-error formula is only a diagnostic comparator. It must not be presented as an alternate physical SNR definition.
-8. **Scientific independence:** Table 4 is a published membership reference, not independent astrophysical ground truth.
+8. **Formula interpretation:** The inverse-error formula is only a diagnostic comparator. It must not be presented as an alternate physical SNR definition.
+9. **Scientific independence:** Table 4 is a published membership reference, not independent astrophysical ground truth.
 
 ## 11. Required next experiments
 
