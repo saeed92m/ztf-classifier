@@ -51,6 +51,7 @@ def flag_policy_accepts(value: Any, policy: str) -> bool | None:
         return flag == 0
     raise ValueError(f"Unknown flag policy: {policy}")
 
+
 ARCHIVES = {
     "g": {
         "member": "ztf2g",
