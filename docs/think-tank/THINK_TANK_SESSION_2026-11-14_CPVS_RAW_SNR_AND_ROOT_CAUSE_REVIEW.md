@@ -236,9 +236,18 @@ For each of the 14 row-count mismatch IDs and a matched control set:
 - test the 55 four-field-only controls;
 - preserve all 11,602 residual IDs.
 
-### P0-D — Full parent reconstruction
+### P0-D — Investigate the 17 remaining objects
 
-Only after P0-A to P0-C pass:
+- inspect all 17 records against the original Table 2 bytes and ReadMe;
+- confirm the missing `Per-g`/`Per-r` sentinel and `log(FAP)=0` in the failed band;
+- determine whether the 17 were excluded because a valid per-band period was required, because MGPR failed, or because of another fit-quality condition;
+- check the role of `tau_g`/`tau_r` in the published correlation analysis and whether complete-case filtering was applied before Table 4 generation;
+- verify the requirement for `m_gr) using the two mean magnitudes;
+- seek the authors' source code or supplementary processing details; if none exist, document the method gap rather than infer a rule.
+
+### P0-E — Full parent reconstruction
+
+Only after the row-eligibility and 17-object questions are resolved:
 - reconstruct the complete 781,602 parent membership from pinned sources;
 - compare object-level IDs with Table 4;
 - verify duplicate handling, identifier mapping, source hashes and full confusion counts;
