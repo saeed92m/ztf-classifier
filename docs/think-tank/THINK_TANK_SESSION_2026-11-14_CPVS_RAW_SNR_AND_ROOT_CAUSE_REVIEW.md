@@ -319,19 +319,82 @@ The flag-policy scan [run 43525513465](https://github.com/saeed92m/ztf-classifie
 
 ## 13. Joint decision and current status
 
+### Verified
+- Parent Table 2: **781,602 unique Seq values and 781,602 unique ZTF names**. The range 1–781,604 has only two absent sequence values (615171 and 615172); there are no duplicate Seq values.
+- Table 4: **730,184 unique ZTF names**. All map to Table 2; zero unmapped names and zero duplicate names.
+- Table 4's internal ID equals the matched Table 2 Seq for all 730,184 records. The published Table 4 membership and the retained Zenodo membership reference agree exactly.
+- Historical full-parent comparison: 741,786 reconstructed candidates; 730,184 intersection; 11,602 candidate-only; zero published-only.
+- Exact four-field diagnostic conjunction `gmag>0 AND rmag>0 AND Per-g>0 AND Per-r>0` reproduces the Table 4 split on the retained historical parent artifact. This establishes an empirical discriminator for that pinned revision, not the publisher's documented selector.
+- Residual partition: **11,580** fail both the two-mean-magnitude pair and the two-band-period pair; **17** have both mean magnitudes but one missing band-specific period; **5** have both band-specific periods but a missing g-band mean magnitude. None passes all four conditions.
+- For the 17 objects, all retain the common `Per` used by Chan et al. to phase-fold both bands. Their missing-band `log(FAP)` values are mixed: 10 are 0.0 and 7 are negative. One FAP threshold does not explain these missing periods.
+- Both `gmag` and `rmag` are required to calculate Chan et al.'s `m_gr` colour feature. The paper uses the common period `Per` for two-band phase folding. The paper does not explicitly say that both band-specific periods `Per-g` and `Per-r` were membership gates.
+- A minimum detection count is not the root cause: 45 residual objects have `Ng,Nr>=11`; 21 have at least 20 in each band; only one has fewer than 20 detections in total.
+- The Table 2 fields `R2-g` and `R2-r` cannot be used as direct membership gates. Their published ReadMe labels them R-square, while Chen et al. describe an adjusted-R² criterion. The attempted direct Table 2 ablations also remove many published members.
+- The broad ID/Seq/Table 4 crosswalk is verified. A general identifier namespace mismatch is not a credible explanation for the 11,602 residuals.
+
+### Fresh raw-source flag-policy scan
+- GitHub Actions run: [43525513465](https://github.com/saeed92m/ztf-classifier/actions/runs/43525513465).
+- Runner: standard GitHub-hosted `ubuntu-latest`; no paid, larger or self-hosted runner.
+- Commit: `451680f94a06303f99b6ea9fd92bda95a784a6d5`.
+- Both checksum-pinned Zenodo raw archives passed archive/member hashes, CRC, size and row-count validation.
+- All 11,602 residual IDs passed the two-band SNR test under the approximate, exact and inverse-error diagnostic calculations.
+- The `flag < 32768` and literal `flag != 32768` policies did not change the residual membership: 11,602 remained two-band PASS.
+- The stricter `flag == 0` policy reduced the residual PASS count to 11,513 (89 residual IDs removed). In the full-parent ablation, this strict rule also excluded 5,472 published Table 4 members. It is therefore not a valid reconstruction rule.
+- The Zenodo columns are named `g_flag` and `r_flag`. Their exact equivalence to Chen et al.'s `catflags` field has not been proven. ZTF DR2 documentation defines `catflags<32768` as the ordinary epoch-quality condition and `catflags=0` as stricter. Do not silently equate the Zenodo field names with `catflags`.
+- The raw archive row counts disagree with Table 2 `Ng/Nr` for 14 residual IDs: 13 have Table 2 `Ng=0` but raw g rows; one has `Nr=0` but raw r rows. These rows have tested flag values below 32768, so the tested flag policies do not explain the mismatch. Image-level `INFOBITS` is not present in the Zenodo attachment files.
+- The artifact boundary is verified. Artifact ID `14085318178` has exactly five allowlisted evidence files (runner manifest, archive sizes, archive hashes, JSON report and object-level TSV), 937,297 compressed bytes and no raw archives or unrelated reports. Artifact SHA-256: `198ad0becaae7cc752e34fd34ae6e269ae49a73b255afc6a3773d651f26e6088`. It expires 2026-11-27.
+
+### Interpretation
+The strongest explanation is now a **downstream two-band fit/feature-completeness condition**. The reconstructed residuals do not fail the tested SNR thresholds. The vast majority lack one or more required fitted metadata values. Both mean magnitudes are needed for the published colour feature. The remaining 17 lack one per-band period output, but keep the common period.
+
+This is a strong, source-consistent explanation of the observed partition. It is not yet proof of the authors' complete processing logic. The paper's short Section 2.1 description does not state the full four-field conjunction. The 17-object exclusion mechanism is still unexplained. The 14 row-count mismatches are a separate data-lineage and quality question.
+
+### Current state
 - Raw archive integrity: **VERIFIED**.
-- Raw SNR scan for 11,602 residual IDs: **COMPLETED**.
-- SNR formula disagreement in residual cohort: **NONE**.
-- Four-field predicate as empirical discriminator: **VERIFIED FOR THIS RESIDUAL COHORT**.
-- Four-field predicate as publisher's documented rule: **NOT ESTABLISHED**.
-- Raw row count agreement: **14 OBJECTS HAVE AT LEAST ONE MISMATCH**.
-- Flag-based detection semantics: **NOT YET TESTED**.
-- Identifier namespace equivalence: **REQUIRES EXPLICIT VERIFICATION**.
-- Full 781,602-object reconstruction in this workflow: **NOT PERFORMED**.
-- MGPR analysis: **NOT PERFORMED**.
+- 11,602-object raw SNR scan: **COMPLETED**.
+- Tested flag-policy ablation: **COMPLETED; no explanation for the main residual cohort**.
+- Five-file artifact allowlist: **VERIFIED**.
+- Exact Table 2 / Table 4 / Zenodo membership crosswalk: **VERIFIED**.
+- Four-field diagnostic as an empirical discriminator: **VERIFIED ON THE PINNED HISTORICAL PARENT ARTIFACT**.
+- Four-field conjunction as the publisher's documented membership rule: **NOT ESTABLISHED**.
+- 14 raw archive / Table 2 row-count discrepancies: **OPEN**.
+- Exact `g_flag/r_flag` to `catflags` equivalence and image-level `INFOBITS` attribution: **OPEN**.
+- 17-object exclusion mechanism: **OPEN**.
+- Independent reproduction of the full Chan et al. preprocessing and MGPR output: **NOT PERFORMED**.
 - Scientific validation: **NOT_VALIDATED**.
-- Production selector and v0.2.0 baseline: **UNCHANGED**.
+- Production selector, thresholds, model, features, taxonomy, benchmark and v0.2.0 baseline: **UNCHANGED**.
 - Issue #170: **KEEP OPEN**.
 - PR #285: **KEEP DRAFT; DO NOT MERGE ON THIS EVIDENCE ALONE**.
 
-**Root-cause conclusion:** not yet established. The strongest current lead is incomplete two-band fit metadata: positive `gmag` and `rmag` remove 11,585 residuals; the remaining 17 all have one missing band-specific period while retaining a common period. The tested `flag < 32768` diagnostic leaves all 11,602 residuals unchanged, and strict zero-flag filtering removes 5,472 published members. The next work must explain why the Chan et al. pipeline requires both mean magnitudes and, for the remaining 17, both band-specific periods, or identify another rule that yields the same partition. The 14 raw/Table 2 row-count mismatches remain a separate provenance/quality investigation.
+## 14. Next experiments — priority order
+
+### P0-A — Reproduce the 17-object path
+- Use the 17 fixed SourceIDs listed in Section 5.
+- Retrieve their exact two-band raw observations and use the common Table 2 `Per` to phase-fold both bands, as Chan et al. describe.
+- Run the published MGPR form and generate both 160-point interpolated bands.
+- Compare convergence, covariance conditioning, phase coverage, finite outputs and physical plausibility against matched Table 4 members of the same variable types and similar magnitude/cadence.
+- Determine whether the 17 fail MGPR or whether they can be processed normally. A successful MGPR run would reject MGPR failure as their explanation.
+- Keep MGPR readiness separate from CPVS membership.
+
+### P0-B — Reconstruct the missing two-band fit products
+- For the 11,580 objects that fail both metadata pairs and the 5 objects with both periods but missing g mean magnitude, compare `Ng/Nr`, `R2-g/R2-r`, amplitudes, `log(FAP-g/r)`, period values and raw observation coverage.
+- Verify the precise definitions of zero sentinels, fit failures and adjusted R² in the original Chen et al. Table 2 bytes and ReadMe.
+- Do not use Table 2 R² values as a proxy for adjusted R² until the equations and processing stage match.
+
+### P0-C — Resolve the 14 row-count mismatches
+- Preserve the 14 SourceIDs in the audit report.
+- Verify the lineage of `g_flag/r_flag`, `catflags`, and image-level `INFOBITS`.
+- If required, resolve the raw exposures to the official DR2 image metadata. The Zenodo attachments alone do not contain `INFOBITS`.
+- Compare row eligibility and counts with Table 2 `Ng/Nr` without inventing missing values or remapping IDs.
+
+### P0-D — Obtain independent method evidence
+- Search for a public author implementation or supplementary processing notes.
+- If no implementation is available, request clarification from the authors on the 730,184 sample construction and the reason for the 17 omissions.
+- If the historical rule cannot be confirmed, document the exact method gap. Do not convert an empirical match into a claimed reproduction.
+
+### P0-E — Final scientific acceptance
+- Reconstruct the complete 781,602 parent set from pinned source inputs after row eligibility and two-band fit requirements are specified.
+- Compare all object-level IDs to the exact Table 4 IDs. Report false positives, false negatives and UNKNOWN objects.
+- Retain the fixed 100-object and 1,000-object diagnostics and the 55 four-field-only controls.
+- Add regression tests for the verified rule only after independent evidence establishes it.
+- Keep all production and v0.2.0 artifacts unchanged until scientific acceptance passes.
