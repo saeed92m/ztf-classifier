@@ -10,6 +10,7 @@ import shutil
 import zipfile
 import zlib
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -293,12 +294,29 @@ def test_two_band_candidate_membership_is_reported_for_each_snr_formula() -> Non
             "table2_nr": 2,
         }
     }
+    def policy_metrics(passes: dict[str, bool]) -> dict[str, dict[str, Any]]:
+        return {
+            policy: {
+                "eligible_rows": 2,
+                "qualifying_detections_approximate": int(passes["approximate"]),
+                "qualifying_detections_exact": int(passes["exact"]),
+                "qualifying_detections_inverse_error": int(passes["inverse_error"]),
+                "passes_approximate_snr": passes["approximate"],
+                "passes_exact_snr": passes["exact"],
+                "passes_inverse_error_snr": passes["inverse_error"],
+            }
+            for policy in audit.FLAG_POLICIES
+        }
+
     g_metrics = {
         10: {
             "raw_row_count": 2,
             "passes_approximate_snr": True,
             "passes_exact_snr": False,
             "passes_inverse_error_snr": True,
+            "flag_policy_metrics": policy_metrics(
+                {"approximate": True, "exact": False, "inverse_error": True}
+            ),
         }
     }
     r_metrics = {
@@ -307,6 +325,9 @@ def test_two_band_candidate_membership_is_reported_for_each_snr_formula() -> Non
             "passes_approximate_snr": True,
             "passes_exact_snr": True,
             "passes_inverse_error_snr": False,
+            "flag_policy_metrics": policy_metrics(
+                {"approximate": True, "exact": True, "inverse_error": False}
+            ),
         }
     }
 
