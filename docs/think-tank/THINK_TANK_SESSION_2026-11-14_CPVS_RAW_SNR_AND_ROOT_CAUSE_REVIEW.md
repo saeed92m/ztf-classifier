@@ -130,13 +130,17 @@ This is now a high-priority investigation branch. It may reveal a quality-filter
 
 ## 7. Primary-source constraints
 
-Chan et al. (2022), Section 2.1, states that the 730,184 light curves contain at least one 2.5σ and 3σ detection in g and r, respectively, and says both bands are phase-folded using the common period in Table 2. The text does not specify the complete row-level definition of a qualifying detection in that paragraph.
+Chen et al. (2020), Section III, describes the parent-catalogue processing: at least 20 detections; poor-quality images and photometry excluded using `INFOBITS < 33,554,432` and `catflags != 32,768`; and periodic candidates accepted if the light curve in one band met all period-search conditions. It also describes later period redetermination using photometry within 1 arcsecond of the source position.
+
+Chan et al. (2022), Section 2.1, states that the 730,184 selected light curves contain at least one 2.5σ detection in g and one 3σ detection in r, and that both bands are phase-folded using the common period in Table 2. The paper does not provide a full row-level formula for the detection in that paragraph.
 
 The Zenodo record for Chen et al. (2020) identifies `ztf2g` and `ztf2r` as single-exposure photometry files, with columns:
 - g: `SourceID, RAdeg, DEdeg, HJD, gmag, e_gmag, g_flag`
 - r: `SourceID, RAdeg, DEdeg, HJD, rmag, e_rmag, r_flag`
 
-The VizieR Table 2 metadata describes `Ng` and `Nr` as the number of detections in each band. Therefore, counting all rows with nonzero magnitude and positive error without interpreting `g_flag`/`r_flag` is not yet a faithful reconstruction of the catalogue's detection semantics.
+The same Zenodo record explicitly states that `SourceID` is the internal source identifier that joins these attachments to Table 2, and gives the example ZTFJ000000.19+320847.2 with `SourceID=3`. This makes a wholesale identifier-namespace mismatch less likely, although the project must still validate its full object-level join.
+
+VizieR defines `Ng` and `Nr` as the number of detections in each band. The current scan counts all rows with valid magnitude/error and reports flags without filtering. It therefore does not yet reproduce Chen et al.'s stated quality cuts. The `INFOBITS` field is not present in the Zenodo archive. The exact equivalence of Zenodo `g_flag`/`r_flag` to the `catflags` named in Chen et al. must be verified before applying that criterion as a faithful reproduction.
 
 Primary sources:
 - Chan et al. 2022, Section 2.1: https://doi.org/10.3847/1538-4357/ac69d4
@@ -153,7 +157,7 @@ Primary sources:
 | 03 Variable-star astrophysicist | A non-zero measurement is not automatically a scientifically usable detection. | Examine flags, bad measurements and period validity. |
 | 04 Time-series statistician | “At least one detection” depends on the detection predicate, not just a numerical SNR threshold. | Define and test candidate row-level predicates. |
 | 05 Astroinformatics engineer | The 14 count mismatches expose an untested join/quality/data-version assumption. | Produce a full per-ID row and field audit. |
-| 06 Cross-match specialist | SourceID/Seq/ID semantics must be proved from source definitions, not inferred from matching values. | Validate identity mapping independently. |
+| 06 Cross-match specialist | Zenodo explicitly documents SourceID as the internal identifier joining the single-exposure files to Table 2. | Preserve the documented mapping and verify it across the complete object set. |
 | 07 ML scientist | No production model change is justified by this diagnostic. | Keep model and feature contract frozen. |
 | 08 Scientific validation lead | The residual cohort is fully explained by the four-field predicate empirically, but not by published methodology. | Require independent full-set reconstruction. |
 | 09 Software architect | Diagnostic and production selectors must remain separate. | Preserve diagnostic-only outputs and schemas. |
@@ -168,7 +172,7 @@ Primary sources:
 ## 9. Red Team objections
 
 1. **Detection semantics:** The script currently does not filter `g_flag` or `r_flag`. A row passing the numerical SNR threshold may still be rejected by the original catalogue pipeline.
-2. **Identity semantics:** The diagnostic joins raw rows to candidate objects using the first field as an integer SourceID. Confirm this matches the official Table 2 identifier and the candidate provenance identifier for every row.
+2. **Identity semantics:** Zenodo documents SourceID as the internal identifier joining the raw attachments to Table 2. Confirm that the candidate provenance file uses this same identifier and verify the complete join; do not invent a remapping.
 3. **Table 2 counts:** The 14 mismatches mean raw row count cannot be treated as equivalent to `Ng`/`Nr` without understanding the source filters.
 4. **Metadata gate:** Four-field positivity exactly separates the residual cohort, but this remains a diagnostic correlation.
 5. **Sample design:** The 100 and 1,000 samples are stratified and overlapping; do not interpret pooled metrics as random population estimates.
@@ -183,10 +187,13 @@ Primary sources:
 For each of the 14 row-count mismatch IDs and a matched control set:
 - extract all raw rows for both bands;
 - tabulate exact flag values and bit patterns;
-- calculate SNR before and after each defensible flag policy;
+- test `flag != 32768`, `flag < 32768`, and `flag == 0` as separate diagnostics;
+- verify whether Zenodo `g_flag`/`r_flag` are exactly the `catflags` field described by Chen et al.;
+- record that `INFOBITS < 33,554,432` cannot be tested from the current Zenodo archive because INFOBITS is not included;
+- calculate SNR before and after each diagnostic flag policy;
 - report positive/zero/negative/non-finite magnitude and error counts;
 - compare eligible raw-row counts with Table 2 `Ng`/`Nr`;
-- do not assume a flag policy unless it is supported by Chen et al. documentation or the source pipeline.
+- do not assume a flag policy is the complete published method.
 
 ### P0-B — Prove identifier semantics
 
