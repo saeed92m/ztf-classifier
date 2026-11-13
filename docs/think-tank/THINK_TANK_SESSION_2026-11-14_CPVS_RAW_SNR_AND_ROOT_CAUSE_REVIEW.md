@@ -314,8 +314,9 @@ Do not infer MGPR readiness from catalogue membership. Evaluate the common perio
 
 A later push produced standard CI run [43474444378](https://github.com/saeed92m/ztf-classifier/actions/runs/43474444378), not a fresh raw-SNR scan. Six engineering jobs passed. Dependency Audit failed because `soupsieve 2.10` was reported with three vulnerabilities (CVE-2026-126190, CVE-2026-126193, CVE-2026-126191); the CI Gate therefore failed. This is a separate dependency-security issue, not evidence against the raw-SNR result.
 
-The workflow file was changed to upload only five explicit evidence files. That artifact-boundary change has not yet been verified by a new raw-SNR run. The existing run 43463184881 artifact contains unrelated historical reports and tables because it uploaded the entire `reports/` directory. Raw g/r archives were not included.
+The first raw-SNR run 43463184881 uploaded the entire `reports/` directory and included unrelated historical reports and tables; it did not upload raw g/r archives. The workflow now uses a five-file allowlist, and the completed follow-up run 43525513465 verifies that boundary.
 The flag-policy scan [run 43525513465](https://github.com/saeed92m/ztf-classifier/actions/runs/43525513465) completed successfully. Setup, synthetic regression tests, pinned-input retrieval, both checksum-pinned archive downloads, raw scan and artifact upload all passed. Its artifact (ID 14085318178, SHA-256 `198ad0becaae7cc752e34fd34ae6e269ae49a73b255afc6a3773d651f26e6088`) contains exactly five allowlisted files; no unrelated reports or raw archives were uploaded. The artifact contains 7,074,893 uncompressed bytes and expires 2026-11-27.
+On the latest documentation head `3d85fea`, standard CI is pending; Scientific Validation, CodeQL and Product Scope Audit are in progress. The Scientific Validation job has skipped unrelated source-acquisition jobs and is currently checking benchmark/lifecycle contracts. No fresh green CI result is claimed.
 
 ## 13. Joint decision and current status
 
