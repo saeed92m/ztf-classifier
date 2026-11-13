@@ -242,6 +242,18 @@ def test_raw_snr_sample_rederivation_and_four_field_gate(
     assert exported_by_id[4]["rederived_candidate_inverse_error"] == ""
 
 
+def test_flag_policy_predicates_are_explicit_and_fail_closed() -> None:
+    assert audit.flag_policy_accepts("4096", "not_equal_32768") is True
+    assert audit.flag_policy_accepts("4096", "below_32768") is True
+    assert audit.flag_policy_accepts("4096", "zero_only") is False
+    assert audit.flag_policy_accepts("32768", "not_equal_32768") is False
+    assert audit.flag_policy_accepts("32768", "below_32768") is False
+    assert audit.flag_policy_accepts("32768", "zero_only") is False
+    assert audit.flag_policy_accepts("", "not_equal_32768") is None
+    with pytest.raises(ValueError):
+        audit.flag_policy_accepts("0", "unknown_policy")
+
+
 def test_input_failure_report_preserves_integrity_evidence(tmp_path: Path) -> None:
     output = tmp_path / "reports" / "input_failure.json"
     input_integrity = {"validation_errors": ["pinned hash mismatch"]}
