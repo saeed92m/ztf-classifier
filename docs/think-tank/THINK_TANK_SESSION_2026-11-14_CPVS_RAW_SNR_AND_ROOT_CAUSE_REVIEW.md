@@ -114,6 +114,13 @@ The pinned heavy-run artifact `scientific-validation-heavy` from run 38635891449
 
 Interpretation:
 - The tested `flag < 32768` policy does not reduce the 11,602 residuals. This argues against that flag rule as the root cause.
+- Observation-count hypotheses are also insufficient on their own:
+  - `Ng < 11`: 11,443 residuals.
+  - `Nr < 11`: 114 residuals.
+  - At least one band has fewer than 11 detections: 11,557 residuals; 45 have at least 11 in both bands.
+  - At least one band has fewer than 20 detections: 11,581 residuals; 21 have at least 20 in both bands.
+  - Only one residual has `Ng + Nr < 20`: SourceID `266897` (4 g + 12 r = 16). Thus Chen et al.'s stated minimum of 20 detections, if interpreted as total detections, explains at most one of the 11,602.
+  A minimum of 11 or 20 points per band is not documented by the paper and does not reproduce the full split.
 - The Table 2 `R2-g`/`R2-r` fields do not reproduce Table 4 membership when used as a direct global gate:
   - requiring both `R2 >= 0.4` leaves 6 candidate-only objects but excludes 204,462 published members;
   - requiring both `R2 < 0.4` selects 346 candidate-only objects and includes 20,053 published members;
