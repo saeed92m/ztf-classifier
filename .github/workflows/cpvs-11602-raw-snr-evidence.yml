@@ -167,6 +167,11 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: cpvs-11602-raw-snr-evidence
-          path: reports/
+          path: |
+            reports/runner_manifest.json
+            reports/source_archive_sizes.tsv
+            reports/source_archive_sha256.txt
+            reports/cpvs_membership_raw_snr_rederivation.json
+            reports/cpvs_membership_raw_snr_objects.tsv
           if-no-files-found: warn
           retention-days: 14
