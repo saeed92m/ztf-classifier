@@ -112,6 +112,12 @@ The pinned heavy-run artifact `scientific-validation-heavy` from run 38635891449
 | Exact magnitude-error SNR + positive gmag/rmag | 730,201 | 17 | 730,184 | 0 |
 | Positive gmag, rmag, Per-g and Per-r | 730,184 intersection | 0 residual after intersection | 730,184 | 0 |
 
+Full parent-set confusion counts:
+- SNR candidate set alone: TP 730,184; FP 11,602; FN 0; TN 39,816.
+- Four-field metadata gate alone: TP 730,184; FP 55; FN 0; TN 51,363.
+- SNR candidate set AND four-field metadata gate: TP 730,184; FP 0; FN 0; TN 51,418.
+The 55 four-field-only controls are UNKNOWN for two-band SNR, not FAIL. Therefore, the exact intersection is informative, but the four-field gate alone is not a sufficient membership rule.
+
 Interpretation:
 - The tested `flag < 32768` policy does not reduce the 11,602 residuals. This argues against that flag rule as the root cause.
 - The completed flag-policy re-scan [run 43525513465](https://github.com/saeed92m/ztf-classifier/actions/runs/43525513465) confirms:
