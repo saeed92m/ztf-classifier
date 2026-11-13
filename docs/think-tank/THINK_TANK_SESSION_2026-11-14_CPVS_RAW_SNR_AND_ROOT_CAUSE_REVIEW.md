@@ -150,6 +150,7 @@ Interpretation:
 - 1 object has `Nr=0` in Table 2 but 93 rows in the raw r archive.
 - Several other mismatches are small count differences.
 - These counts alone do not establish an identifier error. Table 2 counts may reflect a selected/quality-filtered definition, while the Zenodo files are single-exposure photometry. This must be tested against the exact source-generation and flag semantics.
+- The earlier per-object heavy-run diagnostics report qualifying-row flag OR values of 0 or 4096 in g for these 14 IDs and 0 in r; none reports 32768. If the archived flag field is the same as `catflags`, this is further evidence against `catflags != 32768` explaining these particular mismatches. The flag-field equivalence is still unverified.
 
 This is now a high-priority investigation branch. It may reveal a quality-filtering or data-lineage difference that the current SNR-only scan does not capture.
 
