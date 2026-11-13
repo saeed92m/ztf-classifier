@@ -399,3 +399,79 @@ This is a strong, source-consistent explanation of the observed partition. It is
 - Retain the fixed 100-object and 1,000-object diagnostics and the 55 four-field-only controls.
 - Add regression tests for the verified rule only after independent evidence establishes it.
 - Keep all production and v0.2.0 artifacts unchanged until scientific acceptance passes.
+
+
+## 15. Primary-source method reconciliation and current ordered decision — 2026-11-14
+
+### Primary-source facts now checked
+
+**Chen et al. (2020), Section III** states that their original CPVS discovery pipeline:
+1. starts with objects with at least 20 detections;
+2. filters image quality with \`INFOBITS < 33,554,432\` and epoch photometry with \`catflags != 32,768\`;
+3. performs initial period searches on observations associated with the same internal product ID;
+4. accepts a periodic candidate when the light curve in **one** band meets all period-search conditions;
+5. redetermines the period using photometry within 1 arcsecond of the source position;
+6. fits a fourth-order Fourier model;
+7. excludes poorly fitted light curves using the adjusted-R² condition stated as \`R_g^2 < 0.4\` and \`R_r^2 < 0.4\`;
+8. applies additional alias exclusions.
+
+Source: https://arxiv.org/abs/2005.08662
+
+**Chan et al. (2022), Section 2.1** states that the 730,184 selected light curves have at least one 2.5σ g-band detection and one 3σ r-band detection. Both bands are phase-folded with the common Table 2 period. The paper then applies multivariate Gaussian-process regression in normalized phase/wavelength space.
+
+Source: https://doi.org/10.3847/1538-4357/ac69d4
+
+The Chan paper's stated two-band SNR condition is therefore not a complete description of the original Chen catalogue-construction pipeline. The papers describe different processing stages. Do not merge the two stages into one undocumented selector.
+
+### Important diagnostic correction: the R² rule
+
+The Chen text describes rejection when **both** band-specific adjusted-R² values are below 0.4. The direct Table 2 ablation was re-evaluated with that logical interpretation:
+
+- Retain objects unless both Table 2 \`R2-g\` and \`R2-r\` are below 0.4.
+- Result: 721,387 reconstructed candidates; 11,256 candidate-only; 20,053 published-only.
+
+This does not reproduce Table 4 membership. The Table 2 ReadMe calls the fields “R-square”, while Chen et al. call the fitted statistic “adjusted R²”. Their exact mathematical equivalence and processing stage remain unverified. Do not treat these columns as a faithful adjusted-R² implementation until the formula is established.
+
+The simple 20-detection threshold also does not explain the residual cohort: 21 residual objects have at least 20 detections in each band; only one has fewer than 20 detections in total.
+
+### Current best interpretation
+
+The 11,602 excess objects are not explained by:
+- the tested approximate or exact magnitude-error-to-SNR formula;
+- the tested \`flag < 32768\` or literal \`flag != 32768\` rule on the Zenodo flag values;
+- a simple 11-per-band or 20-per-band observation-count threshold;
+- a broad Table 2 Seq / Table 4 ID crosswalk error.
+
+The strongest empirical separator remains the two-band metadata-completeness conjunction. Both mean magnitudes explain 11,585 residuals; the remaining 17 have both mean magnitudes and the common period, but lack one band-specific period. Five more objects have both band-specific periods but lack a mean magnitude. This points to a downstream fit/feature-completeness difference, but the papers do not explicitly prescribe the four-field conjunction as Table 4 membership logic.
+
+The 14 raw-archive/Table 2 \`Ng/Nr\` mismatches remain separate. The Zenodo attachment's \`g_flag/r_flag\` names have not been proven identical to \`catflags\`, and image-level \`INFOBITS\` is absent from those attachments. The tested flag values are all below 32,768; no raw row had value 32,768. This does not test the image-level quality cut.
+
+### Ordered Think Tank decision
+
+1. **Lock the historical reference and source semantics.** Keep the exact Table 2, Table 4, Zenodo and current candidate hashes. Maintain the validated ID crosswalk. Do not regenerate or remap IDs.
+2. **Reconstruct the original Chen pipeline in order.** Test the 20-detection rule after quality eligibility; establish the field mapping for \`catflags\`; resolve image \`INFOBITS\`; reproduce same-product-ID period search, one-band acceptance, 1-arcsecond period redetermination, fourth-order Fourier fitting, the exact adjusted-R² formula/logic and alias cuts. Record membership after every stage.
+3. **Resolve raw-row provenance.** Explain all 14 \`Ng/Nr\` mismatches and test raw-row eligibility for the full residual list, not only these 14 examples. Preserve missing image metadata as UNKNOWN.
+4. **Investigate the 42-object diagnostic cohort.** It contains all 17 two-mean-magnitude/period-incomplete objects, all 5 two-period/magnitude-incomplete objects, 10 fixed objects from each dominant one-band fit-output stratum, and 42 nearest same-Type Table 4 controls. Compare shared-period phase coverage, point counts and quality/SNR distributions in each band.
+5. **Run MGPR only after the phase-fold audit passes.** Use the Chan paper's common period in both bands. Compare all residual cases with matched Table 4 controls. Record optimizer convergence, kernel/hyperparameter values, covariance conditioning, phase coverage and 160-point outputs. MGPR success or failure is not itself catalogue-membership proof.
+6. **Perform the full 781,602-object reconstruction.** Compare object IDs against the pinned 730,184 Table 4 set at every source-backed processing stage. Report TP, FP, FN, UNKNOWN, duplicates, missing IDs and stage-level hashes.
+7. **Change production only after independent method evidence.** If the historical logic cannot be established from public sources or an author implementation, preserve the method gap. Do not infer a filter from a matching count. Keep issue #170 open and PR #285 Draft.
+
+### New diagnostic implementation and CI state
+
+- Added \`scripts/diagnose_cpvs_phasefold_coverage.py\` and \`tests/test_cpvs_phasefold_coverage.py\`.
+- Added workflow \`.github/workflows/cpvs-17-phasefold-coverage.yml\`, restricted to standard \`ubuntu-latest\`; no paid or self-hosted runner.
+- The three historical inputs are now SHA-256 pinned:
+  - parent metadata: \`3675b1274f73fcb15d47e7a780f194ef8fa335cd248c6ff53ea4f01559c86591\`;
+  - selected IDs: \`699ff34bcf8dd4b5043eed48384973cb5109fd86ca260f831a502097370238df\`;
+  - selection diagnostics: \`7e763d8804a57d75d1633d0a4089a4a6ac5aa40bb4695964d35e645b67ad5b61\`.
+- The first test run was blocked by a historical-artifact download credential error. The subsequent run retrieved the artifact and began the raw Zenodo archive download. That earlier attempt used a flawed circular-phase test fixture and is not accepted as a successful diagnostic.
+- The fixture was corrected. The workflow now uses \`github.token\` with \`actions: read\`. Corrected run [43530167582](https://github.com/saeed92m/ztf-classifier/actions/runs/43530167582) is queued behind the earlier attempt. No phase-coverage result or MGPR result is accepted yet.
+- On current PR head \`737b387ec62726f0ec78898b80d416a62e65dedd\`, CodeQL and Product Scope Audit passed. Standard CI and Scientific Validation are still running. The separate earlier Dependency Audit failure involving \`soupsieve 2.10\` remains to be checked on the latest head.
+
+### Current decision
+
+**ROOT CAUSE: NOT PROVEN. SCIENTIFIC VALIDATION: NOT_VALIDATED.**
+
+Leading explanation: a difference in the completeness/eligibility of two-band fitted products or later feature preparation, beyond the published two-band SNR statement. The next action is the ordered source-pipeline reconstruction above, beginning with the exact Chen quality/period/Fourier stages and the 14 raw-row mismatches. The 42-object shared-period phase-fold diagnostic is a supporting test, not a substitute for that reconstruction.
+
+No production selector, thresholds, ID mapping, model, feature schema, taxonomy, benchmark, release artifact or v0.2.0 baseline has changed.
