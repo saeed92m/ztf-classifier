@@ -36,6 +36,11 @@ ARCHIVES = {
 }
 LN10_OVER_2P5 = math.log(10.0) / 2.5
 HJD_TO_MJD = 2400000.5
+INPUT_SHA256 = {
+    "parent_metadata.tsv": "3675b1274f73fcb15d47e7a780f194ef8fa335cd248c6ff53ea4f01559c86591",
+    "selected.tsv": "699ff34bcf8dd4b5043eed48384973cb5109fd86ca260f831a502097370238df",
+    "selection_diagnostics.json": "7e763d8804a57d75d1633d0a4089a4a6ac5aa40bb4695964d35e645b67ad5b61",
+}
 
 
 def num(value: Any) -> float | None:
@@ -54,6 +59,17 @@ def positive(value: Any) -> bool:
 def parse_tsv(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8", newline="") as stream:
         return list(csv.DictReader(stream, delimiter="\t"))
+
+
+def verify_sha256(path: Path, expected: str) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    observed = digest.hexdigest()
+    if observed != expected:
+        raise ValueError(f"SHA-256 mismatch for {path.name}: {observed}")
+    return observed
 
 
 def load_parent(path: Path) -> dict[int, dict[str, str]]:
@@ -339,6 +355,10 @@ def main() -> None:
 
     root = args.input_dir
     data_dir = root / "ztf_periodic_730k"
+    input_hashes = {
+        name: verify_sha256(data_dir / name, expected)
+        for name, expected in INPUT_SHA256.items()
+    }
     parent = load_parent(data_dir / "parent_metadata.tsv")
     diag = json.loads((data_dir / "selection_diagnostics.json").read_text(encoding="utf-8"))
     selected_rows = parse_tsv(data_dir / "selected.tsv")
@@ -446,6 +466,7 @@ def main() -> None:
             "It does not run MGPR, prove interpolation quality, or reproduce CPVS membership."
         ),
         "source_run": 38635891449,
+        "pinned_input_sha256": input_hashes,
         "raw_archive_checks": {
             band: {
                 "archive_sha256": result["archive_sha256"],
