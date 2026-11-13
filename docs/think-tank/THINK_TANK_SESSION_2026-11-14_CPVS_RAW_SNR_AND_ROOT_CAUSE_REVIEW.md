@@ -242,7 +242,7 @@ For each of the 14 row-count mismatch IDs and a matched control set:
 - confirm the missing `Per-g`/`Per-r` sentinel and `log(FAP)=0` in the failed band;
 - determine whether the 17 were excluded because a valid per-band period was required, because MGPR failed, or because of another fit-quality condition;
 - check the role of `tau_g`/`tau_r` in the published correlation analysis and whether complete-case filtering was applied before Table 4 generation;
-- verify the requirement for `m_gr) using the two mean magnitudes;
+- verify the requirement for `m_gr` using the two mean magnitudes;
 - seek the authors' source code or supplementary processing details; if none exist, document the method gap rather than infer a rule.
 
 ### P0-E — Full parent reconstruction
@@ -253,7 +253,7 @@ Only after the row-eligibility and 17-object questions are resolved:
 - verify duplicate handling, identifier mapping, source hashes and full confusion counts;
 - record exact commands and intermediate artifacts.
 
-### P0-E — MGPR readiness, separate from membership
+### P0-F — MGPR readiness, separate from membership
 
 Do not infer MGPR readiness from catalogue membership. Evaluate the common period, per-band coverage, usable measurements, phase coverage, error behavior, numerical conditioning and convergence in a separate gate.
 
