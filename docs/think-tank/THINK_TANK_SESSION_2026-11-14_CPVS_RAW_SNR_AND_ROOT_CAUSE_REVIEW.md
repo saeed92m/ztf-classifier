@@ -123,7 +123,7 @@ The Chan et al. (2022) paper explicitly uses the color feature `m_gr = <m_g> - <
 
 The fixed samples are stratified diagnostic samples. Pooled rates are not population prevalence estimates. Missing raw rows remain UNKNOWN, not FAIL.
 
-## 6. New source-row-count discrepancies
+## 7. New source-row-count discrepancies
 
 The raw archive row counts were compared with Table 2 `Ng` and `Nr` for each candidate-only object. Fourteen IDs have at least one mismatch:
 
@@ -152,7 +152,7 @@ Interpretation:
 
 This is now a high-priority investigation branch. It may reveal a quality-filtering or data-lineage difference that the current SNR-only scan does not capture.
 
-## 7. Primary-source constraints
+## 8. Primary-source constraints
 
 Chen et al. (2020), Section III, describes the parent-catalogue processing: at least 20 detections; poor-quality images and photometry excluded using `INFOBITS < 33,554,432` and `catflags != 32,768`; and periodic candidates accepted if the light curve in one band met all period-search conditions. It also describes later period redetermination using photometry within 1 arcsecond of the source position.
 
@@ -172,7 +172,7 @@ Primary sources:
 - Chen et al. 2020 ZTF CPVS Zenodo record and raw-file schema: https://zenodo.org/records/3886372
 - VizieR Table 2 field metadata: https://vizier.cfa.harvard.edu/viz-bin/VizieR-3?-source=J%2FApJS%2F249%2F18%2Ftable2
 
-## 8. Sixteen-seat review
+## 9. Sixteen-seat review
 
 | Seat | Review finding | Required action |
 |---|---|---|
@@ -193,7 +193,7 @@ Primary sources:
 | 15 Technical documentation lead | The exact run, hashes, formulas, caveats and next experiments must be preserved. | Maintain this session and Issue #170. |
 | 16 Independent Red Team | The current script can overcount detections if flags define usability; it also assumes the candidate IDs map directly to raw archive SourceID. | Challenge both assumptions before any conclusion. |
 
-## 9. Red Team objections
+## 10. Red Team objections
 
 1. **Detection semantics:** The script currently does not filter `g_flag` or `r_flag`. A row passing the numerical SNR threshold may still be rejected by the original catalogue pipeline.
 2. **Identity semantics:** Zenodo documents SourceID as the internal identifier joining the raw attachments to Table 2. Confirm that the candidate provenance file uses this same identifier and verify the complete join; do not invent a remapping.
@@ -204,7 +204,7 @@ Primary sources:
 7. **Formula interpretation:** The inverse-error formula is only a diagnostic comparator. It must not be presented as an alternate physical SNR definition.
 8. **Scientific independence:** Table 4 is a published membership reference, not independent astrophysical ground truth.
 
-## 10. Required next experiments
+## 11. Required next experiments
 
 ### P0-A — Establish raw row eligibility
 
@@ -247,13 +247,13 @@ Only after P0-A to P0-C pass:
 
 Do not infer MGPR readiness from catalogue membership. Evaluate the common period, per-band coverage, usable measurements, phase coverage, error behavior, numerical conditioning and convergence in a separate gate.
 
-## 11. Workflow and CI note
+## 12. Workflow and CI note
 
 A later push produced standard CI run [43474444378](https://github.com/saeed92m/ztf-classifier/actions/runs/43474444378), not a fresh raw-SNR scan. Six engineering jobs passed. Dependency Audit failed because `soupsieve 2.10` was reported with three vulnerabilities (CVE-2026-126190, CVE-2026-126193, CVE-2026-126191); the CI Gate therefore failed. This is a separate dependency-security issue, not evidence against the raw-SNR result.
 
 The workflow file was changed to upload only five explicit evidence files. That artifact-boundary change has not yet been verified by a new raw-SNR run. The existing run 43463184881 artifact contains unrelated historical reports and tables because it uploaded the entire `reports/` directory. Raw g/r archives were not included.
 
-## 12. Joint decision and current status
+## 13. Joint decision and current status
 
 - Raw archive integrity: **VERIFIED**.
 - Raw SNR scan for 11,602 residual IDs: **COMPLETED**.
