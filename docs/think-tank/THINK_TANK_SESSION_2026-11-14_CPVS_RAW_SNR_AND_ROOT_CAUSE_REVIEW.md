@@ -126,7 +126,7 @@ Interpretation:
   - requiring both `R2 < 0.4` selects 346 candidate-only objects and includes 20,053 published members;
   - requiring either band `R2 < 0.4` leaves 11,596 candidate-only objects but excludes 204,462 published members;
   - requiring both `R2 > 0` leaves 17 candidate-only objects and excludes 805 published members.
-  The R² rule in Chen et al. (2020) therefore cannot be applied directly to these Table 2 fields as a simple Table 4 membership selector. The source-stage meaning or logical interpretation requires further investigation.
+  The R² rule in Chen et al. (2020) therefore does not reproduce Table 4 when applied directly to these Table 2 fields as a simple membership selector. Important schema caveat: the Table 2 ReadMe labels `R2-g`/`R2-r` as R-square, while Chen et al.'s prose calls the fit statistic adjusted R². We have not established that these are the same statistic. The source-stage meaning, exact formula and logical interpretation require further investigation.
 - The strict `flag == 0` policy is not acceptable: it removes 5,472 published members. Do not use it.
 - Requiring both parent mean magnitudes to be positive removes 11,585 of the 11,602 residuals and leaves only 17. The published intersection remains complete.
 - The remaining 17 have both mean magnitudes, but one of `Per-g` or `Per-r` is missing. In the original Table 2 rows, the missing band's `Per-g` or `Per-r` is the zero sentinel. Its `log(FAP)` is not uniform: 10 of the 17 have `log(FAP)=0.0`, while 7 have negative values from -2.497 to -23.842. Therefore, a missing per-band period cannot be explained by a single FAP threshold; the period-fit rejection or output rule needs investigation. The other band supplies the common `Per`. Their per-band observation counts are substantial (approximately 50–245), so simple low-count rejection does not explain these 17.
@@ -228,7 +228,7 @@ Primary sources:
 4. **Metadata gate:** Four-field positivity exactly separates the residual cohort, but this remains a diagnostic correlation.
 5. **Sample design:** The 100 and 1,000 samples are stratified and overlapping; do not interpret pooled metrics as random population estimates.
 6. **Flags and errors:** The current calculation uses magnitude error and magnitude validity. It does not apply any quality-flag policy.
-7. **R² semantics:** Chen et al.'s Section III adjusted-R² rejection text does not reproduce the Table 4 split when applied directly to Table 2 `R2-g`/`R2-r`; do not use it as a membership filter without establishing the processing stage and exact logic.
+7. **R² semantics:** Chen et al.'s Section III refers to adjusted R², but the Table 2 ReadMe labels `R2-g`/`R2-r` as R-square. The direct field ablation does not reproduce Table 4; verify the exact statistic and processing stage before drawing a conclusion or applying a filter.
 8. **Formula interpretation:** The inverse-error formula is only a diagnostic comparator. It must not be presented as an alternate physical SNR definition.
 9. **Scientific independence:** Table 4 is a published membership reference, not independent astrophysical ground truth.
 
