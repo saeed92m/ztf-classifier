@@ -270,6 +270,7 @@ Do not infer MGPR readiness from catalogue membership. Evaluate the common perio
 A later push produced standard CI run [43474444378](https://github.com/saeed92m/ztf-classifier/actions/runs/43474444378), not a fresh raw-SNR scan. Six engineering jobs passed. Dependency Audit failed because `soupsieve 2.10` was reported with three vulnerabilities (CVE-2026-126190, CVE-2026-126193, CVE-2026-126191); the CI Gate therefore failed. This is a separate dependency-security issue, not evidence against the raw-SNR result.
 
 The workflow file was changed to upload only five explicit evidence files. That artifact-boundary change has not yet been verified by a new raw-SNR run. The existing run 43463184881 artifact contains unrelated historical reports and tables because it uploaded the entire `reports/` directory. Raw g/r archives were not included.
+A new flag-policy scan, [run 43525513465](https://github.com/saeed92m/ztf-classifier/actions/runs/43525513465), has passed setup, synthetic regression tests, pinned-input retrieval and both checksum-pinned archive downloads. At the time of this update, the raw scan step is still running and artifact upload is pending. This run uses the five-file allowlist and will verify the artifact boundary if it completes successfully.
 
 ## 13. Joint decision and current status
 
