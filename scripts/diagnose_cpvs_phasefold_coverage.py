@@ -288,7 +288,10 @@ def scan_archive(
                 hjd, mag, magerr = num(fields[3]), num(fields[4]), num(fields[5])
                 if hjd is None or mag is None or mag == 0 or magerr is None or magerr <= 0:
                     continue
-                snr = 1.0 / math.expm1(magerr * LN10_OVER_2P5)
+                try:
+                    snr = 1.0 / math.expm1(magerr * LN10_OVER_2P5)
+                except (OverflowError, ZeroDivisionError):
+                    snr = 0.0
                 flag = None
                 try:
                     flag = int(fields[6])
@@ -391,6 +394,10 @@ def main() -> None:
             "r_valid_n": r["valid"]["n"],
             "g_snr_qualified_n": g["snr_qualified"]["n"],
             "r_snr_qualified_n": r["snr_qualified"]["n"],
+            "g_snr_phase_bins_160": g["snr_qualified"]["occupied_bins_160"],
+            "r_snr_phase_bins_160": r["snr_qualified"]["occupied_bins_160"],
+            "g_snr_max_phase_gap": g["snr_qualified"]["max_circular_phase_gap"],
+            "r_snr_max_phase_gap": r["snr_qualified"]["max_circular_phase_gap"],
             "g_phase_bins_160": g["valid"]["occupied_bins_160"],
             "r_phase_bins_160": r["valid"]["occupied_bins_160"],
             "g_max_phase_gap": g["valid"]["max_circular_phase_gap"],
