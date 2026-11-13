@@ -114,6 +114,13 @@ The pinned heavy-run artifact `scientific-validation-heavy` from run 38635891449
 
 Interpretation:
 - The tested `flag < 32768` policy does not reduce the 11,602 residuals. This argues against that flag rule as the root cause.
+- The completed flag-policy re-scan [run 43525513465](https://github.com/saeed92m/ztf-classifier/actions/runs/43525513465) confirms:
+  - all 11,602 residuals pass under both `flag < 32768` and the literal `flag != 32768` rule;
+  - no raw row in the candidate-only scan has flag value 32,768; all observed values are below 32,768;
+  - strict `flag == 0` leaves 11,513 residuals and rejects 89, but it is not the documented usable-epoch rule and the full-parent ablation loses 5,472 published members;
+  - row-count matches remain 11,588 in g and 11,599 in r under both non-strict policies, so flags do not explain the 14 row-count mismatches;
+  - the 14 mismatching objects have raw flag values 0, except SourceID 265675 with 4096; none has 32,768.
+- The 55 four-field-only controls remain UNKNOWN for the two-band SNR decision: 54 have no qualifying g evidence, 4 have no qualifying r evidence, and no object is classified as a two-band SNR FAIL. Do not convert UNKNOWN to FAIL.
 - Observation-count hypotheses are also insufficient on their own:
   - `Ng < 11`: 11,443 residuals.
   - `Nr < 11`: 114 residuals.
@@ -298,7 +305,7 @@ Do not infer MGPR readiness from catalogue membership. Evaluate the common perio
 A later push produced standard CI run [43474444378](https://github.com/saeed92m/ztf-classifier/actions/runs/43474444378), not a fresh raw-SNR scan. Six engineering jobs passed. Dependency Audit failed because `soupsieve 2.10` was reported with three vulnerabilities (CVE-2026-126190, CVE-2026-126193, CVE-2026-126191); the CI Gate therefore failed. This is a separate dependency-security issue, not evidence against the raw-SNR result.
 
 The workflow file was changed to upload only five explicit evidence files. That artifact-boundary change has not yet been verified by a new raw-SNR run. The existing run 43463184881 artifact contains unrelated historical reports and tables because it uploaded the entire `reports/` directory. Raw g/r archives were not included.
-A new flag-policy scan, [run 43525513465](https://github.com/saeed92m/ztf-classifier/actions/runs/43525513465), has passed setup, synthetic regression tests, pinned-input retrieval and both checksum-pinned archive downloads. At the time of this update, the raw scan step is still running and artifact upload is pending. This run uses the five-file allowlist and will verify the artifact boundary if it completes successfully.
+The flag-policy scan [run 43525513465](https://github.com/saeed92m/ztf-classifier/actions/runs/43525513465) completed successfully. Setup, synthetic regression tests, pinned-input retrieval, both checksum-pinned archive downloads, raw scan and artifact upload all passed. Its artifact (ID 14085318178, SHA-256 `198ad0becaae7cc752e34fd34ae6e269ae49a73b255afc6a3773d651f26e6088`) contains exactly five allowlisted files; no unrelated reports or raw archives were uploaded. The artifact contains 7,074,893 uncompressed bytes and expires 2026-11-27.
 
 ## 13. Joint decision and current status
 
