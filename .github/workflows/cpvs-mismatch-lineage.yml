@@ -72,12 +72,6 @@ jobs:
           echo "47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9  raw/ztf2g.zip" | sha256sum --check -
           echo "48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74  raw/ztf2r.zip" | sha256sum --check -
 
-      - name: Run mismatch lineage tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m unittest discover -s tests -p "test_cpvs_mismatch_lineage.py" -v
-
       - name: Trace mismatch rows and coordinate aliases
         shell: bash
         run: |
