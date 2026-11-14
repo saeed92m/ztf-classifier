@@ -921,3 +921,57 @@ The 16-role Think Tank agrees on the following order:
 5. **P2 — Full scientific acceptance:** rerun full-parent object-level comparison after method and raw provenance are established; report TP, FP, FN, UNKNOWN and stage-level hashes.
 
 The full-parent scan and MGPR run are successful diagnostic executions; neither closes the CPVS root-cause investigation. Keep PR #285 Draft, issue #170 Open, and production selectors, thresholds, model artifacts, taxonomy, benchmark and v0.2.0 unchanged.
+
+
+## 22. Follow-up experiments committed — 2026-11-14 (execution pending)
+
+The Think Tank authorized two bounded, read-only research diagnostics. Both use standard GitHub-hosted `ubuntu-latest` runners; no laptop processing, paid runner or production data mutation is involved.
+
+### A. MGPR robustness extension
+
+Added/updated:
+- `scripts/diagnose_cpvs_mgpr.py`
+- `tests/test_cpvs_mgpr.py`
+- `.github/workflows/cpvs-mgpr-feasibility.yml`
+
+The full-data fit now uses eight deterministic initial parameter vectors, all checked to remain within the declared L-BFGS-B bounds. Each object also receives four contiguous blocked-phase folds. Each fold:
+- excludes one quarter of the phase cycle from training in both bands;
+- fits on the remaining three quarters;
+- uses four deterministic starts;
+- predicts only the held-out observations;
+- reports RMSE, MAE, normalized RMSE, median normalized residual, 1σ/2σ coverage and mean log predictive density;
+- records `PASS`, `OPTIMIZER_NOT_CONVERGED`, `INSUFFICIENT_DATA` or `ERROR` distinctly.
+
+Workflow [43612080772](https://github.com/saeed92m/ztf-classifier/actions/runs/43612080772) is in progress and is downloading the pinned raw archives. No eight-start or blocked-phase result has been accepted yet. The completed 34-object two-start feasibility result in Section 21 remains valid as a bounded numerical result only.
+
+### B. Raw/Table2 mismatch coordinate and epoch lineage
+
+Added:
+- `scripts/diagnose_cpvs_mismatch_lineage.py`
+- `tests/test_cpvs_mismatch_lineage.py`
+- `.github/workflows/cpvs-mismatch-lineage.yml`
+- `configs/process/cycles/cpvs-mismatch-coordinate-epoch-lineage-20261114.json`
+
+The diagnostic processes all 100 mismatch objects in both bands. It records:
+- exact raw row count and numeric-valid row count;
+- unique epochs, duplicate epochs and duplicate measurements;
+- raw flag frequencies, magnitude and uncertainty ranges;
+- raw-to-Table2 coordinate separation;
+- time minimum/maximum and a numeric MJD-like versus HJD/JD-like hint;
+- alternate raw SourceIDs within 3 arcseconds of a target whose band has zero attached rows.
+
+The coordinate comparison is a lead for provenance review only. It does not remap IDs automatically. Raw photometry rows are not uploaded; only object-level aggregates and nearby alternate identifiers are retained.
+
+Workflow [43612083641](https://github.com/saeed92m/ztf-classifier/actions/runs/43612083641) is in progress and has passed both pinned-artifact downloads. It is currently downloading the checksum-pinned g/r archives. No coordinate/epoch result has been accepted yet.
+
+### Current latest-head engineering state
+
+At commit `7f74ec098cbec04a0f6884948b7e00617c71cba0`:
+- Format Check: PASS.
+- CodeQL: PASS.
+- Scientific Validation contract and lifecycle checks: PASS.
+- Lint: in progress.
+- Product Scope Audit: in progress.
+- MGPR robustness and mismatch-lineage workflows: in progress.
+
+These engineering checks do not establish scientific membership. PR #285 remains Draft and issue #170 remains Open. No production selector, model, features, taxonomy, benchmark or v0.2.0 baseline has changed.
