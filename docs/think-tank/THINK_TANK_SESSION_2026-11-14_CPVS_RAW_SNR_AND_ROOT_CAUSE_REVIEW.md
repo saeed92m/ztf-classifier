@@ -704,3 +704,76 @@ Next actions:
 3. Complete the full CI gate on the latest commit.
 4. Only after MGPR results, continue reconstructing the original Chen pipeline, including INFOBITS/catflags semantics, same-product period search, Fourier-fit stage and alias exclusions.
 5. Keep the full-parent 781,602-object comparison as the final membership validation gate.
+
+
+## 19. Full Table2 feature completeness and the 55 raw-photometry controls — 2026-11-14
+
+### Full-parent metadata recheck
+
+The pinned historical artifact was downloaded again and its ZIP digest was verified:
+- artifact: \`scientific-validation-heavy\`, run \`38635891449\`;
+- ZIP SHA-256: \`346cd0a22d1490c9d3c5f6ff290ca2377e1c5458895c0c0d4b616b0708630c36\`;
+- parent metadata SHA-256: \`3675b1274f73fcb15d47e7a780f194ef8fa335cd248c6ff53ea4f01559c86591\`;
+- parent rows: 781,602 unique SourceIDs.
+
+The original Table2 file and Table4 crosswalk were also verified from artifact \`cpvs-raw-cds-reconciliation\`, run \`41367972395\`, ZIP SHA-256 \`130f3db65827afd83f5050e7eb91eb1cf7f6432e85456fd16586c8000a9aa6be\`.
+
+Verified object sets:
+- Table4 reference: 730,184 IDs.
+- Reconstructed SNR candidate set: 741,786 IDs.
+- Candidate-only residuals: 11,602 IDs.
+- Four-field-only controls: 55 IDs.
+- Parent objects outside candidate and 55 controls: 39,761 IDs.
+
+Across all 781,602 parent objects, the four-field predicate (positive gmag, rmag, Per-g and Per-r) selects 730,239 objects. It contains every Table4 member and 55 additional parent objects. Inside the reconstructed candidate set, the same predicate selects exactly 730,184 objects: 730,184 Table4 members, zero residuals, zero false negatives.
+
+Adding positive gAmp and rAmp does not change this 730,239 parent-wide set. Adding positive Ng and Nr also does not change it. The 55 additional objects have all six of these Table2 values positive.
+
+The Table2 ReadMe explicitly marks gmag, rmag, Per-g, Per-r, gAmp and rAmp as missing when zero. It does not mark R2 or log(FAP) zero as missing. In the Table4 reference, R2-g includes 28 zeros and 768 negative values; R2-r includes 9 negative values. log(FAP-g/r) includes zero and negative values. Therefore a positive-R2 or positive-FAP rule would be scientifically invalid.
+
+This strengthens the complete-case feature hypothesis for the 11,602 residuals: the missing Table2 values align with per-band feature fields used downstream. It remains a hypothesis about publisher intent, not a documented official membership rule.
+
+### Recovered raw-photometry audit for the 55 controls
+
+The earlier raw-control artifact was recovered and re-hashed:
+- artifact \`cpvs-raw-cds-reconciliation\`, run \`41367972395\`;
+- \`four_field_only_55.tsv\`: SHA-256 \`b7f712910467616919f616dfd5f9ddb94a4c6b819f973469eeeb704fae0e1ab6\`;
+- \`per_band_snr_metrics.tsv\`: SHA-256 \`5388d4f2b8bae524dbc0f96ccf1d74b4a0ef08e6ce0a7e52d0dd0eb0fdfb7002\`;
+- \`per_object_snr_metrics.json\`: SHA-256 \`c04e319f293ea937695558ba6ae1b304e9785156dcc164b861f188ee62eb2a51\`;
+- \`report.json\`: SHA-256 \`1d42f55dc1c8f01f289ec697a8af4465aef8ea64e8d5f9fb43c2c96ea2e7cf57\`.
+
+The report status is PARTIAL. It records:
+- only 1 of 55 controls has g-band raw rows;
+- 51 of 55 have r-band raw rows;
+- the band-presence cross-tab is 51 r-only, 3 neither, 1 g-only, and zero with both bands;
+- raw row counts match Table2 Ng for 1 object and Nr for 51 objects;
+- no control is reconstructed as a two-band SNR candidate.
+
+The report itself warns that row-count mismatches must be resolved before interpreting SNR. Therefore these 55 are **not proven low-SNR objects**. Their retained Zenodo raw attachments do not contain both bands for any of them, despite positive Table2 Ng and Nr. This points to a data-stage, attachment-completeness, image-quality or SourceID-mapping question.
+
+### Revised leading hypothesis
+
+The evidence now supports a two-part reconstruction hypothesis:
+1. The 11,602 residuals pass the raw two-band SNR test but lack at least one Table2 feature field required for a complete downstream feature vector.
+2. The 55 parent controls pass the Table2 completeness test but lack dual-band raw rows in the retained Zenodo attachments, so they do not enter the reconstructed two-band SNR candidate set.
+
+The exact intersection of the reconstructed SNR candidate set and the four-field complete-case predicate equals Table4. This is strong empirical evidence, but it does not prove the original authors used this exact sequence.
+
+### Full-parent experiment started
+
+The new research-only full-parent workflow:
+- scans all 89,697,393 g rows and 109,971,576 r rows;
+- verifies archive SHA-256, decompressed member SHA-256, byte count, row count and CRC;
+- records raw and numeric-valid row counts for every Table2 SourceID;
+- evaluates approximate, exact and inverse-error SNR formulas;
+- evaluates Zenodo flag comparators \`!=32768\`, \`<32768\` and \`==0\` without assuming these fields are DR2 catflags;
+- compares raw row counts with Table2 Ng/Nr by Table4, residual, 55-control and other-parent cohorts;
+- emits a full 781,602-object reconciliation TSV and a row-count mismatch TSV.
+
+Implementation:
+- \`scripts/diagnose_cpvs_full_parent_reconstruction.py\`
+- \`tests/test_cpvs_full_parent_reconstruction.py\`
+- \`.github/workflows/cpvs-full-parent-reconstruction.yml\`
+- \`configs/process/cycles/cpvs-full-parent-raw-row-reconciliation-20261114.json\`
+
+The full-parent scan is pending. Until it completes, the 55-control raw-data discrepancy and all-parent count reconciliation remain unresolved. No production selector or v0.2.0 change is authorized.
