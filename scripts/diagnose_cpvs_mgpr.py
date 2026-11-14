@@ -307,8 +307,8 @@ def main() -> None:
     curves = []
     for sid in sorted(objects):
         obj = objects[sid]
-        g_rows = raw["g"]["objects"][sid]["valid"]
-        r_rows = raw["r"]["objects"][sid]["valid"]
+        g_rows = raw["g"]["objects"][sid]["valid_rows"]
+        r_rows = raw["r"]["objects"][sid]["valid_rows"]
         metrics, predictions = predict_object(sid, obj, g_rows, r_rows)
         records.append(metrics)
         curves.extend(predictions)
