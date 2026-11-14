@@ -1,6 +1,11 @@
 import unittest
 
-from scripts.diagnose_cpvs_full_parent_reconstruction import cohort, confusion, pos, resolve_member_name
+from scripts.diagnose_cpvs_full_parent_reconstruction import (
+    cohort,
+    confusion,
+    pos,
+    resolve_member_name,
+)
 
 
 class FullParentReconstructionTests(unittest.TestCase):
