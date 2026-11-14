@@ -778,4 +778,4 @@ Implementation:
 - `.github/workflows/cpvs-full-parent-reconstruction.yml`
 - `configs/process/cycles/cpvs-full-parent-raw-row-reconciliation-20261114.json`
 
-The full-parent scan is pending. Until it completes, the 55-control raw-data discrepancy and all-parent count reconciliation remain unresolved. No production selector or v0.2.0 change is authorized.
+The first full-parent attempt, [run 43599229387](https://github.com/saeed92m/ztf-classifier/actions/runs/43599229387), downloaded the checksum-pinned ZIPs but stopped before scanning. Its preliminary guard compared ZIP central-directory size/CRC metadata. The already validated phase-fold scanner verifies the decompressed member stream directly. The full-parent script now resolves the unique member by basename and verifies decompressed byte count, row count, SHA-256 and CRC after streaming. This is an engineering correction, not a scientific finding. A rerun is pending. Until it completes, the 55-control raw-data discrepancy and all-parent count reconciliation remain unresolved. No production selector or v0.2.0 change is authorized.
