@@ -56,7 +56,9 @@ def test_star_embed_mapping_rejects_misaligned_arrays() -> None:
         star_embed_row_to_internal_lc(row)
 
 
-def test_star_embed_feature_probe_uses_clean_test_ids_and_emits_42_features(tmp_path) -> None:
+def test_star_embed_feature_probe_uses_clean_test_ids_and_emits_42_features(
+    tmp_path,
+) -> None:
     data_dir = tmp_path / "data"
     output_dir = tmp_path / "output"
     data_dir.mkdir()
@@ -79,7 +81,9 @@ def test_star_embed_feature_probe_uses_clean_test_ids_and_emits_42_features(tmp_
     assert (output_dir / "star_embed_v0_2_feature_probe.parquet").is_file()
 
 
-def test_star_embed_feature_probe_blocks_cross_split_leakage_but_runs_clean_sample(tmp_path) -> None:
+def test_star_embed_feature_probe_blocks_cross_split_leakage_but_runs_clean_sample(
+    tmp_path,
+) -> None:
     data_dir = tmp_path / "data"
     output_dir = tmp_path / "output"
     data_dir.mkdir()
