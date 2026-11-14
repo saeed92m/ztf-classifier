@@ -6,12 +6,20 @@ from pathlib import Path
 
 from scripts.diagnose_cpvs_table6_overlap import (
     build_report,
+    is_candidate_only_stratum,
     metadata_predicates,
     read_table6_ids,
 )
 
 
 class Table6OverlapTests(unittest.TestCase):
+    def test_candidate_only_stratum_survives_sample_labels(self):
+        self.assertTrue(is_candidate_only_stratum("candidate_only"))
+        self.assertTrue(is_candidate_only_stratum("candidate_only,sample_1000"))
+        self.assertTrue(is_candidate_only_stratum("candidate_only,sample_100,sample_1000"))
+        self.assertFalse(is_candidate_only_stratum("parent_neither,sample_1000"))
+        self.assertFalse(is_candidate_only_stratum("four_field_only,sample_100"))
+
     def test_reads_ids_and_checks_archive_and_member(self):
         header = b"".join(f"# header {i}\n".encode() for i in range(20))
         rows = (
