@@ -88,3 +88,17 @@ jobs:
             reports/scientific_validation/star_embed_input_audit/input_probe/*.json
             reports/scientific_validation/star_embed_input_audit/input_probe/*.parquet
           if-no-files-found: warn
+
+      - name: Enforce independent source integrity gate after evidence upload
+        if: always()
+        env:
+          AUDIT_EXIT_CODE: ${{ steps.source_audit.outputs.audit_exit_code }}
+          PROBE_EXIT_CODE: ${{ steps.source_audit.outputs.probe_exit_code }}
+        run: |
+          set -euo pipefail
+          if [ "$AUDIT_EXIT_CODE" != "0" ] || [ "$PROBE_EXIT_CODE" != "0" ]; then
+            echo "FAIL-CLOSED: StarEmbed source integrity or input feature probe did not pass."
+            echo "audit_exit_code=$AUDIT_EXIT_CODE"
+            echo "probe_exit_code=$PROBE_EXIT_CODE"
+            exit 1
+          fi
