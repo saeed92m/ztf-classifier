@@ -95,8 +95,6 @@ def scan(path:Path,band:str,parent_ids:set[int]):
  if sha(path)!=cfg["sha"]: raise ValueError(f"{band} archive SHA-256 mismatch")
  with zipfile.ZipFile(path) as z:
   member_name=resolve_member_name(z,cfg["member"])
-  info=z.getinfo(member_name)
-  if info.file_size!=cfg["size"] or f"{info.CRC:08x}"!=cfg["crc"]: raise ValueError(f"{band} member size/CRC mismatch")
  counts={k:array.array("I",[0])*(MAX_SEQ+1) for k in COUNT_FIELDS}
  digest=hashlib.sha256(); crc=0; nbytes=0; nrows=0; malformed=0; unknown=0; missing_flag=0
  p=subprocess.Popen(["unzip","-p",str(path),member_name],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
