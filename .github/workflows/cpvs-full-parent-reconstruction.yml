@@ -1,0 +1,82 @@
+name: CPVS full-parent raw photometry reconciliation
+
+on:
+  push:
+    branches:
+      - research/cpvs-snr-formula-audit-20261112
+    paths:
+      - scripts/diagnose_cpvs_full_parent_reconstruction.py
+      - tests/test_cpvs_full_parent_reconstruction.py
+      - .github/workflows/cpvs-full-parent-reconstruction.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: cpvs-full-parent-reconstruction-\${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  full-parent-reconstruction:
+    name: Reconcile all 781,602 Table2 objects with raw g/r photometry
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Download pinned full-parent metadata artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: scientific-validation-heavy
+          path: inputs/parent
+          repository: \${{ github.repository }}
+          run-id: 38635891449
+          github-token: \${{ github.token }}
+
+      - name: Download pinned Table2/Table4 reconciliation artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cpvs-raw-cds-reconciliation
+          path: inputs/reconciliation
+          repository: \${{ github.repository }}
+          run-id: 41367972395
+          github-token: \${{ github.token }}
+
+      - name: Download checksum-pinned raw Zenodo photometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p raw reports
+          curl --fail --location --retry 4 --retry-all-errors "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" --output raw/ztf2g.zip
+          curl --fail --location --retry 4 --retry-all-errors "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" --output raw/ztf2r.zip
+          echo "47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9  raw/ztf2g.zip" | sha256sum --check -
+          echo "48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74  raw/ztf2r.zip" | sha256sum --check -
+          df -h .
+
+      - name: Run full-parent reconstruction
+        run: |
+          python scripts/diagnose_cpvs_full_parent_reconstruction.py \
+            --parent-dir inputs/parent \
+            --reconciliation-dir inputs/reconciliation \
+            --g-archive raw/ztf2g.zip \
+            --r-archive raw/ztf2r.zip \
+            --output-dir reports
+
+      - name: Upload full-parent evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-full-parent-reconstruction-evidence
+          path: |
+            reports/cpvs_full_parent_reconstruction_report.json
+            reports/cpvs_full_parent_object_reconciliation.tsv
+            reports/cpvs_full_parent_rowcount_mismatches.tsv
+          if-no-files-found: error
+          retention-days: 14
