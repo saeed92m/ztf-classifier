@@ -210,14 +210,18 @@ def main() -> None:
             stream,
             fieldnames=[
                 "SourceID", "ZTF", "Type", "gmag", "rmag", "Per", "Per-g", "Per-r",
-                "Ng", "Nr", "mean_magnitude_pair_positive", "band_period_pair_positive",
-                "four_field_positive",
+                "Ng", "Nr", "both_mean_magnitudes_positive",
+                "both_band_periods_positive", "four_field_positive",
             ],
             delimiter="\t",
             extrasaction="ignore",
         )
         writer.writeheader()
-        writer.writerows(overlap)
+        for row in overlap:
+            writer.writerow({
+                **row,
+                **metadata_predicates(row),
+            })
     print(json.dumps(report, indent=2))
 
 
