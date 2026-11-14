@@ -1,6 +1,6 @@
 import unittest
 
-from scripts.diagnose_cpvs_full_parent_reconstruction import cohort, confusion, pos
+from scripts.diagnose_cpvs_full_parent_reconstruction import cohort, confusion, pos, resolve_member_name
 
 
 class FullParentReconstructionTests(unittest.TestCase):
@@ -16,6 +16,20 @@ class FullParentReconstructionTests(unittest.TestCase):
         self.assertEqual(cohort(2, {1}, {2}, {3}), "candidate_only_residual")
         self.assertEqual(cohort(3, {1}, {2}, {3}), "four_field_only_55")
         self.assertEqual(cohort(4, {1}, {2}, {3}), "other_parent")
+
+
+    def test_resolves_nested_zip_member_by_basename(self):
+        import tempfile
+        import zipfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as directory:
+            archive_path = Path(directory) / "fixture.zip"
+            with zipfile.ZipFile(archive_path, "w") as archive:
+                archive.writestr("work/ztf2g", b"photometry")
+                archive.writestr("__MACOSX/ztf2g", b"metadata")
+            with zipfile.ZipFile(archive_path) as archive:
+                self.assertEqual(resolve_member_name(archive, "ztf2g"), "work/ztf2g")
 
     def test_confusion_matrix_is_object_level(self):
         result = confusion({1, 2, 3}, {2, 3, 4})
