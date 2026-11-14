@@ -36,9 +36,9 @@ class CPVSMismatchLineageTests(unittest.TestCase):
 
     def test_scan_finds_nearby_alternate_source_id(self):
         raw = (
-            b"100 10.0 0.0 2459000.5 17.0 0.1 0\\n"
-            b"201 20.0001 0.0 2459000.6 17.1 0.1 64\\n"
-            b"201 20.0001 0.0 2459001.6 17.2 0.1 64\\n"
+            b"100 10.0 0.0 2459000.5 17.0 0.1 0\n"
+            b"201 20.0001 0.0 2459000.6 17.1 0.1 64\n"
+            b"201 20.0001 0.0 2459001.6 17.2 0.1 64\n"
         )
         with tempfile.TemporaryDirectory() as directory:
             archive_path = Path(directory) / "tiny.zip"
