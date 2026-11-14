@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from scripts.diagnose_cpvs_phasefold_coverage import (
     ARCHIVES,
+    finalize_observed_object,
     num,
     phase_metrics,
     positive,
@@ -16,6 +17,22 @@ from scripts.diagnose_cpvs_phasefold_coverage import (
 
 
 class PhaseFoldCoverageTests(unittest.TestCase):
+    def test_finalizer_preserves_raw_rows_and_adds_phase_summaries(self):
+        row = {"phase": 0.25, "magnitude": 19.2, "mag_error": 0.1}
+        item = {
+            "valid": [row],
+            "snr_qualified": [row],
+            "flag_lt_32768": [row],
+            "flag_zero": [row],
+            "flag_counts": {"0": 1},
+        }
+        finalize_observed_object(item)
+        self.assertEqual(item["valid_rows"][0]["magnitude"], 19.2)
+        self.assertEqual(item["snr_qualified_rows"][0]["mag_error"], 0.1)
+        self.assertEqual(item["valid"]["n"], 1)
+        self.assertEqual(item["snr_qualified"]["occupied_bins_160"], 1)
+        self.assertEqual(item["flag_counts"], {"0": 1})
+
     def test_phase_metric_counts_wrapped_phases(self):
         result = phase_metrics([0.02, 0.24, 0.48, 0.72, 0.98])
         self.assertEqual(result["n"], 5)
