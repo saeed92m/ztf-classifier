@@ -48,7 +48,7 @@ def load_inputs(parent_dir:Path,recon_dir:Path):
  verified={}
  for name,(digest,size) in PARENT_HASHES.items(): verified[name]=verify(root/name,digest,size)
  for name,(digest,size) in RECON_HASHES.items():
-  rel=("raw"/Path(name)) if name=="table2.dat" else ("output"/Path(name))
+  rel=(Path("raw")/name) if name=="table2.dat" else (Path("output")/name)
   verified[name]=verify(recon_dir/rel,digest,size)
  table2={}
  with (recon_dir/"raw"/"table2.dat").open("r",encoding="ascii") as f:
@@ -61,19 +61,19 @@ def load_inputs(parent_dir:Path,recon_dir:Path):
  if len(table2)!=EXPECTED["parent"]: raise ValueError("Table2 row count mismatch")
  candidate=set()
  with (root/"selected.tsv").open("r",encoding="utf-8-sig",newline="") as f:
-  for r in csv.DictReader(f,delimiter="\\t"): candidate.add(int(r["SourceID"]))
+  for r in csv.DictReader(f,delimiter="\t"): candidate.add(int(r["SourceID"]))
  diag=json.loads((root/"selection_diagnostics.json").read_text(encoding="utf-8"))
  residual={int(r["source_id"]) for r in diag["candidate_only_all_objects"]}
  table4=set()
  with (recon_dir/"output"/"table4_to_table2_seq_crosswalk.tsv").open("r",encoding="utf-8",newline="") as f:
-  for r in csv.DictReader(f,delimiter="\\t"):
+  for r in csv.DictReader(f,delimiter="\t"):
    sid=int(r["Table2_Seq"])
    if sid in table4: raise ValueError("Duplicate Table4 crosswalk ID")
    if r["Table4_ID_equals_Table2_Seq"].lower()!="true": raise ValueError("Table4/Table2 ID crosswalk mismatch")
    table4.add(sid)
  controls=set()
  with (recon_dir/"output"/"four_field_only_55.tsv").open("r",encoding="utf-8",newline="") as f:
-  for r in csv.DictReader(f,delimiter="\\t"):
+  for r in csv.DictReader(f,delimiter="\t"):
    sid=int(r["SourceID"])
    if r["four_field_positive"].lower()!="true": raise ValueError("Invalid 55-control predicate")
    controls.add(sid)
