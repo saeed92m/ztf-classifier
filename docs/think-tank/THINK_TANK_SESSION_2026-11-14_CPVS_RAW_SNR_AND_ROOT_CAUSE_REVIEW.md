@@ -531,3 +531,65 @@ Latest relevant evidence:
 ### Decision carried forward
 
 **The CPVS root cause remains NOT PROVEN.** Do not interpret the four-field metadata match as the publisher's rule. Do not apply a new flag or image-quality filter to production. Next, finish the 42-object phase-coverage diagnostic, then decide whether MGPR is warranted. In parallel, map the Zenodo flags to original DR2 `catflags` and recover image-level `INFOBITS` for the 14 count-mismatch objects. Keep PR #285 Draft, issue #170 open, and v0.2.0 unchanged.
+
+
+## 17. Shared-period phase coverage and Table 6 overlap results — 2026-11-14
+
+### Phase-fold coverage diagnostic
+
+Workflow run [43535760220](https://github.com/saeed92m/ztf-classifier/actions/runs/43535760220) completed successfully on revision `2d31d08e9d12ad6535ab49ca26008dcc0d630fc1`. The report covers 42 candidate-only residual objects (all 17 both-magnitude / incomplete-band-period cases, all 5 both-period / missing-magnitude cases, and two fixed 10-object strata) plus 42 matched Table 4 controls. It uses the common Table 2 period, separately folds g and r, counts occupied bins on a 160-bin phase grid, and records circular phase gaps.
+
+Verified archive checks in the report:
+- g archive SHA-256: `47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9`; member SHA-256: `366aaf3539f83955bb1e29799df9e63005a9eb682f4f56d0807545a3534b0f16`; 89,697,393 rows.
+- r archive SHA-256: `48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74`; member SHA-256: `78df6d0b22099a7e5c6e74b897682c6ab94f90d5f9e887d4b0b3b152514e50fe`; 109,971,576 rows.
+- The report records zero raw/Table 2 count mismatches among these 84 selected objects. This is not a full-residual count reconciliation.
+
+Cohort-level medians:
+- 17 residuals with both g/r mean magnitudes but at least one missing band-specific period: g 92/160 bins (57.5%); r 91/160 (56.9%). Their g/r median largest circular gaps are 0.0587 and 0.0756.
+- 5 residuals with both band-specific periods but incomplete mean-magnitude pair: g 9/160 bins (5.6%); r 77/160 (48.1%). Their median g/r largest gaps are 0.3326 and 0.0679.
+- Fixed 10-object g-fit-missing stratum: median g 4.5/160 bins (2.8%) versus r 82/160 (51.3%).
+- Fixed 10-object r-fit-missing stratum: median r 4/160 bins (2.5%) versus g 35.5/160 (22.2%).
+- The 42 matched controls have median g 43/160 bins (26.9%) and r 76.5/160 (47.8%). They are same-Type nearest matches on period, magnitudes and observation counts, not a random control sample.
+
+Interpretation:
+1. The 5 objects with incomplete mean magnitudes have very sparse g-band phase coverage (6–12 valid g observations; median 11). This supports a band-specific data-completeness explanation for those objects.
+2. The fixed 10-object missing-fit strata also have very sparse phase coverage in the corresponding band. This supports the same mechanism for those sampled objects.
+3. The 17 objects with both mean magnitudes and a missing `Per-g` or `Per-r` have substantial shared-period coverage in both bands. Their median coverage is close to that of their 17 matched Table 4 controls. Sparse shared-period coverage is therefore not a sufficient explanation for this 17-object subgroup.
+4. The phase-fold run did not execute MGPR. Phase coverage does not prove Gaussian-process convergence, interpolation quality, original CPVS membership, or the historical selection rule.
+
+The compact report has SHA-256 `6094a9fcee0d37c3cbf42e7b6d97aee5f791cd5adea81fa67d38553295ebd47a`; the object-level TSV has SHA-256 `a6f6f83be18809b8c3d3cc1068f4ef6463ec84771bd30883505de0c91a800bb6`. The downloaded evidence archive is SHA-256 `424f5bd03a0a4f43956901459209527eaa03be0611acf77657c3caf71267b76d`.
+
+A rerun on the corrected streaming-scanner revision remains in progress. Do not treat that pending run as an additional validation result. The completed report remains bounded to the stated 84 objects.
+
+### Table 6 suspected-variable catalogue overlap
+
+Workflow run [43538253256](https://github.com/saeed92m/ztf-classifier/actions/runs/43538253256) completed successfully on revision `ddd4f12e78da805d915792e49ac687aa870030b0`.
+
+Input and integrity evidence:
+- Zenodo archive `Table6.txt.zip` MD5: `fcad26b036c8dbee29f6d868fecc9697`.
+- Decompressed member `Table6.txt`: 167,166,038 bytes; SHA-256 `f1b51a6be353d8712eba626e12c57bb3c5b0900c2435210f088d65f9db32c6af`; CRC32 `4f18f13d`.
+- 1,381,527 records, 1,381,527 unique IDs, 13 fields per record, zero duplicate IDs.
+- The pinned residual evidence artifact came from run `43525513465` and has SHA-256 `198ad0becaae7cc752e34fd34ae6e269ae49a73b255afc6a3773d651f26e6088`.
+
+Object-level result:
+- 11,602 candidate-only residuals, 11,602 unique SourceIDs and 11,602 unique ZTF names.
+- Table 6 overlap: **0**.
+- Table 6 non-overlap: **11,602**.
+- Overlap fraction: **0.0**.
+- The overlap TSV contains only its header; no residual ID matched Table 6.
+- The overlap result is also zero within each tested metadata stratum: the 17 both-magnitude objects, the 5 both-period objects, and the 11,580 objects failing both pairs.
+
+Interpretation:
+- The residual set is not explained by these objects being listed in the published suspected-variable catalogue.
+- Table 6 is a separate catalogue, not the primary Table 2 variables membership list. Zero overlap rules out this specific cross-catalogue explanation only.
+- Do not use Table 6 as a production membership filter. The original Chen/Chan selection stages remain to be reconstructed.
+
+The report JSON has SHA-256 `b5a1eafd7b99d95dc31b627f9132a775d0ef9fc71efd62052a5b74b64ab2c28e`; the overlap TSV has SHA-256 `b3fb177880fb8530a1188c79474ca163725d52dca89158aba87b55de7bdad13d`; the downloaded evidence archive has SHA-256 `687dde745d22212dfe74e05cf604b16738aeb566aa356ee69eb186a19b0ec743`.
+
+### Current decisions
+
+- **CPVS root cause remains NOT PROVEN.** The Table 6 hypothesis is rejected for the 11,602 residuals. The phase-fold results support per-band data sparsity for some strata but do not explain the 17 objects with both mean magnitudes and good shared-period coverage.
+- Next scientific experiment: obtain the exact MGPR implementation details and run a bounded, deterministic MGPR diagnostic on the 17-object subgroup and matched Table 4 controls. Record convergence, hyperparameters, covariance conditioning, optimizer behavior and output-grid stability. Do not infer catalogue membership from a successful fit alone.
+- Continue resolving Zenodo `g_flag/r_flag` to original DR2 `catflags`, recover image-level `INFOBITS`, and trace the 14 raw/Table 2 count mismatches.
+- Complete the full 781,602-parent reconstruction and the TP/FP/FN/UNKNOWN comparison only after all selector stages are source-backed.
+- Preserve PR #285 Draft, issue #170 Open and v0.2.0. No production selector, model or release change is authorized by these diagnostic results.
