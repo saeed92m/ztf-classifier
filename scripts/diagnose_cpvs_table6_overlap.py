@@ -114,7 +114,7 @@ def metadata_predicates(row: dict[str, str]) -> dict[str, bool]:
 
 def read_candidate_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8", newline="") as stream:
-        reader = csv.DictReader(stream, delimiter="\\t")
+        reader = csv.DictReader(stream, delimiter="\t")
         required = {
             "SourceID", "ZTF", "strata", "candidate", "Table4_member",
             "gmag", "rmag", "Per-g", "Per-r", "four_field_positive",
