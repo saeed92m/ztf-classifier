@@ -273,8 +273,9 @@ def blocked_phase_cross_validation(
         try:
             x, y, yerr, scaling = prepare_training_data(train_g, train_r)
             gp, fit = fit_one_gp(x, y, yerr, starts=CV_STARTS)
-            for band_index, (band, wavelength, test_rows) in enumerate(
-                (("g", 0.0, test_g), ("r", 1.0, test_r))
+            for band, wavelength, test_rows in (
+                ("g", 0.0, test_g),
+                ("r", 1.0, test_r),
             ):
                 phase = np.asarray(
                     [float(row["phase"]) % 1.0 + 2.0 for row in test_rows],
