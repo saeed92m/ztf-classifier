@@ -1,0 +1,75 @@
+name: CPVS Table 6 suspected-variable overlap diagnostic
+
+on:
+  push:
+    branches:
+      - research/cpvs-snr-formula-audit-20261112
+    paths:
+      - scripts/diagnose_cpvs_table6_overlap.py
+      - tests/test_cpvs_table6_overlap.py
+      - .github/workflows/cpvs-table6-overlap.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  table6-overlap:
+    name: Compare 11,602 CPVS residuals with suspected-variable table
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - name: Checkout investigation revision
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Download pinned 11,602-object evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: cpvs-11602-raw-snr-evidence
+          path: inputs/residuals
+          repository: \${{ github.repository }}
+          run-id: 43525513465
+          github-token: \${{ github.token }}
+
+      - name: Download and verify Zenodo Table 6
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p raw reports
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://zenodo.org/records/3886372/files/Table6.txt.zip?download=1" \
+            --output raw/Table6.txt.zip
+          echo "fcad26b036c8dbee29f6d868fecc9697  raw/Table6.txt.zip" | md5sum --check -
+
+      - name: Run deterministic overlap tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p "test_cpvs_table6_overlap.py" -v
+
+      - name: Audit Table 6 overlap
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/diagnose_cpvs_table6_overlap.py \
+            --residuals inputs/residuals/cpvs_membership_raw_snr_objects.tsv \
+            --table6-zip raw/Table6.txt.zip \
+            --output-dir reports
+
+      - name: Upload compact Table 6 overlap evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-table6-overlap-evidence
+          path: |
+            reports/cpvs_table6_overlap_report.json
+            reports/cpvs_table6_residual_overlap.tsv
+          if-no-files-found: error
+          retention-days: 14
