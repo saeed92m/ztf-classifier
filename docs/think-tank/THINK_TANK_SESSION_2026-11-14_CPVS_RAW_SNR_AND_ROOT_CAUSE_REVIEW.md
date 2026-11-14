@@ -407,12 +407,12 @@ This is a strong, source-consistent explanation of the observed partition. It is
 
 **Chen et al. (2020), Section III** states that their original CPVS discovery pipeline:
 1. starts with objects with at least 20 detections;
-2. filters image quality with \`INFOBITS < 33,554,432\` and epoch photometry with \`catflags != 32,768\`;
+2. filters image quality with `INFOBITS < 33,554,432` and epoch photometry with `catflags != 32,768`;
 3. performs initial period searches on observations associated with the same internal product ID;
 4. accepts a periodic candidate when the light curve in **one** band meets all period-search conditions;
 5. redetermines the period using photometry within 1 arcsecond of the source position;
 6. fits a fourth-order Fourier model;
-7. excludes poorly fitted light curves using the adjusted-R² condition stated as \`R_g^2 < 0.4\` and \`R_r^2 < 0.4\`;
+7. excludes poorly fitted light curves using the adjusted-R² condition stated as `R_g^2 < 0.4` and `R_r^2 < 0.4`;
 8. applies additional alias exclusions.
 
 Source: https://arxiv.org/abs/2005.08662
@@ -427,7 +427,7 @@ The Chan paper's stated two-band SNR condition is therefore not a complete descr
 
 The Chen text describes rejection when **both** band-specific adjusted-R² values are below 0.4. The direct Table 2 ablation was re-evaluated with that logical interpretation:
 
-- Retain objects unless both Table 2 \`R2-g\` and \`R2-r\` are below 0.4.
+- Retain objects unless both Table 2 `R2-g` and `R2-r` are below 0.4.
 - Result: 721,387 reconstructed candidates; 11,256 candidate-only; 20,053 published-only.
 
 This does not reproduce Table 4 membership. The Table 2 ReadMe calls the fields “R-square”, while Chen et al. call the fitted statistic “adjusted R²”. Their exact mathematical equivalence and processing stage remain unverified. Do not treat these columns as a faithful adjusted-R² implementation until the formula is established.
@@ -438,19 +438,19 @@ The simple 20-detection threshold also does not explain the residual cohort: 21 
 
 The 11,602 excess objects are not explained by:
 - the tested approximate or exact magnitude-error-to-SNR formula;
-- the tested \`flag < 32768\` or literal \`flag != 32768\` rule on the Zenodo flag values;
+- the tested `flag < 32768` or literal `flag != 32768` rule on the Zenodo flag values;
 - a simple 11-per-band or 20-per-band observation-count threshold;
 - a broad Table 2 Seq / Table 4 ID crosswalk error.
 
 The strongest empirical separator remains the two-band metadata-completeness conjunction. Both mean magnitudes explain 11,585 residuals; the remaining 17 have both mean magnitudes and the common period, but lack one band-specific period. Five more objects have both band-specific periods but lack a mean magnitude. This points to a downstream fit/feature-completeness difference, but the papers do not explicitly prescribe the four-field conjunction as Table 4 membership logic.
 
-The 14 raw-archive/Table 2 \`Ng/Nr\` mismatches remain separate. The Zenodo attachment's \`g_flag/r_flag\` names have not been proven identical to \`catflags\`, and image-level \`INFOBITS\` is absent from those attachments. The tested flag values are all below 32,768; no raw row had value 32,768. This does not test the image-level quality cut.
+The 14 raw-archive/Table 2 `Ng/Nr` mismatches remain separate. The Zenodo attachment's `g_flag/r_flag` names have not been proven identical to `catflags`, and image-level `INFOBITS` is absent from those attachments. The tested flag values are all below 32,768; no raw row had value 32,768. This does not test the image-level quality cut.
 
 ### Ordered Think Tank decision
 
 1. **Lock the historical reference and source semantics.** Keep the exact Table 2, Table 4, Zenodo and current candidate hashes. Maintain the validated ID crosswalk. Do not regenerate or remap IDs.
-2. **Reconstruct the original Chen pipeline in order.** Test the 20-detection rule after quality eligibility; establish the field mapping for \`catflags\`; resolve image \`INFOBITS\`; reproduce same-product-ID period search, one-band acceptance, 1-arcsecond period redetermination, fourth-order Fourier fitting, the exact adjusted-R² formula/logic and alias cuts. Record membership after every stage.
-3. **Resolve raw-row provenance.** Explain all 14 \`Ng/Nr\` mismatches and test raw-row eligibility for the full residual list, not only these 14 examples. Preserve missing image metadata as UNKNOWN.
+2. **Reconstruct the original Chen pipeline in order.** Test the 20-detection rule after quality eligibility; establish the field mapping for `catflags`; resolve image `INFOBITS`; reproduce same-product-ID period search, one-band acceptance, 1-arcsecond period redetermination, fourth-order Fourier fitting, the exact adjusted-R² formula/logic and alias cuts. Record membership after every stage.
+3. **Resolve raw-row provenance.** Explain all 14 `Ng/Nr` mismatches and test raw-row eligibility for the full residual list, not only these 14 examples. Preserve missing image metadata as UNKNOWN.
 4. **Investigate the 42-object diagnostic cohort.** It contains all 17 two-mean-magnitude/period-incomplete objects, all 5 two-period/magnitude-incomplete objects, 10 fixed objects from each dominant one-band fit-output stratum, and 42 nearest same-Type Table 4 controls. Compare shared-period phase coverage, point counts and quality/SNR distributions in each band.
 5. **Run MGPR only after the phase-fold audit passes.** Use the Chan paper's common period in both bands. Compare all residual cases with matched Table 4 controls. Record optimizer convergence, kernel/hyperparameter values, covariance conditioning, phase coverage and 160-point outputs. MGPR success or failure is not itself catalogue-membership proof.
 6. **Perform the full 781,602-object reconstruction.** Compare object IDs against the pinned 730,184 Table 4 set at every source-backed processing stage. Report TP, FP, FN, UNKNOWN, duplicates, missing IDs and stage-level hashes.
@@ -458,15 +458,15 @@ The 14 raw-archive/Table 2 \`Ng/Nr\` mismatches remain separate. The Zenodo atta
 
 ### New diagnostic implementation and CI state
 
-- Added \`scripts/diagnose_cpvs_phasefold_coverage.py\` and \`tests/test_cpvs_phasefold_coverage.py\`.
-- Added workflow \`.github/workflows/cpvs-17-phasefold-coverage.yml\`, restricted to standard \`ubuntu-latest\`; no paid or self-hosted runner.
+- Added `scripts/diagnose_cpvs_phasefold_coverage.py` and `tests/test_cpvs_phasefold_coverage.py`.
+- Added workflow `.github/workflows/cpvs-17-phasefold-coverage.yml`, restricted to standard `ubuntu-latest`; no paid or self-hosted runner.
 - The three historical inputs are now SHA-256 pinned:
-  - parent metadata: \`3675b1274f73fcb15d47e7a780f194ef8fa335cd248c6ff53ea4f01559c86591\`;
-  - selected IDs: \`699ff34bcf8dd4b5043eed48384973cb5109fd86ca260f831a502097370238df\`;
-  - selection diagnostics: \`7e763d8804a57d75d1633d0a4089a4a6ac5aa40bb4695964d35e645b67ad5b61\`.
+  - parent metadata: `3675b1274f73fcb15d47e7a780f194ef8fa335cd248c6ff53ea4f01559c86591`;
+  - selected IDs: `699ff34bcf8dd4b5043eed48384973cb5109fd86ca260f831a502097370238df`;
+  - selection diagnostics: `7e763d8804a57d75d1633d0a4089a4a6ac5aa40bb4695964d35e645b67ad5b61`.
 - The first test run was blocked by a historical-artifact download credential error. The subsequent run retrieved the artifact and began the raw Zenodo archive download. That earlier attempt used a flawed circular-phase test fixture and is not accepted as a successful diagnostic.
-- The fixture was corrected. The workflow now uses \`github.token\` with \`actions: read\`. Corrected run [43530167582](https://github.com/saeed92m/ztf-classifier/actions/runs/43530167582) is queued behind the earlier attempt. No phase-coverage result or MGPR result is accepted yet.
-- On current PR head \`737b387ec62726f0ec78898b80d416a62e65dedd\`, CodeQL and Product Scope Audit passed. Standard CI and Scientific Validation are still running. The separate earlier Dependency Audit failure involving \`soupsieve 2.10\` remains to be checked on the latest head.
+- The fixture was corrected. The workflow now uses `github.token` with `actions: read`. Corrected run [43530167582](https://github.com/saeed92m/ztf-classifier/actions/runs/43530167582) is queued behind the earlier attempt. No phase-coverage result or MGPR result is accepted yet.
+- On current PR head `737b387ec62726f0ec78898b80d416a62e65dedd`, CodeQL and Product Scope Audit passed. Standard CI and Scientific Validation are still running. The separate earlier Dependency Audit failure involving `soupsieve 2.10` remains to be checked on the latest head.
 
 ### Current decision
 
@@ -711,12 +711,12 @@ Next actions:
 ### Full-parent metadata recheck
 
 The pinned historical artifact was downloaded again and its ZIP digest was verified:
-- artifact: \`scientific-validation-heavy\`, run \`38635891449\`;
-- ZIP SHA-256: \`346cd0a22d1490c9d3c5f6ff290ca2377e1c5458895c0c0d4b616b0708630c36\`;
-- parent metadata SHA-256: \`3675b1274f73fcb15d47e7a780f194ef8fa335cd248c6ff53ea4f01559c86591\`;
+- artifact: `scientific-validation-heavy`, run `38635891449`;
+- ZIP SHA-256: `346cd0a22d1490c9d3c5f6ff290ca2377e1c5458895c0c0d4b616b0708630c36`;
+- parent metadata SHA-256: `3675b1274f73fcb15d47e7a780f194ef8fa335cd248c6ff53ea4f01559c86591`;
 - parent rows: 781,602 unique SourceIDs.
 
-The original Table2 file and Table4 crosswalk were also verified from artifact \`cpvs-raw-cds-reconciliation\`, run \`41367972395\`, ZIP SHA-256 \`130f3db65827afd83f5050e7eb91eb1cf7f6432e85456fd16586c8000a9aa6be\`.
+The original Table2 file and Table4 crosswalk were also verified from artifact `cpvs-raw-cds-reconciliation`, run `41367972395`, ZIP SHA-256 `130f3db65827afd83f5050e7eb91eb1cf7f6432e85456fd16586c8000a9aa6be`.
 
 Verified object sets:
 - Table4 reference: 730,184 IDs.
@@ -731,18 +731,18 @@ Adding positive gAmp and rAmp does not change this 730,239 parent-wide set. Addi
 
 The Table2 ReadMe explicitly marks gmag, rmag, Per-g, Per-r, gAmp and rAmp as missing when zero. It does not mark R2 or log(FAP) zero as missing. In the Table4 reference, R2-g includes 28 zeros and 768 negative values; R2-r includes 9 negative values. log(FAP-g/r) includes zero and negative values. Therefore a positive-R2 or positive-FAP rule would be scientifically invalid.
 
-**Publisher-source boundary:** the checksum-pinned Table4 ReadMe (SHA-256 \`0a7ec0dac13b155fdd63322dc9b0230de42fd05169e0e02c70f68fce0bc67d6a\`) describes the 730,184 objects using the two-band detection criterion: at least one 2.5σ g detection and one 3σ r detection. It does not state the four-field complete-case predicate. The checksum-pinned Table2 ReadMe (SHA-256 \`e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a\`) marks gmag, rmag, Per-g, Per-r, gAmp and rAmp as missing when zero. Therefore the complete-case explanation remains an evidence-based hypothesis about downstream feature availability, not a published membership rule.
+**Publisher-source boundary:** the checksum-pinned Table4 ReadMe (SHA-256 `0a7ec0dac13b155fdd63322dc9b0230de42fd05169e0e02c70f68fce0bc67d6a`) describes the 730,184 objects using the two-band detection criterion: at least one 2.5σ g detection and one 3σ r detection. It does not state the four-field complete-case predicate. The checksum-pinned Table2 ReadMe (SHA-256 `e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a`) marks gmag, rmag, Per-g, Per-r, gAmp and rAmp as missing when zero. Therefore the complete-case explanation remains an evidence-based hypothesis about downstream feature availability, not a published membership rule.
 
 This strengthens the complete-case feature hypothesis for the 11,602 residuals: the missing Table2 values align with per-band feature fields used downstream. It remains a hypothesis about publisher intent, not a documented official membership rule.
 
 ### Recovered raw-photometry audit for the 55 controls
 
 The earlier raw-control artifact was recovered and re-hashed:
-- artifact \`cpvs-raw-cds-reconciliation\`, run \`41367972395\`;
-- \`four_field_only_55.tsv\`: SHA-256 \`b7f712910467616919f616dfd5f9ddb94a4c6b819f973469eeeb704fae0e1ab6\`;
-- \`per_band_snr_metrics.tsv\`: SHA-256 \`5388d4f2b8bae524dbc0f96ccf1d74b4a0ef08e6ce0a7e52d0dd0eb0fdfb7002\`;
-- \`per_object_snr_metrics.json\`: SHA-256 \`c04e319f293ea937695558ba6ae1b304e9785156dcc164b861f188ee62eb2a51\`;
-- \`report.json\`: SHA-256 \`1d42f55dc1c8f01f289ec697a8af4465aef8ea64e8d5f9fb43c2c96ea2e7cf57\`.
+- artifact `cpvs-raw-cds-reconciliation`, run `41367972395`;
+- `four_field_only_55.tsv`: SHA-256 `b7f712910467616919f616dfd5f9ddb94a4c6b819f973469eeeb704fae0e1ab6`;
+- `per_band_snr_metrics.tsv`: SHA-256 `5388d4f2b8bae524dbc0f96ccf1d74b4a0ef08e6ce0a7e52d0dd0eb0fdfb7002`;
+- `per_object_snr_metrics.json`: SHA-256 `c04e319f293ea937695558ba6ae1b304e9785156dcc164b861f188ee62eb2a51`;
+- `report.json`: SHA-256 `1d42f55dc1c8f01f289ec697a8af4465aef8ea64e8d5f9fb43c2c96ea2e7cf57`.
 
 The report status is PARTIAL. It records:
 - only 1 of 55 controls has g-band raw rows;
@@ -768,14 +768,14 @@ The new research-only full-parent workflow:
 - verifies archive SHA-256, decompressed member SHA-256, byte count, row count and CRC;
 - records raw and numeric-valid row counts for every Table2 SourceID;
 - evaluates approximate, exact and inverse-error SNR formulas;
-- evaluates Zenodo flag comparators \`!=32768\`, \`<32768\` and \`==0\` without assuming these fields are DR2 catflags;
+- evaluates Zenodo flag comparators `!=32768`, `<32768` and `==0` without assuming these fields are DR2 catflags;
 - compares raw row counts with Table2 Ng/Nr by Table4, residual, 55-control and other-parent cohorts;
 - emits a full 781,602-object reconciliation TSV and a row-count mismatch TSV.
 
 Implementation:
-- \`scripts/diagnose_cpvs_full_parent_reconstruction.py\`
-- \`tests/test_cpvs_full_parent_reconstruction.py\`
-- \`.github/workflows/cpvs-full-parent-reconstruction.yml\`
-- \`configs/process/cycles/cpvs-full-parent-raw-row-reconciliation-20261114.json\`
+- `scripts/diagnose_cpvs_full_parent_reconstruction.py`
+- `tests/test_cpvs_full_parent_reconstruction.py`
+- `.github/workflows/cpvs-full-parent-reconstruction.yml`
+- `configs/process/cycles/cpvs-full-parent-raw-row-reconciliation-20261114.json`
 
 The full-parent scan is pending. Until it completes, the 55-control raw-data discrepancy and all-parent count reconciliation remain unresolved. No production selector or v0.2.0 change is authorized.
