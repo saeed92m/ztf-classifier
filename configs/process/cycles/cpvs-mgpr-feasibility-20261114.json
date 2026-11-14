@@ -76,7 +76,7 @@
     ]
   },
   "regression": {
-    "status": "PENDING_CI",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
       "MGPR input preparation tests must pass.",
       "The bounded workflow must complete with finite, traceable outputs or explicit per-object failures.",
