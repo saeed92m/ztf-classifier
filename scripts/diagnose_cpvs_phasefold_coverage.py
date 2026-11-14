@@ -253,6 +253,17 @@ def phase_metrics(phases: list[float], bins: int = 160) -> dict[str, Any]:
     }
 
 
+def finalize_observed_object(item: dict[str, Any]) -> None:
+    """Preserve raw photometry rows and attach phase-only summaries."""
+    item["valid_rows"] = item["valid"]
+    item["snr_qualified_rows"] = item["snr_qualified"]
+    item["flag_lt_32768_rows"] = item["flag_lt_32768"]
+    item["flag_zero_rows"] = item["flag_zero"]
+    item["flag_counts"] = dict(sorted(item["flag_counts"].items()))
+    for key in ("valid", "snr_qualified", "flag_lt_32768", "flag_zero"):
+        item[key] = phase_metrics([row["phase"] for row in item[key]])
+
+
 def scan_archive(
     archive_path: Path,
     band: str,
@@ -409,9 +420,7 @@ def scan_archive(
         raise ValueError("; ".join(errors))
 
     for item in observed.values():
-        item["flag_counts"] = dict(sorted(item["flag_counts"].items()))
-        for key in ("valid", "snr_qualified", "flag_lt_32768", "flag_zero"):
-            item[key] = phase_metrics([x["phase"] for x in item[key]])
+        finalize_observed_object(item)
     return {
         "archive_sha256": observed_archive_sha,
         "member_sha256": member_sha,
