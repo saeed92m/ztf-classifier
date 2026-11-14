@@ -51,6 +51,13 @@ jobs:
           run-id: 41367972395
           github-token: ${{ github.token }}
 
+      - name: Run mismatch lineage tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p "test_cpvs_mismatch_lineage.py" -v
+
+
       - name: Download checksum-pinned Zenodo g/r archives
         shell: bash
         run: |
