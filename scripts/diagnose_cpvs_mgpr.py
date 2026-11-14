@@ -169,7 +169,10 @@ def fit_one_gp(
     names = list(gp.get_parameter_names())
     params = {name: float(value) for name, value in zip(names, theta)}
     # The covariance condition number is measured on the fitted training matrix.
-    delta = math.exp(theta[0])
+    white_noise_index = next(
+        index for index, name in enumerate(names) if "white_noise" in name
+    )
+    delta = math.exp(theta[white_noise_index])
     covariance = gp.kernel.get_value(x)
     covariance = covariance + np.diag(yerr**2 + delta)
     condition_number = float(np.linalg.cond(covariance))
