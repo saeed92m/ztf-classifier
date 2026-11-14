@@ -34,8 +34,9 @@
       },
       "correctness": {
         "before": "Phase coverage was measured, but MGPR feasibility, optimizer behavior and covariance conditioning were unknown.",
-        "after": "Pending the bounded 34-object MGPR workflow.",
-        "evidence": "Workflow .github/workflows/cpvs-mgpr-feasibility.yml; script scripts/diagnose_cpvs_mgpr.py; Chan et al. 2022 Section 2.1."
+        "after": "First MGPR attempt 43598133000 passed runtime installation, full-parent artifact download, raw archive download/checksums, and preparation tests, then failed before fitting due to ModuleNotFoundError: No module named 'scripts'. Corrected import-path commit 589f23b234a041f64ad3a32e26ed6c8079b65f7e is awaiting workflow 43598776355.",
+        "evidence": "Workflow .github/workflows/cpvs-mgpr-feasibility.yml; script scripts/diagnose_cpvs_mgpr.py; Chan et al. 2022 Section 2.1.",
+        "status": "PENDING"
       },
       "reproducibility": {
         "before": "The article's MGPR method was known at the equation and procedure level; no project implementation or deterministic test existed.",
@@ -52,19 +53,24 @@
       "The paper specifies L-BFGS-B, repeated phases from 0 to 3 and prediction on phases 2 to 3 with 160 points per band.",
       "The paper does not publish exact optimizer bounds, initial values, george version, or complete implementation.",
       "The diagnostic uses explicit deterministic analyst-selected starts and bounds and labels them as implementation choices.",
-      "All raw numeric-valid rows are used; no mapping from Zenodo g_flag/r_flag to DR2 catflags is assumed."
+      "All raw numeric-valid rows are used; no mapping from Zenodo g_flag/r_flag to DR2 catflags is assumed.",
+      "Run 43598133000 failed before any MGPR fit because direct script execution could not resolve the scripts package; no scientific fit result was produced.",
+      "Commit 589f23b234a041f64ad3a32e26ed6c8079b65f7e adds package-relative/direct-script import support.",
+      "Corrected MGPR workflow 43598776355 and full CI 43598776344 are pending."
     ],
-    "blocker": "Run the bounded MGPR workflow, inspect all object-level outputs and verify the report hashes."
+    "blocker": "Await corrected MGPR workflow 43598776355 and full CI 43598776344."
   },
   "failure_analysis": {
-    "status": "UNRESOLVED",
+    "status": "ROOT_CAUSE_IDENTIFIED",
     "root_causes": [
-      "The 17-object missing-band-period subgroup has adequate shared-period phase coverage; MGPR feasibility remains unmeasured."
+      "The 17-object missing-band-period subgroup has adequate shared-period phase coverage; MGPR feasibility remains unmeasured.",
+      "The first MGPR workflow attempt failed before fitting because the direct script invocation imported scripts.diagnose_cpvs_phasefold_coverage, but the runner's script path did not include the repository root."
     ],
     "limitations": [
       "The diagnostic is not an exact reproduction of the authors' unpublished code.",
       "A converged MGPR fit does not prove historical CPVS membership or explain all 11,602 residuals.",
-      "Raw Zenodo flag fields have not been proven equivalent to DR2 catflags."
+      "Raw Zenodo flag fields have not been proven equivalent to DR2 catflags.",
+      "No MGPR optimizer or interpolation metrics exist yet; the failed run is not scientific evidence."
     ]
   },
   "knowledge_extraction": {
@@ -72,21 +78,24 @@
     "findings": [
       "Chan et al. uses the common Table 2 period for both bands, not the per-band Per-g and Per-r values, when phase-folding.",
       "A missing per-band fitted period does not by itself prevent the published common-period MGPR preprocessing.",
-      "The paper's MGPR equations and processing sequence can be translated into a bounded diagnostic, but unpublished numerical settings remain explicit uncertainty."
+      "The paper's MGPR equations and processing sequence can be translated into a bounded diagnostic, but unpublished numerical settings remain explicit uncertainty.",
+      "A script can import successfully as a package in unit tests but fail when executed directly from the scripts directory; both execution modes need explicit support."
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "PENDING",
     "open_blockers": [
-      "MGPR input preparation tests must pass.",
-      "The bounded workflow must complete with finite, traceable outputs or explicit per-object failures.",
-      "No production membership rule may be inferred from numerical convergence alone."
+      "Corrected MGPR workflow must complete the 34-object diagnostic and upload verifiable evidence.",
+      "Full CI must pass all gates on the latest branch head.",
+      "No membership rule may be inferred from numerical convergence alone."
     ]
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not use MGPR convergence as a CPVS membership selector.",
     "Do not change production code or v0.2.0 baseline.",
-    "Continue reconstructing the original Chen pipeline, flag semantics and full-parent object-level membership."
+    "Continue reconstructing the original Chen pipeline, flag semantics and full-parent object-level membership.",
+    "Treat MGPR run 43598133000 as an execution failure before fitting, not a scientific result.",
+    "Use corrected import-path commit 589f23b234a041f64ad3a32e26ed6c8079b65f7e as the validation target."
   ]
 }
