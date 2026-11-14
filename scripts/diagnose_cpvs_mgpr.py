@@ -60,7 +60,15 @@ LOG_BOUNDS = [(-16.0, 4.0), (-12.0, 12.0), (-14.0, 3.0), (-14.0, 3.0)]
 STARTS = [
     (math.log(0.01), 0.0, math.log(0.1**2 / 2.0), math.log(0.5**2 / 2.0)),
     (math.log(0.1), 0.0, math.log(0.5**2 / 2.0), math.log(2.0**2 / 2.0)),
+    (math.log(0.003), -0.5, math.log(0.05**2 / 2.0), math.log(0.25**2 / 2.0)),
+    (math.log(0.03), 0.5, math.log(0.2**2 / 2.0), math.log(1.0**2 / 2.0)),
+    (math.log(0.1), -0.5, math.log(1.0**2 / 2.0), math.log(4.0**2 / 2.0)),
+    (math.log(0.3), 0.5, math.log(2.0**2 / 2.0), math.log(8.0**2 / 2.0)),
+    (math.log(0.01), -1.0, math.log(0.3**2 / 2.0), math.log(4.0**2 / 2.0)),
+    (math.log(0.3), 1.0, math.log(0.8**2 / 2.0), math.log(0.8**2 / 2.0)),
 ]
+CV_STARTS = STARTS[:4]
+
 
 
 def prepare_training_data(
@@ -114,6 +122,7 @@ def fit_one_gp(
     x: np.ndarray,
     y: np.ndarray,
     yerr: np.ndarray,
+    starts: list[tuple[float, float, float, float]] = STARTS,
 ) -> tuple[Any, dict[str, Any]]:
     """Fit the published separable RBF plus diagonal white-noise kernel."""
     try:
@@ -122,9 +131,9 @@ def fit_one_gp(
     except ImportError as exc:
         raise RuntimeError("Install the pinned research dependency george==0.4.4") from exc
 
-    best: tuple[float, Any, Any] | None = None
+    best: tuple[float, Any, Any, int] | None = None
     attempts: list[dict[str, Any]] = []
-    for start_index, start in enumerate(STARTS):
+    for start_index, start in enumerate(starts):
         kernel = (
             kernels.ConstantKernel(log_constant=start[1], ndim=2)
             * kernels.ExpSquaredKernel(
@@ -172,11 +181,11 @@ def fit_one_gp(
         if math.isfinite(final_nll) and (best is None or final_nll < best[0]):
             gp.set_parameter_vector(result.x)
             gp.compute(x, yerr=yerr)
-            best = (final_nll, gp, result)
+            best = (final_nll, gp, result, start_index)
 
     if best is None:
         raise RuntimeError("All deterministic MGPR optimization starts failed")
-    nll, gp, result = best
+    nll, gp, result, selected_start_index = best
     theta = np.asarray(result.x, dtype=float)
     names = list(gp.get_parameter_names())
     params = {name: float(value) for name, value in zip(names, theta)}
@@ -190,18 +199,133 @@ def fit_one_gp(
     condition_number = float(np.linalg.cond(covariance))
     if not math.isfinite(condition_number):
         condition_number = None
+    finite_nll = [
+        item["negative_log_likelihood"]
+        for item in attempts
+        if item["negative_log_likelihood"] is not None
+    ]
+    lower_hits = []
+    upper_hits = []
+    for name, value, (lower, upper) in zip(names, theta, LOG_BOUNDS):
+        if abs(float(value) - lower) <= 1.0e-6:
+            lower_hits.append(name)
+        if abs(float(value) - upper) <= 1.0e-6:
+            upper_hits.append(name)
     return gp, {
         "negative_log_likelihood": nll,
         "optimizer_success": bool(result.success),
         "optimizer_message": str(result.message),
         "optimizer_iterations": int(result.nit),
         "optimizer_function_evaluations": int(result.nfev),
+        "optimizer_start_count": len(starts),
+        "optimizer_start_success_count": sum(item["success"] for item in attempts),
+        "optimizer_selected_start_index": selected_start_index,
+        "optimizer_start_nll_min": min(finite_nll) if finite_nll else None,
+        "optimizer_start_nll_max": max(finite_nll) if finite_nll else None,
+        "optimizer_start_nll_spread": (
+            max(finite_nll) - min(finite_nll) if finite_nll else None
+        ),
+        "optimizer_lower_bound_hits": lower_hits,
+        "optimizer_upper_bound_hits": upper_hits,
         "parameter_names": names,
         "parameters_log_space": params,
         "white_noise_variance": delta,
         "covariance_condition_number_2norm": condition_number,
         "optimizer_starts": attempts,
     }
+
+
+def blocked_phase_cross_validation(
+    g_rows: list[dict[str, Any]],
+    r_rows: list[dict[str, Any]],
+    fold_count: int = 4,
+) -> list[dict[str, Any]]:
+    """Hold out contiguous phase sectors and score predictions on unseen rows."""
+    fold_results: list[dict[str, Any]] = []
+    for fold_index in range(fold_count):
+        phase_min = fold_index / fold_count
+        phase_max = (fold_index + 1) / fold_count
+
+        def in_fold(row: dict[str, Any]) -> bool:
+            phase = float(row["phase"]) % 1.0
+            return phase_min <= phase < phase_max
+
+        train_g = [row for row in g_rows if not in_fold(row)]
+        test_g = [row for row in g_rows if in_fold(row)]
+        train_r = [row for row in r_rows if not in_fold(row)]
+        test_r = [row for row in r_rows if in_fold(row)]
+        result: dict[str, Any] = {
+            "fold_index": fold_index,
+            "phase_min": phase_min,
+            "phase_max": phase_max,
+            "status": "NOT_RUN",
+        }
+        result["bands"] = {}
+        if min(len(train_g), len(train_r), len(test_g), len(test_r)) < 5:
+            result["status"] = "INSUFFICIENT_DATA"
+            result["reason"] = "At least five train and five test observations per band are required."
+            result["bands"] = {
+                "g": {"train_observations": len(train_g), "test_observations": len(test_g)},
+                "r": {"train_observations": len(train_r), "test_observations": len(test_r)},
+            }
+            fold_results.append(result)
+            continue
+        try:
+            x, y, yerr, scaling = prepare_training_data(train_g, train_r)
+            gp, fit = fit_one_gp(x, y, yerr, starts=CV_STARTS)
+            for band_index, (band, wavelength, test_rows) in enumerate(
+                (("g", 0.0, test_g), ("r", 1.0, test_r))
+            ):
+                phase = np.asarray(
+                    [float(row["phase"]) % 1.0 + 2.0 for row in test_rows],
+                    dtype=float,
+                )
+                test_x = np.column_stack((phase, np.full(len(phase), wavelength)))
+                predicted_norm, variance_norm = gp.predict(y, test_x, return_var=True)
+                scale = scaling[band]
+                predicted_mag = predicted_norm * scale["std_magnitude"] + scale["mean_magnitude"]
+                predictive_variance = (
+                    np.maximum(variance_norm, 0.0) * scale["std_magnitude"] ** 2
+                )
+                observed_mag = np.asarray(
+                    [float(row["magnitude"]) for row in test_rows], dtype=float
+                )
+                measurement_error = np.asarray(
+                    [float(row["mag_error"]) for row in test_rows], dtype=float
+                )
+                total_sigma = np.sqrt(predictive_variance + measurement_error**2)
+                residual = observed_mag - predicted_mag
+                normalized_residual = residual / np.maximum(total_sigma, 1.0e-12)
+                log_density = (
+                    -0.5 * np.log(2.0 * math.pi * np.maximum(total_sigma**2, 1.0e-24))
+                    -0.5 * normalized_residual**2
+                )
+                result["bands"][band] = {
+                    "train_observations": len(train_g if band == "g" else train_r),
+                    "test_observations": len(test_rows),
+                    "rmse_magnitude": float(np.sqrt(np.mean(residual**2))),
+                    "mae_magnitude": float(np.mean(np.abs(residual))),
+                    "normalized_rmse_by_band_std": float(
+                        np.sqrt(np.mean(residual**2)) / scale["std_magnitude"]
+                    ),
+                    "median_absolute_normalized_residual": float(
+                        np.median(np.abs(normalized_residual))
+                    ),
+                    "coverage_1sigma": float(np.mean(np.abs(normalized_residual) <= 1.0)),
+                    "coverage_2sigma": float(np.mean(np.abs(normalized_residual) <= 2.0)),
+                    "mean_log_predictive_density": float(np.mean(log_density)),
+                }
+            result["fit"] = {
+                "optimizer_success": fit["optimizer_success"],
+                "optimizer_start_count": fit["optimizer_start_count"],
+                "optimizer_start_nll_spread": fit["optimizer_start_nll_spread"],
+            }
+            result["status"] = "PASS"
+        except (ValueError, RuntimeError, np.linalg.LinAlgError, FloatingPointError) as exc:
+            result["status"] = "ERROR"
+            result["error"] = f"{type(exc).__name__}: {exc}"
+        fold_results.append(result)
+    return fold_results
 
 
 def predict_object(
@@ -258,6 +382,7 @@ def predict_object(
         "r_phase_bins_160": len({min(159, int((float(x["phase"]) % 1.0) * 160)) for x in r_rows}),
         "fit": fit,
         "bands": band_summary,
+        "blocked_phase_cv": blocked_phase_cross_validation(g_rows, r_rows),
     }
     return metrics, curves
 
@@ -316,7 +441,7 @@ def main() -> None:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     report = {
         "schema_version": "1.0",
-        "diagnostic": "Bounded Chan et al. (2022) MGPR feasibility audit",
+        "diagnostic": "Chan et al. (2022) MGPR multi-start and blocked-phase robustness audit",
         "scope": "17 candidate-only residuals and 17 deterministic matched Table 4 controls; not a membership selector",
         "reference_method": PAPER,
         "implementation_choices_not_specified_by_paper": {
@@ -324,6 +449,7 @@ def main() -> None:
             "optimizer_initial_values": STARTS,
             "optimizer_bounds": LOG_BOUNDS,
             "multi_start_count": len(STARTS),
+            "blocked_phase_cross_validation": "four contiguous phase folds; four fixed starts per fold; held-out measurements are excluded from that fold's fit",
             "wavelength_coordinate": "g=0, r=1 after normalized two-band mapping",
             "uncertainties": "scaled per-point magnitude errors passed to george.GP.compute; fitted white-noise variance added by george",
             "fit_policy": "all numerically valid raw archive rows; flag semantics are not assumed",
@@ -347,6 +473,20 @@ def main() -> None:
             "control_median_g_sigma": statistics.median(x["bands"]["g"]["median_predictive_sigma_magnitude"] for x in records if x["cohort"] == "matched_table4_control"),
             "residual_median_r_sigma": statistics.median(x["bands"]["r"]["median_predictive_sigma_magnitude"] for x in records if x["cohort"] == "all_17_both_magnitudes_period_incomplete"),
             "control_median_r_sigma": statistics.median(x["bands"]["r"]["median_predictive_sigma_magnitude"] for x in records if x["cohort"] == "matched_table4_control"),
+            "optimizer_start_nll_spread_gt_1_count": sum(
+                (x["fit"]["optimizer_start_nll_spread"] or 0.0) > 1.0 for x in records
+            ),
+            "optimizer_upper_bound_hit_count": sum(
+                bool(x["fit"]["optimizer_upper_bound_hits"]) for x in records
+            ),
+            "blocked_phase_cv_fold_count": sum(
+                fold["status"] == "PASS"
+                for x in records for fold in x["blocked_phase_cv"]
+            ),
+            "blocked_phase_cv_error_count": sum(
+                fold["status"] == "ERROR"
+                for x in records for fold in x["blocked_phase_cv"]
+            ),
         },
         "interpretation_limit": (
             "A finite or converged GP fit does not establish historical CPVS membership. "
