@@ -1,3 +1,9 @@
+## [Unreleased]
+
+### Security
+- Upgrade Soup Sieve to 4.1. This resolves the audited advisories CVE-2026-126190, CVE-2026-126191, CVE-2026-126192 and CVE-2026-126193.
+- Require Python 3.11.5 or later in the Python 3.11 series. Soup Sieve 4.1 requires Python 3.11.5 or later.
+
 # Changelog
 
 All notable changes to the ZTF Classifier platform are documented here.
