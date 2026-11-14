@@ -779,3 +779,19 @@ Implementation:
 - `configs/process/cycles/cpvs-full-parent-raw-row-reconciliation-20261114.json`
 
 The first full-parent attempt, [run 43599229387](https://github.com/saeed92m/ztf-classifier/actions/runs/43599229387), downloaded the checksum-pinned ZIPs but stopped before scanning. Its preliminary guard compared ZIP central-directory size/CRC metadata. The already validated phase-fold scanner verifies the decompressed member stream directly. The full-parent script now resolves the unique member by basename and verifies decompressed byte count, row count, SHA-256 and CRC after streaming. This is an engineering correction, not a scientific finding. A rerun is pending. Until it completes, the 55-control raw-data discrepancy and all-parent count reconciliation remain unresolved. No production selector or v0.2.0 change is authorized.
+
+
+## 20. MGPR feasibility integration correction — 2026-11-14
+
+The first real-data MGPR attempt exposed two execution issues. Neither is a scientific result.
+
+1. Workflow run [43598692569](https://github.com/saeed92m/ztf-classifier/actions/runs/43598692569) passed the synthetic \`george\` GP fit test, then failed when the script was executed directly because it imported a sibling module through the \`scripts\` package name. The script now supports package-relative import and direct script execution.
+2. Workflow run [43598776355](https://github.com/saeed92m/ztf-classifier/actions/runs/43598776355) passed preparation tests and reached real-data processing. It then failed because the shared phase-fold scanner replaces its raw \`valid\` row list with a phase-summary dictionary. MGPR needs the original magnitude, uncertainty and phase values. This was an interface mismatch between two research diagnostics.
+
+Correction:
+- The phase-fold scanner now preserves original rows in \`valid_rows\`, \`snr_qualified_rows\`, \`flag_lt_32768_rows\` and \`flag_zero_rows\`, while retaining the existing phase-summary fields.
+- MGPR now reads \`valid_rows\`.
+- A regression test verifies that the scanner preserves raw rows and still produces the same phase summaries.
+- The phase-fold report schema and output TSV remain unchanged.
+
+The real-data MGPR experiment must be rerun. No MGPR result is yet verified. The synthetic GP test is only a software/API check; it is not evidence that any CPVS object fits the model. The bounded experiment remains 17 residuals with complete mean magnitudes but one missing band-specific period, plus 17 matched Table4 controls. Record optimizer convergence, fitted hyperparameters, covariance conditioning, predictive uncertainty and output-grid stability for every object. Do not infer historical membership from fit success or failure.
