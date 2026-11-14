@@ -22,15 +22,16 @@
     "artifact_sha256": "f486c72589b289607ad3ef04ebda0560a86132eb1be6fd1a990d9e62988a4f44"
   },
   "change": {
-    "proposed": "Add a read-only, bounded MGPR feasibility diagnostic using george==0.4.4.",
+    "proposed": "Extend the bounded MGPR audit to eight deterministic L-BFGS-B starts per full-data object and four contiguous blocked-phase validation folds (four deterministic starts per fold), while preserving exact object/control identities and explicit output of optimizer and predictive diagnostics.",
     "scope": "Research-only script, tests and GitHub Actions workflow; no product dependencies, model, selector, feature schema, scientific threshold or baseline artifact changes.",
     "rationale": "The paper phase-folds both bands using the common Table 2 period. The 17 residuals have adequate observed phase coverage, so MGPR feasibility is the next discriminating experiment."
   },
   "expected_improvement": [
-    "Measure optimizer convergence and negative log likelihood for each residual and matched control.",
-    "Record fitted phase/wavelength length scales, kernel amplitude, diagonal white-noise variance and covariance condition number.",
-    "Generate 160-point posterior mean and uncertainty curves for each band.",
-    "Separate a successful numerical fit from scientific membership evidence."
+    "Measure local-optimum sensitivity across eight full-data starts.",
+    "Measure sensitivity to the explicitly bounded kernel hyperparameters.",
+    "Evaluate held-out predictions in four contiguous phase sectors per object.",
+    "Report RMSE, MAE, normalized RMSE, one/two-sigma coverage and mean log predictive density.",
+    "Keep posterior uncertainty separate from out-of-sample predictive performance and membership evidence."
   ],
   "measurement": {
     "metrics": {
@@ -60,14 +61,18 @@
     }
   },
   "validation": {
-    "status": "PASS",
+    "status": "PENDING_CI",
     "scientific_gate_affected": false,
     "evidence": [
       "Workflow 43601683991 completed successfully on the standard ubuntu-latest hosted runner.",
       "All pinned parent inputs and raw g/r archive hashes passed verification.",
       "All 34 bounded MGPR fits reported optimizer_success=true; both starts succeeded for every object.",
-      "Artifact 14117002862 contains the report, object metrics and 10,880 interpolated-curve rows."
-    ]
+      "Artifact 14117002862 contains the report, object metrics and 10,880 interpolated-curve rows.",
+      "The first bounded two-start run 43601683991 passed for all 34 objects; see Section 21 of Think Tank Session 08.",
+      "The eight-start and four-fold blocked-phase extension is committed on the current research branch.",
+      "MGPR robustness workflow run 43612080772 is downloading checksum-pinned raw archives; its results are pending."
+    ],
+    "blocker": "Await MGPR robustness run 43612080772, deterministic tests and latest-head CI before accepting the eight-start or blocked-phase results."
   },
   "failure_analysis": {
     "status": "UNRESOLVED",
@@ -82,7 +87,8 @@
       "The full data were used for fitting and evaluation; no blocked-epoch or independent predictive validation was performed.",
       "Posterior sigma is not a generalization-error estimate.",
       "Zenodo g_flag/r_flag semantics are not assumed to equal DR2 catflags.",
-      "A converged GP fit does not prove historical CPVS membership."
+      "A converged GP fit does not prove historical CPVS membership.",
+      "The eight-start and blocked-phase extension has not completed; no out-of-sample metrics are available yet."
     ]
   },
   "knowledge_extraction": {
@@ -97,11 +103,10 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Expand deterministic MGPR initialization to at least eight starts per object and test optimizer-bound sensitivity.",
-      "Compare prediction curves across starts, not only likelihood values.",
-      "Add blocked-epoch validation without using held-out observations for fitting.",
-      "Review upper-bound wavelength metrics and large start-to-start likelihood gaps.",
-      "Re-run the robust diagnostic on the latest branch head."
+      "Complete workflow 43612080772 with eight starts per full-data object and four blocked-phase folds.",
+      "Inspect all optimizer starts and confirm selected solutions are stable across starts and bounds.",
+      "Review all four held-out phase folds per object, including insufficient-data or optimizer warning states.",
+      "Do not infer CPVS membership from MGPR fit or blocked-phase performance."
     ]
   },
   "decision": "BLOCKED",
@@ -110,6 +115,7 @@
     "Do not change production code or v0.2.0.",
     "Treat run 43601683991 as bounded numerical feasibility only.",
     "Investigate multi-start sensitivity and out-of-sample predictive performance.",
-    "Continue reconstructing the original Chen selection stages and raw-source provenance."
+    "Continue reconstructing the original Chen selection stages and raw-source provenance.",
+    "The 34-object two-start fit is a completed feasibility result; the eight-start and blocked-phase validation are a separate pending robustness experiment."
   ]
 }
