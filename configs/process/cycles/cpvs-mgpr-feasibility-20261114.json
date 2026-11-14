@@ -70,9 +70,10 @@
       "Artifact 14117002862 contains the report, object metrics and 10,880 interpolated-curve rows.",
       "The first bounded two-start run 43601683991 passed for all 34 objects; see Section 21 of Think Tank Session 08.",
       "The eight-start and four-fold blocked-phase extension is committed on the current research branch.",
-      "MGPR robustness workflow run 43612080772 is downloading checksum-pinned raw archives; its results are pending."
+      "MGPR robustness workflow run 43612080772 is downloading checksum-pinned raw archives; its results are pending.",
+      "Raw epoch time-scale verification is pending in mismatch-lineage workflow 43612083641; phase-derived conclusions are provisional until the numeric scale is confirmed."
     ],
-    "blocker": "Await MGPR robustness run 43612080772, deterministic tests and latest-head CI before accepting the eight-start or blocked-phase results."
+    "blocker": "Await eight-start/blocked-phase robustness result and raw epoch scale confirmation. If the byte-level time scale is MJD-like, rerun phase-fold and MGPR using the correct epoch convention."
   },
   "failure_analysis": {
     "status": "UNRESOLVED",
@@ -88,7 +89,8 @@
       "Posterior sigma is not a generalization-error estimate.",
       "Zenodo g_flag/r_flag semantics are not assumed to equal DR2 catflags.",
       "A converged GP fit does not prove historical CPVS membership.",
-      "The eight-start and blocked-phase extension has not completed; no out-of-sample metrics are available yet."
+      "The eight-start and blocked-phase extension has not completed; no out-of-sample metrics are available yet.",
+      "The public Zenodo record describes the raw time column as HJD, while the CDS ReadMe describes ztf2g.dat/ztf2r.dat time values as MJD. The phase-fold scanner currently subtracts 2400000.5, which is valid only for HJD-like input. The raw numeric epoch scale is not yet independently verified; all phase-derived coverage and MGPR results are provisional until the lineage artifact establishes the scale and any necessary rerun is complete."
     ]
   },
   "knowledge_extraction": {
@@ -106,7 +108,8 @@
       "Complete workflow 43612080772 with eight starts per full-data object and four blocked-phase folds.",
       "Inspect all optimizer starts and confirm selected solutions are stable across starts and bounds.",
       "Review all four held-out phase folds per object, including insufficient-data or optimizer warning states.",
-      "Do not infer CPVS membership from MGPR fit or blocked-phase performance."
+      "Do not infer CPVS membership from MGPR fit or blocked-phase performance.",
+      "Confirm whether the Zenodo epoch values are HJD-like (requiring subtraction of 2400000.5) or MJD-like before accepting any phase-fold or MGPR result."
     ]
   },
   "decision": "BLOCKED",
