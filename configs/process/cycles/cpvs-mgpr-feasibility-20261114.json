@@ -83,7 +83,7 @@
     ]
   },
   "regression": {
-    "status": "PENDING",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
       "Corrected MGPR workflow must complete the 34-object diagnostic and upload verifiable evidence.",
       "Full CI must pass all gates on the latest branch head.",
