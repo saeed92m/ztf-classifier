@@ -795,3 +795,129 @@ Correction:
 - The phase-fold report schema and output TSV remain unchanged.
 
 The real-data MGPR experiment must be rerun. No MGPR result is yet verified. The synthetic GP test is only a software/API check; it is not evidence that any CPVS object fits the model. The bounded experiment remains 17 residuals with complete mean magnitudes but one missing band-specific period, plus 17 matched Table4 controls. Record optimizer convergence, fitted hyperparameters, covariance conditioning, predictive uncertainty and output-grid stability for every object. Do not infer historical membership from fit success or failure.
+
+
+## 21. Full-parent raw reconciliation and successful bounded MGPR results — 2026-11-14
+
+This section supersedes the earlier pending statements in Sections 18–20 for the two bounded/full-parent experiments named below. It does not close the CPVS scientific validation blocker.
+
+### A. Full-parent raw SNR and row-count scan
+
+Workflow [43600721277](https://github.com/saeed92m/ztf-classifier/actions/runs/43600721277) completed successfully on revision `f0b981f4fadb677a290ae9609524bea296ea4ed1`, using a standard GitHub-hosted `ubuntu-latest` runner.
+
+Scope: all **781,602** Table2 objects, the complete pinned Zenodo g/r attachments, the Table2/Table4 crosswalk, the reconstructed candidate set and the fixed 55 four-field-only controls.
+
+Verified result:
+- Parent IDs: 781,602.
+- Table4 reference IDs: 730,184.
+- Reconstructed two-band SNR candidates: 741,786.
+- Candidate-only residuals: 11,602.
+- Published-only IDs: 0.
+- Four-field complete-case predicate within the reconstructed candidate set: 730,184; TP=730,184, FP=0, FN=0.
+- Four-field complete-case predicate across the full parent: 730,239, which contains Table4 plus 55 four-field-only controls.
+- Requiring positive gAmp/rAmp or positive Ng/Nr does not remove those 55 controls from the four-field parent-wide set.
+
+SNR/flag ablations:
+- Approximate, exact and inverse-error SNR calculations produce the same 741,786-object candidate set on these pinned archives.
+- The tested `flag < 32768` and `flag != 32768` policies do not change that set.
+- `flag == 0` reduces the candidate set to 736,225 and removes 5,472 Table4 members. It is not an acceptable reconstruction rule.
+- The Zenodo flags are still not proven equivalent to DR2 `catflags`.
+
+Raw archive integrity:
+- g: 89,697,393 parsed rows; 5,034,066,142 decompressed bytes; archive SHA-256 `47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9`; member SHA-256 `366aaf3539f83955bb1e29799df9e63005a9eb682f4f56d0807545a3534b0f16`; CRC32 `d2f33aa0`.
+- r: 109,971,576 parsed rows; 6,175,667,360 decompressed bytes; archive SHA-256 `48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74`; member SHA-256 `78df6d0b22099a7e5c6e74b897682c6ab94f90d5f9e887d4b0b3b152514e50fe`; CRC32 `225495a0`.
+- Unknown SourceID rows: 132 in g and 113 in r.
+- No malformed rows were reported.
+
+A source-documentation discrepancy is now open: the CDS ReadMe for Chen et al. lists 89,697,393 rows for both `ztf2g.dat` and `ztf2r.dat`, while the checksum-pinned Zenodo r attachment decompressed to 109,971,576 records in the full-parent run. The g count agrees. Do not silently treat this as a harmless typo or an archive defect. Verify the exact Zenodo file version and CDS representation, and retain both checksums and observed counts.
+
+### B. Full-parent Table2 Ng/Nr versus raw attachment counts
+
+There are **100 objects** with at least one raw attachment row count different from Table2 Ng/Nr:
+- 91 g-band count mismatches;
+- 25 r-band count mismatches;
+- some objects mismatch in both bands.
+
+Cohort breakdown:
+- 55 four-field-only controls;
+- 14 candidate-only residuals;
+- 26 Table4 members;
+- 5 other parent objects.
+
+The 55 controls are particularly important:
+- 54/55 have no g-band raw rows despite positive Table2 Ng;
+- 4/55 have no r-band raw rows despite positive Table2 Nr;
+- the band-presence cross-tab is 51 r-only, 3 neither, 1 g-only, 0 with both bands.
+- None has both bands represented in the Zenodo attachments.
+
+Therefore, these controls are **not proven low-SNR objects**. Their raw measurements are absent from at least one attached band, so SNR cannot be calculated for the missing band from this supplement.
+
+The 14 residual mismatches include 13 objects with Table2 Ng=0 but positive raw g row counts, plus one additional g-count mismatch. Three residual objects have r-count mismatches; one has Table2 Nr=0 with positive raw r rows. These differences require object/epoch provenance tracing.
+
+Among Table4 members, 26 objects have at least one count mismatch: raw counts are greater than Table2 in 20 g cases and 15 r cases, with one g case in which Table2 exceeds the raw count. The mismatch is not limited to non-members; this is a source-lineage issue across the published catalogue too.
+
+The Table2 ReadMe describes Ng/Nr as the number of detections in the corresponding band. It also marks zero as missing for `gmag`, `rmag`, `Per-g`, `Per-r`, `gAmp` and `rAmp`; it does not define zero/negative R-square or log(FAP) as missing. Do not impose positive R-square or positive FAP conditions.
+
+Primary catalogue source:
+https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/ReadMe
+
+Zenodo supplement:
+https://zenodo.org/records/3886372
+
+### C. Successful bounded MGPR feasibility run for the 17 residuals
+
+Workflow [43601683991](https://github.com/saeed92m/ztf-classifier/actions/runs/43601683991) completed successfully on revision `886608da7154e8a4cea3f2d984b4c767baf97161`. All steps completed, including raw archive integrity checks, preparation tests, 34 object fits and artifact upload.
+
+Scope:
+- all 17 candidate-only residuals with both positive mean magnitudes and one missing band-specific period;
+- 17 deterministic same-Type Table4 controls;
+- common Table2 period used to fold both g and r;
+- all numerically valid raw rows were used; no unverified flag mapping was applied;
+- `george==0.4.4`, two deterministic L-BFGS-B starting points, explicit optimizer bounds, three repeated phase cycles and 160 prediction points per band;
+- no product dependency or production model/selector change.
+
+Results:
+- 34/34 optimizer fits reported success.
+- Both starts reported success for all 34 objects.
+- The report contains 34 object metrics and 10,880 prediction rows (34 × 2 bands × 160 points).
+- Residual median posterior sigma: g=0.025626 mag, r=0.017018 mag.
+- Matched-control median posterior sigma: g=0.015585 mag, r=0.012382 mag.
+- Residual covariance condition number: median 65.37, maximum 3,105.62.
+- Control covariance condition number: median 179.60, maximum 2,221.88.
+- The wavelength-metric log parameter reached the upper optimizer bound for 6/17 residuals and 9/17 controls.
+
+Optimizer-start sensitivity:
+- Six objects have absolute negative-log-likelihood differences greater than 1 between the two starts: three residuals (SourceIDs 440167, 518053 and 657950) and three controls (310175, 368656 and 432012).
+- Maximum differences are 122.77 for residual SourceID 657950 and 272.95 for control SourceID 432012.
+- The best finite likelihood was retained, but two starts are not sufficient evidence of optimizer robustness.
+
+Interpretation:
+1. The missing `Per-g` or `Per-r` field does not prevent a finite two-band MGPR fit when the common Table2 period and raw g/r measurements are available.
+2. Thus, numerical MGPR failure is not a sufficient explanation for excluding these 17 residuals from Table4.
+3. Residuals have larger median posterior sigma than controls in both bands, but this is a posterior uncertainty summary, not a held-out prediction error.
+4. The full dataset was used for fitting and prediction. No blocked-epoch holdout or independent predictive validation was performed.
+5. The paper does not specify exact GP initial values, optimizer bounds, George version or full reference code. This is a source-informed feasibility implementation, not exact reproduction.
+6. A successful GP fit does not prove historical catalogue membership and does not explain the other 11,585 residuals.
+
+Evidence hashes:
+- MGPR artifact digest: `sha256:f486c72589b289607ad3ef04ebda0560a86132eb1be6fd1a990d9e62988a4f44`.
+- Report: `a4b33cdcb8de7cffb16fd8f373ce8fa9dfb4a43164999ea30cf35d9c0ba4f61d`.
+- Object metrics: `6d7997bff9875e832d3061f1c057ca5638e561862bba51cf6a9ce4070cad315f`.
+- Interpolated curves: `67c446c2b9342cc40a17eb8b074ce829a73e07e836c2f95e384c9af11c18118d`.
+- Full-parent artifact digest: `sha256:d92a4b00c1958916efa3e6bc0c9e1d2a8a135553f47278ec64701dc06ee3a2aa`.
+- Full-parent report: `a9b993beb3c50e4a77fd01d7a73333928b5d927ed006553ac4b99ada67460152`.
+- Full-parent mismatch TSV: `d33c4dc3c575e520b867d84a1b9424368b2c44176f15651abba20b585ef0c8d5`.
+
+### D. Updated Think Tank decision and next work
+
+**CPVS ROOT CAUSE: NOT PROVEN. SCIENTIFIC VALIDATION: NOT_VALIDATED.**
+
+The 16-role Think Tank agrees on the following order:
+
+1. **P0 — Raw provenance and coordinates:** inspect all 100 row-count mismatch objects. For every object, compare Table2 RA/Dec and SourceID with raw attachment RA/Dec, MJD/HJD, magnitude, uncertainty and flag. Check duplicate epochs, row multiplicity, nearest alternate SourceIDs within 1 arcsecond and 3 arcseconds, and image-level metadata where available. Do not infer low SNR when raw rows are absent.
+2. **P0 — Resolve the r-file documentation conflict:** verify the checksum-pinned Zenodo r member and its record metadata against the CDS ReadMe. Preserve the observed 109,971,576 rows and 6,175,667,360 bytes until the discrepancy is explained.
+3. **P1 — MGPR robustness:** expand deterministic multi-starts to at least 8 per object, test broader but explicit bounds, compare posterior curves and parameters across starts, and add blocked-epoch validation. Keep all 34 object identities fixed.
+4. **P1 — Original Chen selector:** reconstruct the pipeline stage-by-stage, including 20 detections, INFOBITS, catflags, one-band periodicity acceptance, 1-arcsecond period redetermination, fourth-order Fourier fits, the exact adjusted-R² statistic and alias exclusions.
+5. **P2 — Full scientific acceptance:** rerun full-parent object-level comparison after method and raw provenance are established; report TP, FP, FN, UNKNOWN and stage-level hashes.
+
+The full-parent scan and MGPR run are successful diagnostic executions; neither closes the CPVS root-cause investigation. Keep PR #285 Draft, issue #170 Open, and production selectors, thresholds, model artifacts, taxonomy, benchmark and v0.2.0 unchanged.
