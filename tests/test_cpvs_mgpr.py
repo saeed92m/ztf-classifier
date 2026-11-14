@@ -50,7 +50,33 @@ class CPVSMGPRPreparationTests(unittest.TestCase):
         self.assertTrue(np.isfinite(result["negative_log_likelihood"]))
         self.assertGreater(result["white_noise_variance"], 0)
         self.assertIsNotNone(result["covariance_condition_number_2norm"])
-        self.assertEqual(len(result["optimizer_starts"]), 2)
+        self.assertEqual(result["optimizer_start_count"], 8)
+        self.assertEqual(len(result["optimizer_starts"]), 8)
+        self.assertEqual(result["optimizer_start_success_count"], 8)
+        self.assertIsNotNone(result["optimizer_start_nll_spread"])
+
+    @unittest.skipUnless(importlib.util.find_spec("george"), "george is installed only in the bounded MGPR workflow")
+    def test_blocked_phase_cross_validation_reports_each_fold(self):
+        from scripts.diagnose_cpvs_mgpr import blocked_phase_cross_validation
+
+        phases = np.linspace(0.0, 1.0, 80, endpoint=False)
+        g = [
+            {"phase": float(phase), "magnitude": float(12 + np.sin(2 * np.pi * phase)),
+             "mag_error": 0.05}
+            for phase in phases
+        ]
+        r = [
+            {"phase": float(phase), "magnitude": float(13 + 0.7 * np.sin(2 * np.pi * phase + 0.2)),
+             "mag_error": 0.05}
+            for phase in phases
+        ]
+        results = blocked_phase_cross_validation(g, r)
+        self.assertEqual(len(results), 4)
+        self.assertTrue(all(item["status"] == "PASS" for item in results))
+        for item in results:
+            self.assertGreater(item["bands"]["g"]["test_observations"], 0)
+            self.assertGreater(item["bands"]["r"]["test_observations"], 0)
+            self.assertGreaterEqual(item["bands"]["g"]["coverage_2sigma"], 0.0)
 
     def test_rejects_zero_variance_band(self):
         g = [
