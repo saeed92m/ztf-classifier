@@ -475,3 +475,59 @@ The 14 raw-archive/Table 2 \`Ng/Nr\` mismatches remain separate. The Zenodo atta
 Leading explanation: a difference in the completeness/eligibility of two-band fitted products or later feature preparation, beyond the published two-band SNR statement. The next action is the ordered source-pipeline reconstruction above, beginning with the exact Chen quality/period/Fourier stages and the 14 raw-row mismatches. The 42-object shared-period phase-fold diagnostic is a supporting test, not a substitute for that reconstruction.
 
 No production selector, thresholds, ID mapping, model, feature schema, taxonomy, benchmark, release artifact or v0.2.0 baseline has changed.
+
+
+## 16. Zenodo flag schema, official ZTF quality levels, and phase-fold repair — 2026-11-14
+
+### Source-backed field definitions
+
+The Zenodo record for the CPVS supplementary data explicitly says that the two raw attachments contain:
+
+- `ztf2g`: `SourceID, RAdeg, DEdeg, HJD, gmag, e_gmag, g_flag`;
+- `ztf2r`: `SourceID, RAdeg, DEdeg, HJD, rmag, e_rmag, r_flag`.
+
+It also states that `SourceID` joins these files to Table 2. The record does **not** define `g_flag/r_flag` as the ZTF DR2 `catflags` field. Therefore the field-name similarity is not evidence of exact semantic equivalence.
+
+Source: https://zenodo.org/records/3886372
+
+The official ZTF DR2 documentation distinguishes two quality levels:
+
+- `INFOBITS < 33,554,432`: image/catalog-level quality, stored in archive image metadata;
+- `catflags < 32,768`: epoch-level light-curve quality;
+- `catflags = 0`: a stricter optional requirement for perfectly clean measurements.
+
+The Chen paper's literal `catflags != 32,768` condition is not identical to the official documentation's `catflags < 32,768` recommendation. Keep the paper's stated predicate and the archive's recommended predicate as separate tests until the source implementation is reproduced.
+
+Source: https://irsa.ipac.caltech.edu/data/ZTF/docs/releases/dr02/src/dr02.html
+
+### Consequences for the 11,602 residuals
+
+1. The checksum-pinned Zenodo supplement supplies per-epoch flag columns, but it does not supply image-level `INFOBITS`.
+2. The raw scan found no flag value equal to 32,768, and every observed flag value was below 32,768. This means the tested `< 32768` and `!= 32768` predicates produce the same result on the scanned values. It does **not** prove that the Zenodo fields are `catflags`.
+3. The scan cannot validate the image-level `INFOBITS` cut. A row-level flag test cannot replace it.
+4. The 14 raw-archive/`Ng/Nr` count mismatches remain unresolved. Their investigation requires a trace from each `SourceID` and epoch (`HJD`, position, filter and photometry) to the historical DR2 image/catalog metadata. Preserve missing image metadata as UNKNOWN.
+
+### Phase-fold workflow repair
+
+The earlier phase-fold workflow failed while Python's `ZipExtFile` checked the CRC for the multi-gigabyte `ztf2g` ZIP64 member. The same immutable archives had already passed the complete repository raw scan through Info-ZIP streaming and independent byte-level integrity checks.
+
+The phase-fold scanner now uses the same streaming approach:
+
+- read the archive with `unzip -p`;
+- verify the archive SHA-256;
+- verify the member SHA-256, decompressed byte count, row count, central-directory CRC and streamed CRC;
+- reject malformed rows and non-zero extractor exit codes;
+- add a deterministic small-ZIP regression test for stream extraction and integrity checks.
+
+The scanner remains diagnostic only. It does not run MGPR and does not change CPVS membership.
+
+Latest relevant evidence:
+- the previous raw SNR evidence workflow passed on run [43525513465](https://github.com/saeed92m/ztf-classifier/actions/runs/43525513465);
+- phase-fold code repair is committed on the research branch;
+- the first rerun using the new streaming code is still in progress; no phase-coverage report has been accepted;
+- the test suite's first post-repair CI run found one unused test import. That import was removed. The rerun on commit `fe76e90f8b0ea44f8b56ed14275deba7f4c07f1b` is still in progress;
+- CodeQL, Product Scope Audit and the Scientific Validation contract passed on the earlier current branch head. Those checks do not validate phase coverage or resolve the scientific discrepancy.
+
+### Decision carried forward
+
+**The CPVS root cause remains NOT PROVEN.** Do not interpret the four-field metadata match as the publisher's rule. Do not apply a new flag or image-quality filter to production. Next, finish the 42-object phase-coverage diagnostic, then decide whether MGPR is warranted. In parallel, map the Zenodo flags to original DR2 `catflags` and recover image-level `INFOBITS` for the 14 count-mismatch objects. Keep PR #285 Draft, issue #170 open, and v0.2.0 unchanged.
