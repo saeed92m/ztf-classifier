@@ -663,3 +663,44 @@ No flag predicate is assumed in this MGPR feasibility run. Zenodo g_flag/r_flag 
 ### Current execution status
 
 The MGPR workflow and regression tests have been committed to the research branch. CI and the bounded scientific run are pending. No MGPR result is claimed yet.
+
+
+## 18. MGPR feasibility execution and CI repair — 2026-11-14
+
+### First MGPR attempt
+
+Workflow run [43598133000](https://github.com/saeed92m/ztf-classifier/actions/runs/43598133000) completed with failure after:
+- Pinned research runtime installation passed.
+- Full-parent evidence download passed.
+- Both raw Zenodo archive downloads and SHA-256 checks passed.
+- MGPR preparation unit tests passed.
+- The scientific fit did not start. The script failed at import time with `ModuleNotFoundError: No module named 'scripts'`.
+
+This is an execution/import-path defect, not an MGPR numerical result. No object-level fit or interpolation result was produced. The run is not evidence for or against MGPR feasibility.
+
+### Corrective change
+
+Commit `589f23b234a041f64ad3a32e26ed6c8079b65f7e` updates the research-only MGPR script to support both package-relative import (unit tests) and direct script execution (GitHub Actions). It does not change the kernel, input selection, optimizer, thresholds or scientific baseline.
+
+The corrected MGPR workflow run `43598776355` is pending. The earlier run `43598692569` was created before the import-path correction and must not be counted as validation of the corrected script.
+
+### CI lint repair
+
+The first CI run on commit `0db1079555b8cd719b4089813d37769b2bbe6f9b` failed Ruff lint because `tests/test_cpvs_mgpr.py` created an unused RNG variable. Commit `9576a5ad1da317c35d80a440b3e59eb3517b5617` removes that unused variable. The format check passed on the earlier attempt; its later CI run was cancelled by a newer push before the remaining gates completed.
+
+The corrected CI run on commit `589f23b234a041f64ad3a32e26ed6c8079b65f7e` is pending. No complete CI pass is claimed.
+
+### Current gate and decision
+
+- MGPR feasibility: **PENDING** on corrected import-path revision; previous attempt failed before fitting.
+- CI: **PENDING** on corrected lint/import revision; full gate has not passed.
+- CPVS membership root cause: **NOT PROVEN**.
+- No production selector, model, feature schema, benchmark, taxonomy or v0.2.0 baseline change.
+- PR #285 remains Draft and issue #170 remains Open.
+
+Next actions:
+1. Complete the corrected MGPR workflow. Inspect all 34 object-level results, including optimizer status, finite likelihoods, covariance conditioning, uncertainty and output-grid stability. Preserve explicit failures per object.
+2. If runtime or memory limits fail, profile the 34-object diagnostic and design a bounded, deterministic numerical strategy without changing the scientific method or silently downsampling observations.
+3. Complete the full CI gate on the latest commit.
+4. Only after MGPR results, continue reconstructing the original Chen pipeline, including INFOBITS/catflags semantics, same-product period search, Fourier-fit stage and alias exclusions.
+5. Keep the full-parent 781,602-object comparison as the final membership validation gate.
