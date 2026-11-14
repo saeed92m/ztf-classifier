@@ -7,12 +7,17 @@
     "The shared-period phase-fold diagnostic run 43535760220 found that the 17-object subgroup has median coverage of 92/160 g bins and 91/160 r bins.",
     "The 17 objects retain a positive common Table 2 period, both positive mean magnitudes and raw photometry in both bands.",
     "The matched-control design uses one same-Type Table 4 member per residual, matched on common period, g/r magnitudes and Ng/Nr.",
-    "Chan et al. (2022), Section 2.1, specifies george MGPR, normalized phase/wavelength coordinates, separable RBF kernel, constant amplitude, diagonal white noise, zero mean, L-BFGS-B, three phase cycles and a 160-point output grid."
+    "Chan et al. (2022), Section 2.1, specifies george MGPR, normalized phase/wavelength coordinates, separable RBF kernel, constant amplitude, diagonal white noise, zero mean, L-BFGS-B, three phase cycles and a 160-point output grid.",
+    "Workflow 43601683991 completed successfully on commit 886608da7154e8a4cea3f2d984b4c767baf97161 with 17 residuals and 17 matched Table4 controls.",
+    "Artifact 14117002862 passed all three workflow steps after checksum-pinned g/r archive retrieval and the bounded MGPR audit."
   ],
   "baseline": {
     "revision": "research/cpvs-snr-formula-audit-20261112@43bcca38f952728d1ed58218febc93dcd8a024e7",
     "reference": "Chan et al. 2022, ApJ 932, 118, DOI 10.3847/1538-4357/ac69d4",
-    "cohort": "17 candidate-only residuals with both mean magnitudes and one missing band-specific period; 17 deterministic matched Table 4 controls"
+    "cohort": "17 candidate-only residuals with both mean magnitudes and one missing band-specific period; 17 deterministic matched Table 4 controls",
+    "executed_revision": "886608da7154e8a4cea3f2d984b4c767baf97161",
+    "workflow_run": 43601683991,
+    "artifact_sha256": "f486c72589b289607ad3ef04ebda0560a86132eb1be6fd1a990d9e62988a4f44"
   },
   "change": {
     "proposed": "Add a read-only, bounded MGPR feasibility diagnostic using george==0.4.4.",
@@ -34,70 +39,75 @@
       },
       "correctness": {
         "before": "Phase coverage was measured, but MGPR feasibility, optimizer behavior and covariance conditioning were unknown.",
-        "after": "First MGPR attempt 43598133000 passed runtime installation, full-parent artifact download, raw archive download/checksums, and preparation tests, then failed before fitting due to ModuleNotFoundError: No module named 'scripts'. Corrected import-path commit 589f23b234a041f64ad3a32e26ed6c8079b65f7e is awaiting workflow 43598776355.",
-        "evidence": "Workflow .github/workflows/cpvs-mgpr-feasibility.yml; script scripts/diagnose_cpvs_mgpr.py; Chan et al. 2022 Section 2.1.",
-        "status": "PENDING"
+        "after": "34/34 objects (17 residuals, 17 same-Type matched Table4 controls) converged under two deterministic L-BFGS-B starts each; 0 optimizer failures; 10,880 posterior grid rows (160 points × 2 bands × 34 objects). This proves bounded numerical feasibility only.",
+        "evidence": "Workflow 43601683991; report SHA-256 a4b33cdcb8de7cffb16fd8f373ce8fa9dfb4a43164999ea30cf35d9c0ba4f61d; object metrics SHA-256 6d7997bff9875e832d3061f1c057ca5638e561862bba51cf6a9ce4070cad315f.",
+        "status": "MEASURED"
       },
       "reproducibility": {
         "before": "The article's MGPR method was known at the equation and procedure level; no project implementation or deterministic test existed.",
-        "after": "A pinned george==0.4.4 environment, deterministic multi-start settings, input hashes and object-level evidence outputs are defined; CI pending.",
-        "evidence": "PyPI george 0.4.4; workflow and report schema."
+        "after": "Pinned george==0.4.4, Python 3.11, parent/selected/diagnostic SHA-256 inputs, g/r archive/member hashes, 34 object metrics and 10,880 grid predictions were recorded. Artifact digest sha256:f486c72589b289607ad3ef04ebda0560a86132eb1be6fd1a990d9e62988a4f44.",
+        "evidence": "MGPR run 43601683991 and artifact 14117002862; interpolated curves SHA-256 67c446c2b9342cc40a17eb8b074ce829a73e07e836c2f95e384c9af11c18118d.",
+        "status": "MEASURED"
+      },
+      "robustness": {
+        "before": "No real-data optimization or covariance diagnostics had been measured.",
+        "after": "All 34 fits converged, but 6 objects showed absolute NLL differences >1 between the two starts (3 residuals, 3 controls); maximum differences were 122.77 for residual SourceID 657950 and 272.95 for control SourceID 432012. The fitted wavelength metric hit its upper log bound in 6/17 residuals and 9/17 controls. Multi-start and bound sensitivity remain open.",
+        "evidence": "cpvs_mgpr_object_metrics.jsonl from run 43601683991; summary computed from the 34 object records.",
+        "status": "MEASURED"
       }
     }
   },
   "validation": {
-    "status": "PENDING_CI",
+    "status": "PASS",
     "scientific_gate_affected": false,
     "evidence": [
-      "The paper describes zero mean, a separable RBF phase/wavelength kernel, constant amplitude and diagonal white noise.",
-      "The paper specifies L-BFGS-B, repeated phases from 0 to 3 and prediction on phases 2 to 3 with 160 points per band.",
-      "The paper does not publish exact optimizer bounds, initial values, george version, or complete implementation.",
-      "The diagnostic uses explicit deterministic analyst-selected starts and bounds and labels them as implementation choices.",
-      "All raw numeric-valid rows are used; no mapping from Zenodo g_flag/r_flag to DR2 catflags is assumed.",
-      "Run 43598133000 failed before any MGPR fit because direct script execution could not resolve the scripts package; no scientific fit result was produced.",
-      "Commit 589f23b234a041f64ad3a32e26ed6c8079b65f7e adds package-relative/direct-script import support.",
-      "Corrected MGPR workflow 43598776355 and full CI 43598776344 are pending.",
-      "MGPR run 43598776355 reached the real-data step after the synthetic george test passed, then exposed an interface mismatch: the phase-fold scanner had replaced raw valid-row lists with phase-summary dictionaries. The scanner now preserves raw rows separately as valid_rows; MGPR consumes that field, and a regression test covers the contract."
-    ],
-    "blocker": "Await corrected MGPR workflow 43598776355 and full CI 43598776344."
+      "Workflow 43601683991 completed with all job steps successful on the standard ubuntu-latest hosted runner.",
+      "The pinned parent metadata, selected IDs and selection diagnostic hashes matched their expected values.",
+      "Both raw archive hashes, decompressed member hashes, byte counts, row counts and CRCs passed integrity checks.",
+      "The bounded 17 residual + 17 control MGPR audit completed with optimizer_success=true for all 34 objects.",
+      "The report, metrics JSONL and interpolated-curve TSV were uploaded as artifact 14117002862 with SHA-256 f486c72589b289607ad3ef04ebda0560a86132eb1be6fd1a990d9e62988a4f44."
+    ]
   },
   "failure_analysis": {
-    "status": "ROOT_CAUSE_IDENTIFIED",
+    "status": "UNRESOLVED",
     "root_causes": [
-      "The 17-object missing-band-period subgroup has adequate shared-period phase coverage; MGPR feasibility remains unmeasured.",
-      "The first MGPR workflow attempt failed before fitting because the direct script invocation imported scripts.diagnose_cpvs_phasefold_coverage, but the runner's script path did not include the repository root."
+      "The 17 residuals with both mean magnitudes and missing one band-specific period can be fitted by the bounded shared-period MGPR implementation; a missing Per-g or Per-r value is not a numerical MGPR blocker under this diagnostic.",
+      "The 11,602 CPVS membership discrepancy is not explained by MGPR convergence; historical membership decisions occur upstream or depend on additional undocumented selection/preparation stages."
     ],
     "limitations": [
-      "The diagnostic is not an exact reproduction of the authors' unpublished code.",
-      "A converged MGPR fit does not prove historical CPVS membership or explain all 11,602 residuals.",
-      "Raw Zenodo flag fields have not been proven equivalent to DR2 catflags.",
-      "No MGPR optimizer or interpolation metrics exist yet; the failed run is not scientific evidence."
+      "This is a bounded diagnostic, not an exact reproduction of the authors' private code. The paper does not specify George version, initial values, bounds or the complete implementation.",
+      "Two starts per object are insufficient for optimization robustness: six objects have start-dependent likelihood gaps above 1, including large gaps.",
+      "Six residuals and nine controls have the wavelength metric at its upper optimizer bound.",
+      "All available rows were used to fit and assess the posterior. No held-out epochs, blocked time validation or independent interpolation validation was performed. Posterior sigma is not a generalization-error estimate.",
+      "The Zenodo g_flag/r_flag mapping to DR2 catflags remains unverified; all numerically valid rows were used without applying an unverified flag policy.",
+      "The successful fit does not establish catalogue membership or explain the remaining 11,602 IDs."
     ]
   },
   "knowledge_extraction": {
     "status": "SUPPORTED",
     "findings": [
-      "Chan et al. uses the common Table 2 period for both bands, not the per-band Per-g and Per-r values, when phase-folding.",
-      "A missing per-band fitted period does not by itself prevent the published common-period MGPR preprocessing.",
-      "The paper's MGPR equations and processing sequence can be translated into a bounded diagnostic, but unpublished numerical settings remain explicit uncertainty.",
-      "A script can import successfully as a package in unit tests but fail when executed directly from the scripts directory; both execution modes need explicit support."
+      "The shared Table2 period supports a finite, converged two-band GP fit for all 17 examined residuals despite one missing band-specific period value.",
+      "Numerical MGPR feasibility does not prove that an object belongs to the published Table4 sample.",
+      "Posterior uncertainty and optimizer convergence must be separated from held-out predictive performance.",
+      "A two-start optimization can return successful fits while still showing material local-optimum sensitivity."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Corrected MGPR workflow must complete the 34-object diagnostic and upload verifiable evidence.",
-      "Full CI must pass all gates on the latest branch head.",
-      "No membership rule may be inferred from numerical convergence alone.",
-      "Rerun MGPR feasibility after preserving raw valid photometry rows in the phase-fold scanner."
+      "Extend deterministic multi-start testing to at least 8 starts per object and test sensitivity to optimizer bounds.",
+      "Compare posterior curves across converged starts, not only negative log likelihood.",
+      "Add blocked/held-out phase or epoch validation without using held-out rows in fitting.",
+      "Review objects whose wavelength metric reaches the upper bound and whose NLL changes materially across starts.",
+      "Rerun the robust MGPR audit on the latest branch head after the multi-start sensitivity changes."
     ]
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not use MGPR convergence as a CPVS membership selector.",
-    "Do not change production code or v0.2.0 baseline.",
-    "Continue reconstructing the original Chen pipeline, flag semantics and full-parent object-level membership.",
-    "Treat MGPR run 43598133000 as an execution failure before fitting, not a scientific result.",
-    "Use corrected import-path commit 589f23b234a041f64ad3a32e26ed6c8079b65f7e as the validation target."
+    "Do not change production code or the v0.2.0 baseline.",
+    "Treat the successful 34-object run as bounded numerical feasibility only.",
+    "Investigate multi-start sensitivity and held-out prediction before interpreting uncertainty metrics.",
+    "Continue reconstructing original Chen selection, flag semantics and full-parent object-level membership."
   ]
 }
