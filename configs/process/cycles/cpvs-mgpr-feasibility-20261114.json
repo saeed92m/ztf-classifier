@@ -9,7 +9,9 @@
     "The matched-control design uses one same-Type Table 4 member per residual, matched on common period, g/r magnitudes and Ng/Nr.",
     "Chan et al. (2022), Section 2.1, specifies george MGPR, normalized phase/wavelength coordinates, separable RBF kernel, constant amplitude, diagonal white noise, zero mean, L-BFGS-B, three phase cycles and a 160-point output grid.",
     "Workflow 43601683991 completed successfully on commit 886608da7154e8a4cea3f2d984b4c767baf97161 with 17 residuals and 17 matched Table4 controls.",
-    "Artifact 14117002862 passed all three workflow steps after checksum-pinned g/r archive retrieval and the bounded MGPR audit."
+    "Artifact 14117002862 passed all three workflow steps after checksum-pinned g/r archive retrieval and the bounded MGPR audit.",
+    "Workflow 43601683991 completed successfully on commit 886608da7154e8a4cea3f2d984b4c767baf97161 with 17 residuals and 17 matched Table4 controls.",
+    "Artifact 14117002862 completed all steps after pinned archive retrieval and integrity validation."
   ],
   "baseline": {
     "revision": "research/cpvs-snr-formula-audit-20261112@43bcca38f952728d1ed58218febc93dcd8a024e7",
@@ -39,20 +41,20 @@
       },
       "correctness": {
         "before": "Phase coverage was measured, but MGPR feasibility, optimizer behavior and covariance conditioning were unknown.",
-        "after": "34/34 objects (17 residuals, 17 same-Type matched Table4 controls) converged under two deterministic L-BFGS-B starts each; 0 optimizer failures; 10,880 posterior grid rows (160 points × 2 bands × 34 objects). This proves bounded numerical feasibility only.",
+        "after": "34/34 objects converged under two deterministic L-BFGS-B starts each; 0 optimizer failures; 10,880 posterior-grid rows (160 points × 2 bands × 34 objects). This demonstrates bounded numerical feasibility only.",
         "evidence": "Workflow 43601683991; report SHA-256 a4b33cdcb8de7cffb16fd8f373ce8fa9dfb4a43164999ea30cf35d9c0ba4f61d; object metrics SHA-256 6d7997bff9875e832d3061f1c057ca5638e561862bba51cf6a9ce4070cad315f.",
         "status": "MEASURED"
       },
       "reproducibility": {
         "before": "The article's MGPR method was known at the equation and procedure level; no project implementation or deterministic test existed.",
-        "after": "Pinned george==0.4.4, Python 3.11, parent/selected/diagnostic SHA-256 inputs, g/r archive/member hashes, 34 object metrics and 10,880 grid predictions were recorded. Artifact digest sha256:f486c72589b289607ad3ef04ebda0560a86132eb1be6fd1a990d9e62988a4f44.",
-        "evidence": "MGPR run 43601683991 and artifact 14117002862; interpolated curves SHA-256 67c446c2b9342cc40a17eb8b074ce829a73e07e836c2f95e384c9af11c18118d.",
+        "after": "Pinned george==0.4.4, Python 3.11, three input hashes, raw g/r archive/member hashes, object-level metrics and 10,880 curve rows were recorded. Artifact digest sha256:f486c72589b289607ad3ef04ebda0560a86132eb1be6fd1a990d9e62988a4f44.",
+        "evidence": "Workflow 43601683991 and artifact 14117002862; curves SHA-256 67c446c2b9342cc40a17eb8b074ce829a73e07e836c2f95e384c9af11c18118d.",
         "status": "MEASURED"
       },
       "robustness": {
-        "before": "No real-data optimization or covariance diagnostics had been measured.",
-        "after": "All 34 fits converged, but 6 objects showed absolute NLL differences >1 between the two starts (3 residuals, 3 controls); maximum differences were 122.77 for residual SourceID 657950 and 272.95 for control SourceID 432012. The fitted wavelength metric hit its upper log bound in 6/17 residuals and 9/17 controls. Multi-start and bound sensitivity remain open.",
-        "evidence": "cpvs_mgpr_object_metrics.jsonl from run 43601683991; summary computed from the 34 object records.",
+        "before": "No real-data optimizer or covariance diagnostics had been measured.",
+        "after": "All 34 fits converged, but 6 objects had absolute NLL differences >1 between two starts (3 residuals and 3 controls). Maximum differences: 122.77 for residual SourceID 657950 and 272.95 for control SourceID 432012. The wavelength-metric log parameter reached its upper bound in 6/17 residuals and 9/17 controls. Robustness remains open.",
+        "evidence": "34 object records from cpvs_mgpr_object_metrics.jsonl in workflow run 43601683991.",
         "status": "MEASURED"
       }
     }
@@ -61,53 +63,53 @@
     "status": "PASS",
     "scientific_gate_affected": false,
     "evidence": [
-      "Workflow 43601683991 completed with all job steps successful on the standard ubuntu-latest hosted runner.",
-      "The pinned parent metadata, selected IDs and selection diagnostic hashes matched their expected values.",
-      "Both raw archive hashes, decompressed member hashes, byte counts, row counts and CRCs passed integrity checks.",
-      "The bounded 17 residual + 17 control MGPR audit completed with optimizer_success=true for all 34 objects.",
-      "The report, metrics JSONL and interpolated-curve TSV were uploaded as artifact 14117002862 with SHA-256 f486c72589b289607ad3ef04ebda0560a86132eb1be6fd1a990d9e62988a4f44."
+      "Workflow 43601683991 completed successfully on the standard ubuntu-latest hosted runner.",
+      "All pinned parent inputs and raw g/r archive hashes passed verification.",
+      "All 34 bounded MGPR fits reported optimizer_success=true; both starts succeeded for every object.",
+      "Artifact 14117002862 contains the report, object metrics and 10,880 interpolated-curve rows."
     ]
   },
   "failure_analysis": {
     "status": "UNRESOLVED",
     "root_causes": [
-      "The 17 residuals with both mean magnitudes and missing one band-specific period can be fitted by the bounded shared-period MGPR implementation; a missing Per-g or Per-r value is not a numerical MGPR blocker under this diagnostic.",
-      "The 11,602 CPVS membership discrepancy is not explained by MGPR convergence; historical membership decisions occur upstream or depend on additional undocumented selection/preparation stages."
+      "The 17 residuals can be fitted numerically with the common Table2 period despite one missing band-specific period; a GP fitting failure is not supported as the explanation for these 17 catalogue exclusions.",
+      "The cause of the 11,602-object historical CPVS membership discrepancy remains unknown and is not resolved by this bounded MGPR experiment."
     ],
     "limitations": [
-      "This is a bounded diagnostic, not an exact reproduction of the authors' private code. The paper does not specify George version, initial values, bounds or the complete implementation.",
-      "Two starts per object are insufficient for optimization robustness: six objects have start-dependent likelihood gaps above 1, including large gaps.",
-      "Six residuals and nine controls have the wavelength metric at its upper optimizer bound.",
-      "All available rows were used to fit and assess the posterior. No held-out epochs, blocked time validation or independent interpolation validation was performed. Posterior sigma is not a generalization-error estimate.",
-      "The Zenodo g_flag/r_flag mapping to DR2 catflags remains unverified; all numerically valid rows were used without applying an unverified flag policy.",
-      "The successful fit does not establish catalogue membership or explain the remaining 11,602 IDs."
+      "The paper does not publish exact initial values, optimizer bounds, George version or a complete reference implementation.",
+      "Two deterministic starts do not establish optimizer robustness; six objects show start-dependent NLL differences above 1.",
+      "Six residuals and nine controls reached the upper wavelength-metric log bound.",
+      "The full data were used for fitting and evaluation; no blocked-epoch or independent predictive validation was performed.",
+      "Posterior sigma is not a generalization-error estimate.",
+      "Zenodo g_flag/r_flag semantics are not assumed to equal DR2 catflags.",
+      "A converged GP fit does not prove historical CPVS membership."
     ]
   },
   "knowledge_extraction": {
     "status": "SUPPORTED",
     "findings": [
-      "The shared Table2 period supports a finite, converged two-band GP fit for all 17 examined residuals despite one missing band-specific period value.",
-      "Numerical MGPR feasibility does not prove that an object belongs to the published Table4 sample.",
+      "The shared Table2 period supports finite two-band GP fitting for all 17 tested residuals despite a missing Per-g or Per-r value.",
+      "MGPR convergence is not a catalogue-membership criterion.",
       "Posterior uncertainty and optimizer convergence must be separated from held-out predictive performance.",
-      "A two-start optimization can return successful fits while still showing material local-optimum sensitivity."
+      "Two successful optimizer starts can still converge to materially different likelihood values."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Extend deterministic multi-start testing to at least 8 starts per object and test sensitivity to optimizer bounds.",
-      "Compare posterior curves across converged starts, not only negative log likelihood.",
-      "Add blocked/held-out phase or epoch validation without using held-out rows in fitting.",
-      "Review objects whose wavelength metric reaches the upper bound and whose NLL changes materially across starts.",
-      "Rerun the robust MGPR audit on the latest branch head after the multi-start sensitivity changes."
+      "Expand deterministic MGPR initialization to at least eight starts per object and test optimizer-bound sensitivity.",
+      "Compare prediction curves across starts, not only likelihood values.",
+      "Add blocked-epoch validation without using held-out observations for fitting.",
+      "Review upper-bound wavelength metrics and large start-to-start likelihood gaps.",
+      "Re-run the robust diagnostic on the latest branch head."
     ]
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not use MGPR convergence as a CPVS membership selector.",
-    "Do not change production code or the v0.2.0 baseline.",
-    "Treat the successful 34-object run as bounded numerical feasibility only.",
-    "Investigate multi-start sensitivity and held-out prediction before interpreting uncertainty metrics.",
-    "Continue reconstructing original Chen selection, flag semantics and full-parent object-level membership."
+    "Do not change production code or v0.2.0.",
+    "Treat run 43601683991 as bounded numerical feasibility only.",
+    "Investigate multi-start sensitivity and out-of-sample predictive performance.",
+    "Continue reconstructing the original Chen selection stages and raw-source provenance."
   ]
 }
