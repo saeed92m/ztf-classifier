@@ -593,3 +593,73 @@ The report JSON has SHA-256 `b5a1eafd7b99d95dc31b627f9132a775d0ef9fc71efd62052a5
 - Continue resolving Zenodo `g_flag/r_flag` to original DR2 `catflags`, recover image-level `INFOBITS`, and trace the 14 raw/Table 2 count mismatches.
 - Complete the full 781,602-parent reconstruction and the TP/FP/FN/UNKNOWN comparison only after all selector stages are source-backed.
 - Preserve PR #285 Draft, issue #170 Open and v0.2.0. No production selector, model or release change is authorized by these diagnostic results.
+
+
+## 18. MGPR feasibility experiment — method reconstruction and execution plan (2026-11-14)
+
+### Primary-source method recovered
+
+The published Chan et al. (2022) Section 2.1 gives a sufficiently detailed mathematical and procedural description to design a bounded feasibility experiment. It does not provide a complete executable reference implementation or all numerical optimizer settings.
+
+Source: [Chan et al. 2022, ApJ 932, 118](https://doi.org/10.3847/1538-4357/ac69d4), also [arXiv:2112.03306](https://arxiv.org/abs/2112.03306).
+
+The paper specifies:
+1. Use the common period from Chen et al. Table 2 to phase-fold both g and r observations: \(\phi=(t/\tau)-\lfloor t/\tau\rfloor\).
+2. Normalize wavelength to a two-filter coordinate.
+3. Use a zero mean function.
+4. Use a separable radial-basis covariance in phase and wavelength, multiplied by a constant amplitude, plus diagonal white noise:
+   \[
+   K(\mathbf r,\mathbf r') =
+   C\exp\left(-\frac{(\Delta\phi)^2}{l_\phi^2}\right)
+   \exp\left(-\frac{(\Delta\lambda)^2}{l_\lambda^2}\right)
+   +\delta\,\mathbb{1}_{\mathbf r=\mathbf r'}.
+   \]
+5. Optimize \(l_\phi,l_\lambda,C,\delta\) against the negative log likelihood using SciPy L-BFGS-B and George.
+6. Repeat the phase-folded observations twice, producing phase coordinates over [0,3], then use the [2,3] interval as the periodic output.
+7. Generate 160 evenly spaced values per band.
+8. Standardize each band independently and scale its magnitude errors by the same standard deviation.
+
+The article does not state the exact George version, optimizer bounds, initial parameter values, or full treatment of measurement uncertainties in the likelihood. We must not invent these as published facts.
+
+### Why the next cohort is 17 + 17
+
+The 17 residuals with both positive mean magnitudes but one missing band-specific period have:
+- common Table 2 period available for all 17;
+- median phase coverage of 92/160 bins in g and 91/160 in r;
+- phase coverage close to their 17 matched Table 4 controls.
+
+This makes them a useful cohort for testing whether the missing per-band period prevents the downstream common-period MGPR interpolation. It does not imply that Chan used Per-g or Per-r as eligibility requirements.
+
+### Bounded diagnostic implementation
+
+The research-only implementation is:
+- scripts/diagnose_cpvs_mgpr.py
+- tests/test_cpvs_mgpr.py
+- .github/workflows/cpvs-mgpr-feasibility.yml
+- lifecycle record configs/process/cycles/cpvs-mgpr-feasibility-20261114.json
+
+It uses:
+- all 17 residuals and their 17 deterministic same-Type Table 4 controls;
+- the pinned raw Zenodo g/r archives and historical parent artifact;
+- george==0.4.4 in an isolated GitHub-hosted research runner only; this is not added to production dependencies;
+- common Table 2 period, phase repetition over three cycles, normalized two-filter coordinate (g=0, r=1), zero mean, separable RBF, constant amplitude and fitted diagonal white noise;
+- per-band StandardScaler-style normalization and scaled measurement errors;
+- two deterministic optimizer starts and explicit log-space bounds.
+
+The starts and bounds are analyst-selected reproducibility controls because the paper does not publish those values. The script records them in the report. It also records optimizer status, negative log likelihood, fitted kernel parameters, white-noise variance, covariance condition number, predictive uncertainty and the fraction of predictions outside the observed magnitude range.
+
+No flag predicate is assumed in this MGPR feasibility run. Zenodo g_flag/r_flag has not been proven equivalent to original DR2 catflags. The input uses rows that pass the explicit numeric validity checks in the scanner. This is a feasibility test, not an exact reconstruction of the publisher's pipeline.
+
+### Acceptance and interpretation rules
+
+- A finite GP prediction is not a membership decision.
+- Optimizer success alone is not enough. Check likelihood, fitted parameters, covariance conditioning, uncertainty and physical plausibility.
+- Compare residuals with matched controls under the same implementation and input policy.
+- If results depend strongly on starts or bounds, report instability. Do not select a favorable run.
+- If MGPR works for the 17 residuals, this only shows that a missing band-specific Fourier period is not, by itself, a computational barrier to the Chan preprocessing.
+- If MGPR fails for the residuals but succeeds for matched controls, investigate data/flag eligibility and numerical conditioning. This still does not prove the official selection rule.
+- Keep the 11,602-object CPVS discrepancy NOT PROVEN until original selector stages and full-parent object-level comparison are reconstructed.
+
+### Current execution status
+
+The MGPR workflow and regression tests have been committed to the research branch. CI and the bounded scientific run are pending. No MGPR result is claimed yet.
