@@ -63,7 +63,7 @@ STARTS = [
     (math.log(0.003), -0.5, math.log(0.05**2 / 2.0), math.log(0.25**2 / 2.0)),
     (math.log(0.03), 0.5, math.log(0.2**2 / 2.0), math.log(1.0**2 / 2.0)),
     (math.log(0.1), -0.5, math.log(1.0**2 / 2.0), math.log(4.0**2 / 2.0)),
-    (math.log(0.3), 0.5, math.log(2.0**2 / 2.0), math.log(8.0**2 / 2.0)),
+    (math.log(0.3), 0.5, math.log(2.0**2 / 2.0), math.log(5.0**2 / 2.0)),
     (math.log(0.01), -1.0, math.log(0.3**2 / 2.0), math.log(4.0**2 / 2.0)),
     (math.log(0.3), 1.0, math.log(0.8**2 / 2.0), math.log(0.8**2 / 2.0)),
 ]
@@ -321,7 +321,9 @@ def blocked_phase_cross_validation(
                 "optimizer_start_count": fit["optimizer_start_count"],
                 "optimizer_start_nll_spread": fit["optimizer_start_nll_spread"],
             }
-            result["status"] = "PASS"
+            result["status"] = (
+                "PASS" if fit["optimizer_success"] else "OPTIMIZER_NOT_CONVERGED"
+            )
         except (ValueError, RuntimeError, np.linalg.LinAlgError, FloatingPointError) as exc:
             result["status"] = "ERROR"
             result["error"] = f"{type(exc).__name__}: {exc}"
