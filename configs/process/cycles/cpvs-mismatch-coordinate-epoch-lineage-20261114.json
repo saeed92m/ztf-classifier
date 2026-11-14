@@ -43,9 +43,11 @@
     "scientific_gate_affected": false,
     "evidence": [
       "Uses standard GitHub-hosted ubuntu-latest.",
-      "Raw photometry rows will not be uploaded; only aggregate statistics and alternate IDs will be retained."
+      "Raw photometry rows will not be uploaded; only aggregate statistics and alternate IDs will be retained.",
+      "Mismatch lineage workflow 43612083641 is running on a standard ubuntu-latest hosted runner.",
+      "The workflow downloads the pinned 100-object mismatch artifact and Table2.dat, then verifies both raw archive SHA-256 values before scanning."
     ],
-    "blocker": "The checksum-pinned workflow and deterministic tests must pass."
+    "blocker": "Await archive download, 100-object lineage scan, deterministic tests and compact artifact upload."
   },
   "failure_analysis": {
     "status": "UNRESOLVED",
@@ -69,13 +71,16 @@
     "open_blockers": [
       "Run the checksum-pinned lineage workflow.",
       "Review all 100 object/band records and any nearby alternate SourceIDs.",
-      "Verify the time coordinate scale against both Zenodo metadata and the CDS ReadMe."
+      "Verify the time coordinate scale against both Zenodo metadata and the CDS ReadMe.",
+      "Verify workflow expressions, artifact input paths and the test ZIP newline fixture on GitHub Actions.",
+      "Review MJD/HJD value ranges against the Zenodo file description and CDS ReadMe before accepting prior phase-fold interpretations."
     ]
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not automatically remap SourceIDs based only on coordinate proximity.",
     "Do not treat missing raw observations as low-SNR data.",
-    "Keep CPVS root cause NOT_PROVEN and preserve v0.2.0."
+    "Keep CPVS root cause NOT_PROVEN and preserve v0.2.0.",
+    "The new lineage scan records numeric time ranges to test the conflicting HJD (Zenodo record description) versus MJD (CDS ReadMe) field descriptions."
   ]
 }
