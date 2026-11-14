@@ -38,7 +38,8 @@ jobs:
 
       - name: Test source audit and independent input adapter
         run: |
-          python -m pytest -q tests/test_star_embed_audit.py tests/test_star_embed_input.py
+          python -m pytest -q \\
+            tests/test_star_embed_audit.py tests/test_star_embed_input.py
 
       - name: Acquire the five pinned StarEmbed Parquet artifacts
         env:
@@ -50,7 +51,8 @@ jobs:
             --benchmark-id star_embed_ztf_40k \
             --output reports/scientific_validation/star_embed_input_audit/data \
             --code-version "$CODE_VERSION"
-          test -s reports/scientific_validation/star_embed_input_audit/data.acquisition.json
+          test -s \\
+            reports/scientific_validation/star_embed_input_audit/data.acquisition.json
 
       - name: Audit source IDs and run 50-object v0.2 feature-input probe
         id: source_audit
@@ -97,7 +99,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$AUDIT_EXIT_CODE" != "0" ] || [ "$PROBE_EXIT_CODE" != "0" ]; then
-            echo "FAIL-CLOSED: StarEmbed source integrity or input feature probe did not pass."
+            echo "FAIL-CLOSED: StarEmbed source integrity or input feature"
+            echo "probe did not pass."
             echo "audit_exit_code=$AUDIT_EXIT_CODE"
             echo "probe_exit_code=$PROBE_EXIT_CODE"
             exit 1
