@@ -112,6 +112,13 @@ def metadata_predicates(row: dict[str, str]) -> dict[str, bool]:
     }
 
 
+def is_candidate_only_stratum(value: str | None) -> bool:
+    return any(
+        label.strip() == "candidate_only"
+        for label in (value or "").split(",")
+    )
+
+
 def read_candidate_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8", newline="") as stream:
         reader = csv.DictReader(stream, delimiter="\t")
@@ -122,7 +129,10 @@ def read_candidate_rows(path: Path) -> list[dict[str, str]]:
         missing = required.difference(reader.fieldnames or [])
         if missing:
             raise ValueError(f"Residual artifact missing columns: {sorted(missing)}")
-        rows = [row for row in reader if row.get("strata", "").strip() == "candidate_only"]
+        rows = [
+            row for row in reader
+            if is_candidate_only_stratum(row.get("strata"))
+        ]
     if len(rows) != EXPECTED_RESIDUALS:
         raise ValueError(f"Expected {EXPECTED_RESIDUALS} candidate-only residuals; found {len(rows)}")
     source_ids = [row["SourceID"].strip() for row in rows]
