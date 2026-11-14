@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compare the 11,602 CPVS residuals with Chen et al.'s suspected-variable table."""
 from __future__ import annotations
-import argparse, csv, hashlib, json, zipfile, zlib
+import argparse, csv, hashlib, json, math, zipfile, zlib
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -88,13 +88,36 @@ def read_table6_ids(
     }
 
 
+def is_positive_finite(value: str | None) -> bool:
+    try:
+        number = float(value) if value is not None else float("nan")
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(number) and number > 0
+
+
+def metadata_predicates(row: dict[str, str]) -> dict[str, bool]:
+    mean_pair = is_positive_finite(row.get("gmag")) and is_positive_finite(row.get("rmag"))
+    period_pair = is_positive_finite(row.get("Per-g")) and is_positive_finite(row.get("Per-r"))
+    four_field = mean_pair and period_pair
+    recorded_four_field = row.get("four_field_positive", "").strip().lower() == "true"
+    if recorded_four_field != four_field:
+        raise ValueError(
+            f"Four-field flag disagrees with source values for SourceID={row.get('SourceID')}"
+        )
+    return {
+        "both_mean_magnitudes_positive": mean_pair,
+        "both_band_periods_positive": period_pair,
+        "four_field_positive": four_field,
+    }
+
+
 def read_candidate_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8", newline="") as stream:
-        reader = csv.DictReader(stream, delimiter="\t")
+        reader = csv.DictReader(stream, delimiter="\\t")
         required = {
             "SourceID", "ZTF", "strata", "candidate", "Table4_member",
-            "mean_magnitude_pair_positive", "band_period_pair_positive",
-            "four_field_positive",
+            "gmag", "rmag", "Per-g", "Per-r", "four_field_positive",
         }
         missing = required.difference(reader.fieldnames or [])
         if missing:
@@ -112,6 +135,8 @@ def read_candidate_rows(path: Path) -> list[dict[str, str]]:
         raise ValueError("A candidate-only row is not marked as a candidate")
     if any(row["Table4_member"].strip().lower() != "false" for row in rows):
         raise ValueError("A candidate-only row is unexpectedly a Table 4 member")
+    for row in rows:
+        metadata_predicates(row)
     return rows
 
 
@@ -121,9 +146,14 @@ def build_report(
     table6_metadata: dict[str, Any],
 ) -> tuple[dict[str, Any], list[dict[str, str]]]:
     overlap = [row for row in residual_rows if row["ZTF"].strip() in table6_ids]
+    predicates = {row["SourceID"]: metadata_predicates(row) for row in residual_rows}
     by_predicate: dict[str, dict[str, int]] = {}
-    for field in ("mean_magnitude_pair_positive", "band_period_pair_positive", "four_field_positive"):
-        group = [row for row in residual_rows if row[field].strip().lower() == "true"]
+    for field in (
+        "both_mean_magnitudes_positive",
+        "both_band_periods_positive",
+        "four_field_positive",
+    ):
+        group = [row for row in residual_rows if predicates[row["SourceID"]][field]]
         by_predicate[field] = {
             "residuals_in_group": len(group),
             "table6_overlap": sum(row["ZTF"].strip() in table6_ids for row in group),
