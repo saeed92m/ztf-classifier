@@ -1,4 +1,4 @@
-name: CPVS MGPR feasibility diagnostic
+name: CPVS MGPR robustness diagnostic
 
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
   mgpr-feasibility:
     name: Fit MGPR for 17 residuals and 17 matched Table 4 controls
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     env:
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
@@ -67,7 +67,7 @@ jobs:
       - name: Run MGPR preparation tests
         run: python -m unittest discover -s tests -p "test_cpvs_mgpr.py" -v
 
-      - name: Run bounded MGPR feasibility audit
+      - name: Run multi-start MGPR and blocked-phase robustness audit
         run: |
           python scripts/diagnose_cpvs_mgpr.py \
             --input-dir inputs \
@@ -78,7 +78,7 @@ jobs:
       - name: Upload MGPR evidence
         uses: actions/upload-artifact@v6
         with:
-          name: cpvs-mgpr-feasibility-evidence
+          name: cpvs-mgpr-robustness-evidence
           path: |
             reports/cpvs_mgpr_feasibility_report.json
             reports/cpvs_mgpr_object_metrics.jsonl
