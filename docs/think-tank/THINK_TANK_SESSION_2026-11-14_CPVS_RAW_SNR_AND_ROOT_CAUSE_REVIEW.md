@@ -559,7 +559,7 @@ Interpretation:
 
 The compact report has SHA-256 `6094a9fcee0d37c3cbf42e7b6d97aee5f791cd5adea81fa67d38553295ebd47a`; the object-level TSV has SHA-256 `a6f6f83be18809b8c3d3cc1068f4ef6463ec84771bd30883505de0c91a800bb6`. The downloaded evidence archive is SHA-256 `424f5bd03a0a4f43956901459209527eaa03be0611acf77657c3caf71267b76d`.
 
-A rerun on the corrected streaming-scanner revision remains in progress. Do not treat that pending run as an additional validation result. The completed report remains bounded to the stated 84 objects.
+The corrected streaming-scanner rerun completed successfully as [workflow run 43536139104](https://github.com/saeed92m/ztf-classifier/actions/runs/43536139104) on revision `fe76e90f8b0ea44f8b56ed14275deba7f4c07f1b`. It reproduced the same 84-object result and reported zero raw/Table2 row-count mismatches within this bounded cohort. Its artifact SHA-256 is `dd74e6e0a821c58f11426a1800d7932e7d95d8f7f64727979886c97d7b19d7a4`; report SHA-256 `6094a9fcee0d37c3cbf42e7b6d97aee5f791cd5adea81fa67d38553295ebd47a`; object TSV SHA-256 `a6f6f83be18809b8c3d3cc1068f4ef6463ec84771bd30883505de0c91a800bb6`. This remains bounded to the stated 84 objects and is not a full-parent validation.
 
 ### Table 6 suspected-variable catalogue overlap
 
