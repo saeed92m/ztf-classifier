@@ -74,7 +74,8 @@
       "Zenodo raw attachments do not contain image-level INFOBITS.",
       "Zenodo g_flag/r_flag are not proven equivalent to DR2 catflags.",
       "The CDS ReadMe says the r attachment has 89,697,393 records while the checksum-pinned Zenodo r member yielded 109,971,576; this archive/documentation discrepancy must be resolved.",
-      "A row-count mismatch does not by itself prove low SNR, duplicate detections or incorrect SourceID mapping."
+      "A row-count mismatch does not by itself prove low SNR, duplicate detections or incorrect SourceID mapping.",
+      "The Zenodo record's field description calls the epoch HJD, while the CDS ReadMe calls the corresponding data-file field MJD. The actual numeric range in the attached bytes must be measured before any phase-fold interpretation is accepted."
     ]
   },
   "knowledge_extraction": {
@@ -95,7 +96,8 @@
       "Inspect duplicate MJD/HJD records, coordinate scatter, flag counts and photometric errors.",
       "Resolve the CDS ReadMe versus Zenodo r-member row-count discrepancy.",
       "Recover image-level INFOBITS and establish the exact g_flag/r_flag mapping.",
-      "Reconstruct the Chen selector stage by stage and perform final independent membership validation."
+      "Reconstruct the Chen selector stage by stage and perform final independent membership validation.",
+      "Resolve HJD versus MJD semantics using numeric raw epochs and the exact Zenodo/ CDS file versions; rerun all phase-derived analyses if the current conversion is wrong."
     ]
   },
   "decision": "BLOCKED",
