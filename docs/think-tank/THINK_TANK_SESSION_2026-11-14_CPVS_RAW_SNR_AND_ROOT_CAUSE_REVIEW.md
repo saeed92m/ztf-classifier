@@ -731,6 +731,8 @@ Adding positive gAmp and rAmp does not change this 730,239 parent-wide set. Addi
 
 The Table2 ReadMe explicitly marks gmag, rmag, Per-g, Per-r, gAmp and rAmp as missing when zero. It does not mark R2 or log(FAP) zero as missing. In the Table4 reference, R2-g includes 28 zeros and 768 negative values; R2-r includes 9 negative values. log(FAP-g/r) includes zero and negative values. Therefore a positive-R2 or positive-FAP rule would be scientifically invalid.
 
+**Publisher-source boundary:** the checksum-pinned Table4 ReadMe (SHA-256 \`0a7ec0dac13b155fdd63322dc9b0230de42fd05169e0e02c70f68fce0bc67d6a\`) describes the 730,184 objects using the two-band detection criterion: at least one 2.5σ g detection and one 3σ r detection. It does not state the four-field complete-case predicate. The checksum-pinned Table2 ReadMe (SHA-256 \`e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a\`) marks gmag, rmag, Per-g, Per-r, gAmp and rAmp as missing when zero. Therefore the complete-case explanation remains an evidence-based hypothesis about downstream feature availability, not a published membership rule.
+
 This strengthens the complete-case feature hypothesis for the 11,602 residuals: the missing Table2 values align with per-band feature fields used downstream. It remains a hypothesis about publisher intent, not a documented official membership rule.
 
 ### Recovered raw-photometry audit for the 55 controls
