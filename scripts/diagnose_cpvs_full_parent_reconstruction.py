@@ -85,15 +85,21 @@ def load_inputs(parent_dir:Path,recon_dir:Path):
  if membership["published_only_count"]!=0 or membership["published_count"]!=EXPECTED["table4"]: raise ValueError("Membership audit failed")
  return table2,candidate,table4,residual,controls,{"verified_inputs":verified,"membership_audit":membership}
 
+def resolve_member_name(archive:zipfile.ZipFile, basename:str)->str:
+ matches=[name for name in archive.namelist() if Path(name).name==basename and "__MACOSX" not in name]
+ if len(matches)!=1: raise ValueError(f"Expected one {basename} member by basename; found {matches}")
+ return matches[0]
+
 def scan(path:Path,band:str,parent_ids:set[int]):
  cfg=ARCHIVES[band]
  if sha(path)!=cfg["sha"]: raise ValueError(f"{band} archive SHA-256 mismatch")
  with zipfile.ZipFile(path) as z:
-  info=z.getinfo(cfg["member"])
+  member_name=resolve_member_name(z,cfg["member"])
+  info=z.getinfo(member_name)
   if info.file_size!=cfg["size"] or f"{info.CRC:08x}"!=cfg["crc"]: raise ValueError(f"{band} member size/CRC mismatch")
  counts={k:array.array("I",[0])*(MAX_SEQ+1) for k in COUNT_FIELDS}
  digest=hashlib.sha256(); crc=0; nbytes=0; nrows=0; malformed=0; unknown=0; missing_flag=0
- p=subprocess.Popen(["unzip","-p",str(path),cfg["member"]],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+ p=subprocess.Popen(["unzip","-p",str(path),member_name],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
  assert p.stdout is not None
  for line in p.stdout:
   digest.update(line); crc=zlib.crc32(line,crc); nbytes+=len(line); nrows+=1
