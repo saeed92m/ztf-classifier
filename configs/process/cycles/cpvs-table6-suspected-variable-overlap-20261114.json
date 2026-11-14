@@ -37,51 +37,54 @@
     "metrics": {
       "correctness": {
         "before": "No object-level overlap comparison with Chen Table6 was recorded.",
-        "after": "Report exact residual-to-Table6 ID intersection and non-intersection.",
-        "status": "NOT_MEASURED"
+        "after": "0 of 11,602 unique candidate-only residual IDs occur in the checksum-pinned Table 6 suspected-variable catalogue (1,381,527 unique Table 6 IDs).",
+        "status": "MEASURED"
       },
       "reproducibility": {
         "before": "No pinned Table6 overlap report existed.",
-        "after": "Pin Zenodo MD5, input artifact run ID and output hashes.",
-        "status": "NOT_MEASURED"
+        "after": "Zenodo Table6 archive MD5 fcad26b036c8dbee29f6d868fecc9697; member SHA-256 f1b51a6be353d8712eba626e12c57bb3c5b0900c2435210f088d65f9db32c6af; input raw-evidence run 43525513465; report SHA-256 b5a1eafd7b99d95dc31b627f9132a775d0ef9fc71efd62052a5b74b64ab2c28e; artifact digest sha256:687dde745d22212dfe74e05cf604b16738aeb566aa356ee69eb186a19b0ec743.",
+        "status": "MEASURED"
       }
     }
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "PASS",
     "scientific_gate_affected": false,
     "evidence": [
-      "Zenodo Table6 archive checksum and CDS catalogue row count are recorded as inputs."
-    ],
-    "blocker": "The overlap computation and archive integrity checks must pass on a standard GitHub-hosted runner."
+      "Table 6 workflow run 43538253256 completed successfully on revision ddd4f12e78da805d915792e49ac687aa870030b0.",
+      "Zenodo archive MD5 and decompressed member SHA-256/size/CRC were verified.",
+      "Table 6 contained 1,381,527 records and unique IDs; no duplicates were found.",
+      "All 11,602 candidate-only residuals were parsed as unique SourceID and ZTF ID; exact intersection with Table 6 was zero.",
+      "The deterministic tests passed in the successful workflow.",
+      "The JSON report and TSV output hashes are recorded in Think Tank Session 08."
+    ]
   },
   "failure_analysis": {
     "status": "UNRESOLVED",
     "root_causes": [
-      "The relation between the 11,602 residuals and the separately published suspected-variable catalogue has not yet been tested."
+      "The 11,602 residuals have zero overlap with Table 6. Their original Chen/Chan selection-stage cause remains unknown."
     ],
     "limitations": [
-      "Overlap with Table6 does not prove the Chan et al. 730,184 membership rule or the original Chen selection logic."
+      "Table 6 is a separate suspected-variable catalogue; zero overlap rules out only this cross-catalogue explanation.",
+      "This diagnostic does not reconstruct the original candidate selector or the Chan et al. Table 4 membership logic."
     ]
   },
   "knowledge_extraction": {
     "status": "SUPPORTED",
     "findings": [
-      "A separately published suspected-variable table exists and should be tested before the CPVS membership discrepancy is explained solely by two-band metadata completeness.",
-      "The SNAD mirror's Table6 import confirms that Table6 is a distinct dataset from Table2."
+      "Table 6 is a separately published suspected-variable catalogue with 1,381,527 unique IDs.",
+      "None of the 11,602 candidate-only residual IDs occur in Table 6.",
+      "The Table 6 overlap test is a reproducible negative result; it is not a valid production membership filter."
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
-    "open_blockers": [
-      "Run the checksum-pinned Table6 overlap workflow.",
-      "Review the compact overlap report and object-level intersection."
-    ]
+    "status": "PASS",
+    "open_blockers": []
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
-    "Do not use Table6 overlap as a production filter.",
+    "Do not use Table 6 overlap as a production filter.",
     "Keep CPVS root cause NOT_PROVEN until the original published membership pipeline is reconstructed and full-parent comparison is complete.",
-    "Keep PR #285 Draft and issue #170 open."
+    "Keep PR #285 Draft and issue #170 Open."
   ]
 }
