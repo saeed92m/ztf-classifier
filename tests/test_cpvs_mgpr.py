@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import importlib.util
 import unittest
 
 import numpy as np
 
-from scripts.diagnose_cpvs_mgpr import prepare_training_data
+from scripts.diagnose_cpvs_mgpr import fit_one_gp, prepare_training_data
 
 
 class CPVSMGPRPreparationTests(unittest.TestCase):
@@ -31,6 +32,26 @@ class CPVSMGPRPreparationTests(unittest.TestCase):
         self.assertTrue(np.allclose(x[6:9, 0], [2.1, 2.5, 2.9]))
         self.assertTrue(np.all(x[:9, 1] == 0.0))
         self.assertTrue(np.all(x[9:, 1] == 1.0))
+
+
+    @unittest.skipUnless(importlib.util.find_spec("george"), "george is installed only in the bounded MGPR workflow")
+    def test_george_fit_returns_finite_likelihood_and_conditioning(self):
+        rng = np.random.default_rng(17)
+        phases = np.linspace(0.0, 1.0, 12, endpoint=False)
+        x = np.vstack((
+            np.column_stack((np.concatenate([phases, phases + 1, phases + 2]), np.zeros(36))),
+            np.column_stack((np.concatenate([phases, phases + 1, phases + 2]), np.ones(36))),
+        ))
+        y = np.concatenate((
+            np.tile(np.sin(2 * np.pi * phases), 3),
+            np.tile(0.7 * np.sin(2 * np.pi * phases + 0.2), 3),
+        ))
+        yerr = np.full(len(y), 0.05)
+        _, result = fit_one_gp(x, y, yerr)
+        self.assertTrue(np.isfinite(result["negative_log_likelihood"]))
+        self.assertGreater(result["white_noise_variance"], 0)
+        self.assertIsNotNone(result["covariance_condition_number_2norm"])
+        self.assertEqual(len(result["optimizer_starts"]), 2)
 
     def test_rejects_zero_variance_band(self):
         g = [
