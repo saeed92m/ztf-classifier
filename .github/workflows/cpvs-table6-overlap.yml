@@ -35,9 +35,9 @@ jobs:
         with:
           name: cpvs-11602-raw-snr-evidence
           path: inputs/residuals
-          repository: \${{ github.repository }}
+          repository: ${{ github.repository }}
           run-id: 43525513465
-          github-token: \${{ github.token }}
+          github-token: ${{ github.token }}
 
       - name: Download and verify Zenodo Table 6
         shell: bash
