@@ -15,7 +15,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: cpvs-full-parent-reconstruction-\${{ github.ref }}
+  group: cpvs-full-parent-reconstruction-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -37,18 +37,18 @@ jobs:
         with:
           name: scientific-validation-heavy
           path: inputs/parent
-          repository: \${{ github.repository }}
+          repository: ${{ github.repository }}
           run-id: 38635891449
-          github-token: \${{ github.token }}
+          github-token: ${{ github.token }}
 
       - name: Download pinned Table2/Table4 reconciliation artifact
         uses: actions/download-artifact@v4
         with:
           name: cpvs-raw-cds-reconciliation
           path: inputs/reconciliation
-          repository: \${{ github.repository }}
+          repository: ${{ github.repository }}
           run-id: 41367972395
-          github-token: \${{ github.token }}
+          github-token: ${{ github.token }}
 
       - name: Download checksum-pinned raw Zenodo photometry
         shell: bash
