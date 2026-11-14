@@ -3,7 +3,6 @@ import shutil
 import tempfile
 import unittest
 import zipfile
-import zlib
 from pathlib import Path
 from unittest.mock import patch
 
