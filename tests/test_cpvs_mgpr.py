@@ -36,7 +36,6 @@ class CPVSMGPRPreparationTests(unittest.TestCase):
 
     @unittest.skipUnless(importlib.util.find_spec("george"), "george is installed only in the bounded MGPR workflow")
     def test_george_fit_returns_finite_likelihood_and_conditioning(self):
-        rng = np.random.default_rng(17)
         phases = np.linspace(0.0, 1.0, 12, endpoint=False)
         x = np.vstack((
             np.column_stack((np.concatenate([phases, phases + 1, phases + 2]), np.zeros(36))),
