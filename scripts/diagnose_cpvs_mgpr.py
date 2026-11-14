@@ -19,16 +19,28 @@ from typing import Any
 import numpy as np
 from scipy.optimize import minimize
 
-from scripts.diagnose_cpvs_phasefold_coverage import (
-    ARCHIVES,
-    INPUT_SHA256,
-    choose_controls,
-    choose_targets,
-    load_parent,
-    parse_tsv,
-    scan_archive,
-    verify_sha256,
-)
+try:
+    from .diagnose_cpvs_phasefold_coverage import (
+        ARCHIVES,
+        INPUT_SHA256,
+        choose_controls,
+        choose_targets,
+        load_parent,
+        parse_tsv,
+        scan_archive,
+        verify_sha256,
+    )
+except ImportError:
+    from diagnose_cpvs_phasefold_coverage import (
+        ARCHIVES,
+        INPUT_SHA256,
+        choose_controls,
+        choose_targets,
+        load_parent,
+        parse_tsv,
+        scan_archive,
+        verify_sha256,
+    )
 
 PAPER = {
     "reference": "Chan et al. 2022, ApJ 932, 118, Section 2.1",
