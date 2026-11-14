@@ -13,10 +13,10 @@ from scripts.diagnose_cpvs_table6_overlap import (
 
 class Table6OverlapTests(unittest.TestCase):
     def test_reads_ids_and_checks_archive_and_member(self):
-        header = b"".join(f"# header {i}\\n".encode() for i in range(20))
+        header = b"".join(f"# header {i}\n".encode() for i in range(20))
         rows = (
-            b"ZTFJ000019.72+542513.0 10.0 20.0 0.0 20.5 0.0 0.2 0.1 0.1 10 100 -5.0\\n"
-            b"ZTFJ000022.75+651051.5 11.0 21.0 18.0 20.0 0.2 0.3 0.1 0.1 50 60 -6.0\\n"
+            b"ZTFJ000019.72+542513.0 10.0 20.0 0.0 20.5 0.0 0.2 0.1 0.1 10 100 -5.0\n"
+            b"ZTFJ000022.75+651051.5 11.0 21.0 18.0 20.0 0.2 0.3 0.1 0.1 50 60 -6.0\n"
         )
         with tempfile.TemporaryDirectory() as directory:
             archive_path = Path(directory) / "table6.zip"
