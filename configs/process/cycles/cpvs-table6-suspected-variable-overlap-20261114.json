@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-table6-suspected-variable-overlap-20261114",
+  "objective": "Test whether the 11,602 candidate-only residual IDs are represented in Chen et al.'s separately published Table 6 suspected-variable catalogue.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Zenodo record 3886372",
+      "status": "VERIFIED",
+      "detail": "The record contains Table2 (ZTF Variables Catalog) and Table6 (ZTF Suspected Variables Catalog). The Table6 archive MD5 is fcad26b036c8dbee29f6d868fecc9697."
+    },
+    {
+      "source": "CDS ReadMe J/ApJS/249/18",
+      "status": "VERIFIED",
+      "detail": "The CDS mirror describes table3.dat as the ZTF suspected variables catalog with 1,381,527 rows and an ID column."
+    },
+    {
+      "source": "snad-space/ztf-periodic-catalog-db",
+      "status": "VERIFIED",
+      "detail": "The public SNAD mirror imports Table2 and Table6 separately from Zenodo and defines an ID field for Table6; it is a catalogue mirror, not the original CPVS selection implementation."
+    },
+    {
+      "source": "CPVS raw SNR evidence artifact, workflow run 43525513465",
+      "status": "VERIFIED",
+      "detail": "The allowlisted compact evidence artifact contains SourceID and ZTF name for the 11,602 candidate-only residuals."
+    }
+  ],
+  "baseline": {
+    "revision": "research/cpvs-snr-formula-audit-20261112",
+    "description": "No production selector, model, benchmark or v0.2.0 artifact is changed. This is an external-catalogue overlap diagnostic only."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reproducibility",
+    "source provenance"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "No object-level overlap comparison with Chen Table6 was recorded.",
+        "after": "Report exact residual-to-Table6 ID intersection and non-intersection.",
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "before": "No pinned Table6 overlap report existed.",
+        "after": "Pin Zenodo MD5, input artifact run ID and output hashes.",
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Zenodo Table6 archive checksum and CDS catalogue row count are recorded as inputs."
+    ],
+    "blocker": "The overlap computation and archive integrity checks must pass on a standard GitHub-hosted runner."
+  },
+  "failure_analysis": {
+    "status": "UNRESOLVED",
+    "root_causes": [
+      "The relation between the 11,602 residuals and the separately published suspected-variable catalogue has not yet been tested."
+    ],
+    "limitations": [
+      "Overlap with Table6 does not prove the Chan et al. 730,184 membership rule or the original Chen selection logic."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A separately published suspected-variable table exists and should be tested before the CPVS membership discrepancy is explained solely by two-band metadata completeness.",
+      "The SNAD mirror's Table6 import confirms that Table6 is a distinct dataset from Table2."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the checksum-pinned Table6 overlap workflow.",
+      "Review the compact overlap report and object-level intersection."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not use Table6 overlap as a production filter.",
+    "Keep CPVS root cause NOT_PROVEN until the original published membership pipeline is reconstructed and full-parent comparison is complete.",
+    "Keep PR #285 Draft and issue #170 open."
+  ]
+}
