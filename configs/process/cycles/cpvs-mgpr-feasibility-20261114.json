@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-mgpr-feasibility-20261114",
+  "objective": "Test whether the 17 CPVS residuals with both mean magnitudes and missing one band-specific period can be interpolated by a bounded, source-informed multiband Gaussian Process diagnostic.",
+  "previous_knowledge_consumed": [
+    "The 11,602 residuals remain unexplained; no production selector change is authorized.",
+    "The shared-period phase-fold diagnostic run 43535760220 found that the 17-object subgroup has median coverage of 92/160 g bins and 91/160 r bins.",
+    "The 17 objects retain a positive common Table 2 period, both positive mean magnitudes and raw photometry in both bands.",
+    "The matched-control design uses one same-Type Table 4 member per residual, matched on common period, g/r magnitudes and Ng/Nr.",
+    "Chan et al. (2022), Section 2.1, specifies george MGPR, normalized phase/wavelength coordinates, separable RBF kernel, constant amplitude, diagonal white noise, zero mean, L-BFGS-B, three phase cycles and a 160-point output grid."
+  ],
+  "baseline": {
+    "revision": "research/cpvs-snr-formula-audit-20261112@43bcca38f952728d1ed58218febc93dcd8a024e7",
+    "reference": "Chan et al. 2022, ApJ 932, 118, DOI 10.3847/1538-4357/ac69d4",
+    "cohort": "17 candidate-only residuals with both mean magnitudes and one missing band-specific period; 17 deterministic matched Table 4 controls"
+  },
+  "change": {
+    "proposed": "Add a read-only, bounded MGPR feasibility diagnostic using george==0.4.4.",
+    "scope": "Research-only script, tests and GitHub Actions workflow; no product dependencies, model, selector, feature schema, scientific threshold or baseline artifact changes.",
+    "rationale": "The paper phase-folds both bands using the common Table 2 period. The 17 residuals have adequate observed phase coverage, so MGPR feasibility is the next discriminating experiment."
+  },
+  "expected_improvement": [
+    "Measure optimizer convergence and negative log likelihood for each residual and matched control.",
+    "Record fitted phase/wavelength length scales, kernel amplitude, diagonal white-noise variance and covariance condition number.",
+    "Generate 160-point posterior mean and uncertainty curves for each band.",
+    "Separate a successful numerical fit from scientific membership evidence."
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "Dependency Audit failed for CVE-2026-114613 in msgpack==1.2.2.",
+        "after": "Pending fresh CI; msgpack==1.2.3 is pinned on the PR branch.",
+        "evidence": "CI runs 40597691322 and 40638865397; PR #238"
+      },
+      "correctness": {
+        "before": "Phase coverage was measured, but MGPR feasibility, optimizer behavior and covariance conditioning were unknown.",
+        "after": "Pending the bounded 34-object MGPR workflow.",
+        "evidence": "Workflow .github/workflows/cpvs-mgpr-feasibility.yml; script scripts/diagnose_cpvs_mgpr.py; Chan et al. 2022 Section 2.1."
+      },
+      "reproducibility": {
+        "before": "The article's MGPR method was known at the equation and procedure level; no project implementation or deterministic test existed.",
+        "after": "A pinned george==0.4.4 environment, deterministic multi-start settings, input hashes and object-level evidence outputs are defined; CI pending.",
+        "evidence": "PyPI george 0.4.4; workflow and report schema."
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The paper describes zero mean, a separable RBF phase/wavelength kernel, constant amplitude and diagonal white noise.",
+      "The paper specifies L-BFGS-B, repeated phases from 0 to 3 and prediction on phases 2 to 3 with 160 points per band.",
+      "The paper does not publish exact optimizer bounds, initial values, george version, or complete implementation.",
+      "The diagnostic uses explicit deterministic analyst-selected starts and bounds and labels them as implementation choices.",
+      "All raw numeric-valid rows are used; no mapping from Zenodo g_flag/r_flag to DR2 catflags is assumed."
+    ],
+    "blocker": "Run the bounded MGPR workflow, inspect all object-level outputs and verify the report hashes."
+  },
+  "failure_analysis": {
+    "status": "UNRESOLVED",
+    "root_causes": [
+      "The 17-object missing-band-period subgroup has adequate shared-period phase coverage; MGPR feasibility remains unmeasured."
+    ],
+    "limitations": [
+      "The diagnostic is not an exact reproduction of the authors' unpublished code.",
+      "A converged MGPR fit does not prove historical CPVS membership or explain all 11,602 residuals.",
+      "Raw Zenodo flag fields have not been proven equivalent to DR2 catflags."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Chan et al. uses the common Table 2 period for both bands, not the per-band Per-g and Per-r values, when phase-folding.",
+      "A missing per-band fitted period does not by itself prevent the published common-period MGPR preprocessing.",
+      "The paper's MGPR equations and processing sequence can be translated into a bounded diagnostic, but unpublished numerical settings remain explicit uncertainty."
+    ]
+  },
+  "regression": {
+    "status": "PENDING_CI",
+    "open_blockers": [
+      "MGPR input preparation tests must pass.",
+      "The bounded workflow must complete with finite, traceable outputs or explicit per-object failures.",
+      "No production membership rule may be inferred from numerical convergence alone."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not use MGPR convergence as a CPVS membership selector.",
+    "Do not change production code or v0.2.0 baseline.",
+    "Continue reconstructing the original Chen pipeline, flag semantics and full-parent object-level membership."
+  ]
+}
