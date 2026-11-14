@@ -6,6 +6,7 @@ is not mapped to the frozen 15-class classifier, and no prediction is produced.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import random
 from collections import Counter
@@ -159,12 +160,19 @@ def run_star_embed_feature_probe(
             record.update({name: float(features[name]) for name in V0_2_FEATURES})
             feature_rows.append(record)
         except (TypeError, ValueError, KeyError) as exc:
-            failures.append({"sourceid": sourceid, "error": f"{type(exc).__name__}: {exc}"})
+            failures.append(
+                {
+                    "sourceid": sourceid,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+            )
 
     feature_frame = pd.DataFrame(feature_rows)
     output.mkdir(parents=True, exist_ok=True)
     if not feature_frame.empty:
-        feature_frame.to_parquet(output / "star_embed_v0_2_feature_probe.parquet", index=False)
+        feature_frame.to_parquet(
+            output / "star_embed_v0_2_feature_probe.parquet", index=False
+        )
 
     leakage = {
         "within_split_duplicates": duplicate_counts,
@@ -190,7 +198,7 @@ def run_star_embed_feature_probe(
         "selected_clean_test_objects": selected_n,
         "feature_vectors_generated": len(feature_rows),
         "feature_vector_width": len(V0_2_FEATURES),
-        "feature_names_sha256_ordered": __import__("hashlib").sha256(
+        "feature_names_sha256_ordered": hashlib.sha256(
             "\\n".join(V0_2_FEATURES).encode("utf-8")
         ).hexdigest(),
         "sample_source_split": "test",
@@ -205,18 +213,20 @@ def run_star_embed_feature_probe(
         "leakage_audit": leakage,
         "failures": failures,
         "interpretation": (
-            "The frozen v0.2 feature-preparation path was exercised on a deterministic "
-            "clean subset of StarEmbed test objects. This does not evaluate classifier "
-            "accuracy: StarEmbed has a seven-class taxonomy that is not mapped to the "
-            "frozen 15-class model. Any source split duplication/overlap blocks benchmark "
-            "acceptance even when feature generation succeeds."
+            "The frozen v0.2 feature-preparation path was exercised on a "
+            "deterministic clean subset of StarEmbed test objects. This does not "
+            "evaluate classifier accuracy: StarEmbed has a seven-class taxonomy "
+            "that is not mapped to the frozen 15-class model. Any source split "
+            "duplication/overlap blocks benchmark acceptance even when feature "
+            "generation succeeds."
         ),
         "limitations": [
             "No class mapping or prediction was performed.",
             "No model was trained or changed.",
             "StarEmbed labels remain source-provided benchmark labels.",
             "The sample is diagnostic, not population-level performance evidence.",
-            "No raw source arrays are written to the report; only derived feature rows are emitted.",
+            "No raw source arrays are written to the report; only derived feature "
+            "rows are emitted.",
         ],
     }
     (output / "star_embed_input_probe.json").write_text(
@@ -239,7 +249,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"status={report['status']}")
     print(f"feature_vectors_generated={report['feature_vectors_generated']}")
     print(f"report={args.output_dir / 'star_embed_input_probe.json'}")
-    return 2 if report["status"] == "BLOCKED_SOURCE_SPLIT_INTEGRITY" or report["failures"] else 0
+    blocked = report["status"] == "BLOCKED_SOURCE_SPLIT_INTEGRITY"
+    return 2 if blocked or report["failures"] else 0
 
 
 if __name__ == "__main__":
