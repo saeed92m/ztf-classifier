@@ -14,7 +14,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: cpvs-mismatch-lineage-\${{ github.ref }}
+  group: cpvs-mismatch-lineage-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -38,18 +38,18 @@ jobs:
         with:
           name: cpvs-full-parent-reconstruction-evidence
           path: inputs/full-parent
-          repository: \${{ github.repository }}
+          repository: ${{ github.repository }}
           run-id: 43600721277
-          github-token: \${{ github.token }}
+          github-token: ${{ github.token }}
 
       - name: Download pinned Table2 source artifact
         uses: actions/download-artifact@v4
         with:
           name: cpvs-raw-cds-reconciliation
           path: inputs/reconciliation
-          repository: \${{ github.repository }}
+          repository: ${{ github.repository }}
           run-id: 41367972395
-          github-token: \${{ github.token }}
+          github-token: ${{ github.token }}
 
       - name: Download checksum-pinned Zenodo g/r archives
         shell: bash
