@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-full-parent-raw-row-reconciliation-20261114",
+  "objective": "Reconcile raw Zenodo g/r photometry row counts and SNR candidate membership against all 781,602 Table2 objects, with explicit Table4 crosswalk and 55 complete-metadata controls.",
+  "previous_knowledge_consumed": [
+    "Table4 crosswalk contains 730,184 unique Table2 Seq IDs; candidate set contains 741,786; candidate-only residuals are 11,602; published-only IDs are zero.",
+    "The four positive fields gmag, rmag, Per-g and Per-r select all 730,184 Table4 IDs inside the reconstructed candidate set, with zero Table4 omissions.",
+    "Across all 781,602 parent objects, 730,239 pass the four-field predicate; the additional 55 are the fixed four_field_only controls and are not in the reconstructed candidate set.",
+    "A pinned raw-archive audit of the 55 controls is PARTIAL: only one has g-band rows, 51 have r-band rows, and no control has both bands represented. Raw row counts match Table2 Ng for one object and Nr for 51 objects.",
+    "The 55-control report explicitly warns that row-count mismatches must be resolved before interpreting the apparent SNR failure.",
+    "The Zenodo raw fields are documented as SourceID, RAdeg, DEdeg, MJD, mag, e_mag and flag; g_flag/r_flag have not been proven equivalent to DR2 catflags."
+  ],
+  "baseline": {
+    "parent_artifact": "scientific-validation-heavy from workflow run 38635891449; artifact SHA-256 346cd0a22d1490c9d3c5f6ff290ca2377e1c5458895c0c0d4b616b0708630c36",
+    "reconciliation_artifact": "cpvs-raw-cds-reconciliation from workflow run 41367972395; artifact SHA-256 130f3db65827afd83f5050e7eb91eb1cf7f6432e85456fd16586c8000a9aa6be",
+    "raw_photometry": "Zenodo record 3886372; g archive SHA-256 47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9; r archive SHA-256 48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74"
+  },
+  "change": {
+    "proposed": "Run a single-pass, checksummed scan of all 781,602 Table2 SourceIDs against both raw Zenodo archives. Count raw and numeric-valid rows, evaluate SNR formula and flag-policy comparators, and compare per-object counts with Table2 Ng/Nr.",
+    "scope": "Research-only script, tests, workflow and evidence artifacts; no production selector, model, feature schema or baseline changes.",
+    "rationale": "The 55 complete-metadata controls have missing raw rows in at least one band. A full-parent row-count reconciliation is required to distinguish SNR filtering from archive incompleteness or SourceID mapping errors."
+  },
+  "expected_improvement": [
+    "Verify all raw archive rows, member sizes, row counts, CRC and SHA-256.",
+    "Produce per-object raw/valid/SNR/flag counts for all 781,602 parent IDs.",
+    "Compare SNR candidate sets with the reconstructed 741,786 candidate IDs and the 730,184 Table4 reference.",
+    "Quantify Table2 Ng/Nr versus raw row-count differences by membership cohort.",
+    "Identify all discrepant SourceIDs for follow-up coordinate and image-quality tracing."
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "Dependency Audit failed for CVE-2026-114613 in msgpack==1.2.2.",
+        "after": "Pending fresh CI; msgpack==1.2.3 is pinned on the PR branch.",
+        "evidence": "CI runs 40597691322 and 40638865397; PR #238"
+      },
+      "correctness": {
+        "before": "Only residual and 55-control subsets had raw row-count/SNR diagnostics. The 55-control audit was partial and the full-parent raw count distribution was unknown.",
+        "after": "Pending the checksum-pinned full-parent scan and object-level comparison.",
+        "evidence": "The 55-control report from run 41367972395 has status PARTIAL; 54/55 lack g rows, 4/55 lack r rows, and none has both bands represented."
+      },
+      "reproducibility": {
+        "before": "Existing raw audits covered bounded residual/control subsets, not the complete 781,602-object parent.",
+        "after": "A deterministic full-parent workflow, pinned artifacts, archive/member hashes, and per-object output schema have been added; execution pending.",
+        "evidence": "scripts/diagnose_cpvs_full_parent_reconstruction.py and .github/workflows/cpvs-full-parent-reconstruction.yml."
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The Table2/Table4 crosswalk and 55-control artifact hashes are pinned.",
+      "The full-parent workflow verifies Table2, Table4 crosswalk, candidate set, residual set, 55 controls, raw archive hashes, member SHA-256, byte counts, row counts and CRC.",
+      "Zenodo flag fields are treated as diagnostic fields only; no catflags equivalence is assumed.",
+      "Image-level INFOBITS are not available in the Zenodo attachments."
+    ]
+  },
+  "failure_analysis": {
+    "status": "UNRESOLVED",
+    "root_causes": [
+      "The 11,602 residuals have complete raw SNR eligibility but incomplete Table2 feature fields.",
+      "The 55 complete-metadata controls have no dual-band raw photometry in the retained Zenodo attachment; their exclusion cannot be attributed to low SNR until raw-data completeness and SourceID mapping are resolved."
+    ],
+    "limitations": [
+      "The 55-control raw audit is partial and dates from 2026-11-02.",
+      "Missing raw rows are not evidence of low-SNR measurements.",
+      "The full scan cannot recover image-level INFOBITS from the current attachments.",
+      "An empirical exact match between SNR plus four-field completeness and Table4 does not prove the publisher's intended selector."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "The four-field complete-case predicate is necessary for all Table4 members and removes all 11,602 residuals from the reconstructed candidate set.",
+      "The parent-wide four-field predicate also admits 55 objects outside the SNR candidate set.",
+      "The 55-control raw audit shows no dual-band raw coverage, so their apparent SNR failure is confounded by missing raw records.",
+      "Table2 ReadMe marks gmag, rmag, Per-g, Per-r, gAmp and rAmp as missing when zero; R2 and log(FAP) zeros/negative values must not be treated as missing."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the full-parent raw reconciliation workflow.",
+      "Explain all raw/Table2 Ng/Nr count mismatches.",
+      "Verify SNR candidate membership at object level for all 781,602 IDs.",
+      "Resolve 55-control raw row absence and 14 residual row-count mismatches."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not call the 55 controls low-SNR failures while raw rows are missing.",
+    "Do not treat zero or negative R2/log(FAP) values as missing data.",
+    "Do not infer official selector intent from exact count matching.",
+    "Do not change production selector or v0.2.0 baseline."
+  ]
+}
