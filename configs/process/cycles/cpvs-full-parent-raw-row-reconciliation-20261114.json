@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-full-parent-raw-row-reconciliation-20261114",
+  "objective": "Reconcile raw Zenodo g/r photometry row counts and SNR candidate membership against all 781,602 Table2 objects, with explicit Table4 crosswalk and 55 complete-metadata controls.",
+  "previous_knowledge_consumed": [
+    "Table4 crosswalk contains 730,184 unique Table2 Seq IDs; candidate set contains 741,786; candidate-only residuals are 11,602; published-only IDs are zero.",
+    "The four positive fields gmag, rmag, Per-g and Per-r select all 730,184 Table4 IDs inside the reconstructed candidate set, with zero Table4 omissions.",
+    "Across all 781,602 parent objects, 730,239 pass the four-field predicate; the additional 55 are the fixed four_field_only controls and are not in the reconstructed candidate set.",
+    "A pinned raw-archive audit of the 55 controls is PARTIAL: only one has g-band rows, 51 have r-band rows, and no control has both bands represented. Raw row counts match Table2 Ng for one object and Nr for 51 objects.",
+    "The 55-control report explicitly warns that row-count mismatches must be resolved before interpreting the apparent SNR failure.",
+    "The Zenodo raw fields are documented as SourceID, RAdeg, DEdeg, MJD, mag, e_mag and flag; g_flag/r_flag have not been proven equivalent to DR2 catflags.",
+    "Full-parent workflow 43600721277 completed successfully on revision f0b981f4fadb677a290ae9609524bea296ea4ed1.",
+    "The successful artifact is cpvs-full-parent-reconstruction-evidence, digest sha256:d92a4b00c1958916efa3e6bc0c9e1d2a8a135553f47278ec64701dc06ee3a2aa."
+  ],
+  "baseline": {
+    "parent_artifact": "scientific-validation-heavy from workflow run 38635891449; artifact SHA-256 346cd0a22d1490c9d3c5f6ff290ca2377e1c5458895c0c0d4b616b0708630c36",
+    "reconciliation_artifact": "cpvs-raw-cds-reconciliation from workflow run 41367972395; artifact SHA-256 130f3db65827afd83f5050e7eb91eb1cf7f6432e85456fd16586c8000a9aa6be",
+    "raw_photometry": "Zenodo record 3886372; g archive SHA-256 47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9; r archive SHA-256 48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74",
+    "table2_readme_sha256": "e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a",
+    "table4_readme_sha256": "0a7ec0dac13b155fdd63322dc9b0230de42fd05169e0e02c70f68fce0bc67d6a"
+  },
+  "change": {
+    "proposed": "Run a single-pass, checksummed scan of all 781,602 Table2 SourceIDs against both raw Zenodo archives. Count raw and numeric-valid rows, evaluate SNR formula and flag-policy comparators, and compare per-object counts with Table2 Ng/Nr.",
+    "scope": "Research-only script, tests, workflow and evidence artifacts; no production selector, model, feature schema or baseline changes.",
+    "rationale": "The 55 complete-metadata controls have missing raw rows in at least one band. A full-parent row-count reconciliation is required to distinguish SNR filtering from archive incompleteness or SourceID mapping errors."
+  },
+  "expected_improvement": [
+    "Verify all raw archive rows, member sizes, row counts, CRC and SHA-256.",
+    "Produce per-object raw/valid/SNR/flag counts for all 781,602 parent IDs.",
+    "Compare SNR candidate sets with the reconstructed 741,786 candidate IDs and the 730,184 Table4 reference.",
+    "Quantify Table2 Ng/Nr versus raw row-count differences by membership cohort.",
+    "Identify all discrepant SourceIDs for follow-up coordinate and image-quality tracing."
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "Dependency Audit failed for CVE-2026-114613 in msgpack==1.2.2.",
+        "after": "Pending fresh CI; msgpack==1.2.3 is pinned on the PR branch.",
+        "evidence": "CI runs 40597691322 and 40638865397; PR #238"
+      },
+      "correctness": {
+        "before": "Only residual and 55-control subsets had raw row-count/SNR diagnostics. The 55-control audit was partial and the full-parent raw count distribution was unknown.",
+        "after": "All 781,602 Table2 objects were scanned. 741,786 raw two-band SNR candidates were reconstructed (11,602 candidate-only, zero published-only). Four-core metadata completeness selects exactly 730,184 Table4 objects within the candidate set (TP=730,184, FP=0, FN=0); the parent-wide predicate admits 55 extra objects. 100 objects have a raw/Table2 count mismatch: 91 g-band and 25 r-band mismatch instances.",
+        "evidence": "Workflow 43600721277; report SHA-256 a9b993beb3c50e4a77fd01d7a73333928b5d927ed006553ac4b99ada67460152.",
+        "status": "MEASURED"
+      },
+      "reproducibility": {
+        "before": "Existing raw audits covered bounded residual/control subsets, not the complete 781,602-object parent.",
+        "after": "Both raw archives and decompressed members passed SHA-256, byte count, row count and CRC verification. Full object TSV SHA-256 383976b9c73dc8e6ef71beab92aabccc2f89a4fb4b56a6969e8f623b3162cb2a; mismatch TSV SHA-256 d33c4dc3c575e520b867d84a1b9424368b2c44176f15651abba20b585ef0c8d5; artifact digest sha256:d92a4b00c1958916efa3e6bc0c9e1d2a8a135553f47278ec64701dc06ee3a2aa.",
+        "evidence": "Workflow 43600721277 on standard GitHub-hosted ubuntu-latest runner; 781,602 object reconciliation rows and 100 mismatch rows.",
+        "status": "MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Workflow 43600721277 completed successfully on ubuntu-latest.",
+      "All 781,602 parent objects were reconciled using the pinned Table2/Table4 crosswalk.",
+      "Both archive and member SHA-256, byte count, row count and CRC checks passed.",
+      "The report and both object-level TSV outputs were uploaded and their hashes recorded."
+    ]
+  },
+  "failure_analysis": {
+    "status": "UNRESOLVED",
+    "root_causes": [
+      "The 11,602 residuals pass the tested raw two-band SNR reconstruction but fail the four-field Table2 complete-case predicate.",
+      "The exact role of the four-field predicate in the publisher's method is undocumented and remains unproven.",
+      "The 55 four-field-only controls have no dual-band raw coverage in the Zenodo attachments despite positive Table2 Ng/Nr.",
+      "100 objects have one or more raw/Table2 count mismatches, including published Table4 members."
+    ],
+    "limitations": [
+      "Zenodo raw attachments do not contain image-level INFOBITS.",
+      "Zenodo g_flag/r_flag are not proven equivalent to DR2 catflags.",
+      "The CDS ReadMe says the r attachment has 89,697,393 records while the checksum-pinned Zenodo r member yielded 109,971,576; this archive/documentation discrepancy must be resolved.",
+      "A row-count mismatch does not by itself prove low SNR, duplicate detections or incorrect SourceID mapping.",
+      "The Zenodo record's field description calls the epoch HJD, while the CDS ReadMe calls the corresponding data-file field MJD. The actual numeric range in the attached bytes must be measured before any phase-fold interpretation is accepted."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Approximate, exact and inverse-error SNR formulas yield the same 741,786 candidate set on the pinned archives.",
+      "The tested flag<32768 and flag!=32768 policies do not change the candidate set; flag==0 removes 5,472 published members.",
+      "Four-field completeness yields an exact Table4 split inside the reconstructed SNR candidates, but 55 more parent objects also have all four fields.",
+      "The raw attachments omit one or both bands for 55 of those controls; none has both raw bands.",
+      "The full parent has 100 raw/Table2 count-mismatch objects across residual, Table4, control and other-parent cohorts."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Trace all 100 mismatch objects to exact raw epochs and source coordinates.",
+      "Search nearby alternate SourceIDs for objects with missing raw rows.",
+      "Inspect duplicate MJD/HJD records, coordinate scatter, flag counts and photometric errors.",
+      "Resolve the CDS ReadMe versus Zenodo r-member row-count discrepancy.",
+      "Recover image-level INFOBITS and establish the exact g_flag/r_flag mapping.",
+      "Reconstruct the Chen selector stage by stage and perform final independent membership validation.",
+      "Resolve HJD versus MJD semantics using numeric raw epochs and the exact Zenodo/ CDS file versions; rerun all phase-derived analyses if the current conversion is wrong."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not call the 55 controls low-SNR failures while raw rows are absent.",
+    "Do not infer publisher intent from exact count matching.",
+    "Do not equate Zenodo g_flag/r_flag with catflags without proof.",
+    "Do not change production selectors, models or v0.2.0.",
+    "Prioritize the 100-object raw-row provenance investigation."
+  ]
+}

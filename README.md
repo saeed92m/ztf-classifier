@@ -281,6 +281,7 @@ Primary environment:
 * WSL2
 
 The repository contains reproducibility, provenance, checksum validation, ingestion diagnostics, and artifact-contract components intended to make model production and inference auditable. CI uses the committed `requirements.lock` environment captured from a verified Python 3.11.16 Ubuntu runner. The CI gate also validates formatting, coverage reporting, package builds, wheel installation, and dependency security auditing.
+- Minimum supported version: Python 3.11.5 (the reference environment uses Python 3.11.16).
 
 ## Validation status
 
