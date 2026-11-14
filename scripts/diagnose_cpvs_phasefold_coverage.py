@@ -12,6 +12,8 @@ import hashlib
 import json
 import math
 import statistics
+import subprocess
+import tempfile
 import zipfile
 import zlib
 from collections import defaultdict
@@ -25,6 +27,10 @@ ARCHIVES = {
         "threshold": 2.5,
         "mag_index": 4,
         "err_index": 5,
+        "member_sha256": "366aaf3539f83955bb1e29799df9e63005a9eb682f4f56d0807545a3534b0f16",
+        "member_size": 5034066142,
+        "member_rows": 89697393,
+        "member_crc32": "d2f33aa0",
     },
     "r": {
         "member": "ztf2r",
@@ -32,6 +38,10 @@ ARCHIVES = {
         "threshold": 3.0,
         "mag_index": 4,
         "err_index": 5,
+        "member_sha256": "78df6d0b22099a7e5c6e74b897682c6ab94f90d5f9e887d4b0b3b152514e50fe",
+        "member_size": 6175667360,
+        "member_rows": 109971576,
+        "member_crc32": "225495a0",
     },
 }
 LN10_OVER_2P5 = math.log(10.0) / 2.5
@@ -248,43 +258,76 @@ def scan_archive(
     band: str,
     objects: dict[int, dict[str, Any]],
 ) -> dict[str, Any]:
+    """Scan a pinned ZIP member through Info-ZIP and verify its full byte stream.
+
+    Python's ZipExtFile raised BadZipFile on the multi-gigabyte ZIP64 g member
+    although the same immutable archive passed the repository's prior full scan.
+    Use the already-validated Info-ZIP streaming path, then verify SHA-256, size,
+    row count and CRC independently before accepting any phase metrics.
+    """
     config = ARCHIVES[band]
-    digest = hashlib.sha256()
-    member_digest = hashlib.sha256()
-    member_bytes = 0
-    member_crc = 0
-    malformed = 0
-    rows_total = 0
+    archive_digest = hashlib.sha256()
+    with archive_path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            archive_digest.update(chunk)
+    observed_archive_sha = archive_digest.hexdigest()
+    if observed_archive_sha != config["sha256"]:
+        raise ValueError(
+            f"{band} archive SHA-256 mismatch: {observed_archive_sha}"
+        )
+
+    with zipfile.ZipFile(archive_path) as archive:
+        members = [
+            name
+            for name in archive.namelist()
+            if Path(name).name == config["member"] and "__MACOSX" not in name
+        ]
+        if len(members) != 1:
+            raise ValueError(
+                f"Expected one {config['member']} member; found {members}"
+            )
+        member_name = members[0]
+        info = archive.getinfo(member_name)
+        central_crc = info.CRC
+        central_size = info.file_size
+    if f"{central_crc:08x}" != config["member_crc32"]:
+        raise ValueError(
+            f"{band} central-directory CRC mismatch: {central_crc:08x}"
+        )
 
     observed: dict[int, dict[str, Any]] = {
-        sid: {"valid": [], "snr_qualified": [], "flag_lt_32768": [], "flag_zero": [], "raw_rows": 0,
-              "flag_counts": defaultdict(int)}
+        sid: {
+            "valid": [],
+            "snr_qualified": [],
+            "flag_lt_32768": [],
+            "flag_zero": [],
+            "raw_rows": 0,
+            "flag_counts": defaultdict(int),
+        }
         for sid in objects
     }
 
-    h = hashlib.sha256()
-    with archive_path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            h.update(chunk)
-    if h.hexdigest() != config["sha256"]:
-        raise ValueError(f"{band} archive SHA-256 mismatch: {h.hexdigest()}")
-
-    with zipfile.ZipFile(archive_path) as archive:
-        members = [name for name in archive.namelist() if Path(name).name == config["member"] and "__MACOSX" not in name]
-        if len(members) != 1:
-            raise ValueError(f"Expected one {config['member']} member; found {members}")
-        member_name = members[0]
-        info = archive.getinfo(member_name)
-        with archive.open(member_name, "r") as stream:
-            for raw in stream:
+    member_digest = hashlib.sha256()
+    member_bytes = 0
+    member_crc = 0
+    rows_total = 0
+    malformed = 0
+    stderr_text = ""
+    returncode: int | None = None
+    try:
+        with tempfile.TemporaryFile() as stderr_file:
+            process = subprocess.Popen(
+                ["unzip", "-p", str(archive_path), member_name],
+                stdout=subprocess.PIPE,
+                stderr=stderr_file,
+            )
+            if process.stdout is None:
+                raise RuntimeError("Info-ZIP did not expose a stdout stream")
+            for raw in process.stdout:
                 member_digest.update(raw)
                 member_bytes += len(raw)
                 member_crc = zlib.crc32(raw, member_crc)
-                try:
-                    fields = parse_line(raw)
-                except (UnicodeDecodeError, csv.Error):
-                    malformed += 1
-                    continue
+                fields = parse_line(raw)
                 if not fields:
                     continue
                 if len(fields) != 7:
@@ -293,28 +336,41 @@ def scan_archive(
                 try:
                     sid = int(fields[0])
                 except ValueError:
-                    # Some files contain column headers. They do not count as data rows.
+                    malformed += 1
                     continue
                 rows_total += 1
                 if sid not in observed:
                     continue
+
                 item = observed[sid]
                 item["raw_rows"] += 1
                 item["flag_counts"][fields[6]] += 1
-                hjd, mag, magerr = num(fields[3]), num(fields[4]), num(fields[5])
-                if hjd is None or mag is None or mag == 0 or magerr is None or magerr <= 0:
+                hjd = num(fields[3])
+                mag = num(fields[4])
+                magerr = num(fields[5])
+                if (
+                    hjd is None
+                    or mag is None
+                    or mag == 0
+                    or magerr is None
+                    or magerr <= 0
+                ):
                     continue
                 try:
                     snr = 1.0 / math.expm1(magerr * LN10_OVER_2P5)
                 except (OverflowError, ZeroDivisionError):
                     snr = 0.0
-                flag = None
                 try:
                     flag = int(fields[6])
                 except (TypeError, ValueError):
-                    pass
+                    flag = None
                 phase = ((hjd - HJD_TO_MJD) / objects[sid]["period"]) % 1.0
-                row = {"phase": phase, "magnitude": mag, "mag_error": magerr, "snr_exact": snr}
+                row = {
+                    "phase": phase,
+                    "magnitude": mag,
+                    "mag_error": magerr,
+                    "snr_exact": snr,
+                }
                 item["valid"].append(row)
                 if snr >= config["threshold"]:
                     item["snr_qualified"].append(row)
@@ -323,22 +379,45 @@ def scan_archive(
                 if flag == 0:
                     item["flag_zero"].append(row)
 
-        member_sha = member_digest.hexdigest()
-        if member_bytes != info.file_size:
-            raise ValueError(f"{band} member size mismatch: {member_bytes} != {info.file_size}")
-        if member_crc & 0xFFFFFFFF != info.CRC:
-            raise ValueError(f"{band} member CRC mismatch")
-        if malformed:
-            raise ValueError(f"{band} archive has {malformed} malformed rows")
+            process.stdout.close()
+            returncode = process.wait()
+            stderr_file.seek(0)
+            stderr_text = stderr_file.read().decode("utf-8", errors="replace")
+    except FileNotFoundError as exc:
+        raise RuntimeError("The Ubuntu runner must provide the 'unzip' utility") from exc
 
-    for sid, item in observed.items():
+    member_sha = member_digest.hexdigest()
+    crc_text = f"{member_crc & 0xFFFFFFFF:08x}"
+    errors: list[str] = []
+    if returncode != 0:
+        errors.append(f"Info-ZIP exit code {returncode}: {stderr_text[-500:]}")
+    if member_sha != config["member_sha256"]:
+        errors.append(f"{band} member SHA-256 mismatch: {member_sha}")
+    if member_bytes != config["member_size"]:
+        errors.append(f"{band} member size mismatch: {member_bytes}")
+    if rows_total != config["member_rows"]:
+        errors.append(f"{band} member row count mismatch: {rows_total}")
+    if crc_text != config["member_crc32"]:
+        errors.append(f"{band} member CRC mismatch: {crc_text}")
+    if central_size != member_bytes % (2**32):
+        errors.append(
+            f"{band} central size mismatch: {central_size} != {member_bytes % (2**32)}"
+        )
+    if malformed:
+        errors.append(f"{band} member has {malformed} malformed rows")
+    if errors:
+        raise ValueError("; ".join(errors))
+
+    for item in observed.values():
         item["flag_counts"] = dict(sorted(item["flag_counts"].items()))
         for key in ("valid", "snr_qualified", "flag_lt_32768", "flag_zero"):
             item[key] = phase_metrics([x["phase"] for x in item[key]])
     return {
-        "archive_sha256": config["sha256"],
+        "archive_sha256": observed_archive_sha,
         "member_sha256": member_sha,
         "member_bytes": member_bytes,
+        "member_crc32": crc_text,
+        "central_directory_crc32": f"{central_crc:08x}",
         "rows_total": rows_total,
         "malformed_rows": malformed,
         "objects": observed,
