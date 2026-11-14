@@ -979,3 +979,25 @@ At commit `7f74ec098cbec04a0f6884948b7e00617c71cba0`:
 - MGPR robustness and mismatch-lineage workflows: in progress.
 
 These engineering checks do not establish scientific membership. PR #285 remains Draft and issue #170 remains Open. No production selector, model, features, taxonomy, benchmark or v0.2.0 baseline has changed.
+
+
+### Primary-source equation clarification
+
+Chan et al. (2022), Section 2.1, Equation (1), defines the phase as
+
+```
+phi = t / tau - floor(t / tau)
+```
+
+and explicitly defines `t` as time in Modified Julian Date (MJD), with `tau` as the common period. The published equation does not use the Table2 `T0` field.
+
+Source: https://doi.org/10.3847/1538-4357/ac69d4
+
+The CDS ReadMe for Chen et al. describes the Zenodo-derived `ztf2g.dat` and `ztf2r.dat` time field as MJD, with a documented range of 58197.15–58725.2. It also states that these light curves were downloaded from the Zenodo record. Source: https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/ReadMe
+
+The Zenodo record's text description labels the raw field HJD. Therefore, the input-file bytes must determine the conversion:
+- If the downloaded ZIP members contain HJD-like values near 2.4 million, convert to MJD by subtracting 2400000.5 before applying Equation (1).
+- If the downloaded ZIP members already contain MJD-like values near 58,000, do not subtract 2400000.5.
+- Do not substitute Table2 `T0` for the phase origin unless a source-backed implementation requires it.
+
+The mismatch-lineage workflow records actual epoch minima/maxima for the raw observations of the 100 affected objects. Until that report identifies the input scale, existing phase-fold and MGPR results are provisional and must not support a scientific membership decision.
