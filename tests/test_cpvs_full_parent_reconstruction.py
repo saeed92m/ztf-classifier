@@ -1,6 +1,6 @@
 import unittest
 
-from scripts.diagnose_cpvs_full_parent_reconstruction import confusion, pos
+from scripts.diagnose_cpvs_full_parent_reconstruction import cohort, confusion, pos
 
 
 class FullParentReconstructionTests(unittest.TestCase):
@@ -10,6 +10,12 @@ class FullParentReconstructionTests(unittest.TestCase):
         self.assertFalse(pos("-0.1"))
         self.assertFalse(pos("nan"))
         self.assertFalse(pos(""))
+
+    def test_cohort_partition_is_explicit(self):
+        self.assertEqual(cohort(1, {1}, {2}, {3}), "table4_member")
+        self.assertEqual(cohort(2, {1}, {2}, {3}), "candidate_only_residual")
+        self.assertEqual(cohort(3, {1}, {2}, {3}), "four_field_only_55")
+        self.assertEqual(cohort(4, {1}, {2}, {3}), "other_parent")
 
     def test_confusion_matrix_is_object_level(self):
         result = confusion({1, 2, 3}, {2, 3, 4})
