@@ -1,0 +1,94 @@
+name: CPVS mismatch object coordinate and epoch lineage
+
+on:
+  push:
+    branches:
+      - research/cpvs-snr-formula-audit-20261112
+    paths:
+      - scripts/diagnose_cpvs_mismatch_lineage.py
+      - tests/test_cpvs_mismatch_lineage.py
+      - .github/workflows/cpvs-mismatch-lineage.yml
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: cpvs-mismatch-lineage-\${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  mismatch-lineage:
+    name: Trace 100 raw/Table2 mismatch objects
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Download pinned full-parent mismatch artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cpvs-full-parent-reconstruction-evidence
+          path: inputs/full-parent
+          repository: \${{ github.repository }}
+          run-id: 43600721277
+          github-token: \${{ github.token }}
+
+      - name: Download pinned Table2 source artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cpvs-raw-cds-reconciliation
+          path: inputs/reconciliation
+          repository: \${{ github.repository }}
+          run-id: 41367972395
+          github-token: \${{ github.token }}
+
+      - name: Download checksum-pinned Zenodo g/r archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p raw reports
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \
+            --output raw/ztf2g.zip
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" \
+            --output raw/ztf2r.zip
+          echo "47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9  raw/ztf2g.zip" | sha256sum --check -
+          echo "48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74  raw/ztf2r.zip" | sha256sum --check -
+
+      - name: Run mismatch lineage tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p "test_cpvs_mismatch_lineage.py" -v
+
+      - name: Trace mismatch rows and coordinate aliases
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/diagnose_cpvs_mismatch_lineage.py \
+            --table2 inputs/reconciliation/raw/table2.dat \
+            --mismatches inputs/full/cpvs_full_parent_rowcount_mismatches.tsv \
+            --g-archive raw/ztf2g.zip \
+            --r-archive raw/ztf2r.zip \
+            --output-dir reports
+
+      - name: Upload compact lineage evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-mismatch-lineage-evidence
+          path: |
+            reports/cpvs_mismatch_lineage_report.json
+            reports/cpvs_mismatch_object_lineage.tsv
+            reports/cpvs_mismatch_coordinate_aliases.tsv
+          if-no-files-found: error
+          retention-days: 14
