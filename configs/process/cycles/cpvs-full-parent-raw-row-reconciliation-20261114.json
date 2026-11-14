@@ -13,7 +13,9 @@
   "baseline": {
     "parent_artifact": "scientific-validation-heavy from workflow run 38635891449; artifact SHA-256 346cd0a22d1490c9d3c5f6ff290ca2377e1c5458895c0c0d4b616b0708630c36",
     "reconciliation_artifact": "cpvs-raw-cds-reconciliation from workflow run 41367972395; artifact SHA-256 130f3db65827afd83f5050e7eb91eb1cf7f6432e85456fd16586c8000a9aa6be",
-    "raw_photometry": "Zenodo record 3886372; g archive SHA-256 47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9; r archive SHA-256 48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74"
+    "raw_photometry": "Zenodo record 3886372; g archive SHA-256 47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9; r archive SHA-256 48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74",
+    "table2_readme_sha256": "e57991d9e086155b9da14eaca7a6abc46a876a2dce58b397a90c915ec309e24a",
+    "table4_readme_sha256": "0a7ec0dac13b155fdd63322dc9b0230de42fd05169e0e02c70f68fce0bc67d6a"
   },
   "change": {
     "proposed": "Run a single-pass, checksummed scan of all 781,602 Table2 SourceIDs against both raw Zenodo archives. Count raw and numeric-valid rows, evaluate SNR formula and flag-policy comparators, and compare per-object counts with Table2 Ng/Nr.",
