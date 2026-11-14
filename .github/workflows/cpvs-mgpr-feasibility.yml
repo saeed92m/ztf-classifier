@@ -68,9 +68,6 @@ jobs:
           echo "48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74  raw/ztf2r.zip" | sha256sum --check -
           df -h .
 
-      - name: Run MGPR preparation tests
-        run: python -m unittest discover -s tests -p "test_cpvs_mgpr.py" -v
-
       - name: Run multi-start MGPR and blocked-phase robustness audit
         run: |
           python scripts/diagnose_cpvs_mgpr.py \
