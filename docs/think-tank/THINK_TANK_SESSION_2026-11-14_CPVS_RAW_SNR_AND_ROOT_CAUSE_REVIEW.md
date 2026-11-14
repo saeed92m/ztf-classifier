@@ -944,6 +944,10 @@ The full-data fit now uses eight deterministic initial parameter vectors, all ch
 
 Workflow [43612080772](https://github.com/saeed92m/ztf-classifier/actions/runs/43612080772) is in progress and is downloading the pinned raw archives. No eight-start or blocked-phase result has been accepted yet. The completed 34-object two-start feasibility result in Section 21 remains valid as a bounded numerical result only.
 
+### Critical time-coordinate caveat
+
+The published source descriptions conflict: the Zenodo record describes the raw time field as **HJD**, while the CDS ReadMe labels the corresponding data field **MJD**. The existing phase-fold scanner subtracts `2400000.5`; that conversion is valid for HJD-like input and invalid for already-MJD input. The new lineage workflow records actual raw numeric time ranges to distinguish these cases. Until it completes, the previous phase-coverage and MGPR results are provisional. If the raw bytes are MJD-like, the phase-fold and MGPR experiments must be rerun with the correct convention before their scientific interpretation is accepted.
+
 ### B. Raw/Table2 mismatch coordinate and epoch lineage
 
 Added:
