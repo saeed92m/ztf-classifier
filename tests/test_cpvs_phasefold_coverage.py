@@ -43,7 +43,7 @@ class PhaseFoldCoverageTests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("unzip"), "Info-ZIP unzip is not installed")
     def test_scan_archive_streams_member_and_verifies_integrity(self):
-        raw_member = b"100\\t0\\t0\\t2400001.5\\t17.0\\t0.1\\t0\\n"
+        raw_member = b"100\t0\t0\t2400001.5\t17.0\t0.1\t0\n"
         with tempfile.TemporaryDirectory() as tmp:
             archive_path = Path(tmp) / "tiny-ztf2g.zip"
             with zipfile.ZipFile(
