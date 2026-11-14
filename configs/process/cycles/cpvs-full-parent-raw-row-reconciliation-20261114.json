@@ -55,7 +55,8 @@
       "The Table2/Table4 crosswalk and 55-control artifact hashes are pinned.",
       "The full-parent workflow verifies Table2, Table4 crosswalk, candidate set, residual set, 55 controls, raw archive hashes, member SHA-256, byte counts, row counts and CRC.",
       "Zenodo flag fields are treated as diagnostic fields only; no catflags equivalence is assumed.",
-      "Image-level INFOBITS are not available in the Zenodo attachments."
+      "Image-level INFOBITS are not available in the Zenodo attachments.",
+      "Initial full-parent run 43599229387 stopped before scanning because a central-directory size/CRC guard rejected the ZIP member. The decompressed-member integrity checks already used by the successful phase-fold workflow are now applied after streaming: exact bytes, rows, SHA-256 and CRC."
     ]
   },
   "failure_analysis": {
@@ -86,7 +87,8 @@
       "Run the full-parent raw reconciliation workflow.",
       "Explain all raw/Table2 Ng/Nr count mismatches.",
       "Verify SNR candidate membership at object level for all 781,602 IDs.",
-      "Resolve 55-control raw row absence and 14 residual row-count mismatches."
+      "Resolve 55-control raw row absence and 14 residual row-count mismatches.",
+      "Rerun full-parent scan after ZIP member validation correction."
     ]
   },
   "decision": "BLOCKED",
