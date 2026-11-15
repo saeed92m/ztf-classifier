@@ -8,7 +8,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import random
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -179,9 +178,12 @@ def run_star_embed_feature_probe(
         "cross_split_object_id_overlap": overlap_counts,
     }
     has_leakage = any(duplicate_counts.values()) or any(overlap_counts.values())
+    sample_complete = selected_n == sample_size
     status = (
         "BLOCKED_SOURCE_SPLIT_INTEGRITY"
         if has_leakage
+        else "BLOCKED_INSUFFICIENT_CLEAN_TEST_SAMPLE"
+        if not sample_complete
         else "PASS_INPUT_FEATURE_PROBE"
     )
     report = {
@@ -199,7 +201,7 @@ def run_star_embed_feature_probe(
         "feature_vectors_generated": len(feature_rows),
         "feature_vector_width": len(V0_2_FEATURES),
         "feature_names_sha256_ordered": hashlib.sha256(
-            "\\n".join(V0_2_FEATURES).encode("utf-8")
+            "\n".join(V0_2_FEATURES).encode("utf-8")
         ).hexdigest(),
         "sample_source_split": "test",
         "sample_exclusions": {
@@ -230,7 +232,7 @@ def run_star_embed_feature_probe(
         ],
     }
     (output / "star_embed_input_probe.json").write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\\n",
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return report
@@ -249,7 +251,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"status={report['status']}")
     print(f"feature_vectors_generated={report['feature_vectors_generated']}")
     print(f"report={args.output_dir / 'star_embed_input_probe.json'}")
-    blocked = report["status"] == "BLOCKED_SOURCE_SPLIT_INTEGRITY"
+    blocked = report["status"] != "PASS_INPUT_FEATURE_PROBE"
     return 2 if blocked or report["failures"] else 0
 
 
