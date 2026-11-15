@@ -1,5 +1,6 @@
 """Regression tests for the independent StarEmbed input path."""
 import copy
+import json
 
 import numpy as np
 import pyarrow as pa
@@ -103,3 +104,32 @@ def test_star_embed_feature_probe_blocks_cross_split_leakage_but_runs_clean_samp
     assert report["status"] == "BLOCKED_SOURCE_SPLIT_INTEGRITY"
     assert report["sample_exclusions"]["test_objects_overlapping_other_splits"] == 1
     assert report["feature_vectors_generated"] == 1
+
+def test_star_embed_feature_probe_blocks_when_clean_sample_is_smaller_than_requested(
+    tmp_path,
+) -> None:
+    data_dir = tmp_path / "data"
+    output_dir = tmp_path / "output"
+    data_dir.mkdir()
+    rows_by_file = {
+        ARTIFACTS[0]: [_row("train-1")],
+        ARTIFACTS[1]: [_row("train-2")],
+        ARTIFACTS[2]: [_row("validation-1")],
+        ARTIFACTS[3]: [_row("test-1"), _row("test-2")],
+        ARTIFACTS[4]: [_row("anom-1", "Beta_Lyrae")],
+    }
+    for filename, rows in rows_by_file.items():
+        pq.write_table(pa.Table.from_pylist(rows), data_dir / filename)
+
+    report = run_star_embed_feature_probe(
+        data_dir, output_dir, sample_size=3, seed=7
+    )
+
+    assert report["selected_clean_test_objects"] == 2
+    assert report["feature_vectors_generated"] == 2
+    assert report["status"] == "BLOCKED_INSUFFICIENT_CLEAN_TEST_SAMPLE"
+    saved_report = json.loads(
+        (output_dir / "star_embed_input_probe.json").read_text(encoding="utf-8")
+    )
+    assert saved_report["status"] == "BLOCKED_INSUFFICIENT_CLEAN_TEST_SAMPLE"
+
