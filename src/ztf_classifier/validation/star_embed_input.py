@@ -36,7 +36,7 @@ def star_embed_row_to_internal_lc(row: dict[str, Any]) -> pd.DataFrame:
     """
     bands = row.get("bands_data")
     if not isinstance(bands, dict):
-        raise ValueError("bands_data must be a struct/dict")
+        raise TypeError("bands_data must be a struct/dict")
 
     records: list[dict[str, Any]] = []
     for band, fid in BAND_TO_FID.items():
@@ -44,7 +44,7 @@ def star_embed_row_to_internal_lc(row: dict[str, Any]) -> pd.DataFrame:
         if payload is None:
             continue
         if not isinstance(payload, dict):
-            raise ValueError(f"{band} band payload must be a struct/dict")
+            raise TypeError(f"{band} band payload must be a struct/dict")
         required = ("target", "past_feat_dynamic_real", "mjd")
         missing = [name for name in required if payload.get(name) is None]
         if missing:
@@ -146,7 +146,7 @@ def run_star_embed_feature_probe(
             record: dict[str, Any] = {
                 "sourceid": sourceid,
                 "class_str": str(row.get("class_str", "")),
-                "input_rows_g_r": int(len(internal)),
+                "input_rows_g_r": len(internal),
                 "g_n_obs": float(features.get("g_n_obs", np.nan)),
                 "r_n_obs": float(features.get("r_n_obs", np.nan)),
                 "g_ls_best_period_days": float(
@@ -227,7 +227,7 @@ def run_star_embed_feature_probe(
             "No model was trained or changed.",
             "StarEmbed labels remain source-provided benchmark labels.",
             "The sample is diagnostic, not population-level performance evidence.",
-            "No raw source arrays are written to the report; only derived feature "
+            ("No raw source arrays are written to the report; only derived feature ")
             "rows are emitted.",
         ],
     }
