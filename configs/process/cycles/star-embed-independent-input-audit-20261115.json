@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "star-embed-independent-input-audit-20261115",
+  "objective": "Audit the pinned StarEmbed ZTF_40k source splits and test whether the frozen v0.2.0 42-feature input path can process a deterministic clean subset without training or predicting.",
+  "previous_knowledge_consumed": [
+    "Issue #210 and PR #211 recorded one duplicate SourceID within the StarEmbed train split and one train/test SourceID overlap; source lineage and split-generation semantics remain unresolved.",
+    "StarEmbed has a seven-class taxonomy and is not mapped to the frozen 15-class v0.2.0 production taxonomy.",
+    "The experiment is input compatibility only. It must not report model accuracy or alter the v0.2.0 model, features, class order, benchmark, or acceptance criteria.",
+    "The initial PR #290 CI run 43684816288 failed Ruff because star_embed_input.py had a missing comma and skipped downstream stages.",
+    "The same initial workflow contained doubled shell continuation characters in the pytest and acquisition-manifest checks; the pytest command could pass a literal backslash argument."
+  ],
+  "baseline": {
+    "revision": "research/star-embed-input-20261115@81308e26456e54b94de54244df57e95e6134606c",
+    "source": "StarEmbed ZTF_40k pinned benchmark manifest configs/benchmarks/star_embed_ztf_40k.json",
+    "model": "Frozen v0.2.0 feature extractor only; no model inference",
+    "feature_contract": "V0_2_FEATURES; 42 ordered features",
+    "sample": {
+      "size": 50,
+      "seed": 20261115,
+      "split": "test",
+      "policy": "exclude duplicated test IDs and IDs overlapping any other split"
+    }
+  },
+  "change": {
+    "proposed": "Repair the Python syntax defect and shell line continuations, then run the pinned StarEmbed source integrity audit and deterministic 50-object feature-input probe.",
+    "scope": "Research branch only: dedicated workflow, source audit, input adapter, focused tests and this lifecycle record. No production or frozen baseline changes.",
+    "rationale": "The earlier CI failure was an engineering defect that prevented the independent-input experiment from running. It must be repaired before interpreting any StarEmbed evidence."
+  },
+  "expected_improvement": [
+    "Run focused unit tests for StarEmbed schema mapping, source split integrity and feature output.",
+    "Verify the five pinned Parquet files and their hashes.",
+    "Report duplicate IDs and cross-split overlaps without weakening fail-closed behavior.",
+    "Generate up to 50 deterministic clean-test feature vectors in the frozen v0.2.0 feature order.",
+    "Keep all StarEmbed classifier-performance claims out of scope."
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "CI run 43684816288 failed at Ruff lint due to a syntax error in star_embed_input.py; downstream test, build and dependency stages were skipped.",
+        "after": "Format Check and Lint passed on commit 3ef4682f4f3ee75d796cde46995fd036cc662fb1. Cumulative Lifecycle Gate failed because this meaningful PR change had no cycle record. A new cycle record is being added; fresh CI is required.",
+        "evidence": "PR #290; CI run 43815904979; lifecycle job 133128541574."
+      },
+      "correctness": {
+        "before": "The feature-input module had a Python syntax error, and workflow shell continuations were malformed.",
+        "after": "The missing list-item comma was corrected. Two doubled shell continuation characters were reduced to one. The corrected commands are visible in the PR head; focused tests and the source-backed probe have not yet run on the corrected head.",
+        "evidence": "Commits 517c68becd50a4f147ac10f79573bc2ba339e378 and 3ef4682f4f3ee75d796cde46995fd036cc662fb1."
+      },
+      "reproducibility": {
+        "before": "The PR defines a pinned source manifest and deterministic seed, but no successful current-head acquisition artifact has been inspected.",
+        "after": "Pending fresh source-backed workflow execution and artifact hash verification.",
+        "evidence": "configs/benchmarks/star_embed_ztf_40k.json; PR #290 branch."
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "CodeQL, Product Scope Audit and Scientific Validation passed on commit 3ef4682f4f3ee75d796cde46995fd036cc662fb1.",
+      "Format Check and Ruff Lint passed on CI run 43815904979.",
+      "The Cumulative Lifecycle Gate failed because the PR did not include a machine-readable cycle record.",
+      "The test suite, package build, dependency audit and StarEmbed acquisition workflow have not yet completed on the corrected head."
+    ],
+    "blocker": "Add the required lifecycle record, rerun CI, verify the dedicated source-backed StarEmbed workflow, inspect its artifact and review source split integrity."
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The initial Ruff failure was caused by a missing comma between adjacent string literals in the limitations list in star_embed_input.py.",
+      "The workflow's pytest and acquisition-manifest shell commands contained two trailing backslashes instead of one, so shell continuation semantics were incorrect.",
+      "The corrected PR head then failed the lifecycle gate because the meaningful code/workflow changes did not include a cumulative cycle record."
+    ],
+    "limitations": [
+      "The source dataset has known duplicate and cross-split overlap risks; these remain scientific benchmark blockers.",
+      "A successful feature-input probe does not establish classifier accuracy, taxonomy compatibility or independent scientific validation.",
+      "The 50-object sample is diagnostic and cannot establish population-level performance.",
+      "No production model inference or training is in scope."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A code-level feature-input compatibility test must be separated from benchmark-label and classifier-performance validation.",
+      "Split-level duplicate and overlap checks must remain fail-closed.",
+      "Lifecycle records are required for meaningful PR changes and must state unverified work explicitly."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Rerun full CI after this cycle record is committed.",
+      "Verify focused tests pass on the corrected PR head.",
+      "Verify the dedicated StarEmbed workflow runs its pytest command and checks the acquisition manifest.",
+      "Inspect the acquired source audit report and exact duplicate/overlap IDs.",
+      "Inspect the 50-object input probe and confirm the feature width/order and all per-object failures.",
+      "Do not claim benchmark acceptance while any source split duplicate or cross-split overlap remains unexplained."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not train or run predictions on StarEmbed as if its seven classes map to the frozen 15-class production taxonomy.",
+    "Do not weaken duplicate or cross-split leakage checks.",
+    "Do not change the v0.2.0 feature definitions, model artifact, class order or benchmark.",
+    "Do not claim the 50-object probe completed until the source-backed artifact is inspected.",
+    "Keep PR #290 Draft until all engineering and source-backed evidence is reviewed."
+  ]
+}
