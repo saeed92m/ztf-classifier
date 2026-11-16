@@ -820,3 +820,15 @@ Current run [43818065884](https://github.com/saeed92m/ztf-classifier/actions/run
 - Coordinate/epoch trace: PENDING.
 
 No new scientific result is available yet.
+
+
+### ۱۸.۲. وضعیت جدید PR #290 پس از اصلاح وابستگی
+
+- Base PR #290: `security/soupsieve-cve-20261114`.
+- Current head: `4933558c1303cbd1a6a9bf8e7d6ff86cb1cc1c29`.
+- The current StarEmbed branch's `requirements.lock` now contains `soupsieve==4.1`.
+- The security base branch also contains `soupsieve==4.1`.
+- Scientific Validation run [43818154042](https://github.com/saeed92m/ztf-classifier/actions/runs/43818154042) passed.
+- No fresh complete CI run has yet verified Dependency Audit on this current head. The previous full CI run's Dependency Audit failure remains the last full-gate result.
+
+**Disposition:** the vulnerable pin is no longer present in the current StarEmbed branch, but do not mark the complete CI gate green until a fresh full run verifies it.
