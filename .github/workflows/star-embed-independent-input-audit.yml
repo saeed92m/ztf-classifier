@@ -1,0 +1,165 @@
+name: StarEmbed Independent Input Audit
+
+on:
+  push:
+    branches:
+      - "research/star-embed-input-*"
+    paths:
+      - ".github/workflows/star-embed-independent-input-audit.yml"
+      - "src/ztf_classifier/validation/star_embed_audit.py"
+      - "src/ztf_classifier/validation/star_embed_input.py"
+      - "tests/test_star_embed_audit.py"
+      - "tests/test_star_embed_input.py"
+      - "configs/benchmarks/star_embed_ztf_40k.json"
+      - "requirements.lock"
+      - "configs/process/cycles/star-embed-independent-input-audit-20261115.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-input-audit:
+    name: Acquire StarEmbed and run the frozen feature-input path
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11.16"
+          cache: pip
+
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip==26.2 setuptools==84.1.0 wheel==0.48.0
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Test source audit and independent input adapter
+        run: |
+          python -m pytest -q \
+            tests/test_star_embed_audit.py tests/test_star_embed_input.py
+
+      - name: Acquire the five pinned StarEmbed Parquet artifacts
+        env:
+          CODE_VERSION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p reports/scientific_validation/star_embed_input_audit/data
+          python -m ztf_classifier.validation acquire \
+            --benchmark-id star_embed_ztf_40k \
+            --output reports/scientific_validation/star_embed_input_audit/data \
+            --code-version "$CODE_VERSION"
+          test -s \
+            reports/scientific_validation/star_embed_input_audit/data.acquisition.json
+
+      - name: Audit source IDs and run 50-object v0.2 feature-input probe
+        id: source_audit
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -uo pipefail
+          root=reports/scientific_validation/star_embed_input_audit
+          data="$root/data"
+
+          # Keep both diagnostics running after a fail-closed source audit.
+          # The feature probe selects only unique test IDs absent from all other
+          # splits. Its report must still retain the global leakage blocker.
+          set +e
+          python -m ztf_classifier.validation.star_embed_audit \
+            --data-dir "$data" \
+            --output "$root/source_identity_audit.json" \
+            --sample-size 50 \
+            --seed 20261115
+          audit_rc=$?
+
+          python -m ztf_classifier.validation.star_embed_input \
+            --data-dir "$data" \
+            --output-dir "$root/input_probe" \
+            --sample-size 50 \
+            --seed 20261115
+          probe_rc=$?
+
+          python -m ztf_classifier.validation.star_embed_input \
+            --data-dir "$data" \
+            --output-dir "$root/input_probe_repeat" \
+            --sample-size 50 \
+            --seed 20261115
+          repeat_rc=$?
+
+          python - "$root" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          root = Path(sys.argv[1])
+          first = json.loads((root / "input_probe/star_embed_input_probe.json").read_text())
+          second = json.loads((root / "input_probe_repeat/star_embed_input_probe.json").read_text())
+          fields = (
+              "feature_rows_sha256",
+              "feature_names_sha256_ordered",
+              "feature_vectors_generated",
+              "feature_vector_width",
+              "selected_clean_test_objects",
+          )
+          differences = {
+              field: (first.get(field), second.get(field))
+              for field in fields
+              if first.get(field) != second.get(field)
+          }
+          if differences:
+              print(json.dumps({"logical_reproducibility": "FAIL", "differences": differences}, indent=2))
+              raise SystemExit(1)
+          print(json.dumps({
+              "logical_reproducibility": "PASS",
+              "feature_rows_sha256": first["feature_rows_sha256"],
+              "feature_vectors_generated": first["feature_vectors_generated"],
+              "feature_vector_width": first["feature_vector_width"],
+              "parquet_container_sha256_first": first.get("feature_parquet_sha256"),
+              "parquet_container_sha256_repeat": second.get("feature_parquet_sha256"),
+          }, indent=2))
+          PY
+          reproducibility_rc=$?
+          set -e
+
+          echo "audit_exit_code=$audit_rc" >> "$GITHUB_OUTPUT"
+          echo "probe_exit_code=$probe_rc" >> "$GITHUB_OUTPUT"
+          echo "repeat_exit_code=$repeat_rc" >> "$GITHUB_OUTPUT"
+          echo "reproducibility_exit_code=$reproducibility_rc" >> "$GITHUB_OUTPUT"
+          echo "audit_exit_code=$audit_rc"
+          echo "probe_exit_code=$probe_rc"
+          echo "repeat_exit_code=$repeat_rc"
+          echo "reproducibility_exit_code=$reproducibility_rc"
+          echo "Both feature probes and their logical comparison will be uploaded before the final gate."
+
+      - name: Upload compact diagnostic evidence only
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: star-embed-independent-input-audit
+          path: |
+            reports/scientific_validation/star_embed_input_audit/*.json
+            reports/scientific_validation/star_embed_input_audit/input_probe/*.json
+            reports/scientific_validation/star_embed_input_audit/input_probe/*.parquet
+            reports/scientific_validation/star_embed_input_audit/input_probe_repeat/*.json
+          if-no-files-found: warn
+
+      - name: Enforce independent source integrity gate after evidence upload
+        if: always()
+        env:
+          AUDIT_EXIT_CODE: ${{ steps.source_audit.outputs.audit_exit_code }}
+          PROBE_EXIT_CODE: ${{ steps.source_audit.outputs.probe_exit_code }}
+          REPEAT_EXIT_CODE: ${{ steps.source_audit.outputs.repeat_exit_code }}
+          REPRODUCIBILITY_EXIT_CODE: ${{ steps.source_audit.outputs.reproducibility_exit_code }}
+        run: |
+          set -euo pipefail
+          if [ "$AUDIT_EXIT_CODE" != "0" ] || [ "$PROBE_EXIT_CODE" != "0" ] || [ "$REPEAT_EXIT_CODE" != "0" ] || [ "$REPRODUCIBILITY_EXIT_CODE" != "0" ]; then
+            echo "FAIL-CLOSED: StarEmbed source integrity or input feature probe did not pass."
+            echo "audit_exit_code=$AUDIT_EXIT_CODE"
+            echo "probe_exit_code=$PROBE_EXIT_CODE"
+            echo "repeat_exit_code=$REPEAT_EXIT_CODE"
+            echo "reproducibility_exit_code=$REPRODUCIBILITY_EXIT_CODE"
+            exit 1
+          fi

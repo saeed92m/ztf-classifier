@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "star-embed-independent-input-audit-20261115",
+  "objective": "Audit the pinned StarEmbed ZTF_40k source splits and test whether the frozen v0.2.0 42-feature input path can process a deterministic clean subset without training or predicting.",
+  "previous_knowledge_consumed": [
+    "Issue #210 and PR #211 recorded one duplicate SourceID within the StarEmbed train split and one train/test SourceID overlap; source lineage and split-generation semantics remain unresolved.",
+    "StarEmbed has a seven-class taxonomy and is not mapped to the frozen 15-class v0.2.0 production taxonomy.",
+    "The experiment is input compatibility only. It must not report model accuracy or alter the v0.2.0 model, features, class order, benchmark, or acceptance criteria.",
+    "The first source-backed workflow acquired all five Parquet files and detected one duplicate train SourceID and one train/test overlap. The first attempt did not run the feature probe because GitHub Actions bash inherited errexit.",
+    "The public StarEmbed repository documents a class-stratified row-level split script. It does not deduplicate or group by SourceID. Its relation to the exact 2026-05 dataset build remains unverified."
+  ],
+  "baseline": {
+    "revision": "c50121d7c3f60d4eb45d97afad8af08e81a73b23",
+    "source": "StarEmbed/ZTF_40k, source version 2026-05 dataset snapshot",
+    "model": "Frozen v0.2.0 feature extractor only; no model inference",
+    "feature_contract": "V0_2_FEATURES; 42 ordered features",
+    "sample": {
+      "size": 50,
+      "seed": 20261115,
+      "split": "test",
+      "policy": "exclude duplicated test IDs and IDs overlapping any other split"
+    }
+  },
+  "change": {
+    "completed": "The source-audit workflow now captures both diagnostic return codes, runs the clean-test feature probe even when the global source audit fails, uploads both reports, and enforces the original fail-closed gate after evidence upload.",
+    "scope": "Research branch only: dedicated workflow and this lifecycle record. No production or frozen baseline changes.",
+    "rationale": "The source audit must not prevent collection of independent diagnostic evidence. The final benchmark gate must still reject any duplicate or cross-split object identity."
+  },
+  "expected_improvement": [
+    "Retain exact hashes and row counts for all five pinned Parquet artifacts.",
+    "Report duplicate IDs and cross-split overlaps without weakening fail-closed behavior.",
+    "Run the deterministic 50-object feature-input probe on unique test IDs that do not overlap any other split.",
+    "Upload source audit and feature probe outputs even when the global source-integrity gate fails.",
+    "Keep all StarEmbed classifier-performance claims out of scope."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The source audit returned exit code 2 and GitHub Actions bash stopped before the feature-input probe. The final gate received empty output values.",
+        "after": "The corrected workflow runs the source audit and both feature probes, captures all return codes, uploads reports, and enforces the original fail-closed gate. Run 43975760982 recorded audit=2, probe=2, repeat=2, logical_reproducibility=0."
+      },
+      "reproducibility": {
+        "before": "The first run had an acquired source manifest and identity report, but no feature-probe output.",
+        "after": "The same pinned snapshot was probed twice in workflow 43975760982. The canonical feature-row hash, feature order hash, vector count and width matched exactly. Both Parquet files also had the same container SHA-256. Earlier run 43974706084 had a different Parquet container hash; that older difference is not explained, but the two newest runs 43975629271 and 43975760982 both produced the same Parquet hash and logical content hash."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "This experiment verifies feature-input compatibility only. It does not validate classifier performance, taxonomy compatibility, source split integrity, or independent scientific validity."
+      }
+    },
+    "trade_off": "The workflow runs a diagnostic feature probe on a clean test subset even when the overall source split is blocked. It still fails the final gate while any global duplicate or cross-split overlap remains."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Source-backed workflow run 43972197924 completed. Focused tests passed: 10 passed in 1.60 seconds.",
+      "All five source Parquet files were acquired from the 2026-05 dataset snapshot. File SHA-256 values: train-00000-of-00002.parquet 6a84a4fe8706fa6cff2a908a2b3a0a89bab6e7d564fb53ebd56491757a8746bc; train-00001-of-00002.parquet 73cdd608cc3c8e102817317e51fc079fff52de6f46bdcd0ed9a3a4e708cd672d; validation-00000-of-00001.parquet 7652e00b09babff33f7a0ebcd3294e4854963b59f0c0d533115300c2aee64726; test-00000-of-00001.parquet 4ef77d676d399f8ceb2d6ab9caa652206309e590ebf7196f4477443fb8fe7d2c; anom-00000-of-00001.parquet 716f053acf17ff7697ec07fc886d75bc1440545f3c84459373541b566a0c83b1.",
+      "Train has 29047 rows and 29046 unique SourceIDs. Duplicate SourceID CSS_J164349.2+401208 occurs at combined-train row positions 16033 and 21298. Both rows have identical metadata and identical g/r/i array hashes.",
+      "Train/test overlap count is 1. CSS_J051729.2+083846 has identical metadata and identical g/r array hashes in both splits.",
+      "Validation has 4150 unique SourceIDs, test has 8301 unique SourceIDs, and anomaly split has 1087 unique SourceIDs.",
+      "The identity audit generated a deterministic 50-object test sample with seed 20261115.",
+      "The feature probe report states status BLOCKED_SOURCE_SPLIT_INTEGRITY, feature_path_status EXECUTED, selected_clean_test_objects 50, feature_vectors_generated 50, feature_vector_width 42, and zero per-object failures.",
+      "Feature order SHA-256: f4ae4079c62bb0be5b148e01c7b3e32ff9245f2a6ce7c22cc2a110e576d4a576.",
+      "Feature Parquet SHA-256: f62b4af6c5dbda1775daa24a2bde37ef538aa9fb13399dd9173e9c457c9a4a30.",
+      "Probe JSON SHA-256: 2bd0bf2744bb0c7a48081c9a2234ef488ce2cd60de82997dba47b8fe40ccb3c3.",
+      "Uploaded evidence artifact 14280220895 has SHA-256 ee94ef84d3012e9df7d9b9ff414283f6c86ff7ccc63d50bdde19921fb1c7ae01.",
+      "Both diagnostics returned exit code 2. The final workflow gate failed with these recorded codes. This is the expected fail-closed result while global split leakage remains.",
+      "Exact-head source-backed workflow 43975760982 completed. Focused tests: 11 passed in 1.61 seconds.",
+      "The workflow acquired all five pinned Parquet files from the 2026-05 snapshot with the same five SHA-256 values recorded in earlier evidence.",
+      "The source audit again found one duplicate Train SourceID CSS_J164349.2+401208 and one Train/Test overlap CSS_J051729.2+083846. The deterministic clean Test sample selected 50 objects.",
+      "The workflow ran the same 50-object feature probe twice against the same acquired snapshot. Both JSON reports were byte-identical and both feature Parquet files had the same SHA-256.",
+      "Both probes generated 50 vectors with width 42 and zero per-object failures. Feature order SHA-256: f4ae4079c62bb0be5b148e01c7b3e32ff9245f2a6ce7c22cc2a110e576d4a576.",
+      "Canonical logical feature-row SHA-256, identical across both probes: 007ad53ab62a6afae243666d2f45c2b79738e0f846196c7dda6d733a8b17ac53.",
+      "Both Parquet container SHA-256 values: f62b4af6c5dbda1775daa24a2bde37ef538aa9fb13399dd9173e9c457c9a4a30; file size 43,837 bytes.",
+      "The source audit, first probe and repeat probe returned exit code 2. The logical reproducibility comparison returned 0. The final workflow gate failed because source split integrity remains blocked; this is expected fail-closed behavior.",
+      "Evidence artifact 14279469265 SHA-256 cc4ade508d16abff10f252ce2beeef6a68b66bed62e31b9f99bcfb89ff553a9c."
+    ],
+    "blocker": "The duplicate train SourceID and train/test overlap remain unexplained. The input feature path is verified for this deterministic sample, but StarEmbed benchmark acceptance remains blocked."
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The source dataset contains one duplicate train SourceID: CSS_J164349.2+401208. Both copies have identical g/r/i array hashes and metadata.",
+      "The source dataset contains one SourceID shared by train and test: CSS_J051729.2+083846. Both copies have identical g/r array hashes and metadata.",
+      "The first workflow attempt inherited GitHub Actions bash errexit. The source audit returned 2 and prevented the feature probe from running. The workflow fix now captures both return codes and runs both diagnostics."
+    ],
+    "hypotheses": [
+      "The upstream StarEmbed build_split.py at commit b76a83af49af29c7042e436b950fc1fd360fa7bd (2025-10-07) flattens metadata and performs class-stratified row-level train_test_split operations with seed 42. The script does not deduplicate or group by SourceID. The companion ZTF README identifies it as the split builder.",
+      "This upstream method is consistent with the observed duplicate row and cross-split leakage. However, the exact 2026-05 published dataset snapshot has not yet been tied to this exact script revision and input dataset. Treat this as an unverified root-cause hypothesis."
+    ],
+    "unresolved": [
+      "The source-generation reason for the duplicate train SourceID is unknown.",
+      "The source-generation reason for the train/test overlap is unknown.",
+      "The exact build script and pre-split source snapshot used for the published 2026-05 Parquet files are not yet pinned.",
+      "The reason for the different Parquet container SHA-256 in earlier run 43974706084 (524e0a2c...) is not established. The two latest source-backed runs have matching logical and container hashes."
+    ],
+    "limitations": [
+      "A successful feature-input probe does not establish classifier accuracy, taxonomy compatibility or independent scientific validation.",
+      "The 50-object sample is diagnostic and cannot establish population-level performance.",
+      "No production model inference or training is in scope."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "The pinned source package is downloadable and all five file hashes are recorded.",
+      "The source audit found one duplicate train SourceID and one train/test SourceID overlap.",
+      "The implicated duplicate rows have identical per-band array hashes and metadata.",
+      "The deterministic clean test sample contains 50 objects and uses seed 20261115.",
+      "The frozen v0.2.0 feature path generated all 50 feature vectors with width 42 and zero per-object failures.",
+      "The feature probe reports global split leakage and remains blocked while any duplicate or overlap exists.",
+      "The upstream class-stratified row-split script is evidence for a hypothesis, not proof of the published dataset's exact build lineage.",
+      "Two repeated source-backed probes on the same pinned snapshot produced identical canonical feature-row hashes and identical Parquet hashes.",
+      "The canonical feature-row hash is 007ad53ab62a6afae243666d2f45c2b79738e0f846196c7dda6d733a8b17ac53.",
+      "The latest exact-head audit still detects one duplicate Train SourceID and one Train/Test overlap; the final gate correctly remains blocked."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Trace both implicated SourceIDs to the exact pre-split source dataset and record the source-generation lineage.",
+      "Pin the exact script revision and input snapshot used to generate the published 2026-05 dataset.",
+      "Confirm the corrected workflow continues to upload both diagnostic reports and fail at the final gate while leakage remains.",
+      "Do not claim benchmark acceptance while any source split duplicate or cross-split overlap remains unexplained.",
+      "Do not map StarEmbed's seven classes to the frozen v0.2.0 15-class taxonomy.",
+      "Investigate the earlier differing Parquet container hash from run 43974706084; do not infer data divergence without a logical row comparison."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not train or run predictions on StarEmbed as if its seven classes map to the frozen 15-class production taxonomy.",
+    "Do not weaken duplicate or cross-split leakage checks.",
+    "Do not change the v0.2.0 feature definitions, model artifact, class order or benchmark.",
+    "The 50-object feature-input diagnostic passed for all selected clean test objects; this is not benchmark acceptance.",
+    "Keep PR #290 Draft until source identity findings and benchmark provenance are resolved.",
+    "Two repeated 50-object source-backed probes have verified deterministic logical feature rows for the pinned snapshot; benchmark acceptance remains blocked by source split leakage."
+  ]
+}
