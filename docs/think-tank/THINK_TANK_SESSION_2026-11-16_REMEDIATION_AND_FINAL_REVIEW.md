@@ -859,3 +859,28 @@ Artifact `cpvs_mgpr_object_metrics.jsonl` از اجرای 43612080772 مستقل
 **راه‌حل پیشنهادی:** رویداد Pull Request را به `opened/reopened` محدود کن یا اجرای داده‌محور را فقط به Pushهای فایل‌های کد/تست/Workflow محدود کن. اجرای مستندات نباید دانلود آرشیوهای 840.6 MB را دوباره آغاز کند.
 
 **تصمیم اجرایی:** این تغییر را تا پایان اجرای جاری [43818485826](https://github.com/saeed92m/ztf-classifier/actions/runs/43818485826) اعمال نکن. تغییر فایل Workflow خودش می‌تواند اجرای جدید ایجاد کند. از این نقطه هیچ Commit دیگری روی شاخه CPVS تا تعیین تکلیف اجرای جاری ثبت نشود.
+
+
+---
+
+## ۲۰. Snapshot نهایی این چرخه — 2026-11-16
+
+| مسیر | وضعیت آخرین شواهد | رأی |
+|---|---|---|
+| CPVS full-parent | 781,602 ردیف؛ 11,602 اختلاف؛ آستانه 20-per-band رد شد | Root cause باز |
+| CPVS MGPR | 34/34 fit؛ 132/136 fold PASS؛ 14/17 نامزد و 16/17 کنترل چهار Fold کامل PASS | Feasibility، نه اعتبار عضویت |
+| CPVS 100-object trace | Run 43818485826 در حال دریافت آرشیوهای Hash-pinned؛ مرحله Trace هنوز شروع نشده | Pending |
+| StarEmbed unit tests | 712 PASS؛ 13 SKIP؛ صفر Fail؛ 83.33% line coverage؛ 16 تست StarEmbed PASS | تست مهندسی PASS |
+| StarEmbed package | Build & Verify Package PASS روی Run 43816558927 | PASS |
+| StarEmbed dependency gate | Run قدیمی با Soup Sieve 2.10 شکست خورد؛ Branch فعلی 4.1 دارد و Base امنیتی است؛ CI کامل تازه هنوز ثبت نشده | Pending |
+| Security PR #289 | هر 8 Job در Run 43536652404 موفق | Ready for owner review |
+| Park source hierarchy | DR24 HATS/Parquet اصلی؛ Zubercal مکمل، بر اساس PDFهای نهایی | Clarified |
+| DR24 application | ObservationService اصلی هنوز ALeRCE-backed است | Not integrated |
+| AOIC | قرارداد هویت و آزمون‌های منفی؛ بدون موتور Cross-match | Partial |
+| Production model artifact | جست‌وجوی GitHub، Release، CI، Dropbox و Notion نتیجه نداد | UNKNOWN |
+| CIN | معماری برنامه‌ریزی؛ پیاده‌سازی مجاز نیست | Planning only |
+| Session 09 PR #291 | Draft؛ CI در حال اجرا؛ هیچ Merge انجام نشده | Pending review |
+
+**حفاظت از main:** آخرین Commit مشاهده‌شده main برابر `f681408fae8d8062dd72ff74791872c1590f6ee8` است. هیچ‌یک از PRهای #283، #284، #285، #289، #290 یا #291 ادغام نشده‌اند. Release جدیدی منتشر نشده است.
+
+**رأی نهایی این چرخه:** اصلاحات مهندسی مشخص ثبت شده‌اند؛ اما هیچ مانع علمی اصلی بسته نشده است. جلسه ۰۹ بازبینی نهایی چرخه فعلی است، نه گواه پذیرش علمی یا محصول نهایی.
