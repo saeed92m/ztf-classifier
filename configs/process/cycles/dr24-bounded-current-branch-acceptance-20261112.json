@@ -67,7 +67,8 @@
       "The bounded DR24 HATS batch API live parity test passed in run 43180970933: 1 passed, 1 warning; pinned OIDs 264114400013085 (78 epochs) and 264214400000912 (123 epochs) matched their expected SHA-256 hashes.",
       "The deterministic multi-OID Workbench UI test passed in run 43180998574: 1 passed using the fake backend.",
       "The bounded Zubercal DR20 adapter live parity test passed in run 43181021520: 1 passed; 123 rows (49 g, 74 r), two PS1 candidates preserved as AMBIGUOUS_MULTIPLE_PS1_IDS and NOT_SELECTED. Evidence artifact 13925104998 ZIP SHA-256 542bca594bc47753dded72f9c5720805ed10dc58dac3d9646c3e190fd891481f verified.",
-      "These results validate only the declared bounded acquisition/API/UI adapter contracts. They do not validate physical identity, HATS-Zubercal photometric parity, HMJD/MJD(TDB) conversion, DR24 normalization, v0.2.0 feature parity, classifier inference or scientific discovery."
+      "These results validate only the declared bounded acquisition/API/UI adapter contracts. They do not validate physical identity, HATS-Zubercal photometric parity, HMJD/MJD(TDB) conversion, DR24 normalization, v0.2.0 feature parity, classifier inference or scientific discovery.",
+      "Dependency-order refresh 2026-11-16: this PR is now based on security/soupsieve-cve-20261114 (PR #289 head 7f815527e8d0308fb8fde14ff80ab6c631a0d5a8), which upgrades soupsieve to 4.1. The previous exact-head CI and three bounded source/UI tests passed before the dependency CVEs were reported. Fresh full CI on this security base is required; no new validation result is claimed by this note."
     ]
   },
   "failure_analysis": {
@@ -90,8 +91,11 @@
     ]
   },
   "regression": {
-    "status": "PASS",
-    "open_blockers": [],
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Re-run all eight engineering CI jobs on the current security/soupsieve-cve-20261114 base; do not rely on the historical pre-CVE run alone.",
+      "The three bounded DR24/Zubercal tests establish only their declared API/UI contracts, not physical identity, photometric parity, feature parity, model inference, or scientific acceptance."
+    ],
     "evidence": [
       "DR24 batch live API test passed on two pinned OIDs.",
       "Deterministic Workbench multi-OID test passed.",
