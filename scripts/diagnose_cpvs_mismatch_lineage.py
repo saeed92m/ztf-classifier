@@ -7,8 +7,6 @@ import csv
 import hashlib
 import json
 import math
-import subprocess
-import tempfile
 import zipfile
 import zlib
 from collections import Counter
@@ -184,91 +182,80 @@ def scan_archive(
         if f"{info.CRC:08x}" != config["member_crc32"]:
             raise ValueError(f"{band} central-directory CRC mismatch")
 
-    with tempfile.TemporaryFile() as stderr_file:
-        process = subprocess.Popen(
-            ["unzip", "-p", str(archive_path), member_name],
-            stdout=subprocess.PIPE, stderr=stderr_file,
-        )
-        if process.stdout is None:
-            raise RuntimeError("Info-ZIP stdout is unavailable")
-        for raw in process.stdout:
-            digest.update(raw)
-            crc = zlib.crc32(raw, crc)
-            member_bytes += len(raw)
-            member_rows += 1
-            try:
-                fields = parse_fields(raw)
-                if len(fields) != 7:
+    with zipfile.ZipFile(archive_path) as archive:
+        with archive.open(member_name, "r") as member_stream:
+            for raw in member_stream:
+                digest.update(raw)
+                crc = zlib.crc32(raw, crc)
+                member_bytes += len(raw)
+                member_rows += 1
+                try:
+                    fields = parse_fields(raw)
+                    if len(fields) != 7:
+                        malformed += 1
+                        continue
+                    source_id = int(fields[0])
+                    ra, dec, epoch, mag, err = map(float, fields[1:6])
+                except (UnicodeDecodeError, ValueError):
                     malformed += 1
                     continue
-                source_id = int(fields[0])
-                ra, dec, epoch, mag, err = map(float, fields[1:6])
-            except (UnicodeDecodeError, ValueError):
-                malformed += 1
-                continue
-            if not all(math.isfinite(value) for value in (ra, dec, epoch, mag, err)):
-                malformed += 1
-                continue
-            flag = fields[6]
+                if not all(math.isfinite(value) for value in (ra, dec, epoch, mag, err)):
+                    malformed += 1
+                    continue
+                flag = fields[6]
 
-            if source_id in object_stats:
-                item = object_stats[source_id]
-                item["raw_rows"] += 1
-                item["times"][round(epoch, 7)] += 1
-                item["measurements"][(round(epoch, 7), round(mag, 7), round(err, 7), flag)] += 1
-                item["flags"][flag] += 1
-                item["ras"].append(ra)
-                item["decs"].append(dec)
-                if mag == 0:
-                    item["zero_magnitude_rows"] += 1
-                if err == 0:
-                    item["zero_error_rows"] += 1
-                if err < 0:
-                    item["negative_error_rows"] += 1
-                if mag != 0 and err > 0:
-                    item["valid_numeric_rows"] += 1
-                    item["magnitudes"].append(mag)
-                    item["errors"].append(err)
-                continue
+                if source_id in object_stats:
+                    item = object_stats[source_id]
+                    item["raw_rows"] += 1
+                    item["times"][round(epoch, 7)] += 1
+                    item["measurements"][(round(epoch, 7), round(mag, 7), round(err, 7), flag)] += 1
+                    item["flags"][flag] += 1
+                    item["ras"].append(ra)
+                    item["decs"].append(dec)
+                    if mag == 0:
+                        item["zero_magnitude_rows"] += 1
+                    if err == 0:
+                        item["zero_error_rows"] += 1
+                    if err < 0:
+                        item["negative_error_rows"] += 1
+                    if mag != 0 and err > 0:
+                        item["valid_numeric_rows"] += 1
+                        item["magnitudes"].append(mag)
+                        item["errors"].append(err)
+                    continue
 
-            if source_id not in seen_source_ids:
-                seen_source_ids.add(source_id)
-                ra_cell, dec_cell = cell_key(ra, dec)
-                candidate_ids = spatial_hash.get((ra_cell, dec_cell), set())
-                best: tuple[float, int] | None = None
-                for target_id in candidate_ids:
-                    target = missing_targets[target_id]
-                    separation = angular_separation_arcsec(ra, dec, target["ra"], target["dec"])
-                    if separation <= SEARCH_RADIUS_ARCSEC and (best is None or separation < best[0]):
-                        best = (separation, target_id)
-                if best is not None:
-                    separation, target_id = best
-                    alias_owner[source_id] = (target_id, separation)
-                    aliases[(target_id, source_id)] = {
-                        "target_SourceID": target_id,
-                        "target_ZTF": missing_targets[target_id]["ZTF"],
-                        "alternate_SourceID": source_id,
-                        "separation_arcsec": separation,
-                        "alternate_raw_rows": 0,
-                        "flags": Counter(),
-                        "time_min": epoch,
-                        "time_max": epoch,
-                    }
-            alias = alias_owner.get(source_id)
-            if alias is not None:
-                target_id, separation = alias
-                record = aliases[(target_id, source_id)]
-                record["alternate_raw_rows"] += 1
-                record["flags"][flag] += 1
-                record["time_min"] = min(record["time_min"], epoch)
-                record["time_max"] = max(record["time_max"], epoch)
+                if source_id not in seen_source_ids:
+                    seen_source_ids.add(source_id)
+                    ra_cell, dec_cell = cell_key(ra, dec)
+                    candidate_ids = spatial_hash.get((ra_cell, dec_cell), set())
+                    best: tuple[float, int] | None = None
+                    for target_id in candidate_ids:
+                        target = missing_targets[target_id]
+                        separation = angular_separation_arcsec(ra, dec, target["ra"], target["dec"])
+                        if separation <= SEARCH_RADIUS_ARCSEC and (best is None or separation < best[0]):
+                            best = (separation, target_id)
+                    if best is not None:
+                        separation, target_id = best
+                        alias_owner[source_id] = (target_id, separation)
+                        aliases[(target_id, source_id)] = {
+                            "target_SourceID": target_id,
+                            "target_ZTF": missing_targets[target_id]["ZTF"],
+                            "alternate_SourceID": source_id,
+                            "separation_arcsec": separation,
+                            "alternate_raw_rows": 0,
+                            "flags": Counter(),
+                            "time_min": epoch,
+                            "time_max": epoch,
+                        }
+                alias = alias_owner.get(source_id)
+                if alias is not None:
+                    target_id, separation = alias
+                    record = aliases[(target_id, source_id)]
+                    record["alternate_raw_rows"] += 1
+                    record["flags"][flag] += 1
+                    record["time_min"] = min(record["time_min"], epoch)
+                    record["time_max"] = max(record["time_max"], epoch)
 
-        process.stdout.close()
-        return_code = process.wait()
-        stderr_file.seek(0)
-        stderr = stderr_file.read().decode("utf-8", errors="replace")
-    if return_code:
-        raise RuntimeError(f"Info-ZIP failed for {band}: {stderr[-1200:]}")
     member_sha = digest.hexdigest()
     crc_hex = f"{crc & 0xFFFFFFFF:08x}"
     if member_sha != config["member_sha256"]:
