@@ -276,7 +276,8 @@ The project is managed with Git and uses a pinned Python development environment
 
 Primary environment:
 
-* Python **3.11.16**
+* Runtime support: Python **3.11.5–3.11.x**
+* Verified development and CI runtime: Python **3.11.16**
 * Ubuntu 26.04 LTS
 * WSL2
 
