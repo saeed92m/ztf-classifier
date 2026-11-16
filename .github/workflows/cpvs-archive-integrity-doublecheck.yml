@@ -126,7 +126,7 @@ jobs:
                   "expected_rows": cfg["member_rows"],
               }
           Path("reports/cpvs_archive_integrity_doublecheck.json").write_text(
-              json.dumps(report, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+              json.dumps(report, indent=2, sort_keys=True) + chr(10), encoding="utf-8")
           print(json.dumps(report, indent=2, sort_keys=True))
           PY
           printf 'g_unzip_test_exit=%s\nr_unzip_test_exit=%s\n' "$g_rc" "$r_rc" | tee reports/unzip_test_exit_codes.txt
