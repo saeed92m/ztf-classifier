@@ -50,7 +50,8 @@
       "Workflow run 43822608874 passed the local benchmark and lifecycle contract job; external source-backed acquisition and model-evidence jobs were skipped.",
       "Workflow run 43822608821 passed Product Scope Audit.",
       "Workflow run 43822609021 passed CodeQL.",
-      "No scientific validation claim is made. The sixteen think-tank seats are simulated specialist perspectives, not independent human peer review."
+      "No scientific validation claim is made. The sixteen think-tank seats are simulated specialist perspectives, not independent human peer review.",
+      "CI run 43823221608 completed on exact PR head b674f2f09d18a7436a0dfe663afc31d67acd6be4: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, and Build & Verify Package all PASS; Dependency Audit FAIL; final CI Gate FAIL. Test Suite completed successfully (exact summary not separately extracted in this run). Dependency Audit reports soupsieve==2.10 with CVE-2026-126190, CVE-2026-126193 and CVE-2026-126191. The dependency correction is in PR #289, whose full eight-job CI including Dependency Audit passed, but PR #289 is not merged; main still resolves the vulnerable version. CodeQL run 43823221650 and Product Scope Audit run 43823221594 passed. Scientific Validation run 43823221581 passed the benchmark/lifecycle contract job; all source-backed acquisition and benchmark jobs were skipped. This is an engineering result only, not scientific validation."
     ]
   },
   "failure_analysis": {
@@ -58,7 +59,8 @@
     "root_causes": [
       "PR #292 omitted the mandatory machine-readable lifecycle record under configs/process/cycles/, causing the cumulative lifecycle gate to fail.",
       "Because the lifecycle gate failed, downstream test, runtime, package, and dependency jobs did not execute on this PR event.",
-      "The scientific source-backed jobs were conditional and skipped; successful local contract tests do not establish source-backed scientific validity."
+      "The scientific source-backed jobs were conditional and skipped; successful local contract tests do not establish source-backed scientific validity.",
+      "The rerun on PR #292 passed all non-security engineering jobs but failed Dependency Audit because the base branch main still resolves soupsieve==2.10; the fix is isolated in unmerged PR #289. This is a dependency-ordering blocker, not a defect introduced by the documentation-only PR."
     ]
   },
   "knowledge_extraction": {
@@ -74,9 +76,10 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Re-run PR-triggered CI after adding this cycle record and inspect every required job.",
-      "Keep PR #292 Draft until owner review and all required engineering checks are complete.",
-      "Do not claim scientific validation from this documentation PR."
+      "Owner review and integration of PR #289 are required before the main-branch dependency audit can pass.",
+      "Re-run PR #292 CI after the dependency fix is integrated; do not bypass Dependency Audit.",
+      "Source-backed DR24, ALeRCE and StarEmbed jobs were skipped; no scientific validation claim is made.",
+      "Keep PR #292 unmerged until owner review and all required checks pass."
     ]
   },
   "decision": "REVISE",
