@@ -43,9 +43,9 @@
         "before": "The first run had an acquired source manifest and identity report, but no feature-probe output.",
         "after": "The second run used the same source version, five pinned file hashes, sample size 50 and seed 20261115. It produced a 50-row feature Parquet artifact and a machine-readable probe report."
       },
-      "feature_input_compatibility": {
-        "before": "No source-backed StarEmbed feature-input result was available.",
-        "after": "50 of 50 selected clean test objects produced feature vectors with width 42, zero per-object failures and the frozen ordered feature contract."
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "This experiment verifies feature-input compatibility only. It does not validate classifier performance, taxonomy compatibility, source split integrity, or independent scientific validity."
       }
     },
     "trade_off": "The workflow runs a diagnostic feature probe on a clean test subset even when the overall source split is blocked. It still fails the final gate while any global duplicate or cross-split overlap remains."
@@ -104,7 +104,7 @@
     ]
   },
   "regression": {
-    "status": "PARTIALLY_VERIFIED",
+    "status": "BLOCKED",
     "open_blockers": [
       "Trace both implicated SourceIDs to the exact pre-split source dataset and record the source-generation lineage.",
       "Pin the exact script revision and input snapshot used to generate the published 2026-05 dataset.",
