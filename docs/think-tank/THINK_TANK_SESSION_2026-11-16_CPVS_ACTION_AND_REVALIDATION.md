@@ -273,3 +273,27 @@ The candidate-only provenance TSV was re-read directly from the pinned reconcili
 Interpretation: missing mean magnitudes in this residual cohort are perfectly associated with a zero R2 value in the same band. This points to a missing/failed Fourier-fit output state, not merely the absence of raw SNR detections. It is a strong diagnostic association, not proof of the exact internal pipeline decision. The 17 period-incomplete objects remain a separate issue because their mean magnitudes exist and their common period exists.
 
 Next test: compare the 11,585 residuals with missing means against Table4 members with similar per-band observation counts, R2, FAP and quality flags. Then compare the 17 period-incomplete residuals against matched Table4 controls. Do not use R2=0 or missing-field state as a new selector until the upstream fit/output contract is verified.
+
+
+### MGPR method comparison for the 17 period-incomplete residuals
+
+The pinned MGPR robustness artifact was inspected directly (SHA-256 7cb0abd452e9c0293298999dcc3a7e82ed961143ce1cb82955d3282d925a8370).
+
+Its stated method follows Chan et al. Section 2.1:
+- george 0.4.4;
+- zero mean function;
+- separable phase/wavelength exponential kernel plus diagonal white noise;
+- independent standard scaling per band, with errors scaled by the same band standard deviation;
+- L-BFGS-B optimization;
+- phase repetition at offsets 0, 1 and 2, with predictions on [2,3];
+- 160 output points.
+
+For the 17 candidate-only objects with both mean magnitudes but one missing band-specific period:
+- all 17 full-data MGPR fits completed;
+- no fit execution errors occurred;
+- 15 objects passed all four blocked-phase folds;
+- 2 objects had at least one fold classified INSUFFICIENT_DATA;
+- most predictions stayed within the observed magnitude range; one residual had a 4.4% out-of-range fraction in one band, while a matched Table4 control had a 6.9% fraction;
+- optimizer-start sensitivity remains material and several objects hit parameter bounds.
+
+Interpretation: the stated Chan MGPR method, as implemented in this bounded diagnostic, does not reveal a simple fit-failure explanation for the 17. This is not a bit-for-bit reproduction of the authors' unpublished pipeline, and the epoch convention remains unresolved. Do not conclude that the 17 should have been included solely because this implementation converged.
