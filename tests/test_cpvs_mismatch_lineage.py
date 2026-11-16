@@ -62,8 +62,12 @@ class CPVSMismatchLineageTests(unittest.TestCase):
                 {"SourceID": "100", "raw_g": "1"},
                 {"SourceID": "200", "raw_g": "0"},
             ]
+            extracted_path = Path(directory) / "ztf2g.member"
+            extracted_path.write_bytes(raw)
             with patch.dict(ARCHIVES, {"g": config}):
-                result = scan_archive(archive_path, "g", targets, mismatches)
+                result = scan_archive(
+                    archive_path, "g", targets, mismatches, member_path=extracted_path
+                )
         self.assertEqual(result["member_bytes"], len(raw))
         self.assertEqual(result["member_rows"], 3)
         self.assertEqual(result["member_sha256"], hashlib.sha256(raw).hexdigest())
