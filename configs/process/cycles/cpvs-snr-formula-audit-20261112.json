@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-snr-formula-audit-20261112",
+  "objective": "Correct the CPVS raw-SNR diagnostic's object-level formula aggregation and input duplicate/overlap accounting on a branch based on current main, without downloading raw archives or changing production selection.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Think Tank Session TT-2026-11-12-07",
+      "status": "VERIFIED",
+      "detail": "Required separate approximate, exact and inverse-error two-band results; explicit duplicate/overlap accounting; per-stratum reporting; and a cost gate for >11.2 GB archive processing."
+    },
+    {
+      "source": "PR #265 branch research/cpvs-seq-identity-20261104",
+      "status": "VERIFIED",
+      "detail": "Inspected the raw-SNR script and tests. The script computed all three per-band formulas but used only approximate SNR for the two-band candidate set and confusion matrix. The branch has 80 commits and 14 files and is not based on current main."
+    },
+    {
+      "source": "Retained CPVS artifact 13108147605 from run 41367972395",
+      "status": "VERIFIED",
+      "detail": "Independent artifact-level membership arithmetic and fixed sample strata were rechecked in Session 07. No fresh raw g/r SNR or MGPR result is claimed."
+    }
+  ],
+  "baseline": {
+    "revision": "f681408fae8d8062dd72ff74791872c1590f6ee8",
+    "scientific_baseline": "v0.2.0 immutable",
+    "software_release": "v1.0.1 immutable",
+    "cpvs_parent_count": 781602,
+    "cpvs_published_reference_count": 730184,
+    "cpvs_candidate_count_historical": 741786,
+    "cpvs_candidate_only_count": 11602,
+    "selector": "unchanged"
+  },
+  "change": {
+    "scope": "Port only the CPVS membership raw-SNR diagnostic and its synthetic tests to a fresh current-main branch. Add separate two-band candidate sets and confusion summaries for approximate, exact and inverse-error formulas; add within-file duplicate and pairwise cross-file overlap accounting; fail closed on within-file duplicates.",
+    "rationale": "The old stacked branch is stale, and its current two-band result hides the differences between formula alternatives. Input overlap and duplicate counts must be explicit before a costly raw scan."
+  },
+  "expected_improvement": [
+    "Formula-specific two-band candidate sets",
+    "Explicit per-band and two-band PASS/FAIL/UNKNOWN states",
+    "Within-file duplicate accounting",
+    "Pairwise cross-file overlap counts and hashes",
+    "Reproducible compact output with pinned input hashes"
+  ],
+  "measurement": {
+    "metrics": {
+      "regression_protection_count": {
+        "before": "The diagnostic derived a two-band candidate set from approximate SNR only; within-file duplicates and pairwise cross-file overlaps were not reported.",
+        "after": "The code defines separate approximate, exact and inverse-error two-band candidate states; reports within-file duplicates and pairwise cross-file overlaps; lists candidate-only rows with UNKNOWN in any formula; exports formula-specific TSV states; and writes a compact integrity-failure report before fail-closed exit. Three additional synthetic regression functions were added. Current-head CI remains pending.",
+        "status": "PARTIAL"
+      },
+      "scientific_validity": {
+        "before": "The 11,602 candidate-only discrepancy remains unresolved.",
+        "after": "No raw archive scan or MGPR execution is included in this code-only cycle. Synthetic tests do not establish source-backed scientific validity.",
+        "status": "NOT_MEASURED"
+      }
+    },
+    "trade_off": "This change improves the diagnostic contract but does not run the >11.2 GB raw archive scan. Synthetic CI does not establish source-backed scientific validity."
+  },
+  "validation": {
+    "status": "VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "New branch created from main SHA f681408fae8d8062dd72ff74791872c1590f6ee8.",
+      "Only the raw-SNR diagnostic script and its synthetic test module have been ported; the old branch's automatic multi-gigabyte workflow was not copied.",
+      "The script now emits separate approximate, exact and inverse-error two-band results and explicit within-file duplicate/cross-file overlap accounting.",
+      "Three additional synthetic regression test functions are now included: formula-specific two-band membership/confusion results; within-file duplicate and pairwise cross-file overlap reporting; and input-failure evidence persistence. The existing end-to-end fixture asserts expected overlap accounting and zero within-file duplicates. Current-head CI remains pending.",
+      "Current PR #285 head 9e4b59f521a8318daaa7e456dbd0f90654d1e2d7 passed all eight engineering CI jobs in run 43294538781: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit and CI Gate.",
+      "Current-head Test Suite: 706 passed, 13 skipped, zero failures, 9 warnings in 100.19 seconds. Coverage: 7,761 statements, 1,293 missed, 83% line coverage.",
+      "CodeQL run 43294543988 and Product Scope Audit run 43294544114 passed. Scientific Validation run 43294543992 passed the benchmark/lifecycle contract.",
+      "The four source-backed scientific jobs remain SKIPPED: immutable historical ALeRCE, independent StarEmbed benchmark, source provenance acquisition and DR24/ALeRCE source-backed evidence.",
+      "This cycle is VERIFIED and ACCEPTED only for the diagnostic code and synthetic regression contract. No raw archive scan or MGPR execution was performed."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The old script calculated all three per-band SNR variants but build_object_rows and summarize_group derived only one two-band candidate set from approximate SNR.",
+      "The input loader merged repeated SourceIDs across input files but did not report within-file duplicates or pairwise cross-file overlaps."
+    ],
+    "unresolved": [
+      "The CPVS 11,602 candidate-only membership discrepancy remains unresolved. The retained artifact recheck is not a fresh raw-light-curve derivation.",
+      "No raw g/r archive scan or MGPR execution was performed in this cycle.",
+      "The publisher's exact selection method remains unknown; four-field positivity and Ng/Nr thresholds remain diagnostic only.",
+      "A raw source-backed run requires separate explicit compute/cost approval because the pinned archive members expand to more than 11.2 GB."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Per-band formula alternatives must remain separate through the object-level two-band membership calculation.",
+      "Cross-file overlap is expected for stratified diagnostic samples; within-file duplicate IDs are a separate integrity defect.",
+      "The inverse-error alternative must be labelled diagnostic, not physical SNR equivalence.",
+      "Missing raw observations remain UNKNOWN."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [],
+    "evidence": [
+      "The full current-head test suite passed with 706 passed, 13 skipped, zero failures and 9 warnings.",
+      "Formula-specific approximate/exact/inverse-error two-band summaries, per-formula UNKNOWN reporting, TSV output, within-file duplicate accounting, cross-file overlap hashes and persisted input-failure reports are covered by synthetic regression tests.",
+      "Full eight-job engineering CI passed in run 43294538781."
+    ]
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "Branch is based on current main and intentionally excludes the old PR #265 stack.",
+    "No raw g/r archive downloads are triggered by this branch.",
+    "No CPVS selector, threshold, source ID, model, feature, taxonomy, benchmark or baseline change is made.",
+    "Raw source-backed execution requires separate explicit compute/cost approval.",
+    "Input-integrity failures must be persisted as compact evidence before fail-closed exit; do not discard duplicate/overlap findings when refusing the raw scan.",
+    "PR #285 current head 9e4b59f521a8318daaa7e456dbd0f90654d1e2d7 passed all eight engineering CI jobs: 706 passed, 13 skipped, zero failures, 9 warnings; 83% line coverage.",
+    "The diagnostic code cycle is ACCEPTED for engineering use only. Scientific validity remains NOT_MEASURED, and the 11,602 root cause remains open."
+  ]
+}

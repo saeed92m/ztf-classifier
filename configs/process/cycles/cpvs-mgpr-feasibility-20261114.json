@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-mgpr-feasibility-20261114",
+  "objective": "Test whether the 17 CPVS residuals with both mean magnitudes and missing one band-specific period can be interpolated by a bounded, source-informed multiband Gaussian Process diagnostic.",
+  "previous_knowledge_consumed": [
+    "The 11,602 residuals remain unexplained; no production selector change is authorized.",
+    "The shared-period phase-fold diagnostic run 43535760220 found that the 17-object subgroup has median coverage of 92/160 g bins and 91/160 r bins.",
+    "The 17 objects retain a positive common Table 2 period, both positive mean magnitudes and raw photometry in both bands.",
+    "The matched-control design uses one same-Type Table 4 member per residual, matched on common period, g/r magnitudes and Ng/Nr.",
+    "Chan et al. (2022), Section 2.1, specifies george MGPR, normalized phase/wavelength coordinates, separable RBF kernel, constant amplitude, diagonal white noise, zero mean, L-BFGS-B, three phase cycles and a 160-point output grid.",
+    "Workflow 43601683991 completed successfully on commit 886608da7154e8a4cea3f2d984b4c767baf97161 with 17 residuals and 17 matched Table4 controls.",
+    "Artifact 14117002862 passed all three workflow steps after checksum-pinned g/r archive retrieval and the bounded MGPR audit.",
+    "Workflow 43601683991 completed successfully on commit 886608da7154e8a4cea3f2d984b4c767baf97161 with 17 residuals and 17 matched Table4 controls.",
+    "Artifact 14117002862 completed all steps after pinned archive retrieval and integrity validation."
+  ],
+  "baseline": {
+    "revision": "research/cpvs-snr-formula-audit-20261112@43bcca38f952728d1ed58218febc93dcd8a024e7",
+    "reference": "Chan et al. 2022, ApJ 932, 118, DOI 10.3847/1538-4357/ac69d4",
+    "cohort": "17 candidate-only residuals with both mean magnitudes and one missing band-specific period; 17 deterministic matched Table 4 controls",
+    "executed_revision": "886608da7154e8a4cea3f2d984b4c767baf97161",
+    "workflow_run": 43601683991,
+    "artifact_sha256": "f486c72589b289607ad3ef04ebda0560a86132eb1be6fd1a990d9e62988a4f44"
+  },
+  "change": {
+    "proposed": "Extend the bounded MGPR audit to eight deterministic L-BFGS-B starts per full-data object and four contiguous blocked-phase validation folds (four deterministic starts per fold), while preserving exact object/control identities and explicit output of optimizer and predictive diagnostics.",
+    "scope": "Research-only script, tests and GitHub Actions workflow; no product dependencies, model, selector, feature schema, scientific threshold or baseline artifact changes.",
+    "rationale": "The paper phase-folds both bands using the common Table 2 period. The 17 residuals have adequate observed phase coverage, so MGPR feasibility is the next discriminating experiment."
+  },
+  "expected_improvement": [
+    "Measure local-optimum sensitivity across eight full-data starts.",
+    "Measure sensitivity to the explicitly bounded kernel hyperparameters.",
+    "Evaluate held-out predictions in four contiguous phase sectors per object.",
+    "Report RMSE, MAE, normalized RMSE, one/two-sigma coverage and mean log predictive density.",
+    "Keep posterior uncertainty separate from out-of-sample predictive performance and membership evidence."
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "Dependency Audit failed for CVE-2026-114613 in msgpack==1.2.2.",
+        "after": "Pending fresh CI; msgpack==1.2.3 is pinned on the PR branch.",
+        "evidence": "CI runs 40597691322 and 40638865397; PR #238"
+      },
+      "correctness": {
+        "before": "Phase coverage was measured, but MGPR feasibility, optimizer behavior and covariance conditioning were unknown.",
+        "after": "34/34 objects converged under two deterministic L-BFGS-B starts each; 0 optimizer failures; 10,880 posterior-grid rows (160 points × 2 bands × 34 objects). This demonstrates bounded numerical feasibility only.",
+        "evidence": "Workflow 43601683991; report SHA-256 a4b33cdcb8de7cffb16fd8f373ce8fa9dfb4a43164999ea30cf35d9c0ba4f61d; object metrics SHA-256 6d7997bff9875e832d3061f1c057ca5638e561862bba51cf6a9ce4070cad315f.",
+        "status": "MEASURED"
+      },
+      "reproducibility": {
+        "before": "The article's MGPR method was known at the equation and procedure level; no project implementation or deterministic test existed.",
+        "after": "Pinned george==0.4.4, Python 3.11, three input hashes, raw g/r archive/member hashes, object-level metrics and 10,880 curve rows were recorded. Artifact digest sha256:f486c72589b289607ad3ef04ebda0560a86132eb1be6fd1a990d9e62988a4f44.",
+        "evidence": "Workflow 43601683991 and artifact 14117002862; curves SHA-256 67c446c2b9342cc40a17eb8b074ce829a73e07e836c2f95e384c9af11c18118d.",
+        "status": "MEASURED"
+      },
+      "robustness": {
+        "before": "No real-data optimizer or covariance diagnostics had been measured.",
+        "after": "All 34 fits converged, but 6 objects had absolute NLL differences >1 between two starts (3 residuals and 3 controls). Maximum differences: 122.77 for residual SourceID 657950 and 272.95 for control SourceID 432012. The wavelength-metric log parameter reached its upper bound in 6/17 residuals and 9/17 controls. Robustness remains open.",
+        "evidence": "34 object records from cpvs_mgpr_object_metrics.jsonl in workflow run 43601683991.",
+        "status": "MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Workflow 43601683991 completed successfully on the standard ubuntu-latest hosted runner.",
+      "All pinned parent inputs and raw g/r archive hashes passed verification.",
+      "All 34 bounded MGPR fits reported optimizer_success=true; both starts succeeded for every object.",
+      "Artifact 14117002862 contains the report, object metrics and 10,880 interpolated-curve rows.",
+      "The first bounded two-start run 43601683991 passed for all 34 objects; see Section 21 of Think Tank Session 08.",
+      "The eight-start and four-fold blocked-phase extension is committed on the current research branch.",
+      "MGPR robustness workflow run 43612080772 is downloading checksum-pinned raw archives; its results are pending.",
+      "Raw epoch time-scale verification is pending in mismatch-lineage workflow 43612083641; phase-derived conclusions are provisional until the numeric scale is confirmed."
+    ],
+    "blocker": "Await eight-start/blocked-phase robustness result and raw epoch scale confirmation. If the byte-level time scale is MJD-like, rerun phase-fold and MGPR using the correct epoch convention."
+  },
+  "failure_analysis": {
+    "status": "UNRESOLVED",
+    "root_causes": [
+      "The 17 residuals can be fitted numerically with the common Table2 period despite one missing band-specific period; a GP fitting failure is not supported as the explanation for these 17 catalogue exclusions.",
+      "The cause of the 11,602-object historical CPVS membership discrepancy remains unknown and is not resolved by this bounded MGPR experiment."
+    ],
+    "limitations": [
+      "The paper does not publish exact initial values, optimizer bounds, George version or a complete reference implementation.",
+      "Two deterministic starts do not establish optimizer robustness; six objects show start-dependent NLL differences above 1.",
+      "Six residuals and nine controls reached the upper wavelength-metric log bound.",
+      "The full data were used for fitting and evaluation; no blocked-epoch or independent predictive validation was performed.",
+      "Posterior sigma is not a generalization-error estimate.",
+      "Zenodo g_flag/r_flag semantics are not assumed to equal DR2 catflags.",
+      "A converged GP fit does not prove historical CPVS membership.",
+      "The eight-start and blocked-phase extension has not completed; no out-of-sample metrics are available yet.",
+      "The public Zenodo record describes the raw time column as HJD, while the CDS ReadMe describes ztf2g.dat/ztf2r.dat time values as MJD. The phase-fold scanner currently subtracts 2400000.5, which is valid only for HJD-like input. The raw numeric epoch scale is not yet independently verified; all phase-derived coverage and MGPR results are provisional until the lineage artifact establishes the scale and any necessary rerun is complete."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "The shared Table2 period supports finite two-band GP fitting for all 17 tested residuals despite a missing Per-g or Per-r value.",
+      "MGPR convergence is not a catalogue-membership criterion.",
+      "Posterior uncertainty and optimizer convergence must be separated from held-out predictive performance.",
+      "Two successful optimizer starts can still converge to materially different likelihood values."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Complete workflow 43612080772 with eight starts per full-data object and four blocked-phase folds.",
+      "Inspect all optimizer starts and confirm selected solutions are stable across starts and bounds.",
+      "Review all four held-out phase folds per object, including insufficient-data or optimizer warning states.",
+      "Do not infer CPVS membership from MGPR fit or blocked-phase performance.",
+      "Confirm whether the Zenodo epoch values are HJD-like (requiring subtraction of 2400000.5) or MJD-like before accepting any phase-fold or MGPR result."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not use MGPR convergence as a CPVS membership selector.",
+    "Do not change production code or v0.2.0.",
+    "Treat run 43601683991 as bounded numerical feasibility only.",
+    "Investigate multi-start sensitivity and out-of-sample predictive performance.",
+    "Continue reconstructing the original Chen selection stages and raw-source provenance.",
+    "The 34-object two-start fit is a completed feasibility result; the eight-start and blocked-phase validation are a separate pending robustness experiment."
+  ]
+}

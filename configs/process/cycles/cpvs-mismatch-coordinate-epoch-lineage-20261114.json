@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "cpvs-mismatch-coordinate-epoch-lineage-20261114",
+  "objective": "Investigate the 100 object-level mismatches between Table2 Ng/Nr and raw Zenodo g/r attachment row counts, including missing rows and possible nearby alternate SourceIDs.",
+  "previous_knowledge_consumed": [
+    "Full-parent workflow 43600721277 completed successfully; all 781,602 Table2 objects were reconciled and 100 objects had at least one row-count mismatch.",
+    "Pinned Table2.dat SHA-256 2c77c5b6c14811f6abab6e1442ce82c6fb54dbdcfc141954165704fecfcb3881.",
+    "Pinned mismatch TSV SHA-256 d33c4dc3c575e520b867d84a1b9424368b2c44176f15651abba20b585ef0c8d5; 100 unique SourceIDs.",
+    "The 55 four-field-only controls have 54 missing g-band raw attachments and 4 missing r-band raw attachments; none has both bands in the supplement."
+  ],
+  "baseline": {
+    "revision": "research/cpvs-snr-formula-audit-20261112",
+    "scope": "Read-only research audit; no production selector, model, thresholds or v0.2.0 changes."
+  },
+  "change": {
+    "proposed": "For all 100 mismatch objects, record row-level aggregate statistics, duplicate epochs, flags, coordinate offsets and nearby alternate SourceIDs within 3 arcseconds for targets with zero raw rows.",
+    "scope": "Research-only script, regression tests, GitHub Actions workflow and compact evidence artifacts.",
+    "rationale": "Missing raw rows cannot be classified as low-SNR. Coordinate and epoch provenance are required to distinguish incomplete attachments, identity mapping and processing-stage differences."
+  },
+  "expected_improvement": [
+    "Per-object raw provenance",
+    "Epoch and duplicate diagnostics",
+    "Coordinate offset diagnostics",
+    "Nearby alternate SourceID candidates",
+    "MJD/HJD time-range evidence"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Only aggregate raw/Table2 row counts were recorded for 100 mismatched objects.",
+        "after": "Produce one object/band record for all 100 objects with row counts, time ranges, duplicates, flag counts and coordinate offsets; report alternate SourceIDs within 3 arcseconds.",
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "before": "No compact row-level provenance artifact existed.",
+        "after": "Pin Table2 and mismatch TSV hashes and both raw archive/member hashes; retain only aggregate diagnostics and alias IDs.",
+        "status": "NOT_MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Uses standard GitHub-hosted ubuntu-latest.",
+      "Raw photometry rows will not be uploaded; only aggregate statistics and alternate IDs will be retained.",
+      "Mismatch lineage workflow 43612083641 is running on a standard ubuntu-latest hosted runner.",
+      "The workflow downloads the pinned 100-object mismatch artifact and Table2.dat, then verifies both raw archive SHA-256 values before scanning."
+    ],
+    "blocker": "Await archive download, 100-object lineage scan, deterministic tests and compact artifact upload."
+  },
+  "failure_analysis": {
+    "status": "UNRESOLVED",
+    "root_causes": [
+      "The 100 object-level row-count mismatches have not yet been traced to exact epochs or nearby alternate IDs."
+    ],
+    "limitations": [
+      "Coordinate proximity is a diagnostic, not proof of identity.",
+      "Missing rows do not prove low SNR.",
+      "Image-level INFOBITS is not included in the Zenodo attachments."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A coordinate/epoch-level audit can distinguish missing attachment data, duplicate epochs and possible source-ID mapping discrepancies."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the checksum-pinned lineage workflow.",
+      "Review all 100 object/band records and any nearby alternate SourceIDs.",
+      "Verify the time coordinate scale against both Zenodo metadata and the CDS ReadMe.",
+      "Verify workflow expressions, artifact input paths and the test ZIP newline fixture on GitHub Actions.",
+      "Review MJD/HJD value ranges against the Zenodo file description and CDS ReadMe before accepting prior phase-fold interpretations."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Do not automatically remap SourceIDs based only on coordinate proximity.",
+    "Do not treat missing raw observations as low-SNR data.",
+    "Keep CPVS root cause NOT_PROVEN and preserve v0.2.0.",
+    "The new lineage scan records numeric time ranges to test the conflicting HJD (Zenodo record description) versus MJD (CDS ReadMe) field descriptions."
+  ]
+}

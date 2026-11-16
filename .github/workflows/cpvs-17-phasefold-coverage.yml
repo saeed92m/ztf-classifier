@@ -1,0 +1,95 @@
+name: CPVS shared-period phase-fold coverage diagnostic
+
+on:
+  push:
+    branches:
+      - research/cpvs-snr-formula-audit-20261112
+    paths:
+      - scripts/diagnose_cpvs_phasefold_coverage.py
+      - tests/test_cpvs_phasefold_coverage.py
+      - .github/workflows/cpvs-17-phasefold-coverage.yml
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: cpvs-phasefold-coverage-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  phasefold-diagnostic:
+    name: Phase-fold 42 residuals and matched Table 4 controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - name: Checkout investigation revision
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Runner preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$RUNNER_OS" = "Linux"
+          test -n "$RUNNER_TEMP"
+          df -h .
+          python --version
+          free -h
+
+      - name: Download pinned full-parent evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: scientific-validation-heavy
+          path: inputs
+          repository: ${{ github.repository }}
+          run-id: 38635891449
+          github-token: ${{ github.token }}
+
+      - name: Download checksum-pinned Zenodo raw photometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p raw reports
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://zenodo.org/records/3886372/files/ztf2g.zip?download=1" \
+            --output raw/ztf2g.zip
+          curl --fail --location --retry 4 --retry-all-errors \
+            "https://zenodo.org/records/3886372/files/ztf2r.zip?download=1" \
+            --output raw/ztf2r.zip
+          echo "47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9  raw/ztf2g.zip" | sha256sum --check -
+          echo "48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74  raw/ztf2r.zip" | sha256sum --check -
+          du -h raw/ztf2g.zip raw/ztf2r.zip
+
+      - name: Run deterministic phase-fold metric tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p "test_cpvs_phasefold_coverage.py" -v
+
+      - name: Audit shared-period phase coverage for residuals and controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/diagnose_cpvs_phasefold_coverage.py \
+            --input-dir inputs \
+            --g-archive raw/ztf2g.zip \
+            --r-archive raw/ztf2r.zip \
+            --output-dir reports
+
+      - name: Upload compact phase-fold evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: cpvs-phasefold-coverage-evidence
+          path: |
+            reports/cpvs_phasefold_coverage_report.json
+            reports/cpvs_phasefold_coverage_objects.tsv
+          if-no-files-found: error
+          retention-days: 14
