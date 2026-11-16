@@ -27,6 +27,40 @@ SPLIT_FILES = {
 }
 
 
+def _canonical_feature_rows_sha256(frame: pd.DataFrame) -> str:
+    """Hash logical feature rows independently of Parquet container metadata."""
+    canonical_rows: list[dict[str, Any]] = []
+    for row in frame.to_dict(orient="records"):
+        canonical: dict[str, Any] = {}
+        for name, value in row.items():
+            if value is None:
+                canonical[name] = None
+            elif isinstance(value, (bool, np.bool_)):
+                canonical[name] = bool(value)
+            elif isinstance(value, (int, np.integer)):
+                canonical[name] = int(value)
+            elif isinstance(value, (float, np.floating)):
+                numeric = float(value)
+                canonical[name] = numeric if np.isfinite(numeric) else None
+            elif isinstance(value, str):
+                canonical[name] = value
+            elif pd.isna(value):
+                canonical[name] = None
+            else:
+                raise TypeError(
+                    f"Unsupported feature value for canonical hash: {type(value).__name__}"
+                )
+        canonical_rows.append(canonical)
+    encoded = json.dumps(
+        canonical_rows,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def star_embed_row_to_internal_lc(row: dict[str, Any]) -> pd.DataFrame:
     """Map StarEmbed source-native g/r arrays to the frozen internal LC columns.
 
@@ -168,10 +202,16 @@ def run_star_embed_feature_probe(
 
     feature_frame = pd.DataFrame(feature_rows)
     output.mkdir(parents=True, exist_ok=True)
+    feature_parquet_path = output / "star_embed_v0_2_feature_probe.parquet"
+    feature_parquet_sha256: str | None = None
+    feature_parquet_bytes: int | None = None
     if not feature_frame.empty:
-        feature_frame.to_parquet(
-            output / "star_embed_v0_2_feature_probe.parquet", index=False
-        )
+        feature_frame.to_parquet(feature_parquet_path, index=False)
+        feature_parquet_sha256 = hashlib.sha256(
+            feature_parquet_path.read_bytes()
+        ).hexdigest()
+        feature_parquet_bytes = feature_parquet_path.stat().st_size
+    feature_rows_sha256 = _canonical_feature_rows_sha256(feature_frame)
 
     leakage = {
         "within_split_duplicates": duplicate_counts,
@@ -200,6 +240,9 @@ def run_star_embed_feature_probe(
         "selected_clean_test_objects": selected_n,
         "feature_vectors_generated": len(feature_rows),
         "feature_vector_width": len(V0_2_FEATURES),
+        "feature_rows_sha256": feature_rows_sha256,
+        "feature_parquet_sha256": feature_parquet_sha256,
+        "feature_parquet_bytes": feature_parquet_bytes,
         "feature_names_sha256_ordered": hashlib.sha256(
             "\n".join(V0_2_FEATURES).encode("utf-8")
         ).hexdigest(),

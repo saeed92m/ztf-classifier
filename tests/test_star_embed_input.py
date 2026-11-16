@@ -79,6 +79,9 @@ def test_star_embed_feature_probe_uses_clean_test_ids_and_emits_42_features(
     assert report["status"] == "PASS_INPUT_FEATURE_PROBE"
     assert report["feature_vectors_generated"] == 1
     assert report["feature_vector_width"] == 42
+    assert len(report["feature_rows_sha256"]) == 64
+    assert len(report["feature_parquet_sha256"]) == 64
+    assert report["feature_parquet_bytes"] > 0
     assert (output_dir / "star_embed_v0_2_feature_probe.parquet").is_file()
 
 
@@ -133,3 +136,28 @@ def test_star_embed_feature_probe_blocks_when_clean_sample_is_smaller_than_reque
     )
     assert saved_report["status"] == "BLOCKED_INSUFFICIENT_CLEAN_TEST_SAMPLE"
 
+
+
+def test_star_embed_feature_probe_logical_hash_is_reproducible(tmp_path) -> None:
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    rows_by_file = {
+        ARTIFACTS[0]: [_row("train-1")],
+        ARTIFACTS[1]: [_row("train-2")],
+        ARTIFACTS[2]: [_row("validation-1")],
+        ARTIFACTS[3]: [_row("test-1"), _row("test-2")],
+        ARTIFACTS[4]: [_row("anom-1", "Beta_Lyrae")],
+    }
+    for filename, rows in rows_by_file.items():
+        pq.write_table(pa.Table.from_pylist(rows), data_dir / filename)
+
+    first = run_star_embed_feature_probe(
+        data_dir, tmp_path / "output-1", sample_size=2, seed=20261115
+    )
+    second = run_star_embed_feature_probe(
+        data_dir, tmp_path / "output-2", sample_size=2, seed=20261115
+    )
+
+    assert first["feature_rows_sha256"] == second["feature_rows_sha256"]
+    assert first["feature_vector_width"] == second["feature_vector_width"] == 42
+    assert first["feature_vectors_generated"] == second["feature_vectors_generated"] == 2
