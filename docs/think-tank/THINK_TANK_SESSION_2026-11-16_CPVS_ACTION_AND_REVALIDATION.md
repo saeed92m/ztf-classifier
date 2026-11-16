@@ -291,8 +291,8 @@ Its stated method follows Chan et al. Section 2.1:
 For the 17 candidate-only objects with both mean magnitudes but one missing band-specific period:
 - all 17 full-data MGPR fits completed;
 - no fit execution errors occurred;
-- 15 objects passed all four blocked-phase folds;
-- 2 objects had at least one fold classified INSUFFICIENT_DATA;
+- 14 objects passed all four blocked-phase folds;
+- 3 objects had one fold classified INSUFFICIENT_DATA and passed the other three;
 - most predictions stayed within the observed magnitude range; one residual had a 4.4% out-of-range fraction in one band, while a matched Table4 control had a 6.9% fraction;
 - optimizer-start sensitivity remains material and several objects hit parameter bounds.
 
