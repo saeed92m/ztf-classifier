@@ -81,13 +81,58 @@ jobs:
             --sample-size 50 \
             --seed 20261115
           probe_rc=$?
+
+          python -m ztf_classifier.validation.star_embed_input \
+            --data-dir "$data" \
+            --output-dir "$root/input_probe_repeat" \
+            --sample-size 50 \
+            --seed 20261115
+          repeat_rc=$?
+
+          python - "$root" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          root = Path(sys.argv[1])
+          first = json.loads((root / "input_probe/star_embed_input_probe.json").read_text())
+          second = json.loads((root / "input_probe_repeat/star_embed_input_probe.json").read_text())
+          fields = (
+              "feature_rows_sha256",
+              "feature_names_sha256_ordered",
+              "feature_vectors_generated",
+              "feature_vector_width",
+              "selected_clean_test_objects",
+          )
+          differences = {
+              field: (first.get(field), second.get(field))
+              for field in fields
+              if first.get(field) != second.get(field)
+          }
+          if differences:
+              print(json.dumps({"logical_reproducibility": "FAIL", "differences": differences}, indent=2))
+              raise SystemExit(1)
+          print(json.dumps({
+              "logical_reproducibility": "PASS",
+              "feature_rows_sha256": first["feature_rows_sha256"],
+              "feature_vectors_generated": first["feature_vectors_generated"],
+              "feature_vector_width": first["feature_vector_width"],
+              "parquet_container_sha256_first": first.get("feature_parquet_sha256"),
+              "parquet_container_sha256_repeat": second.get("feature_parquet_sha256"),
+          }, indent=2))
+          PY
+          reproducibility_rc=$?
           set -e
 
           echo "audit_exit_code=$audit_rc" >> "$GITHUB_OUTPUT"
           echo "probe_exit_code=$probe_rc" >> "$GITHUB_OUTPUT"
+          echo "repeat_exit_code=$repeat_rc" >> "$GITHUB_OUTPUT"
+          echo "reproducibility_exit_code=$reproducibility_rc" >> "$GITHUB_OUTPUT"
           echo "audit_exit_code=$audit_rc"
           echo "probe_exit_code=$probe_rc"
-          echo "Both diagnostic reports will be uploaded before the final gate."
+          echo "repeat_exit_code=$repeat_rc"
+          echo "reproducibility_exit_code=$reproducibility_rc"
+          echo "Both feature probes and their logical comparison will be uploaded before the final gate."
 
       - name: Upload compact diagnostic evidence only
         if: always()
@@ -98,6 +143,7 @@ jobs:
             reports/scientific_validation/star_embed_input_audit/*.json
             reports/scientific_validation/star_embed_input_audit/input_probe/*.json
             reports/scientific_validation/star_embed_input_audit/input_probe/*.parquet
+            reports/scientific_validation/star_embed_input_audit/input_probe_repeat/*.json
           if-no-files-found: warn
 
       - name: Enforce independent source integrity gate after evidence upload
@@ -105,11 +151,15 @@ jobs:
         env:
           AUDIT_EXIT_CODE: ${{ steps.source_audit.outputs.audit_exit_code }}
           PROBE_EXIT_CODE: ${{ steps.source_audit.outputs.probe_exit_code }}
+          REPEAT_EXIT_CODE: ${{ steps.source_audit.outputs.repeat_exit_code }}
+          REPRODUCIBILITY_EXIT_CODE: ${{ steps.source_audit.outputs.reproducibility_exit_code }}
         run: |
           set -euo pipefail
-          if [ "$AUDIT_EXIT_CODE" != "0" ] || [ "$PROBE_EXIT_CODE" != "0" ]; then
+          if [ "$AUDIT_EXIT_CODE" != "0" ] || [ "$PROBE_EXIT_CODE" != "0" ] || [ "$REPEAT_EXIT_CODE" != "0" ] || [ "$REPRODUCIBILITY_EXIT_CODE" != "0" ]; then
             echo "FAIL-CLOSED: StarEmbed source integrity or input feature probe did not pass."
             echo "audit_exit_code=$AUDIT_EXIT_CODE"
             echo "probe_exit_code=$PROBE_EXIT_CODE"
+            echo "repeat_exit_code=$REPEAT_EXIT_CODE"
+            echo "reproducibility_exit_code=$REPRODUCIBILITY_EXIT_CODE"
             exit 1
           fi
