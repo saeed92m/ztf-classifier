@@ -64,6 +64,10 @@ class CPVSMismatchLineageTests(unittest.TestCase):
             ]
             with patch.dict(ARCHIVES, {"g": config}):
                 result = scan_archive(archive_path, "g", targets, mismatches)
+        self.assertEqual(result["member_bytes"], len(raw))
+        self.assertEqual(result["member_rows"], 3)
+        self.assertEqual(result["member_sha256"], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(result["member_crc32"], f"{crc:08x}")
         self.assertEqual(result["objects"][0]["raw_rows"], 1)
         self.assertEqual(result["targets_without_raw_rows"], [200])
         self.assertEqual(len(result["coordinate_aliases"]), 1)
