@@ -795,3 +795,14 @@ This is a workflow path defect, not a scientific result and not evidence of a so
 The current PR #285 head is `0024f5dad5cdee3a439ab5258b078de370dfaf9c`. Rerun [43817485587](https://github.com/saeed92m/ztf-classifier/actions/runs/43817485587) has passed setup, artifact downloads and mismatch tests; checksum-pinned Zenodo archive download is in progress. The coordinate/epoch trace has not started.
 
 **Disposition:** the workflow path defect is identified and corrected in the branch. Do not close the CPVS scientific blocker until the current run completes the actual 100-object trace and the resulting evidence is inspected.
+
+
+### ۱۸.۱. اصلاح ترتیب وابستگی StarEmbed
+
+برای جلوگیری از تکرار تغییر امنیتی، PR #290 به‌صورت Draft روی شاخه `security/soupsieve-cve-20261114` (PR #289) قرار گرفت. این یک PR زنجیره‌ای است؛ ادغام انجام نشده است.
+
+- PR #289: ارتقای Soup Sieve به 4.1 و CI کامل موفق.
+- PR #290: اکنون همان lockfile امن را از Base خود دریافت می‌کند.
+- CI جدید PR #290 باید Dependency Audit را دوباره اجرا کند.
+
+**وضعیت:** ترتیب وابستگی اصلاح شد؛ نتیجه CI روی Base جدید هنوز در انتظار است. PR #290 نباید پیش از پذیرش و ادغام PR #289 وارد main شود.
