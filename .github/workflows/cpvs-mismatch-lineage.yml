@@ -19,8 +19,8 @@ permissions:
   actions: read
 
 concurrency:
-  group: cpvs-mismatch-lineage-${{ github.ref }}
-  cancel-in-progress: false
+  group: cpvs-mismatch-lineage
+  cancel-in-progress: true
 
 jobs:
   mismatch-lineage:
