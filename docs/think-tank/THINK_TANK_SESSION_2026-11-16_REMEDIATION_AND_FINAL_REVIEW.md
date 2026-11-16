@@ -618,3 +618,40 @@ SHA-256 آرشیوهای ZIP:
 - Chen et al. (2020), Section 3–4: https://arxiv.org/abs/2005.08662
 - Chan et al. (2022), Section 2.1: https://doi.org/10.3847/1538-4357/ac69d4
 - ZTF DR4 quality-filter documentation: https://irsa.ipac.caltech.edu/data/ZTF/docs/releases/dr04/src/dr04.html
+
+
+---
+
+## ۱۴. StarEmbed corrected-head test evidence — 2026-11-16
+
+PR #290 head `6f9b192a6bd4f84b1f4ce212a56539bdaeedd58d` has a completed Test Suite job in Workflow [43816558927](https://github.com/saeed92m/ztf-classifier/actions/runs/43816558927).
+
+JUnit artifact 14203550260 was downloaded and inspected:
+- 725 collected test cases;
+- 712 passed;
+- 0 failures;
+- 0 errors;
+- 13 skipped;
+- line coverage 83.33% (6,733 / 8,080);
+- branch coverage was not measured.
+
+All 16 StarEmbed-specific unit tests passed. They cover:
+- deterministic clean-test sample generation;
+- duplicate object detection within a split;
+- cross-split overlap blocking;
+- missing artifact fail-closed behavior;
+- MJD, magnitude error and band mapping;
+- array alignment;
+- 42-feature output;
+- clean-sample size enforcement.
+
+Interpretation: this validates the adapter and split-audit test logic on controlled fixtures. It does not validate the real downloaded StarEmbed Parquet files or establish that the real dataset has clean splits.
+
+The 13 skipped tests are material:
+- 7 frozen production inference tests: legacy model artifact/shared inputs unavailable;
+- 3 raw/feature integration modules: benchmark artifact or raw detection cache unavailable;
+- 3 live tests: DR24 HATS, Zubercal live parity and DR24 browser UI require explicit environment flags.
+
+Format Check, Ruff Lint, Cumulative Lifecycle Gate, Test Suite and Runtime Smoke Tests passed on this head. Build & Verify Package was still in progress at the time of this record; the complete CI Gate and Dependency Audit are not yet accepted.
+
+**Disposition:** StarEmbed engineering tests now pass. The source-backed acquisition audit, real split provenance and 50-object feature-input artifact remain unverified. Keep PR #290 Draft and make no accuracy claim.
