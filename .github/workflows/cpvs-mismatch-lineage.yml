@@ -83,7 +83,7 @@ jobs:
           set -euo pipefail
           python scripts/diagnose_cpvs_mismatch_lineage.py \
             --table2 inputs/reconciliation/raw/table2.dat \
-            --mismatches inputs/full/cpvs_full_parent_rowcount_mismatches.tsv \
+            --mismatches inputs/full-parent/cpvs_full_parent_rowcount_mismatches.tsv \
             --g-archive raw/ztf2g.zip \
             --r-archive raw/ztf2r.zip \
             --output-dir reports
