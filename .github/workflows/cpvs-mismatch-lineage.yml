@@ -8,6 +8,11 @@ on:
       - scripts/diagnose_cpvs_mismatch_lineage.py
       - tests/test_cpvs_mismatch_lineage.py
       - .github/workflows/cpvs-mismatch-lineage.yml
+  pull_request:
+    paths:
+      - scripts/diagnose_cpvs_mismatch_lineage.py
+      - tests/test_cpvs_mismatch_lineage.py
+      - .github/workflows/cpvs-mismatch-lineage.yml
 
 permissions:
   contents: read
