@@ -186,3 +186,38 @@ The next acceptance gate is a successful, checksum-verified 100-object lineage r
 - Chen et al. (2020) Zenodo record: https://zenodo.org/records/3886372
 - Chen et al. (2020) CDS ReadMe: https://cdsarc.cds.unistra.fr/ftp/J/ApJS/249/18/ReadMe
 - Official ZTF DR2 quality documentation: https://irsa.ipac.caltech.edu/data/ZTF/docs/releases/dr02/src/dr02.html
+
+
+---
+
+## 7. Primary-source recovery — Chen et al. (2020), full Section III
+
+The full paper text is now checked directly from arXiv: https://arxiv.org/abs/2005.08662
+
+This adds important upstream constraints that must be tested before accepting the four-field hypothesis:
+
+1. Chen et al. first selected ZTF DR2 objects with at least 20 detections.
+2. They excluded poor-quality images and photometry using INFOBITS < 33,554,432 and catflags != 32,768.
+3. Period searches were performed in both g and r bands, but a candidate was accepted when the light curve in **one band** met all period-search conditions. Therefore, requiring both Per-g and Per-r to be positive is not a valid assumption about the original Chen catalogue-generation gate.
+4. They used Lomb–Scargle periods from 0.025 to 1,000 days and selected periodic candidates with FAP < 0.001.
+5. They redetermined periods using photometry within 1 arcsecond of the source position.
+6. They fitted fourth-order Fourier functions and excluded poorly fitted light curves using adjusted R-squared. The paper describes the condition as R_g^2 < 0.4 and R_r^2 < 0.4; its exact logical implementation and the correspondence to the published Table 2 R2 fields still need source-level verification.
+7. They then excluded some aliases using period versus R-squared or phase-difference criteria.
+8. The classification feature set includes the period, Fourier parameters, amplitude, Wesenheit magnitude and adjusted R-squared. The Wesenheit calculation explicitly uses both fitted mean magnitudes.
+
+### Consequence for the 11,602 discrepancy
+
+The 11,585 residuals with at least one missing mean magnitude have a plausible downstream completeness explanation: Chan et al. uses both mean magnitudes to construct the two-band color/Wesenheit-derived feature. This is consistent with the exact empirical four-field intersection, but it still does not prove that the four-field predicate was the actual Table 4 filter.
+
+The remaining 17 residuals are more difficult. They have both mean magnitudes and a common period, but one band-specific period is missing. Chen et al. explicitly allowed a catalogue candidate to pass the original periodicity search when only one band met the period conditions. Chan et al.'s phase-folding method uses the common Table 2 period. Therefore the missing Per-g/Per-r value alone is not a documented reason to exclude these 17 from the Chan pipeline. Their exclusion needs a separate explanation, such as a raw-data quality issue, a failed two-band interpolation, a missing/invalid epoch, or another undocumented complete-case rule.
+
+### New ordered tests
+
+- Verify the Zenodo g_flag/r_flag mapping to DR2 catflags by comparing the exact raw observations against the official DR2 light-curve products for a bounded set of the 100 mismatch objects and controls.
+- Recover or query the DR2 image metadata needed to evaluate INFOBITS < 33,554,432. The Zenodo attachments do not contain INFOBITS.
+- For all 100 row-count mismatch objects, compare Table 2 Ng/Nr with raw rows after each independently documented quality stage.
+- For the 17 period-incomplete residuals, compare raw two-band data and quality-qualified detections with 17 matched Table 4 controls; then rerun the Chan two-band MGPR preparation and interpolation using the proven MJD convention.
+- Test the original Chen adjusted-R-squared and alias criteria only after confirming whether the Table 2 R2-g/R2-r fields are the same statistic.
+- Do not impose a two-band period requirement at the Chen catalogue-generation stage. Preserve it only as a diagnostic feature-completeness hypothesis if the Chan pipeline requires it.
+
+This primary-source recovery narrows the problem. It does not resolve the 11,602 discrepancy. Root cause remains NOT PROVEN.
