@@ -243,3 +243,17 @@ Within the residual set, missing mean magnitudes strongly track low per-band obs
 Interpretation: the stated Chen minimum of 20 detections is consistent with a total-object minimum, not a two-band minimum. The low per-band counts are a useful diagnostic for why Table2 fit products may be missing, but they cannot be used as a membership gate because thousands of Table4 members also have fewer than 20 detections in one band.
 
 The 17 period-incomplete residuals remain unexplained. Their common period exists, both mean magnitudes are present, and the Chan phase-folding method uses the common period. The next test must focus on the raw-data quality and interpolation path, not impose a both-band period rule without source evidence.
+
+
+### Latest 100-object lineage workflow attempt — 2026-11-16
+
+Workflow [43816898041](https://github.com/saeed92m/ztf-classifier/actions/runs/43816898041) verified the following:
+- Both pinned input artifacts downloaded successfully.
+- The updated synthetic integrity regression tests passed.
+- Both Zenodo raw archives downloaded successfully and matched their pinned SHA-256 values:
+  - g: 47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9
+  - r: 48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74
+
+The data trace then failed before analysis because the workflow passed `inputs/full/cpvs_full_parent_rowcount_mismatches.tsv`, while the artifact was extracted to `inputs/full-parent/`. This is a workflow path defect, not a scientific result.
+
+Corrected the path to `inputs/full-parent/cpvs_full_parent_rowcount_mismatches.tsv` in commit `a7ada0a0c213b7c30e216fee402c9cf6255f61e5`. The rerun must verify the corrected path and complete the actual 100-object scan. No coordinate, alternate-ID or epoch result is accepted yet.
