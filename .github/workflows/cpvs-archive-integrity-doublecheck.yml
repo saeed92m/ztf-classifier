@@ -100,7 +100,11 @@ jobs:
                     "archives": {}, "interpretation": "DIAGNOSTIC_ONLY"}
           for band, cfg in expected.items():
               path = Path(cfg["path"])
-              digest = hashlib.sha256(path.read_bytes()).hexdigest()
+              digest_obj = hashlib.sha256()
+              with path.open("rb") as stream:
+                  for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                      digest_obj.update(chunk)
+              digest = digest_obj.hexdigest()
               with zipfile.ZipFile(path) as zf:
                   matches = [i for i in zf.infolist() if Path(i.filename).name == cfg["member"] and "__MACOSX" not in i.filename]
                   if len(matches) != 1:
