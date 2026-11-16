@@ -59,9 +59,10 @@
       "CodeQL, Product Scope Audit and Scientific Validation passed on commit 3ef4682f4f3ee75d796cde46995fd036cc662fb1.",
       "Format Check and Ruff Lint passed on CI run 43815904979.",
       "The Cumulative Lifecycle Gate failed because the PR did not include a machine-readable cycle record.",
-      "The test suite, package build, dependency audit and StarEmbed acquisition workflow have not yet completed on the corrected head."
+      "The test suite, package build, dependency audit and StarEmbed acquisition workflow have not yet completed on the corrected head.",
+      "PR #290 is now stacked on security/soupsieve-cve-20261114 (PR #289), whose complete CI including Dependency Audit passed. A fresh PR #290 run on this base is required; the previous Dependency Audit failure was against main's soupsieve==2.10."
     ],
-    "blocker": "Add the required lifecycle record, rerun CI, verify the dedicated source-backed StarEmbed workflow, inspect its artifact and review source split integrity."
+    "blocker": "Run fresh CI and the dedicated source-backed StarEmbed audit on the current PR head with the PR #289 security base. Inspect the source audit and feature-input artifacts."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED",
@@ -93,7 +94,8 @@
       "Verify the dedicated StarEmbed workflow runs its pytest command and checks the acquisition manifest.",
       "Inspect the acquired source audit report and exact duplicate/overlap IDs.",
       "Inspect the 50-object input probe and confirm the feature width/order and all per-object failures.",
-      "Do not claim benchmark acceptance while any source split duplicate or cross-split overlap remains unexplained."
+      "Do not claim benchmark acceptance while any source split duplicate or cross-split overlap remains unexplained.",
+      "Fresh CI after retargeting PR #290 to the verified PR #289 security branch; confirm the complete Dependency Audit passes."
     ]
   },
   "decision": "BLOCKED",
@@ -102,6 +104,7 @@
     "Do not weaken duplicate or cross-split leakage checks.",
     "Do not change the v0.2.0 feature definitions, model artifact, class order or benchmark.",
     "Do not claim the 50-object probe completed until the source-backed artifact is inspected.",
-    "Keep PR #290 Draft until all engineering and source-backed evidence is reviewed."
+    "Keep PR #290 Draft until all engineering and source-backed evidence is reviewed.",
+    "PR #290 is stacked on PR #289; do not merge the experiment before the security base is accepted."
   ]
 }
