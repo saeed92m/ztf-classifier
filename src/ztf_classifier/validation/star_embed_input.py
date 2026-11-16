@@ -227,8 +227,7 @@ def run_star_embed_feature_probe(
             "No model was trained or changed.",
             "StarEmbed labels remain source-provided benchmark labels.",
             "The sample is diagnostic, not population-level performance evidence.",
-            ("No raw source arrays are written to the report; only derived feature ")
-            "rows are emitted.",
+            "No raw source arrays are written to the report; only derived feature rows are emitted.",
         ],
     }
     (output / "star_embed_input_probe.json").write_text(
