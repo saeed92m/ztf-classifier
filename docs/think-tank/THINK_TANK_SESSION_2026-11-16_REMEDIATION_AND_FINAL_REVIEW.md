@@ -832,3 +832,17 @@ No new scientific result is available yet.
 - No fresh complete CI run has yet verified Dependency Audit on this current head. The previous full CI run's Dependency Audit failure remains the last full-gate result.
 
 **Disposition:** the vulnerable pin is no longer present in the current StarEmbed branch, but do not mark the complete CI gate green until a fresh full run verifies it.
+
+
+### ۳.۱.۱. تفکیک MGPR بین 17 نامزد و 17 کنترل
+
+Artifact `cpvs_mgpr_object_metrics.jsonl` از اجرای 43612080772 مستقل بازخوانی شد. نتایج Fold در سطح هر جرم شمارش شدند:
+
+| گروه | تعداد جرم | چهار Fold کامل PASS | سه PASS + یک INSUFFICIENT_DATA | خطای برازش |
+|---|---:|---:|---:|---:|
+| 17 نامزد با دو میانگین قدر و یک دوره باندی ناقص | 17 | 14 | 3 | 0 |
+| 17 کنترل متناظر Table 4 | 17 | 16 | 1 | 0 |
+
+تمام 34 برازش کامل موفق شدند. این نتیجه نشان می‌دهد 17 نامزد اضافی از نظر این آزمون MGPR به‌طور روشن از کنترل‌های مرجع جدا نمی‌شوند. این آزمون، علت اختلاف عضویت را توضیح نمی‌دهد و نباید به‌عنوان رد یا تأیید عضویت استفاده شود.
+
+گزارش تکمیلی روی شاخه CPVS همچنین مقادیر 4.4% و 6.9% را برای یک سنجه خارج از دامنه پیش‌بینی گزارش می‌کند؛ این سنجه در JSONL فعلی موجود نیست و در این جلسه مستقل بازتولید نشده است. تا زمان ارائه Artifact و کد محاسبه، این دو مقدار صرفاً گزارش‌شده و نه VERIFIED محسوب می‌شوند.
