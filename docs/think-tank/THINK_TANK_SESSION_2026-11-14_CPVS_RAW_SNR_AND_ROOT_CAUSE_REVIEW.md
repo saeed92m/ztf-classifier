@@ -1001,3 +1001,54 @@ The Zenodo record's text description labels the raw field HJD. Therefore, the in
 - Do not substitute Table2 `T0` for the phase origin unless a source-backed implementation requires it.
 
 The mismatch-lineage workflow records actual epoch minima/maxima for the raw observations of the 100 affected objects. Until that report identifies the input scale, existing phase-fold and MGPR results are provisional and must not support a scientific membership decision.
+
+---
+
+## 23. Execution re-check — 2026-11-16
+
+This addendum supersedes the earlier "execution pending" wording in Section 22 where later workflow evidence is now available. It does not change the scientific disposition.
+
+### A. MGPR robustness extension — completed diagnostic
+
+Workflow [43612080772](https://github.com/saeed92m/ztf-classifier/actions/runs/43612080772) completed successfully on the standard hosted runner. Its evidence artifact is cpvs-mgpr-robustness-evidence (artifact ID 14121661396, SHA-256 7cb0abd452e9c0293298999dcc3a7e82ed961143ce1cb82955d3282d925a8370).
+
+Verified outcome:
+- 34 fixed objects were processed; all 34 full-data fits completed.
+- Eight deterministic optimizer starts were attempted per object.
+- 34/34 objects had an across-start negative-log-likelihood spread greater than 1.
+- 15/34 objects reached at least one configured upper parameter bound in at least one start.
+- Four contiguous blocked-phase folds were evaluated per object (136 fold attempts).
+- 132 folds passed; 4 were classified INSUFFICIENT_DATA; 0 were execution errors.
+
+Interpretation: the workflow establishes bounded computational feasibility and exposes optimizer/bound sensitivity. It does not establish generalization, validate the published CPVS membership, or resolve the timestamp convention. Posterior uncertainty is not a substitute for held-out predictive validation.
+
+### B. Raw/Table2 coordinate and epoch lineage — still blocked before analysis
+
+Workflow [43612083641](https://github.com/saeed92m/ztf-classifier/actions/runs/43612083641) downloaded and checksum-verified both pinned raw archives and both input artifacts. It then failed in the unit-test stage before the 100-object trace ran.
+
+The failing test is test_scan_finds_nearby_alternate_source_id. The error was raised at the archive integrity check in scripts/diagnose_cpvs_mismatch_lineage.py: g member size/row-count mismatch. The coordinate/epoch scan and evidence upload were skipped. Therefore, this run produced no accepted coordinate, alternate-ID, epoch-range or HJD/MJD result.
+
+A diagnostic-only code change now reports the observed and expected member byte and row counts in the exception. This preserves the fail-closed integrity check. It does not relax the expected archive values or bypass the check. The next run must establish the exact count mismatch and correct either the test fixture or the implementation from evidence. Do not use partial raw-scan results as a substitute.
+
+### C. Full-parent reconciliation — successful, but scientific semantics remain open
+
+Workflow [43600721277](https://github.com/saeed92m/ztf-classifier/actions/runs/43600721277) completed successfully for all 781,602 Table 2 objects. Artifact ID 14116817753 has ZIP SHA-256 d92a4b00c1958916efa3e6bc0c9e1d2a8a135553f47278ec64701dc06ee3a2aa.
+
+The full-parent evidence still supports the diagnostic four-field pattern, but not a documented publisher rule. The 11,602 residual objects, 17 per-band-period residuals, 14 raw/Table2 row-count mismatches, source-field semantics and time-coordinate conflict remain unresolved. Do not convert the empirical four-field discriminator into a production selector.
+
+### D. Current disposition and required next actions
+
+- Scientific root cause: NOT_PROVEN.
+- CPVS scientific validation: NOT_VALIDATED.
+- Issue #170: keep Open.
+- PR #285: keep Draft.
+- Production SNR selector, thresholds, SourceID mapping, feature definitions, taxonomy, benchmark and v0.2.0 baseline: unchanged.
+
+Next actions, in order:
+1. Rerun the 100-object lineage test after the new diagnostic message is present; record actual byte and row counts.
+2. Fix the test fixture or code only after identifying which side of the archive contract is wrong. Keep checksum, CRC and row-count checks fail-closed.
+3. Rerun the complete 100-object g/r lineage scan and inspect every coordinate/epoch result.
+4. Resolve the Zenodo HJD versus CDS MJD description using the exact pinned member bytes and independent primary-source evidence. Rerun phase-fold and MGPR work if the raw time scale requires it.
+5. Have the 16-role simulated Think Tank plus Red Team review the resulting artifacts, methods and residual uncertainty before any production-method decision.
+
+The review remains a structured simulated expert-role exercise, not an external human peer review.
