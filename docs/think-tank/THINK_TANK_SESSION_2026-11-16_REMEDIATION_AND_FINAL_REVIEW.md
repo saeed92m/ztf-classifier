@@ -806,3 +806,17 @@ The current PR #285 head is `0024f5dad5cdee3a439ab5258b078de370dfaf9c`. Rerun [4
 - CI جدید PR #290 باید Dependency Audit را دوباره اجرا کند.
 
 **وضعیت:** ترتیب وابستگی اصلاح شد؛ نتیجه CI روی Base جدید هنوز در انتظار است. PR #290 نباید پیش از پذیرش و ادغام PR #289 وارد main شود.
+
+
+### ۱۹.۱. مسیر اصلاح‌شده و اجرای جاری
+
+Run [43817485587](https://github.com/saeed92m/ztf-classifier/actions/runs/43817485587) completed with failure because it still executed the old workflow command using `inputs/full/`. The actual failure was FileNotFoundError for the mismatch TSV. This run did not reach coordinate/epoch analysis.
+
+The current PR #285 head is `4d26e54714ef130b174bba086442880c7332adce`. The workflow file now uses the verified extracted directory `inputs/full-parent/`. It also changes the concurrency group to a single shared group with `cancel-in-progress: true` to prevent future duplicate full-archive transfers.
+
+Current run [43818065884](https://github.com/saeed92m/ztf-classifier/actions/runs/43818065884):
+- Setup, pinned artifact downloads and mismatch unit tests: PASS.
+- Checksum-pinned raw archive download: IN_PROGRESS.
+- Coordinate/epoch trace: PENDING.
+
+No new scientific result is available yet.
