@@ -6,6 +6,8 @@ on:
       - research/cpvs-archive-integrity-doublecheck-20261116
     paths:
       - .github/workflows/cpvs-archive-integrity-doublecheck.yml
+      - tests/test_cpvs_mismatch_lineage.py
+      - scripts/diagnose_cpvs_mismatch_lineage.py
       - configs/process/cycles/pr-295-cpvs-archive-integrity-doublecheck-20261116.json
   workflow_dispatch:
 
