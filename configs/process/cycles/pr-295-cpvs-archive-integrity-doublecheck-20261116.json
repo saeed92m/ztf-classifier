@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-295-cpvs-archive-integrity-doublecheck-20261116",
+  "objective": "Independently determine whether the publisher-checksum-pinned CPVS g/r ZIP archives pass a second ZIP implementation's decompression and CRC validation before repeating the 100-object lineage scan.",
+  "previous_knowledge_consumed": [
+    "PR #285 lineage run 43818485826 verified both downloaded archive SHA-256 values but failed while Python zipfile streamed the ztf2g member with BadZipFile: Bad CRC-32.",
+    "The failure does not establish whether the archive itself is malformed, Info-ZIP and Python disagree, or the failure is caused by a transfer/cache/runtime issue.",
+    "CPVS membership discrepancy #170 remains unresolved; no membership rule or threshold change is authorized.",
+    "Frozen scientific baseline v0.2.0 and 42-feature contract remain protected."
+  ],
+  "baseline": {
+    "revision": "PR #285 head a172501eb0d9eb0266a6c229dc8a64308eb887e5",
+    "scope": "Research-only workflow diagnostic; no scientific selection logic, source data, model, benchmark, feature schema, thresholds or production branch changes."
+  },
+  "change": {
+    "proposed": "Add an independent Info-ZIP unzip -t integrity check and Python central-directory metadata report for the exact checksum-pinned Zenodo g/r archives.",
+    "scope": "One research workflow and one cumulative lifecycle record. Upload compact diagnostic logs and metadata only; do not upload raw archive bytes.",
+    "rationale": "A second independent decompressor is required to distinguish ZIP member corruption from Python zipfile-specific behavior before changing the lineage scanner."
+  },
+  "expected_improvement": [
+    "Independent CRC/decompression evidence for both pinned archives",
+    "Recorded archive SHA-256, byte size, member CRC, compressed size and uncompressed size",
+    "Fail-closed lineage execution: run the existing scanner only if the independent ZIP integrity checks pass"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The 100-object lineage scan failed on ztf2g with a CRC error after archive SHA-256 checks passed.",
+        "after": "Info-ZIP validates both archive members independently; the existing Python lineage scan is run only after both checks pass.",
+        "status": "PENDING"
+      },
+      "reproducibility": {
+        "before": "Only the failed Python zipfile execution log was available.",
+        "after": "Retain checksum-pinned integrity metadata, Info-ZIP test logs, exit codes and lineage outputs when produced.",
+        "status": "PENDING"
+      }
+    }
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Workflow re-downloads the exact pinned Zenodo archives and checks their SHA-256 values.",
+      "Info-ZIP unzip -t provides an independent decompression and CRC validation implementation.",
+      "Python reads central-directory metadata without modifying source bytes.",
+      "Raw archive files are not uploaded as workflow artifacts."
+    ],
+    "blocker": "Await workflow 43856355640 and review its compact evidence artifact."
+  },
+  "failure_analysis": {
+    "status": "UNRESOLVED",
+    "root_causes": [
+      "It is not yet known whether the pinned ztf2g ZIP member fails CRC under Info-ZIP or only under Python zipfile."
+    ],
+    "limitations": [
+      "Successful ZIP integrity does not prove CPVS membership reconstruction.",
+      "Coordinate proximity is not proof of SourceID identity.",
+      "This diagnostic does not resolve the 11,602 candidate-only CPVS objects."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "PENDING",
+    "findings": []
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Validate workflow YAML and lifecycle gate.",
+      "Verify both ZIP archives with Info-ZIP.",
+      "If independent integrity passes, rerun the unchanged 100-object lineage scanner.",
+      "If it fails, preserve the failure and investigate publisher archive integrity without disabling CRC checks."
+    ]
+  },
+  "decision": "PENDING",
+  "knowledge_carried_forward": [
+    "Do not bypass CRC validation.",
+    "Do not alter CPVS membership rules or thresholds.",
+    "Do not close Issue #170 until the 11,602 discrepancy has a reproducible root cause.",
+    "Keep the original v0.2.0 baseline unchanged."
+  ]
+}
