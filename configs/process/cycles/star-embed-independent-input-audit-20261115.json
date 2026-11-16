@@ -7,10 +7,10 @@
     "StarEmbed has a seven-class taxonomy and is not mapped to the frozen 15-class v0.2.0 production taxonomy.",
     "The experiment is input compatibility only. It must not report model accuracy or alter the v0.2.0 model, features, class order, benchmark, or acceptance criteria.",
     "The initial PR #290 CI run 43684816288 failed Ruff because star_embed_input.py had a missing comma and skipped downstream stages.",
-    "The same initial workflow contained doubled shell continuation characters in the pytest and acquisition-manifest checks; the pytest command could pass a literal backslash argument."
+    "The dedicated source workflow later acquired all five Parquet files and reproduced the duplicate/overlap findings. Its shell exited at the audit failure before it ran the feature-input probe."
   ],
   "baseline": {
-    "revision": "research/star-embed-input-20261115@81308e26456e54b94de54244df57e95e6134606c",
+    "revision": "4933558c1303cbd1a6a9bf8e7d6ff86cb1cc1c29",
     "source": "StarEmbed ZTF_40k pinned benchmark manifest configs/benchmarks/star_embed_ztf_40k.json",
     "model": "Frozen v0.2.0 feature extractor only; no model inference",
     "feature_contract": "V0_2_FEATURES; 42 ordered features",
@@ -22,80 +22,82 @@
     }
   },
   "change": {
-    "proposed": "Repair the Python syntax defect and shell line continuations, then run the pinned StarEmbed source integrity audit and deterministic 50-object feature-input probe.",
-    "scope": "Research branch only: dedicated workflow, source audit, input adapter, focused tests and this lifecycle record. No production or frozen baseline changes.",
-    "rationale": "The earlier CI failure was an engineering defect that prevented the independent-input experiment from running. It must be repaired before interpreting any StarEmbed evidence."
+    "proposed": "Capture the source-audit exit code without aborting the shell, run the independent clean-test feature probe, upload both reports, and enforce the original fail-closed gate after evidence upload.",
+    "scope": "Research branch only: dedicated workflow and this lifecycle record. No production or frozen baseline changes.",
+    "rationale": "The first source-backed run correctly detected dataset leakage but did not run the clean-test input probe because GitHub Actions bash starts with errexit enabled. The corrected workflow must preserve both the leakage blocker and diagnostic feature evidence."
   },
   "expected_improvement": [
-    "Run focused unit tests for StarEmbed schema mapping, source split integrity and feature output.",
-    "Verify the five pinned Parquet files and their hashes.",
+    "Retain exact hashes and row counts for all five pinned Parquet artifacts.",
     "Report duplicate IDs and cross-split overlaps without weakening fail-closed behavior.",
-    "Generate up to 50 deterministic clean-test feature vectors in the frozen v0.2.0 feature order.",
+    "Run the deterministic 50-object feature-input probe on unique test IDs that do not overlap any other split.",
+    "Upload source audit and feature probe outputs even when the global source-integrity gate fails.",
     "Keep all StarEmbed classifier-performance claims out of scope."
   ],
   "measurement": {
     "metrics": {
-      "reliability": {
-        "before": "CI run 43684816288 failed at Ruff lint due to a syntax error in star_embed_input.py; downstream test, build and dependency stages were skipped.",
-        "after": "Format Check and Lint passed on commit 3ef4682f4f3ee75d796cde46995fd036cc662fb1. Cumulative Lifecycle Gate failed because this meaningful PR change had no cycle record. A new cycle record is being added; fresh CI is required.",
-        "evidence": "PR #290; CI run 43815904979; lifecycle job 133128541574."
-      },
       "correctness": {
-        "before": "The feature-input module had a Python syntax error, and workflow shell continuations were malformed.",
-        "after": "The missing list-item comma was corrected. Two doubled shell continuation characters were reduced to one. The corrected commands are visible in the PR head; focused tests and the source-backed probe have not yet run on the corrected head.",
-        "evidence": "Commits 517c68becd50a4f147ac10f79573bc2ba339e378 and 3ef4682f4f3ee75d796cde46995fd036cc662fb1."
+        "before": "The source audit returned exit code 2 and the shell stopped before the feature-input probe. The final gate then received empty output values.",
+        "after": "The workflow now disables errexit only while capturing both diagnostic return codes. It restores errexit before writing the step outputs. The final gate still fails if either diagnostic returns non-zero."
       },
       "reproducibility": {
-        "before": "The PR defines a pinned source manifest and deterministic seed, but no successful current-head acquisition artifact has been inspected.",
-        "after": "Pending fresh source-backed workflow execution and artifact hash verification.",
-        "evidence": "configs/benchmarks/star_embed_ztf_40k.json; PR #290 branch."
+        "before": "The source acquisition and identity audit completed, but the 50-object feature probe did not run.",
+        "after": "The acquisition manifest records all five file hashes. The identity audit used seed 20261115 and selected 50 test IDs. A new run is required to produce and inspect feature-probe evidence."
       }
-    }
+    },
+    "trade_off": "The workflow will run a diagnostic feature probe on a clean test subset even when the overall source split is blocked. It will still fail the final gate while any global duplicate or cross-split overlap remains."
   },
   "validation": {
-    "status": "NOT_VERIFIED",
+    "status": "PARTIALLY_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
-      "CodeQL, Product Scope Audit and Scientific Validation passed on commit 3ef4682f4f3ee75d796cde46995fd036cc662fb1.",
-      "Format Check and Ruff Lint passed on CI run 43815904979.",
-      "The Cumulative Lifecycle Gate failed because the PR did not include a machine-readable cycle record.",
-      "The test suite, package build, dependency audit and StarEmbed acquisition workflow have not yet completed on the corrected head.",
-      "PR #290 is now stacked on security/soupsieve-cve-20261114 (PR #289), whose complete CI including Dependency Audit passed. A fresh PR #290 run on this base is required; the previous Dependency Audit failure was against main's soupsieve==2.10."
+      "Source-backed workflow 43818139378 completed acquisition of five StarEmbed Parquet files from source version 2026-05 dataset snapshot.",
+      "Acquisition artifact 14203795864 has SHA-256 faeb31d5db2c4d67da118338ddf7a5d59593c61b88144a58f7d310f8583151a5.",
+      "File hashes: train-00000-of-00002.parquet 6a84a4fe8706fa6cff2a908a2b3a0a89bab6e7d564fb53ebd56491757a8746bc; train-00001-of-00002.parquet 73cdd608cc3c8e102817317e51fc079fff52de6f46bdcd0ed9a3a4e708cd672d; validation-00000-of-00001.parquet 7652e00b09babff33f7a0ebcd3294e4854963b59f0c0d533115300c2aee64726; test-00000-of-00001.parquet 4ef77d676d399f8ceb2d6ab9caa652206309e590ebf7196f4477443fb8fe7d2c; anom-00000-of-00001.parquet 716f053acf17ff7697ec07fc886d75bc1440545f3c84459373541b566a0c83b1.",
+      "Train has 29047 rows and 29046 unique SourceIDs; duplicate SourceID CSS_J164349.2+401208.",
+      "Train/test overlap count is 1; overlapping SourceID CSS_J051729.2+083846.",
+      "Validation has 4150 unique SourceIDs, test has 8301 unique SourceIDs, and anomaly split has 1087 unique SourceIDs.",
+      "The identity audit generated a deterministic 50-object test sample with seed 20261115.",
+      "The first run did not produce input-probe JSON or Parquet output. The uploaded artifact contains only the acquisition manifest and source identity audit."
     ],
-    "blocker": "Run fresh CI and the dedicated source-backed StarEmbed audit on the current PR head with the PR #289 security base. Inspect the source audit and feature-input artifacts."
+    "blocker": "The duplicate train SourceID and train/test overlap remain unexplained. The clean-test feature probe must be rerun and inspected. Benchmark acceptance remains blocked."
   },
   "failure_analysis": {
-    "status": "ROOT_CAUSE_IDENTIFIED",
+    "status": "PARTIALLY_DIAGNOSED",
     "root_causes": [
-      "The initial Ruff failure was caused by a missing comma between adjacent string literals in the limitations list in star_embed_input.py.",
-      "The workflow's pytest and acquisition-manifest shell commands contained two trailing backslashes instead of one, so shell continuation semantics were incorrect.",
-      "The corrected PR head then failed the lifecycle gate because the meaningful code/workflow changes did not include a cumulative cycle record."
+      "The source dataset contains one duplicate SourceID within train: CSS_J164349.2+401208.",
+      "The source dataset contains one SourceID shared by train and test: CSS_J051729.2+083846.",
+      "The workflow's source-audit step used set -uo pipefail but inherited GitHub Actions bash errexit. The audit command returned 2, so the shell exited before capturing its return code or running the feature probe. The final gate received empty output values."
+    ],
+    "unresolved": [
+      "The source-generation reason for the duplicate train SourceID is unknown.",
+      "The source-generation reason for the train/test overlap is unknown.",
+      "The clean 50-object feature-input probe has not yet been executed on the acquired source snapshot."
     ],
     "limitations": [
-      "The source dataset has known duplicate and cross-split overlap risks; these remain scientific benchmark blockers.",
       "A successful feature-input probe does not establish classifier accuracy, taxonomy compatibility or independent scientific validation.",
       "The 50-object sample is diagnostic and cannot establish population-level performance.",
       "No production model inference or training is in scope."
     ]
   },
   "knowledge_extraction": {
-    "status": "SUPPORTED",
+    "status": "VERIFIED",
     "findings": [
-      "A code-level feature-input compatibility test must be separated from benchmark-label and classifier-performance validation.",
-      "Split-level duplicate and overlap checks must remain fail-closed.",
-      "Lifecycle records are required for meaningful PR changes and must state unverified work explicitly."
+      "The pinned source package is downloadable and its five Parquet file hashes are recorded.",
+      "The source audit found one duplicate train SourceID and one train/test SourceID overlap.",
+      "The 50-object deterministic test sample is selected after stable SourceID sorting with seed 20261115.",
+      "The input adapter excludes duplicated test IDs and IDs that overlap any other split before selecting the feature probe sample.",
+      "The feature probe reports global split leakage and remains blocked while any duplicate or overlap exists."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Rerun full CI after this cycle record is committed.",
-      "Verify focused tests pass on the corrected PR head.",
-      "Verify the dedicated StarEmbed workflow runs its pytest command and checks the acquisition manifest.",
-      "Inspect the acquired source audit report and exact duplicate/overlap IDs.",
-      "Inspect the 50-object input probe and confirm the feature width/order and all per-object failures.",
+      "Run the corrected StarEmbed workflow and confirm both audit and input-probe reports are uploaded.",
+      "Inspect the number of feature vectors generated, feature width/order hash, per-object failures and sample exclusions.",
+      "Confirm the final workflow gate fails while duplicate or cross-split overlap remains.",
+      "Trace the duplicate and overlap SourceIDs to the source dataset's split-generation provenance.",
       "Do not claim benchmark acceptance while any source split duplicate or cross-split overlap remains unexplained.",
-      "Fresh CI after retargeting PR #290 to the verified PR #289 security branch; confirm the complete Dependency Audit passes."
+      "Do not map StarEmbed's seven classes to the frozen v0.2.0 15-class taxonomy."
     ]
   },
   "decision": "BLOCKED",
@@ -103,8 +105,7 @@
     "Do not train or run predictions on StarEmbed as if its seven classes map to the frozen 15-class production taxonomy.",
     "Do not weaken duplicate or cross-split leakage checks.",
     "Do not change the v0.2.0 feature definitions, model artifact, class order or benchmark.",
-    "Do not claim the 50-object probe completed until the source-backed artifact is inspected.",
-    "Keep PR #290 Draft until all engineering and source-backed evidence is reviewed.",
-    "PR #290 is stacked on PR #289; do not merge the experiment before the security base is accepted."
+    "Run the clean 50-object feature-input diagnostic even when global leakage blocks benchmark acceptance, then retain both results.",
+    "Keep PR #290 Draft until the source identity findings and feature-input evidence are reviewed."
   ]
 }

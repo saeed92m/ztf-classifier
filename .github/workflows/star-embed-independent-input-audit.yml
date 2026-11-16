@@ -58,28 +58,36 @@ jobs:
       - name: Audit source IDs and run 50-object v0.2 feature-input probe
         id: source_audit
         continue-on-error: true
+        shell: bash
         run: |
           set -uo pipefail
           root=reports/scientific_validation/star_embed_input_audit
           data="$root/data"
+
+          # Keep both diagnostics running after a fail-closed source audit.
+          # The feature probe selects only unique test IDs absent from all other
+          # splits. Its report must still retain the global leakage blocker.
+          set +e
           python -m ztf_classifier.validation.star_embed_audit \
             --data-dir "$data" \
             --output "$root/source_identity_audit.json" \
             --sample-size 50 \
             --seed 20261115
           audit_rc=$?
+
           python -m ztf_classifier.validation.star_embed_input \
             --data-dir "$data" \
             --output-dir "$root/input_probe" \
             --sample-size 50 \
             --seed 20261115
           probe_rc=$?
+          set -e
+
           echo "audit_exit_code=$audit_rc" >> "$GITHUB_OUTPUT"
           echo "probe_exit_code=$probe_rc" >> "$GITHUB_OUTPUT"
-          if [ "$audit_rc" -ne 0 ] || [ "$probe_rc" -ne 0 ]; then
-            echo "Independent source integrity or input-path gate is BLOCKED."
-            exit 2
-          fi
+          echo "audit_exit_code=$audit_rc"
+          echo "probe_exit_code=$probe_rc"
+          echo "Both diagnostic reports will be uploaded before the final gate."
 
       - name: Upload compact diagnostic evidence only
         if: always()
@@ -100,8 +108,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$AUDIT_EXIT_CODE" != "0" ] || [ "$PROBE_EXIT_CODE" != "0" ]; then
-            echo "FAIL-CLOSED: StarEmbed source integrity or input feature"
-            echo "probe did not pass."
+            echo "FAIL-CLOSED: StarEmbed source integrity or input feature probe did not pass."
             echo "audit_exit_code=$AUDIT_EXIT_CODE"
             echo "probe_exit_code=$PROBE_EXIT_CODE"
             exit 1
