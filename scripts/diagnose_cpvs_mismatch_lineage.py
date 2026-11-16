@@ -274,7 +274,11 @@ def scan_archive(
     if member_sha != config["member_sha256"]:
         raise ValueError(f"{band} member SHA-256 mismatch")
     if member_bytes != config["member_bytes"] or member_rows != config["member_rows"]:
-        raise ValueError(f"{band} member size/row-count mismatch")
+        raise ValueError(
+            f"{band} member size/row-count mismatch: "
+            f"bytes={member_bytes}/{config['member_bytes']}, "
+            f"rows={member_rows}/{config['member_rows']}"
+        )
     if crc_hex != config["member_crc32"] or malformed:
         raise ValueError(f"{band} member CRC or malformed-row validation failed")
 
