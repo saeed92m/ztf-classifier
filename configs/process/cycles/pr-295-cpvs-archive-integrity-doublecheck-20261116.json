@@ -26,30 +26,35 @@
     "metrics": {
       "correctness": {
         "before": "The 100-object lineage scan failed on ztf2g with a CRC error after archive SHA-256 checks passed.",
-        "after": "Info-ZIP validates both archive members independently; the existing Python lineage scan is run only after both checks pass.",
-        "status": "PENDING"
+        "after": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
       },
       "reproducibility": {
         "before": "Only the failed Python zipfile execution log was available.",
-        "after": "Retain checksum-pinned integrity metadata, Info-ZIP test logs, exit codes and lineage outputs when produced.",
-        "status": "PENDING"
+        "after": "NOT_MEASURED",
+        "status": "NOT_MEASURED"
       }
-    }
+    },
+    "trade_off": "Independent archive integrity validation adds a gate before lineage analysis. It preserves the fail-closed rule and does not bypass CRC checks."
   },
   "validation": {
-    "status": "PENDING_CI",
+    "status": "NOT_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
       "Workflow re-downloads the exact pinned Zenodo archives and checks their SHA-256 values.",
       "Info-ZIP unzip -t provides an independent decompression and CRC validation implementation.",
       "Python reads central-directory metadata without modifying source bytes.",
-      "Raw archive files are not uploaded as workflow artifacts."
+      "Raw archive files are not uploaded as workflow artifacts.",
+      "The initial CI run 43856626824 failed before the archive workflow ran because this lifecycle record used unsupported knowledge_extraction and decision states. The record has been corrected; a new CI run is required."
     ],
-    "blocker": "Await workflow 43856355640 and review its compact evidence artifact."
+    "blocker": "No independent Info-ZIP integrity result is available yet. Run the archive workflow and inspect its compact evidence artifact."
   },
   "failure_analysis": {
-    "status": "UNRESOLVED",
+    "status": "PARTIALLY_DIAGNOSED",
     "root_causes": [
+      "The initial lifecycle gate failure was caused by knowledge_extraction.status=PENDING, an empty findings list, and decision=PENDING. The repository contract permits only defined knowledge statuses, requires non-empty findings, and accepts only ACCEPT, REVISE or BLOCKED."
+    ],
+    "unresolved": [
       "It is not yet known whether the pinned ztf2g ZIP member fails CRC under Info-ZIP or only under Python zipfile."
     ],
     "limitations": [
@@ -59,23 +64,28 @@
     ]
   },
   "knowledge_extraction": {
-    "status": "PENDING",
-    "findings": []
+    "status": "UNRESOLVED",
+    "findings": [
+      "A SHA-256 match verifies archive byte identity against the pinned digest. It does not verify decompression or the CRC of each ZIP member.",
+      "Do not bypass CRC validation or run lineage analysis after an independent archive-integrity failure.",
+      "Do not infer CPVS membership correctness from successful ZIP integrity."
+    ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Validate workflow YAML and lifecycle gate.",
+      "Rerun CI and confirm the cumulative lifecycle gate passes on the corrected record.",
       "Verify both ZIP archives with Info-ZIP.",
       "If independent integrity passes, rerun the unchanged 100-object lineage scanner.",
       "If it fails, preserve the failure and investigate publisher archive integrity without disabling CRC checks."
     ]
   },
-  "decision": "PENDING",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "Do not bypass CRC validation.",
     "Do not alter CPVS membership rules or thresholds.",
     "Do not close Issue #170 until the 11,602 discrepancy has a reproducible root cause.",
-    "Keep the original v0.2.0 baseline unchanged."
+    "Keep the original v0.2.0 baseline unchanged.",
+    "Treat the archive-integrity result and the CPVS membership result as separate claims."
   ]
 }
