@@ -69,7 +69,8 @@
       "Latest PR #285 head 4d26e54714ef130b174bba086442880c7332adce: workflow 43818065884 passed setup, pinned artifact downloads and mismatch tests; raw archive download remains in progress.",
       "Latest PR #290 head 4933558c1303cbd1a6a9bf8e7d6ff86cb1cc1c29 contains soupsieve==4.1 and is based on the security branch; Scientific Validation 43818154042 passed, but a fresh complete CI/Dependency Audit has not been recorded.",
       "PR #289 CI run 43536652404 passed all eight jobs, including Dependency Audit.",
-      "The CPVS lineage workflow path defect was confirmed in run 43817485587 and corrected in the current branch; the current trace has not started."
+      "The CPVS lineage workflow path defect was confirmed in run 43817485587 and corrected in the current branch; the current trace has not started.",
+      "Post-review CI/base update 2026-11-16: exact-head PR #291 CI run 43818873284 failed only at Dependency Audit because its prior main base still resolved soupsieve==2.10 with three CVEs; the final CI gate therefore failed. CodeQL run 43818873287, Product Scope Audit run 43818873313 and Scientific Validation contract run 43818873319 passed; source-backed scientific jobs were skipped. PR #289 exact-head CI run 43536652404 passed all eight jobs including Dependency Audit and was moved to Ready for review. PR #291 is now retargeted to security/soupsieve-cve-20261114; a fresh full CI result on that base is still required."
     ],
     "blocker": "This documentation review does not close any scientific or product acceptance gate. Each underlying issue retains its own acceptance criteria."
   },
@@ -83,7 +84,8 @@
       "The normal application observation path still uses ALeRCE by default; DR24 raw acquisition is not yet a validated inference path.",
       "The current PR #290 base branch still contains soupsieve 2.10; the dependency audit detects three CVEs. The separate PR #289 upgrade to 4.1 passes its dependency audit but is not merged.",
       "The CPVS 100-object lineage rerun has not completed; the latest run is pending.",
-      "The prior CPVS lineage rerun 43817485587 still used the old inputs/full/ path and failed before analysis; current head contains the corrected inputs/full-parent/ path."
+      "The prior CPVS lineage rerun 43817485587 still used the old inputs/full/ path and failed before analysis; current head contains the corrected inputs/full-parent/ path.",
+      "The exact-head PR #291 CI run failed Dependency Audit because the prior main base retained soupsieve==2.10; the fix is in PR #289. The PR has been retargeted to the security branch, but no fresh full CI result on that base is verified."
     ],
     "limitations": [
       "The 16-seat review uses simulated expert roles and is not external human peer review.",
@@ -93,7 +95,8 @@
       "The PR #290 dependency audit failure means the complete CI Gate is not green despite successful tests, runtime smoke and package build.",
       "The current CPVS raw archive trace run is pending; no new coordinate or epoch evidence is available.",
       "The current CPVS archive download is still in progress; no new coordinate/epoch results are available.",
-      "The current StarEmbed branch has the security pin fixed, but its latest full CI and Dependency Audit are not yet verified."
+      "The current StarEmbed branch has the security pin fixed, but its latest full CI and Dependency Audit are not yet verified.",
+      "PR #291's CI result from the prior main base is not valid evidence of a green dependency gate on the current security base; the new base requires fresh CI."
     ]
   },
   "knowledge_extraction": {
@@ -119,7 +122,8 @@
       "Complete the PR #290 dependency gate only after the PR #289 security fix is approved and included in its base or a formally stacked dependency.",
       "Obtain the bounded WSL local artifact audit JSON for Issue #282 after remote recovery sources were exhausted.",
       "Inspect the output of CPVS lineage run 43818065884 after it completes.",
-      "Obtain a fresh complete CI/Dependency Audit result on the current PR #290 head."
+      "Obtain a fresh complete CI/Dependency Audit result on the current PR #290 head.",
+      "Re-run the complete PR #291 CI on the security/soupsieve-cve-20261114 base and inspect all required jobs before review or merge."
     ]
   },
   "decision": "BLOCKED",
