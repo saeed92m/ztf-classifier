@@ -65,7 +65,11 @@
       "Full-parent reconciliation TSV was independently re-read; a 20-per-band threshold would exclude 8,734 Table 4 members.",
       "StarEmbed corrected-head CI 43816558927: 712 passed, 13 skipped, 0 failures; 83.33% line coverage; all 16 StarEmbed-specific unit tests passed.",
       "PR #290 Dependency Audit failed on inherited soupsieve 2.10 vulnerabilities; PR #289 upgrade to 4.1 passed all eight CI jobs.",
-      "CPVS lineage run 43817131764 was cancelled during archive download; latest run 43817485587 is pending with no job started."
+      "CPVS lineage run 43817131764 was cancelled during archive download; latest run 43817485587 is pending with no job started.",
+      "Latest PR #285 head 4d26e54714ef130b174bba086442880c7332adce: workflow 43818065884 passed setup, pinned artifact downloads and mismatch tests; raw archive download remains in progress.",
+      "Latest PR #290 head 4933558c1303cbd1a6a9bf8e7d6ff86cb1cc1c29 contains soupsieve==4.1 and is based on the security branch; Scientific Validation 43818154042 passed, but a fresh complete CI/Dependency Audit has not been recorded.",
+      "PR #289 CI run 43536652404 passed all eight jobs, including Dependency Audit.",
+      "The CPVS lineage workflow path defect was confirmed in run 43817485587 and corrected in the current branch; the current trace has not started."
     ],
     "blocker": "This documentation review does not close any scientific or product acceptance gate. Each underlying issue retains its own acceptance criteria."
   },
@@ -78,7 +82,8 @@
       "The frozen v0.2.0 production model artifact has not been independently recovered and authenticated.",
       "The normal application observation path still uses ALeRCE by default; DR24 raw acquisition is not yet a validated inference path.",
       "The current PR #290 base branch still contains soupsieve 2.10; the dependency audit detects three CVEs. The separate PR #289 upgrade to 4.1 passes its dependency audit but is not merged.",
-      "The CPVS 100-object lineage rerun has not completed; the latest run is pending."
+      "The CPVS 100-object lineage rerun has not completed; the latest run is pending.",
+      "The prior CPVS lineage rerun 43817485587 still used the old inputs/full/ path and failed before analysis; current head contains the corrected inputs/full-parent/ path."
     ],
     "limitations": [
       "The 16-seat review uses simulated expert roles and is not external human peer review.",
@@ -86,7 +91,9 @@
       "The report does not claim model accuracy, scientific discovery, product readiness or release acceptance.",
       "The full-parent TSV does not contain gmag/rmag fields, so the reported 11,467/11,470 and 114/115 missing-mean correlations have not been independently recomputed from the raw Table2 bytes in this session.",
       "The PR #290 dependency audit failure means the complete CI Gate is not green despite successful tests, runtime smoke and package build.",
-      "The current CPVS raw archive trace run is pending; no new coordinate or epoch evidence is available."
+      "The current CPVS raw archive trace run is pending; no new coordinate or epoch evidence is available.",
+      "The current CPVS archive download is still in progress; no new coordinate/epoch results are available.",
+      "The current StarEmbed branch has the security pin fixed, but its latest full CI and Dependency Audit are not yet verified."
     ]
   },
   "knowledge_extraction": {
@@ -110,7 +117,9 @@
       "Re-review all changes on their final PR heads before any merge or release.",
       "Wait for and inspect the latest CPVS lineage run 43817485587; do not commit to its branch while the large archive job is pending.",
       "Complete the PR #290 dependency gate only after the PR #289 security fix is approved and included in its base or a formally stacked dependency.",
-      "Obtain the bounded WSL local artifact audit JSON for Issue #282 after remote recovery sources were exhausted."
+      "Obtain the bounded WSL local artifact audit JSON for Issue #282 after remote recovery sources were exhausted.",
+      "Inspect the output of CPVS lineage run 43818065884 after it completes.",
+      "Obtain a fresh complete CI/Dependency Audit result on the current PR #290 head."
     ]
   },
   "decision": "BLOCKED",
