@@ -655,3 +655,23 @@ The 13 skipped tests are material:
 Format Check, Ruff Lint, Cumulative Lifecycle Gate, Test Suite and Runtime Smoke Tests passed on this head. Build & Verify Package was still in progress at the time of this record; the complete CI Gate and Dependency Audit are not yet accepted.
 
 **Disposition:** StarEmbed engineering tests now pass. The source-backed acquisition audit, real split provenance and 50-object feature-input artifact remain unverified. Keep PR #290 Draft and make no accuracy claim.
+
+
+### ۱۳.۶. ممیزی حداقل تعداد تشخیص — آزمون ابطال آستانه دو‌باندی
+
+فایل `cpvs_full_parent_object_reconciliation.tsv` از Artifact کامل والد دریافت و مستقل با pandas بازخوانی شد. Hash فایل ZIP ورودی Artifact برابر است با:
+
+`d92a4b00c1958916efa3e6bc0c9e1d2a8a135553f47278ec64701dc06ee3a2aa`
+
+نتایج قابل بازتولید از 781,602 ردیف:
+- فقط 1/11,602 نامزد اضافی دارای (Ng+Nr<20) است.
+- 0/730,184 عضو Table 4 دارای (Ng+Nr<20) است.
+- 11,581/11,602 نامزد اضافی در دست‌کم یک باند کمتر از 20 مشاهده دارند.
+- 8,734/730,184 عضو Table 4 نیز در دست‌کم یک باند کمتر از 20 مشاهده دارند.
+- 21 نامزد اضافی در هر دو باند دست‌کم 20 مشاهده دارند.
+
+**نتیجه:** حداقل 20 detection در Chen به‌عنوان شرط مجموع مشاهدات جرم توصیف شده است؛ تبدیل آن به شرط حداقل 20 مشاهده در هر باند، 8,734 عضو منتشرشده را حذف می‌کند و مردود است.
+
+یک تحلیل تکمیلی روی Table 2 گزارش کرده است که از موارد فاقد gmag، تعداد 11,467/11,470 دارای Ng<20 هستند و از موارد فاقد rmag، تعداد 114/115 دارای Nr<20 هستند. این هم‌بستگی برای فرضیه کمبود داده مفید است، اما به علت نبود ستون‌های gmag/rmag در TSV آشتی‌سازی فعلی، در این جلسه به‌عنوان نتیجه مستقل بازتولیدشده علامت نمی‌خورد. باید با فایل Table 2 پین‌شده و Hash آن دوباره محاسبه شود.
+
+**تصمیم:** هیچ آستانه 20-per-band به Selector اضافه نشود. 21 مورد باقی‌مانده با هر دو باند حداقل 20 مشاهده باید جداگانه بررسی شوند؛ به‌ویژه 17 مورد با دوره باندی ناقص و 4 مورد با میانگین قدر ناقص که در تحلیل تکمیلی گزارش شده‌اند.
