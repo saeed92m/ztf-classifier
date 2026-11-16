@@ -221,3 +221,25 @@ The remaining 17 residuals are more difficult. They have both mean magnitudes an
 - Do not impose a two-band period requirement at the Chen catalogue-generation stage. Preserve it only as a diagnostic feature-completeness hypothesis if the Chan pipeline requires it.
 
 This primary-source recovery narrows the problem. It does not resolve the 11,602 discrepancy. Root cause remains NOT PROVEN.
+
+
+### Detection-count ablation — caution against a per-band 20-point shortcut
+
+The pinned Table2 rows and Table4 ID list were re-parsed from the reconciliation artifact (ZIP SHA-256 130f3db65827afd83f5050e7eb91eb1cf7f6432e85456fd16586c8000a9aa6be).
+
+Verified counts:
+- Only 1/11,602 candidate-only objects has Ng + Nr < 20.
+- 0/730,184 Table4 members has Ng + Nr < 20.
+- 11,581/11,602 residuals have Ng < 20 or Nr < 20.
+- However, 8,734 Table4 members also have Ng < 20 or Nr < 20.
+- Therefore, a per-band 20-detection threshold would reject 8,734 published members and is not a valid global reconstruction rule.
+- The 21 residuals with Ng >= 20 and Nr >= 20 consist of 17 objects with both mean magnitudes but one missing per-band period, plus 4 objects with a missing mean magnitude.
+
+Within the residual set, missing mean magnitudes strongly track low per-band observation counts:
+- 11,467/11,470 missing gmag cases have Ng < 20.
+- 114/115 missing rmag cases have Nr < 20.
+- The remaining cases show that the association is not a deterministic rule.
+
+Interpretation: the stated Chen minimum of 20 detections is consistent with a total-object minimum, not a two-band minimum. The low per-band counts are a useful diagnostic for why Table2 fit products may be missing, but they cannot be used as a membership gate because thousands of Table4 members also have fewer than 20 detections in one band.
+
+The 17 period-incomplete residuals remain unexplained. Their common period exists, both mean magnitudes are present, and the Chan phase-folding method uses the common period. The next test must focus on the raw-data quality and interpolation path, not impose a both-band period rule without source evidence.
