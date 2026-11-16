@@ -38,7 +38,7 @@ jobs:
 
       - name: Test source audit and independent input adapter
         run: |
-          python -m pytest -q \\
+          python -m pytest -q \
             tests/test_star_embed_audit.py tests/test_star_embed_input.py
 
       - name: Acquire the five pinned StarEmbed Parquet artifacts
@@ -51,7 +51,7 @@ jobs:
             --benchmark-id star_embed_ztf_40k \
             --output reports/scientific_validation/star_embed_input_audit/data \
             --code-version "$CODE_VERSION"
-          test -s \\
+          test -s \
             reports/scientific_validation/star_embed_input_audit/data.acquisition.json
 
       - name: Audit source IDs and run 50-object v0.2 feature-input probe
