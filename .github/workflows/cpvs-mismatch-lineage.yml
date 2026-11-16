@@ -77,6 +77,15 @@ jobs:
           echo "47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9  raw/ztf2g.zip" | sha256sum --check -
           echo "48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74  raw/ztf2r.zip" | sha256sum --check -
 
+      - name: Validate ZIP CRC and extract members with Info-ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          unzip -tq raw/ztf2g.zip
+          unzip -tq raw/ztf2r.zip
+          unzip -p raw/ztf2g.zip ztf2g > raw/ztf2g.member
+          unzip -p raw/ztf2r.zip ztf2r > raw/ztf2r.member
+
       - name: Trace mismatch rows and coordinate aliases
         shell: bash
         run: |
@@ -86,6 +95,8 @@ jobs:
             --mismatches inputs/full-parent/cpvs_full_parent_rowcount_mismatches.tsv \
             --g-archive raw/ztf2g.zip \
             --r-archive raw/ztf2r.zip \
+            --g-member raw/ztf2g.member \
+            --r-member raw/ztf2r.member \
             --output-dir reports
 
       - name: Upload compact lineage evidence
