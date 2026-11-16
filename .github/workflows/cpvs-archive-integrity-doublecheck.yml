@@ -6,6 +6,7 @@ on:
       - research/cpvs-archive-integrity-doublecheck-20261116
     paths:
       - .github/workflows/cpvs-archive-integrity-doublecheck.yml
+      - configs/process/cycles/pr-295-cpvs-archive-integrity-doublecheck-20261116.json
   workflow_dispatch:
 
 permissions:
