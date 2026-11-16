@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "think-tank-remediation-final-review-20261116",
+  "objective": "Record a cross-disciplinary, evidence-based review of the current ZTF Classifier blockers, remediation commits, workflow outcomes, scientific limitations and next acceptance gates.",
+  "previous_knowledge_consumed": [
+    "The repository uses a protected v0.2.0 scientific baseline and a 42-feature contract.",
+    "CPVS Issue #170 remains an unresolved membership-reconstruction blocker.",
+    "StarEmbed Issue #210 and PR #290 contain an independent-input experiment, not classifier-performance validation.",
+    "DR24 Issue #253 and AOIC Issue #249 define separate source-acquisition and source-identity workstreams.",
+    "Issue #282 tracks recovery and independent authentication of the original production model artifact.",
+    "CIN Issue #251 is an optional human-in-the-loop subsystem and must not delay the Park MVP."
+  ],
+  "baseline": {
+    "revision": "main@f681408fae8d8062dd72ff74791872c1590f6ee8",
+    "protected_scientific_baseline": "v0.2.0",
+    "feature_contract": "42 ordered features",
+    "benchmark": "150 objects; 15 classes; 10 objects per class",
+    "scope": "Documentation-only cross-cutting review; no production code, model, data or acceptance criteria changed."
+  },
+  "change": {
+    "proposed": "Add Session 09 as a traceable cross-disciplinary review of the latest verified repository, workflow, artifact and primary-source evidence.",
+    "scope": "One think-tank review document and one cumulative lifecycle record on a research branch.",
+    "rationale": "The current state spans multiple scientific and engineering workstreams. A consolidated evidence ledger is needed to prevent stale status, false closure and accidental coupling of unrelated blockers."
+  },
+  "expected_improvement": [
+    "Separate verified facts, partial evidence, failed runs and unresolved hypotheses.",
+    "Record remediation actually applied and distinguish it from work still pending.",
+    "Preserve the scientific baseline and independent acceptance criteria.",
+    "Provide a dependency-aware sequence for the next review cycle."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "Status was distributed across issues, PR descriptions, workflow outputs and earlier think-tank sessions.",
+        "after": "A single Session 09 document records the current evidence and explicitly marks unresolved gates.",
+        "evidence": "docs/think-tank/THINK_TANK_SESSION_2026-11-16_REMEDIATION_AND_FINAL_REVIEW.md",
+        "status": "MEASURED"
+      },
+      "reproducibility": {
+        "before": "No consolidated review linked the latest CPVS, StarEmbed, DR24, AOIC, model artifact and security evidence.",
+        "after": "The review links the relevant GitHub issues, PRs, workflow runs, artifacts and primary sources. No raw data or credentials are included.",
+        "evidence": "Session 09 references and linked workflow artifacts.",
+        "status": "MEASURED"
+      },
+      "reliability": {
+        "before": "Several earlier status notes were stale or described workflows as pending after completion.",
+        "after": "The review records completed, failed, pending and unverified states separately; it does not infer scientific validity from CI.",
+        "evidence": "Workflow runs 43600721277, 43612080772, 43612083641 and 43815904979.",
+        "status": "MEASURED"
+      }
+    }
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The document was created on a research branch and fetched again by exact repository path and commit.",
+      "Current CPVS full-parent and MGPR workflow metadata and the MGPR artifact were inspected.",
+      "The CPVS 100-object lineage workflow failure was verified from its job log.",
+      "StarEmbed PR #290 current branch commits and prior CI/lifecycle outcomes were inspected.",
+      "DR24 ObservationService and API source files were inspected on main.",
+      "The report explicitly identifies simulated expert roles and does not claim external human peer review."
+    ],
+    "blocker": "This documentation review does not close any scientific or product acceptance gate. Each underlying issue retains its own acceptance criteria."
+  },
+  "failure_analysis": {
+    "status": "UNRESOLVED",
+    "root_causes": [
+      "The CPVS 11,602-object membership discrepancy has not been explained by a documented publisher selection rule.",
+      "The 100-object coordinate/epoch lineage workflow failed before data analysis.",
+      "StarEmbed source split duplicates and cross-split overlap remain unresolved.",
+      "The frozen v0.2.0 production model artifact has not been independently recovered and authenticated.",
+      "The normal application observation path still uses ALeRCE by default; DR24 raw acquisition is not yet a validated inference path."
+    ],
+    "limitations": [
+      "The 16-seat review uses simulated expert roles and is not external human peer review.",
+      "Some PR checks were inspected on preceding heads; fresh current-head checks remain required.",
+      "The report does not claim model accuracy, scientific discovery, product readiness or release acceptance."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Engineering CI success and scientific validation are separate acceptance layers.",
+      "An empirical predicate that matches reference membership is not proof of the publisher's algorithm.",
+      "Source-native survey IDs must remain distinct from astrophysical identity.",
+      "The Park MVP, CPVS research and optional CIN runtime must remain separate delivery tracks.",
+      "Unverified model artifacts must remain UNKNOWN rather than be reconstructed or substituted."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Complete the CPVS 100-object raw/Table2 coordinate and epoch trace.",
+      "Resolve the raw epoch scale using exact pinned bytes and rerun dependent analyses if needed.",
+      "Complete StarEmbed CI and source-backed audit, then resolve duplicate and split-overlap lineage.",
+      "Recover and independently authenticate the original v0.2.0 production model artifact.",
+      "Complete DR24 normalized application integration and independent identity validation.",
+      "Re-review all changes on their final PR heads before any merge or release."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Preserve v0.2.0, the 42-feature contract, class order and benchmark.",
+    "Keep Issue #170 open and PR #285 Draft.",
+    "Keep StarEmbed as a diagnostic input experiment only until split integrity is resolved.",
+    "Keep DR24 HATS and Zubercal as separate source products.",
+    "Keep CIN optional and outside the Park MVP critical path.",
+    "Do not merge or release without explicit authorization and verified acceptance."
+  ]
+}
