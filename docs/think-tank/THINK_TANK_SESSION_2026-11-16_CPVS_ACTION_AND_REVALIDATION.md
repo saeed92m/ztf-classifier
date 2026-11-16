@@ -257,3 +257,19 @@ Workflow [43816898041](https://github.com/saeed92m/ztf-classifier/actions/runs/4
 The data trace then failed before analysis because the workflow passed `inputs/full/cpvs_full_parent_rowcount_mismatches.tsv`, while the artifact was extracted to `inputs/full-parent/`. This is a workflow path defect, not a scientific result.
 
 Corrected the path to `inputs/full-parent/cpvs_full_parent_rowcount_mismatches.tsv` in commit `a7ada0a0c213b7c30e216fee402c9cf6255f61e5`. The rerun must verify the corrected path and complete the actual 100-object scan. No coordinate, alternate-ID or epoch result is accepted yet.
+
+
+### Missing-field / fit-metric correlation — candidate-only cohort
+
+The candidate-only provenance TSV was re-read directly from the pinned reconciliation artifact (artifact ZIP SHA-256 130f3db65827afd83f5050e7eb91eb1cf7f6432e85456fd16586c8000a9aa6be).
+
+- All 11,470 candidate-only objects with missing gmag have R2-g = 0.
+- All 115 candidate-only objects with missing rmag have R2-r = 0.
+- 10 objects have a present gmag but missing Per-g.
+- 7 objects have a present rmag but missing Per-r.
+- Those 17 objects have both mean magnitudes present and exactly one missing band-specific period.
+- Five objects have missing gmag but a present Per-g; all still have R2-g = 0.
+
+Interpretation: missing mean magnitudes in this residual cohort are perfectly associated with a zero R2 value in the same band. This points to a missing/failed Fourier-fit output state, not merely the absence of raw SNR detections. It is a strong diagnostic association, not proof of the exact internal pipeline decision. The 17 period-incomplete objects remain a separate issue because their mean magnitudes exist and their common period exists.
+
+Next test: compare the 11,585 residuals with missing means against Table4 members with similar per-band observation counts, R2, FAP and quality flags. Then compare the 17 period-incomplete residuals against matched Table4 controls. Do not use R2=0 or missing-field state as a new selector until the upstream fit/output contract is verified.
