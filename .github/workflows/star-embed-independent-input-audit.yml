@@ -12,6 +12,7 @@ on:
       - "tests/test_star_embed_input.py"
       - "configs/benchmarks/star_embed_ztf_40k.json"
       - "requirements.lock"
+      - "configs/process/cycles/star-embed-independent-input-audit-20261115.json"
   workflow_dispatch:
 
 permissions:
