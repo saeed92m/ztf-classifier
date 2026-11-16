@@ -138,8 +138,49 @@ jobs:
             exit 1
           fi
 
-      - name: Run 100-object coordinate and epoch lineage scan
+      - name: Extract CRC-validated members and audit decompressed content
+        id: member_extract
         if: steps.zip_audit.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          unzip -p raw/ztf2g.zip ztf2g > raw/ztf2g.member
+          unzip -p raw/ztf2r.zip ztf2r > raw/ztf2r.member
+          python - <<'PY'
+          import hashlib, json, zlib
+          from pathlib import Path
+
+          expected = {
+              "g": {"path": "raw/ztf2g.member", "sha256": "366aaf3539f83955bb1e29799df9e63005a9eb682f4f56d0807545a3534b0f16", "bytes": 5034066142, "rows": 89697393, "crc32": "d2f33aa0"},
+              "r": {"path": "raw/ztf2r.member", "sha256": "78df6d0b22099a7e5c6e74b897682c6ab94f90d5f9e887d4b0b3b152514e50fe", "bytes": 6175667360, "rows": 109971576, "crc32": "225495a0"},
+          }
+          report = {"method": "Info-ZIP extraction after successful unzip -t; streaming SHA-256/CRC/line count", "bands": {}, "status": "PASS"}
+          for band, cfg in expected.items():
+              path = Path(cfg["path"])
+              digest = hashlib.sha256()
+              crc = 0
+              rows = 0
+              size = 0
+              with path.open("rb") as stream:
+                  for line in stream:
+                      digest.update(line)
+                      crc = zlib.crc32(line, crc)
+                      size += len(line)
+                      rows += 1
+              result = {"path": str(path), "bytes": size, "rows": rows, "sha256": digest.hexdigest(), "crc32": f"{crc & 0xFFFFFFFF:08x}"}
+              result["matches_expected"] = (size == cfg["bytes"] and rows == cfg["rows"] and result["sha256"] == cfg["sha256"] and result["crc32"] == cfg["crc32"])
+              report["bands"][band] = result
+              if not result["matches_expected"]:
+                  report["status"] = "MISMATCH"
+          Path("reports/cpvs_member_extraction_audit.json").write_text(json.dumps(report, indent=2, sort_keys=True) + chr(10), encoding="utf-8")
+          print(json.dumps(report, indent=2, sort_keys=True))
+          if report["status"] != "PASS":
+              raise SystemExit(1)
+          PY
+
+      - name: Run 100-object coordinate and epoch lineage scan
+        if: steps.zip_audit.outcome == 'success' && steps.member_extract.outcome == 'success'
         shell: bash
         run: |
           set -euo pipefail
@@ -149,6 +190,8 @@ jobs:
             --mismatches inputs/full-parent/cpvs_full_parent_rowcount_mismatches.tsv \
             --g-archive raw/ztf2g.zip \
             --r-archive raw/ztf2r.zip \
+            --g-member raw/ztf2g.member \
+            --r-member raw/ztf2r.member \
             --output-dir reports
 
       - name: Upload compact integrity and lineage evidence
@@ -158,6 +201,7 @@ jobs:
           name: cpvs-archive-integrity-doublecheck
           path: |
             reports/cpvs_archive_integrity_doublecheck.json
+            reports/cpvs_member_extraction_audit.json
             reports/ztf2g_unzip_test.log
             reports/ztf2r_unzip_test.log
             reports/unzip_test_exit_codes.txt

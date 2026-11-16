@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import ExitStack
 import csv
 import hashlib
 import json
@@ -148,6 +149,8 @@ def scan_archive(
     band: str,
     table2: dict[int, dict[str, Any]],
     mismatch_rows: list[dict[str, str]],
+    *,
+    member_path: Path | None = None,
 ) -> dict[str, Any]:
     config = ARCHIVES[band]
     archive_sha = sha256_file(archive_path)
@@ -182,79 +185,85 @@ def scan_archive(
         if f"{info.CRC:08x}" != config["member_crc32"]:
             raise ValueError(f"{band} central-directory CRC mismatch")
 
-    with zipfile.ZipFile(archive_path) as archive:
-        with archive.open(member_name, "r") as member_stream:
-            for raw in member_stream:
-                digest.update(raw)
-                crc = zlib.crc32(raw, crc)
-                member_bytes += len(raw)
-                member_rows += 1
-                try:
-                    fields = parse_fields(raw)
-                    if len(fields) != 7:
-                        malformed += 1
-                        continue
-                    source_id = int(fields[0])
-                    ra, dec, epoch, mag, err = map(float, fields[1:6])
-                except (UnicodeDecodeError, ValueError):
+    with ExitStack() as stack:
+        if member_path is None:
+            archive = stack.enter_context(zipfile.ZipFile(archive_path))
+            member_stream = stack.enter_context(archive.open(member_name, "r"))
+        else:
+            if not member_path.is_file():
+                raise FileNotFoundError(f"Extracted archive member is missing: {member_path}")
+            member_stream = stack.enter_context(member_path.open("rb"))
+        for raw in member_stream:
+            digest.update(raw)
+            crc = zlib.crc32(raw, crc)
+            member_bytes += len(raw)
+            member_rows += 1
+            try:
+                fields = parse_fields(raw)
+                if len(fields) != 7:
                     malformed += 1
                     continue
-                if not all(math.isfinite(value) for value in (ra, dec, epoch, mag, err)):
-                    malformed += 1
-                    continue
-                flag = fields[6]
+                source_id = int(fields[0])
+                ra, dec, epoch, mag, err = map(float, fields[1:6])
+            except (UnicodeDecodeError, ValueError):
+                malformed += 1
+                continue
+            if not all(math.isfinite(value) for value in (ra, dec, epoch, mag, err)):
+                malformed += 1
+                continue
+            flag = fields[6]
 
-                if source_id in object_stats:
-                    item = object_stats[source_id]
-                    item["raw_rows"] += 1
-                    item["times"][round(epoch, 7)] += 1
-                    item["measurements"][(round(epoch, 7), round(mag, 7), round(err, 7), flag)] += 1
-                    item["flags"][flag] += 1
-                    item["ras"].append(ra)
-                    item["decs"].append(dec)
-                    if mag == 0:
-                        item["zero_magnitude_rows"] += 1
-                    if err == 0:
-                        item["zero_error_rows"] += 1
-                    if err < 0:
-                        item["negative_error_rows"] += 1
-                    if mag != 0 and err > 0:
-                        item["valid_numeric_rows"] += 1
-                        item["magnitudes"].append(mag)
-                        item["errors"].append(err)
-                    continue
+            if source_id in object_stats:
+                item = object_stats[source_id]
+                item["raw_rows"] += 1
+                item["times"][round(epoch, 7)] += 1
+                item["measurements"][(round(epoch, 7), round(mag, 7), round(err, 7), flag)] += 1
+                item["flags"][flag] += 1
+                item["ras"].append(ra)
+                item["decs"].append(dec)
+                if mag == 0:
+                    item["zero_magnitude_rows"] += 1
+                if err == 0:
+                    item["zero_error_rows"] += 1
+                if err < 0:
+                    item["negative_error_rows"] += 1
+                if mag != 0 and err > 0:
+                    item["valid_numeric_rows"] += 1
+                    item["magnitudes"].append(mag)
+                    item["errors"].append(err)
+                continue
 
-                if source_id not in seen_source_ids:
-                    seen_source_ids.add(source_id)
-                    ra_cell, dec_cell = cell_key(ra, dec)
-                    candidate_ids = spatial_hash.get((ra_cell, dec_cell), set())
-                    best: tuple[float, int] | None = None
-                    for target_id in candidate_ids:
-                        target = missing_targets[target_id]
-                        separation = angular_separation_arcsec(ra, dec, target["ra"], target["dec"])
-                        if separation <= SEARCH_RADIUS_ARCSEC and (best is None or separation < best[0]):
-                            best = (separation, target_id)
-                    if best is not None:
-                        separation, target_id = best
-                        alias_owner[source_id] = (target_id, separation)
-                        aliases[(target_id, source_id)] = {
-                            "target_SourceID": target_id,
-                            "target_ZTF": missing_targets[target_id]["ZTF"],
-                            "alternate_SourceID": source_id,
-                            "separation_arcsec": separation,
-                            "alternate_raw_rows": 0,
-                            "flags": Counter(),
-                            "time_min": epoch,
-                            "time_max": epoch,
-                        }
-                alias = alias_owner.get(source_id)
-                if alias is not None:
-                    target_id, separation = alias
-                    record = aliases[(target_id, source_id)]
-                    record["alternate_raw_rows"] += 1
-                    record["flags"][flag] += 1
-                    record["time_min"] = min(record["time_min"], epoch)
-                    record["time_max"] = max(record["time_max"], epoch)
+            if source_id not in seen_source_ids:
+                seen_source_ids.add(source_id)
+                ra_cell, dec_cell = cell_key(ra, dec)
+                candidate_ids = spatial_hash.get((ra_cell, dec_cell), set())
+                best: tuple[float, int] | None = None
+                for target_id in candidate_ids:
+                    target = missing_targets[target_id]
+                    separation = angular_separation_arcsec(ra, dec, target["ra"], target["dec"])
+                    if separation <= SEARCH_RADIUS_ARCSEC and (best is None or separation < best[0]):
+                        best = (separation, target_id)
+                if best is not None:
+                    separation, target_id = best
+                    alias_owner[source_id] = (target_id, separation)
+                    aliases[(target_id, source_id)] = {
+                        "target_SourceID": target_id,
+                        "target_ZTF": missing_targets[target_id]["ZTF"],
+                        "alternate_SourceID": source_id,
+                        "separation_arcsec": separation,
+                        "alternate_raw_rows": 0,
+                        "flags": Counter(),
+                        "time_min": epoch,
+                        "time_max": epoch,
+                    }
+            alias = alias_owner.get(source_id)
+            if alias is not None:
+                target_id, separation = alias
+                record = aliases[(target_id, source_id)]
+                record["alternate_raw_rows"] += 1
+                record["flags"][flag] += 1
+                record["time_min"] = min(record["time_min"], epoch)
+                record["time_max"] = max(record["time_max"], epoch)
 
     member_sha = digest.hexdigest()
     crc_hex = f"{crc & 0xFFFFFFFF:08x}"
@@ -324,6 +333,8 @@ def main() -> None:
     parser.add_argument("--mismatches", type=Path, required=True)
     parser.add_argument("--g-archive", type=Path, required=True)
     parser.add_argument("--r-archive", type=Path, required=True)
+    parser.add_argument("--g-member", type=Path, required=True)
+    parser.add_argument("--r-member", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
     table2_hash = verify_file(args.table2, EXPECTED_TABLE2)
@@ -331,7 +342,10 @@ def main() -> None:
     table2 = load_table2(args.table2)
     mismatches = load_mismatches(args.mismatches)
     scans = {
-        band: scan_archive(path, band, table2, mismatches)
+        band: scan_archive(
+            path, band, table2, mismatches,
+            member_path=args.g_member if band == "g" else args.r_member,
+        )
         for band, path in (("g", args.g_archive), ("r", args.r_archive))
     }
     args.output_dir.mkdir(parents=True, exist_ok=True)
