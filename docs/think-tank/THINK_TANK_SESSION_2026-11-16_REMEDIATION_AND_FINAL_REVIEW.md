@@ -771,3 +771,27 @@ PR #289 already upgrades Soup Sieve to 4.1 and aligns package metadata with Pyth
 This means the failure in PR #290 is a base-branch dependency issue, not a StarEmbed code/test failure. The safe dependency order is to complete the security PR first, then rerun PR #290 against a base that includes the verified lockfile update. Do not duplicate or weaken the dependency fix in the StarEmbed experiment.
 
 **Disposition:** keep PR #289 and PR #290 Draft until the Project Owner approves the required merge order. Do not claim PR #290 CI is green while Dependency Audit is failing.
+
+
+---
+
+## ۱۹. CPVS 100-object lineage workflow: path defect isolated
+
+Workflow [43816898041](https://github.com/saeed92m/ztf-classifier/actions/runs/43816898041) completed the following:
+- Both pinned input artifacts downloaded successfully.
+- The current mismatch integrity unit tests passed.
+- Both checksum-pinned Zenodo archives downloaded successfully and matched their expected SHA-256 values:
+  - g: `47cd1823b3ccdb69fa3085381cf63ff0605f6d841fc3bc37489dce023ddc19b9`
+  - r: `48331ba1157afc993a1399e094b97752a82d8d0f736d2fdf63fd7b2a82281b74`
+
+The actual trace did not start. The workflow passed the wrong extracted path:
+`inputs/full/cpvs_full_parent_rowcount_mismatches.tsv`
+
+The artifact was extracted under:
+`inputs/full-parent/`
+
+This is a workflow path defect, not a scientific result and not evidence of a source-data row-count discrepancy. The branch owner corrected the workflow path in commit `a7ada0a0c213b7c30e216fee402c9cf6255f61e5`.
+
+The current PR #285 head is `0024f5dad5cdee3a439ab5258b078de370dfaf9c`. Rerun [43817485587](https://github.com/saeed92m/ztf-classifier/actions/runs/43817485587) has passed setup, artifact downloads and mismatch tests; checksum-pinned Zenodo archive download is in progress. The coordinate/epoch trace has not started.
+
+**Disposition:** the workflow path defect is identified and corrected in the branch. Do not close the CPVS scientific blocker until the current run completes the actual 100-object trace and the resulting evidence is inspected.
