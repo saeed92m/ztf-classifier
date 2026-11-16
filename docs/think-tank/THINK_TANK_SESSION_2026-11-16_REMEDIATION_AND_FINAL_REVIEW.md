@@ -741,3 +741,33 @@ python scripts/audit_scientific_artifacts.py
 - اجرای جدید [43817485587](https://github.com/saeed92m/ztf-classifier/actions/runs/43817485587) در وضعیت PENDING است و هنوز Job اجرایی ایجاد نشده است.
 
 **نتیجه:** هنوز هیچ خروجی تازه‌ای از ردیابی مختصات، شناسه‌های جایگزین یا مقیاس زمانی نداریم. نتیجه آزمون واحد موفق است؛ نتیجه علمی ردیابی هنوز UNKNOWN است. از ایجاد Commit جدید روی شاخه CPVS تا تعیین تکلیف اجرای جاری خودداری شود تا انتقال‌های داده تکراری ایجاد نشوند.
+
+
+---
+
+## ۱۸. Dependency audit cross-PR result — 2026-11-16
+
+PR #290 completed its test, runtime and package stages, but the Dependency Audit failed on its current base branch.
+
+### PR #290 — CI 43816558927
+- Format Check: PASS.
+- Ruff Lint: PASS.
+- Cumulative Lifecycle Gate: PASS.
+- Test Suite: PASS (712 passed, 13 skipped, 0 failures).
+- Runtime Smoke Tests: PASS.
+- Build & Verify Package: PASS.
+- Dependency Audit: FAIL.
+- CI Gate: FAIL because the dependency audit failed.
+
+The audit identified three known vulnerabilities in `soupsieve==2.10`:
+- CVE-2026-126190;
+- CVE-2026-126193;
+- CVE-2026-126191.
+
+### Existing security remediation — PR #289
+
+PR #289 already upgrades Soup Sieve to 4.1 and aligns package metadata with Python >=3.11.5. Its current recorded CI run [43536652404](https://github.com/saeed92m/ztf-classifier/actions/runs/43536652404) passed all eight jobs, including Dependency Audit, package build, tests, CodeQL, Scientific Validation and Product Scope Audit.
+
+This means the failure in PR #290 is a base-branch dependency issue, not a StarEmbed code/test failure. The safe dependency order is to complete the security PR first, then rerun PR #290 against a base that includes the verified lockfile update. Do not duplicate or weaken the dependency fix in the StarEmbed experiment.
+
+**Disposition:** keep PR #289 and PR #290 Draft until the Project Owner approves the required merge order. Do not claim PR #290 CI is green while Dependency Audit is failing.
