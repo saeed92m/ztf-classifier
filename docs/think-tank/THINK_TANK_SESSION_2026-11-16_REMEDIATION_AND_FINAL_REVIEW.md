@@ -277,11 +277,19 @@ PR #289 نسخه آسیب‌پذیر Soup Sieve را به 4.1 ارتقا می‌
 
 ### ۳.۸. Cosmic Intelligence Network — Issue #251
 
-**وضعیت: معماری پیشنهادی؛ Runtime اجرا نشده است.**
+**وضعیت: معماری برای برنامه‌ریزی تأیید شده؛ پیاده‌سازی هنوز مجاز نشده است. Runtime وجود ندارد.**
 
-CIN باید یک زیرسیستم مستقل و اختیاری Human-in-the-loop باقی بماند. داده مشارکتی، اجماع کاربران و برچسب‌های انسانی نباید به‌صورت خودکار Ground Truth یا داده Benchmark محافظت‌شده شوند.
+سند مرجع CIN، آن را یک سامانه مستقل Human-in-the-loop تعریف می‌کند؛ نه یک رأی‌گیری ساده یا ابزار Gamification. ماژول‌های Task Generation، Task Allocation، Contribution Ingestion، Quality Control، Consensus، Contributor Calibration، Active Learning، Dataset Versioning و Expert Review باید مستقل و نسخه‌دار طراحی شوند.
 
-**تصمیم:** CIN در مسیر فعلی MVP اولویت ندارد. ابتدا قراردادهای حریم خصوصی، نگهداری داده، مجوز، ممیزی، کنترل کیفیت و Pilot محدود باید تکمیل شوند.
+الزامات علمی:
+- داده‌های نجومی خام، ویژگی‌ها، پیش‌بینی مدل، پاسخ خام کاربران، اجماع، بازبینی متخصص و Benchmark باید در حوزه‌های داده جدا بمانند.
+- پاسخ کاربر، حتی با اجماع بالا، Ground Truth محسوب نمی‌شود.
+- اختلاف و عدم قطعیت باید حفظ شوند.
+- Taskها باید نسخه، پاسخ مجاز، گزینه Abstain، QC، Assignment و Acceptance Criteria داشته باشند.
+- داده مشارکتی نباید وارد Benchmark منجمد یا مدل Production شود.
+- هر Model Retraining باید از Governance و ارزیابی مستقل عبور کند.
+
+**تصمیم:** طبق سند مرجع ZTF-CIN-ARCH-001، پیاده‌سازی Runtime هنوز مجاز نیست. این جلسه نیز مجوز پیاده‌سازی CIN صادر نمی‌کند. CIN در مسیر فعلی MVP اولویت ندارد. پیش از هر درخواست مجوز جدید، باید Privacy، Retention، Licensing، QC، Expert Adjudication، Pilot و هزینه عملیاتی تعریف شوند.
 
 ---
 
