@@ -2,7 +2,7 @@
   "schema_version": "1.1",
   "stage_id": "park-lab-mvp-execution-plan-20261117",
   "objective": "Define a small, real, multi-type Park laboratory demonstration with end-to-end user workflow, strict identity and source provenance, and explicit scientific gates.",
-  "status": "PLAN_RECORDED_NOT_EXECUTED",
+  "status": "PLAN_RECORDED_WITH_SOURCE_INVENTORY_AUDIT",
   "scope": {
     "target_demo": "30-50 unique confirmed astrophysical source groups, not 30-50 OIDs",
     "smoke": "5-10 confirmed source groups",
@@ -71,8 +71,13 @@
   ],
   "validation": {
     "status": "NOT_RUN",
-    "tests_run": [],
-    "scientific_validation": "NOT_CLAIMED"
+    "source_inventory": "AUDIT_COMPLETE_SAMPLE_REJECTED",
+    "scientific_validation": "NOT_CLAIMED",
+    "tests_run": [
+      "Downloaded GitHub Actions artifact 13670960922 from run 42611080798",
+      "Verified local SHA-256 against GitHub artifact digest",
+      "Inspected archive members, query manifests, TSV rows, label distribution and DR24 observation-availability counts"
+    ]
   },
   "decision": "APPROVE_EXECUTION_PLAN",
   "changes": {
@@ -83,5 +88,49 @@
     "thresholds_changed": false,
     "production_data_changed": false
   },
-  "next_action": "Start Sprint 0 read-only artifact/snapshot recovery audit and Sprint 1 label/DR24 candidate inventory; no model inference until gates pass."
+  "next_action": "Resolve coordinates for ALeRCE OIDs from an authoritative catalog endpoint, then create a candidate list with explicit cross-match evidence to DR24 HATS; do not use the current 150+150 tables as a joined dataset.",
+  "source_inventory_audit": {
+    "workflow_run_id": 42611080798,
+    "artifact_id": 13670960922,
+    "artifact_sha256": "31d0609322e6c5671d485a20c970ef3c4760844c3d38a28769ad8e30d1928058",
+    "artifact_integrity": "PASS_GITHUB_DIGEST_MATCH",
+    "alerce_reference": {
+      "rows": 150,
+      "classifier": "lc_classifier_1.1.13",
+      "classes": {
+        "Periodic-Other": 53,
+        "E": 25,
+        "LPV": 23,
+        "YSO": 20,
+        "CEP": 14,
+        "RRL": 11,
+        "CV/Nova": 3,
+        "SNIa": 1
+      },
+      "class_count": 8,
+      "probability_mean": 0.3785579466666667,
+      "probability_median": 0.3377,
+      "coordinates_present": false,
+      "role": "top-ranked broker reference output; not independent ground truth"
+    },
+    "dr24_objects": {
+      "rows": 150,
+      "selection": "deterministic lexicographic OID selection",
+      "partition_count": 1,
+      "ra_range_deg": [
+        3.8727441,
+        4.8474052
+      ],
+      "dec_range_deg": [
+        -29.6068265,
+        -29.5412577
+      ],
+      "ngoodobsrel_zero": 57,
+      "ngoodobsrel_lt10": 102,
+      "ngoodobsrel_gte30": 41,
+      "ngoodobsrel_gte60": 33,
+      "nested_epoch_payload_included": false
+    },
+    "conclusion": "The ALeRCE and DR24 tables are independent and have no shared crossmatch key or coordinates in the ALeRCE response. They must not be joined by row order or OID. This sample is unsuitable for the multi-type Park demo; retain only as acquisition/provenance evidence."
+  }
 }
