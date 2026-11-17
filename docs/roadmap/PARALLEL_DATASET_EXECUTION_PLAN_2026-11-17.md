@@ -8,6 +8,8 @@
 
 ## 1. Decision
 
+**Park MVP acceptance is governed by the full-cohort contract in [PARK_MVP_REAL_DATASET_END_TO_END_ACCEPTANCE_2026-11-17.md](PARK_MVP_REAL_DATASET_END_TO_END_ACCEPTANCE_2026-11-17.md).** Product completion is not measured by arbitrary 50-, 100-, or 1,000-object samples. The Park acceptance run processes the complete predeclared real-data cohort; batches are allowed only as an execution method when all batches are reconciled.
+
 CPVS reconstruction is no longer a prerequisite for general product development or the Park MVP data path. Keep the 11,602 candidate-only discrepancy open as a separate historical-reproduction research blocker.
 
 Run three independent workstreams:
@@ -71,7 +73,7 @@ Test an independently sourced variable-star dataset for source integrity and com
 4. Report duplicates within each split and every cross-split overlap with source-file and row provenance.
 5. Trace each discrepant ID to upstream records. Do not silently deduplicate or move records between splits.
 6. Establish whether the upstream split is row-wise or object-wise and whether duplicate rows represent repeated observations, duplicated objects or source packaging defects.
-7. Produce a deterministic 50-object diagnostic sample from the clean held-out partition only. Save exact IDs, selection seed/algorithm, source-file hashes and per-object outcomes.
+7. The previously executed deterministic 50-object probe is an input-path diagnostic only. Do not use its size or result as a product acceptance criterion or population-performance claim. Further sampling is justified only for a named diagnostic question.
 8. Verify array alignment, finite values, units, cadence, band identity and the explicit mapping to the internal light-curve schema.
 9. Run the frozen 42-feature extractor as an input-compatibility experiment only. Record missing/unsupported feature semantics; do not invent replacements.
 10. Keep StarEmbed labels in their own taxonomy. Do not report v0.2 model accuracy from this experiment.
@@ -166,6 +168,8 @@ Store only small, reviewable metadata and code:
 Do not commit bulk Parquet/HATS archives, credentials, or unlicensed data.
 
 ## 9. Execution order and exit criteria
+
+The primary Park product acceptance target is the complete, source-defined dataset package described in PARK_MVP_REAL_DATASET_END_TO_END_ACCEPTANCE_2026-11-17.md. StarEmbed and CPVS diagnostic sample sizes remain scoped to their independent research questions and are not MVP completion measures.
 
 | Priority | Task | Exit condition |
 |---|---|---|
