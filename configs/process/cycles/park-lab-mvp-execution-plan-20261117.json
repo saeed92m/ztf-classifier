@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "park-lab-mvp-execution-plan-20261117",
+  "objective": "Define a small, real, multi-type Park laboratory demonstration with end-to-end user workflow, strict identity and source provenance, and explicit scientific gates.",
+  "status": "PLAN_RECORDED_NOT_EXECUTED",
+  "scope": {
+    "target_demo": "30-50 unique confirmed astrophysical source groups, not 30-50 OIDs",
+    "smoke": "5-10 confirmed source groups",
+    "source": "ZTF DR24 HATS native lightcurves",
+    "labels": "ALeRCE reference/weak labels; BTS spectroscopic labels only for its supported transient population",
+    "baseline": "v0.2.0 and software v1.0.1 remain immutable",
+    "existing_demo_limit": "The existing v0.5 sample has 30 g-band OIDs from one field/rcid and no confirmed physical-source grouping; it cannot serve as the multi-type demo dataset."
+  },
+  "decisions": [
+    "Do not train or evaluate a classifier on only 30-50 demo objects.",
+    "Keep DR24 raw exploration, frozen v0.2 reference inference, and any future DR24-specific model as separate lanes.",
+    "Do not feed HMJD into the v0.2 MJD feature contract by renaming columns or applying an unverified conversion.",
+    "Preserve DR24 mag, magerr, clrcoeff, catflags and filter/field/rcid semantics.",
+    "Show raw scores as raw unless calibration is present and independently validated.",
+    "Keep OOD separate from scientific anomaly detection.",
+    "Use CONFIRMED identity only for the main 30-50 source count; keep ambiguous/unmatched examples separate."
+  ],
+  "facts_checked": [
+    {
+      "fact": "v0.2 model class order contains 15 classes and no Artifact/Unknown class.",
+      "source": "src/ztf_classifier/models/classes.py on main",
+      "status": "VERIFIED"
+    },
+    {
+      "fact": "v0.2 feature pipeline requires mjd/fid/mag/magerr; basic features need 10 observations per band, Lomb-Scargle needs 30, cross-band features need both bands.",
+      "source": "src/ztf_classifier/features/pipeline.py on main",
+      "status": "VERIFIED"
+    },
+    {
+      "fact": "DR24 HATS uses hmjd, mag, magerr, clrcoeff, catflags; HMJD is HJD - 2400000.5; DR24 mag is calibrated for g-r=0 in AB.",
+      "source": "Official IRSA DR24 release notes and HATS tutorial",
+      "status": "VERIFIED"
+    },
+    {
+      "fact": "Current ObservationService standard get_observations path uses ALeRCE; DR24 raw acquisition is a separate method/route.",
+      "source": "src/ztf_classifier/application/observations.py on main",
+      "status": "VERIFIED"
+    },
+    {
+      "fact": "Existing Park Pilot v0.5 contains 30 g-band OIDs from one field/rcid, not 30 confirmed unique physical sources; no DR24 classifier inference was run.",
+      "source": "docs/acceptance/PARK_PILOT_V0.5_EVIDENCE_2026-11-11.fa.md",
+      "status": "VERIFIED"
+    },
+    {
+      "fact": "The original v0.2 production model artifact is unavailable/unauthenticated in accessible remote sources; do not substitute lab-smoke artifact.",
+      "source": "PR #278 and Issue #282 audit record",
+      "status": "VERIFIED"
+    }
+  ],
+  "deliverable": "A 5-10-source end-to-end acceptance run and a 30-50-source guided demonstration, with a provenance-rich dataset package and truthful model/calibration status.",
+  "gates": [
+    "Recover/authenticate model artifact and original 150-row snapshot.",
+    "Build multi-type 30-50 confirmed source-group manifest; do not count OIDs as sources.",
+    "Complete explicit DR24 source selection in Application Service and Workbench.",
+    "Validate HMJD/time, photometry, color and QC contracts before feature mapping.",
+    "Only run v0.2 inference if original artifact and feature parity are proven.",
+    "If needed, define a separately versioned DR24 lab model trained/evaluated on data independent of the 30-50 demo set.",
+    "Complete repeatable Workbench run, exports, offline replay, clean environment and evidence report."
+  ],
+  "acceptance_limits": [
+    "A 30-50 source demo cannot establish competitive population Macro-F1.",
+    "A 30-50 source demo cannot establish generalizable probability calibration or temporal transfer.",
+    "ALeRCE labels are reference/weak labels, not independent astrophysical truth.",
+    "BTS covers a limited spectroscopically classified transient population, not all 15 classes.",
+    "The 100,000-lightcurve scale target remains a later dataset milestone; confirm whether the Park committee requires it before initial acceptance."
+  ],
+  "validation": {
+    "status": "NOT_RUN",
+    "tests_run": [],
+    "scientific_validation": "NOT_CLAIMED"
+  },
+  "decision": "APPROVE_EXECUTION_PLAN",
+  "changes": {
+    "documentation_only": true,
+    "application_code_changed": false,
+    "model_changed": false,
+    "baseline_changed": false,
+    "thresholds_changed": false,
+    "production_data_changed": false
+  },
+  "next_action": "Start Sprint 0 read-only artifact/snapshot recovery audit and Sprint 1 label/DR24 candidate inventory; no model inference until gates pass."
+}
