@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "park-live-workbench-e2e-20261119",
+  "objective": "Extend the Park demonstrator browser acceptance from a deterministic fake backend to the pinned live DR24 HATS source, including raw UI inspection and JSON export.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "PR #297 Park laboratory demonstrator runbook",
+      "status": "VERIFIED",
+      "detail": "The Workbench has a raw DR24 Explorer with separate OID panels, diagnostic QC, provenance, and JSON export; local execution is still required for the handoff."
+    },
+    {
+      "source": "DR24 live API parity test",
+      "status": "VERIFIED",
+      "detail": "The two pinned OIDs return 78 and 123 epochs with their expected payload hashes through the FastAPI endpoint."
+    },
+    {
+      "source": "DR24 deterministic Workbench UI contract",
+      "status": "VERIFIED",
+      "detail": "The browser test covers rendering, QC, provenance, validation errors, and raw JSON export with a deterministic fake backend."
+    }
+  ],
+  "baseline": {
+    "revision": "a08b93be6f893e1b68147c1bc3832198f2ca62ef",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "change": {
+    "scope": "Add an opt-in Playwright test that exercises the actual Workbench against the public DR24 HATS backend for the two pinned OIDs. Enable the live UI test in the Park PR workflow and install the optional DR24 dependencies. No runtime application code, model, feature mapping, scientific threshold, benchmark, or baseline is changed.",
+    "rationale": "API source parity and a fake-backend UI contract are separate proofs. The Park workflow needs one browser-level check that connects the real HATS source to the visible Workbench and exported raw JSON."
+  },
+  "expected_improvement": [
+    "Verify the actual Workbench can retrieve and render the two pinned live DR24 OIDs.",
+    "Verify separate g/r OID panels, native epoch counts, diagnostic QC, provenance, and payload hashes in the browser.",
+    "Verify the downloadable JSON preserves both live payloads and QC assessments.",
+    "Keep the live integration test opt-in and isolated from ordinary offline CI."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The API live test and Workbench browser test used separate execution paths; the browser test used a fake backend.",
+        "after": "A new opt-in browser test is defined to use the real DR24 HATS backend and verify both pinned payloads end to end.",
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "before": "The live API test checked payload hashes, while the UI test checked export structure with synthetic data.",
+        "after": "The live browser test checks the pinned epoch counts and payload hashes in the UI and exported JSON.",
+        "status": "NOT_MEASURED"
+      },
+      "reliability": {
+        "before": "No live-source Workbench browser test existed for the Park handoff.",
+        "after": "An opt-in real-source browser test and CI workflow are added; execution evidence is pending.",
+        "status": "NOT_MEASURED"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The test verifies retrieval and display contracts only. It does not validate physical identity, production QC, features, model inference, or astrophysical classification."
+      }
+    },
+    "trade_off": "The live browser test depends on public DR24 HATS availability and is therefore opt-in. It supplements, but does not replace, a local Workbench run on the Park demonstration device."
+  },
+  "validation": {
+    "status": "NOT_RUN",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The test uses the same two pinned OIDs and payload hashes as tests/test_dr24_batch_live_api.py.",
+      "The test preserves the existing deterministic fake-backend browser test.",
+      "The live test is enabled only in the Park Workbench workflow through ZTF_DR24_BATCH_LIVE_UI_TEST=1.",
+      "No scientific model or feature inference is executed."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [],
+    "unresolved": [
+      "Run the new live browser test on GitHub Actions and inspect the exported JSON assertions.",
+      "A successful CI browser test does not replace the required local Workbench run on the actual Park demonstration device."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "API source parity and browser integration are separate acceptance evidence.",
+      "A fake-backend UI test cannot prove the live source-to-Workbench path.",
+      "A live browser test can verify the bounded source-to-UI-to-export path without claiming scientific classifier validity."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Current-head CI and Product Scope Audit must pass.",
+      "The live DR24 Workbench browser test must pass with the pinned OIDs and payload hashes.",
+      "The local Park demonstration device must still complete the runbook and retain screenshot, JSON export, and export hash."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "Keep the frozen v0.2.0 baseline and baseline_v0.2 artifact identity unchanged.",
+    "Keep the DR24 QC status DIAGNOSTIC_NOT_PRODUCTION_APPROVED.",
+    "Do not claim physical-source identity, DR24 classifier inference, calibrated probabilities, or scientific anomaly detection.",
+    "The local Workbench run remains a hard handoff requirement even if the CI live browser test passes."
+  ]
+}

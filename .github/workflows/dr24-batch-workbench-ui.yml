@@ -32,6 +32,7 @@ jobs:
     timeout-minutes: 20
     env:
       ZTF_DR24_BATCH_UI_TEST: "1"
+      ZTF_DR24_BATCH_LIVE_UI_TEST: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -42,7 +43,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.lock
-          python -m pip install -e .
+          python -m pip install -e ".[dr24]"
           python -m pip install playwright==1.56.0
       - name: Install Chromium
         run: python -m playwright install --with-deps chromium
