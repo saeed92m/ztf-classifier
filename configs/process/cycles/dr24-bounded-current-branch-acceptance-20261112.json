@@ -20,7 +20,7 @@
     }
   ],
   "baseline": {
-    "revision": "f681408fae8d8062dd72ff74791872c1590f6ee8",
+    "revision": "main@dcedccf50ae5a4541ababc29cfc7471a7d0ea14a",
     "scientific_baseline": "v0.2.0 immutable",
     "software_release": "v1.0.1 immutable",
     "model_version": "baseline_v0.2",
@@ -68,7 +68,8 @@
       "The deterministic multi-OID Workbench UI test passed in run 43180998574: 1 passed using the fake backend.",
       "The bounded Zubercal DR20 adapter live parity test passed in run 43181021520: 1 passed; 123 rows (49 g, 74 r), two PS1 candidates preserved as AMBIGUOUS_MULTIPLE_PS1_IDS and NOT_SELECTED. Evidence artifact 13925104998 ZIP SHA-256 542bca594bc47753dded72f9c5720805ed10dc58dac3d9646c3e190fd891481f verified.",
       "These results validate only the declared bounded acquisition/API/UI adapter contracts. They do not validate physical identity, HATS-Zubercal photometric parity, HMJD/MJD(TDB) conversion, DR24 normalization, v0.2.0 feature parity, classifier inference or scientific discovery.",
-      "Dependency-order refresh 2026-11-16: this PR is now based on security/soupsieve-cve-20261114 (PR #289 head 7f815527e8d0308fb8fde14ff80ab6c631a0d5a8), which upgrades soupsieve to 4.1. The previous exact-head CI and three bounded source/UI tests passed before the dependency CVEs were reported. Fresh full CI on this security base is required; no new validation result is claimed by this note."
+      "Dependency-order refresh 2026-11-16: this PR is now based on security/soupsieve-cve-20261114 (PR #289 head 7f815527e8d0308fb8fde14ff80ab6c631a0d5a8), which upgrades soupsieve to 4.1. The previous exact-head CI and three bounded source/UI tests passed before the dependency CVEs were reported. Fresh full CI on this security base is required; no new validation result is claimed by this note.",
+      "Main security PR #289 is now merged as dcedccf50ae5a4541ababc29cfc7471a7d0ea14a. Main CI #44515762167 passed 702 tests with 13 skipped and 9 warnings; the Dependency Audit passed."
     ]
   },
   "failure_analysis": {
@@ -91,10 +92,9 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "BLOCKED",
     "open_blockers": [
-      "Re-run all eight engineering CI jobs on the current security/soupsieve-cve-20261114 base; do not rely on the historical pre-CVE run alone.",
-      "The three bounded DR24/Zubercal tests establish only their declared API/UI contracts, not physical identity, photometric parity, feature parity, model inference, or scientific acceptance."
+      "Re-run all eight engineering CI jobs on the current main base after retargeting; the previous full CI result was on the older security branch base."
     ],
     "evidence": [
       "DR24 batch live API test passed on two pinned OIDs.",
@@ -104,7 +104,7 @@
       "Three bounded DR24 API, Workbench UI and Zubercal adapter tests passed with their pinned evidence."
     ]
   },
-  "decision": "ACCEPT",
+  "decision": "BLOCKED",
   "knowledge_carried_forward": [
     "The three existing opt-in workflows can be run on ci/dr24-bounded-acceptance-20261112.",
     "Pinned DR24 API payload hashes currently match the two recorded expected values for the declared test OIDs.",
@@ -113,6 +113,7 @@
     "These results are bounded integration evidence only; they do not validate DR24 normalization, cross-survey photometric parity, the frozen v0.2 model, or full scientific discovery.",
     "PR #284 full current-head engineering CI run 43181490615 passed all eight jobs; full suite 702 passed, 13 skipped, zero failed, 9 warnings.",
     "All three bounded live/contract workflows passed: DR24 HATS API (43180970933), deterministic Workbench UI (43180998574), Zubercal DR20 ambiguity parity (43181021520).",
-    "This cycle is VERIFIED and ACCEPTED only for enabling and executing the three bounded tests. It does not close Issue #253 or establish DR24 model inference or scientific acceptance."
+    "This cycle is VERIFIED and ACCEPTED only for enabling and executing the three bounded tests. It does not close Issue #253 or establish DR24 model inference or scientific acceptance.",
+    "The cycle decision remains BLOCKED until the current main-base CI passes. The historical three focused test passes remain valid only for their declared bounded contracts."
   ]
 }
