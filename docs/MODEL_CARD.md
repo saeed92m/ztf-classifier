@@ -1,7 +1,7 @@
 # ZTF Classifier — Model Card
 
 ## Model identity
-- Software release: v1.0.0
+- Software release: v1.0.1
 - Scientific baseline: v0.2.0 (immutable)
 - Production model version: baseline_v0.2
 - Model family: XGBoost
@@ -51,4 +51,4 @@ Predictions are decision-support signals for scientific analysis. Low-confidence
 ## Compatibility and lineage
 The v0.2.0 scientific baseline and baseline_v0.2 model identity are immutable. Future model improvements must use a new model version and preserve compatibility or provide explicit migration rules.
 
-The software package milestone v1.0.0 does not imply that the scientific model itself became v1.0; the two version lines are intentionally independent.
+The software package release line (currently v1.0.1) does not imply that the scientific model became v1.0. The software release and scientific model version lines are independent.
