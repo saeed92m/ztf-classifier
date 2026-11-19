@@ -1,0 +1,54 @@
+name: DR24 API Live Smoke
+
+on:
+  push:
+    branches:
+      - research/dr24-api-live-smoke-20261105
+    paths:
+      - .github/workflows/dr24-api-live-smoke.yml
+      - src/ztf_classifier/api/app.py
+      - src/ztf_classifier/application/observations.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
+      - tests/integration/test_dr24_api_live_smoke.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dr24-api-live-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live-api-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ZTF_DR24_LIVE_TEST: "1"
+      DR24_LIVE_SMOKE_OUTPUT: reports/dr24_api_live_smoke.json
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e ".[dr24]"
+
+      - name: Run live FastAPI-to-HATS smoke test
+        run: python -m pytest -q tests/integration/test_dr24_api_live_smoke.py
+
+      - name: Upload bounded API smoke evidence
+        if: always() && hashFiles('reports/dr24_api_live_smoke.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: dr24-api-live-smoke
+          path: reports/dr24_api_live_smoke.json
+          if-no-files-found: error
+          retention-days: 14
