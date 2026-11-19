@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "park-mvp-real-dataset-e2e-acceptance-20261117",
+  "objective": "Convert the Project Owner's clarification into a full-cohort, real-data Park MVP acceptance contract. Replace arbitrary sample-count milestones with one pinned, complete user-workflow dataset package.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Project Owner instruction 2026-11-17",
+      "status": "VERIFIED",
+      "detail": "The product must be tested as a user would operate it on a coherent real dataset; arbitrary 50/100/1000 object counts are not product acceptance."
+    },
+    {
+      "source": "Issue #253",
+      "status": "VERIFIED",
+      "detail": "DR24 HATS application integration and end-to-end API/Workbench execution remain open."
+    },
+    {
+      "source": "AOIC architecture v0.1",
+      "status": "VERIFIED",
+      "detail": "OID, catalog entry, canonical object, detection, observation, event, dataset and analysis must remain distinct; ambiguous identities must remain explicit."
+    },
+    {
+      "source": "Park dossier and presentation",
+      "status": "VERIFIED",
+      "detail": "DR24 HATS is the primary time-series source; ALeRCE and BTS have distinct label/reference roles; Zubercal is supplementary."
+    },
+    {
+      "source": "Issue #282",
+      "status": "VERIFIED",
+      "detail": "Original frozen v0.2.0 production model artifact remains unavailable/unauthenticated in accessible remote sources."
+    }
+  ],
+  "baseline": {
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2",
+    "historical_cutoff": 59447.224132
+  },
+  "change": {
+    "completed": "Added a full-cohort Park MVP end-to-end acceptance plan. It defines one immutable dataset package with DR24 observations, separate ALeRCE reference labels, BTS independent transient labels, and AOIC identity/provenance. It defines the normal API/Workbench user journey, hard acceptance gates, and READY / READY WITH LIMITATIONS / NOT READY decision rules.",
+    "scope": "Documentation-only research branch change. No application code, model, data, taxonomy, baseline, thresholds or production records changed.",
+    "rationale": "Small deterministic samples are useful for narrow diagnostics only. They cannot demonstrate product readiness, population performance or a complete user workflow. The acceptance run must process the complete predeclared cohort; batching is allowed only if all batches are processed and reconciled."
+  },
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "before": "Existing parallel plan described separate DR24, StarEmbed, BTS and CPVS workstreams but did not define one complete Park user-workflow dataset package.",
+        "after": "A versioned acceptance contract now specifies the dataset layers, user journey and gate criteria. No runtime product behavior has yet been measured."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "before": "No full-cohort Park dataset manifest or repeated application run exists in this change.",
+        "after": "The new contract requires pinned releases, complete cohort definition, hashes and a repeated full-cohort run."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "This change is a planning contract only. It does not execute DR24 ingestion, model inference or independent BTS evaluation."
+      }
+    },
+    "trade_off": "A complete cohort makes the acceptance result representative of the declared dataset, but requires explicit accounting for unavailable records, ambiguous identities and source-specific data semantics."
+  },
+  "validation": {
+    "status": "NOT_RUN",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "New document: docs/roadmap/PARK_MVP_REAL_DATASET_END_TO_END_ACCEPTANCE_2026-11-17.md.",
+      "No code tests or source-backed dataset jobs are claimed for this documentation-only change.",
+      "The initial current-head CI run 43998420974 failed in the cumulative lifecycle contract because this record omitted required lifecycle fields; this record is amended to satisfy the declared contract. A fresh CI run is required."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The initial lifecycle record omitted expected_improvement, knowledge_extraction and regression, and measurement.metrics was empty. The cumulative lifecycle validator rejected the record before the CI test suite ran."
+    ],
+    "unresolved": [
+      "The full authoritative BTS release and exact cohort query must be pinned before runtime execution.",
+      "The original v0.2.0 production model artifact must be recovered and authenticated.",
+      "DR24 feature parity and ordinary API/Workbench integration are not yet demonstrated.",
+      "AOIC remains an architecture proposal, not a completed identity service."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not use arbitrary object counts as product completion criteria.",
+    "Use the complete source-defined cohort in the pinned Park Pilot Dataset package.",
+    "Keep DR24, ALeRCE, BTS and Zubercal data semantics and taxonomies separate.",
+    "Do not run frozen model inference on DR24 until model authentication and feature parity pass.",
+    "Keep CPVS as separate research and do not let it block the Park product workflow.",
+    "The new acceptance contract is not evidence that the MVP is ready."
+  ],
+  "expected_improvement": [
+    "Define one immutable, source-pinned Park Pilot dataset package with a complete eligible cohort.",
+    "Specify the normal API and Workbench workflow from dataset selection through reproducible export.",
+    "Keep DR24 observations, ALeRCE reference labels, BTS spectroscopic labels and AOIC identity provenance distinct.",
+    "Preserve the v0.2.0 baseline and require independent authentication before using its production model."
+  ],
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "A planning contract is not evidence of runtime product behavior or scientific acceptance.",
+      "The complete source-defined cohort, not an arbitrary object count, is the Park MVP product acceptance target.",
+      "DR24, ALeRCE, BTS and Zubercal have distinct source roles and data semantics.",
+      "The original v0.2.0 production model must be authenticated before inference; the lab-smoke artifact is not a substitute.",
+      "The demonstrator may expose acquisition, light curves, descriptive QC and reproducible exports while classification remains blocked."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run fresh CI on the amended PR head and inspect all failed or skipped jobs.",
+      "Pin the complete eligible Park Pilot cohort and its source releases, query, schemas and hashes.",
+      "Complete DR24 application integration and full-cohort Workbench execution.",
+      "Authenticate the original v0.2.0 model or separately validate a new Park Pilot model.",
+      "Complete AOIC identity/provenance and independent BTS evaluation for supported transient classes."
+    ]
+  }
+}
