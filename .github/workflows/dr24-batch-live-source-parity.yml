@@ -1,6 +1,16 @@
 name: DR24 Batch API Live Source Parity
 
 on:
+  push:
+    branches:
+      - ci/dr24-bounded-acceptance-20261112
+    paths:
+      - .github/workflows/dr24-batch-live-source-parity.yml
+      - src/ztf_classifier/api/app.py
+      - src/ztf_classifier/application/observations.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
+      - src/ztf_classifier/validation/dr24_quality.py
+      - tests/test_dr24_batch_live_api.py
   pull_request:
     branches:
       - feat/dr24-raw-observation-adapter-20261104
