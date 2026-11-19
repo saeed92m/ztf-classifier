@@ -3,6 +3,7 @@ name: DR24 Batch Workbench UI Contract
 on:
   pull_request:
     branches:
+      - main
       - feat/dr24-raw-preserving-qc-assessment-20261107
     paths:
       - .github/workflows/dr24-batch-workbench-ui.yml

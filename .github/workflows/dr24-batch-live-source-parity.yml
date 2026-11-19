@@ -3,6 +3,7 @@ name: DR24 Batch API Live Source Parity
 on:
   pull_request:
     branches:
+      - main
       - feat/dr24-raw-observation-adapter-20261104
     paths:
       - .github/workflows/dr24-batch-live-source-parity.yml
