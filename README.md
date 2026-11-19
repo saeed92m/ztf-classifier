@@ -4,9 +4,22 @@ A CPU-first Astronomical Data Analysis & Discovery Platform for Zwicky Transient
 
 ## Project status
 
-**Version:** v1.0.1
-**Release:** `v1.0.1` (immutable)
-**Status:** v1.0.1 released and immutable; v1.0.0 remains immutable; Scientific Validation, CI, CodeQL, release publication, and artifact verification passed
+**Status date:** 2026-11-19  
+**Software release:** v1.0.1 (immutable)  
+**Scientific baseline:** v0.2.0 (immutable)  
+**Main revision reviewed:** `dcedccf50ae5a4541ababc29cfc7471a7d0ea14a`
+
+Main CI #44515762167 passed: 702 tests passed, 13 skipped, and 9 warnings. Format, lint, runtime smoke, package build, dependency audit, and CI gate passed. The original v0.2.0 production model artifact is not available in the accessible repository, release assets, or retained CI reports. Recovery remains open in [Issue #282](https://github.com/saeed92m/ztf-classifier/issues/282). Do not use the lab-smoke artifact as a substitute.
+
+The DR24 Explorer is a bounded raw-data demonstrator. It does not run the frozen v0.2.0 classifier on DR24. The Park MVP remains NOT ACCEPTED pending the complete dataset and API/Workbench gates.
+
+**Current project documents**
+- [Continuity Handbook v3.1](docs/HANDBOOK_UPDATED_v3.1.md)
+- [Master Execution Roadmap — 2026-11-19](docs/MASTER_EXECUTION_ROADMAP_2026-11-19.md)
+- [Master Defect Register — 2026-11-19](docs/MASTER_DEFECT_REGISTER_2026-11-19.md)
+- [Park technical status addendum — Persian](docs/acceptance/PARK_TECHNICAL_STATUS_ADDENDUM_2026-11-19.fa.md)
+- [Think Tank review — 2026-11-19](docs/think-tank/THINK_TANK_SESSION_2026-11-19_PARK_READINESS_AND_CONVERGENCE.md)
+- [Park acceptance PR #297](https://github.com/saeed92m/ztf-classifier/pull/297)
 
 The v0.2 core pipeline includes:
 
@@ -17,7 +30,7 @@ The v0.2 core pipeline includes:
 * conformal prediction;
 * out-of-distribution (OOD) scoring;
 * historical and temporal evaluation;
-* persisted production model artifacts;
+* versioned model-artifact contracts and inference interfaces; original artifact recovery remains open;
 * production inference;
 * single-object and batch inference interfaces.
 
@@ -115,26 +128,17 @@ reports/tables/final_feature_set_v0.2.parquet
 
 ## Model and calibration
 
-The production model uses the frozen v0.2 model configuration and persists the complete inference artifact.
+The software contains a versioned artifact-loading and inference contract for the frozen v0.2.0 model. However, the original production artifact has not been recovered or authenticated from accessible repository, release, CI, or connected remote sources (Issue #282).
 
-The artifact includes:
+The intended original model identity is `baseline_v0.2`. Its expected artifact contract is schema 1.0. A separate schema-1.1 lab-smoke artifact is not a production substitute. Do not rebuild, rename, or copy it into the production path.
 
-* model configuration;
-* trained classifier;
-* preprocessing state;
-* feature schema;
-* probability calibration;
-* provenance information;
-* conformal prediction diagnostics;
-* OOD diagnostics and production OOD model.
-
-The current artifact schema is **1.1** and remains backward-compatible with schema **1.0** artifacts.
+The inference code can load a trusted artifact when one is supplied. This does not mean that the original artifact is available or that production inference has passed on the current checkout.
 
 ## Conformal prediction
 
-Conformal diagnostics are calibrated from held-out predictions and persisted with the production artifact.
+The code supports conformal diagnostics when a valid, authenticated artifact and calibration data are available. The original production artifact is currently unavailable in accessible remote sources (Issue #282). Do not claim that conformal coverage is reproducible from this checkout.
 
-Production inference can expose:
+When the required artifact is available, production inference can expose:
 
 * significance level (`alpha`);
 * conformal threshold;
@@ -165,9 +169,9 @@ The OOD feature contract contains **42 features**, matching the frozen model fea
 
 ## Production inference
 
-The production inference layer loads a persisted artifact and performs inference using the stored model, preprocessing, calibration, conformal diagnostics, and OOD configuration.
+The production inference layer supports loading a trusted persisted artifact and uses its model, preprocessing, calibration, conformal diagnostics, and OOD configuration. The original frozen production artifact is not currently available in accessible remote sources. Do not treat inference code or contract tests as proof that the original model can run on this checkout.
 
-Production outputs preserve model and diagnostic metadata so that downstream consumers can distinguish the exact artifact contract used for inference.
+Production outputs are designed to preserve model and diagnostic metadata so downstream users can identify the artifact contract used for inference.
 
 ## Command-line interface
 
@@ -284,24 +288,19 @@ The repository contains reproducibility, provenance, checksum validation, ingest
 
 ## Validation status
 
-The production inference and batch-output contracts are covered by focused automated tests.
+Latest main engineering run: [CI #44515762167](https://github.com/saeed92m/ztf-classifier/actions/runs/44515762167).
 
-Current validated areas include:
+- 702 tests passed.
+- 13 tests skipped.
+- 9 warnings were reported.
+- Format, lint, runtime smoke, package build, dependency audit, and CI gate passed.
+- At least seven production-inference tests remain skipped because the original artifact or shared inputs are unavailable (Issue #282).
+- [Scientific Validation #44515762163](https://github.com/saeed92m/ztf-classifier/actions/runs/44515762163) completed all five workflow jobs. It acquired separate 150-row DR24 Objects Table and live ALeRCE reference responses and verified the frozen ALeRCE reference manifest. The DR24 and ALeRCE responses are not cross-matched and do not form a labeled DR24 cohort.
+- These workflow results do not prove DR24 feature parity, model inference on DR24, calibrated performance, physical-source identity, or full-cohort Park acceptance.
 
-* model artifact loading and schema compatibility;
-* calibration;
-* conformal diagnostics;
-* OOD diagnostics;
-* production inference;
-* CLI prediction output;
-* batch Parquet output;
-* batch metadata contract;
-* batch schema and flag validation;
-* rejection of empty batch outputs.
+Skipped tests are not PASS. Source-backed and model-dependent tests must run when their required inputs are available.
 
-The full test suite is the release gate. CI runs installation, dependency verification, Ruff, the complete pytest suite, and package import verification. Registry-backed prediction and batch paths are covered by real subprocess E2E tests.
-
-The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the current software release is `v1.0.1`.
+The immutable scientific baseline is tag `v0.2.0`; the intended model identity remains `baseline_v0.2`, but its original artifact is not currently available in accessible remote sources.
 
 ## Repository structure
 
@@ -378,7 +377,7 @@ An unresolved external reproduction claim must not silently become a product fai
 - Exact CPVS reconstruction remains UNRESOLVED: the current Seq-based run finds 741,786 candidates, all 730,184 published objects, and 11,602 candidate-only objects with zero published-only or unmapped names. Selection semantics for the extra candidates remain under investigation; no threshold or flag rule may be tuned solely to force the published cardinality.
 - This reconstruction discrepancy is not an ML or production failure and must not be hidden or forced away by threshold tuning.
 
-The v1.0.1 software release is published and immutable. The broader discovery platform continues through documented product expansion and independent scientific benchmarking.
+The v1.0.1 software release is published and immutable. No Park demo prerelease has been created. The broader discovery platform continues through the gated roadmap.
 
 ## Astronomical Data Analysis & Discovery Platform layer
 
@@ -415,7 +414,7 @@ The platform architecture now has executable domain contracts for external catal
 The current production model explicitly does **not** claim a scientific-anomaly detector: OOD diagnostics and scientific anomaly evidence are separate result channels. Scientific anomaly evidence remains `not_evaluated` until a dedicated analysis mode supplies and versions such evidence.
 
 
-## Current project roadmap and status (2026-10-11)
+## Historical roadmap snapshot (2026-10-11)\n\nThis section is retained as a historical record. Use the dated 2026-11-19 handbook and master roadmap linked at the top for current status.
 
 - Current immutable software release: **v1.0.1**; frozen scientific baseline: **v0.2.0**.
 - Canonical continuity handbook: [HANDBOOK_UPDATED_v2.8.md](docs/HANDBOOK_UPDATED_v2.8.md).
