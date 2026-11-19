@@ -6,6 +6,7 @@ import numpy as np
 
 from ztf_classifier.models.classes import MODEL_CLASSES
 from ztf_classifier.models.conformal import ConformalResult
+from ztf_classifier.models.data_adequacy import DataAdequacyResult
 from ztf_classifier.models.inference import InferenceResult
 from ztf_classifier.models.ood import OODResult
 from ztf_classifier.models.production_conformal import (
@@ -25,6 +26,7 @@ class PredictionResultBuilder:
         calibrated_probabilities: np.ndarray | None = None,
         conformal: (ConformalResult | ProductionConformalDiagnostics | None) = None,
         ood: OODResult | None = None,
+        data_adequacy: DataAdequacyResult | None = None,
         scientific_anomaly: ScientificAnomalyResult | None = None,
         calibration_status: str = "unavailable",
         conformal_status: str = "unavailable",
@@ -67,6 +69,7 @@ class PredictionResultBuilder:
             conformal=conformal,
             ood=ood,
             scientific_anomaly=scientific_anomaly,
+            data_adequacy=data_adequacy,
             calibration_status=calibration_status,
             conformal_status=conformal_status,
             ood_status=ood_status,

@@ -126,6 +126,64 @@ class SourceBackedAnalysisExecutor:
             },
         }
 
+        if result.data_adequacy is not None:
+            adequacy = result.data_adequacy
+            prediction["data_adequacy"] = {
+                "status": adequacy.status[0],
+                "observed_feature_count": int(
+                    adequacy.observed_feature_count[0]
+                ),
+                "missing_feature_count": int(
+                    adequacy.missing_feature_count[0]
+                ),
+                "coverage_fraction": float(adequacy.coverage_fraction[0]),
+                "missing_feature_names": list(adequacy.missing_feature_names[0]),
+                "reason_codes": list(adequacy.reason_codes[0]),
+                "policy_version": adequacy.policy_version,
+                "interpretation": "descriptive_only_not_an_eligibility_decision",
+            }
+
+        prediction["ood_evaluation_status"] = (
+            "not_available"
+            if result.ood is None
+            else (
+                "evaluated_adequacy_unreported"
+                if result.data_adequacy is None
+                else (
+                    "evaluated_complete_features"
+                    if result.data_adequacy.status[0] == "complete"
+                    else "evaluated_with_missing_features"
+                )
+            )
+        )
+
+        if result.ood is not None:
+            prediction["ood"] = {
+                "anomaly_score": float(result.ood.anomaly_score[0]),
+                "normality_score": float(result.ood.normality_score[0]),
+                "anomaly_percentile": float(result.ood.anomaly_percentile[0]),
+                "isolation_forest_label": int(result.ood.isolation_forest_label[0]),
+                "anomaly_rank": int(result.ood.anomaly_rank[0]),
+                "is_top_1pct_anomaly": bool(result.ood.is_top_1pct_anomaly[0]),
+                "is_top_5pct_anomaly": bool(result.ood.is_top_5pct_anomaly[0]),
+                "is_top_10pct_anomaly": bool(result.ood.is_top_10pct_anomaly[0]),
+                "input_feature_coverage_fraction": (
+                    float(result.data_adequacy.coverage_fraction[0])
+                    if result.data_adequacy is not None
+                    else None
+                ),
+                "input_observed_feature_count": (
+                    int(result.data_adequacy.observed_feature_count[0])
+                    if result.data_adequacy is not None
+                    else None
+                ),
+                "input_missing_feature_count": (
+                    int(result.data_adequacy.missing_feature_count[0])
+                    if result.data_adequacy is not None
+                    else None
+                ),
+            }
+
         model_provenance = prediction_response.provenance.to_dict()
         for section in (
             "dataset",
@@ -139,7 +197,7 @@ class SourceBackedAnalysisExecutor:
                 value.pop("source_path", None)
 
         return {
-            "schema_version": "1.0",
+            "schema_version": "1.1",
             "oid": oid,
             "survey": survey,
             "observation_count": len(records),
@@ -156,6 +214,9 @@ class SourceBackedAnalysisExecutor:
                 "calibration": result.calibration_status,
                 "conformal": result.conformal_status,
                 "ood": result.ood_status,
+                "data_adequacy": (
+                    "available" if result.data_adequacy is not None else "unavailable"
+                ),
             },
             "model_provenance": model_provenance,
             "observation_provenance": observation_provenance.to_dict(),

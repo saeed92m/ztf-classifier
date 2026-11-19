@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "data-adequacy-ood-diagnostic-20261109",
+  "objective": "Add a row-aligned, descriptive feature-coverage diagnostic to production inference and expose the OOD evaluation basis without introducing an unvalidated OOD eligibility threshold or changing the v0.2.0 scientific baseline.",
+  "previous_knowledge_consumed": [
+    "ProductionInferenceService sends every row that has at least one finite feature to the persisted OOD model.",
+    "OODProductionModel applies median imputation, robust scaling, and Isolation Forest. Its validation does not enforce per-row feature coverage.",
+    "A previous local diagnostic reported that a row with one finite feature can receive an OOD score. This remains a behavior to reproduce against the exact local production artifact.",
+    "The frozen v0.2.0 classifier, 42-feature schema, class order, model artifact, and acceptance criteria must remain unchanged.",
+    "The exact frozen OOD reference training matrix and a verified text mapping of all 42 features are not available in the public source tree."
+  ],
+  "baseline": {
+    "revision": "main@bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c",
+    "scientific_baseline": "v0.2.0 immutable",
+    "model_version": "baseline_v0.2",
+    "feature_count": 42,
+    "model_family": "XGBoost",
+    "status": "Production OOD input validation is global rather than row-specific. No scientifically validated per-row OOD eligibility threshold exists."
+  },
+  "expected_improvement": [
+    "Expose pre-imputation observed/missing feature counts and coverage fraction for every prediction row.",
+    "Identify the missing model features and provide stable reason codes.",
+    "Keep data adequacy separate from OOD anomaly scores.",
+    "Expose whether OOD was evaluated with complete or missing model features.",
+    "Keep API, CLI, batch, job, and web outputs aligned.",
+    "Preserve the classifier, persisted OOD model, preprocessing, feature schema, and v0.2.0 baseline."
+  ],
+  "measurement": {
+    "metrics": {
+      "coverage": {
+        "before": "PredictionResult had no per-row data-adequacy result.",
+        "after": "DataAdequacyResult reports observed_feature_count, missing_feature_count, coverage_fraction, missing_feature_names, status, reason_codes, and policy_version=coverage-only-v1.",
+        "status": "IMPLEMENTED_AND_CI_VERIFIED"
+      },
+      "reproducibility": {
+        "before": "API, CLI, batch, web, and job outputs did not expose consistent row-level adequacy. The job payload omitted per-row OOD values.",
+        "after": "Per-row adequacy and OOD evaluation state are added to API, CLI, batch Parquet, job payload, and web workbench.",
+        "status": "IMPLEMENTED_AND_CI_VERIFIED"
+      },
+      "scientific_validity": {
+        "before": "No validated coverage threshold or independent missingness robustness evidence.",
+        "after": "No threshold is introduced. A one-feature row remains OOD-scored and is labelled evaluated_with_missing_features.",
+        "status": "BLOCKED_PENDING_REFERENCE_DATA_AND_MASKING_EXPERIMENTS"
+      }
+    }
+  },
+  "validation": {
+    "status": "BLOCKED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "CI test suite: 648 passed, 10 skipped, 9 warnings in 74.74 seconds; total coverage 83%.",
+      "The five new DataAdequacyResult unit tests passed.",
+      "The one-finite-feature production inference regression test passed. It confirms that the row is labelled partial while the current OOD implementation still emits a score.",
+      "API prediction serialization, CLI diagnostics, batch Parquet contract, and source-backed job result tests passed.",
+      "Ruff format and Ruff lint passed.",
+      "Runtime smoke tests for CLI, API, and worker passed.",
+      "Package build, wheel installation, dependency verification, and package import passed.",
+      "Build-system isolation and dependency audit passed.",
+      "CodeQL passed.",
+      "P1-P6 Product Scope Audit passed.",
+      "Scientific validation contract tests and cumulative lifecycle contract tests passed.",
+      "Ten tests were skipped: three because the frozen feature artifact or raw detection cache was absent, and seven because the legacy v1.0 artifact or shared model inputs were unavailable. These skips are not scientific validation."
+    ],
+    "blocker": "Production OOD eligibility remains blocked. The exact frozen OOD reference matrix and verified 42-feature family mapping are required for controlled masking experiments. CI success does not replace this evidence."
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_CONFIRMED_FOR_INPUT_VALIDATION",
+    "root_causes": [
+      "OODProductionModel._validate_features checks whether any finite value exists in the full matrix, not whether each row has sufficient feature coverage.",
+      "Median imputation can convert sparse rows into complete transformed rows before Isolation Forest scoring.",
+      "Request-level ood_status does not communicate per-row feature coverage."
+    ],
+    "unresolved": [
+      "The scientifically acceptable OOD evaluation coverage policy is not known.",
+      "The exact production reference matrix must be recovered and verified before controlled masking experiments."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A numerical OOD score does not prove that the original input row is scientifically adequate.",
+      "Feature coverage is a descriptive diagnostic, not an eligibility decision.",
+      "Do not infer a global threshold from a small benchmark or from correlation with anomaly scores.",
+      "Keep request-level OOD artifact availability separate from per-row OOD evaluation state.",
+      "Do not claim scientific validation when required integration tests are skipped."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "The full CI test suite passed, but 10 artifact-dependent tests were skipped because the frozen feature/raw-cache and legacy v1.0 artifacts were unavailable in GitHub Actions.",
+      "Recover and hash the exact OOD reference training matrix and the frozen feature schema.",
+      "Run controlled masking experiments and define a versioned OOD eligibility policy before gating sparse rows."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "The new coverage diagnostic is descriptive only and uses policy_version coverage-only-v1.",
+    "A one-feature row is labelled partial and its OOD output is labelled evaluated_with_missing_features.",
+    "No OOD threshold is approved by this change.",
+    "The v0.2.0 scientific baseline remains unchanged.",
+    "The CPVS 11,602 candidate-only discrepancy remains a separate unresolved scientific validation blocker.",
+    "Latest CI evidence: 648 passed, 10 skipped, 9 warnings; coverage 83%; runtime smoke tests, package build and installation, dependency audit, CodeQL, product-scope audit, and lifecycle validation passed."
+  ]
+}

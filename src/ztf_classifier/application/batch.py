@@ -16,7 +16,7 @@ from ztf_classifier.application.schemas import (
 from ztf_classifier.application.service import ApplicationService
 from ztf_classifier.models.classes import MODEL_CLASSES
 
-BATCH_SCHEMA_VERSION = "1.1"
+BATCH_SCHEMA_VERSION = "1.2"
 
 
 @dataclass(frozen=True)
@@ -168,7 +168,54 @@ class BatchInferenceService:
                     diagnostic.prediction_sets.sum(axis=1).astype("int64")
                 )
 
+        if result.data_adequacy is not None:
+            adequacy = result.data_adequacy
+            output["data_adequacy_status"] = adequacy.status
+            output["data_adequacy_observed_feature_count"] = (
+                adequacy.observed_feature_count
+            )
+            output["data_adequacy_missing_feature_count"] = (
+                adequacy.missing_feature_count
+            )
+            output["data_adequacy_coverage_fraction"] = adequacy.coverage_fraction
+            output["data_adequacy_missing_feature_names"] = [
+                list(names) for names in adequacy.missing_feature_names
+            ]
+            output["data_adequacy_reason_codes"] = [
+                list(codes) for codes in adequacy.reason_codes
+            ]
+            output["data_adequacy_policy_version"] = adequacy.policy_version
+
+        if result.data_adequacy is None:
+            if result.ood is None:
+                output["ood_evaluation_status"] = ["not_available"] * len(output)
+            else:
+                output["ood_evaluation_status"] = [
+                    "evaluated_adequacy_unreported"
+                ] * len(output)
+        else:
+            output["ood_evaluation_status"] = [
+                "not_available"
+                if result.ood is None
+                else (
+                    "evaluated_complete_features"
+                    if status == "complete"
+                    else "evaluated_with_missing_features"
+                )
+                for status in result.data_adequacy.status
+            ]
+
         if result.ood is not None:
+            if result.data_adequacy is not None:
+                output["ood_input_feature_coverage_fraction"] = (
+                    result.data_adequacy.coverage_fraction
+                )
+                output["ood_input_observed_feature_count"] = (
+                    result.data_adequacy.observed_feature_count
+                )
+                output["ood_input_missing_feature_count"] = (
+                    result.data_adequacy.missing_feature_count
+                )
             output["ood_anomaly_score"] = result.ood.anomaly_score
             output["ood_normality_score"] = result.ood.normality_score
             output["ood_anomaly_percentile"] = result.ood.anomaly_percentile

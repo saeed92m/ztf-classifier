@@ -11,6 +11,8 @@ import pytest
 from ztf_classifier.application.batch import BATCH_SCHEMA_VERSION, BatchInferenceService
 from ztf_classifier.application.schemas import PredictionResponse
 from ztf_classifier.models.classes import MODEL_CLASSES
+from ztf_classifier.models.data_adequacy import DataAdequacyResult
+from ztf_classifier.models.ood import OODResult
 from ztf_classifier.models.provenance import ModelProvenance
 from ztf_classifier.models.results import PredictionResult
 
@@ -27,6 +29,23 @@ def _response(sample_count: int = 2) -> PredictionResponse:
         calibrated_predicted_class_indices=np.zeros(sample_count, dtype=np.int64),
         calibrated_predicted_labels=tuple(
             MODEL_CLASSES[0] for _ in range(sample_count)
+        ),
+        ood=OODResult(
+            anomaly_score=np.array([0.5, 0.6][:sample_count]),
+            normality_score=np.array([-0.5, -0.6][:sample_count]),
+            anomaly_percentile=np.array([50.0, 60.0][:sample_count]),
+            isolation_forest_label=np.array([1, -1][:sample_count]),
+            anomaly_rank=np.array([2, 1][:sample_count]),
+            is_top_1pct_anomaly=np.array([False, False][:sample_count]),
+            is_top_5pct_anomaly=np.array([False, False][:sample_count]),
+            is_top_10pct_anomaly=np.array([False, False][:sample_count]),
+        ),
+        data_adequacy=DataAdequacyResult.from_matrix(
+            np.vstack([
+                np.ones(42, dtype=np.float64),
+                np.concatenate([np.ones(1), np.full(41, np.nan)]),
+            ])[:sample_count],
+            tuple(f"feature_{index}" for index in range(42)),
         ),
     )
     provenance = ModelProvenance(
@@ -99,6 +118,22 @@ def test_batch_preserves_oid_and_row_count(tmp_path: Path) -> None:
     assert result.model_family == "XGBoost"
     assert len(result.predictions) == 2
     assert list(result.predictions["oid"]) == ["ZTF001", "ZTF002"]
+    assert list(result.predictions["data_adequacy_status"]) == [
+        "complete",
+        "partial",
+    ]
+    assert list(result.predictions["data_adequacy_observed_feature_count"]) == [
+        42,
+        1,
+    ]
+    assert list(result.predictions["ood_evaluation_status"]) == [
+        "evaluated_complete_features",
+        "evaluated_with_missing_features",
+    ]
+    assert list(result.predictions["ood_input_observed_feature_count"]) == [42, 1]
+    assert result.predictions["data_adequacy_policy_version"].eq(
+        "coverage-only-v1"
+    ).all()
 
 
 def test_batch_contains_all_probability_columns(tmp_path: Path) -> None:

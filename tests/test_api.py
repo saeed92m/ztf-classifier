@@ -15,6 +15,8 @@ from ztf_classifier.domain.observations import (
     ObservationProvenance,
 )
 from ztf_classifier.jobs import JobStore
+from ztf_classifier.models.data_adequacy import DataAdequacyResult
+from ztf_classifier.models.ood import OODResult
 from ztf_classifier.models.results import PredictionResult
 
 
@@ -38,7 +40,21 @@ class FakeApplicationService:
             raw_predicted_labels=raw_labels,
             calibration_status="available",
             conformal_status="unavailable",
-            ood_status="unavailable",
+            ood_status="available",
+            ood=OODResult(
+                anomaly_score=np.array([0.5]),
+                normality_score=np.array([-0.5]),
+                anomaly_percentile=np.array([90.0]),
+                isolation_forest_label=np.array([-1]),
+                anomaly_rank=np.array([1]),
+                is_top_1pct_anomaly=np.array([False]),
+                is_top_5pct_anomaly=np.array([False]),
+                is_top_10pct_anomaly=np.array([True]),
+            ),
+            data_adequacy=DataAdequacyResult.from_matrix(
+                np.ones((len(dataset), 42), dtype=np.float64),
+                tuple(f"feature_{index}" for index in range(42)),
+            ),
             model_version=model_version,
             artifact_schema_version="1.1",
             artifact_hash="a" * 64,
@@ -249,6 +265,16 @@ def test_prediction_uses_server_side_model_selection(
     payload = response.json()
     assert payload["model_version"] == "baseline_v0.2"
     assert payload["predictions"][0]["predicted_class"] == "AGN"
+    assert payload["schema_version"] == "1.1"
+    assert payload["predictions"][0]["data_adequacy"]["status"] == "complete"
+    assert payload["predictions"][0]["data_adequacy"]["observed_feature_count"] == 42
+    assert payload["predictions"][0]["data_adequacy"]["policy_version"] == (
+        "coverage-only-v1"
+    )
+    assert payload["predictions"][0]["ood_evaluation_status"] == (
+        "evaluated_complete_features"
+    )
+    assert payload["predictions"][0]["ood"]["input_observed_feature_count"] == 42
     assert "/secret" not in response.text
     assert fake_service.calls[0][2] == "baseline_v0.2"
 
