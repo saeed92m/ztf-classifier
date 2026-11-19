@@ -1,0 +1,224 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "project-status-documentation-convergence-20261112",
+  "objective": "Establish a dated, evidence-based project continuation point and align the selected canonical GitHub documents and Notion project knowledge pages without changing runtime behavior or scientific baselines.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "main commit f681408fae8d8062dd72ff74791872c1590f6ee8",
+      "status": "VERIFIED",
+      "detail": "Inspected latest main revision and current merged DR24/Zubercal work before preparing the documentation consolidation."
+    },
+    {
+      "source": "docs/knowledge/PROJECT_KNOWLEDGE_BASE.md and docs/knowledge/CUMULATIVE_IMPROVEMENT_LEDGER.md",
+      "status": "VERIFIED",
+      "detail": "Preserved frozen v0.2.0, source evidence roles, fail-closed validation, and cumulative-learning lifecycle requirements."
+    },
+    {
+      "source": "Notion Handbook v3.0, Park Pilot Readiness, CPVS audit, CIN source and Project Knowledge Base",
+      "status": "VERIFIED",
+      "detail": "Compared current and historical notes; retained older records and added a dated correction path."
+    },
+    {
+      "source": "Project attachments: Park presentation, project technical/business dossier, CPVS convergence policy and handoff, CIN architecture, collective-data-generation plan, 16-role think-tank specification",
+      "status": "VERIFIED",
+      "detail": "Used the submitted institutional, scientific and governance documents as project requirements and historical context. Proposals remain distinct from implemented capabilities."
+    }
+  ],
+  "baseline": {
+    "revision": "f681408fae8d8062dd72ff74791872c1590f6ee8",
+    "scientific_baseline": "v0.2.0 immutable",
+    "software_release": "v1.0.1 immutable",
+    "model_version": "baseline_v0.2",
+    "feature_count": 42
+  },
+  "expected_improvement": [
+    "Provide one dated master continuation point with evidence precedence, product priorities, scientific blockers, risks, and next actions.",
+    "Align README, Model Card, Scientific Methodology, benchmark source semantics, Knowledge Base index, roadmap, and acceptance checklist.",
+    "Record the submitted institutional and commercialization plan without presenting targets as achievements.",
+    "Preserve the 16-role think-tank method as ongoing project governance.",
+    "Keep raw research questions and frozen production baselines unchanged.",
+    "Create a read-only inventory and safe triage plan for all open pull requests, preserving unique research evidence and avoiding mass merges or closures.",
+    "Convert the supplied 16-role review into a current, evidence-based master review, defect register and gated execution roadmap.",
+    "Make minimum source identity and association semantics an explicit P0 dependency alongside DR24 application integration.",
+    "Review and record the explicit application source-selection boundary across ALeRCE detections, native DR24 HATS and Zubercal DR20, with independent think-tank review and a proposed ADR.",
+    "Operationalize the original 16-seat Think Tank and 12-stage Master Prompt as a version-controlled charter, source register, session register and mandatory PR traceability block.",
+    "Link material engineering and scientific work to stable Think Tank session IDs, active roles, source references, evidence, Red Team findings and Project Owner approval state."
+  ],
+  "measurement": {
+    "metrics": {
+      "coverage": {
+        "before": "No single dated 2026-11-12 master status document existed on main; current status was distributed across older status reports, repository docs, Notion pages and attached project sources.",
+        "after": "One 452-line master continuation document was added; eight additional canonical/documentation files were aligned; the report is linked from README and Knowledge Base. A third 16-role think-tank session and a proposed explicit-source-selection ADR were added; both are indexed from the master review and continuation report. Added docs/think-tank/CHARTER.md, SESSION_REGISTER.md, Session 05, sources/think_tank/PROJECT_SOURCE_INDEX.md and a Think Tank traceability section in .github/pull_request_template.md."
+      },
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "before": "No single consistent denominator existed for counting every documentation conflict across all historical sources.",
+        "after": "Selected high-impact conflicts were corrected with dated evidence. Full line-by-line audit of every historical handbook and every source-code module remains outside this documentation cycle. A code-level review now records that existing v1 analysis remains ALeRCE-backed, DR24 HATS and Zubercal are native-only paths, and no approved source normalization/feature bridge exists. The original meeting composition and Project Owner authority are preserved: 16 permanent seats; 7–9 routine decision sessions; 3–5 specialist panels; 6–10 brainstorming; 16-seat stage/release reviews. Focused Session 05 used 8 active roles plus Red Team and is not misrepresented as all 16."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "before": "No unified record linked all active workstreams and evidence in one dated source.",
+        "after": "The master record contains exact repository revision, source hashes, run/test boundaries, issue links, and retained sample identifiers. End-to-end scientific reruns were not part of this documentation cycle."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "before": "CPVS membership root cause remained unresolved; DR24 end-to-end product validation remained incomplete.",
+        "after": "Scientific state is documented without changing the selector, thresholds, datasets, model, labels, or validation criteria. This documentation cycle does not close scientific blockers."
+      }
+    },
+    "trade_off": "Documentation is updated before implementation. The master status records current evidence and proposal boundaries. No unsupported project-completion percentage is reported."
+  },
+  "validation": {
+    "status": "PASS",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Branch was created from the inspected main revision f681408fae8d8062dd72ff74791872c1590f6ee8.",
+      "GitHub compare before this lifecycle record reported documentation-only changes with no main divergence.",
+      "Format Check, Lint, Product Scope Audit, and CodeQL Python completed successfully on the current branch head before adding this record.",
+      "Scientific validation contract checks completed, but source-backed ALeRCE, DR24/ALeRCE, StarEmbed, and provenance acquisition jobs were skipped.",
+      "The first CI attempt failed because the meaningful documentation PR had no changed JSON cycle record under configs/process/cycles/. The cycle-record validator passed for existing records; the enforcement step correctly rejected this PR.",
+      "Updated PR head 3241955ebb918bd79f9b15263d16f6bf541f00e9 completed all four workflows: CI, Scientific Validation, Product Scope Audit, and CodeQL.",
+      "CI run 43118116290: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate all passed.",
+      "Pytest XML artifact 13899457586 reports 715 tests, 0 failures, 0 errors, 13 skipped, runtime 101.819 seconds.",
+      "Coverage artifact reports 6468/7761 lines covered (83.34%); branch coverage was not measured.",
+      "Seven production inference tests skipped because the frozen legacy production artifact or shared model inputs are unavailable. Three integration collection groups and three live-source tests were also skipped.",
+      "Scientific Validation contract job passed; source provenance, DR24/ALeRCE, StarEmbed, and historical ALeRCE source-backed jobs were skipped.",
+      "Latest current-head CI run 43180573715 completed successfully: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate all passed.",
+      "Exact JUnit artifact 13926735814 was downloaded and parsed: 715 test cases, 702 passed, 13 skipped, zero failures, zero errors.",
+      "Coverage artifact reports 6,468 of 7,761 lines covered (83.34%); branch coverage was not measured.",
+      "Product Scope Audit, CodeQL Python, and Scientific Validation contract tests all passed on the latest head.",
+      "Source-backed provenance, DR24/ALeRCE, StarEmbed and historical ALeRCE jobs remained skipped; the result is not a Scientific-PASS.",
+      "Current-head CI run 43235940260 exposed a lifecycle-record inconsistency: decision=ACCEPT was combined with non-empty regression.open_blockers, which the repository validator correctly rejects.",
+      "Corrected the documentation-cycle scope: independent scientific/product blockers remain in failure_analysis.unresolved and knowledge_carried_forward, not as regressions of this documentation-only cycle. The cycle acceptance decision is limited to documentation convergence and does not close project blockers.",
+      "Re-run is required on the corrected cycle record; the prior failed lifecycle gate is retained as evidence and is not reported as a passing run.",
+      "Current PR head b1bbab8fb2c6f2ae384ba37e1012141d777a9bb3 completed CI run 43236966192: all eight engineering CI jobs passed.",
+      "JUnit artifact 13952487957 was downloaded and parsed for the current head: 715 tests, 702 passed, 13 skipped, zero failures, zero errors.",
+      "Current-head line coverage was 6468/7761 (83.34%); branch coverage was not measured. Pytest reported 9 warnings.",
+      "Current-head skip breakdown: seven production-inference tests require the unavailable legacy production artifact or shared model inputs; three collection skips require frozen benchmark/features or raw detections; one deterministic browser test and two live-source parity tests were opt-in and not enabled.",
+      "Scientific Validation run 43236966676: benchmark/lifecycle contract passed; DR24/ALeRCE source-backed evidence, immutable historical ALeRCE, provenance acquisition, and independent StarEmbed evidence jobs were skipped.",
+      "Product Scope Audit run 43236966212 and CodeQL run 43236966693 passed on the same head.",
+      "PR #281 remains open, Draft and unmerged. GitHub compare reports 46 commits ahead of main and zero behind. No scientific/product blockers were closed.",
+      "Think Tank Session 03 used 16 simulated specialist roles plus an independent Red Team pass to review source selection and native observation boundaries. The result is recorded at docs/think-tank/THINK_TANK_SESSION_2026-11-12_EXPLICIT_SOURCE_SELECTION.md.",
+      "Proposed ADR docs/architecture/ADR_EXPLICIT_OBSERVATION_SOURCE_SELECTION_v0.1.md defines explicit source identifiers, source-native result contracts, no-silent-fallback behavior, backward compatibility and the model-readiness gate. It does not authorize runtime implementation or choose the Park primary product.",
+      "The current source review found no source selector in ObjectAnalysisRequest or AnalysisJobRequest and no source field in persistent JobRecord; SourceBackedAnalysisExecutor still calls the ALeRCE-backed normalized get_observations path.",
+      "The ADR preserves AD-DATA-001 as PROPOSED. Park primary data product selection remains open and DR24/Zubercal remain blocked from the frozen v0.2.0 inference path.",
+      "Think Tank Session 04 reviewed Issue #170, PR #265, the CPVS raw-SNR diagnostic, checksum-pinned archive workflow and retained artifact evidence using 16 simulated specialist perspectives plus an independent Red Team pass.",
+      "The four-field intersection remains a root-cause candidate, not proof of the publisher's selection method. The 11,602 candidate-only set is reconstructed from retained artifacts and has not yet been freshly re-derived from raw photometry.",
+      "Current PR #265 raw-SNR run 43097116480, r-band reconciliation run 43097116394 and targeted Seq run 43097116446 were checked on 2026-11-12; all remain QUEUED and have no jobs, so no new scan result exists.",
+      "Red Team review found that the diagnostic currently combines only approximate SNR at object-membership level; it needs separate complete two-band candidate sets for approximate, exact and inverse-error alternatives. It also needs per-stratum sample summaries and explicit duplicate/overlap reporting.",
+      "PR #265 branch compares 80 commits ahead / 92 commits behind current main, merge base bc85f6c36b28f3c9ddc2b7b5aa00e0256148441c; the Draft PR must not be merged as-is.",
+      "Added canonical Think Tank Charter with all 16 original seats, meeting composition, evidence states, the complete 12-stage process, Project Owner authority and protected project principles.",
+      "Added a session register with the baseline review and Sessions 02–05, plus workstream-to-role mapping.",
+      "Added a Project Source index that links the supplied member/charter file, CPVS convergence policy, historical CPVS report, CIN canonical source, collective data-generation idea, Park proposal, project dossier and named project conversations.",
+      "Added Session 05 documenting the source-identity multi-OID evidence review, CI regression cause, correction and outstanding API/scientific gates.",
+      "Updated .github/pull_request_template.md so material PRs must reference Think Tank session IDs, roles, charter stages, sources, evidence, Red Team findings and Project Owner approval requirements.",
+      "Latest verified PR #283 Test Suite run 43282419204 on head 90b6026e62e41bdff4d33c251ec2f0e1cbbb7ba9: 736 passed, 13 skipped, zero failures, 9 warnings; Format, Lint, Lifecycle, Runtime Smoke, CodeQL, Product Scope and scientific lifecycle contract passed. Package build remained in progress at last check; source-backed scientific jobs skipped.",
+      "Latest PR #281 docs branch head 28228e3c689a2655dccc8ae12fcd4f4e4a880563 has charter, source index and PR-template changes; current CI remained in progress at last check. Prior head 15ce624fa29449d5c5437f7ac20e114a6a01abe4 passed all eight engineering CI jobs."
+    ],
+    "blocker": "Documentation PR engineering CI is green. Scientific acceptance remains blocked: the frozen production artifact is unavailable in accessible CI/repository sources, source-backed scientific jobs were skipped, DR24 live-source parity was not run, and Park MVP end-to-end acceptance remains incomplete."
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "Project state was spread across older repository documents, Notion handbooks, issue/PR updates and attached proposal files.",
+      "Some current docs contained stale or ambiguous claims, including software release version, CPVS residual count, membership-reference semantics, and product versus Park acceptance scope.",
+      "The first documentation PR omitted the mandatory machine-readable cumulative cycle record. The repository workflow correctly failed closed.",
+      "The cycle record incorrectly placed independent project-level blockers in regression.open_blockers while setting decision=ACCEPT. The validator correctly enforces that an accepted cycle has no open regressions. The project blockers are real but are outside the acceptance scope of this documentation-only cycle."
+    ],
+    "unresolved": [
+      "The prior 2026-11-09 WSL audit already reported the frozen production artifact path absent and the ALeRCE raw-detection cache absent; the exact historical JSON and full per-file path list are not in the currently accessible Project files.",
+      "Recover and independently authenticate the original schema-1.0 production artifact through a controlled authoritative source; do not ask the user to repeat the prior inventory before remote recovery sources are exhausted.",
+      "Run the seven production inference tests after authoritative artifact and shared model inputs are recovered.",
+      "Run live DR24 HATS, DR24 UI and Zubercal parity tests with pinned source data.",
+      "The Park MVP still requires explicit DR24 application integration and confirmed-source end-to-end testing.",
+      "The CPVS 11,602 residual explanation remains unresolved; the retained candidate set has not been freshly re-derived on current main."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "Use one dated project status source that links to evidence, while keeping original PDFs and historical reports immutable.",
+      "Separate software release, scientific baseline, model, feature schema, and artifact schema versions.",
+      "Treat published CPVS membership as a membership reference, not independent astrophysical ground truth.",
+      "Treat missing raw observations as UNKNOWN unless observed evidence supports FAIL.",
+      "Do not equate merged raw adapters or green engineering CI with end-to-end scientific acceptance.",
+      "Keep the 16-role think-tank process active, and identify it as a governance method rather than claiming 16 external experts are engaged.",
+      "Keep proposed business targets, customer segments, revenue models, and grants separate from documented achievements.",
+      "A prior local WSL artifact inventory was already recorded on 2026-11-09: production artifact path absent, lab-smoke artifact present but ineligible, ALeRCE raw cache absent, processed feature/config artifacts and dependent test modules present.",
+      "The 2026-11-09 summary of nine missing production files predates the corrected audit contract. Current schema-1.0 production readiness requires six core files; three conformal/OOD diagnostics are optional.",
+      "The user's local audit should not be repeated merely to advance repository-side work; use the existing evidence and continue remote recovery first.",
+      "A 16-role structured think-tank review was completed and recorded. It distinguishes simulated expert-role review from actual participation by external human experts.",
+      "Joint think-tank decision: prioritize DR24-first Park MVP; preserve v0.2.0/v1.0.1; keep CPVS unresolved and separate; keep CIN optional; do not connect DR24 to model inference before time, photometry, QC, identity and feature-parity gates pass.",
+      "GitHub returned 29 open PRs on 2026-11-12. Many are historical or stacked on old bases; open state and a mergeable flag do not establish review or acceptance.",
+      "A dedicated OPEN_PR_TRIAGE_2026-11-12.md records active review candidates, historical/stacked PRs, current issue trackers and a no-mass-merge/no-mass-close protocol.",
+      "The original think-tank source identifies source identity as a P0 dependency: OID, observation, astrophysical source, catalog object and candidate association must remain distinct.",
+      "The target product requires separate classification, uncertainty, anomaly/novelty, scientific-context and discovery-prioritization outputs.",
+      "The original think-tank review identifies 18 defect/risk domains and a seven-phase roadmap; they are now captured in dated repository documents.",
+      "The minimum source identity/association contract is P0 alongside DR24 application integration. Full AOIC can be phased, but model-ready multi-OID data requires explicit association evidence and ambiguity states.",
+      "Issue #210 records a concrete StarEmbed source audit failure: duplicate_sourceids_within_split:train:1 and object_id_overlap_between_splits:train__test:1. StarEmbed metrics remain ineligible as independent evidence until identity/split leakage is resolved.",
+      "Issue #188 records a historical DR24 smoke run: 12 candidates from a pinned 150-row subset; 7 feature-engine executions succeeded and 5 failed due no g/r rows after filter normalization; 0/12 had 30+ valid points in both bands; model inference was NOT_RUN. This is smoke evidence only.",
+      "The historical raw CDS reconciliation on 2026-11-02 verified raw Table 2/Table 4 against publisher MRT with zero mismatches and a complete 730,184 name-to-Seq crosswalk. The historical four-field diagnostic reproduced Table 4 membership on the retained artifact, but the publisher's exact rule remains unproven.",
+      "The 11,557-object reduction under Ng>=11 and Nr>=11 leaves 45 residuals and is a diagnostic clue, not a documented selection rule.",
+      "Direct MGPR testing remains an explicit CPVS research requirement; execution status must use PASS/FAIL/UNKNOWN/ERROR and preserve numerical diagnostics.",
+      "Scientific Validation Source Adapters now classify StarEmbed as a candidate external benchmark blocked by source/split audit, and ALeRCE as a reference-system output/weak-label source, not independent astrophysical ground truth.",
+      "The submitted Park dossier emphasizes Zubercal recalibrated PSF photometry, while the current source-product contract treats DR24 HATS as primary and Zubercal as supplementary. The primary product decision must be confirmed against the approved Park deliverable; HATS and Zubercal are not interchangeable.",
+      "README now links the dated master status, 16-role review, defect register, execution roadmap and open PR triage.",
+      "Architecture v0.3 now distinguishes a source-native survey object/OID from a physical astrophysical source and defines explicit association states. The legacy CanonicalObject wording is constrained to survey-object semantics until a versioned identity contract is implemented.",
+      "The source adapter registry now treats StarEmbed as a candidate external benchmark blocked by identity/split audit and ALeRCE as reference-system output/weak labels rather than independent astrophysical ground truth.",
+      "Scientific Methodology now includes the historical raw CDS Table2/Table4 hash reconciliation, exact historical four-field diagnostic, 55 controls, 11,557/45 observation-count clue and outstanding MGPR protocol.",
+      "The Park dossier's emphasis on Zubercal photometry and the repository contract's HATS-primary design are not yet reconciled; primary product choice remains OPEN.",
+      "A new source-selection API must not collapse ALeRCE, DR24 HATS and Zubercal DR20 into one normalized observation shape because they use different time scales, photometry/error semantics and external identifiers.",
+      "Native data acquisition and model analysis require separate capability gates. An unsupported source/model pairing must fail closed and must not fall back to another source."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "Current continuation point: docs/PROJECT_MASTER_STATUS_AND_CONTINUATION_2026-11-12.md",
+    "Current Notion continuation page: https://app.notion.com/p/41512a22ffe181c29cd9c62174889872?pvs=204",
+    "Current documentation review PR: https://github.com/saeed92m/ztf-classifier/pull/281",
+    "Immediate product critical path: Issues #158 and #253.",
+    "Deferred scientific research: Issues #170 and #180.",
+    "No scientific or production baseline changes are part of this cycle.",
+    "Verified CI report for documentation PR head 3241955ebb918bd79f9b15263d16f6bf541f00e9: 715 tests, 0 failures, 13 skips; 83.34% line coverage; all engineering workflows passed.",
+    "CI artifact 13899457586 contains pytest-report.xml and coverage.xml.",
+    "Scientific-PASS remains blocked by missing frozen production artifact and skipped source-backed evidence.",
+    "Historical local WSL artifact audit dated 2026-11-09 is already known; do not request a duplicate local audit as the next action.",
+    "Artifact recovery tracker: Issue #282.",
+    "Sixteen-role think-tank review and joint decision are recorded in section 17 of the master continuation document and in the Notion master page.",
+    "Open PR inventory and safe triage: docs/OPEN_PR_TRIAGE_2026-11-12.md.",
+    "Canonical 16-role review: docs/THINK_TANK_MASTER_REVIEW_2026-11-12.md.",
+    "Defect/risk register: docs/MASTER_DEFECT_REGISTER_2026-11-12.md.",
+    "Gated execution roadmap: docs/MASTER_EXECUTION_ROADMAP_2026-11-12.md.",
+    "Open PR triage: docs/OPEN_PR_TRIAGE_2026-11-12.md.",
+    "StarEmbed leakage blocker: Issue #210 / PR #211; exact failure keys are recorded.",
+    "Multi-source validation status: Issue #188; DR24 smoke results are not production model validation.",
+    "Historical CPVS raw CDS reconciliation and MGPR requirement are documented in docs/SCIENTIFIC_METHODOLOGY.md and the Notion CPVS audit page.",
+    "Independent validation blockers: Issue #188 (DR24 smoke only; model inference NOT_RUN) and Issue #210 (StarEmbed train/test identity leakage).",
+    "Park source-product decision remains open: confirm HATS versus Zubercal primary role against the approved deliverable; keep separate adapters and provenance.",
+    "Architecture v0.3 source identity correction: docs/architecture/ARCHITECTURE_v0.3.md.",
+    "Current benchmark source semantics: docs/SCIENTIFIC_VALIDATION_SOURCE_ADAPTERS.md.",
+    "Expanded CPVS historical and MGPR evidence: docs/SCIENTIFIC_METHODOLOGY.md and Notion CPVS audit.",
+    "Latest PR head: 62bf4600a6df4ed04a16b2b6830ea823b67e50a5; 40 commits ahead and 0 behind main; 15 documentation/process files in the diff.",
+    "CI run 43180573715: 702 passed, 13 skipped, 0 failed/errors; line coverage 83.34%; branch coverage not measured.",
+    "Engineering validation PASS applies only to the documentation/candidate branch; source-backed scientific jobs remain SKIPPED and independent product/scientific blockers remain open.",
+    "Companion documents: THINK_TANK_MASTER_REVIEW_2026-11-12.md, MASTER_DEFECT_REGISTER_2026-11-12.md, MASTER_EXECUTION_ROADMAP_2026-11-12.md, OPEN_PR_TRIAGE_2026-11-12.md, architecture/ARCHITECTURE_v0.3.md.",
+    "CI run 43235940260 failed at the cumulative lifecycle gate because decision=ACCEPT conflicted with non-empty regression.open_blockers. The record was corrected by separating documentation-cycle regressions from independent product/scientific blockers; those blockers remain open in the defect register and issues.",
+    "Latest tested PR head: b1bbab8fb2c6f2ae384ba37e1012141d777a9bb3; CI run 43236966192 is green with 715 tests (702 passed, 13 skipped, zero failures/errors), 83.34% line coverage and no branch coverage measurement.",
+    "Current exact skip breakdown is recorded in docs/PROJECT_MASTER_STATUS_AND_CONTINUATION_2026-11-12.md section 16.4; missing frozen production artifacts and source-backed skips remain blockers.",
+    "Latest PR #281 snapshot: 46 commits ahead, zero behind main, 16 changed files; open, Draft and unmerged.",
+    "Think Tank Session 02 is a required review input before changing source selection, native observation pathways, OID association, normalization or inference.",
+    "Think Tank Session 03 and proposed ADR: docs/think-tank/THINK_TANK_SESSION_2026-11-12_EXPLICIT_SOURCE_SELECTION.md and docs/architecture/ADR_EXPLICIT_OBSERVATION_SOURCE_SELECTION_v0.1.md.",
+    "Source selection is a design proposal only. Existing v1 behavior remains unchanged; no HATS/Zubercal normalization, identity matching, OID grouping or inference is authorized by the ADR.",
+    "Think Tank Session 04: docs/think-tank/THINK_TANK_SESSION_2026-11-12_CPVS_MEMBERSHIP_REVIEW.md. Issue #170 remains open and unresolved.",
+    "The queued raw-SNR workflow is a bounded diagnostic for 11,602 residual IDs, 100/1,000 stratified samples and 55 controls, not a full 781,602-object reconstruction.",
+    "Before interpreting outputs, add full two-band formula alternatives, per-stratum sample summaries and duplicate/overlap audit. Keep zero-row band status UNKNOWN.",
+    "The charter at docs/think-tank/CHARTER.md is the version-controlled operating reference. The original project source remains the authority for the 16-seat proposal and 12-stage process.",
+    "Use docs/think-tank/SESSION_REGISTER.md for stable session IDs and role mapping. Do not claim all 16 simulated roles participated in a focused panel.",
+    "The PR template now requires Think Tank traceability for material changes. PR #281 must pass fresh CI on the charter/template head before it is considered ready for review.",
+    "Session 05 and PR #283 current test result are recorded in docs/think-tank/THINK_TANK_SESSION_2026-11-12_SOURCE_IDENTITY_CONTRACT_REVIEW.md; API/persistence review and independent astrophysical validation remain open."
+  ]
+}

@@ -1,6 +1,8 @@
 # Astronomical Data Analysis & Discovery Platform — Product Roadmap
 
-Status date: 2026-10-11  
+Status date: 2026-11-12
+
+Current status and execution order are maintained in [PROJECT_MASTER_STATUS_AND_CONTINUATION_2026-11-12.md](../PROJECT_MASTER_STATUS_AND_CONTINUATION_2026-11-12.md). The checklist below is the historical 2026-10-11 roadmap snapshot. It must not be read as current PR or acceptance status without checking Issues #158 and #253.  
 Current immutable software release: v1.0.1  
 Product implementation tracker: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158)  
 Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170)
