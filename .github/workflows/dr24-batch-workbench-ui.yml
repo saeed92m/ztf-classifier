@@ -12,6 +12,7 @@ on:
   push:
     branches:
       - feat/dr24-batch-workbench-ui-20261107
+      - ci/dr24-bounded-acceptance-20261112
     paths:
       - .github/workflows/dr24-batch-workbench-ui.yml
       - src/ztf_classifier/web/static/app.js
