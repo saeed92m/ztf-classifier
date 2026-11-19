@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "bts-dr24-recovery-tools-refresh-20261104",
+  "objective": "Bring the independent BTS-to-DR24 spatial-recovery and Lightcurves-availability tooling onto current main as a bounded, manual-only research workflow. Preserve raw provenance and keep all outputs separate from the production selector.",
+  "previous_knowledge_consumed": [
+    "The 100-object BTS spatial-recovery pilot recovered 773 DR24 OIDs within a 5-arcsecond candidate-generation radius and recorded filter and field/CCD/quadrant provenance.",
+    "The indexed Lightcurves HATS query found 714/773 recovered OIDs and 59 missing rows; row availability does not prove photometry quality.",
+    "A separate four-OID nested-payload probe retrieved 626 epoch rows and preserves HMJD, native magnitude, magerr, clrcoeff, catflags, and partition metadata.",
+    "A ZTF OID is not a universal astrophysical identity; filter/field/quadrant context must be preserved.",
+    "CPVS exact-reconstruction is deferred research and is not a dependency for this independent BTS/DR24 workstream."
+  ],
+  "baseline": {
+    "revision": "main@5bb01ffe15926502bb96fee6e86e86c183ca7779",
+    "description": "Adds independent, standalone research scripts, deterministic fixture tests, a report, and a manual-only bounded workflow. No application runtime, model, feature schema, taxonomy, benchmark, or acceptance criteria change."
+  },
+  "expected_improvement": [
+    "reproducibility",
+    "correctness",
+    "maintainability"
+  ],
+  "measurement": {
+    "metrics": {
+      "reproducibility": {
+        "before": "The 100-target BTS-to-DR24 recovery results existed as recorded workflow artifacts but the complete acquisition/query/audit tooling was not registered on current main.",
+        "after": "The repository contains reproducible BTS snapshot acquisition, DR24 spatial query, OID multiplicity audit, indexed Lightcurves availability query, and deterministic tests."
+      },
+      "correctness": {
+        "before": "The recovery pilot scripts were not available in current main for rerun.",
+        "after": "The tools retain all candidate OIDs, recompute angular separation, preserve available partition metadata, and report ambiguity/multiplicity without asserting physical identity."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "The new manual-only workflow must be executed on current main before operational repeatability is measured."
+      }
+    },
+    "trade_off": "The live source-backed workflow is manual-only and capped at 100 BTS targets per run to control query load. Routine CI runs fixtures only."
+  },
+  "validation": {
+    "status": "PENDING_CI",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Run deterministic fixture tests through ordinary CI.",
+      "Validate the lifecycle record and all documentation/code formatting.",
+      "Confirm the live BTS/DR24 workflow is workflow_dispatch-only, bounded to 1–100 targets, and has contents:read permissions.",
+      "No full-catalog scan, production normalization, model inference, or release is part of this PR."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The previous recovery tooling branch was based on an older main revision and its workflow included push and pull_request triggers for source-backed acquisition.",
+      "The source-backed pilot needed to be retained as a reproducible research tool without making live external queries part of routine CI or every main push."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "BTS coordinates can generate DR24 candidate associations but do not prove physical identity.",
+      "Filter, field, CCD, quadrant, and OID provenance must be retained when interpreting multiplicity.",
+      "The 5-arcsecond radius is candidate generation only; it is not an accepted identity threshold.",
+      "Objects Table OID availability and Lightcurves row availability are distinct.",
+      "Raw payload retrieval, photometry normalization, quality policy, and model performance are separate validation stages."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Current-head CI and deterministic fixture tests must pass.",
+      "A manual source-backed run on current main is required to verify repeatability.",
+      "The scripts do not implement the production DR24 observation adapter or cross-OID physical identity."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep the workflow manual-only and bounded to 100 BTS targets per run.",
+    "Preserve raw and normalized data as separate artifacts with hashes.",
+    "Do not label multiple OIDs as false positives without partition and identity evidence.",
+    "Do not treat row availability as photometry quality.",
+    "Do not connect this research tooling to production inference until Issue #253 acceptance criteria pass."
+  ]
+}
