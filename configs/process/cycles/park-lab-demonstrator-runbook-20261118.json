@@ -25,11 +25,11 @@
     }
   ],
   "baseline": {
-    "revision": "main@f681408fae8d8062dd72ff74791872c1590f6ee8",
+    "revision": "main@dcedccf50ae5a4541ababc29cfc7471a7d0ea14a",
     "description": "The repository contains a raw DR24 Explorer and a bounded live API parity test. The two-OID live test and local Workbench run described by this runbook have not yet been verified for this Park handoff."
   },
   "change": {
-    "scope": "Add a reproducible Park laboratory runbook for a two-OID DR24 HATS sample. No application code, scientific model, feature schema, taxonomy, baseline, thresholds, or datasets are changed.",
+    "scope": "Consolidate the Park runbook, full-cohort acceptance contract, parallel dataset plan, current handbook, master roadmap, defect register, think-tank review, Persian Park status addendum, installation/quick-start/user documentation, model card, scientific methodology, source adapters, architecture identity boundary, and production acceptance checklist. No model weights, baseline, feature schema, taxonomy, thresholds, or production data are changed.",
     "rationale": "A bounded, raw-preserving demonstration can show real-data retrieval and provenance while avoiding unsupported claims about physical identity, production QC, DR24 classifier inference, calibrated probabilities, or anomaly discovery."
   },
   "expected_improvement": [
@@ -65,9 +65,14 @@
       "The runbook was fetched back from branch park/lab-demonstrator-runbook-20261118 and reviewed.",
       "The current DR24 Explorer documentation describes bounded raw OID retrieval, native-field preservation, diagnostic QC, provenance, and JSON export.",
       "The current CI failure identifies the missing cycle record as a change-related failure.",
-      "The current PR body explicitly states that the pinned live test and local Workbench run have not yet been executed for this handoff."
+      "The current PR body explicitly states that the pinned live test and local Workbench run have not yet been executed for this handoff.",
+      "Main CI #44515762167 passed on main: 702 tests passed, 13 skipped, 9 warnings; format, lint, runtime smoke, package build, dependency audit, and CI gate passed.",
+      "Scientific Validation #44515762163 completed all five jobs and acquired separate 150-row DR24 Objects Table and live ALeRCE responses plus the frozen ALeRCE reference manifest. The live 150-row responses are not cross-matched.",
+      "Current documentation was updated to identify the original baseline_v0.2 production artifact as unavailable in accessible remote sources and to keep production inference blocked.",
+      "A simulated 16-seat think-tank review was recorded. It is not external human peer review.",
+      "Production acceptance checklist, source adapter contract, architecture identity boundary, model card, installation, quick-start, user guide, methodology, README, changelog, and roadmap were aligned to the current evidence."
     ],
-    "blocker": "Run the pinned live source-parity test and the local Workbench procedure on a clean isolated Python 3.11 checkout; retain the commit SHA, complete test output, screenshot, exported JSON, and SHA-256.",
+    "blocker": "Run the pinned live source-parity test and the local Workbench procedure on a clean isolated Python 3.11 checkout; retain commit SHA, full output, screenshot, exported JSON, and SHA-256. The full-cohort Park acceptance remains open.",
     "regression": "PENDING",
     "blockers": [
       "Do not accept a failed or skipped live source-parity test.",
@@ -108,6 +113,10 @@
     "The CPVS membership discrepancy remains a separate unresolved research issue and is not a blocker for this bounded raw-data demonstrator.",
     "The DR24 Explorer remains experimental and diagnostic-only.",
     "The Park demonstrator is not accepted until the live source-parity test and local Workbench run pass.",
-    "Do not publish a Park demo release or claim full classifier readiness before the acceptance evidence is complete."
+    "Do not publish a Park demo release or claim full classifier readiness before the acceptance evidence is complete.",
+    "The Park laboratory demonstrator and the full Park MVP are separate gates.",
+    "Current main CI success is engineering evidence only; 13 tests remain skipped and the original production model artifact is unavailable.",
+    "The 150-row DR24 Objects Table and 150-row ALeRCE reference snapshots are independent, unpaired evidence sets.",
+    "All current product and Park claims must follow the 2026-11-19 handbook and Persian technical addendum."
   ]
 }
