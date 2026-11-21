@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-298-fastapi-compatible-range-20261121",
+  "objective": "Evaluate the proposed FastAPI supported-version range without changing the installed lockfile, API behavior, scientific contracts, or frozen baselines.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "PR #298 pyproject.toml diff",
+      "status": "VERIFIED",
+      "detail": "The PR changes the FastAPI lower/upper version range from >=0.141.1,<0.143 to >=0.141.1,<0.164. It does not change application source code."
+    },
+    {
+      "source": "requirements.lock on PR #298 head",
+      "status": "VERIFIED",
+      "detail": "The lockfile still pins fastapi==0.141.1 and starlette==1.7.0. The default locked CI environment therefore does not by itself test the newly permitted upper range."
+    },
+    {
+      "source": "CI run 44721790514",
+      "status": "VERIFIED",
+      "detail": "Format and lint passed. The cumulative lifecycle gate failed because the PR did not include a cycle record. Test Suite, Runtime Smoke, package build and Dependency Audit were skipped."
+    }
+  ],
+  "baseline": {
+    "revision": "main@b933af4bf91c00d0cdbb9fdebeeec7ae7b799474",
+    "description": "FastAPI dependency range is restricted to >=0.141.1,<0.143. The existing requirements lock pins FastAPI 0.141.1 and Starlette 1.7.0."
+  },
+  "change": {
+    "scope": "Add only a machine-readable lifecycle record for the proposed FastAPI range change. No dependency version, lockfile, application code, API contract, model, feature schema, benchmark, or release artifact is changed by this commit.",
+    "rationale": "The lifecycle gate correctly requires an auditable record. The record explicitly keeps the wider dependency range unverified until compatibility tests cover the declared supported versions."
+  },
+  "expected_improvement": [
+    "Make the proposed dependency-range change auditable.",
+    "Enable the repository's required CI stages to run after lifecycle validation.",
+    "Verify whether the wider FastAPI range remains compatible with the pinned Starlette range and the application API."
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "The FastAPI package metadata allows only >=0.141.1,<0.143. CI has not completed on the proposed wider range because the lifecycle gate stopped first.",
+        "after": "The PR proposes >=0.141.1,<0.164. The locked environment still uses FastAPI 0.141.1, so compatibility at newer allowed versions requires an explicit test matrix before acceptance.",
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "before": "The PR had no machine-readable cycle record; the lifecycle gate rejected it.",
+        "after": "A schema 1.1 cycle record is added. The next CI run must validate the record and run the full test, smoke, build and dependency stages.",
+        "status": "NOT_MEASURED"
+      }
+    },
+    "trade_off": "The wider version range can reduce future packaging conflicts, but it also permits untested FastAPI versions unless a compatibility matrix or upper-bound policy is established."
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "PR #298 changes only the FastAPI range in pyproject.toml.",
+      "requirements.lock still pins fastapi==0.141.1 and starlette==1.7.0.",
+      "CI #44721790514 passed Format and Lint, then stopped at the cycle-record requirement."
+    ],
+    "blocker": "Run CI after the cycle record is added. Separately test the current supported minimum and a suitably selected upper version from the declared FastAPI range, including Starlette compatibility, API tests, runtime smoke, package build, and dependency audit."
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The cumulative lifecycle gate rejected the PR because pyproject.toml changed without a JSON cycle record under configs/process/cycles/."
+    ],
+    "unresolved": [
+      "The PR's wider FastAPI range is not validated by the current lockfile, which still pins FastAPI 0.141.1.",
+      "Compatibility with the declared Starlette constraint at newer FastAPI versions has not been measured."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A permissive package version range is a compatibility claim. A locked test environment at the minimum version does not validate the full range.",
+      "FastAPI and Starlette compatibility must be tested together.",
+      "The CI lifecycle gate requires a change record before expensive or broad tests run."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Complete current-head CI after the cycle record is added.",
+      "Test at least one newer FastAPI version allowed by the proposed upper bound with its compatible Starlette release.",
+      "Run API contract tests, runtime smoke, package build and dependency audit.",
+      "Do not treat the dependency change as accepted until all checks pass."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "This cycle records the proposal and CI blocker only. It does not accept the wider FastAPI range.",
+    "Do not modify the frozen v0.2.0 scientific baseline, model, features, taxonomy, class order, or benchmark.",
+    "Keep PR #298 open until version-matrix evidence and all required checks pass."
+  ]
+}
