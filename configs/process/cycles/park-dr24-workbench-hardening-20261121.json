@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "park-dr24-workbench-hardening-20261121",
+  "objective": "Harden DR24 acquisition error reporting, batch Workbench handling, empty-response export protection, and model dependency provenance without changing the frozen scientific baseline or enabling production inference.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "PR #300 / commit 289d8b6f2c70a8926590a5755afdd5dfb6b0dddc",
+      "status": "IMPLEMENTED_PENDING_CI",
+      "detail": "Four-file change set adds DR24 exception logging, defensive handling for empty/partial/missing-OID batch responses, export protection, regression tests, and installed dependency version checks."
+    },
+    {
+      "source": "DR24 batch Workbench validation evidence available before this PR",
+      "status": "BOUNDED_EVIDENCE",
+      "detail": "Prior bounded live batch checks returned requested OIDs without missing records in the tested samples. This does not establish full-catalogue source validity or production ML compatibility."
+    }
+  ],
+  "baseline": {
+    "revision": "b933af4bf91c00d0cdbb9fdebeeec7ae7b799474",
+    "description": "Canonical main branch before the PR change set. Frozen v0.2.0 scientific baseline, model artifacts, feature definitions, class order, and acceptance criteria remain unchanged by this PR."
+  },
+  "expected_improvement": [
+    "Record DR24 acquisition exceptions for diagnosis.",
+    "Handle empty, partial, and missing-OID batch responses without misleading UI state.",
+    "Prevent JSON export when no usable observations are present.",
+    "Compare model dependency provenance with installed environment versions.",
+    "Add regression coverage for the defensive Workbench behavior."
+  ],
+  "measurement": {
+    "metrics": {
+      "change_scope": {
+        "before": "No changes in the four target files on the base revision.",
+        "after": "Four files changed: src/ztf_classifier/api/app.py, src/ztf_classifier/web/static/app.js, tests/integration/test_dr24_batch_workbench_ui.py, tests/test_model_provenance.py.",
+        "evidence": "GitHub compare main...park/local-worktree-sync-20261121 reports one commit, four changed files, 103 additions and 16 deletions.",
+        "status": "MEASURED"
+      },
+      "format_and_lint": {
+        "before": "Not evaluated for this change set.",
+        "after": "Format Check and Lint jobs completed successfully in workflow run 44936080302.",
+        "status": "MEASURED"
+      },
+      "scientific_validity": {
+        "before": "NOT_VERIFIED",
+        "after": "NOT_VERIFIED",
+        "status": "NOT_MEASURED",
+        "reason": "This engineering change does not provide source-backed scientific validation, model authentication, or end-to-end Park acceptance evidence."
+      }
+    },
+    "trade_off": "Defensive UI behavior and traceability improve. The demonstrator remains separate from production inference; source identity and scientific acceptance gates are unchanged."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "GitHub Actions Format Check passed in run 44936080302.",
+      "GitHub Actions Lint passed in run 44936080302.",
+      "CodeQL passed in run 44936080262.",
+      "P1-P6 Product Scope Audit passed in run 44936080297.",
+      "Scientific validation contract tests, cumulative lifecycle contract tests, and local scientific artifact audit regression tests passed in run 44936080296.",
+      "Source-backed scientific acquisition, immutable historical reference, independent StarEmbed benchmark, and DR24/ALeRCE evidence jobs were skipped; these skips are not scientific passes.",
+      "The main CI workflow run 44936080302 failed because its Cumulative Lifecycle Gate requires a machine-readable cycle record for meaningful PR changes. The four code/test files changed, but no cycle record was included in the initial PR head.",
+      "The initial CI failure caused Test Suite, Runtime Smoke Tests, Build & Verify Package, and Dependency Audit jobs to be skipped."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The initial PR did not include a machine-readable cumulative cycle record under configs/process/cycles/, as required by the existing CI policy."
+    ],
+    "unresolved": [
+      "Re-run CI after adding this cycle record.",
+      "Confirm Test Suite, Runtime Smoke Tests, Build & Verify Package, and Dependency Audit complete successfully.",
+      "Review any new failures without weakening validation criteria."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Meaningful code and test changes require a corresponding machine-readable cumulative cycle record.",
+      "A successful scientific contract test job does not imply that source-backed scientific evidence jobs ran.",
+      "DR24 Workbench defensive handling must not be represented as production classifier validation."
+    ]
+  },
+  "regression": {
+    "status": "PENDING_CI",
+    "open_blockers": [
+      "The full CI test suite did not run in the initial workflow because the lifecycle gate failed.",
+      "Runtime smoke, package build, and dependency audit did not run in the initial workflow.",
+      "Scientific source-backed jobs were skipped and remain outside the evidence established by this PR."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Keep DR24 acquisition and Workbench diagnostics separate from production inference.",
+    "Preserve the frozen v0.2.0 model, feature, taxonomy, and acceptance contracts.",
+    "Do not claim scientific validation from skipped source-backed jobs or passing process-contract tests.",
+    "Re-run the complete gated CI after this cycle record is added."
+  ]
+}
