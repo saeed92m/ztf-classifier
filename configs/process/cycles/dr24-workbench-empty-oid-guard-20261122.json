@@ -46,20 +46,17 @@
   ],
   "measurement": {
     "metrics": {
-      "empty_oid_request": {
+      "correctness": {
         "status": "NOT_MEASURED",
-        "before": "runAnalysis() can construct /v1/objects//analysis when state.oid is empty.",
-        "after": "A guard returns before fetch; Playwright regression checks that no /analysis request is emitted."
+        "reason": "The change is intended to prevent empty-OID analysis requests. The new Playwright regression has not yet completed in CI."
       },
-      "raw_export_integrity": {
+      "reproducibility": {
         "status": "NOT_MEASURED",
-        "before": "Existing deterministic UI test checks source payload preservation.",
-        "after": "No export implementation is changed; existing assertions remain in place."
+        "reason": "Raw export code is unchanged. Export integrity is not re-measured by this change."
       },
-      "qc_policy": {
+      "scientific_validity": {
         "status": "NOT_MEASURED",
-        "before": "Existing versioned diagnostic policy and unit tests are present.",
-        "after": "No QC calculation is changed; current policy remains diagnostic only."
+        "reason": "The diagnostic QC policy is unchanged. This engineering fix does not validate scientific QC or model readiness."
       }
     },
     "trade_off": "The guard prevents a malformed request but does not add an OID-entry workflow. Users must select or load an object through the existing UI."
