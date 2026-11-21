@@ -117,6 +117,19 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page()
             page.goto("http://127.0.0.1:8766/workbench", wait_until="domcontentloaded")
+            analysis_requests: list[str] = []
+            page.on(
+                "request",
+                lambda request: analysis_requests.append(request.url)
+                if "/analysis" in request.url
+                else None,
+            )
+            page.locator("#runAnalysisButton").click()
+            assert analysis_requests == []
+            assert "Enter an object ID before analysis" in page.locator(
+                ".connection-state"
+            ).inner_text()
+
             page.locator('[data-view="dr24"]').click()
             page.locator("#dr24ObjectIds").wait_for(state="visible")
             page.locator("#dr24ObjectIds").fill("101, 202")
