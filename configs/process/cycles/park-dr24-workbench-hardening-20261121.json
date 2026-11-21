@@ -11,7 +11,12 @@
     {
       "source": "DR24 batch Workbench validation evidence available before this PR",
       "status": "BOUNDED_EVIDENCE",
-      "detail": "Prior bounded live batch checks returned requested OIDs without missing records in the tested samples. This does not establish full-catalogue source validity or production ML compatibility."
+      "detail": "Prior bounded live batch checks returned requested OIDs in the tested samples. This does not establish full-catalogue source validity or production ML compatibility."
+    },
+    {
+      "source": "src/ztf_classifier/lifecycle.py on main",
+      "status": "VERIFIED",
+      "detail": "The lifecycle contract allows only registered metric names and regression statuses PASS, FAIL, BLOCKED, or NOT_VERIFIED. This record was revised to match that contract."
     }
   ],
   "baseline": {
@@ -27,22 +32,14 @@
   ],
   "measurement": {
     "metrics": {
-      "change_scope": {
-        "before": "No changes in the four target files on the base revision.",
-        "after": "Four files changed: src/ztf_classifier/api/app.py, src/ztf_classifier/web/static/app.js, tests/integration/test_dr24_batch_workbench_ui.py, tests/test_model_provenance.py.",
-        "evidence": "GitHub compare main...park/local-worktree-sync-20261121 reports one commit, four changed files, 103 additions and 16 deletions.",
-        "status": "MEASURED"
-      },
-      "format_and_lint": {
-        "before": "Not evaluated for this change set.",
-        "after": "Format Check and Lint jobs completed successfully in workflow run 44936080302.",
-        "status": "MEASURED"
+      "robustness": {
+        "before": "The Workbench had no regression evidence for empty and partial DR24 batch responses in the targeted integration test.",
+        "after": "Regression assertions cover partial responses, empty responses, missing OIDs, provenance retention, export of returned records, and disabled export when no records are returned.",
+        "evidence": "Implemented in tests/integration/test_dr24_batch_workbench_ui.py on PR #300. Execution remains unverified because the gated Test Suite was skipped after the lifecycle gate failed."
       },
       "scientific_validity": {
-        "before": "NOT_VERIFIED",
-        "after": "NOT_VERIFIED",
         "status": "NOT_MEASURED",
-        "reason": "This engineering change does not provide source-backed scientific validation, model authentication, or end-to-end Park acceptance evidence."
+        "reason": "This engineering change does not provide source-backed scientific validation, model authentication, feature parity, or end-to-end Park acceptance evidence."
       }
     },
     "trade_off": "Defensive UI behavior and traceability improve. The demonstrator remains separate from production inference; source identity and scientific acceptance gates are unchanged."
@@ -51,40 +48,42 @@
     "status": "PARTIALLY_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
-      "GitHub Actions Format Check passed in run 44936080302.",
-      "GitHub Actions Lint passed in run 44936080302.",
-      "CodeQL passed in run 44936080262.",
-      "P1-P6 Product Scope Audit passed in run 44936080297.",
-      "Scientific validation contract tests, cumulative lifecycle contract tests, and local scientific artifact audit regression tests passed in run 44936080296.",
-      "Source-backed scientific acquisition, immutable historical reference, independent StarEmbed benchmark, and DR24/ALeRCE evidence jobs were skipped; these skips are not scientific passes.",
-      "The main CI workflow run 44936080302 failed because its Cumulative Lifecycle Gate requires a machine-readable cycle record for meaningful PR changes. The four code/test files changed, but no cycle record was included in the initial PR head.",
-      "The initial CI failure caused Test Suite, Runtime Smoke Tests, Build & Verify Package, and Dependency Audit jobs to be skipped."
+      "Format Check and Lint passed in PR-triggered workflow run 44936569356.",
+      "CodeQL passed in workflow run 44936569298.",
+      "P1-P6 Product Scope Audit passed in workflow run 44936569312.",
+      "Scientific validation contract tests, cumulative lifecycle contract tests, and local scientific artifact audit regression tests passed in workflow run 44936569332.",
+      "Source-backed scientific acquisition, immutable historical reference, independent StarEmbed benchmark, and DR24/ALeRCE evidence jobs were skipped in workflow run 44936569332. These skips are not scientific passes.",
+      "The Cumulative Lifecycle Gate rejected this cycle record because it used unsupported metric names and an unsupported regression status. The record has now been corrected to match the validator contract; the updated head still requires a fresh CI run.",
+      "The failed lifecycle gate caused Test Suite, Runtime Smoke Tests, Build & Verify Package, and Dependency Audit to be skipped on the current pre-fix head."
     ]
   },
   "failure_analysis": {
-    "status": "PARTIALLY_DIAGNOSED",
+    "status": "ROOT_CAUSE_IDENTIFIED",
     "root_causes": [
-      "The initial PR did not include a machine-readable cumulative cycle record under configs/process/cycles/, as required by the existing CI policy."
+      "The initial PR head did not include the required machine-readable cycle record.",
+      "The subsequent cycle record used metric names change_scope and format_and_lint, which are not present in METRIC_NAMES in src/ztf_classifier/lifecycle.py.",
+      "The subsequent cycle record used regression.status PENDING_CI, which is not an allowed status. The validator accepts PASS, FAIL, BLOCKED, and NOT_VERIFIED."
     ],
     "unresolved": [
-      "Re-run CI after adding this cycle record.",
+      "Run the complete gated CI on the corrected PR head.",
       "Confirm Test Suite, Runtime Smoke Tests, Build & Verify Package, and Dependency Audit complete successfully.",
-      "Review any new failures without weakening validation criteria."
+      "Review all new test failures without weakening scientific or lifecycle validation criteria."
     ]
   },
   "knowledge_extraction": {
-    "status": "SUPPORTED",
+    "status": "VERIFIED",
     "findings": [
       "Meaningful code and test changes require a corresponding machine-readable cumulative cycle record.",
+      "Lifecycle record field values must match the executable validator contract; contract tests alone do not validate every newly added record unless the record is included in the run.",
       "A successful scientific contract test job does not imply that source-backed scientific evidence jobs ran.",
       "DR24 Workbench defensive handling must not be represented as production classifier validation."
     ]
   },
   "regression": {
-    "status": "PENDING_CI",
+    "status": "NOT_VERIFIED",
     "open_blockers": [
-      "The full CI test suite did not run in the initial workflow because the lifecycle gate failed.",
-      "Runtime smoke, package build, and dependency audit did not run in the initial workflow.",
+      "The current PR head has not completed the full gated Test Suite because the lifecycle gate failed.",
+      "Runtime smoke, package build, and dependency audit were skipped on the current pre-fix head.",
       "Scientific source-backed jobs were skipped and remain outside the evidence established by this PR."
     ]
   },
@@ -93,6 +92,6 @@
     "Keep DR24 acquisition and Workbench diagnostics separate from production inference.",
     "Preserve the frozen v0.2.0 model, feature, taxonomy, and acceptance contracts.",
     "Do not claim scientific validation from skipped source-backed jobs or passing process-contract tests.",
-    "Re-run the complete gated CI after this cycle record is added."
+    "Re-run the complete gated CI after correcting the cycle record."
   ]
 }
