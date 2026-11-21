@@ -23,10 +23,15 @@ from ztf_classifier.io.dr24_lightcurve import (
 class FakeDR24Backend:
     def __init__(self) -> None:
         self.calls: list[tuple[int, ...]] = []
+        self.returned_oids: set[int] | None = None
 
     def acquire(self, request: object) -> DR24LightcurveResult:
         objectids = tuple(request.objectids)  # type: ignore[attr-defined]
         self.calls.append(objectids)
+        selected_oids = tuple(
+            objectid for objectid in objectids
+            if self.returned_oids is None or objectid in self.returned_oids
+        )
         records = tuple(
             DR24LightcurveRecord(
                 objectid=objectid,
@@ -61,7 +66,7 @@ class FakeDR24Backend:
                 ),
                 payload_sha256=f"{objectid:064x}",
             )
-            for objectid in objectids
+            for objectid in selected_oids
         )
         return DR24LightcurveResult(
             records=records,
@@ -69,8 +74,11 @@ class FakeDR24Backend:
                 "source": "IRSA ZTF DR24 Lightcurves HATS",
                 "query": {"index": "objectid", "objectids": list(objectids)},
                 "requested_oids": list(objectids),
-                "returned_oids": list(objectids),
-                "missing_oids": [],
+                "returned_oids": list(selected_oids),
+                "missing_oids": [
+                    objectid for objectid in objectids
+                    if objectid not in selected_oids
+                ],
             },
         )
 
@@ -168,6 +176,60 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator("#dr24LoadButton").click()
             assert "between 1 and 10" in page.locator("#dr24Status").inner_text()
             assert backend.calls == [(101, 202)]
+
+            # Partial response: preserve and export the returned raw payload.
+            backend.returned_oids = {101}
+            page.locator("#dr24ObjectIds").fill("101, 202")
+            page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('returned 1 · missing 1')",
+                timeout=10_000,
+            )
+            assert page.locator("#dr24Results .panel").count() == 1
+            assert page.get_by_text("OID 101 · filter g").is_visible()
+            assert page.locator("#dr24ExportButton").is_enabled()
+
+            partial_provenance = json.loads(
+                page.locator("#dr24Provenance").inner_text()
+            )
+            assert partial_provenance["requested_oids"] == [101, 202]
+            assert partial_provenance["returned_oids"] == [101]
+            assert partial_provenance["missing_oids"] == [202]
+
+            with page.expect_download(timeout=10_000) as partial_download_info:
+                page.locator("#dr24ExportButton").click()
+            partial_export = json.loads(
+                Path(partial_download_info.value.path()).read_text(
+                    encoding="utf-8"
+                )
+            )
+            assert [
+                record["objectid"]
+                for record in partial_export["source_payload"]["records"]
+            ] == [101]
+            assert partial_export["source_payload"]["provenance"]["missing_oids"] == [202]
+
+            # Empty successful response: preserve provenance, disable export.
+            backend.returned_oids = set()
+            page.locator("#dr24ObjectIds").fill("101, 202")
+            page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('completed successfully, but returned no records')",
+                timeout=10_000,
+            )
+            assert "no catalog rows were returned" in (
+                page.locator("#dr24Results").inner_text().lower()
+            )
+            assert page.locator("#dr24ExportButton").is_disabled()
+
+            empty_provenance = json.loads(
+                page.locator("#dr24Provenance").inner_text()
+            )
+            assert empty_provenance["requested_oids"] == [101, 202]
+            assert empty_provenance["returned_oids"] == []
+            assert empty_provenance["missing_oids"] == [101, 202]
+            assert backend.calls == [(101, 202)] * 3
+
             browser.close()
     finally:
         server.should_exit = True

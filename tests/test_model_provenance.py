@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from importlib.metadata import version
 from pathlib import Path
 
 from ztf_classifier.models.provenance import (
@@ -63,13 +64,16 @@ def test_build_captures_expected_provenance():
     assert provenance.python_version
     assert provenance.platform
     assert provenance.machine
-    assert provenance.dependencies["ztf-classifier"] == "1.0.1"
-    assert provenance.dependencies["numpy"] == "2.4.6"
-    assert provenance.dependencies["pandas"] == "3.0.6"
-    assert provenance.dependencies["scipy"] == "1.17.1"
-    assert provenance.dependencies["scikit-learn"] == "1.9.1"
-    assert provenance.dependencies["xgboost"] == "3.2.0"
-    assert provenance.dependencies["pyarrow"] == "25.0.1"
+    for package in (
+        "ztf-classifier",
+        "numpy",
+        "pandas",
+        "scipy",
+        "scikit-learn",
+        "xgboost",
+        "pyarrow",
+    ):
+        assert provenance.dependencies[package] == version(package)
 
 
 def test_paths_are_project_relative():
