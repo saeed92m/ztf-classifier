@@ -6,12 +6,12 @@
     {
       "source": "Issue #158 — Park prototype acceptance",
       "status": "VERIFIED",
-      "detail": "The Park prototype requires a working scientist-facing workflow and dated evidence. The 30–50-object guided demonstration is a target, not a verified current capability."
+      "detail": "The Park prototype needs a repeatable user-facing workflow and retained evidence. Small samples are diagnostic and do not represent full-product acceptance."
     },
     {
       "source": "Issue #253 — DR24 application acquisition",
       "status": "VERIFIED",
-      "detail": "The raw DR24 Explorer is distinct from the default ALeRCE observation and inference path. Source identity, filter grouping, normalization, and production QC remain separate acceptance requirements."
+      "detail": "The raw DR24 Explorer remains distinct from the ALeRCE observation and inference path. Source identity, filter grouping, normalization, and production QC remain separate acceptance requirements."
     },
     {
       "source": "docs/user/DR24_EXPLORER.md",
@@ -19,104 +19,105 @@
       "detail": "The Explorer supports bounded 1–10 OID raw inspection and JSON export. Its QC is diagnostic only; it does not run the frozen v0.2.0 model."
     },
     {
-      "source": "GitHub Actions run 44349019016 on PR #297",
+      "source": "PR #297 live Workbench E2E validation",
       "status": "VERIFIED",
-      "detail": "The PR failed because the documentation change had no cumulative cycle record. Test Suite, Runtime Smoke, Package Build, and Dependency Audit were skipped after the lifecycle gate failed."
+      "detail": "The pinned live API and Workbench browser tests passed for the declared two-OID sample. A local run on the presentation device is still required."
     }
   ],
   "baseline": {
-    "revision": "main@dcedccf50ae5a4541ababc29cfc7471a7d0ea14a",
-    "description": "The repository contains a raw DR24 Explorer and a bounded live API parity test. The two-OID live test and local Workbench run described by this runbook have not yet been verified for this Park handoff."
+    "revision": "b933af4bf91c00d0cdbb9fdebeeec7ae7b799474",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2",
+    "description": "Canonical main revision at the start of this Park documentation and validation review. The frozen scientific baseline remains unchanged."
   },
   "change": {
-    "scope": "Consolidate the Park runbook, full-cohort acceptance contract, parallel dataset plan, current handbook, master roadmap, defect register, think-tank review, Persian Park status addendum, installation/quick-start/user documentation, model card, scientific methodology, source adapters, architecture identity boundary, and production acceptance checklist. No model weights, baseline, feature schema, taxonomy, thresholds, or production data are changed.",
-    "rationale": "A bounded, raw-preserving demonstration can show real-data retrieval and provenance while avoiding unsupported claims about physical identity, production QC, DR24 classifier inference, calibrated probabilities, or anomaly discovery."
+    "scope": "Update the Park runbook lifecycle evidence and add a dated Persian technical status addendum. Record passing bounded live API and browser tests, current CI evidence, and the remaining local-device acceptance requirement. No model weights, production data, feature definitions, taxonomy, thresholds, or acceptance criteria are changed.",
+    "rationale": "The prior status record predated the successful live HATS API and Workbench browser tests. The new record must distinguish remote CI evidence from the required local presentation-device run."
   },
   "expected_improvement": [
-    "reproducibility",
-    "correctness",
-    "coverage",
-    "reliability"
+    "Keep the Park operator procedure aligned with the latest verified live API and browser evidence.",
+    "Make the boundary between remote CI validation and local presentation-device acceptance explicit.",
+    "Provide a current Persian technical status for the Park submission.",
+    "Preserve the full-cohort Park MVP as a separate, unaccepted product gate."
   ],
   "measurement": {
     "metrics": {
       "reproducibility": {
-        "before": "Park operation depended on informal knowledge and did not have one versioned, bounded operator procedure.",
-        "after": "The runbook records the checkout, Python 3.11 environment, pinned OIDs, live API parity test, Workbench steps, evidence retention, and claim boundaries.",
+        "before": "The runbook described the pinned OID test and local Workbench procedure, but no live Workbench CI evidence was recorded in this stage.",
+        "after": "The runbook lifecycle record now links pinned API and live browser results, expected payload hashes, and the local evidence still required.",
         "status": "SUPPORTED"
       },
-      "scientific_validity": {
-        "before": "A presentation could conflate raw DR24 inspection with classifier inference and scientific validation.",
-        "after": "The runbook explicitly limits demonstrated claims to raw DR24 retrieval, inspection, diagnostic QC, provenance, and export.",
+      "correctness": {
+        "before": "The current status addendum did not yet include the successful 21 November live API and browser runs.",
+        "after": "The addendum records exact run IDs, test results, claim limits, and open local acceptance.",
         "status": "SUPPORTED"
       },
       "reliability": {
-        "before": "The pinned two-OID live test and local Workbench path have no verified acceptance record for this handoff.",
-        "after": "Both operations must pass and produce retained evidence before the demonstrator is accepted.",
-        "status": "PENDING"
+        "before": "The live source path had not been verified in the actual Workbench browser.",
+        "after": "The bounded live API and browser paths pass in GitHub Actions, but the actual presentation device remains untested.",
+        "status": "PARTIALLY_VERIFIED"
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "The raw Explorer tests do not establish a physical-source association, production QC, feature compatibility, model inference, calibration, or scientific classification."
       }
     },
-    "trade_off": "The bounded raw-data demonstration is narrower than the complete classifier and discovery platform described in the long-term product vision. This limitation is explicit and intentional."
+    "trade_off": "The demonstrator remains deliberately narrow. This limits the presentation claims but protects scientific integrity and allows the broader platform to continue."
   },
   "validation": {
-    "status": "IN_PROGRESS",
+    "status": "PARTIALLY_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
-      "The runbook was fetched back from branch park/lab-demonstrator-runbook-20261118 and reviewed.",
-      "The current DR24 Explorer documentation describes bounded raw OID retrieval, native-field preservation, diagnostic QC, provenance, and JSON export.",
-      "The current CI failure identifies the missing cycle record as a change-related failure.",
-      "The current PR body explicitly states that the pinned live test and local Workbench run have not yet been executed for this handoff.",
-      "Main CI #44515762167 passed on main: 702 tests passed, 13 skipped, 9 warnings; format, lint, runtime smoke, package build, dependency audit, and CI gate passed.",
-      "Scientific Validation #44515762163 completed all five jobs and acquired separate 150-row DR24 Objects Table and live ALeRCE responses plus the frozen ALeRCE reference manifest. The live 150-row responses are not cross-matched.",
-      "Current documentation was updated to identify the original baseline_v0.2 production artifact as unavailable in accessible remote sources and to keep production inference blocked.",
-      "A simulated 16-seat think-tank review was recorded. It is not external human peer review.",
-      "Production acceptance checklist, source adapter contract, architecture identity boundary, model card, installation, quick-start, user guide, methodology, README, changelog, and roadmap were aligned to the current evidence."
+      "PR #297 live API parity run 44943450694 passed: 1 test in 18.73 seconds, with 1 warning.",
+      "PR #297 offline Workbench browser run 44943450666 passed: 1 test in 4.12 seconds.",
+      "PR #297 pinned live Workbench browser run 44943450666 passed: 1 test in 27.57 seconds.",
+      "PR #297 CI run 44943450712 passed all eight engineering jobs.",
+      "The PR #297 Test Suite reported 743 passed, 15 skipped, 9 warnings, and 84% line coverage.",
+      "CodeQL and Product Scope Audit passed on the PR #297 head.",
+      "Scientific Validation contract checks passed, but four source-backed scientific evidence jobs were skipped; no scientific validation claim is made.",
+      "The local runbook procedure on the actual presentation device has not been executed or evidenced."
     ],
-    "blocker": "Run the pinned live source-parity test and the local Workbench procedure on a clean isolated Python 3.11 checkout; retain commit SHA, full output, screenshot, exported JSON, and SHA-256. The full-cohort Park acceptance remains open.",
-    "regression": "PENDING",
-    "blockers": [
-      "Do not accept a failed or skipped live source-parity test.",
-      "Verify that both OIDs are returned with 78 and 123 epochs and their pinned payload hashes.",
-      "Verify separate g- and r-band OID panels, raw table, diagnostic QC, provenance, and JSON export in the Workbench.",
-      "Do not claim classifier inference, calibrated probabilities, physical-source identity, production QC, or scientific anomaly discovery from this demonstration."
-    ]
+    "blocker": "Run the isolated Python 3.11 checkout on the actual presentation device. Complete the pinned live API test and the Workbench steps. Retain the commit SHA, environment versions, test output, screenshot, exported JSON, export SHA-256, UTC time, and warnings. The full Park MVP remains a separate unaccepted gate."
   },
   "failure_analysis": {
     "status": "SUPPORTED",
     "root_causes": [
-      "The documentation-only PR added a meaningful file under docs/acceptance/ but did not include the required machine-readable cumulative cycle record.",
-      "The lifecycle gate therefore failed and downstream CI stages were skipped.",
-      "The local live-data and Workbench acceptance operations remain unverified for this handoff."
+      "The earlier status snapshot was created before the pinned live API and Workbench browser runs completed.",
+      "Remote GitHub Actions cannot establish that the application launches and displays correctly on the actual presentation device."
+    ],
+    "unresolved": [
+      "Local presentation-device execution and its evidence package are still missing.",
+      "The full predeclared Park pilot cohort, AOIC identity, production feature pipeline, authenticated model, independent evaluation, and product delivery gates remain incomplete."
     ]
   },
   "knowledge_extraction": {
-    "status": "SUPPORTED",
+    "status": "VERIFIED",
     "findings": [
-      "A real-data raw Explorer is a valid laboratory demonstration only when its claim boundary is explicit.",
-      "A source-parity test and a visible Workbench screen are separate acceptance evidence.",
-      "A successful scientific-validation workflow that skips source-backed jobs does not establish source-backed scientific validation.",
-      "Raw survey OIDs must remain separate until a validated physical-source identity rule exists."
+      "The pinned remote live API and browser tests pass for the two-OID sample.",
+      "A remote browser test does not replace a local application run on the actual demonstration machine.",
+      "The raw Explorer is a valid bounded laboratory demonstration only when its claim boundary is explicit.",
+      "The full Park MVP and the laboratory demonstrator are different acceptance gates."
     ]
   },
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
-      "Run the complete current-head CI after adding this cycle record.",
-      "Execute the pinned DR24 live source-parity test.",
-      "Execute the Workbench workflow and verify the exported evidence package.",
-      "Review the Park presentation so current raw-Explorer capabilities are not described as validated classifier outputs."
+      "Complete the local Python 3.11 Workbench runbook on the actual presentation device.",
+      "Retain screenshot, exported JSON, SHA-256, environment versions, commit SHA, and UTC run time.",
+      "Review the final Park presentation to ensure it does not claim DR24 classification, calibrated probabilities, production QC, physical-source identity, or scientific anomaly discovery."
     ]
   },
   "decision": "BLOCKED",
   "knowledge_carried_forward": [
-    "The v0.2.0 scientific baseline and baseline_v0.2 model identity remain unchanged.",
-    "The CPVS membership discrepancy remains a separate unresolved research issue and is not a blocker for this bounded raw-data demonstrator.",
-    "The DR24 Explorer remains experimental and diagnostic-only.",
-    "The Park demonstrator is not accepted until the live source-parity test and local Workbench run pass.",
-    "Do not publish a Park demo release or claim full classifier readiness before the acceptance evidence is complete.",
-    "The Park laboratory demonstrator and the full Park MVP are separate gates.",
-    "Current main CI success is engineering evidence only; 13 tests remain skipped and the original production model artifact is unavailable.",
-    "The 150-row DR24 Objects Table and 150-row ALeRCE reference snapshots are independent, unpaired evidence sets.",
-    "All current product and Park claims must follow the 2026-11-19 handbook and Persian technical addendum."
+    "The laboratory demonstrator is NOT READY until the actual presentation-device run passes.",
+    "After that local run, the demonstrator may be marked READY WITH LIMITATIONS for raw DR24 retrieval, inspection, diagnostic QC, provenance, and export only.",
+    "The full Park MVP remains NOT ACCEPTED.",
+    "Keep the frozen v0.2.0 baseline and model identity unchanged.",
+    "Do not enable DR24 inference until an authenticated compatible model and tested feature contract are available.",
+    "The next functional product priority is explicit DR24 source selection through the normal observation-service boundary, with ALeRCE remaining separately selectable and no silent fallback.",
+    "Implement minimum AOIC association evidence before treating different survey OIDs as one physical source.",
+    "Continue the Core Product roadmap. The Park deliverable is an early milestone, not the final product.",
+    "Keep CIN as a future, separately governed subsystem outside the Park critical path."
   ]
 }
