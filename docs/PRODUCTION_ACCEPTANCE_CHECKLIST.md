@@ -1,112 +1,63 @@
-# Production Acceptance Checklist
+# Production Acceptance Checklist — Current Status
 
-Current evidence: P0 frozen-reference/source-backed validation evidence completed on `main` at `044e57af46201654061cbca2300ec384a113500a` (2026-10-04). The remaining unchecked items are final release-scope audits, not the former ALeRCE/CPVS recovery blocker.
+**Status date:** 2026-11-19  
+**Main revision reviewed:** `dcedccf50ae5a4541ababc29cfc7471a7d0ea14a`
 
-This checklist is the final gate for the Astronomical Data Analysis & Discovery Platform layer.
+## Current disposition
 
-## Scientific integrity
+**Engineering CI:** PASS  
+**Bounded raw DR24 demonstrator:** NOT YET VERIFIED for this handoff  
+**Park MVP:** NOT ACCEPTED  
+**Validated DR24 classifier:** NOT ESTABLISHED  
+**Final product:** IN DEVELOPMENT
 
-- [x] v0.2.0 tag remains immutable.
-- [x] Current `main` scientific-validation gate is documented and release-blocking.
-- [x] Native v0.2 feature schema remains 42 features and deterministic.
-- [x] Source-backed analysis never fabricates observations.
-- [x] Scientific results retain object, survey, model, schema, provenance, and creation metadata.
-- [x] Reports and catalog exports are derived read-only views.
+Main CI #44515762167 passed with 702 tests passed, 13 skipped, and 9 warnings. Format, lint, runtime smoke, package build, dependency audit, and CI gate passed.
 
-## Persistence
+Scientific Validation #44515762163 completed five jobs. It acquired a 150-row DR24 Objects Table response, a separate 150-row live ALeRCE response, and the frozen ALeRCE reference manifest. The two live 150-row responses are not cross-matched. They do not form a labeled DR24 evaluation cohort.
 
-- [x] Job lifecycle is durable and lease-aware.
-- [x] Scientific results are idempotent per job.
-- [x] Conflicting retries are rejected.
-- [x] Incremental checkpoints cannot move backwards.
-- [x] Runtime databases are external to source control.
+The original v0.2.0 production model artifact is not available in the accessible repository, release assets, or retained CI reports (Issue #282). At least seven production-inference tests remain skipped because the original artifact or shared inputs are unavailable.
 
-## API
+## Acceptance gates
 
-- [x] OpenAPI exposes versioned contracts.
-- [x] Stable error codes do not leak internal exception details.
-- [x] Request IDs are generated or propagated.
-- [x] Optional bearer authentication protects versioned endpoints when configured.
-- [x] Catalog pagination and bounded exports are enforced.
-- [x] Feature backend discovery and explicit backend selection are versioned.
+| Gate | Requirement | Current status | Evidence required to close |
+|---|---|---|---|
+| G0 | Preserve v0.2.0 baseline, 42 features, class order, cutoff, and taxonomy | PASS for current reviewed revision | Repeat baseline integrity checks after any scientific change |
+| G1 | Bounded DR24 HATS acquisition and raw payload parity | PARTIAL | Current pinned two-OID live test passes; retain response counts and hashes |
+| G2 | Physical-source identity and OID association | NOT ACCEPTED | AOIC identity ledger with evidence and ambiguity states |
+| G3 | Time, photometry, flags, and QC semantics | NOT ACCEPTED | Approved source-specific contracts and regression tests |
+| G4 | DR24 source selection through the normal application service | PARTIAL | End-to-end API/Workbench source selection; no silent fallback |
+| G5 | Complete predeclared Park cohort | NOT ACCEPTED | Immutable cohort manifest, all records acquired or explained |
+| G6 | Feature mapping and model readiness | BLOCKED | Authenticated original model artifact or separately versioned validated model |
+| G7 | Calibration, conformal, OOD, and anomaly semantics | NOT ACCEPTED | Independent held-out evidence; separate result channels |
+| G8 | Full Workbench workflow | NOT ACCEPTED | Full cohort completes through normal UI and exports a run manifest |
+| G9 | Repeatability and independent evaluation | NOT ACCEPTED | Full rerun hash comparison and appropriate independent reference evaluation |
+| G10 | Clean installation, security, backup, restore, and handover | NOT ACCEPTED | Clean-machine evidence, license decision, backup/restore test, user guide |
 
-## Workbench
+## Laboratory demonstrator gate
 
-- [x] Observations and durable results are API-backed.
-- [x] No illustrative scientific values are presented as loaded results.
-- [x] Catalog, jobs, report, and analysis views consume API contracts.
-- [x] Report export is read-only and deterministic.
-- [x] Theme changes do not alter scientific semantics.
+The current raw Explorer may demonstrate only:
+- bounded public DR24 HATS retrieval;
+- source-native light-curve display;
+- diagnostic QC;
+- acquisition provenance;
+- raw JSON export.
 
-## CI / packaging
+The pinned two-OID live parity test and local Workbench procedure must pass before the demonstrator is marked READY WITH LIMITATIONS.
 
-- [x] Ruff lint passes.
-- [x] Ruff format checks pass.
-- [x] Full pytest suite passes on current `main` CI; four data-dependent modules remain explicitly skipped when their immutable raw inputs are unavailable.
-- [x] Coverage is recorded.
-- [x] Package build succeeds.
-- [x] Built wheel installs and passes pip check.
-- [x] Package import succeeds.
-- [x] Dependency audit passes.
-- [x] No runtime SQLite database or credential is committed.
+The previous seven-OID Workbench smoke with 2,183 epochs is historical raw retrieval/display evidence. It does not close the current pinned test or full-cohort acceptance.
 
-## Scientific validation status
+## Product-level scientific gate
 
-The engineering/platform gates are implemented and CI-covered. The P0 source-backed scientific-validation recovery is **COMPLETE**: immutable ALeRCE/CPVS references were acquired and verified, DR24/ALeRCE source-backed evidence completed, heavy CPVS derivation/audit completed, and the lifecycle gate was verified. The exact 730,184-member CPVS historical reproduction remains a claim-specific **UNRESOLVED** external question and is fail-closed; it is not a product failure and is not forced by cardinality tuning.
+A green engineering CI run is not scientific acceptance. Source-backed jobs must acquire and validate the intended evidence. Skipped tests are not PASS. The current 150-row DR24 and ALeRCE snapshots are separate, unpaired evidence sets.
 
-## Release evidence
+## Frozen model gate
 
-The release is accepted only after all engineering gates and the mandatory scientific-validation gate have executable evidence. CI success alone does not satisfy the scientific-validation gate. The release workflow enforces this boundary and must fail closed while any required scientific-validation item remains `NOT VERIFIED`.
+The original `baseline_v0.2` artifact is not available in accessible remote sources. Do not substitute the schema-1.1 lab-smoke artifact. Keep production inference BLOCKED until the original artifact and trusted hashes are recovered or a new model is separately versioned and validated.
 
-## Scientific Validation — permanent Product-Level Gate
+## CPVS research gate — separate from Park
 
-- [x] Benchmark Registry exists under `configs/benchmarks/`.
-- [x] Versioned manifest contract records source/version/DOI-or-authoritative-unassigned-state, retrieval date, IDs, hashes, schema, taxonomy, mapping, splits, leakage exclusions, preprocessing/input contract, and provenance.
-- [x] Ground truth and independent reference predictions are explicitly separated.
-- [x] ALeRCE is represented as an independent reference system, not ground truth.
-- [x] Reproducible table benchmark runner produces JSON/Markdown evidence and hashes its input.
-- [x] Regression comparison is executable and release-blocking.
-- [x] Registry contract is exercised by GitHub Actions.
-- [x] P0 source-backed benchmark/reference execution and immutable evidence acquisition are complete for the declared recovery scope.
-- [ ] All required leakage checks are PASS for the final release candidate.
-- [ ] Full scientific validation across ingestion -> normalization -> QC -> feature generation -> inference -> calibration/OOD -> provenance is PASS for the final release candidate.
-- [x] Scientific Validation Dashboard/Report is integrated into the Workbench via the versioned API and Workbench validation view.
-- [ ] No unresolved benchmark regression remains for the final release scope.
+Issue #170 remains UNRESOLVED. The recorded Seq-based comparison has 11,602 candidate-only objects and zero published-only objects. Reverify source artifacts before describing the numbers as a fresh result. Do not tune thresholds to force equality. CPVS is not a blocker for the raw DR24 demonstrator.
 
-The P0 scientific-validation recovery gate is **COMPLETE**. The final release gate remains open until the unchecked final-release audits above are executed and dispositioned. Engineering CI success alone still cannot satisfy the final release gate.
+## Definition of done
 
-## Definition of Done — Scientific Validation Gate
-
-A product release is scientifically complete only when all applicable conditions below have executable evidence:
-
-- every affected benchmark is identified by a versioned registry manifest;
-- benchmark source/version/retrieval date/DOI-or-authoritative-unassigned-state, object IDs, hashes, schema, taxonomy, class mapping, split, leakage exclusions, preprocessing contract, input contract, and provenance are recorded;
-- independent ground truth is kept distinct from classifier/reference agreement;
-- all applicable leakage checks are PASS, with no unresolved NOT_EXECUTED release blockers;
-- the complete scientific chain from ingestion through reproducible inference has been validated;
-- classification, calibration, OOD, coverage/rejection, QC, determinism, schema, provenance, and failure-code metrics are reported where applicable;
-- any benchmark regression has an explicit scientific disposition before release;
-- benchmark evidence is reproducible from source-backed immutable inputs or explicitly documented external-source limitations;
-- the Scientific Validation report/dashboard identifies population, version, results, regressions, scope limits, and known failure cases;
-- the release workflow records an explicit Scientific Validation Gate result.
-
-A benchmark passing is evidence for its declared scope, not proof of universal correctness.
-
-## Cumulative Learning & Continuous Improvement — permanent product process gate
-
-- [x] Cumulative-learning principle is documented as a lifecycle requirement.
-- [x] Mandatory lifecycle includes Audit, Previous Knowledge Retrieval, Baseline, Implementation, Test, Measure, Validate, Root Cause, Knowledge Extraction, Knowledge Update, Regression Update, Baseline Comparison, and Accept/Revise.
-- [x] Operational Knowledge Layer exists under `docs/knowledge/`.
-- [x] Cumulative Improvement Ledger exists and is version-controlled.
-- [x] Knowledge statuses are explicitly classified as FACT, VERIFIED, SUPPORTED, HYPOTHESIS, ASSUMPTION, UNRESOLVED, or REJECTED.
-- [x] Executable lifecycle contract exists in `ztf_classifier.lifecycle`.
-- [x] Lifecycle contract has regression tests.
-- [x] Multi-objective quality vector is defined for relevant changes.
-- [x] Performance baseline dimensions are defined and NOT_MEASURED is allowed when evidence is unavailable or not applicable.
-- [x] Local optimization cannot override scientific validity, reproducibility, or release integrity.
-- [x] Every meaningful pull request must carry a validated machine-readable cycle record under `configs/process/cycles/`.
-- [x] CI validates all cycle records and includes the cumulative lifecycle gate in the merge gate.
-- [ ] Every future product stage has a completed cumulative cycle record and measured evidence.
-- [ ] Process-performance trends are measured over enough cycles to establish a meaningful baseline.
-
-The cumulative-learning gate is complementary to the permanent Scientific Validation Product-Level Gate and cannot downgrade or bypass scientific blockers.
+A gate is closed only when the required evidence is retained and reviewed. A code path, a successful small sample, or a green workflow with skipped required evidence does not close a product or scientific gate.

@@ -2,6 +2,19 @@
 
 All notable changes to the ZTF Classifier platform are documented here.
 
+## [Unreleased] — 2026-11-19
+
+### Documentation and governance
+- Consolidate the Park laboratory demonstrator runbook, full-cohort acceptance contract, and dataset execution plan under PR #297.
+- Clarify that the DR24 Explorer is a raw-data inspection demonstrator, not a validated DR24 classifier.
+- Record the unavailable original v0.2.0 production artifact as an open recovery blocker.
+- Align current project status, handbook, roadmap, defect register, and Park technical addendum.
+
+### Security
+- Upgrade the pinned Soup Sieve dependency to 4.1. Merged in PR #289.
+
+All notable changes to the ZTF Classifier platform are documented here.
+
 ## [1.0.1] — 2026-10-07
 
 ### Fixed

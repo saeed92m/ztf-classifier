@@ -15,6 +15,7 @@ from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.io.dr24_lightcurve import (
+    DR24LightcurveBackend,
     DR24LightcurveRecord,
     DR24LightcurveResult,
 )
@@ -168,6 +169,113 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator("#dr24LoadButton").click()
             assert "between 1 and 10" in page.locator("#dr24Status").inner_text()
             assert backend.calls == [(101, 202)]
+            browser.close()
+    finally:
+        server.should_exit = True
+        thread.join(timeout=10)
+
+
+
+LIVE_EXPECTED = {
+    264114400013085: {
+        "filter": "g",
+        "epochs": 78,
+        "sha256": "735ee15135670a1a28b03b76edfb394e9c0c193d528f3da56ebb593468baf2a0",
+    },
+    264214400000912: {
+        "filter": "r",
+        "epochs": 123,
+        "sha256": "a37f6fa2ee91009805b6fab3a5563b793cba9e84f6a82ec333bae507442c70ae",
+    },
+}
+
+
+@pytest.mark.skipif(
+    os.getenv("ZTF_DR24_BATCH_LIVE_UI_TEST") != "1",
+    reason="Set ZTF_DR24_BATCH_LIVE_UI_TEST=1 to run the live DR24 Workbench test.",
+)
+def test_workbench_loads_and_exports_two_pinned_live_dr24_oids(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+
+    settings = ApiSettings(
+        observation_cache_dir=tmp_path / "cache",
+        job_store_path=tmp_path / "jobs.sqlite3",
+        result_store_path=tmp_path / "results.sqlite3",
+        application_state_path=tmp_path / "settings.json",
+    )
+    service = ObservationService(
+        client=object(),
+        cache_dir=settings.observation_cache_dir,
+        dr24_backend=DR24LightcurveBackend(),
+    )
+    app = create_app(settings, observation_service=service)
+    server = uvicorn.Server(
+        uvicorn.Config(app, host="127.0.0.1", port=8767, log_level="warning")
+    )
+    thread = threading.Thread(target=server.run, daemon=True)
+    thread.start()
+
+    try:
+        ready = False
+        for _ in range(120):
+            try:
+                with urllib.request.urlopen("http://127.0.0.1:8767/health", timeout=1) as response:
+                    ready = response.status == 200
+                if ready:
+                    break
+            except (URLError, TimeoutError, ConnectionError):
+                time.sleep(0.5)
+        assert ready, "FastAPI did not become ready within 60 seconds"
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto("http://127.0.0.1:8767/workbench", wait_until="domcontentloaded")
+            page.locator('[data-view="dr24"]').click()
+            page.locator("#dr24ObjectIds").wait_for(state="visible")
+            objectids = list(LIVE_EXPECTED)
+            page.locator("#dr24ObjectIds").fill(", ".join(map(str, objectids)))
+            page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
+                timeout=120_000,
+            )
+
+            panels = page.locator("#dr24Results .panel")
+            assert panels.count() == 2
+            assert page.locator("#dr24Results svg circle").count() > 0
+            assert "DIAGNOSTIC_NOT_PRODUCTION_APPROVED" in page.locator(
+                "#dr24Results"
+            ).inner_text()
+
+            panel_texts = [panels.nth(index).inner_text() for index in range(2)]
+            for objectid, expected in LIVE_EXPECTED.items():
+                panel_text = next(
+                    text for text in panel_texts if f"OID {objectid} · filter {expected['filter']}" in text
+                )
+                assert f"epochs {expected['epochs']} / catalog {expected['epochs']}" in panel_text
+                assert f"payload SHA-256 {expected['sha256']}" in panel_text
+
+            provenance = json.loads(page.locator("#dr24Provenance").inner_text())
+            assert provenance["source"] == "IRSA ZTF DR24 Lightcurves HATS"
+            assert provenance["requested_oids"] == objectids
+            assert provenance["returned_oids"] == objectids
+            assert provenance["missing_oids"] == []
+
+            with page.expect_download(timeout=15_000) as download_info:
+                page.locator("#dr24ExportButton").click()
+            download = download_info.value
+            exported = json.loads(Path(download.path()).read_text(encoding="utf-8"))
+            assert exported["export_schema_version"] == "ztf-dr24-raw-export-v0.2"
+            records = {
+                record["objectid"]: record
+                for record in exported["source_payload"]["records"]
+            }
+            assert set(records) == set(objectids)
+            for objectid, expected in LIVE_EXPECTED.items():
+                assert len(records[objectid]["epochs"]) == expected["epochs"]
+                assert records[objectid]["payload_sha256"] == expected["sha256"]
+            assert len(exported["source_payload"]["qc_assessments"]) == 2
             browser.close()
     finally:
         server.should_exit = True

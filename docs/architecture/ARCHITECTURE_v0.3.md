@@ -1,3 +1,23 @@
+# Current source identity constraint — 2026-11-19
+
+The architecture below is a target contract. It does not mean every target component is implemented.
+
+A ZTF survey OID is not a canonical astrophysical source identifier. Keep these entities separate:
+- survey catalog entry;
+- source-native OID;
+- physical source group;
+- individual observation;
+- transient event;
+- host galaxy.
+
+A physical source group requires explicit association evidence. Angular proximity or nearest-neighbour rank alone is not proof. Preserve association states: CONFIRMED, AMBIGUOUS, UNMATCHED, PROVISIONAL, and DISPUTED. Every association must record source namespace, identifiers, coordinates and uncertainties, match method, separation, candidate count, decision, and evidence hash.
+
+DR24 HATS and Zubercal DR20 are separate products. Preserve their source-native identifiers, time scales, photometry, uncertainties, and QC. Do not silently normalize one product into the other.
+
+The raw DR24 Explorer is not a validated DR24 classifier. It does not run the frozen v0.2.0 model on DR24. Model inference requires an authenticated artifact and compatible feature semantics.
+
+---
+
 # ZTF Classifier — v0.3 Architecture
 
 > Status: Draft — Architecture Contract Phase
@@ -93,7 +113,7 @@ The contract may include MJD, flux or magnitude, uncertainty, filter or band, qu
 
 ### 5.2 Canonical Object Contract
 
-A canonical object groups observations belonging to a single astronomical source and provides a stable object identifier together with object-level metadata.
+A canonical object represents a physical source group only when a versioned identity decision supports that association. It must retain the source-native OIDs and association evidence. An OID alone must not be promoted to a physical-source identifier.
 
 ### 5.3 Dataset Contract
 

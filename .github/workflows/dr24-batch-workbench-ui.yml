@@ -3,6 +3,7 @@ name: DR24 Batch Workbench UI Contract
 on:
   pull_request:
     branches:
+      - main
       - feat/dr24-raw-preserving-qc-assessment-20261107
     paths:
       - .github/workflows/dr24-batch-workbench-ui.yml
@@ -17,6 +18,7 @@ on:
       - src/ztf_classifier/web/static/app.js
       - src/ztf_classifier/web/static/index.html
       - tests/integration/test_dr24_batch_workbench_ui.py
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -27,6 +29,7 @@ concurrency:
 
 jobs:
   deterministic-browser-contract:
+    name: Deterministic offline Workbench browser contract
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
@@ -41,9 +44,34 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.lock
-          python -m pip install -e .
+          python -m pip install -e ".[dr24]"
           python -m pip install playwright==1.56.0
       - name: Install Chromium
         run: python -m playwright install --with-deps chromium
       - name: Run deterministic batch UI test
-        run: python -m pytest -q tests/integration/test_dr24_batch_workbench_ui.py
+        run: python -m pytest -q tests/integration/test_dr24_batch_workbench_ui.py -k "not live"
+
+  pinned-live-dr24-browser-validation:
+    name: Pinned live DR24 Workbench browser validation
+    needs: deterministic-browser-contract
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && startsWith(github.head_ref, 'park/')) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      ZTF_DR24_BATCH_LIVE_UI_TEST: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install -e ".[dr24]"
+          python -m pip install playwright==1.56.0
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Run pinned live DR24 Workbench test
+        run: python -m pytest -q tests/integration/test_dr24_batch_workbench_ui.py -k live

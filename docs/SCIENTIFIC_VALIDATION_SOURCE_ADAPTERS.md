@@ -5,9 +5,9 @@ repository stores the **source contract**, not mutable external benchmark data.
 
 | ID | Source | Role | Evidence requirement |
 |---|---|---|---|
-| `star_embed_ztf_40k` | StarEmbed ZTF_40k | ground truth | immutable dataset/split/schema hashes |
-| `ztf_periodic_781k` | ZTF CPVS / DR2 | ground truth | Zenodo attachment and catalog hashes |
-| `ztf_periodic_730k` | published 730,184-object quality subset | ground truth | parent snapshot hash + deterministic selection |
+| `star_embed_ztf_40k` | StarEmbed ZTF_40k | candidate benchmark; ground-truth status not accepted | immutable dataset/split/schema hashes and completed leakage audit |
+| `ztf_periodic_781k` | ZTF CPVS / DR2 | historical parent population | Zenodo attachment and catalog hashes |
+| `ztf_periodic_730k` | published 730,184-object quality subset | historical membership reference | immutable publisher snapshot and membership hashes |
 | `ztf_dr24_source_subset` | official ZTF DR24 | source-backed | release metadata + query/artifact hashes |
 | `alerce_reference` | ALeRCE TAP | independent reference | query + response hashes + schema |
 
@@ -28,12 +28,27 @@ does not close a historical reproducibility blocker.
 StarEmbed is modeled as a five-artifact Parquet package. The adapter now requires a verified 40-character Hugging Face commit SHA before acquisition; unverified revisions or hashes are rejected. Acquisition binds all five artifacts into one evidence manifest. The 781k adapter pins the Zenodo Table2 attachment. DR24 and ALeRCE remain query-driven and fail closed until their returned artifacts are actually acquired.\n\nThe actual benchmark data are intentionally not committed to Git.
 
 
-## 730k deterministic derivation
+## CPVS membership reconstruction — unresolved
 
-The 730,184-object release is not treated as an independently downloadable source. The derivation runner consumes the pinned 781,602-object CPVS parent plus the published ZTF2 g/r light-curve artifacts. It requires at least one g-band detection at 2.5σ and one r-band detection at 3σ, and fails closed unless the resulting object count is exactly 730,184. The published study describes the same 730,184/781,602 selection and thresholds. The runner writes a content hash of the selected SourceID manifest and a derivation manifest containing the selection parameters and output hash.
+The published 730,184-object membership snapshot is the historical reference. A current-source reconstruction is diagnostic only and must not replace the published membership.
 
-The derivation runner requires the parent evidence SHA and emits an immutable evidence manifest for the derived snapshot. It fails closed if the parent count or derived count does not match the published 781,602 / 730,184 populations. The repository still does not claim that derivation evidence exists until the real source artifacts have been acquired and the runner has produced the expected count.
+The recorded Seq-based comparison reports 781,602 parent rows, 730,184 published members, and 741,786 reconstructed candidates:
+- intersection: 730,184;
+- candidate-only: 11,602;
+- published-only: 0.
 
+The 11,602 candidate-only objects remain unexplained. Exact historical reconstruction is **UNRESOLVED**. Reverify source files, versions, and hashes before treating these counts as a fresh run. Do not tune a threshold or quality flag to force the candidate count to 730,184. Preserve all discrepant IDs and their provenance.
+
+The historical four-field rule is a hypothesis until the real source artifacts, fixed samples, and full object-level comparison reproduce it. Synthetic tests do not establish historical author intent.
+
+## Current source-evidence snapshot — 2026-11-19
+
+Scientific Validation run #44515762163 acquired:
+- a 150-row DR24 Objects Table response;
+- a separate 150-row live ALeRCE reference response;
+- the immutable historical ALeRCE reference manifest.
+
+The DR24 and ALeRCE responses are not cross-matched. They are not one labeled cohort and must not be used as a model-evaluation dataset. The run proves bounded source acquisition and evidence-manifest creation only.
 
 ## DR24 HATS versus Zubercal
 
