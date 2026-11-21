@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "dr24-workbench-empty-oid-guard-20261122",
+  "objective": "Prevent the Workbench from submitting an object-analysis request when no non-empty OID is selected. Preserve the raw DR24 export and diagnostic QC contracts.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Notion Think Tank Charter & Session Register",
+      "status": "VERIFIED",
+      "detail": "This is a focused 3–5 role engineering session. The Project Owner retains final authority; simulated specialist perspectives do not constitute external peer review."
+    },
+    {
+      "source": "Notion Park Web Demonstrator execution specification",
+      "status": "VERIFIED",
+      "detail": "DR24 Explorer is a raw-data workflow. It must remain separate from normalized ALeRCE inference and must not trigger model inference."
+    },
+    {
+      "source": "main app.js at 225ed7b92969e00aebac7089159a38f5e6871015",
+      "status": "VERIFIED",
+      "detail": "runAnalysis() constructs /v1/objects/{oid}/analysis from state.oid without checking that the OID is non-empty."
+    },
+    {
+      "source": "main DR24 QC implementation",
+      "status": "VERIFIED",
+      "detail": "The versioned ztf-dr24-raw-qc-diagnostic-v1 assessment already preserves raw epochs, separates bit-15 likely-usable from strict catflags==0 and photometry validity, and is explicitly not production-approved."
+    },
+    {
+      "source": "User-provided DR24 export and prior independent validation",
+      "status": "PARTIALLY_VERIFIED",
+      "detail": "Two requested OIDs and 201 epochs were reported as validated in the conversation. The exact uploaded file bytes are not re-opened in this GitHub change; no new data claim is made."
+    }
+  ],
+  "baseline": {
+    "revision": "main@b933af4bf91c00d0cdbb9fdebeeec7ae7b799474",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "change": {
+    "scope": "Add a client-side non-empty OID guard before issuing the object analysis request and add a Playwright regression assertion that no /analysis request is sent when the initial Workbench state has no OID. Do not change API contracts, DR24 acquisition, QC policy, raw payload, model, features, taxonomy or benchmark.",
+    "rationale": "The browser log showed POST /v1/objects//analysis. The current runAnalysis() interpolates state.oid without validation. A client guard prevents the malformed request and gives the user an actionable status."
+  },
+  "expected_improvement": [
+    "No empty-OID analysis request is emitted from the Workbench.",
+    "The user receives a clear status message when analysis is requested without an OID.",
+    "Existing DR24 raw JSON export and diagnostic QC remain unchanged."
+  ],
+  "measurement": {
+    "metrics": {
+      "empty_oid_request": {
+        "status": "NOT_MEASURED",
+        "before": "runAnalysis() can construct /v1/objects//analysis when state.oid is empty.",
+        "after": "A guard returns before fetch; Playwright regression checks that no /analysis request is emitted."
+      },
+      "raw_export_integrity": {
+        "status": "NOT_MEASURED",
+        "before": "Existing deterministic UI test checks source payload preservation.",
+        "after": "No export implementation is changed; existing assertions remain in place."
+      },
+      "qc_policy": {
+        "status": "NOT_MEASURED",
+        "before": "Existing versioned diagnostic policy and unit tests are present.",
+        "after": "No QC calculation is changed; current policy remains diagnostic only."
+      }
+    },
+    "trade_off": "The guard prevents a malformed request but does not add an OID-entry workflow. Users must select or load an object through the existing UI."
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Source review confirms missing client-side OID validation in runAnalysis().",
+      "Existing QC module already distinguishes bit 15, strict clean flags and photometric validity.",
+      "Existing DR24 integration test checks raw export and source payload preservation."
+    ],
+    "blocker": "Run current-head Format, Lint, Lifecycle, Playwright integration, full Test Suite, Runtime Smoke, package build and Dependency Audit. Confirm test collection and inspect any skipped jobs."
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "runAnalysis() did not validate state.oid before constructing the path parameter."
+    ],
+    "unresolved": [
+      "The original empty-OID request's exact browser interaction sequence is not captured in a HAR; the source code path is sufficient to reproduce the malformed URL when the handler is invoked with empty state."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A path parameter must be validated before constructing a request URL.",
+      "The current DR24 QC implementation already preserves raw epochs and keeps diagnostic classifications separate; do not duplicate or alter it without new evidence."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the new Playwright regression test in CI.",
+      "Run existing DR24 QC unit tests and full suite.",
+      "Run a bounded fixed OID batch after code merge in the user's local environment; this code change alone does not validate HATS data."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "No DR24 raw records are filtered, reordered, or modified by this change.",
+    "QC policy remains ztf-dr24-raw-qc-diagnostic-v1 and DIAGNOSTIC_NOT_PRODUCTION_APPROVED.",
+    "No production inference or v0.2.0 baseline changes are authorized or included."
+  ]
+}
