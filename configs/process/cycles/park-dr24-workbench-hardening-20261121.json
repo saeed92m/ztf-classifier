@@ -1,97 +1,100 @@
 {
   "schema_version": "1.1",
   "stage_id": "park-dr24-workbench-hardening-20261121",
-  "objective": "Harden DR24 acquisition error reporting, batch Workbench handling, empty-response export protection, and model dependency provenance without changing the frozen scientific baseline or enabling production inference.",
+  "objective": "Harden DR24 acquisition error reporting, empty and partial batch Workbench handling, export protection, and model dependency provenance while preserving the frozen scientific baseline. Ensure the new deterministic Workbench regression test actually runs on pull requests to main.",
   "previous_knowledge_consumed": [
     {
-      "source": "PR #300 / commit 289d8b6f2c70a8926590a5755afdd5dfb6b0dddc",
-      "status": "IMPLEMENTED_PENDING_CI",
-      "detail": "Four-file change set adds DR24 exception logging, defensive handling for empty/partial/missing-OID batch responses, export protection, regression tests, and installed dependency version checks."
+      "source": "PR #300 implementation commit 289d8b6f2c70a8926590a5755afdd5dfb6b0dddc",
+      "status": "IMPLEMENTED",
+      "detail": "Adds DR24 acquisition exception logging, defensive handling for empty/partial/missing-OID batch responses, export protection, regression assertions, and installed dependency provenance checks."
     },
     {
-      "source": "DR24 batch Workbench validation evidence available before this PR",
-      "status": "BOUNDED_EVIDENCE",
-      "detail": "Prior bounded live batch checks returned requested OIDs in the tested samples. This does not establish full-catalogue source validity or production ML compatibility."
-    },
-    {
-      "source": "src/ztf_classifier/lifecycle.py on main",
+      "source": "PR #300 lifecycle correction commit 235c3b93ef08fa81df136adc4a001b488f78df73",
       "status": "VERIFIED",
-      "detail": "The lifecycle contract allows only registered metric names and regression statuses PASS, FAIL, BLOCKED, or NOT_VERIFIED. This record was revised to match that contract."
+      "detail": "Corrected the cycle record to use registered metric names and allowed regression status values. The updated CI lifecycle validation passed."
+    },
+    {
+      "source": "CI test report artifact 14721108692 from run 44939561094",
+      "status": "VERIFIED",
+      "detail": "JUnit report confirms 743 passed and 14 skipped. The target Workbench browser test is among the skips because ZTF_DR24_BATCH_UI_TEST was not enabled in the general test suite."
     }
   ],
   "baseline": {
     "revision": "b933af4bf91c00d0cdbb9fdebeeec7ae7b799474",
-    "description": "Canonical main branch before the PR change set. Frozen v0.2.0 scientific baseline, model artifacts, feature definitions, class order, and acceptance criteria remain unchanged by this PR."
+    "description": "Canonical main branch before PR #300. Frozen v0.2.0 scientific baseline, model artifacts, feature definitions, class order, and acceptance criteria are unchanged."
   },
   "expected_improvement": [
     "Record DR24 acquisition exceptions for diagnosis.",
     "Handle empty, partial, and missing-OID batch responses without misleading UI state.",
     "Prevent JSON export when no usable observations are present.",
     "Compare model dependency provenance with installed environment versions.",
-    "Add regression coverage for the defensive Workbench behavior."
+    "Execute the deterministic Playwright Workbench regression test for pull requests targeting main."
   ],
   "measurement": {
     "metrics": {
       "robustness": {
-        "before": "The Workbench had no regression evidence for empty and partial DR24 batch responses in the targeted integration test.",
-        "after": "Regression assertions cover partial responses, empty responses, missing OIDs, provenance retention, export of returned records, and disabled export when no records are returned.",
-        "evidence": "Implemented in tests/integration/test_dr24_batch_workbench_ui.py on PR #300. Execution remains unverified because the gated Test Suite was skipped after the lifecycle gate failed."
+        "before": "The previous Workbench test did not cover empty and partial batch responses, and the opt-in UI test was not triggered by PR #300.",
+        "after": "Regression assertions cover partial responses, empty responses, missing OIDs, provenance retention, returned-record export, and disabled export when no records are returned. The dedicated workflow is now configured to run for relevant pull requests to main.",
+        "evidence": "The test assertions are present in tests/integration/test_dr24_batch_workbench_ui.py. The general suite on run 44939561094 skipped this opt-in test because the environment flag was not set. The updated workflow requires a fresh run before this regression is considered verified."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
-        "reason": "This engineering change does not provide source-backed scientific validation, model authentication, feature parity, or end-to-end Park acceptance evidence."
+        "reason": "This engineering change does not provide source-backed scientific validation, original model authentication, feature parity, physical-source identity, or full-cohort Park acceptance evidence."
       }
     },
-    "trade_off": "Defensive UI behavior and traceability improve. The demonstrator remains separate from production inference; source identity and scientific acceptance gates are unchanged."
+    "trade_off": "Defensive UI behavior and traceability improve. The DR24 Explorer remains separate from production inference. The workflow change adds a bounded deterministic browser test and does not download survey data."
   },
   "validation": {
     "status": "PARTIALLY_VERIFIED",
     "scientific_gate_affected": false,
     "evidence": [
-      "Format Check and Lint passed in PR-triggered workflow run 44936569356.",
-      "CodeQL passed in workflow run 44936569298.",
-      "P1-P6 Product Scope Audit passed in workflow run 44936569312.",
-      "Scientific validation contract tests, cumulative lifecycle contract tests, and local scientific artifact audit regression tests passed in workflow run 44936569332.",
-      "Source-backed scientific acquisition, immutable historical reference, independent StarEmbed benchmark, and DR24/ALeRCE evidence jobs were skipped in workflow run 44936569332. These skips are not scientific passes.",
-      "The Cumulative Lifecycle Gate rejected this cycle record because it used unsupported metric names and an unsupported regression status. The record has now been corrected to match the validator contract; the updated head still requires a fresh CI run.",
-      "The failed lifecycle gate caused Test Suite, Runtime Smoke Tests, Build & Verify Package, and Dependency Audit to be skipped on the current pre-fix head."
+      "CodeQL run 44939561079 passed.",
+      "Product Scope Audit run 44939561082 passed.",
+      "CI run 44939561094 passed Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate.",
+      "The Test Suite reported 743 passed, 14 skipped, 9 warnings, and 84% line coverage in 94.63 seconds.",
+      "The JUnit artifact identifies three feature/data integration modules, three opt-in DR24 tests, seven production-inference tests, and one opt-in Zubercal test among the 14 skips.",
+      "The specific deterministic Workbench browser test was skipped because ZTF_DR24_BATCH_UI_TEST was not set in the general suite.",
+      "Scientific Validation run 44939561107 passed its contract/registry tests, but all four source-backed evidence jobs were skipped. These skips are not scientific passes.",
+      "The dedicated Workbench workflow previously filtered pull requests to a legacy feature branch. This update changes its pull_request target to main and retains its path filters; a new run is required."
     ]
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED",
     "root_causes": [
-      "The initial PR head did not include the required machine-readable cycle record.",
-      "The subsequent cycle record used metric names change_scope and format_and_lint, which are not present in METRIC_NAMES in src/ztf_classifier/lifecycle.py.",
-      "The subsequent cycle record used regression.status PENDING_CI, which is not an allowed status. The validator accepts PASS, FAIL, BLOCKED, and NOT_VERIFIED."
+      "The earlier cycle record failed lifecycle validation because it contained unregistered metric names and an unsupported regression status. Commit 235c3b93ef08fa81df136adc4a001b488f78df73 corrected the record, and the latest lifecycle gate passed.",
+      "The new Workbench UI regression test was not executed by the general CI suite because it is opt-in.",
+      "The dedicated browser workflow did not trigger for PR #300 because its pull_request target-branch filter pointed to a legacy feature branch rather than main."
     ],
     "unresolved": [
-      "Run the complete gated CI on the corrected PR head.",
-      "Confirm Test Suite, Runtime Smoke Tests, Build & Verify Package, and Dependency Audit complete successfully.",
-      "Review all new test failures without weakening scientific or lifecycle validation criteria."
+      "Verify that the dedicated deterministic Workbench workflow runs on the updated PR head and passes.",
+      "Keep the original v0.2.0 production model recovery and dependent inference tests blocked until the original artifact and trusted manifest are available.",
+      "Keep source-backed scientific validation separate from engineering CI; the corresponding jobs remain skipped."
     ]
   },
   "knowledge_extraction": {
     "status": "VERIFIED",
     "findings": [
-      "Meaningful code and test changes require a corresponding machine-readable cumulative cycle record.",
-      "Lifecycle record field values must match the executable validator contract; contract tests alone do not validate every newly added record unless the record is included in the run.",
-      "A successful scientific contract test job does not imply that source-backed scientific evidence jobs ran.",
+      "A successful aggregate Test Suite does not verify tests that are reported as skipped.",
+      "Opt-in tests require an active workflow trigger and explicit environment configuration.",
+      "A successful scientific contract job does not imply that source-backed acquisition and benchmark evidence jobs ran.",
       "DR24 Workbench defensive handling must not be represented as production classifier validation."
     ]
   },
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "The current PR head has not completed the full gated Test Suite because the lifecycle gate failed.",
-      "Runtime smoke, package build, and dependency audit were skipped on the current pre-fix head.",
-      "Scientific source-backed jobs were skipped and remain outside the evidence established by this PR."
+      "The targeted Playwright test test_workbench_loads_and_exports_multiple_dr24_oids was skipped in CI run 44939561094. The corrected workflow must execute it on the new PR head.",
+      "Seven production-inference tests remain skipped because the original model artifact or shared model inputs are unavailable; tracked in Issue #282.",
+      "Three feature/data integration modules remain skipped because their required frozen feature/raw-data inputs are not available in the CI runner.",
+      "Four source-backed Scientific Validation jobs were skipped; they remain unverified."
     ]
   },
   "decision": "REVISE",
   "knowledge_carried_forward": [
     "Keep DR24 acquisition and Workbench diagnostics separate from production inference.",
-    "Preserve the frozen v0.2.0 model, feature, taxonomy, and acceptance contracts.",
-    "Do not claim scientific validation from skipped source-backed jobs or passing process-contract tests.",
-    "Re-run the complete gated CI after correcting the cycle record."
+    "Preserve the frozen v0.2.0 model, feature, taxonomy, class order, and acceptance criteria.",
+    "Do not claim scientific validation from skipped source-backed jobs or from engineering CI.",
+    "Do not report an opt-in regression test as verified until its dedicated workflow has completed successfully.",
+    "Recover and independently authenticate the original production model before enabling production inference."
   ]
 }
