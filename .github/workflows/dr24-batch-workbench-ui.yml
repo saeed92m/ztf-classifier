@@ -9,6 +9,9 @@ on:
       - .github/workflows/dr24-batch-workbench-ui.yml
       - src/ztf_classifier/web/static/app.js
       - src/ztf_classifier/web/static/index.html
+      - src/ztf_classifier/api/app.py
+      - src/ztf_classifier/application/observations.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
       - tests/integration/test_dr24_batch_workbench_ui.py
   push:
     branches:
@@ -17,6 +20,9 @@ on:
       - .github/workflows/dr24-batch-workbench-ui.yml
       - src/ztf_classifier/web/static/app.js
       - src/ztf_classifier/web/static/index.html
+      - src/ztf_classifier/api/app.py
+      - src/ztf_classifier/application/observations.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
       - tests/integration/test_dr24_batch_workbench_ui.py
   workflow_dispatch:
 
