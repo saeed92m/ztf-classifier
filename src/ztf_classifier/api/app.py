@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import secrets
 from pathlib import Path
 from typing import Any
@@ -60,6 +61,7 @@ from ztf_classifier.results import ScientificResultStore
 from ztf_classifier.validation.gate import evaluate_release_gate
 
 API_VERSION = "v1"
+logger = logging.getLogger(__name__)
 
 
 def _error_response(
@@ -846,6 +848,7 @@ def create_app(
                 status_code=422,
             ) from exc
         except Exception as exc:
+            logger.exception("DR24 batch light-curve acquisition failed")
             raise ApiContractError(
                 "dr24_acquisition_failed",
                 "DR24 light-curve acquisition failed. No alternate source was used.",
@@ -867,6 +870,7 @@ def create_app(
         try:
             return observations.get_dr24_native_lightcurve(objectid)
         except Exception as exc:
+            logger.exception("DR24 single-object light-curve acquisition failed")
             raise ApiContractError(
                 "dr24_acquisition_failed",
                 "DR24 light-curve acquisition failed. No alternate source was used.",
