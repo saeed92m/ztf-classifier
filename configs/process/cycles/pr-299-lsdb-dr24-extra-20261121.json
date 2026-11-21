@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "pr-299-lsdb-dr24-extra-20261121",
+  "objective": "Evaluate the proposed LSDB 0.11.2 upgrade in the optional DR24 acquisition environment without changing the default dependency lock, source adapter, raw-data semantics, feature mapping, or frozen scientific baseline.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "PR #299 pyproject.toml diff",
+      "status": "VERIFIED",
+      "detail": "The PR changes the optional dr24 extra from lsdb==0.10.4 to lsdb==0.11.2. It does not change application source code."
+    },
+    {
+      "source": "requirements.lock on PR #299 head",
+      "status": "VERIFIED",
+      "detail": "The default lock excerpt contains FastAPI and Starlette pins but no LSDB pin. The standard CI dependency installation therefore does not establish compatibility of the optional dr24 extra."
+    },
+    {
+      "source": "CI run 44721804229",
+      "status": "VERIFIED",
+      "detail": "Format and lint passed. The cumulative lifecycle gate failed because the PR had no cycle record. Test Suite, Runtime Smoke, package build and Dependency Audit were skipped."
+    },
+    {
+      "source": "Existing DR24 acquisition contract",
+      "status": "VERIFIED",
+      "detail": "DR24 HATS retrieval is bounded and source-native. Adapter behavior must preserve HMJD, mag, magerr, clrcoeff, catflags, OID, filter, and partition metadata. No feature normalization or model inference is implied by an LSDB upgrade."
+    }
+  ],
+  "baseline": {
+    "revision": "main@b933af4bf91c00d0cdbb9fdebeeec7ae7b799474",
+    "description": "The optional dr24 extra pins LSDB 0.10.4 and s3fs>=2026.9.0,<2027.0.0. The default requirements lock does not include LSDB."
+  },
+  "change": {
+    "scope": "Add only a machine-readable lifecycle record for the proposed optional dependency update. No runtime adapter, data source, model, feature mapping, scientific threshold, benchmark, or release artifact is changed.",
+    "rationale": "The lifecycle gate requires an auditable record. Because LSDB is an optional DR24 dependency and is not in the default lock, dedicated installation and bounded DR24 adapter tests are required."
+  },
+  "expected_improvement": [
+    "Make the optional DR24 dependency update auditable.",
+    "Enable required CI stages to run after lifecycle validation.",
+    "Verify LSDB 0.11.2 installs with the declared s3fs range and supports the bounded HATS catalog operations used by the project."
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "The optional DR24 extra pins LSDB 0.10.4. The standard CI lock does not test the LSDB extra.",
+        "after": "The PR proposes LSDB 0.11.2. Compatibility remains unmeasured until the optional extra is installed and the bounded DR24 catalog/adapter tests run.",
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "before": "The PR had no machine-readable cycle record; the lifecycle gate rejected it.",
+        "after": "A schema 1.1 cycle record is added. The next CI run must validate the record and run available engineering stages.",
+        "status": "NOT_MEASURED"
+      }
+    },
+    "trade_off": "The LSDB update may include upstream fixes, but it changes the HATS access dependency used by the optional DR24 feature. It requires bounded source/adapter evidence and must not trigger broad catalog scans."
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "PR #299 changes only the optional LSDB pin in pyproject.toml.",
+      "The default requirements.lock does not pin LSDB; normal locked CI alone cannot validate the optional DR24 extra.",
+      "CI #44721804229 passed Format and Lint, then stopped at the cycle-record requirement."
+    ],
+    "blocker": "Run CI after the cycle record is added. Install the dr24 extra explicitly, verify pip check and installed LSDB/s3fs versions, run deterministic DR24 adapter contract tests, and run the existing bounded live HATS parity test only in its opt-in workflow."
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The cumulative lifecycle gate rejected the PR because pyproject.toml changed without a JSON cycle record under configs/process/cycles/."
+    ],
+    "unresolved": [
+      "The optional dependency change has not yet been tested in an environment that installs the dr24 extra.",
+      "LSDB 0.11.2 compatibility with the project's HATS catalog schema, objectid index query, and nested lightcurve payload has not yet been measured."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A package's optional extra is not validated when CI installs only the default lock and omits that extra.",
+      "An LSDB upgrade must be tested against the exact catalog operations used by the adapter, not only package installation.",
+      "A successful dependency installation does not establish HATS data parity or scientific validity."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Complete current-head CI after the cycle record is added.",
+      "Install the optional dr24 extra and verify LSDB/s3fs dependency resolution.",
+      "Run deterministic adapter tests covering indexed lookup, nested payload decoding, epoch counts, schema, and provenance.",
+      "Run the pinned live HATS test as a bounded optional integration check.",
+      "Do not claim feature parity, model validity, or scientific acceptance from the dependency upgrade."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "This cycle records the proposal and CI blocker only. It does not accept LSDB 0.11.2.",
+    "Keep DR24 raw acquisition separate from normalized inference.",
+    "Preserve the frozen v0.2.0 model, 42-feature contract, taxonomy, class order, and benchmark.",
+    "Keep PR #299 open until the optional dr24 environment and bounded source adapter tests pass."
+  ]
+}
