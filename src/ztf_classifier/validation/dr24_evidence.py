@@ -26,6 +26,7 @@ from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion, Version
 
 from ztf_classifier.io.dr24_lightcurve import canonical_epoch_json_bytes
+from ztf_classifier.reproducibility.environment import collect_git_state
 
 LEGACY_MANIFEST_SCHEMA_VERSION = "ztf-dr24-evidence-manifest-v1"
 MANIFEST_SCHEMA_VERSION = "ztf-dr24-evidence-manifest-v2"
@@ -716,6 +717,24 @@ def validate_manifest_structure(manifest: Any) -> list[str]:
         errors.append("manifest_returned_missing_oid_partition_invalid")
     if execution["test_result"] != manifest["capture_status"]:
         errors.append("manifest_capture_test_result_mismatch")
+    recorded_sha = execution["software_commit_sha"]
+    actual_head_sha = execution["git_head_sha"]
+    dirty = execution["git_worktree_dirty"]
+    commit_match = execution["git_commit_match"]
+    if (
+        isinstance(recorded_sha, str)
+        and isinstance(actual_head_sha, str)
+        and commit_match is not None
+        and commit_match != (recorded_sha == actual_head_sha)
+    ):
+        errors.append("manifest_git_commit_match_inconsistent")
+    if manifest["capture_status"] == "PASS":
+        if not isinstance(actual_head_sha, str):
+            errors.append("manifest_pass_without_git_head")
+        if dirty is not False:
+            errors.append("manifest_pass_with_dirty_or_unknown_worktree")
+        if commit_match is not True:
+            errors.append("manifest_pass_without_verified_commit_match")
     source_retrieved_at = manifest["source"].get("retrieved_at_utc")
     if source_retrieved_at is not None and not _valid_utc_timestamp(
         source_retrieved_at
@@ -914,6 +933,30 @@ def write_evidence_bundle(
     normalized_sha = _safe_metadata_string(software_commit_sha, pattern=_COMMIT_SHA_RE)
     if normalized_sha is None:
         errors.append("software_commit_sha_invalid")
+
+    git_head_sha: str | None = None
+    git_worktree_dirty: bool | None = None
+    git_commit_match: bool | None = None
+    try:
+        git_state = collect_git_state(source_root)
+        git_head_sha = _safe_metadata_string(
+            git_state.get("git_commit"),
+            pattern=_COMMIT_SHA_RE,
+        )
+        dirty_value = git_state.get("git_dirty")
+        if git_head_sha is None or not isinstance(dirty_value, bool):
+            errors.append("git_state_invalid")
+        else:
+            git_worktree_dirty = dirty_value
+            git_commit_match = (
+                normalized_sha is not None and normalized_sha == git_head_sha
+            )
+            if not git_commit_match:
+                errors.append("software_commit_sha_head_mismatch")
+            if git_worktree_dirty:
+                errors.append("git_worktree_dirty")
+    except (RuntimeError, OSError, ValueError, TypeError):
+        errors.append("git_state_unavailable")
     normalized_python = _safe_metadata_string(
         python_version,
         pattern=re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[A-Za-z0-9.+-]*)$"),
@@ -1172,6 +1215,9 @@ def write_evidence_bundle(
             "started_at_utc": started_value,
             "completed_at_utc": completed_value,
             "software_commit_sha": normalized_sha,
+            "git_head_sha": git_head_sha,
+            "git_worktree_dirty": git_worktree_dirty,
+            "git_commit_match": git_commit_match,
             "python_version": normalized_python,
             "dependency_lockfile": "requirements.lock",
             "dependency_lockfile_path": _DEPENDENCY_PATHS["requirements.lock"],
