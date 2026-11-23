@@ -1158,8 +1158,10 @@ def write_evidence_bundle(
     provenance = safe_payload.get("provenance", {}) if safe_payload else {}
     if not isinstance(provenance, dict):
         provenance = {}
-    returned_oids = _safe_response_oids(safe_payload)
-    missing_oids = [oid for oid in FIXED_OIDS if oid not in returned_oids]
+    response_oids = set(_safe_response_oids(safe_payload))
+    # Manifest OID lists use the fixed policy order, independent of API record order.
+    returned_oids = [oid for oid in FIXED_OIDS if oid in response_oids]
+    missing_oids = [oid for oid in FIXED_OIDS if oid not in response_oids]
     retrieved_at = provenance.get("retrieved_at_utc")
     if not isinstance(retrieved_at, str) or not _valid_utc_timestamp(retrieved_at):
         retrieved_at = None
@@ -1459,7 +1461,7 @@ def validate_evidence_bundle(
                         response_records.setdefault(oid, record)
         returned = _safe_response_oids(parsed_payload)
         missing = [oid for oid in FIXED_OIDS if oid not in returned]
-        if request.get("returned_oids") != returned:
+        if set(request.get("returned_oids", [])) != set(returned):
             errors.append("manifest_returned_oids_do_not_match_api")
         if request.get("missing_oids") != missing:
             errors.append("manifest_missing_oids_do_not_match_api")
