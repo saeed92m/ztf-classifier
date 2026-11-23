@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+import ztf_classifier.validation.dr24_evidence as evidence_module
 from ztf_classifier.io.dr24_lightcurve import canonical_epoch_json_bytes
 from ztf_classifier.validation.dr24_evidence import (
     API_SCHEMA_VERSION,
@@ -24,6 +25,19 @@ from ztf_classifier.validation.dr24_evidence import (
     validate_manifest_structure,
     write_evidence_bundle,
 )
+
+
+@pytest.fixture(autouse=True)
+def _clean_git_state(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        evidence_module,
+        "collect_git_state",
+        lambda _root: {
+            "git_commit": "b" * 40,
+            "git_branch": "test",
+            "git_dirty": False,
+        },
+    )
 
 
 def _dependency_kwargs() -> dict:
@@ -665,3 +679,117 @@ def test_workflow_keeps_setup_failure_and_capture_failure_visible() -> None:
     assert "$RUNNER_TEMP/dr24-evidence-runner-" in workflow
     assert "runner.log" in workflow
     assert ".raw.log" not in workflow.split("path: artifacts/dr24-evidence/", 1)[-1]
+
+
+
+def test_writer_fails_closed_when_git_worktree_is_dirty(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload, expected = _fixture_payload()
+    monkeypatch.setattr(
+        evidence_module,
+        "collect_git_state",
+        lambda _root: {
+            "git_commit": "b" * 40,
+            "git_branch": "test",
+            "git_dirty": True,
+        },
+    )
+    root, errors = write_evidence_bundle(
+        tmp_path / "dirty-bundle",
+        api_response_bytes=json.dumps(payload).encode(),
+        api_status_code=200,
+        software_commit_sha="b" * 40,
+        python_version="3.11.9",
+        **_dependency_kwargs(),
+        execution_started_at_utc="2026-11-23T10:00:00Z",
+        execution_completed_at_utc="2026-11-23T10:00:01Z",
+        test_command="dirty git provenance test",
+        expected_objects=expected,
+    )
+    manifest = json.loads((root / "manifest.json").read_bytes())
+    assert manifest["capture_status"] == "FAIL"
+    assert manifest["execution"]["git_worktree_dirty"] is True
+    assert manifest["execution"]["git_commit_match"] is True
+    assert "git_worktree_dirty" in errors
+
+
+def test_writer_fails_closed_when_supplied_commit_differs_from_head(
+    tmp_path: Path,
+) -> None:
+    payload, expected = _fixture_payload()
+    root, errors = write_evidence_bundle(
+        tmp_path / "mismatch-bundle",
+        api_response_bytes=json.dumps(payload).encode(),
+        api_status_code=200,
+        software_commit_sha="c" * 40,
+        python_version="3.11.9",
+        **_dependency_kwargs(),
+        execution_started_at_utc="2026-11-23T10:00:00Z",
+        execution_completed_at_utc="2026-11-23T10:00:01Z",
+        test_command="git commit mismatch test",
+        expected_objects=expected,
+    )
+    manifest = json.loads((root / "manifest.json").read_bytes())
+    assert manifest["capture_status"] == "FAIL"
+    assert manifest["execution"]["git_head_sha"] == "b" * 40
+    assert manifest["execution"]["git_commit_match"] is False
+    assert "software_commit_sha_head_mismatch" in errors
+
+
+def test_writer_fails_closed_when_git_state_is_unavailable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload, expected = _fixture_payload()
+
+    def unavailable(_root: Path) -> dict:
+        raise RuntimeError("git unavailable")
+
+    monkeypatch.setattr(evidence_module, "collect_git_state", unavailable)
+    root, errors = write_evidence_bundle(
+        tmp_path / "unavailable-git-bundle",
+        api_response_bytes=json.dumps(payload).encode(),
+        api_status_code=200,
+        software_commit_sha="b" * 40,
+        python_version="3.11.9",
+        **_dependency_kwargs(),
+        execution_started_at_utc="2026-11-23T10:00:00Z",
+        execution_completed_at_utc="2026-11-23T10:00:01Z",
+        test_command="git unavailable test",
+        expected_objects=expected,
+    )
+    manifest = json.loads((root / "manifest.json").read_bytes())
+    assert manifest["capture_status"] == "FAIL"
+    assert manifest["execution"]["git_head_sha"] is None
+    assert manifest["execution"]["git_worktree_dirty"] is None
+    assert manifest["execution"]["git_commit_match"] is None
+    assert "git_state_unavailable" in errors
+
+
+def test_manifest_validator_detects_inconsistent_git_commit_attestation() -> None:
+    payload, expected = _fixture_payload()
+    # Reuse the normal writer fixture to obtain a schema-valid PASS manifest.
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as temporary_directory:
+        root, errors = write_evidence_bundle(
+            Path(temporary_directory) / "bundle",
+            api_response_bytes=json.dumps(payload).encode(),
+            api_status_code=200,
+            software_commit_sha="b" * 40,
+            python_version="3.11.9",
+            **_dependency_kwargs(),
+            execution_started_at_utc="2026-11-23T10:00:00Z",
+            execution_completed_at_utc="2026-11-23T10:00:01Z",
+            test_command="git attestation consistency test",
+            expected_objects=expected,
+        )
+        assert errors == []
+        manifest = json.loads((root / "manifest.json").read_bytes())
+
+    manifest["execution"]["software_commit_sha"] = "c" * 40
+    manifest["execution"]["git_commit_match"] = True
+    validation_errors = validate_manifest_structure(manifest)
+    assert "manifest_git_commit_match_inconsistent" in validation_errors
