@@ -793,3 +793,30 @@ def test_manifest_validator_detects_inconsistent_git_commit_attestation() -> Non
     manifest["execution"]["git_commit_match"] = True
     validation_errors = validate_manifest_structure(manifest)
     assert "manifest_git_commit_match_inconsistent" in validation_errors
+
+def test_manifest_oid_order_is_canonical_when_api_records_are_reversed(
+    tmp_path: Path,
+) -> None:
+    payload, expected = _fixture_payload()
+    payload["records"] = list(reversed(payload["records"]))
+    raw = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode()
+
+    root, errors = write_evidence_bundle(
+        tmp_path / "reversed-api-order",
+        api_response_bytes=raw,
+        api_status_code=200,
+        software_commit_sha="b" * 40,
+        python_version="3.11.9",
+        **_dependency_kwargs(),
+        execution_started_at_utc="2026-11-23T10:00:00Z",
+        execution_completed_at_utc="2026-11-23T10:00:01Z",
+        test_command="reversed API record order regression",
+        expected_objects=expected,
+    )
+
+    assert errors == []
+    manifest = json.loads((root / "manifest.json").read_bytes())
+    assert manifest["capture_status"] == "PASS"
+    assert manifest["request"]["returned_oids"] == list(FIXED_OIDS)
+    assert (root / "api_response.json").read_bytes() == raw
+    assert validate_evidence_bundle(root, expected_objects=expected) == []
