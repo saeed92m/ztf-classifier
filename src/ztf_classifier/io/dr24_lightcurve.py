@@ -166,14 +166,23 @@ def _canonical_records(frame: pd.DataFrame) -> tuple[tuple[dict[str, Any], ...],
         {column: _json_scalar(value) for column, value in row.items()}
         for row in frame.loc[:, list(PAYLOAD_COLUMNS)].to_dict(orient="records")
     )
-    encoded = json.dumps(
+    encoded = canonical_epoch_json_bytes(records)
+    return records, hashlib.sha256(encoded).hexdigest()
+
+
+def canonical_epoch_json_bytes(records: Any) -> bytes:
+    """Encode decoded epoch records using the stable DR24 digest contract.
+
+    The digest covers this canonical JSON representation, not original
+    HATS/Parquet object bytes or the enclosing API response.
+    """
+    return json.dumps(
         records,
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=True,
         allow_nan=False,
     ).encode("utf-8")
-    return records, hashlib.sha256(encoded).hexdigest()
 
 
 class DR24LightcurveBackend:
@@ -362,4 +371,5 @@ __all__ = [
     "DR24LightcurveRecord",
     "DR24LightcurveRequest",
     "DR24LightcurveResult",
+    "canonical_epoch_json_bytes",
 ]

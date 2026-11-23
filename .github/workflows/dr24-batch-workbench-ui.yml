@@ -3,19 +3,25 @@ name: DR24 Batch Workbench UI Contract
 on:
   pull_request:
     branches:
-      - feat/dr24-raw-preserving-qc-assessment-20261107
+      - main
     paths:
       - .github/workflows/dr24-batch-workbench-ui.yml
       - src/ztf_classifier/web/static/app.js
       - src/ztf_classifier/web/static/index.html
+      - src/ztf_classifier/api/app.py
+      - src/ztf_classifier/application/observations.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
       - tests/integration/test_dr24_batch_workbench_ui.py
   push:
     branches:
-      - feat/dr24-batch-workbench-ui-20261107
+      - main
     paths:
       - .github/workflows/dr24-batch-workbench-ui.yml
       - src/ztf_classifier/web/static/app.js
       - src/ztf_classifier/web/static/index.html
+      - src/ztf_classifier/api/app.py
+      - src/ztf_classifier/application/observations.py
+      - src/ztf_classifier/io/dr24_lightcurve.py
       - tests/integration/test_dr24_batch_workbench_ui.py
 
 permissions:

@@ -2,6 +2,14 @@
 
 All notable changes to the ZTF Classifier platform are documented here.
 
+## [Unreleased] — 2026-11-22
+
+### Park documentation
+- Added the PR #297 Park demonstrator plan, runbook, status addenda, and historical governance records to the isolated integration branch.
+- Clarified that the DR24 Explorer is a bounded raw-data inspection path and that local integrated-head validation remains pending.
+- Preserved the frozen v0.2.0 baseline and production-model gate; no scientific artifacts or application code changed.
+- Historical PR #297 CI evidence is not evidence for the combined integration commit.
+
 ## [1.0.1] — 2026-10-07
 
 ### Fixed

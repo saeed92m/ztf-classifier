@@ -233,9 +233,14 @@ async function loadObject() {
 }
 async function runAnalysis() {
   const button = document.getElementById("runAnalysisButton");
+  const oid = typeof state.oid === "string" ? state.oid.trim() : "";
+  if (!oid) {
+    setConnectionState("Enter an object ID before analysis", false);
+    return;
+  }
   button.disabled = true; button.textContent = "Running…";
   try {
-    const result = await fetchJson("/v1/objects/" + encodeURIComponent(state.oid) + "/analysis", {
+    const result = await fetchJson("/v1/objects/" + encodeURIComponent(oid) + "/analysis", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ survey: state.survey }),
     });
@@ -642,13 +647,30 @@ async function loadDR24Explorer() {
         renderRecord(record, qcByOid.get(String(record.objectid)))
       );
       document.getElementById("dr24Results").innerHTML = rendered.join("") ||
-        '<section class="panel muted">No catalog rows were returned. No alternate source was used.</section>';
-      const missing = provenance.missing_oids || [];
-      const returned = provenance.returned_oids || records.map(record => record.objectid);
-      document.getElementById("dr24Status").textContent =
-        "Raw DR24 response received. Requested " + objectids.length +
-        " · returned " + returned.length + " · missing " + missing.length +
+        '<section class="panel muted">The DR24 query completed successfully, but no catalog rows were returned. No alternate source was used.</section>';
+      const missing = Array.isArray(provenance.missing_oids)
+        ? provenance.missing_oids : [];
+      const returned = Array.isArray(provenance.returned_oids)
+        ? provenance.returned_oids
+        : records.map(record => record.objectid);
+      const resultSummary =
+        "Requested " + objectids.length +
+        " · returned " + returned.length +
+        " · missing " + missing.length +
         ". No feature generation or inference was performed.";
+
+      if (records.length === 0) {
+        document.getElementById("dr24Status").textContent =
+          "DR24 query completed successfully, but returned no records. " +
+          resultSummary;
+        lastRawExport = null;
+        exportButton.disabled = true;
+        setConnectionState("DR24 query completed · no records");
+        return;
+      }
+
+      document.getElementById("dr24Status").textContent =
+        "Raw DR24 response received. " + resultSummary;
       lastRawExport = {
         export_schema_version: "ztf-dr24-raw-export-v0.2",
         exported_at_utc: new Date().toISOString(),

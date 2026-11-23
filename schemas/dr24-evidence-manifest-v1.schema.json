@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ztf-classifier:schema:ztf-dr24-evidence-manifest-v1",
+  "title": "ZTF DR24 evidence manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "capture_status",
+    "source",
+    "request",
+    "execution",
+    "objects",
+    "files",
+    "validation_errors",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ztf-dr24-evidence-manifest-v1"
+    },
+    "capture_status": {
+      "enum": [
+        "PASS",
+        "FAIL"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "name",
+        "release",
+        "catalog_uri",
+        "original_source_files_available",
+        "original_source_file_sha256",
+        "source_bytes_note",
+        "retrieved_at_utc"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "release": {
+          "const": "DR24"
+        },
+        "catalog_uri": {
+          "type": "string"
+        },
+        "original_source_files_available": {
+          "const": false
+        },
+        "original_source_file_sha256": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "source_bytes_note": {
+          "type": "string"
+        },
+        "retrieved_at_utc": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "request": {
+      "type": "object",
+      "required": [
+        "api_method",
+        "api_path",
+        "query",
+        "requested_oids",
+        "returned_oids",
+        "missing_oids",
+        "http_status_code"
+      ],
+      "additionalProperties": true
+    },
+    "execution": {
+      "type": "object",
+      "required": [
+        "started_at_utc",
+        "completed_at_utc",
+        "software_commit_sha",
+        "python_version",
+        "dependency_lockfile",
+        "dependency_lockfile_sha256",
+        "dr24_dependency_lockfile",
+        "dr24_dependency_lockfile_sha256",
+        "test_command",
+        "test_result",
+        "log_file"
+      ],
+      "properties": {
+        "dependency_lockfile_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "dr24_dependency_lockfile_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "test_result": {
+          "enum": [
+            "PASS",
+            "FAIL"
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "objectid",
+          "filterid",
+          "band",
+          "catalog_epoch_count",
+          "counted_epoch_count",
+          "canonical_epoch_sha256",
+          "canonical_epoch_sha256_covers",
+          "canonical_epoch_file",
+          "canonical_epoch_file_sha256"
+        ],
+        "properties": {
+          "objectid": {
+            "type": "integer"
+          },
+          "filterid": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "band": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "catalog_epoch_count": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "counted_epoch_count": {
+            "type": "integer"
+          },
+          "canonical_epoch_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "canonical_epoch_file_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "files": {
+      "type": "object",
+      "required": [
+        "api_response_file_sha256",
+        "api_response_sha256_covers",
+        "workbench_export_file_sha256",
+        "workbench_export_sha256_covers",
+        "workbench_export_capture_mode",
+        "canonical_epoch_sha256"
+      ],
+      "properties": {
+        "api_response_file_sha256": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "workbench_export_file_sha256": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "canonical_epoch_sha256": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "validation_errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
