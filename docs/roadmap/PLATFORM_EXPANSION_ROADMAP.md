@@ -1,91 +1,108 @@
 # Astronomical Data Analysis & Discovery Platform — Product Roadmap
 
-Status date: 2026-10-11  
-Current immutable software release: v1.0.1  
-Product implementation tracker: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158)  
-Scientific blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170)
+**Status date:** 2026-11-10  
+**Software release:** v1.0.1 (immutable)  
+**Park delivery tracker:** Issue #158  
+**DR24 application integration:** Issue #253  
+**CPVS scientific blocker:** Issue #170
 
-## Guiding constraints
-- Preserve scientific baseline v0.2.0 and model identity baseline_v0.2.
-- Keep the scientific gate fail-closed; missing evidence is never PASS.
-- Build CPU-first, reproducible workflows for modest hardware.
-- Separate classification, uncertainty/calibration, conformal prediction, OOD, anomaly evidence, catalog context, and explainability.
-- Prefer source-backed, versioned adapters over copying datasets into Git.
-- Every meaningful change updates its lifecycle record, tests, failure-prevention knowledge, and affected docs.
+**Current continuity record:** [Handbook v3.0](../HANDBOOK_UPDATED_v3.0.md) · [Project Status & Execution Ledger — 2026-11-07](../PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-07.md) · [Park MVP delivery plan](../PARK_MVP_DELIVERY_PLAN_2026-11-05.md)
 
-## Track A — Scientific integrity and external evidence
+## Evidence refresh — 2026-11-10
 
-### A1. CPVS exact-reproduction investigation — OPEN / UNRESOLVED
-- [ ] Trigger heavy workflow on an intended ci/heavy/* ref and verify source-provenance/scientific-gate-readiness executes.
-- [ ] Re-run CPVS derivation after PR #173's finite/non-zero magnitude correction.
-- [ ] Inspect acquisition report, derived membership, independent VizieR table, and hashes.
-- [x] Verify the robust parser reads all 730,184 published ZTF names without duplicates.
-- [x] Identify and correct the audit's invalid row-ordinal substitution: official CPVS lightcurve membership uses Table2 `Seq` (bytes 24–29), not physical row order.
-- [ ] Rerun derivation and independent membership audit using actual Seq values; previous membership metrics are invalid and superseded.
-- [ ] Explain the residual candidate/published membership difference from valid Seq-based evidence and source-backed selection semantics, not tuned thresholds.
-- [ ] Require exact independent membership audit before claiming exact reconstruction.
-- [ ] Keep Issue #170 open until evidence-based disposition.
+**Park prototype status:** bounded raw ZTF DR24 HATS sample retrieved and packaged for offline inspection. The standalone v0.3 demo contains 30 OID records and 4,046 epochs. All 30 records are g-band records from one HATS field/rcid sample. They are not confirmed unique physical sources. The complete 150-row metadata snapshot file is not in the downloaded evidence bundle.
 
-### A2. Product-level validation — RELEASE-BLOCKING
-- [ ] Complete pinned ZTF DR24 source-backed adapter execution.
-- [ ] Complete frozen historical ALeRCE reference acquisition/execution and immutable manifests.
-- [ ] Complete object-overlap, duplicate, target leakage, temporal leakage, preprocessing, schema, provenance, and failure-code audits.
-- [ ] Generate per-release benchmark evidence and show scope limits/known failure cases to users.
-- [ ] Ensure required scientific gates run rather than skip on release-candidate refs.
+**Current acceptance boundary:** this is a raw-data explorer, not a DR24 classifier. It does not run v0.2.0 inference, derive the frozen 42 features from DR24, or validate DR24 classification/calibration/OOD performance.
 
-## Track B — Desktop application and user experience
+**Latest live UI evidence:** the 30-OID Workbench test predicate was corrected at commit `82f0812d07005dd521361f127f3e9f7d493060af`. Live workflow [#42830475350](https://github.com/saeed92m/ztf-classifier/actions/runs/42830475350) completed successfully. It passed 10-OID repeatability, 30-OID source retrieval in three batches and the 30-OID Workbench/browser walkthrough in three batches; no console/page errors. This is an OID-level UI acceptance on the delivery branch, not proof of 30 distinct physical sources or scientific inference.
 
-### B1. Architecture foundation
-- [ ] Freeze and test Application ↔ Scientific Core boundary.
-- [ ] Define stable application-service, ingestion, provenance, configuration, and durable-state contracts.
-- [ ] Ensure GUI uses the same service contracts as CLI/API and cannot bypass scientific validation.
+**Progress scoring — 2026-11-10:** active project 48%; raw-data demo v0.3 82%; Park MVP acceptance gates 33%. These are equal-weight evidence-completion scores, not time estimates or historical trends. See [Park Pilot Readiness Report](../acceptance/PARK_PILOT_READINESS_2026-11-10.fa.md), [Acceptance Form Reconciliation](../acceptance/PARK_ACCEPTANCE_FORM_RECONCILIATION_2026-11-10.fa.md), [Handbook v3.0](../HANDBOOK_UPDATED_v3.0.md), and [Execution Ledger — 2026-11-10](../PROJECT_STATUS_AND_EXECUTION_LEDGER_2026-11-10.md).
 
-### B2. Scientist-facing workflows
-- [ ] Desktop shell and dashboard.
-- [ ] Data Manager / import / source connection.
-- [ ] Object/source explorer and light-curve visualization.
-- [ ] Analysis workspace with model identity, uncertainty, calibration, OOD and provenance.
-- [ ] Results, visualization, reproducible reports and exports.
-- [ ] Discovery candidate workspace with human review and ranking limitations.
-- [ ] Settings, Help, troubleshooting, diagnostics and logs.
+The immutable v0.2.0 baseline is unchanged. CPVS remains a separate unresolved research workstream. CIN remains proposed and is not on the Park demo critical path.
 
-### B3. Distribution and usability
-- [ ] Windows self-contained installer and first-run smoke test.
-- [ ] macOS application package and smoke test.
-- [ ] Linux AppImage or documented, tested alternative.
-- [ ] Clean-machine installation without Python/pip/Git/terminal for normal use.
-- [ ] CPU-first performance and memory test on modest hardware.
-- [ ] Installer integrity, checksums, release provenance and rollback/uninstall behavior.
+---
 
-## Track C — Scientific capability expansion
-- [ ] Independent labeled benchmark and cross-match evidence.
-- [ ] Model comparison/ensemble only where labels are comparable and splits are leakage-safe.
-- [ ] Dedicated scientific anomaly analysis; do not label OOD as anomaly detection.
-- [ ] Drift monitoring separates live-source changes from frozen historical evaluation.
-- [ ] Multisurvey/light-curve/image/catalog adapters only after licensing, provenance, schema and validation review.
-- [ ] Controlled human feedback; never silently convert review feedback into ground truth.
+## Executive status
+Institutional submission claims are reconciled in the Persian [Park Technical Status Addendum — 2026-11-07](../acceptance/PARK_TECHNICAL_STATUS_ADDENDUM_2026-11-07.fa.md). The original submitted PDFs remain unchanged; use the addendum when presenting current status.
 
-## Track D — Reliability, security, and release engineering
-- [ ] Test fresh installation, upgrade, uninstall, offline/poor-network failure, cache corruption, and missing-data paths.
-- [ ] Test dependency locks, supply-chain/security checks, API auth, data handling, and safe export behavior.
-- [ ] Preserve deterministic reports, input manifests, checksums, model identity, and audit trails.
-- [ ] Every meaningful PR has a validated lifecycle cycle record and regression test.
-- [ ] Every release has complete release notes, release description, checksums, provenance, and scientific/engineering gate evidence.
+The repository has a released Python package, a frozen v0.2.0 scientific baseline, production inference interfaces, an API-backed Workbench, and bounded DR24 research evidence. It does not yet have an accepted DR24-backed 30–50-object end-to-end Park demonstration.
 
-## Milestones and exit criteria
+Do not use an old readiness percentage as a current completion measure. A new percentage requires a defined weighting method and current evidence for every scored item.
 
-| Milestone | Exit criteria |
-|---|---|
-| M0 — Scientific recovery | Required heavy jobs execute; CPVS claim is accurately classified; evidence gaps/root causes are recorded. |
-| M1 — Desktop foundation | Application/service boundary and ingestion/provenance contracts are tested. |
-| M2 — Usable alpha | A non-developer can install, import/connect data, inspect an object/light curve, run analysis, and view evidence. |
-| M3 — Scientific workbench | Results, uncertainty/OOD, discovery review, reproducible reports and exports work end-to-end. |
-| M4 — Cross-platform beta | Windows/macOS/Linux packaging and clean-machine smoke tests pass. |
-| M5 — Scientific product acceptance | Independent benchmark, leakage, provenance, failure analysis and release gates pass for declared scope. |
-| M6 — Stable platform release | All M0–M5 criteria pass, docs/help are complete, release notes and evidence are published. |
+## Non-negotiable constraints
+- Preserve the v0.2.0 model, 42-feature schema, class order, benchmark, historical cutoff, and fail-closed scientific gate.
+- Keep ALeRCE labels as benchmark/reference labels, not independent ground truth.
+- Do not treat OOD as astrophysical anomaly detection.
+- Preserve raw data, source identity, time basis, quality flags, and provenance.
+- Do not download the full multi-terabyte DR24 archive.
+- Skipped scientific tests are NOT VERIFIED, not PASS.
+- No merge, release, or scientific acceptance based only on ordinary CI.
 
-No milestone is complete based on code presence alone. Completion requires measured evidence and recorded acceptance.
+## P0 — Park MVP: DR24-backed exploratory workflow
+Acceptance target: a scientist can run a bounded, reproducible demonstration without terminal use for the normal workflow.
 
-## Evidence update — 2026-10-11
+1. Review the raw DR24 adapter in PR #264. Its current-head CI passed; keep the PR unmerged until review and dependencies are resolved.
+2. Define a curated, evidence-backed OID mapping for the demo sample. Keep ambiguous identities separate.
+3. Complete source-aware acquisition behind the application service boundary. Keep ALeRCE as a separate source; never silently fall back.
+4. Define a versioned DR24 raw/QC contract. Preserve HMJD and native photometry; do not invent color correction or OID grouping.
+5. Complete a 5–10-object smoke test with confirmed source identity, per-object status, hashes, QC, plots, and manifest. Component-level API and browser smoke tests pass, but this full acceptance test remains open.
+6. Integrate source selection, provenance, QC, missing-data reasons, and exports into the Workbench.
+7. Complete a 30–50-object guided demonstration and offline replay.
+8. Generate the Park report from actual run artifacts.
 
-A deeper source-schema review found that the previous audit mapped published ZTF names to parent row ordinals instead of the explicit CPVS Table2 `Seq` field (bytes 24–29), while lightcurve `SourceID` joins by `Seq`. Thus the 725,101 / 16,686 / 5,083 values from heavy run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are invalid and superseded. PR [#176](https://github.com/saeed92m/ztf-classifier/pull/176) now reads actual Seq IDs for the derived candidate universe and published-name join. The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) has completed: 741,786 candidates; 730,184 intersection; 11,602 candidate-only; 0 published-only; 0 duplicate and 0 unmapped published names. This is a valid identifier-space comparison, but exact CPVS reproduction remains **UNRESOLVED** because 11,602 candidates remain unexplained. The flag-zero variant yields 736,225 candidates / 724,712 intersection / 5,472 published-only; a magnitude 20.6 diagnostic loses 18,865 published objects. Neither is an acceptable fix. Current-head CI must pass and the residual selection semantics must be resolved or documented from evidence; do not tune thresholds to force cardinality equality. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true.
+The first DR24 lane is exploratory. It is not the frozen v0.2.0 classifier and must not claim validated DR24 classification performance.
+
+## P1 — Frozen baseline demonstration
+- Verify the local production artifact and its manifest/hashes.
+- Run inference only on inputs that match the frozen 42-feature schema.
+- Preserve class order, cutoff, calibration/conformal/OOD artifact identities.
+- Record all missing artifact or data dependencies as blockers.
+- Do not retrain or alter the baseline.
+
+## P2 — Scientific expansion
+- Build the 100,000-light-curve labeled subset only after source identity, taxonomy, licensing, and provenance gates.
+- Use object-level and temporal leakage-safe splits.
+- Report per-class metrics, calibration, abstention, and external validation only when supported by labeled data.
+- Evaluate anomaly detection separately from OOD.
+- Keep the 150-object v0.2.0 benchmark distinct from the Park dataset.
+
+## Parallel workstreams outside the Park critical path
+### CPVS
+Issue #170 remains unresolved. The previously reported comparison has 11,602 candidate-only IDs and zero published-only IDs. The root cause is not established. Keep all thresholds and scientific criteria unchanged. Do not allow this workstream to block the bounded DR24 application demo.
+
+### Cosmic Intelligence Network
+CIN remains a proposed architecture. It has no verified production contributor network or annotation corpus. Defer runtime implementation until after the Park MVP.
+
+### Distribution
+The published v1.0.1 package is not a self-contained desktop installer. Windows/macOS/Linux installers and clean-machine acceptance remain a separate milestone unless the Park requires them for the initial demonstration.
+
+## Evidence-based milestone gates
+| Gate | Exit evidence | Current status |
+|---|---|---|
+| M0 — frozen baseline | Artifact/schema/class-order integrity | Baseline definition preserved; local artifact verification still required |
+| M1 — raw DR24 adapter | Bounded indexed acquisition, schema and payload hashes | VERIFIED for tested OIDs; PR #264 remains under review |
+| M2 — normalized exploratory data | Versioned QC and identity policy, fixture tests | PARTIAL; descriptive QC/export pass, production selection and identity policy not accepted |
+| M3 — smoke test | 5–10 confirmed sources end-to-end with manifest | PARTIAL; component tests pass, complete acceptance workflow not verified |
+| M4 — guided demo | 30–50 objects, Workbench, exports, offline replay | PARTIAL; 30 OID UI run passed, but source identity and full 30–50 guided acceptance remain open |
+| M5 — scientific model expansion | Labeled dataset and leakage-safe independent evaluation | NOT ACCEPTED |
+| M6 — distribution | Clean-machine platform packaging | NOT ACCEPTED |
+
+No milestone is complete because code exists. Require the stated evidence and recorded acceptance.
+
+
+## Evidence update — 2026-11-07
+
+The following component-level results are verified for the tested OIDs:
+
+- [Direct HATS probe](https://github.com/saeed92m/ztf-classifier/actions/runs/42061697065): 3 OIDs and 417 epochs; catalog `nepochs` matched returned rows; artifact 13432467426.
+- [Repeatability evidence, PR #269](https://github.com/saeed92m/ztf-classifier/pull/269): two four-OID runs, 626 epochs, matching epoch CSV and summary JSON hashes.
+- [FastAPI-to-HATS smoke](https://github.com/saeed92m/ztf-classifier/actions/runs/42063653144): one live test passed in 70.05 seconds; artifact 13430999878.
+- [API failure contracts](https://github.com/saeed92m/ztf-classifier/actions/runs/42065074402): passed.
+- [Workbench browser smoke](https://github.com/saeed92m/ztf-classifier/actions/runs/42275261463): one test passed in 86.93 seconds; seven OIDs, 2,183 epochs; artifact 13532578108.
+
+These tests establish bounded acquisition, API connectivity, raw-data display, descriptive QC and JSON export for their tested cases. They do not establish physical-source identity, cross-OID grouping, production QC selection, HMJD/photometric transformations, DR24 features, classifier inference or scientific validity.
+
+The seven-OID and 30-OID browser tests are not a 5–10 confirmed-physical-source end-to-end acceptance test. The 30-OID OID-level UI is now verified, but the 30–50 physical-source guided demonstration remains PARTIAL until identity/cross-match and a broader user session are accepted. Keep the next milestone focused on a complete, replayable 5–10 confirmed-source run.
+
+## Next concrete action
+Complete PR #264 review and build the smallest end-to-end DR24 exploratory path. The first measurable proof is the 5–10-object smoke test. Do not start with bulk data acquisition, CIN runtime, or a new model.

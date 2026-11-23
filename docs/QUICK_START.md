@@ -1,102 +1,42 @@
 # ZTF Classifier — Quick Start
 
 ## Goal
+Run the released v1.0.1 production inference path with a trusted, compatible v0.2.0 model artifact. This workflow does not acquire or normalize native DR24 light curves.
 
-Run the released v1.0.0 production inference path without downloading the complete ZTF archive.
-
-## 1. Create an environment
-
+## 1. Environment
 Python 3.11 is required.
 
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install ztf-classifier==1.0.0
-```
+    python3.11 -m venv .venv
+    source .venv/bin/activate
+    python -m pip install --upgrade pip
+    python -m pip install ztf-classifier==1.0.1
+    ztf-classifier --help
 
-Verify the installation:
+## 2. Prepare a compatible input
+Production inference expects a Parquet dataset that follows the frozen final_feature_set_v0.2 contract. The contract has 42 features. Do not rename, reorder, synthesize, or substitute features.
 
-```bash
-ztf-classifier --help
-```
+The model artifact is not included in the Python wheel or source distribution. Obtain it through the project's controlled artifact workflow and verify its manifest and hashes before use.
 
-## 2. Prepare a Parquet input
+## 3. Run inference
+Single prediction:
 
-Production inference expects a Parquet dataset containing the frozen v0.2 feature schema.
+    ztf-classifier predict --artifact PATH_TO_ARTIFACT --input INPUT.parquet --output OUTPUT.json
 
-For the baseline model, the feature contract is the immutable 42-feature definition. Do not rename, reorder, synthesize, or silently substitute features.
+Batch prediction:
 
-## 3. Run single-object/batch-style JSON inference
+    ztf-classifier batch --artifact PATH_TO_ARTIFACT --input INPUT.parquet --output OUTPUT.parquet
 
-Use a trusted production artifact:
+The alternative registry mode requires both --registry-dir and --model-version baseline_v0.2. Do not combine artifact and registry selection modes.
 
-```bash
-ztf-classifier predict \
-  --artifact PATH_TO_ARTIFACT \
-  --input INPUT.parquet \
-  --output OUTPUT.json
-```
+## 4. Interpret results
+Keep predicted class/probabilities, calibration, conformal prediction sets, and OOD diagnostics separate. OOD is not an astrophysical anomaly. A high OOD score alone is not evidence of a new astrophysical object.
 
-Or use the explicit registry contract:
+ALeRCE labels are benchmark/reference labels, not independent ground truth.
 
-```bash
-ztf-classifier predict \
-  --registry-dir PATH_TO_REGISTRY \
-  --model-version baseline_v0.2 \
-  --input INPUT.parquet \
-  --output OUTPUT.json
-```
-
-Never provide both model-selection modes.
-
-## 4. Run Parquet batch inference
-
-```bash
-ztf-classifier batch \
-  --artifact PATH_TO_ARTIFACT \
-  --input INPUT.parquet \
-  --output OUTPUT.parquet
-```
-
-The output contains prediction columns and versioned metadata for the model, feature schema, artifact, software, calibration, conformal diagnostics, and OOD diagnostics.
-
-Existing output files are intentionally not overwritten.
-
-## 5. Interpret the result correctly
-
-The production result has separate channels:
-
-- classification/predicted class;
-- calibrated probabilities;
-- conformal prediction sets;
-- OOD diagnostics.
-
-OOD is not the same as an astrophysical anomaly. A scientifically anomalous-object claim requires dedicated scientific-anomaly evidence and is not implied by a high OOD score.
+## 5. DR24 status
+The native DR24 acquisition adapter is under review in PR #264. It is a raw-data interface, not an accepted normalized DR24-to-feature-to-inference path. Do not send DR24 native measurements into the frozen v0.2.0 model.
 
 ## 6. Reproducibility
+Retain input files and hashes, object IDs, source/version, feature schema, model version, artifact hash, software version, run configuration, outputs, warnings, and validation status.
 
-For a reproducible analysis, retain:
-
-- input/source identity;
-- retrieval/version information;
-- object identifiers;
-- feature-schema identity;
-- model version;
-- artifact hash;
-- software version;
-- output artifact;
-- relevant provenance/evidence manifests.
-
-The immutable scientific baseline is v0.2.0 and the production model identity is baseline_v0.2. The software release is v1.0.0.
-
-## 7. Continue to the full workflows
-
-- Installation: `docs/INSTALLATION.md`
-- User workflow: `docs/USER_GUIDE.md`
-- Scientific methodology: `docs/SCIENTIFIC_METHODOLOGY.md`
-- API v1: `docs/api/API_V1.md`
-- Data limitations: `docs/DATA_CARD.md`
-- Model limitations: `docs/MODEL_CARD.md`
-
-The platform is designed for targeted source acquisition and scientific analysis; a full ZTF archive download is not required for the baseline workflow.
+The scientific baseline is v0.2.0. The software release is v1.0.1.
