@@ -1,0 +1,78 @@
+name: DR24 Fixed-OID Evidence Capture
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dr24-evidence-capture-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Prepare artifact directories
+        run: mkdir -p artifacts/dr24-evidence/bundle
+      - name: Install locked project and DR24 dependencies
+        id: install
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -r requirements.lock
+          python -m pip install -r requirements-dr24.lock
+          python -m pip install --no-deps -e .
+          python -m pip check
+          python - <<'PY'
+          from ztf_classifier.validation.dr24_evidence import check_dependency_compatibility
+
+          errors, versions = check_dependency_compatibility()
+          print({"resolved_dependency_count": len(versions), "errors": errors})
+          if errors:
+              raise SystemExit(1)
+          PY
+      - name: Record dependency setup failure
+        if: ${{ always() && steps.install.outcome == 'failure' }}
+        run: >-
+          printf '%s\n' 'Pinned dependency installation failed; inspect the GitHub Actions job log.'
+          > artifacts/dr24-evidence/setup-failure.txt
+      - name: Capture and validate fixed-OID evidence (12 minute limit)
+        timeout-minutes: 15
+        shell: bash
+        run: |
+          set -uo pipefail
+          raw_log="$RUNNER_TEMP/dr24-evidence-runner-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.raw.log"
+          safe_log="$GITHUB_WORKSPACE/artifacts/dr24-evidence/runner.log"
+          timeout --signal=TERM --kill-after=30s 12m \
+            python scripts/capture_dr24_evidence.py \
+              --output-dir artifacts/dr24-evidence/bundle \
+              --software-commit "$GITHUB_SHA" \
+            > "$raw_log" 2>&1
+          capture_status=$?
+          python -c 'import sys; from pathlib import Path; from ztf_classifier.validation.dr24_evidence import redact_log_text; Path(sys.argv[2]).write_text(redact_log_text(Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")), encoding="utf-8")' \
+            "$raw_log" "$safe_log"
+          redact_status=$?
+          rm -f "$raw_log"
+          if [[ "$capture_status" -ne 0 ]]; then
+            exit "$capture_status"
+          fi
+          exit "$redact_status"
+      - name: Upload evidence and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: dr24-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/dr24-evidence/
+          if-no-files-found: warn
+          retention-days: 30
