@@ -17,8 +17,8 @@ The v0.2 core pipeline includes:
 * conformal prediction;
 * out-of-distribution (OOD) scoring;
 * historical and temporal evaluation;
-* persisted production model artifacts;
-* production inference;
+* production inference interfaces and artifact-loading contracts;
+* frozen production model artifact recovery and authentication (currently blocked; see Issue #282);
 * single-object and batch inference interfaces.
 
 The current benchmark contains **150 ZTF objects across 15 ALeRCE classes**. ALeRCE classifications are used as benchmark labels and are not treated as independent ground truth.
@@ -115,20 +115,11 @@ reports/tables/final_feature_set_v0.2.parquet
 
 ## Model and calibration
 
-The production model uses the frozen v0.2 model configuration and persists the complete inference artifact.
+The frozen v0.2.0 production model is `baseline_v0.2` and uses the 42-feature contract. Its original production artifact is **not currently present in the accessible repository or verified release assets**. Recovery and independent authentication remain open in [Issue #282](https://github.com/saeed92m/ztf-classifier/issues/282).
 
-The artifact includes:
+The expected production artifact contract includes the model configuration, trained classifier, preprocessing state, feature schema, calibration, provenance, and the applicable conformal/OOD components. The separate schema-1.1 lab-smoke artifact is not an acceptable substitute for the frozen schema-1.0 production artifact.
 
-* model configuration;
-* trained classifier;
-* preprocessing state;
-* feature schema;
-* probability calibration;
-* provenance information;
-* conformal prediction diagnostics;
-* OOD diagnostics and production OOD model.
-
-The current artifact schema is **1.1** and remains backward-compatible with schema **1.0** artifacts.
+Until the original artifact is recovered and independently authenticated, production-model availability is **UNKNOWN / BLOCKED**. Do not interpret the interface or contract tests as proof that the production weights are available.
 
 ## Conformal prediction
 
@@ -165,9 +156,9 @@ The OOD feature contract contains **42 features**, matching the frozen model fea
 
 ## Production inference
 
-The production inference layer loads a persisted artifact and performs inference using the stored model, preprocessing, calibration, conformal diagnostics, and OOD configuration.
+The software contains production-inference interfaces that load a persisted artifact and preserve model and diagnostic metadata. However, the original frozen `baseline_v0.2` artifact is not currently available in the accessible repository sources and remains under recovery (Issue #282).
 
-Production outputs preserve model and diagnostic metadata so that downstream consumers can distinguish the exact artifact contract used for inference.
+The CLI examples below describe the supported interface. They are executable only when the user supplies an independently authenticated, compatible artifact or registry. The repository does not currently provide a verified copy of the original production weights.
 
 ## Command-line interface
 
@@ -285,24 +276,13 @@ The repository contains reproducibility, provenance, checksum validation, ingest
 
 ## Validation status
 
-The production inference and batch-output contracts are covered by focused automated tests.
+Automated tests cover inference interfaces, artifact contracts, and batch-output behavior. A test that uses fixtures or a lab-smoke artifact does not authenticate the frozen production weights.
 
-Current validated areas include:
+The latest accessible artifact audit and recovery record identify the original `baseline_v0.2` production artifact as missing or incomplete. Production inference tests that require those original weights or shared scientific inputs cannot be treated as passed when they are skipped. See [Issue #282](https://github.com/saeed92m/ztf-classifier/issues/282) for the required chain-of-custody and acceptance evidence.
 
-* model artifact loading and schema compatibility;
-* calibration;
-* conformal diagnostics;
-* OOD diagnostics;
-* production inference;
-* CLI prediction output;
-* batch Parquet output;
-* batch metadata contract;
-* batch schema and flag validation;
-* rejection of empty batch outputs.
+The full test suite is an engineering release gate. CI installation, lint, tests, package builds, and security checks do not replace source-backed scientific validation or production-artifact authentication.
 
-The full test suite is the release gate. CI runs installation, dependency verification, Ruff, the complete pytest suite, and package import verification. Registry-backed prediction and batch paths are covered by real subprocess E2E tests.
-
-The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the current software release is `v1.0.1`.
+The immutable scientific baseline is tag `v0.2.0`; the intended production model version remains `baseline_v0.2`. Its original artifact remains **UNKNOWN / BLOCKED** until recovery and independent authentication succeed. The software release `v1.0.1` does not prove that the model artifact is present.
 
 ## Repository structure
 
