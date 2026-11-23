@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "park-dr24-workbench-hardening-20261121",
+  "objective": "Harden DR24 acquisition error reporting, empty and partial batch Workbench handling, export protection, and model dependency provenance while preserving the frozen scientific baseline. Ensure the deterministic Workbench regression runs on pull requests targeting main.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "PR #300 implementation commit 289d8b6f2c70a8926590a5755afdd5dfb6b0dddc",
+      "status": "IMPLEMENTED",
+      "detail": "Adds DR24 acquisition exception logging, defensive handling for empty/partial/missing-OID batch responses, export protection, regression assertions, and installed dependency provenance checks."
+    },
+    {
+      "source": "PR #300 lifecycle correction commit 235c3b93ef08fa81df136adc4a001b488f78df73",
+      "status": "VERIFIED",
+      "detail": "Corrected the cycle record to use registered metric names and allowed regression status values. The lifecycle validation passed."
+    },
+    {
+      "source": "PR #300 CI workflow correction commit fff61f9d9fb13fd9b23bf1118a68db1cc739bb6a",
+      "status": "VERIFIED",
+      "detail": "Changed the DR24 batch Workbench workflow trigger from a legacy feature branch to main. The targeted Playwright regression ran and passed on this PR head."
+    }
+  ],
+  "baseline": {
+    "revision": "b933af4bf91c00d0cdbb9fdebeeec7ae7b799474",
+    "description": "Canonical main branch before PR #300. This scoped engineering change does not modify the frozen v0.2.0 model, feature definitions, class order, taxonomy, or scientific acceptance criteria."
+  },
+  "expected_improvement": [
+    "Record DR24 acquisition exceptions for diagnosis.",
+    "Handle empty, partial, and missing-OID batch responses without misleading UI state.",
+    "Prevent JSON export when no usable observations are present.",
+    "Compare model dependency provenance with installed environment versions.",
+    "Execute the deterministic Playwright Workbench regression test for pull requests targeting main."
+  ],
+  "measurement": {
+    "metrics": {
+      "robustness": {
+        "before": "The partial/empty Workbench regression existed as an opt-in test but was not triggered for PR #300 because the workflow filtered pull requests to a legacy branch.",
+        "after": "The workflow now targets main. The deterministic Playwright test ran on the updated PR head and verified the empty/partial response and export safeguards.",
+        "evidence": "Workflow run 44943121014 passed: 1 test in 5.70 seconds. The general Test Suite also passed 743 tests; the opt-in browser test remains intentionally skipped there and is covered by the dedicated workflow."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "This engineering change does not establish source-backed scientific validation, original model authentication, DR24 feature parity, physical-source identity, calibrated prediction behavior, or full-cohort Park acceptance."
+      }
+    },
+    "trade_off": "Defensive UI behavior and provenance traceability improve. The DR24 Explorer remains separate from production inference. The dedicated offline browser workflow does not depend on the availability of the public HATS service."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "CI run 44943121033 passed all eight jobs: Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate.",
+      "The Test Suite reported 743 passed, 14 skipped, 9 warnings, 84% line coverage, and 80.10 seconds runtime.",
+      "The Test Suite JUnit report records 14 skips: three raw/feature integration modules without their required local artifacts/cache; three live-source tests not enabled in this general offline suite; seven production-inference tests without the original model/shared inputs; and the deterministic UI test, which is covered by its dedicated workflow.",
+      "The dedicated deterministic Workbench workflow 44943121014 passed 1 test in 5.70 seconds on commit fff61f9d9fb13fd9b23bf1118a68db1cc739bb6a.",
+      "Runtime Smoke Tests passed for CLI, API, and worker entry points.",
+      "Build & Verify Package passed, including installation of the built wheel and package import verification.",
+      "Dependency Audit passed.",
+      "CodeQL run 44943121085 passed.",
+      "Product Scope Audit run 44943121105 passed.",
+      "Scientific Validation run 44943121078 passed its benchmark/lifecycle contract job. All four source-backed evidence jobs were skipped; those skips are not scientific passes."
+    ]
+  },
+  "failure_analysis": {
+    "status": "ROOT_CAUSE_IDENTIFIED",
+    "root_causes": [
+      "The first cycle record used metric names and a regression status outside the lifecycle contract. Commit 235c3b93ef08fa81df136adc4a001b488f78df73 corrected the record.",
+      "The target Workbench regression was opt-in and was not executed by the general Test Suite.",
+      "The dedicated browser workflow filtered pull requests to a legacy branch and did not run for a PR targeting main. Commit fff61f9d9fb13fd9b23bf1118a68db1cc739bb6a corrected the trigger; the targeted test then passed."
+    ],
+    "unresolved": [
+      "Seven production-inference tests remain skipped because the original production model artifact or shared model inputs are unavailable; tracked in Issue #282.",
+      "Three feature/raw-data integration modules remain skipped because the CI runner lacks the required raw detections or feature artifacts.",
+      "Four source-backed Scientific Validation jobs remain skipped. Scientific validity is therefore not measured by this cycle."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "A successful aggregate Test Suite does not verify tests that are reported as skipped.",
+      "Opt-in tests require both an active workflow trigger and explicit environment configuration.",
+      "A deterministic browser regression should not depend on the public survey service.",
+      "Live-source validation must be separate and explicitly enabled.",
+      "A successful scientific contract job does not imply that source-backed acquisition and benchmark evidence jobs ran.",
+      "DR24 Workbench defensive handling must not be represented as production classifier validation."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "ACCEPT applies only to the scoped PR #300 engineering hardening and its verified regression coverage.",
+    "This ACCEPT decision does not accept the Park demonstrator, the full Park MVP, or any scientific validation claim.",
+    "Keep DR24 acquisition and Workbench diagnostics separate from production inference.",
+    "Preserve the frozen v0.2.0 model, feature, taxonomy, class order, and acceptance criteria.",
+    "Do not claim scientific validation from skipped source-backed jobs or from engineering CI.",
+    "Recover and independently authenticate the original production model before enabling production inference."
+  ]
+}

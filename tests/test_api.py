@@ -779,13 +779,12 @@ def test_dr24_batch_endpoint_preserves_raw_records_and_missing_oids() -> None:
             return {
                 "schema_version": "ztf-dr24-native-lightcurve-v1",
                 "records": [
-                    {"objectid": oid, "epochs": [{"hmjd": 60000.1}]}
-                    for oid in request.objectids
+                    {"objectid": 123456, "epochs": [{"hmjd": 60000.1}]}
                 ],
                 "provenance": {
                     "requested_oids": list(request.objectids),
-                    "returned_oids": list(request.objectids),
-                    "missing_oids": [999],
+                    "returned_oids": [123456],
+                    "missing_oids": [789],
                 },
             }
 
@@ -804,9 +803,11 @@ def test_dr24_batch_endpoint_preserves_raw_records_and_missing_oids() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert observation_service.calls == [(123456, 789)]
-    assert [record["objectid"] for record in payload["records"]] == [123456, 789]
+    assert [record["objectid"] for record in payload["records"]] == [123456]
     assert payload["records"][0]["epochs"][0]["hmjd"] == 60000.1
-    assert payload["provenance"]["missing_oids"] == [999]
+    assert payload["provenance"]["requested_oids"] == [123456, 789]
+    assert payload["provenance"]["returned_oids"] == [123456]
+    assert payload["provenance"]["missing_oids"] == [789]
 
 
 def test_dr24_batch_endpoint_rejects_invalid_request_shapes() -> None:
