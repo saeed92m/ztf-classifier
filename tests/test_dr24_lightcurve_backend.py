@@ -235,3 +235,97 @@ def test_backend_rejects_invalid_catalog_identity_metadata(
 def test_returned_objectid_rejects_lossy_or_invalid_values(value: object) -> None:
     with pytest.raises(DR24AcquisitionError, match="invalid objectid"):
         _positive_objectid(value)
+
+
+def test_backend_accepts_empty_result_with_valid_objectid_schema() -> None:
+    class Collection:
+        all_indexes: ClassVar[dict[str, object]] = {"objectid": object()}
+
+    class Query:
+        def compute(self) -> pd.DataFrame:
+            return pd.DataFrame(
+                columns=[
+                    "objectid",
+                    "filterid",
+                    "fieldid",
+                    "rcid",
+                    "objra",
+                    "objdec",
+                    "nepochs",
+                    "lightcurve",
+                ]
+            )
+
+    class Catalog:
+        all_columns: ClassVar[set[str]] = {
+            "objectid",
+            "filterid",
+            "fieldid",
+            "rcid",
+            "objra",
+            "objdec",
+            "nepochs",
+            "lightcurve",
+        }
+        hc_collection: ClassVar[Collection] = Collection()
+
+        def id_search(self, *, values: dict[str, list[int]]) -> Query:
+            assert values == {"objectid": [123, 456]}
+            return Query()
+
+    result = DR24LightcurveBackend(
+        lambda *_args, **_kwargs: Catalog()
+    ).acquire(DR24LightcurveRequest((123, 456)))
+
+    assert result.records == ()
+    assert result.provenance["requested_oids"] == [123, 456]
+    assert result.provenance["returned_oids"] == []
+    assert result.provenance["missing_oids"] == [123, 456]
+    assert result.provenance["epoch_count"] == 0
+    assert result.provenance["payload_sha256"] == {}
+
+
+def test_backend_rejects_empty_result_without_objectid_schema() -> None:
+    class Collection:
+        all_indexes: ClassVar[dict[str, object]] = {"objectid": object()}
+
+    class Query:
+        def compute(self) -> pd.DataFrame:
+            return pd.DataFrame(
+                columns=[
+                    "filterid",
+                    "fieldid",
+                    "rcid",
+                    "objra",
+                    "objdec",
+                    "nepochs",
+                    "lightcurve",
+                ]
+            )
+
+    class Catalog:
+        all_columns: ClassVar[set[str]] = {
+            "objectid",
+            "filterid",
+            "fieldid",
+            "rcid",
+            "objra",
+            "objdec",
+            "nepochs",
+            "lightcurve",
+        }
+        hc_collection: ClassVar[Collection] = Collection()
+
+        def id_search(self, *, values: dict[str, list[int]]) -> Query:
+            assert values == {"objectid": [123]}
+            return Query()
+
+    backend = DR24LightcurveBackend(
+        lambda *_args, **_kwargs: Catalog()
+    )
+
+    with pytest.raises(
+        DR24AcquisitionError,
+        match="query result has no objectid column",
+    ):
+        backend.acquire(DR24LightcurveRequest((123,)))
