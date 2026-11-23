@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -15,12 +16,38 @@ from ztf_classifier.validation.dr24_evidence import (
     FIXED_OIDS,
     PINNED_OBJECTS,
     SOURCE_NAME,
+    check_dependency_compatibility,
+    redact_log_text,
     sha256_bytes,
     validate_api_payload,
     validate_evidence_bundle,
     validate_manifest_structure,
     write_evidence_bundle,
 )
+
+
+def _dependency_kwargs() -> dict:
+    repository = Path(__file__).parents[1]
+    pin_map: dict[str, str] = {}
+    for filename in ("requirements.lock", "requirements-dr24.lock"):
+        for line in (repository / filename).read_text(encoding="utf-8").splitlines():
+            entry = line.partition("#")[0].strip()
+            if "==" not in entry:
+                continue
+            name, version = entry.split("==", 1)
+            canonical_name = re.sub(r"[-_.]+", "-", name).lower()
+            if canonical_name in pin_map:
+                assert pin_map[canonical_name] == version
+            pin_map[canonical_name] = version
+    return {
+        "dependency_lock_sha256": hashlib.sha256(
+            (repository / "requirements.lock").read_bytes()
+        ).hexdigest(),
+        "dr24_dependency_lock_sha256": hashlib.sha256(
+            (repository / "requirements-dr24.lock").read_bytes()
+        ).hexdigest(),
+        "resolved_dependencies": pin_map,
+    }
 
 
 def _fixture_payload() -> tuple[dict, dict[int, dict]]:
@@ -189,8 +216,7 @@ def test_canonical_digest_and_exact_file_byte_digests(tmp_path: Path) -> None:
         api_status_code=200,
         software_commit_sha="b" * 40,
         python_version="3.11.9",
-        dependency_lock_sha256="c" * 64,
-        dr24_dependency_lock_sha256="d" * 64,
+        **_dependency_kwargs(),
         execution_started_at_utc="2026-11-23T10:00:00Z",
         execution_completed_at_utc="2026-11-23T10:00:01Z",
         test_command="offline fixture",
@@ -213,7 +239,7 @@ def test_canonical_digest_and_exact_file_byte_digests(tmp_path: Path) -> None:
     assert manifest["source"]["original_source_file_sha256"] is None
     export = json.loads((root / "workbench_export.json").read_bytes())
     assert export["source_payload"] == payload
-    assert validate_evidence_bundle(root) == []
+    assert validate_evidence_bundle(root, expected_objects=expected) == []
     assert validate_manifest_structure(manifest) == []
 
 
@@ -232,8 +258,7 @@ def test_rejects_workbench_export_from_a_different_response(tmp_path: Path) -> N
         api_status_code=200,
         software_commit_sha="b" * 40,
         python_version="3.11.9",
-        dependency_lock_sha256="c" * 64,
-        dr24_dependency_lock_sha256="d" * 64,
+        **_dependency_kwargs(),
         execution_started_at_utc="2026-11-23T10:00:00Z",
         execution_completed_at_utc="2026-11-23T10:00:01Z",
         test_command="offline fixture",
@@ -252,8 +277,7 @@ def test_malformed_api_bytes_produce_fail_manifest_without_fake_payload(
         api_status_code=502,
         software_commit_sha="b" * 40,
         python_version="3.11.9",
-        dependency_lock_sha256="c" * 64,
-        dr24_dependency_lock_sha256="d" * 64,
+        **_dependency_kwargs(),
         execution_started_at_utc="2026-11-23T10:00:00Z",
         execution_completed_at_utc="2026-11-23T10:00:01Z",
         test_command="offline fixture",
@@ -267,7 +291,7 @@ def test_malformed_api_bytes_produce_fail_manifest_without_fake_payload(
 
 def test_manifest_structure_rejects_missing_required_fields() -> None:
     assert validate_manifest_structure({}) == [
-        "missing_manifest_fields:capture_status,execution,files,limitations,objects,request,schema_version,source"
+        "missing_manifest_fields:capture_status,execution,files,limitations,objects,request,schema_version,source,validation_errors"
     ]
 
 
@@ -279,8 +303,7 @@ def test_detects_modified_bundle_file_and_manifest(tmp_path: Path) -> None:
         api_status_code=200,
         software_commit_sha="b" * 40,
         python_version="3.11.9",
-        dependency_lock_sha256="c" * 64,
-        dr24_dependency_lock_sha256="d" * 64,
+        **_dependency_kwargs(),
         execution_started_at_utc="2026-11-23T10:00:00Z",
         execution_completed_at_utc="2026-11-23T10:00:01Z",
         test_command="offline fixture",
@@ -290,7 +313,7 @@ def test_detects_modified_bundle_file_and_manifest(tmp_path: Path) -> None:
         stream.write(b" ")
     assert (
         "bundle_file_checksum_mismatch:api_response.json"
-        in validate_evidence_bundle(root)
+        in validate_evidence_bundle(root, expected_objects=expected)
     )
 
 
@@ -320,8 +343,7 @@ def test_reproducible_bundle_structure_with_fixed_execution_metadata(
             api_status_code=200,
             software_commit_sha="b" * 40,
             python_version="3.11.9",
-            dependency_lock_sha256="c" * 64,
-            dr24_dependency_lock_sha256="d" * 64,
+            **_dependency_kwargs(),
             execution_started_at_utc="2026-11-23T10:00:00Z",
             execution_completed_at_utc="2026-11-23T10:00:01Z",
             test_command="offline fixture",
@@ -338,3 +360,308 @@ def test_reproducible_bundle_structure_with_fixed_execution_metadata(
         if p.is_file()
     }
     assert first == second
+
+
+@pytest.mark.parametrize(
+    "epoch_value, expected_error",
+    [
+        ("missing", "missing_record_fields:epochs"),
+        (None, f"epochs_not_array:{FIXED_OIDS[0]}"),
+        (7, f"epochs_not_array:{FIXED_OIDS[0]}"),
+        ("epochs", f"epochs_not_array:{FIXED_OIDS[0]}"),
+        ({"unexpected": []}, f"epochs_not_array:{FIXED_OIDS[0]}"),
+        ([], f"catalog_epoch_count_mismatch:{FIXED_OIDS[0]}"),
+        ([None], f"epoch_schema_mismatch:{FIXED_OIDS[0]}"),
+    ],
+)
+def test_malformed_epoch_containers_fail_without_raising(
+    epoch_value: object, expected_error: str
+) -> None:
+    payload, expected = _fixture_payload()
+    if epoch_value == "missing":
+        del payload["records"][0]["epochs"]
+    else:
+        payload["records"][0]["epochs"] = epoch_value
+    errors, _ = validate_api_payload(payload, expected_objects=expected)
+    assert any(expected_error in error for error in errors)
+
+
+def test_nullable_color_coefficient_is_preserved_as_valid_source_data() -> None:
+    payload, expected = _fixture_payload()
+    payload["records"][0]["epochs"][0]["clrcoeff"] = None
+    for record in payload["records"]:
+        digest = sha256_bytes(canonical_epoch_json_bytes(record["epochs"]))
+        record["payload_sha256"] = digest
+        expected[record["objectid"]]["canonical_epoch_sha256"] = digest
+        payload["provenance"]["payload_sha256"][str(record["objectid"])] = digest
+    errors, _ = validate_api_payload(payload, expected_objects=expected)
+    assert errors == []
+
+
+def test_dependency_compatibility_matches_both_locks_and_project_constraints() -> None:
+    versions = _dependency_kwargs()["resolved_dependencies"]
+    errors, normalized = check_dependency_compatibility(versions)
+    assert errors == []
+    assert normalized["pandas"] == "2.3.3"
+    assert normalized["nested-pandas"] == "0.6.10"
+    assert normalized["jsonschema"] == "4.26.0"
+
+    mismatched = dict(versions)
+    mismatched["pandas"] = "3.0.6"
+    errors, _ = check_dependency_compatibility(mismatched)
+    assert "runtime_lock_version_mismatch:pandas" in errors
+    assert "runtime_violates_project_constraint:pandas" in errors
+    assert "nested_pandas_runtime_constraint_mismatch" in errors
+
+
+def test_manifest_schema_is_authoritative_versioned_and_fail_closed(
+    tmp_path: Path,
+) -> None:
+    payload, expected = _fixture_payload()
+    root, errors = write_evidence_bundle(
+        tmp_path / "bundle",
+        api_response_bytes=json.dumps(payload).encode(),
+        api_status_code=200,
+        software_commit_sha="b" * 40,
+        python_version="3.11.9",
+        **_dependency_kwargs(),
+        execution_started_at_utc="2026-11-23T10:00:00Z",
+        execution_completed_at_utc="2026-11-23T10:00:01Z",
+        test_command="offline schema test",
+        expected_objects=expected,
+    )
+    assert errors == []
+    manifest = json.loads((root / "manifest.json").read_bytes())
+    assert manifest["schema_version"] == "ztf-dr24-evidence-manifest-v2"
+    assert validate_manifest_structure(manifest) == []
+
+    invalid_revision = json.loads(json.dumps(manifest))
+    invalid_revision["execution"]["software_commit_sha"] = "not-a-commit"
+    assert any(
+        error.startswith("manifest_json_schema_validation_failed")
+        for error in validate_manifest_structure(invalid_revision)
+    )
+
+    unsupported = json.loads(json.dumps(manifest))
+    unsupported["schema_version"] = "ztf-dr24-evidence-manifest-v99"
+    assert validate_manifest_structure(unsupported) == [
+        "manifest_schema_version_unsupported"
+    ]
+
+    inconsistent = json.loads(json.dumps(manifest))
+    inconsistent["execution"]["test_result"] = "FAIL"
+    assert (
+        "manifest_json_schema_validation_failed:const"
+        in validate_manifest_structure(inconsistent)
+    )
+
+    legacy = json.loads(json.dumps(manifest))
+    legacy["schema_version"] = "ztf-dr24-evidence-manifest-v1"
+    assert validate_manifest_structure(legacy) == []
+
+
+def test_bundle_validator_detects_manifest_checksum_and_digest_map_tampering(
+    tmp_path: Path,
+) -> None:
+    payload, expected = _fixture_payload()
+    root, errors = write_evidence_bundle(
+        tmp_path / "bundle",
+        api_response_bytes=json.dumps(payload).encode(),
+        api_status_code=200,
+        software_commit_sha="b" * 40,
+        python_version="3.11.9",
+        **_dependency_kwargs(),
+        execution_started_at_utc="2026-11-23T10:00:00Z",
+        execution_completed_at_utc="2026-11-23T10:00:01Z",
+        test_command="offline integrity test",
+        expected_objects=expected,
+    )
+    assert errors == []
+
+    manifest = json.loads((root / "manifest.json").read_bytes())
+    manifest["files"]["canonical_epoch_sha256"][str(FIXED_OIDS[0])] = "0" * 64
+    (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    errors = validate_evidence_bundle(root, expected_objects=expected)
+    assert "manifest_file_sha256_mismatch" in errors
+    assert "manifest_digest_map_inconsistent" in errors
+
+
+def test_bundle_validator_reconstructs_api_and_export_provenance(
+    tmp_path: Path,
+) -> None:
+    payload, expected = _fixture_payload()
+    root, errors = write_evidence_bundle(
+        tmp_path / "bundle",
+        api_response_bytes=json.dumps(payload).encode(),
+        api_status_code=200,
+        software_commit_sha="b" * 40,
+        python_version="3.11.9",
+        **_dependency_kwargs(),
+        execution_started_at_utc="2026-11-23T10:00:00Z",
+        execution_completed_at_utc="2026-11-23T10:00:01Z",
+        test_command="offline provenance test",
+        expected_objects=expected,
+    )
+    assert errors == []
+
+    export = json.loads((root / "workbench_export.json").read_bytes())
+    export["source_payload"]["records"][0]["objectid"] = FIXED_OIDS[1]
+    export["derived_from_api_response_sha256"] = "0" * 64
+    (root / "workbench_export.json").write_text(json.dumps(export), encoding="utf-8")
+    errors = validate_evidence_bundle(root, expected_objects=expected)
+    assert "manifest_digest_mismatch:workbench_export.json" in errors
+    assert "workbench_export_payload_mismatch" in errors
+    assert "derived_export_provenance_mismatch" in errors
+
+
+def test_bundle_validator_checks_oid_association_and_independent_epoch_count(
+    tmp_path: Path,
+) -> None:
+    payload, expected = _fixture_payload()
+    root, errors = write_evidence_bundle(
+        tmp_path / "oid-bundle",
+        api_response_bytes=json.dumps(payload).encode(),
+        api_status_code=200,
+        software_commit_sha="b" * 40,
+        python_version="3.11.9",
+        **_dependency_kwargs(),
+        execution_started_at_utc="2026-11-23T10:00:00Z",
+        execution_completed_at_utc="2026-11-23T10:00:01Z",
+        test_command="offline OID test",
+        expected_objects=expected,
+    )
+    assert errors == []
+    source = json.loads((root / "api_response.json").read_bytes())
+    source["records"][0]["objectid"] = FIXED_OIDS[1]
+    (root / "api_response.json").write_text(json.dumps(source), encoding="utf-8")
+    errors = validate_evidence_bundle(root, expected_objects=expected)
+    assert any(error.startswith("duplicate_oid:") for error in errors)
+    assert any(error.startswith("filter_band_mismatch:") for error in errors)
+
+    count_root, count_errors = write_evidence_bundle(
+        tmp_path / "count-bundle",
+        api_response_bytes=json.dumps(payload).encode(),
+        api_status_code=200,
+        software_commit_sha="b" * 40,
+        python_version="3.11.9",
+        **_dependency_kwargs(),
+        execution_started_at_utc="2026-11-23T10:00:00Z",
+        execution_completed_at_utc="2026-11-23T10:00:01Z",
+        test_command="offline epoch test",
+        expected_objects=expected,
+    )
+    assert count_errors == []
+    count_manifest = json.loads((count_root / "manifest.json").read_bytes())
+    count_manifest["objects"][0]["catalog_epoch_count"] += 1
+    (count_root / "manifest.json").write_text(
+        json.dumps(count_manifest), encoding="utf-8"
+    )
+    count_errors = validate_evidence_bundle(count_root, expected_objects=expected)
+    assert "manifest_file_sha256_mismatch" in count_errors
+    assert any(
+        error.startswith("manifest_object_epoch_count_mismatch:")
+        for error in count_errors
+    )
+
+
+def test_bundle_validator_detects_canonical_file_modification(tmp_path: Path) -> None:
+    payload, expected = _fixture_payload()
+    root, errors = write_evidence_bundle(
+        tmp_path / "bundle",
+        api_response_bytes=json.dumps(payload).encode(),
+        api_status_code=200,
+        software_commit_sha="b" * 40,
+        python_version="3.11.9",
+        **_dependency_kwargs(),
+        execution_started_at_utc="2026-11-23T10:00:00Z",
+        execution_completed_at_utc="2026-11-23T10:00:01Z",
+        test_command="offline canonical file test",
+        expected_objects=expected,
+    )
+    assert errors == []
+    canonical_file = root / f"canonical/oid_{FIXED_OIDS[0]}_epochs.json"
+    canonical_file.write_bytes(canonical_file.read_bytes() + b" ")
+    errors = validate_evidence_bundle(root, expected_objects=expected)
+    assert f"canonical_epoch_content_mismatch:{FIXED_OIDS[0]}" in errors
+    assert (
+        f"bundle_file_checksum_mismatch:canonical/oid_{FIXED_OIDS[0]}_epochs.json"
+        in errors
+    )
+
+
+@pytest.mark.parametrize(
+    "response_bytes, status_code, transport_status, error_type, parse_status",
+    [
+        (b"", 200, "RESPONSE_RECEIVED", None, "EMPTY"),
+        (b"{invalid", 200, "RESPONSE_RECEIVED", None, "INVALID"),
+        (b'{"error":"source unavailable"}', 503, "RESPONSE_RECEIVED", None, "VALID"),
+        (b"", None, "TIMEOUT", "ReadTimeout", "NOT_AVAILABLE"),
+    ],
+)
+def test_failure_capture_records_transport_and_parse_states(
+    tmp_path: Path,
+    response_bytes: bytes,
+    status_code: int | None,
+    transport_status: str,
+    error_type: str | None,
+    parse_status: str,
+) -> None:
+    root, errors = write_evidence_bundle(
+        tmp_path / "bundle",
+        api_response_bytes=response_bytes,
+        api_status_code=status_code,
+        software_commit_sha="b" * 40,
+        python_version="3.11.9",
+        **_dependency_kwargs(),
+        execution_started_at_utc="2026-11-23T10:00:00Z",
+        execution_completed_at_utc="2026-11-23T10:00:01Z",
+        test_command="offline transport test",
+        transport_status=transport_status,
+        transport_error_type=error_type,
+    )
+    manifest = json.loads((root / "manifest.json").read_bytes())
+    assert manifest["capture_status"] == "FAIL"
+    assert manifest["request"]["http_status_code"] == status_code
+    assert manifest["request"]["transport_status"] == transport_status
+    assert manifest["request"]["response_parse_status"] == parse_status
+    assert manifest["request"]["transport_error_type"] == error_type
+    assert manifest["execution"]["test_result"] == "FAIL"
+    assert errors
+
+
+def test_log_redaction_covers_headers_cookies_urls_tokens_and_environment_values() -> (
+    None
+):
+    secrets = [
+        "Bearer bearer-secret",
+        "Authorization: Basic header-secret",
+        "Cookie: session=cookie-secret",
+        "https://user:url-secret@example.test/path?access_token=url-secret",
+        "API_TOKEN=environment-secret",
+        "token=message-secret",
+    ]
+    redacted = redact_log_text("\n".join(secrets))
+    for secret in (
+        "bearer-secret",
+        "header-secret",
+        "cookie-secret",
+        "url-secret",
+        "environment-secret",
+        "message-secret",
+    ):
+        assert secret not in redacted
+    assert "[REDACTED]" in redacted
+
+
+def test_workflow_keeps_setup_failure_and_capture_failure_visible() -> None:
+    workflow = (
+        Path(__file__).parents[1] / ".github/workflows/dr24-evidence-capture.yml"
+    ).read_text(encoding="utf-8")
+    assert "workflow_dispatch:" in workflow
+    assert "push:" not in workflow
+    assert "if: ${{ always() && steps.install.outcome == 'failure' }}" in workflow
+    assert "retention-days: 30" in workflow
+    assert 'exit "$capture_status"' in workflow
+    assert "$RUNNER_TEMP/dr24-evidence-runner-" in workflow
+    assert "runner.log" in workflow
+    assert ".raw.log" not in workflow.split("path: artifacts/dr24-evidence/", 1)[-1]

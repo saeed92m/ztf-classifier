@@ -17,6 +17,8 @@ fsspec==2026.9.0
 hats==0.10.4
 human-readable==2.0.3
 jinja2==3.1.6
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
 jmespath==1.1.0
 jproperties==2.1.2
 locket==1.0.0
@@ -26,10 +28,13 @@ markupsafe==3.0.4
 mocpy==0.21.0
 multidict==7.2.1
 nested-pandas==0.6.10
+pandas==2.3.3
 partd==1.4.2
 pathlib-abc==0.5.2
 propcache==0.5.4
 pytz==2026.6
+referencing==0.37.0
+rpds-py==2026.6.3
 s3fs==2026.9.0
 tabulate==0.10.0
 tblib==3.2.2

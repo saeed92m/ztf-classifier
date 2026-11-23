@@ -9,7 +9,6 @@ process environment or request headers.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import subprocess
 import sys
@@ -51,6 +50,16 @@ def _json_log(path: Path, event: str, **fields: object) -> None:
         stream.write(json.dumps(safe, ensure_ascii=False, sort_keys=True) + "\n")
 
 
+def _transport_failure(exc: BaseException) -> tuple[str, str]:
+    name = type(exc).__name__
+    lowered = name.lower()
+    if "timeout" in lowered:
+        return "TIMEOUT", name
+    if any(part in lowered for part in ("connect", "connection", "network")):
+        return "CONNECTION_ERROR", name
+    return "REQUEST_ERROR", name
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", required=True, type=Path)
@@ -63,14 +72,12 @@ def main() -> int:
     log_path = output / "capture.log"
     started = utc_now()
     _json_log(log_path, "capture_started", requested_oids=list(FIXED_OIDS))
-    status_code = 599
+    status_code: int | None = None
+    transport_status = "NOT_ATTEMPTED"
+    transport_error_type: str | None = None
     response_bytes = b""
     result = 1
     try:
-        lockfile = Path("requirements.lock")
-        lock_digest = hashlib.sha256(lockfile.read_bytes()).hexdigest()
-        dr24_lockfile = Path("requirements-dr24.lock")
-        dr24_lock_digest = hashlib.sha256(dr24_lockfile.read_bytes()).hexdigest()
         with tempfile.TemporaryDirectory(prefix="ztf-dr24-evidence-state-") as state:
             state_dir = Path(state)
             settings = ApiSettings(
@@ -90,6 +97,7 @@ def main() -> int:
             with TestClient(app) as client:
                 response = client.post(API_PATH, json={"objectids": list(FIXED_OIDS)})
                 status_code = response.status_code
+                transport_status = "RESPONSE_RECEIVED"
                 response_bytes = response.content
         response_summary = None
         try:
@@ -117,9 +125,19 @@ def main() -> int:
             status="PASS" if not validation_errors else "FAIL",
             errors=validation_errors,
         )
-        result = 0 if status_code == 200 else 1
+        result = 0 if status_code == 200 and not validation_errors else 1
     except Exception as exc:  # noqa: BLE001 - record all acquisition failures without leaking detail
-        _json_log(log_path, "capture_failed", error_type=type(exc).__name__)
+        if status_code is None:
+            transport_status, transport_error_type = _transport_failure(exc)
+        else:
+            transport_status = "RESPONSE_RECEIVED"
+            transport_error_type = None
+        _json_log(
+            log_path,
+            "capture_failed",
+            transport_status=transport_status,
+            error_type=type(exc).__name__,
+        )
 
     completed = utc_now()
     _, bundle_errors = write_evidence_bundle(
@@ -128,14 +146,12 @@ def main() -> int:
         api_status_code=status_code,
         software_commit_sha=args.software_commit or _git_sha(),
         python_version=sys.version.split()[0],
-        dependency_lock_sha256=lock_digest if "lock_digest" in locals() else None,
-        dr24_dependency_lock_sha256=(
-            dr24_lock_digest if "dr24_lock_digest" in locals() else None
-        ),
         execution_started_at_utc=started,
         execution_completed_at_utc=completed,
         test_command="python scripts/capture_dr24_evidence.py --output-dir <bundle>",
         execution_log_path="capture.log",
+        transport_status=transport_status,
+        transport_error_type=transport_error_type,
     )
     return 0 if result == 0 and not bundle_errors else 1
 

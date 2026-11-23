@@ -1,0 +1,428 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ztf-classifier:schema:ztf-dr24-evidence-manifest-v2",
+  "title": "ZTF DR24 evidence manifest v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "capture_status",
+    "source",
+    "request",
+    "execution",
+    "objects",
+    "files",
+    "validation_errors",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "ztf-dr24-evidence-manifest-v2"},
+    "capture_status": {"enum": ["PASS", "FAIL"]},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "release",
+        "catalog_uri",
+        "original_source_files_available",
+        "original_source_file_sha256",
+        "source_bytes_note",
+        "retrieved_at_utc"
+      ],
+      "properties": {
+        "name": {"const": "IRSA ZTF DR24 Lightcurves HATS"},
+        "release": {"const": "DR24"},
+        "catalog_uri": {"const": "s3://ipac-irsa-ztf/ztf/enhanced/dr24/lc/hats"},
+        "original_source_files_available": {"const": false},
+        "original_source_file_sha256": {"type": "null"},
+        "source_bytes_note": {"type": "string", "minLength": 1},
+        "retrieved_at_utc": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "format": "date-time"}
+          ]
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "api_method",
+        "api_path",
+        "query",
+        "requested_oids",
+        "returned_oids",
+        "missing_oids",
+        "http_status_code",
+        "transport_status",
+        "response_parse_status",
+        "transport_error_type"
+      ],
+      "properties": {
+        "api_method": {"const": "POST"},
+        "api_path": {"const": "/v1/dr24/lightcurves"},
+        "query": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["index", "objectids"],
+          "properties": {
+            "index": {"const": "objectid"},
+            "objectids": {"const": [264114400013085, 264214400000912]}
+          }
+        },
+        "requested_oids": {"const": [264114400013085, 264214400000912]},
+        "returned_oids": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 1},
+          "uniqueItems": true
+        },
+        "missing_oids": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 1},
+          "uniqueItems": true
+        },
+        "http_status_code": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "integer", "minimum": 100, "maximum": 599}
+          ]
+        },
+        "transport_status": {
+          "enum": [
+            "NOT_ATTEMPTED",
+            "RESPONSE_RECEIVED",
+            "CONNECTION_ERROR",
+            "TIMEOUT",
+            "REQUEST_ERROR"
+          ]
+        },
+        "response_parse_status": {
+          "enum": ["NOT_AVAILABLE", "VALID", "EMPTY", "INVALID"]
+        },
+        "transport_error_type": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_.]{0,127}$"
+            }
+          ]
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "started_at_utc",
+        "completed_at_utc",
+        "software_commit_sha",
+        "git_head_sha",
+        "git_worktree_dirty",
+        "git_commit_match",
+        "python_version",
+        "dependency_lockfile",
+        "dependency_lockfile_path",
+        "dependency_lockfile_sha256",
+        "dr24_dependency_lockfile",
+        "dr24_dependency_lockfile_path",
+        "dr24_dependency_lockfile_sha256",
+        "project_metadata_path",
+        "project_metadata_sha256",
+        "resolved_dependencies",
+        "dependency_compatibility_status",
+        "test_command",
+        "test_result",
+        "log_file"
+      ],
+      "properties": {
+        "started_at_utc": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "format": "date-time"}
+          ]
+        },
+        "completed_at_utc": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "format": "date-time"}
+          ]
+        },
+        "software_commit_sha": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$"}
+          ]
+        },
+        "git_head_sha": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$"}
+          ]
+        },
+        "git_worktree_dirty": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "boolean"}
+          ]
+        },
+        "git_commit_match": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "boolean"}
+          ]
+        },
+        "python_version": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[A-Za-z0-9.+-]*)$"
+            }
+          ]
+        },
+        "dependency_lockfile": {"const": "requirements.lock"},
+        "dependency_lockfile_path": {"const": "dependencies/requirements.lock"},
+        "dependency_lockfile_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "dr24_dependency_lockfile": {"const": "requirements-dr24.lock"},
+        "dr24_dependency_lockfile_path": {
+          "const": "dependencies/requirements-dr24.lock"
+        },
+        "dr24_dependency_lockfile_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "project_metadata_path": {"const": "dependencies/pyproject.toml"},
+        "project_metadata_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "resolved_dependencies": {
+          "type": "object",
+          "propertyNames": {"pattern": "^[a-z0-9][a-z0-9._-]*$"},
+          "additionalProperties": {"type": "string", "minLength": 1}
+        },
+        "dependency_compatibility_status": {"enum": ["PASS", "FAIL"]},
+        "test_command": {"type": "string", "minLength": 1},
+        "test_result": {"enum": ["PASS", "FAIL"]},
+        "log_file": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^[A-Za-z0-9._/-]+$"}
+          ]
+        }
+      }
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "objectid",
+          "filterid",
+          "band",
+          "catalog_epoch_count",
+          "counted_epoch_count",
+          "canonical_epoch_sha256",
+          "canonical_epoch_sha256_covers",
+          "canonical_epoch_file",
+          "canonical_epoch_file_sha256"
+        ],
+        "properties": {
+          "objectid": {"enum": [264114400013085, 264214400000912]},
+          "filterid": {"type": "integer", "minimum": 1, "maximum": 3},
+          "band": {"enum": ["g", "r", "i"]},
+          "catalog_epoch_count": {"type": "integer", "minimum": 0},
+          "counted_epoch_count": {"type": "integer", "minimum": 0},
+          "canonical_epoch_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "canonical_epoch_sha256_covers": {"type": "string", "minLength": 1},
+          "canonical_epoch_file": {
+            "type": "string",
+            "pattern": "^canonical/oid_[0-9]+_epochs\\.json$"
+          },
+          "canonical_epoch_file_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "api_response_file_sha256",
+        "api_response_sha256_covers",
+        "workbench_export_file_sha256",
+        "workbench_export_sha256_covers",
+        "workbench_export_capture_mode",
+        "canonical_epoch_sha256"
+      ],
+      "properties": {
+        "api_response_file_sha256": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          ]
+        },
+        "api_response_sha256_covers": {"type": "string", "minLength": 1},
+        "workbench_export_file_sha256": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          ]
+        },
+        "workbench_export_sha256_covers": {"type": "string", "minLength": 1},
+        "workbench_export_capture_mode": {
+          "enum": [
+            "unavailable",
+            "derived_from_same_api_response_not_browser_download",
+            "provided_actual_workbench_download"
+          ]
+        },
+        "canonical_epoch_sha256": {
+          "type": "object",
+          "propertyNames": {"pattern": "^[0-9]+$"},
+          "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "validation_errors": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"capture_status": {"const": "PASS"}}, "required": ["capture_status"]},
+      "then": {
+        "properties": {
+          "request": {
+            "properties": {
+              "returned_oids": {"const": [264114400013085, 264214400000912]},
+              "missing_oids": {"maxItems": 0},
+              "http_status_code": {"const": 200},
+              "transport_status": {"const": "RESPONSE_RECEIVED"},
+              "response_parse_status": {"const": "VALID"},
+              "transport_error_type": {"type": "null"}
+            }
+          },
+          "execution": {
+            "properties": {
+              "started_at_utc": {"type": "string"},
+              "completed_at_utc": {"type": "string"},
+              "software_commit_sha": {"type": "string"},
+              "git_head_sha": {
+                "type": "string",
+                "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$"
+              },
+              "git_worktree_dirty": {"const": false},
+              "git_commit_match": {"const": true},
+              "python_version": {"type": "string"},
+              "dependency_compatibility_status": {"const": "PASS"},
+              "test_result": {"const": "PASS"}
+            }
+          },
+          "objects": {"minItems": 2, "maxItems": 2},
+          "files": {
+            "properties": {
+              "api_response_file_sha256": {"type": "string"},
+              "workbench_export_file_sha256": {"type": "string"},
+              "canonical_epoch_sha256": {
+                "required": ["264114400013085", "264214400000912"],
+                "minProperties": 2,
+                "maxProperties": 2
+              }
+            }
+          },
+          "validation_errors": {"maxItems": 0}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"capture_status": {"const": "FAIL"}}, "required": ["capture_status"]},
+      "then": {
+        "properties": {
+          "execution": {"properties": {"test_result": {"const": "FAIL"}}}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "request": {
+            "properties": {"transport_status": {"const": "RESPONSE_RECEIVED"}},
+            "required": ["transport_status"]
+          }
+        },
+        "required": ["request"]
+      },
+      "then": {
+        "properties": {
+          "request": {
+            "properties": {
+              "http_status_code": {"type": "integer", "minimum": 100, "maximum": 599},
+              "transport_error_type": {"type": "null"},
+              "response_parse_status": {"enum": ["VALID", "EMPTY", "INVALID"]}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "request": {
+            "properties": {
+              "transport_status": {
+                "enum": ["CONNECTION_ERROR", "TIMEOUT", "REQUEST_ERROR"]
+              }
+            },
+            "required": ["transport_status"]
+          }
+        },
+        "required": ["request"]
+      },
+      "then": {
+        "properties": {
+          "request": {
+            "properties": {
+              "http_status_code": {"type": "null"},
+              "response_parse_status": {"const": "NOT_AVAILABLE"},
+              "transport_error_type": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "request": {
+            "properties": {"transport_status": {"const": "NOT_ATTEMPTED"}},
+            "required": ["transport_status"]
+          }
+        },
+        "required": ["request"]
+      },
+      "then": {
+        "properties": {
+          "request": {
+            "properties": {
+              "http_status_code": {"type": "null"},
+              "response_parse_status": {"const": "NOT_AVAILABLE"},
+              "transport_error_type": {"type": "null"}
+            }
+          }
+        }
+      }
+    }
+  ]
+}
