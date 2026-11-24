@@ -76,7 +76,10 @@ def _install_navigation_guard(window: Any, base_url: str) -> None:
     if control is None:
         raise RuntimeError("The native WebView2 control is not available.")
 
-    handlers: list[Callable[..., None]] = []
+    handlers: list[Callable[..., None]] = [
+        block_untrusted_navigation,
+        block_external_uri_scheme,
+    ]
 
     def block_untrusted_navigation(sender: Any, args: Any) -> None:
         if not _is_trusted_local_url(str(args.Uri), base_url):
@@ -96,7 +99,6 @@ def _install_navigation_guard(window: Any, base_url: str) -> None:
             attach_core_handlers(sender.CoreWebView2)
 
     control.NavigationStarting += block_untrusted_navigation
-    handlers.append(block_untrusted_navigation)
 
     core = control.CoreWebView2
     if core is None:
@@ -104,7 +106,6 @@ def _install_navigation_guard(window: Any, base_url: str) -> None:
         handlers.append(on_core_initialized)
     else:
         attach_core_handlers(core)
-        handlers.extend([block_untrusted_navigation, block_external_uri_scheme])
 
     # Keep Python delegates alive for the lifetime of the native .NET events.
     window._ztf_navigation_handlers = handlers
