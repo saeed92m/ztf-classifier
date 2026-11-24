@@ -80,10 +80,62 @@ function escapeHtml(value) {
   return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
+let desktopTokenPromise = null;
+function getDesktopApiToken() {
+  if (params.get("desktop") !== "1") return Promise.resolve(null);
+  if (!desktopTokenPromise) {
+    desktopTokenPromise = new Promise((resolve, reject) => {
+      const readToken = () => {
+        const getter = window.pywebview && window.pywebview.api &&
+          window.pywebview.api.get_api_token;
+        if (typeof getter !== "function") {
+          reject(new Error("Desktop authentication bridge is unavailable."));
+          return;
+        }
+        Promise.resolve(getter()).then(resolve, reject);
+      };
+      if (window.pywebview && window.pywebview.api) {
+        readToken();
+        return;
+      }
+      const timeout = window.setTimeout(
+        () => reject(new Error("Desktop authentication bridge did not become ready.")),
+        10000
+      );
+      window.addEventListener("pywebviewready", () => {
+        window.clearTimeout(timeout);
+        readToken();
+      }, { once: true });
+    });
+  }
+  return desktopTokenPromise;
+}
+
+if (params.get("desktop") === "1") {
+  document.addEventListener("click", event => {
+    const anchor = event.target instanceof Element
+      ? event.target.closest("a[href]")
+      : null;
+    if (!anchor) return;
+    const target = new URL(anchor.getAttribute("href"), window.location.href);
+    if (target.origin !== window.location.origin) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, true);
+  window.open = () => null;
+}
+
 async function fetchJson(url, options) {
+  const headers = {
+    Accept: "application/json",
+    ...((options && options.headers) || {}),
+  };
+  const token = await getDesktopApiToken();
+  if (token) headers.Authorization = "Bearer " + token;
   const response = await fetch(url, {
-    headers: { Accept: "application/json", ...((options && options.headers) || {}) },
     ...(options || {}),
+    headers,
   });
   if (!response.ok) { const error = new Error("HTTP " + response.status); error.status = response.status; throw error; }
   return response.json();
