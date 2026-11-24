@@ -43,6 +43,9 @@ jobs:
       - name: Run desktop runtime tests
         run: python -m pytest -q tests/test_desktop_runtime.py
 
+      - name: Validate Workbench JavaScript syntax
+        run: node --check src/ztf_classifier/web/static/app.js
+
       - name: Run Ruff checks
         run: |
           python -m ruff check src/ztf_classifier/desktop tests/test_desktop_runtime.py
