@@ -46,17 +46,22 @@ def test_build_desktop_settings_uses_per_user_storage(
     assert settings.observation_cache_dir == tmp_path / "user-data/cache/observations"
     assert settings.job_store_path == tmp_path / "user-data/jobs/jobs.sqlite3"
     assert settings.result_store_path == tmp_path / "user-data/results/results.sqlite3"
-    assert settings.application_state_path == tmp_path / "user-data/settings/settings.json"
+    assert (
+        settings.application_state_path == tmp_path / "user-data/settings/settings.json"
+    )
     assert settings.scientific_evidence_dir == (
         tmp_path / "user-data/reports/scientific_validation"
     )
-    assert all(path.exists() for path in (
-        settings.observation_cache_dir,
-        settings.job_store_path.parent,
-        settings.result_store_path.parent,
-        settings.application_state_path.parent,
-        settings.scientific_evidence_dir,
-    ))
+    assert all(
+        path.exists()
+        for path in (
+            settings.observation_cache_dir,
+            settings.job_store_path.parent,
+            settings.result_store_path.parent,
+            settings.application_state_path.parent,
+            settings.scientific_evidence_dir,
+        )
+    )
 
 
 def test_build_desktop_settings_requires_a_token(tmp_path: Path) -> None:
