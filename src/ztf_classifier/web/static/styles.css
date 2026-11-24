@@ -275,3 +275,10 @@ h1 { margin: 5px 0 4px; font-size: 22px; letter-spacing: -.02em; }
     width: 100%;
   }
 }
+
+.workspace-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
