@@ -523,6 +523,66 @@ def create_app(
                 status_code=500,
             ) from exc
 
+    @app.post("/v1/workspaces/operations", tags=["workspaces"])
+    def record_workspace_operation(payload: dict[str, Any]) -> dict[str, Any]:
+        """Persist a DR24 acquisition lifecycle event in the active workspace."""
+        try:
+            return workspace_store.record_operation(payload)
+        except WorkspaceNotFoundError as exc:
+            raise ApiContractError(
+                "workspace_not_found",
+                "Create or open a workspace before recording an operation.",
+                status_code=409,
+            ) from exc
+        except WorkspaceConflictError as exc:
+            raise ApiContractError(
+                "workspace_operation_conflict",
+                str(exc),
+                status_code=409,
+            ) from exc
+        except WorkspaceError as exc:
+            raise ApiContractError(
+                "workspace_operation_invalid",
+                str(exc),
+                status_code=422,
+            ) from exc
+        except OSError as exc:
+            raise ApiContractError(
+                "workspace_operation_persist_failed",
+                "The workspace operation could not be saved.",
+                status_code=500,
+            ) from exc
+
+    @app.post("/v1/workspaces/exports", tags=["workspaces"])
+    def save_workspace_export(payload: dict[str, Any]) -> dict[str, Any]:
+        """Save a reproducible raw DR24 export inside the active workspace."""
+        try:
+            return workspace_store.save_export(payload)
+        except WorkspaceNotFoundError as exc:
+            raise ApiContractError(
+                "workspace_not_found",
+                "Create or open a workspace before saving an export.",
+                status_code=409,
+            ) from exc
+        except WorkspaceConflictError as exc:
+            raise ApiContractError(
+                "workspace_export_conflict",
+                str(exc),
+                status_code=409,
+            ) from exc
+        except WorkspaceError as exc:
+            raise ApiContractError(
+                "workspace_export_invalid",
+                str(exc),
+                status_code=422,
+            ) from exc
+        except OSError as exc:
+            raise ApiContractError(
+                "workspace_export_persist_failed",
+                "The workspace export could not be saved.",
+                status_code=500,
+            ) from exc
+
     @app.get(
         "/ready",
         response_model=ServiceStatusResponse,
