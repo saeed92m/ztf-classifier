@@ -527,8 +527,24 @@ async function loadDR24Explorer() {
     return ids;
   }
 
-  function renderRecord(record, qc) {
+  function renderRecord(record, qc, summaryEntry) {
     const oid = Number(record.objectid);
+    const summary = summaryEntry && summaryEntry.summary ? summaryEntry.summary : {};
+    const stat = (value, digits = 3) =>
+      typeof value === "number" && Number.isFinite(value) ? value.toFixed(digits) : "—";
+    const summaryPanel = [
+      '<div class="panel-title" style="margin-top:18px">Descriptive time-series summary</div>',
+      '<div class="panel-subtitle">Source-native descriptive statistics · not model features or classification</div>',
+      '<div class="metadata-grid">',
+      '<div><span>Finite HMJD/mag pairs</span><strong>', escapeHtml(summary.finite_hmjd_mag_pair_count ?? "—"), '</strong></div>',
+      '<div><span>HMJD span (days)</span><strong>', escapeHtml(stat(summary.hmjd_span_days, 2)), '</strong></div>',
+      '<div><span>Median sampling interval (days)</span><strong>', escapeHtml(stat(summary.median_sampling_interval_days, 3)), '</strong></div>',
+      '<div><span>Median magnitude</span><strong>', escapeHtml(stat(summary.mag_median, 3)), '</strong></div>',
+      '<div><span>Magnitude P05–P95 range</span><strong>', escapeHtml(stat(summary.mag_p05, 3)), ' – ', escapeHtml(stat(summary.mag_p95, 3)), '</strong></div>',
+      '<div><span>Median non-negative magerr</span><strong>', escapeHtml(stat(summary.magerr_median, 4)), '</strong></div>',
+      '</div>',
+      '<p class="muted">All finite HMJD/magnitude pairs are included, regardless of catflags. No epoch filtering, time conversion, photometry conversion, OID grouping, feature generation, or inference was performed.</p>'
+    ].join("");
     const filterName = ({1:"g",2:"r",3:"i"})[record.filterid] || "unknown";
     const epochs = Array.isArray(record.epochs) ? record.epochs : [];
     // Keep missing or non-numeric source values out of the chart. In particular,
@@ -607,6 +623,7 @@ async function loadDR24Explorer() {
       ' · payload SHA-256 ', escapeHtml(record.payload_sha256), '</div></div></div>',
       '<div class="panel-subtitle">Time: HMJD · native ZTF magnitude · vertical bars: reported magerr · no cross-OID grouping</div>',
       chart,
+      summaryPanel,
       '<div class="panel-title" style="margin-top:18px">Raw epoch records (first 50)</div>',
       '<div class="catalog-table-wrap"><table class="metadata"><thead><tr><th>HMJD</th><th>mag</th>',
       '<th>magerr</th><th>clrcoeff</th><th>catflags</th></tr></thead><tbody>',
@@ -643,8 +660,16 @@ async function loadDR24Explorer() {
       const provenance = payload.provenance || {};
       document.getElementById("dr24Provenance").textContent =
         JSON.stringify(provenance, null, 2);
+      const summaryItems = payload.descriptive_summaries?.summaries || [];
+      const summaryByOid = new Map(summaryItems.map(item =>
+        [String(item.objectid), item]
+      ));
       const rendered = records.map(record =>
-        renderRecord(record, qcByOid.get(String(record.objectid)))
+        renderRecord(
+          record,
+          qcByOid.get(String(record.objectid)),
+          summaryByOid.get(String(record.objectid))
+        )
       );
       document.getElementById("dr24Results").innerHTML = rendered.join("") ||
         '<section class="panel muted">The DR24 query completed successfully, but no catalog rows were returned. No alternate source was used.</section>';
@@ -672,7 +697,7 @@ async function loadDR24Explorer() {
       document.getElementById("dr24Status").textContent =
         "Raw DR24 response received. " + resultSummary;
       lastRawExport = {
-        export_schema_version: "ztf-dr24-raw-export-v0.2",
+        export_schema_version: "ztf-dr24-raw-export-v0.3",
         exported_at_utc: new Date().toISOString(),
         source_payload: payload,
         interpretation: "Raw source payload preserved. QC is diagnostic only; no epochs were filtered or grouped."
