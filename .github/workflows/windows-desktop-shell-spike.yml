@@ -2,8 +2,6 @@ name: Windows Desktop Shell Spike
 
 on:
   pull_request:
-    branches:
-      - main
     paths:
       - "pyproject.toml"
       - "src/ztf_classifier/desktop/**"
