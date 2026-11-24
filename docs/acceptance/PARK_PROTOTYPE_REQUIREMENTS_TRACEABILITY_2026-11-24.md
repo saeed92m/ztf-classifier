@@ -164,6 +164,8 @@ OOD، عدم‌قطعیت طبقه‌بندی و anomaly detection سه خروج
 
 **گزارش محلی مدل:** `local_scientific_artifact_audit.json` در snapshot محلی با SHA-256 برابر `e866399c0785c0a5b072801c140c9c235fefe24644c73780c10a10228096ef9b` ثبت شده است. آن snapshot از شاخه‌ای سه commit عقب‌تر از upstream تهیه شده بود؛ بنابراین این گزارش شاهد محلی مهم است، نه audit نهایی current-main.
 
+**ممیزی مستقل current-main — 2026-11-24:** درخت بازگشتی GitHub main شامل 628 ورودی بود و truncate نشده بود. هیچ مسیر `model_baseline_v0.2_production`، `baseline_v0.2` یا manifest آرتیفکت تولیدی وجود نداشت. فقط سه جدول گزارش XGBoost v0.2 یافت شد: class names، CV metrics و OOF predictions. Releaseهای v1.0.1، v1.0.0 و v0.5.0 فقط wheel و source archive دارند؛ releaseهای v0.4.0، v0.3.0 و v0.2.0 هیچ asset ندارند. بررسی مستقیم مسیرهای مورد انتظار در root، `artifacts/` و `models/` نیز 404 داد. نتیجه: آرتیفکت اصلی در current main و release assets موجود نیست. Issue #282 مرجع بازیابی باقی می‌ماند.
+
 ## 7. مسیر اجرایی مجاز
 
 اولویت کارها:
