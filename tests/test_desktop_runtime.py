@@ -98,8 +98,14 @@ def test_desktop_api_requires_session_bearer_token(tmp_path: Path) -> None:
             else []
         )
 
+        request_sent = False
+
         async def receive() -> dict[str, Any]:
-            return {"type": "http.request", "body": b"", "more_body": False}
+            nonlocal request_sent
+            if not request_sent:
+                request_sent = True
+                return {"type": "http.request", "body": b"", "more_body": False}
+            return {"type": "http.disconnect"}
 
         async def send(message: dict[str, Any]) -> None:
             messages.append(message)
