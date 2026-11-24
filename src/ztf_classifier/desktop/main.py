@@ -6,7 +6,8 @@ import ctypes
 import os
 import secrets
 import sys
-from typing import Any
+from typing import Any, Callable
+from urllib.parse import urlsplit
 
 from ztf_classifier.api.app import create_app
 from ztf_classifier.desktop.runtime import (
@@ -50,6 +51,65 @@ def _load_webview() -> Any:
     return webview
 
 
+
+def _is_trusted_local_url(candidate: str, base_url: str) -> bool:
+    """Accept only the exact loopback origin owned by this desktop session."""
+    try:
+        candidate_parts = urlsplit(candidate)
+        base_parts = urlsplit(base_url)
+        return (
+            base_parts.scheme == "http"
+            and base_parts.hostname in {"127.0.0.1", "::1"}
+            and candidate_parts.scheme == base_parts.scheme
+            and candidate_parts.hostname == base_parts.hostname
+            and candidate_parts.port == base_parts.port
+            and candidate_parts.username is None
+            and candidate_parts.password is None
+        )
+    except ValueError:
+        return False
+
+
+def _install_navigation_guard(window: Any, base_url: str) -> None:
+    """Block non-session navigation at the native WebView2 event boundary."""
+    control = getattr(window.native, "webview", None)
+    if control is None:
+        raise RuntimeError("The native WebView2 control is not available.")
+
+    handlers: list[Callable[..., None]] = []
+
+    def block_untrusted_navigation(sender: Any, args: Any) -> None:
+        if not _is_trusted_local_url(str(args.Uri), base_url):
+            args.Cancel = True
+
+    def block_external_uri_scheme(sender: Any, args: Any) -> None:
+        args.Cancel = True
+
+    def attach_core_handlers(core: Any) -> None:
+        if core is None:
+            raise RuntimeError("The WebView2 core is not initialized.")
+        core.FrameNavigationStarting += block_untrusted_navigation
+        core.LaunchingExternalUriScheme += block_external_uri_scheme
+
+    def on_core_initialized(sender: Any, args: Any) -> None:
+        if args.IsSuccess:
+            attach_core_handlers(sender.CoreWebView2)
+
+    control.NavigationStarting += block_untrusted_navigation
+    handlers.append(block_untrusted_navigation)
+
+    core = control.CoreWebView2
+    if core is None:
+        control.CoreWebView2InitializationCompleted += on_core_initialized
+        handlers.append(on_core_initialized)
+    else:
+        attach_core_handlers(core)
+        handlers.extend([block_untrusted_navigation, block_external_uri_scheme])
+
+    # Keep Python delegates alive for the lifetime of the native .NET events.
+    window._ztf_navigation_handlers = handlers
+
+
 def main() -> None:
     """Start the private API, then open the standalone Windows window."""
     if os.name != "nt":
@@ -83,6 +143,11 @@ def main() -> None:
             zoomable=False,
         )
         window.events.closed += runtime.stop
+
+        def install_navigation_guard(current_window: Any) -> None:
+            _install_navigation_guard(current_window, base_url)
+
+        window.events.before_show += install_navigation_guard
 
         webview.start(
             gui="edgechromium",
