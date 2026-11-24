@@ -121,6 +121,17 @@ def test_workspace_operation_and_export_are_persisted_with_hashes(
     assert len(metadata["sha256"]) == 64
     assert metadata["size_bytes"] > 0
 
+    restored_export = client.get(
+        "/v1/workspaces/exports/" + metadata["file_name"]
+    )
+    assert restored_export.status_code == 200
+    assert restored_export.json() == export_payload
+
+    restarted_client = _client(tmp_path)
+    active_after_restart = restarted_client.get("/v1/workspaces/active").json()["workspace"]
+    assert active_after_restart["last_operation"]["status"] == "SUCCEEDED"
+    assert active_after_restart["last_export"]["sha256"] == metadata["sha256"]
+
     active = client.get("/v1/workspaces/active").json()["workspace"]
     assert active["last_operation"]["status"] == "SUCCEEDED"
     assert active["last_operation"]["export_file"] == metadata["file_name"]
