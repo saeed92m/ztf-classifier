@@ -188,8 +188,14 @@ def _run_self_test() -> None:
                 if response.status != 200:
                     raise RuntimeError(f"Unexpected HTTP status for {path}.")
                 body = response.read()
-                if path == "/workbench/" and b"DR24 Explorer" not in body:
-                    raise RuntimeError("The packaged Workbench HTML is incomplete.")
+                if path == "/workbench/" and (
+                    b"DR24 Explorer" not in body or b"desktopPreview" not in body
+                ):
+                    raise RuntimeError("The packaged desktop Workbench HTML is incomplete.")
+                if path == "/workbench/app.js" and b"desktop-home" not in body:
+                    raise RuntimeError("The packaged desktop Workbench script is incomplete.")
+                if path == "/workbench/styles.css" and b"data-desktop-preview" not in body:
+                    raise RuntimeError("The packaged desktop Workbench styles are incomplete.")
             checks[f"static:{path}"] = "PASS"
 
         try:
