@@ -17,7 +17,6 @@ from uuid import uuid4
 
 from ztf_classifier.application.state import ApplicationStateStore
 
-
 _WORKSPACE_ID_RE = re.compile(r"^[0-9a-f]{32}$")
 _EXPORT_NAME_RE = re.compile(r"^dr24-raw-export-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}\.json$")
 
