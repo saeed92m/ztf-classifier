@@ -34,7 +34,7 @@ The worksheet requires a CPU-oriented, reproducible software product. It identif
 | Workspace lifecycle | IMPLEMENTED; CI PENDING | Create/open/list, operation logging, export persistence and export restoration APIs and UI are implemented. Exact-head tests are pending. |
 | Reproducibility package | PARTIAL | Raw JSON export, source hashes and workspace metadata are supported. A full data/model/schema/split reproducibility bundle is not yet accepted. |
 | Park guided demonstration | NOT VERIFIED | A 30–50-object end-to-end demonstration has not been accepted. The current desktop workflow is bounded to 1–10 OIDs per acquisition. |
-| Windows installer | NOT VERIFIED | The workflow builds a frozen application, creates an NSIS installer, and tests installation and uninstallation. Exact-head Windows evidence is pending. |
+| Windows installer | RETESTING / NOT ACCEPTED | An earlier exact-head run failed at NSIS compiler selection. The archive contains root and Bin compiler copies; the workflow now selects the canonical root compiler. The installer now checks x64 Windows and embeds a Microsoft-signed Evergreen WebView2 bootstrapper. Exact-head NSIS compile, silent install/uninstall and data-preservation results are pending. |
 | macOS/Linux desktop installers | NOT STARTED | The current standalone desktop preview targets Windows only. |
 
 ## Verified engineering boundaries
@@ -45,7 +45,7 @@ The worksheet requires a CPU-oriented, reproducible software product. It identif
 - DR24 acquisition preserves native source values. It does not silently substitute ALeRCE.
 - DR24 raw acquisition does not perform model inference.
 - Uninstall is designed to preserve user projects, logs and exports.
-- The Windows preview installer is unsigned. A checksum is not a code signature.
+- The Windows preview installer is unsigned. A checksum is not a code signature.\n- The NSIS installer is designed to install the Microsoft Evergreen WebView2 Runtime silently when missing. The bootstrapper is checked for a valid Microsoft Authenticode signature before it is embedded. This installer path is not accepted until the exact-head Windows run and a clean-machine test pass.\n- The preview targets x64 Windows only. The installer rejects 32-bit Windows.
 
 ## Scientific and delivery blockers
 
@@ -56,7 +56,7 @@ The worksheet requires a CPU-oriented, reproducible software product. It identif
 5. Validate calibration, abstention, anomaly detection and explainability on the declared Park population.
 6. Complete a 30–50-object guided demonstration and a reproducibility bundle.
 7. Pass clean Windows install, launch, persistence, upgrade/uninstall and data-preservation tests.
-8. Obtain the required written Park evaluation terms before external distribution of the installer.
+8. Obtain the required written Park evaluation terms before external distribution of the installer.\n9. Verify the WebView2 bootstrapper install path on a clean Windows machine with no pre-installed Runtime.
 
 ## Current delivery decision
 
