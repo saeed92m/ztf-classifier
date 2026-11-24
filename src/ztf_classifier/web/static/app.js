@@ -126,6 +126,51 @@ if (params.get("desktop") === "1") {
   window.open = () => null;
 }
 
+let desktopTokenPromise = null;
+function getDesktopApiToken() {
+  if (params.get("desktop") !== "1") return Promise.resolve(null);
+  if (!desktopTokenPromise) {
+    desktopTokenPromise = new Promise((resolve, reject) => {
+      const readToken = () => {
+        const api = window.pywebview && window.pywebview.api;
+        if (!api || typeof api.get_api_token !== "function") {
+          reject(new Error("Desktop authentication bridge is unavailable."));
+          return;
+        }
+        Promise.resolve(api.get_api_token()).then(resolve, reject);
+      };
+      if (window.pywebview && window.pywebview.api) {
+        readToken();
+        return;
+      }
+      const timeout = window.setTimeout(
+        () => reject(new Error("Desktop authentication bridge did not become ready.")),
+        10000
+      );
+      window.addEventListener("pywebviewready", () => {
+        window.clearTimeout(timeout);
+        readToken();
+      }, { once: true });
+    });
+  }
+  return desktopTokenPromise;
+}
+
+if (params.get("desktop") === "1") {
+  document.addEventListener("click", event => {
+    const anchor = event.target instanceof Element
+      ? event.target.closest("a[href]")
+      : null;
+    if (!anchor) return;
+    const target = new URL(anchor.getAttribute("href"), window.location.href);
+    if (target.origin !== window.location.origin) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, true);
+  window.open = () => null;
+}
+
 async function fetchJson(url, options) {
   const headers = {
     Accept: "application/json",
