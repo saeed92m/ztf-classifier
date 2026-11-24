@@ -1,0 +1,48 @@
+name: Windows Desktop Shell Spike
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/windows-desktop-shell.yml"
+      - "pyproject.toml"
+      - "src/ztf_classifier/desktop/**"
+      - "src/ztf_classifier/api/**"
+      - "src/ztf_classifier/web/static/**"
+      - "tests/test_desktop_launcher.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-desktop-smoke:
+    name: Windows desktop package and local API smoke
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install application and desktop build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[desktop,desktop-build,dev]"
+
+      - name: Run desktop launcher unit tests
+        run: python -m pytest tests/test_desktop_launcher.py -q
+
+      - name: Run local API, authentication, and static UI smoke
+        run: python -m ztf_classifier.desktop --smoke-test
+
+      - name: Build a Windows one-folder diagnostic package
+        run: python -m PyInstaller --clean --noconfirm --onedir --console --name ZTFClassifierSmoke --collect-data ztf_classifier --collect-all webview src/ztf_classifier/desktop/__main__.py
+
+      - name: Test the packaged Windows executable
+        run: .\dist\ZTFClassifierSmoke\ZTFClassifierSmoke.exe --smoke-test
