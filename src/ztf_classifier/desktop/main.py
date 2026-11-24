@@ -191,11 +191,20 @@ def _run_self_test() -> None:
                 if path == "/workbench/" and (
                     b"DR24 Explorer" not in body or b"desktopPreview" not in body
                 ):
-                    raise RuntimeError("The packaged desktop Workbench HTML is incomplete.")
+                    raise RuntimeError(
+                        "The packaged desktop Workbench HTML is incomplete."
+                    )
                 if path == "/workbench/app.js" and b"desktop-home" not in body:
-                    raise RuntimeError("The packaged desktop Workbench script is incomplete.")
-                if path == "/workbench/styles.css" and b"data-desktop-preview" not in body:
-                    raise RuntimeError("The packaged desktop Workbench styles are incomplete.")
+                    raise RuntimeError(
+                        "The packaged desktop Workbench script is incomplete."
+                    )
+                if (
+                    path == "/workbench/styles.css"
+                    and b"data-desktop-preview" not in body
+                ):
+                    raise RuntimeError(
+                        "The packaged desktop Workbench styles are incomplete."
+                    )
             checks[f"static:{path}"] = "PASS"
 
         try:
@@ -288,7 +297,7 @@ def main() -> None:
             private_mode=True,
             storage_path=str(user_data / "webview"),
         )
-    except Exception as exc:  # noqa: BLE001 - show an actionable desktop startup error
+    except Exception as exc:
         _show_error(
             "The ZTF Classifier desktop application could not start.\n\n"
             f"{exc}\n\n"
