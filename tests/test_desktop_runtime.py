@@ -182,6 +182,40 @@ def test_desktop_api_requires_session_bearer_token(tmp_path: Path) -> None:
     assert asyncio.run(get_status("/v1/settings", f"Bearer {token}")) == 200
 
 
+def test_api_docs_remain_enabled_by_default(tmp_path: Path) -> None:
+    settings = ApiSettings(
+        observation_cache_dir=tmp_path / "cache",
+        job_store_path=tmp_path / "jobs.sqlite3",
+        result_store_path=tmp_path / "results.sqlite3",
+        application_state_path=tmp_path / "settings.json",
+        scientific_registry_dir=tmp_path / "benchmarks",
+        scientific_evidence_dir=tmp_path / "evidence",
+    )
+    app = create_app(settings=settings)
+    route_paths = {getattr(route, "path", None) for route in app.routes}
+
+    assert {"/docs", "/redoc", "/openapi.json"} <= route_paths
+
+
+def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
+    static_dir = (
+        Path(__file__).resolve().parents[1]
+        / "src"
+        / "ztf_classifier"
+        / "web"
+        / "static"
+    )
+    html = (static_dir / "index.html").read_text(encoding="utf-8")
+    bootstrap = (static_dir / "desktop-bootstrap.js").read_text(encoding="utf-8")
+
+    assert "Content-Security-Policy" in html
+    assert "script-src 'self'" in html
+    assert "connect-src 'self'" in html
+    assert 'src="./desktop-bootstrap.js"' in html
+    assert "<script>" not in html
+    assert 'document.documentElement.dir = "rtl"' in bootstrap
+
+
 def test_validation_runner_peak_memory_measurement_is_portable() -> None:
     assert _peak_rss_mb() > 0.0
 
