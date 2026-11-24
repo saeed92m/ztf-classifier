@@ -57,10 +57,7 @@ def summarize_dr24_epochs(epochs: Sequence[Mapping[str, Any]]) -> dict[str, Any]
         if _finite_number(epoch.get("magerr")) and float(epoch["magerr"]) >= 0
     ]
     unique_times = sorted(set(times))
-    intervals = [
-        right - left
-        for left, right in pairwise(unique_times)
-    ]
+    intervals = [right - left for left, right in pairwise(unique_times)]
     mag_p05 = _percentile(magnitudes, 0.05)
     mag_p95 = _percentile(magnitudes, 0.95)
 
