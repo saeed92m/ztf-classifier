@@ -64,6 +64,10 @@ jobs:
           if (-not $runtimeFound) {
             $bootstrapper = Join-Path $env:RUNNER_TEMP "MicrosoftEdgeWebView2Setup.exe"
             Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile $bootstrapper
+            $signature = Get-AuthenticodeSignature -LiteralPath $bootstrapper
+            if ($signature.Status -ne "Valid" -or $signature.SignerCertificate.Subject -notmatch "Microsoft Corporation") {
+              throw "The downloaded WebView2 bootstrapper does not have a valid Microsoft Authenticode signature."
+            }
             $process = Start-Process -FilePath $bootstrapper -ArgumentList "/silent", "/install" -Wait -PassThru
             if ($process.ExitCode -ne 0) { throw "WebView2 Evergreen Runtime installation failed: $($process.ExitCode)" }
           }
@@ -104,6 +108,23 @@ jobs:
           Copy-Item $selfTest "dist/desktop-self-test.json" -Force
           if ($report.status -ne "PASS") { throw "Frozen application self-test did not PASS. Process exit code: $($process.ExitCode). Detail: $($report.error)" }
           if ($process.ExitCode -ne 0) { throw "Frozen application self-test reported PASS but exited with code $($process.ExitCode)." }
+
+      - name: Stage signed WebView2 Evergreen bootstrapper for installer
+        shell: pwsh
+        run: |
+          $source = Join-Path $env:RUNNER_TEMP "MicrosoftEdgeWebView2Setup.exe"
+          if (-not (Test-Path $source)) {
+            Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile $source
+          }
+          $signature = Get-AuthenticodeSignature -LiteralPath $source
+          if ($signature.Status -ne "Valid" -or $signature.SignerCertificate.Subject -notmatch "Microsoft Corporation") {
+            throw "The WebView2 bootstrapper does not have a valid Microsoft Authenticode signature."
+          }
+          $destination = Join-Path $PWD "dist/MicrosoftEdgeWebView2Setup.exe"
+          Copy-Item -LiteralPath $source -Destination $destination -Force
+          $hash = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant()
+          "WEBVIEW2_BOOTSTRAPPER_SHA256=$hash" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Verified Microsoft WebView2 bootstrapper SHA-256: $hash"
 
       - name: Install pinned NSIS compiler
         shell: pwsh
@@ -199,6 +220,7 @@ jobs:
             source_commit = "${{ github.sha }}"
             installer_sha256 = $hash
             nsis_version = "3.13"
+            webview2_bootstrapper_sha256 = $env:WEBVIEW2_BOOTSTRAPPER_SHA256
             build_utc = [DateTime]::UtcNow.ToString("o")
             dependency_manifest = "desktop-windows-dependencies.txt"
             self_test_report = "desktop-self-test.json"
