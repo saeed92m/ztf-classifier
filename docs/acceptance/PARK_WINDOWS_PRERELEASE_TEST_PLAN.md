@@ -46,8 +46,8 @@
 |---|---|---|---|
 | W10 | Launch | اجرا از Start Menu | پنجره برنامه باز شود و blank screen نداشته باشد |
 | W11 | local API binding | بررسی listener برنامه | فقط loopback، نه `0.0.0.0` یا IP شبکه |
-| W12 | API authentication | درخواست بدون token و با token نامعتبر | endpointهای `/v1` رد شوند |
-| W13 | WebView navigation | لینک داخلی، لینک خارجی، درخواست پنجره جدید و URI scheme | فقط مبدأ محلی مورد اعتماد در WebView مجاز باشد؛ navigation خارجی و پنجره جدید مسدود شوند؛ scheme ناشناخته مسدود شود |
+| W12 | API security | درخواست بدون token و با token نامعتبر؛ درخواست به `/docs`، `/redoc` و `/openapi.json` | endpointهای `/v1` رد شوند؛ مستندات تعاملی در desktop با 404 بسته باشند؛ security headers موجود باشند |
+| W13 | WebView security | بررسی CSP، لینک داخلی، navigation خارجی، درخواست پنجره جدید و URI scheme | CSP فقط script و connection مبدأ محلی را مجاز کند؛ navigation خارجی و پنجره جدید مسدود شوند؛ scheme ناشناخته مسدود شود |
 | W14 | restart | بستن و اجرای مجدد | برنامه بدون port conflict بالا بیاید |
 | W15 | no developer tools | بررسی مسیر کاربر | برای اجرای عادی Python/Git/terminal لازم نباشد |
 
