@@ -626,6 +626,9 @@ async function renderDesktopWorkspaces() {
           button.disabled = true;
           try {
             await fetchJson("/v1/workspaces/" + encodeURIComponent(button.dataset.openWorkspace) + "/open", { method: "POST" });
+            desktopRawExport = null;
+            desktopDr24Payload = null;
+            desktopRawExportPersisted = false;
             status.textContent = "پروژه باز شد و به‌عنوان فضای کاری فعال ذخیره شد.";
             await refreshWorkspaces();
           } catch (error) {
