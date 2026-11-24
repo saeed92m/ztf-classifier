@@ -553,6 +553,41 @@ def create_app(
                 status_code=500,
             ) from exc
 
+    @app.get(
+        "/v1/workspaces/exports/{file_name}",
+        response_class=Response,
+        tags=["workspaces"],
+    )
+    def get_workspace_export(file_name: str) -> Response:
+        """Read one verified export from the active workspace."""
+        try:
+            export_path = workspace_store.export_path(file_name)
+            return Response(
+                content=export_path.read_bytes(),
+                media_type="application/json",
+                headers={
+                    "Content-Disposition": f'attachment; filename="{file_name}"'
+                },
+            )
+        except WorkspaceNotFoundError as exc:
+            raise ApiContractError(
+                "workspace_export_not_found",
+                "The requested workspace export was not found.",
+                status_code=404,
+            ) from exc
+        except WorkspaceError as exc:
+            raise ApiContractError(
+                "workspace_export_invalid",
+                "The requested workspace export is invalid.",
+                status_code=422,
+            ) from exc
+        except OSError as exc:
+            raise ApiContractError(
+                "workspace_export_read_failed",
+                "The workspace export could not be read.",
+                status_code=500,
+            ) from exc
+
     @app.post("/v1/workspaces/exports", tags=["workspaces"])
     def save_workspace_export(payload: dict[str, Any]) -> dict[str, Any]:
         """Save a reproducible raw DR24 export inside the active workspace."""
