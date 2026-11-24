@@ -169,7 +169,7 @@ class LocalApiServer:
                 def serve() -> None:
                     try:
                         server.run(sockets=[local_socket])
-                    except Exception as exc:  # captured for the controlling thread
+                    except (OSError, RuntimeError, ValueError, TypeError) as exc:  # captured for the controlling thread
                         self._thread_error = exc
 
                 self._thread = threading.Thread(
@@ -244,4 +244,3 @@ class LocalApiServer:
             self._server = None
             self._thread = None
             self._port = None
-
