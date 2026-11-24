@@ -50,7 +50,7 @@ The current contract reports `epochs_excluded = 0` and `filtering_applied = fals
 
 **This is not a quality-selection policy.** It does not define a threshold or approve an epoch mask. It does not mark an object as scientifically valid. Keep all raw values.
 
-## JSON export: `ztf-dr24-raw-export-v0.2`
+## JSON export: `ztf-dr24-raw-export-v0.3`
 
 After a successful batch lookup, select **Download raw JSON + QC**.
 
