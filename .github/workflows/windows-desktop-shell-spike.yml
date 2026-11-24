@@ -7,6 +7,7 @@ on:
       - "src/ztf_classifier/desktop/**"
       - "src/ztf_classifier/web/static/**"
       - "tests/test_desktop_runtime.py"
+      - "tests/integration/test_dr24_batch_workbench_ui.py"
       - "packaging/windows/**"
       - ".github/workflows/windows-desktop-shell-spike.yml"
   workflow_dispatch:
