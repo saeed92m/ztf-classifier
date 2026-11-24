@@ -29,9 +29,7 @@ class DesktopRuntimeError(RuntimeError):
 def get_user_data_dir(app_name: str = "ZTFClassifier") -> Path:
     """Return the per-user application data directory."""
     if os.name == "nt":
-        root = os.environ.get("LOCALAPPDATA") or (
-            Path.home() / "AppData" / "Local"
-        )
+        root = os.environ.get("LOCALAPPDATA") or (Path.home() / "AppData" / "Local")
         return Path(root).expanduser() / app_name
 
     root = os.environ.get("XDG_DATA_HOME")
@@ -171,7 +169,7 @@ class LocalApiServer:
                 def serve() -> None:
                     try:
                         server.run(sockets=[local_socket])
-                    except BaseException as exc:  # captured for the controlling thread
+                    except Exception as exc:  # captured for the controlling thread
                         self._thread_error = exc
 
                 self._thread = threading.Thread(
@@ -247,9 +245,3 @@ class LocalApiServer:
             self._thread = None
             self._port = None
 
-    def __enter__(self) -> LocalApiServer:
-        self.start()
-        return self
-
-    def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> None:
-        self.stop()
