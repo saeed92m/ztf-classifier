@@ -35,10 +35,13 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install --upgrade pip==26.2 setuptools==84.1.0 wheel==0.48.0
-          python -m pip install -e ".[dev,desktop-windows,desktop-build]"
+          python -m pip install -e ".[dev,dr24,desktop-windows,desktop-build]"
 
       - name: Verify dependency environment
         run: python -m pip check
+
+      - name: Verify DR24 runtime dependencies
+        run: python -c "import lsdb, s3fs; print('DR24 dependencies import successfully')"
 
       - name: Run desktop runtime tests
         run: python -m pytest -q tests/test_desktop_runtime.py
@@ -54,7 +57,7 @@ jobs:
       - name: Build Windows one-folder application
         shell: pwsh
         run: |
-          pyinstaller --noconfirm --clean --onedir --windowed --name ZTFClassifier --collect-all webview --collect-all pythonnet --collect-all clr_loader --add-data "src/ztf_classifier/web/static;ztf_classifier/web/static" --add-data "configs/benchmarks;configs/benchmarks" src/ztf_classifier/desktop/main.py
+          pyinstaller --noconfirm --clean --onedir --windowed --name ZTFClassifier --collect-all webview --collect-all pythonnet --collect-all clr_loader --collect-all lsdb --collect-all s3fs --collect-all fsspec --add-data "src/ztf_classifier/web/static;ztf_classifier/web/static" --add-data "configs/benchmarks;configs/benchmarks" src/ztf_classifier/desktop/main.py
           if (-not (Test-Path "dist/ZTFClassifier/ZTFClassifier.exe")) {
             throw "PyInstaller did not create the expected Windows executable."
           }
