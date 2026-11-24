@@ -1028,6 +1028,8 @@ async function loadDR24Explorer() {
 
   async function loadRaw() {
     lastRawExport = null;
+    desktopDr24Payload = null;
+    desktopRawExport = null;
     exportButton.disabled = true;
     let objectids;
     try {
