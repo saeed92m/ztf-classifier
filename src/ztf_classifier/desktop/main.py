@@ -6,7 +6,8 @@ import ctypes
 import os
 import secrets
 import sys
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from urllib.parse import urlsplit
 
 from ztf_classifier.api.app import create_app
