@@ -34,10 +34,10 @@ VIAddVersionKey "Comments" "Experimental Park evaluation pre-release; not a scie
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
-!insertmacro MUI_LANGUAGE "Persian"
+!insertmacro MUI_LANGUAGE "Farsi"
 !insertmacro MUI_LANGUAGE "English"
 
-LangString WebView2InstallFailed ${LANG_PERSIAN} "نصب خودکار Microsoft Edge WebView2 Runtime موفق نبود (کد خروجی: $1). اتصال اینترنت را بررسی کنید و Runtime را از وب‌سایت رسمی Microsoft نصب کنید."
+LangString WebView2InstallFailed ${LANG_FARSI} "نصب خودکار Microsoft Edge WebView2 Runtime موفق نبود (کد خروجی: $1). اتصال اینترنت را بررسی کنید و Runtime را از وب‌سایت رسمی Microsoft نصب کنید."
 LangString WebView2InstallFailed ${LANG_ENGLISH} "Automatic Microsoft Edge WebView2 Runtime installation failed (exit code: $1). Check the internet connection and install the Runtime from the official Microsoft website."
 
 ; WebView2 is mandatory. If it is absent, open Microsoft's official download page and abort.
