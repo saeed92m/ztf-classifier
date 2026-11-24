@@ -40,8 +40,40 @@ Clients never submit arbitrary artifact or registry filesystem paths.
 | GET | `/v1/catalog/results` | Paginated scientific catalog query |
 | GET | `/v1/catalog/results.csv` | Deterministic catalog CSV export |
 | GET | `/v1/results/{result_id}/report` | Deterministic Markdown scientific report |
+| GET | `/v1/workspaces` | List local desktop workspaces and active workspace ID |
+| GET | `/v1/workspaces/active` | Return the active local desktop workspace |
+| POST | `/v1/workspaces` | Create and activate a local desktop workspace |
+| POST | `/v1/workspaces/{workspace_id}/open` | Activate an existing local workspace |
+| POST | `/v1/workspaces/operations` | Persist a bounded DR24 query lifecycle event |
+| POST | `/v1/workspaces/exports` | Persist a successful DR24 raw export and its SHA-256 |
 
 OpenAPI is generated directly by FastAPI from the versioned HTTP schemas.
+
+## Local desktop workspace endpoints
+
+These endpoints support the standalone desktop preview. They store workspace manifests,
+operation logs and JSON exports under the current user's application-data directory.
+They do not change the browser-mode workspace or the scientific model registry.
+
+A workspace must be created or opened before a DR24 query can be recorded. The
+operation lifecycle is:
+
+1. `POST /v1/workspaces/operations` with `status=RUNNING`,
+   `operation_type=DR24_BATCH_QUERY`, `source=ztf_dr24_hats`, and 1–10 unique
+   positive `requested_oids`.
+2. On successful acquisition, submit `status=SUCCEEDED` with the complete
+   `returned_oids` / `missing_oids` partition and one SHA-256 value for every
+   returned OID.
+3. On acquisition failure, submit `status=FAILED` and the requested OIDs as
+   missing. No source substitution is allowed.
+4. `POST /v1/workspaces/exports` stores the complete JSON export only after a
+   successful operation. The response includes the file name, size, path, and
+   SHA-256 digest.
+
+`GET /v1/workspaces/active` and `GET /v1/workspaces` expose the last operation
+and export metadata. A workspace reopen restores this recorded state. The
+stored export remains a raw DR24 record; it does not represent normalized
+features, model inference, or scientific validation.
 
 ## Prediction request
 
