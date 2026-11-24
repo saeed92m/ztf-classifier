@@ -121,31 +121,36 @@ def _install_navigation_guard(window: Any, base_url: str) -> None:
     window._ztf_navigation_handlers = handlers
 
 
-def _is_webview2_runtime_installed() -> bool:
+def _is_webview2_runtime_installed(
+    *,
+    platform_name: str | None = None,
+    registry_module: Any | None = None,
+) -> bool:
     """Check the Evergreen WebView2 Runtime registry values."""
-    if os.name != "nt":
+    if (platform_name or os.name) != "nt":
         return False
 
-    try:
-        import winreg
-    except ImportError:
-        return False
+    if registry_module is None:
+        try:
+            import winreg as registry_module
+        except ImportError:
+            return False
 
     client_id = "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
     locations = (
         (
-            winreg.HKEY_LOCAL_MACHINE,
+            registry_module.HKEY_LOCAL_MACHINE,
             rf"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{client_id}",
         ),
         (
-            winreg.HKEY_CURRENT_USER,
+            registry_module.HKEY_CURRENT_USER,
             rf"Software\Microsoft\EdgeUpdate\Clients\{client_id}",
         ),
     )
     for hive, subkey in locations:
         try:
-            with winreg.OpenKey(hive, subkey) as registry_key:
-                version, _ = winreg.QueryValueEx(registry_key, "pv")
+            with registry_module.OpenKey(hive, subkey) as registry_key:
+                version, _ = registry_module.QueryValueEx(registry_key, "pv")
             if isinstance(version, str) and version not in {"", "0.0.0.0"}:
                 return True
         except OSError:
