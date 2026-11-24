@@ -5,7 +5,7 @@
 Status date: 2026-10-11
 Software release: v1.0.1
 Scientific baseline: v0.2.0 (immutable)
-Production model: baseline_v0.2
+Intended production model: baseline_v0.2 — original artifact recovery BLOCKED (Issue #282)
 
 ## Current state
 v1.0.1 is published and immutable. v1.0.0 remains immutable. Scientific Validation, CI, CodeQL, release asset verification, and release publication gates passed for v1.0.1.
