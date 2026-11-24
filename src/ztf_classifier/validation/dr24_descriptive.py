@@ -66,6 +66,10 @@ def summarize_dr24_epochs(epochs: Sequence[Mapping[str, Any]]) -> dict[str, Any]
     return {
         "schema_version": SUMMARY_SCHEMA_VERSION,
         "policy_status": SUMMARY_POLICY_STATUS,
+        "percentile_method": "linear_interpolation_type_7",
+        "sampling_interval_definition": (
+            "Median difference between sorted unique finite HMJD values."
+        ),
         "raw_epoch_count": len(epochs),
         "finite_hmjd_mag_pair_count": len(pairs),
         "invalid_hmjd_mag_pair_count": len(epochs) - len(pairs),
