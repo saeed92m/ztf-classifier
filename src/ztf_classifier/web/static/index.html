@@ -5,14 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark light" />
     <meta name="description" content="ZTF Classifier Scientific Analysis Workbench" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'"
+    />
     <title>ZTF Scientific Analysis Workbench</title>
-    <script>
-      if (new URLSearchParams(window.location.search).get("desktop") === "1") {
-        document.documentElement.dataset.desktopPreview = "true";
-        document.documentElement.lang = "fa";
-        document.documentElement.dir = "rtl";
-      }
-    </script>
+    <script src="./desktop-bootstrap.js" defer></script>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
