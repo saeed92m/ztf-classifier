@@ -134,9 +134,12 @@ def test_desktop_api_requires_session_bearer_token(tmp_path: Path) -> None:
     )
     app = create_app(settings=settings, docs_enabled=False)
 
-    async def get_status(path: str, authorization: str | None = None) -> int:
+    async def get_response(
+        path: str,
+        authorization: str | None = None,
+    ) -> tuple[int, dict[str, str]]:
         messages: list[dict[str, Any]] = []
-        headers = (
+        request_headers = (
             [(b"authorization", authorization.encode("ascii"))] if authorization else []
         )
 
@@ -162,24 +165,34 @@ def test_desktop_api_requires_session_bearer_token(tmp_path: Path) -> None:
             "raw_path": path.encode("ascii"),
             "query_string": b"",
             "root_path": "",
-            "headers": headers,
+            "headers": request_headers,
             "client": ("127.0.0.1", 12345),
             "server": ("127.0.0.1", 43127),
         }
         await app(scope, receive, send)
-        return next(
-            message["status"]
+        start = next(
+            message
             for message in messages
             if message["type"] == "http.response.start"
         )
+        response_headers = {
+            key.decode("latin-1").lower(): value.decode("latin-1")
+            for key, value in start["headers"]
+        }
+        return start["status"], response_headers
 
-    assert asyncio.run(get_status("/health")) == 200
-    assert asyncio.run(get_status("/docs")) == 404
-    assert asyncio.run(get_status("/redoc")) == 404
-    assert asyncio.run(get_status("/openapi.json")) == 404
+    health_status, health_headers = asyncio.run(get_response("/health"))
+    assert health_status == 200
+    assert health_headers["x-content-type-options"] == "nosniff"
+    assert health_headers["referrer-policy"] == "no-referrer"
+    assert health_headers["x-frame-options"] == "DENY"
 
-    assert asyncio.run(get_status("/v1/settings")) == 401
-    assert asyncio.run(get_status("/v1/settings", f"Bearer {token}")) == 200
+    assert asyncio.run(get_response("/docs"))[0] == 404
+    assert asyncio.run(get_response("/redoc"))[0] == 404
+    assert asyncio.run(get_response("/openapi.json"))[0] == 404
+
+    assert asyncio.run(get_response("/v1/settings"))[0] == 401
+    assert asyncio.run(get_response("/v1/settings", f"Bearer {token}"))[0] == 200
 
 
 def test_api_docs_remain_enabled_by_default(tmp_path: Path) -> None:
