@@ -118,15 +118,31 @@ jobs:
           $nsisRoot = Join-Path ${env:ProgramFiles(x86)} "NSIS"
           New-Item -ItemType Directory -Path $nsisRoot -Force | Out-Null
           Expand-Archive -Path $nsisArchive -DestinationPath $nsisRoot -Force
-          $compiler = Join-Path $nsisRoot "Bin\\makensis.exe"
-          if (-not (Test-Path $compiler)) { throw "Pinned NSIS compiler was not found." }
-          & $compiler /VERSION
+          $compilerCandidates = @(Get-ChildItem -LiteralPath $nsisRoot -Filter "makensis.exe" -File -Recurse)
+          if ($compilerCandidates.Count -ne 1) {
+            throw "Expected exactly one makensis.exe in the checksum-verified NSIS archive; found $($compilerCandidates.Count)."
+          }
+          $compiler = $compilerCandidates[0].FullName
+          $nsisHome = Split-Path -Parent (Split-Path -Parent $compiler)
+          if (-not (Test-Path (Join-Path $nsisHome "Include\\MUI2.nsh"))) {
+            throw "NSIS include directory is missing from the extracted archive."
+          }
+          $versionOutput = & $compiler /VERSION 2>&1
+          $versionExitCode = $LASTEXITCODE
+          $versionText = ($versionOutput -join "`n").Trim()
+          if ($versionExitCode -ne 0 -or $versionText -notmatch "3\\.13") {
+            throw "Expected NSIS 3.13; compiler reported '$versionText' (exit $versionExitCode)."
+          }
+          "NSIS_COMPILER=$compiler" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "NSISDIR=$nsisHome" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Build Windows installer
         shell: pwsh
         run: |
-          $compiler = Join-Path ${env:ProgramFiles(x86)} "NSIS\\Bin\\makensis.exe"
-          & $compiler /V3 packaging/windows/installer.nsi
+          if (-not $env:NSIS_COMPILER -or -not (Test-Path $env:NSIS_COMPILER)) {
+            throw "The verified NSIS compiler path was not exported by the setup step."
+          }
+          & $env:NSIS_COMPILER /V3 packaging/windows/installer.nsi
           if ($LASTEXITCODE -ne 0) { throw "NSIS installer build failed with exit code $LASTEXITCODE." }
           $setup = "dist/ZTFClassifier-0.1.0-preview.1-Setup.exe"
           if (-not (Test-Path $setup)) { throw "The Windows installer was not created." }
