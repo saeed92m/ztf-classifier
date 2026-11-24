@@ -75,6 +75,7 @@ def test_webview2_runtime_detection_checks_machine_and_user_registry() -> None:
         platform_name="linux", registry_module=installed
     )
 
+
 def test_build_desktop_settings_uses_per_user_storage(
     tmp_path: Path,
 ) -> None:
