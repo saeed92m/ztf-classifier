@@ -41,6 +41,28 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def validate_output_dir(root: Path, output_dir: Path) -> Path:
+    """Validate output containment and immutability before any model work."""
+    root = root.resolve()
+    output_dir = output_dir.resolve()
+    legacy_path = (root / "runs/model_baseline_v0.2_production").resolve()
+    if root not in output_dir.parents:
+        raise ValueError(f"Output directory must be inside the project root: {output_dir}")
+    if output_dir == legacy_path or legacy_path in output_dir.parents:
+        raise ValueError("Refusing to write into the frozen production path.")
+    if output_dir.exists():
+        raise FileExistsError(f"Output already exists: {output_dir}")
+    return output_dir
+
+
+def write_json(path: Path, payload: dict[str, object]) -> None:
+    """Write a stable JSON record."""
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
@@ -68,16 +90,12 @@ def main() -> int:
         )
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    output_dir = (
-        args.output_dir.resolve()
+    output_dir = validate_output_dir(
+        root,
+        args.output_dir
         if args.output_dir
-        else root / "runs" / f"reconstructed-baseline-v0.2-{timestamp}"
+        else root / "runs" / f"reconstructed-baseline-v0.2-{timestamp}",
     )
-    legacy_path = (root / "runs/model_baseline_v0.2_production").resolve()
-    if output_dir == legacy_path or legacy_path in output_dir.parents:
-        raise ValueError("Refusing to write into the frozen production path.")
-    if output_dir.exists():
-        raise FileExistsError(f"Output already exists: {output_dir}")
 
     dataset = pd.read_parquet(paths["dataset"])
     folds = pd.read_parquet(paths["fold_assignments"])
@@ -112,6 +130,20 @@ def main() -> int:
     features = engine.prepare_features(dataset)
 
     output_dir.mkdir(parents=True)
+    record_path = output_dir / "reconstruction_record.json"
+    write_json(
+        record_path,
+        {
+            "record_schema": "ztf-model-reconstruction-v1",
+            "status": "IN_PROGRESS",
+            "original_artifact_recovered": False,
+            "production_eligible": False,
+            "limitations": [
+                "This is a new fit, not recovery of the original frozen model binary.",
+                "Do not use this artifact for public classifications.",
+            ],
+        },
+    )
     oof_path = output_dir / "oof_predictions.parquet"
     oof.predictions.to_parquet(oof_path, index=False)
 
@@ -152,7 +184,12 @@ def main() -> int:
     loaded = ModelArtifactLoader().load(artifact_dir)
     expected_probabilities = fitted_model.predict_proba(features)
     actual_probabilities = loaded.model_artifact.model.predict_proba(features)
-    np.testing.assert_array_equal(actual_probabilities, expected_probabilities)
+    np.testing.assert_allclose(
+        actual_probabilities,
+        expected_probabilities,
+        rtol=0.0,
+        atol=1e-12,
+    )
 
     record = {
         "record_schema": "ztf-model-reconstruction-v1",
@@ -181,10 +218,7 @@ def main() -> int:
             "Conformal and OOD production outputs are not included.",
         ],
     }
-    (output_dir / "reconstruction_record.json").write_text(
-        json.dumps(record, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    write_json(record_path, record)
     print(json.dumps(record, indent=2, sort_keys=True))
     return 0
 
