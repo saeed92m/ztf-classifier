@@ -159,3 +159,59 @@ h1 { margin: 5px 0 4px; font-size: 22px; letter-spacing: -.02em; }
   white-space: pre-wrap;
   font: 0.86rem/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
+
+/* Persian-first Windows desktop preview. Browser Workbench remains unchanged. */
+:root[data-desktop-preview="true"] body {
+  direction: rtl;
+  font-family: Tahoma, "Segoe UI", sans-serif;
+}
+:root[data-desktop-preview="true"] .workspace {
+  grid-template-columns: 200px minmax(0, 1fr);
+  direction: rtl;
+}
+:root[data-desktop-preview="true"] .sidebar {
+  border-right: 0;
+  border-left: 1px solid var(--color-border);
+}
+:root[data-desktop-preview="true"] .nav-item {
+  text-align: right;
+}
+:root[data-desktop-preview="true"] .nav-item.active {
+  box-shadow: inset -2px 0 var(--color-accent);
+}
+:root[data-desktop-preview="true"] .main-canvas,
+:root[data-desktop-preview="true"] .canvas-header,
+:root[data-desktop-preview="true"] .panel-header,
+:root[data-desktop-preview="true"] .metadata {
+  direction: rtl;
+}
+:root[data-desktop-preview="true"] .metadata dt,
+:root[data-desktop-preview="true"] .metadata dd {
+  text-align: right;
+}
+:root[data-desktop-preview="true"] .dr24-object-ids,
+:root[data-desktop-preview="true"] #dr24ObjectIds,
+:root[data-desktop-preview="true"] #dr24Provenance,
+:root[data-desktop-preview="true"] .report-content,
+:root[data-desktop-preview="true"] #dr24Results table {
+  direction: ltr;
+  text-align: left;
+}
+:root[data-desktop-preview="true"] #dr24Results .chart,
+:root[data-desktop-preview="true"] #dr24Results svg {
+  direction: ltr;
+}
+:root[data-desktop-preview="true"] #dr24Results table th,
+:root[data-desktop-preview="true"] #dr24Results table td {
+  text-align: right;
+}
+:root[data-desktop-preview="true"] .theme-popover {
+  direction: rtl;
+}
+:root[data-desktop-preview="true"] .theme-popover label {
+  text-align: right;
+}
+:root[data-desktop-preview="true"] .legend-dot {
+  margin-right: 0;
+  margin-left: 4px;
+}
