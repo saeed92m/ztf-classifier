@@ -858,6 +858,7 @@ async function loadDR24Explorer() {
     '<div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding:12px 0">',
     '<label for="dr24ObjectIds">DR24 object IDs</label>',
     '<textarea id="dr24ObjectIds" rows="3" placeholder="One or more OIDs, separated by commas or spaces" style="min-width:min(100%,520px)"></textarea>',
+    desktopMode ? '<button class="secondary-button" id="dr24SampleButton" type="button">شناسه‌های نمونه آزمون‌شده</button>' : '',
     '<button class="primary-button" id="dr24LoadButton" type="button">Load raw light curves</button>',
     '<button id="dr24ExportButton" type="button" disabled>Download raw JSON + QC</button>',
     '</div><p id="dr24Status" class="muted" role="status">No DR24 objects loaded.</p></section>',
@@ -867,12 +868,21 @@ async function loadDR24Explorer() {
     '<pre id="dr24Provenance" class="report-content">No acquisition performed.</pre></section>'
   ].join("");
   setViewHeading("dr24");
+  translateDesktopText(mainCanvas);
+  desktopDr24Payload = null;
+  desktopRawExport = null;
   const input = document.getElementById("dr24ObjectIds");
   const loadButton = document.getElementById("dr24LoadButton");
   const exportButton = document.getElementById("dr24ExportButton");
   let lastRawExport = null;
   const initialIds = params.get("objectids") || params.get("objectid") || "";
   if (initialIds) input.value = initialIds;
+  const sampleButton = document.getElementById("dr24SampleButton");
+  if (sampleButton) {
+    sampleButton.addEventListener("click", () => {
+      input.value = "264114400013085, 264214400000912";
+    });
+  }
 
   function parseObjectIds(value) {
     const tokens = value.split(/[\s,;]+/).filter(Boolean);
@@ -1006,7 +1016,7 @@ async function loadDR24Explorer() {
     try {
       objectids = parseObjectIds(input.value.trim());
     } catch (error) {
-      document.getElementById("dr24Status").textContent = error.message;
+      document.getElementById("dr24Status").textContent = desktopTranslate(error.message);
       return;
     }
     loadButton.disabled = true;
@@ -1038,6 +1048,7 @@ async function loadDR24Explorer() {
       );
       document.getElementById("dr24Results").innerHTML = rendered.join("") ||
         '<section class="panel muted">No catalog rows were returned. No alternate source was used.</section>';
+      translateDesktopText(document.getElementById("dr24Results"));
       const missing = provenance.missing_oids || [];
       const returned = provenance.returned_oids || records.map(record => record.objectid);
       document.getElementById("dr24Status").textContent =
@@ -1050,6 +1061,9 @@ async function loadDR24Explorer() {
         source_payload: payload,
         interpretation: "Raw source payload preserved. QC is diagnostic only; no epochs were filtered or grouped."
       };
+      desktopDr24Payload = payload;
+      desktopRawExport = lastRawExport;
+      translateDesktopText(document.getElementById("dr24Status"));
       exportButton.disabled = false;
       setConnectionState("DR24 raw data loaded");
     } catch (error) {
@@ -1057,9 +1071,12 @@ async function loadDR24Explorer() {
         '<section class="panel muted">DR24 acquisition failed. No fallback source was used.</section>';
       document.getElementById("dr24Provenance").textContent =
         "Unavailable: DR24 acquisition failed.";
+      desktopDr24Payload = null;
+      desktopRawExport = null;
       document.getElementById("dr24Status").textContent =
-        "DR24 acquisition failed (" + (error.status || "network") +
-        "). No fallback source was used.";
+        desktopTranslate("DR24 acquisition failed (") + (error.status || "network") +
+        desktopTranslate("). No fallback source was used.");
+      translateDesktopText(document.getElementById("dr24Results"));
       setConnectionState("DR24 acquisition failed", false);
     } finally {
       loadButton.disabled = false;
@@ -1067,22 +1084,7 @@ async function loadDR24Explorer() {
   }
 
   loadButton.addEventListener("click", loadRaw);
-  exportButton.addEventListener("click", () => {
-    if (!lastRawExport) return;
-    const blob = new Blob([JSON.stringify(lastRawExport, null, 2)], {
-      type: "application/json"
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "ztf-dr24-batch-" +
-      (lastRawExport.source_payload.provenance.requested_oids || []).join("_") +
-      "-raw-export.json";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  });
+  exportButton.addEventListener("click", downloadDesktopRawExport);
   if (input.value) await loadRaw();
 }
 async function showView(view) {
