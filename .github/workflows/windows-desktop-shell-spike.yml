@@ -105,14 +105,15 @@ jobs:
       - name: Install pinned NSIS compiler
         shell: pwsh
         run: |
-          $nsisSetup = Join-Path $env:RUNNER_TEMP "nsis-3.13-setup.exe"
-          Invoke-WebRequest -Uri "https://sourceforge.net/projects/nsis/files/NSIS%203/3.13/nsis-3.13-setup.exe/download" -OutFile $nsisSetup
-          $actualHash = (Get-FileHash -Path $nsisSetup -Algorithm SHA256).Hash
-          $expectedHash = "DB9A1038BBC0E53FEF24F423FD609979BD578E942F1BE1198DB186D1C42652A3"
-          if ($actualHash -ne $expectedHash) { throw "NSIS installer SHA-256 mismatch: $actualHash" }
-          $process = Start-Process -FilePath $nsisSetup -ArgumentList "/S" -Wait -PassThru
-          if ($process.ExitCode -ne 0) { throw "NSIS installation failed: $($process.ExitCode)" }
-          $compiler = Join-Path ${env:ProgramFiles(x86)} "NSIS\\makensis.exe"
+          $nsisArchive = Join-Path $env:RUNNER_TEMP "nsis-3.13.zip"
+          Invoke-WebRequest -Uri "https://downloads.sourceforge.net/project/nsis/NSIS%203/3.13/nsis-3.13.zip" -OutFile $nsisArchive
+          $actualHash = (Get-FileHash -Path $nsisArchive -Algorithm SHA256).Hash
+          $expectedHash = "BA63DFFC4410EE89193E1CB5A41989991BD77C61068DA17E3156D136B7B0B3D8"
+          if ($actualHash -ne $expectedHash) { throw "NSIS archive SHA-256 mismatch: $actualHash" }
+          $nsisRoot = Join-Path ${env:ProgramFiles(x86)} "NSIS"
+          New-Item -ItemType Directory -Path $nsisRoot -Force | Out-Null
+          Expand-Archive -Path $nsisArchive -DestinationPath $nsisRoot -Force
+          $compiler = Join-Path $nsisRoot "Bin\\makensis.exe"
           if (-not (Test-Path $compiler)) { throw "Pinned NSIS compiler was not found." }
           & $compiler /VERSION
 
