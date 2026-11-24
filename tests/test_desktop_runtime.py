@@ -13,6 +13,7 @@ from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.desktop.main import (
     _install_navigation_guard,
     _is_trusted_local_url,
+    _is_webview2_runtime_installed,
 )
 from ztf_classifier.desktop.runtime import (
     DesktopRuntimeError,
@@ -31,6 +32,50 @@ def test_user_data_directory_uses_explicit_windows_location(
 
     assert get_user_data_dir(platform_name="nt") == tmp_path / "ZTFClassifier"
 
+
+def test_webview2_runtime_detection_checks_machine_and_user_registry() -> None:
+    class FakeKey:
+        def __init__(self, value: str) -> None:
+            self.value = value
+
+        def __enter__(self) -> FakeKey:
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+    class FakeRegistry:
+        HKEY_LOCAL_MACHINE = "HKLM"
+        HKEY_CURRENT_USER = "HKCU"
+
+        def __init__(self, values: dict[tuple[str, str], str]) -> None:
+            self.values = values
+
+        def OpenKey(self, hive: str, subkey: str) -> FakeKey:
+            try:
+                return FakeKey(self.values[(hive, subkey)])
+            except KeyError as exc:
+                raise OSError("Registry value not found") from exc
+
+        @staticmethod
+        def QueryValueEx(key: FakeKey, name: str) -> tuple[str, int]:
+            assert name == "pv"
+            return key.value, 1
+
+    client_id = "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
+    user_key = rf"Software\Microsoft\EdgeUpdate\Clients\{client_id}"
+    installed = FakeRegistry({("HKCU", user_key): "126.0.0.0"})
+    missing = FakeRegistry({})
+
+    assert _is_webview2_runtime_installed(
+        platform_name="nt", registry_module=installed
+    )
+    assert not _is_webview2_runtime_installed(
+        platform_name="nt", registry_module=missing
+    )
+    assert not _is_webview2_runtime_installed(
+        platform_name="linux", registry_module=installed
+    )
 
 def test_build_desktop_settings_uses_per_user_storage(
     tmp_path: Path,
