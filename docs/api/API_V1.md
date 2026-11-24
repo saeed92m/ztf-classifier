@@ -46,6 +46,7 @@ Clients never submit arbitrary artifact or registry filesystem paths.
 | POST | `/v1/workspaces/{workspace_id}/open` | Activate an existing local workspace |
 | POST | `/v1/workspaces/operations` | Persist a bounded DR24 query lifecycle event |
 | POST | `/v1/workspaces/exports` | Persist a successful DR24 raw export and its SHA-256 |
+| GET | `/v1/workspaces/exports/{file_name}` | Restore one saved JSON export from the active workspace |
 
 OpenAPI is generated directly by FastAPI from the versioned HTTP schemas.
 
