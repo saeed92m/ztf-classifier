@@ -267,6 +267,8 @@ def create_app(
     observation_service: ObservationService | None = None,
     analysis_executor: SourceBackedAnalysisExecutor | None = None,
     feature_engine: ScientificFeatureEngine | None = None,
+    *,
+    docs_enabled: bool = True,
 ) -> FastAPI:
     """Create the production API application."""
     api_settings = settings or ApiSettings.from_environment()
@@ -280,6 +282,9 @@ def create_app(
         title="ZTF Classifier API",
         version="1.0",
         description="Versioned scientific inference boundary for the ZTF Classifier platform.",
+        docs_url="/docs" if docs_enabled else None,
+        redoc_url="/redoc" if docs_enabled else None,
+        openapi_url="/openapi.json" if docs_enabled else None,
     )
     app.state.settings = api_settings
     app.state.application_service = service
