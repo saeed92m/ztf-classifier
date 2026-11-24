@@ -20,6 +20,7 @@ from ztf_classifier.io.dr24_lightcurve import (
     DR24LightcurveRequest,
 )
 from ztf_classifier.io.parquet_detection_store import ParquetDetectionStore
+from ztf_classifier.validation.dr24_descriptive import summarize_dr24_records
 from ztf_classifier.validation.dr24_quality import assess_dr24_epochs
 
 
@@ -64,6 +65,9 @@ class ObservationService:
             }
             for record in payload["records"]
         ]
+        payload["descriptive_summaries"] = summarize_dr24_records(
+            payload["records"]
+        )
         return payload
 
     def get_observations(
