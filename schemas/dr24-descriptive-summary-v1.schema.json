@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/saeed92m/ztf-classifier/blob/main/schemas/dr24-descriptive-summary-v1.schema.json",
+  "title": "ZTF DR24 source-native descriptive summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_status",
+    "summaries",
+    "grouping_applied"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ztf-dr24-descriptive-summary-v1"
+    },
+    "policy_status": {
+      "const": "DESCRIPTIVE_NOT_CLASSIFICATION"
+    },
+    "grouping_applied": {
+      "const": false
+    },
+    "summaries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "objectid",
+          "filterid",
+          "summary"
+        ],
+        "properties": {
+          "objectid": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "filterid": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              3
+            ]
+          },
+          "summary": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "schema_version",
+              "policy_status",
+              "percentile_method",
+              "sampling_interval_definition",
+              "raw_epoch_count",
+              "finite_hmjd_mag_pair_count",
+              "invalid_hmjd_mag_pair_count",
+              "finite_nonnegative_magerr_count",
+              "invalid_or_negative_magerr_count",
+              "hmjd_min",
+              "hmjd_max",
+              "hmjd_span_days",
+              "unique_hmjd_count",
+              "duplicate_hmjd_count",
+              "median_sampling_interval_days",
+              "mag_min",
+              "mag_median",
+              "mag_max",
+              "mag_p05",
+              "mag_p95",
+              "mag_p95_minus_p05",
+              "magerr_median",
+              "catflags_used_for_selection",
+              "epoch_filtering_applied",
+              "time_conversion_applied",
+              "photometry_conversion_applied",
+              "interpretation"
+            ],
+            "properties": {
+              "schema_version": {
+                "const": "ztf-dr24-descriptive-summary-v1"
+              },
+              "policy_status": {
+                "const": "DESCRIPTIVE_NOT_CLASSIFICATION"
+              },
+              "percentile_method": {
+                "const": "linear_interpolation_type_7"
+              },
+              "sampling_interval_definition": {
+                "type": "string"
+              },
+              "raw_epoch_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "finite_hmjd_mag_pair_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "invalid_hmjd_mag_pair_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "finite_nonnegative_magerr_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "invalid_or_negative_magerr_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "hmjd_min": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "hmjd_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "hmjd_span_days": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "unique_hmjd_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "duplicate_hmjd_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "median_sampling_interval_days": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "mag_min": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "mag_median": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "mag_max": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "mag_p05": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "mag_p95": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "mag_p95_minus_p05": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "magerr_median": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "catflags_used_for_selection": {
+                "const": false
+              },
+              "epoch_filtering_applied": {
+                "const": false
+              },
+              "time_conversion_applied": {
+                "const": false
+              },
+              "photometry_conversion_applied": {
+                "const": false
+              },
+              "interpretation": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
