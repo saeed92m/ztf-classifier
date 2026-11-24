@@ -52,6 +52,13 @@ def _load_webview() -> Any:
             "Windows desktop support is not installed. "
             'Install the "desktop-windows" extra and try again.'
         ) from exc
+    if not _is_webview2_runtime_installed():
+        raise RuntimeError(
+            "Microsoft Edge WebView2 Runtime is not installed. "
+            "Install the Evergreen Runtime from "
+            "https://developer.microsoft.com/microsoft-edge/webview2/ "
+            "and restart ZTF Classifier."
+        )
     return webview
 
 
@@ -155,14 +162,9 @@ def _run_self_test() -> None:
     runtime: LocalApiServer | None = None
 
     try:
-        import webview
-
-        if not hasattr(webview, "create_window") or not _is_webview2_runtime_installed():
-            raise RuntimeError(
-                "Microsoft Edge WebView2 Runtime is not installed. "
-                "Install the Evergreen Runtime from "
-                "https://developer.microsoft.com/microsoft-edge/webview2/"
-            )
+        webview = _load_webview()
+        if not hasattr(webview, "create_window"):
+            raise RuntimeError("The packaged pywebview module is incomplete.")
         checks["pywebview_and_webview2_runtime"] = "PASS"
 
         token = secrets.token_urlsafe(32)
