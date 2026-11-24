@@ -113,3 +113,50 @@ The two companion documents are:
 - `docs/architecture/ADR-001-WINDOWS-DESKTOP-SHELL.md`
 
 No implementation or scientific acceptance is inferred from this review.
+
+
+## 8. Follow-up review — exact Windows preview acceptance contract
+
+**Review basis:** docs/acceptance/PARK_WINDOWS_DESKTOP_BETA_ACCEPTANCE_2026-11-24.md, current PR #310 head, API settings/state contracts, desktop runtime and Workbench source.
+
+This follow-up applies the exact required user workflow. It does not treat the earlier design approval as implementation acceptance.
+
+### New gaps confirmed by source inspection
+
+| Requirement | Current evidence | Decision |
+|---|---|---|
+| Create or open a local workspace | Per-user directories and a persisted workspace_directory preference exist; no user-facing workspace lifecycle or manifest API exists | NOT IMPLEMENTED |
+| Explicit source selection | DR24 endpoint is fixed to the HATS adapter; the Workbench does not require the user to select the source | NOT IMPLEMENTED |
+| Reopen workspace and see last operation/status | Settings persist, but DR24 acquisition status and last operation are not persisted in a workspace record | NOT IMPLEMENTED |
+| Export location and persistence | Browser JSON download exists; the current flow does not save a verified export inside a workspace | PARTIAL |
+| Required analysis and QC screens | Chart, descriptive summary, raw rows and diagnostic QC appear in the DR24 result view; they are not yet separate guided views | PARTIAL |
+| Clean Windows installer | Runtime tests and packaging workflow exist; clean target-machine acceptance is not complete | NOT VERIFIED |
+| Park distribution | Issue #293 still requires written evaluation/demo terms | BLOCKED |
+
+### Follow-up decisions by specialist seats
+
+1. **Product and acceptance:** add a Welcome/Workspace flow before the Home screen. A default folder alone does not satisfy create/open.
+2. **Data engineering:** require an explicit source selection and record the selected source in the request and provenance.
+3. **Reproducibility:** persist the last operation, status, requested/returned/missing OIDs, timestamps and payload hashes in the active workspace.
+4. **Application architecture:** use a versioned workspace manifest and atomic writes. Keep workspace state separate from scientific model state.
+5. **Security:** constrain workspace IDs and paths to the per-user workspace root. Reject path traversal and invalid manifests.
+6. **Scientific UX:** separate light-curve inspection from descriptive/QC summaries, while preserving raw values and the diagnostic-only claim boundary.
+7. **Export engineering:** save the JSON export in the active workspace. Record its path, size and SHA-256. Keep the user download as an additional action.
+8. **QA:** add API, store and browser tests for create, list, open, restart, interrupted operations, export and failure states.
+9. **Windows engineering:** retain the managed loopback service, per-user storage, WebView2 detection and install/uninstall checks. Verify these again after workspace integration.
+10. **Release and legal:** do not upload or distribute the installer until the written Park evaluation terms are approved. A CI build is not a distribution authorization.
+
+### Required implementation order
+
+1. Add a versioned workspace store under the per-user application data directory.
+2. Add authenticated API contracts for create/list/open/active workspace, operation status and workspace export.
+3. Add the Welcome/Workspace screen and persisted last-operation display.
+4. Add an explicit ZTF DR24 HATS selection and include it in acquisition provenance.
+5. Add separate Light-Curve Analysis and Quality/Summary views.
+6. Add regression tests for persistence, path safety, restart and export hashes.
+7. Re-run exact-head CI, Windows package/install tests and the pinned live DR24 browser workflow.
+8. Complete target-device acceptance and the legal gate before Park handoff.
+
+**Updated disposition: DESIGN FOUNDATION ACCEPTED; IMPLEMENTATION NOT YET ACCEPTED; DISTRIBUTION BLOCKED.**
+
+The first preview remains distinct from the six-month full Park MVP. No classifier, calibrated probability, abstention, OOD or anomaly claim is added by this follow-up.
