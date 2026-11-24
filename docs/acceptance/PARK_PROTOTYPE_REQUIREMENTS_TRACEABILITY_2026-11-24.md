@@ -1,6 +1,7 @@
 # ماتریس ردیابی تعهدات نسخه آزمایشی پارک — 2026-11-24
 
 **وضعیت:** مرجع فعال برنامه تحویل Windows Pre-release  
+**برنامه آزمون:** [PARK_WINDOWS_PRERELEASE_TEST_PLAN.md](PARK_WINDOWS_PRERELEASE_TEST_PLAN.md)  
 **مالک پذیرش:** Founder / Project Owner  
 **ردیاب اصلی:** [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158)  
 **سیاست دامنه:** [PARK_WINDOWS_PRERELEASE_SCOPE_FREEZE_2026-11-24.md](PARK_WINDOWS_PRERELEASE_SCOPE_FREEZE_2026-11-24.md)
