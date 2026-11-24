@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import hashlib
 import json
 import os
@@ -9,7 +10,7 @@ import re
 import shutil
 import tempfile
 from dataclasses import replace
-from datetime import UTC, datetime
+import datetime as dt
 from pathlib import Path
 from threading import RLock
 from typing import Any
@@ -56,7 +57,7 @@ class WorkspaceStore:
     @staticmethod
     def _now() -> str:
         return (
-            datetime.now(UTC)
+            dt.datetime.now(dt.UTC)
             .isoformat(timespec="seconds")
             .replace("+00:00", "Z")
         )
