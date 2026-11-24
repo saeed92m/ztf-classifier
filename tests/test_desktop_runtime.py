@@ -27,10 +27,9 @@ def test_user_data_directory_uses_explicit_windows_location(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    monkeypatch.setattr("ztf_classifier.desktop.runtime.os.name", "nt")
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
 
-    assert get_user_data_dir() == tmp_path / "ZTFClassifier"
+    assert get_user_data_dir(platform_name="nt") == tmp_path / "ZTFClassifier"
 
 
 def test_build_desktop_settings_uses_per_user_storage(
