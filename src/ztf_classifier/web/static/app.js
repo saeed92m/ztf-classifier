@@ -2,6 +2,160 @@
 const STORAGE_KEY = "ztf-workbench-appearance";
 const defaults = { theme: "auto", dayStart: "06:00", nightStart: "18:00" };
 const params = new URLSearchParams(window.location.search);
+const desktopMode = params.get("desktop") === "1";
+let desktopDr24Payload = null;
+let desktopRawExport = null;
+const desktopTranslations = {
+  "ALPHA": "ZTF CLASSIFIER",
+  "Scientific Analysis Workbench": "نسخه آزمایشی دسکتاپ",
+  "API ready": "اتصال محلی برقرار است",
+  "Open theme settings": "تنظیمات نمایش",
+  "ANALYSIS": "کاوش داده",
+  "Overview": "نمای کلی",
+  "Observations": "رصدها",
+  "DR24 Explorer (raw)": "کاوش داده‌های خام DR24",
+  "Features": "ویژگی‌ها",
+  "Classification": "طبقه‌بندی",
+  "Uncertainty & OOD": "عدم‌قطعیت و OOD",
+  "Provenance": "منشأ داده",
+  "WORKSPACE": "فضای کار",
+  "Batch jobs": "پردازش دسته‌ای",
+  "Catalog": "کاتالوگ",
+  "Reports": "گزارش‌ها",
+  "Scientific Validation": "اعتبارسنجی علمی",
+  "MODEL": "مدل",
+  "API": "رابط محلی",
+  "v1 · API-backed": "نسخه آزمایشی · API محلی",
+  "OBJECT ANALYSIS": "تحلیل جرم",
+  "Select an object": "شناسه جرم را وارد کنید",
+  "Provide an object ID to load scientific data": "برای دریافت داده، شناسه DR24 را وارد کنید",
+  "Export report": "خروجی گزارش",
+  "Run analysis": "اجرای تحلیل",
+  "Predicted class": "کلاس پیش‌بینی‌شده",
+  "Top probability": "بیشترین احتمال",
+  "Conformal set": "مجموعه همدیس",
+  "OOD percentile": "صدک OOD",
+  "Light curve": "منحنی نوری",
+  "Observation-domain view · flux/magnitude history": "نمای داده رصدی · تاریخچه شار/قدر",
+  "observations": "رصدها",
+  "uncertainty": "عدم‌قطعیت",
+  "mag": "قدر",
+  "Calibrated probability distribution": "توزیع احتمال کالیبره",
+  "Details": "جزئیات",
+  "Scientific context": "زمینه علمی",
+  "Traceable analysis metadata": "فراداده تحلیل قابل ردیابی",
+  "Object ID": "شناسه جرم",
+  "Feature schema": "طرح‌واره ویژگی",
+  "Model": "مدل",
+  "Calibration": "کالیبراسیون",
+  "Data provenance": "منشأ داده",
+  "OBJECT INSPECTOR": "بازرس جرم",
+  "ZTF OBJECT": "جرم ZTF",
+  "Coordinates from loaded observation metadata": "مختصات از فراداده رصد دریافت‌شده",
+  "ANALYSIS STATE": "وضعیت تحلیل",
+  "Inference": "استنتاج",
+  "Conformal": "همدیس",
+  "Dataset": "مجموعه‌داده",
+  "Model artifact": "آرتیفکت مدل",
+  "Schema": "طرح‌واره",
+  "Open provenance graph": "نمایش گراف منشأ",
+  "Appearance": "ظاهر",
+  "Theme": "پوسته",
+  "Auto": "خودکار",
+  "System": "سیستم",
+  "Deep Space": "فضای ژرف",
+  "Alpha Theme": "پوسته Alpha",
+  "Light": "روشن",
+  "Day starts": "شروع روز",
+  "Night starts": "شروع شب",
+  "Auto follows local clock; System follows the operating-system preference.": "حالت خودکار از ساعت محلی پیروی می‌کند؛ حالت سیستم از تنظیمات Windows.",
+  "SOURCE EXPLORER · EXPERIMENTAL": "کاوشگر منبع · آزمایشی",
+  "DR24 Explorer": "کاوشگر DR24",
+  "Native DR24 data only. No feature normalization or model inference.": "فقط داده خام DR24. هیچ نرمال‌سازی ویژگی یا استنتاج مدلی انجام نمی‌شود.",
+  "Indexed multi-OID lookup": "جست‌وجوی شاخص‌محور چندشناسه‌ای",
+  "Enter 1–10 positive ZTF DR24 object IDs. Separate OIDs remain separate records; no broad catalog scan is performed.": "۱ تا ۱۰ شناسه مثبت ZTF DR24 وارد کنید. هر OID یک رکورد مستقل است؛ اسکن گسترده کاتالوگ انجام نمی‌شود.",
+  "DR24 object IDs": "شناسه‌های جرم DR24",
+  "One or more OIDs, separated by commas or spaces": "یک یا چند OID؛ با ویرگول یا فاصله جدا کنید",
+  "Load raw light curves": "دریافت منحنی‌های نوری خام",
+  "Download raw JSON + QC": "دریافت JSON خام + QC",
+  "No DR24 objects loaded.": "هنوز داده‌ای از DR24 دریافت نشده است.",
+  "Enter up to 10 OIDs to inspect native DR24 records.": "برای مشاهده داده خام، حداکثر ۱۰ OID وارد کنید.",
+  "Acquisition provenance": "منشأ دریافت داده",
+  "Source, schema, query, missing OIDs and payload hashes": "منبع، طرح‌واره، پرس‌وجو، OIDهای مفقود و هش داده",
+  "No acquisition performed.": "هنوز دریافت داده انجام نشده است.",
+  "Descriptive time-series summary": "خلاصه توصیفی سری زمانی",
+  "Source-native descriptive statistics · not model features or classification": "آمار توصیفی مستقیم از منبع · نه ویژگی مدل و نه طبقه‌بندی",
+  "Finite HMJD/mag pairs": "زوج‌های معتبر HMJD/قدر",
+  "HMJD span (days)": "بازه HMJD (روز)",
+  "Median sampling interval (days)": "میانه فاصله نمونه‌برداری (روز)",
+  "Median magnitude": "میانه قدر",
+  "Magnitude P05–P95 range": "بازه قدر P05–P95",
+  "Median non-negative magerr": "میانه خطای قدر غیرمنفی",
+  "All finite HMJD/magnitude pairs are included, regardless of catflags. No epoch filtering, time conversion, photometry conversion, OID grouping, feature generation, or inference was performed.": "تمام زوج‌های معتبر HMJD/قدر، بدون توجه به catflags، در آمار آمده‌اند. هیچ ردیف زمانی حذف نشده و تبدیل زمان، تبدیل نورسنجی، گروه‌بندی OID، تولید ویژگی یا استنتاج انجام نشده است.",
+  "Time: HMJD · native ZTF magnitude · vertical bars: reported magerr · no cross-OID grouping": "زمان: HMJD · قدر خام ZTF · میله‌های عمودی: magerr گزارش‌شده · بدون گروه‌بندی بین OIDها",
+  "Field": "میدان",
+  "filter": "فیلتر",
+  "rcid": "rcid",
+  "epochs": "ردیف‌های زمانی",
+  "catalog": "کاتالوگ",
+  "payload SHA-256": "هش SHA-256 داده",
+  "No finite numeric HMJD/magnitude pairs are available to plot. Raw rows remain available below and in the JSON export.": "زوج عددی معتبر HMJD/قدر برای نمودار وجود ندارد. ردیف‌های خام در جدول و خروجی JSON حفظ شده‌اند.",
+  "HMJD": "HMJD",
+  "magerr": "magerr",
+  "clrcoeff": "clrcoeff",
+  "catflags": "catflags",
+  "Diagnostic QC": "کنترل کیفیت تشخیصی",
+  "DIAGNOSTIC_NOT_PRODUCTION_APPROVED": "تشخیصی · تأییدنشده برای تولید",
+  "DR24 raw data loaded": "داده خام DR24 دریافت شد",
+  "No catalog rows were returned. No alternate source was used.": "هیچ ردیفی از کاتالوگ بازنگشت. منبع جایگزین استفاده نشد.",
+  "DR24 acquisition failed. No fallback source was used.": "دریافت DR24 ناموفق بود. منبع جایگزین استفاده نشد.",
+  "Unavailable: DR24 acquisition failed.": "در دسترس نیست: دریافت DR24 ناموفق بود."
+};
+function desktopTranslate(value) {
+  if (!desktopMode || typeof value !== "string") return value;
+  let translated = desktopTranslations[value] || value;
+  const replacements = [
+    ["Querying indexed DR24 source for ", "در حال پرس‌وجوی منبع شاخص‌گذاری‌شده DR24 برای "],
+    [" OID(s)…", " OID…"],
+    ["Raw DR24 response received. Requested ", "پاسخ خام DR24 دریافت شد. درخواست‌شده: "],
+    [" · returned ", " · دریافت‌شده: "],
+    [" · missing ", " · مفقود: "],
+    [". No feature generation or inference was performed.", ". هیچ ویژگی یا استنتاجی تولید نشد."],
+    ["DR24 acquisition failed (", "دریافت DR24 ناموفق بود ("],
+    ["). No fallback source was used.", "). منبع جایگزین استفاده نشد."],
+    ["Enter between 1 and 10 object IDs.", "بین ۱ تا ۱۰ شناسه وارد کنید."],
+    ["Every object ID must be a positive integer.", "هر شناسه باید عدد صحیح مثبت باشد."],
+    ["Every object ID must be a safe positive integer.", "هر شناسه باید عدد صحیح مثبت و قابل‌نمایش باشد."],
+    ["Duplicate object IDs are not allowed.", "OID تکراری مجاز نیست."]
+  ];
+  for (const [source, target] of replacements) {
+    translated = translated.replaceAll(source, target);
+  }
+  return translated;
+}
+function translateDesktopText(root = document) {
+  if (!desktopMode || !root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  for (const node of nodes) {
+    const original = node.nodeValue || "";
+    const trimmed = original.trim();
+    if (!trimmed) continue;
+    const translated = desktopTranslate(trimmed);
+    if (translated !== trimmed) node.nodeValue = original.replace(trimmed, translated);
+  }
+  if (root.querySelectorAll) {
+    root.querySelectorAll("[placeholder], [aria-label]").forEach(element => {
+      if (element.hasAttribute("placeholder")) {
+        element.setAttribute("placeholder", desktopTranslate(element.getAttribute("placeholder")));
+      }
+      if (element.hasAttribute("aria-label")) {
+        element.setAttribute("aria-label", desktopTranslate(element.getAttribute("aria-label")));
+      }
+    });
+  }
+}
 const state = {
   oid: params.get("oid") || "",
   survey: params.get("survey") || "ztf",
