@@ -138,8 +138,8 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
 
             assert backend.calls == [(101, 202)]
             assert page.locator("#dr24Results .panel").count() == 2
-            assert page.get_by_text("OID 101 · filter g").is_visible()
-            assert page.get_by_text("OID 202 · filter r").is_visible()
+            assert page.get_by_text("OID 101 · فیلتر g").is_visible()
+            assert page.get_by_text("OID 202 · فیلتر r").is_visible()
             assert page.locator("#dr24Results svg circle").count() == 4
             assert page.locator("#dr24Results svg .dr24-error-bar").count() == 4
             assert page.locator("#dr24Results .report-content").count() == 2
