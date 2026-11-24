@@ -9,7 +9,6 @@ import sys
 from typing import Any
 
 from ztf_classifier.api.app import create_app
-
 from ztf_classifier.desktop.runtime import (
     LocalApiServer,
     build_desktop_settings,
