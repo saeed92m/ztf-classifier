@@ -132,7 +132,7 @@ def test_desktop_api_requires_session_bearer_token(tmp_path: Path) -> None:
         scientific_registry_dir=tmp_path / "benchmarks",
         scientific_evidence_dir=tmp_path / "evidence",
     )
-    app = create_app(settings=settings)
+    app = create_app(settings=settings, docs_enabled=False)
 
     async def get_status(path: str, authorization: str | None = None) -> int:
         messages: list[dict[str, Any]] = []
@@ -174,6 +174,9 @@ def test_desktop_api_requires_session_bearer_token(tmp_path: Path) -> None:
         )
 
     assert asyncio.run(get_status("/health")) == 200
+    assert asyncio.run(get_status("/docs")) == 404
+    assert asyncio.run(get_status("/redoc")) == 404
+    assert asyncio.run(get_status("/openapi.json")) == 404
 
     assert asyncio.run(get_status("/v1/settings")) == 401
     assert asyncio.run(get_status("/v1/settings", f"Bearer {token}")) == 200
@@ -262,6 +265,7 @@ def test_native_navigation_guard_blocks_external_navigation() -> None:
         def __init__(self) -> None:
             self.FrameNavigationStarting = FakeEvent()
             self.LaunchingExternalUriScheme = FakeEvent()
+            self.NewWindowRequested = FakeEvent()
 
     class FakeControl:
         def __init__(self) -> None:
@@ -302,7 +306,13 @@ def test_native_navigation_guard_blocks_external_navigation() -> None:
     )()
     core.LaunchingExternalUriScheme.fire(core, external_scheme)
     assert external_scheme.Cancel is True
-    assert len(window._ztf_navigation_handlers) == 3
+
+    new_window = type(
+        "Args", (), {"Uri": "https://example.com/new-window", "Handled": False}
+    )()
+    core.NewWindowRequested.fire(core, new_window)
+    assert new_window.Handled is True
+    assert len(window._ztf_navigation_handlers) == 4
 
 
 def test_local_api_requires_ready_health_endpoint() -> None:
