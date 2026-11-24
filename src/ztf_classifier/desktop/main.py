@@ -6,7 +6,6 @@ import ctypes
 import os
 import secrets
 import sys
-from pathlib import Path
 from typing import Any
 
 from ztf_classifier.api.app import create_app
