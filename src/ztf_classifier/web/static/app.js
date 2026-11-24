@@ -83,6 +83,14 @@ const desktopTranslations = {
   "Acquisition provenance": "منشأ دریافت داده",
   "Source, schema, query, missing OIDs and payload hashes": "منبع، طرح‌واره، پرس‌وجو، OIDهای مفقود و هش داده",
   "No acquisition performed.": "هنوز دریافت داده انجام نشده است.",
+  "Raw epoch records (first 50)": "ردیف‌های خام زمانی (۵۰ مورد نخست)",
+  "Raw-preserving QC assessment": "ارزیابی QC با حفظ داده خام",
+  "No epochs in payload.": "در این داده ردیف زمانی وجود ندارد.",
+  "No server-side QC assessment was returned. Raw epochs are still preserved.": "ارزیابی QC از سرور دریافت نشد. ردیف‌های خام حفظ شده‌اند.",
+  "No DR24 export available": "خروجی DR24 در دسترس نیست",
+  "DR24 acquisition failed": "دریافت DR24 ناموفق بود",
+  "Local settings unavailable": "تنظیمات محلی در دسترس نیست",
+  "Object required": "شناسه جرم لازم است",
   "Descriptive time-series summary": "خلاصه توصیفی سری زمانی",
   "Source-native descriptive statistics · not model features or classification": "آمار توصیفی مستقیم از منبع · نه ویژگی مدل و نه طبقه‌بندی",
   "Finite HMJD/mag pairs": "زوج‌های معتبر HMJD/قدر",
@@ -1021,7 +1029,8 @@ async function loadDR24Explorer() {
     }
     loadButton.disabled = true;
     document.getElementById("dr24Status").textContent =
-      "Querying indexed DR24 source for " + objectids.length + " OID(s)…";
+      desktopTranslate("Querying indexed DR24 source for ") + objectids.length +
+      desktopTranslate(" OID(s)…");
     try {
       const payload = await fetchJson("/v1/dr24/lightcurves", {
         method: "POST",
@@ -1070,7 +1079,7 @@ async function loadDR24Explorer() {
       document.getElementById("dr24Results").innerHTML =
         '<section class="panel muted">DR24 acquisition failed. No fallback source was used.</section>';
       document.getElementById("dr24Provenance").textContent =
-        "Unavailable: DR24 acquisition failed.";
+        desktopTranslate("Unavailable: DR24 acquisition failed.");
       desktopDr24Payload = null;
       desktopRawExport = null;
       document.getElementById("dr24Status").textContent =
