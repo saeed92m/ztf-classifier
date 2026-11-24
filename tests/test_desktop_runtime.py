@@ -71,7 +71,6 @@ def test_build_desktop_settings_requires_a_token(tmp_path: Path) -> None:
         build_desktop_settings("", data_dir=tmp_path)
 
 
-
 def test_desktop_api_requires_session_bearer_token(tmp_path: Path) -> None:
     token = "desktop-test-session-token"
     settings = ApiSettings(
