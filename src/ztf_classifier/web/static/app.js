@@ -488,6 +488,7 @@ const titles = {
   reports: ["Reports", "Scientific report generation module"],
   validation: ["Scientific Validation", "Release-blocking scientific evidence and provenance"],
   "desktop-home": ["داشبورد", "نمای کلی نسخه آزمایشی پارک"],
+  workspaces: ["پروژه‌ها", "ساخت و بازگشایی فضای کاری"],
   sources: ["منبع داده", "منبع فعال و قرارداد دریافت داده"],
   "desktop-provenance": ["منشأ داده", "فراداده و شواهد دریافت"],
   "desktop-export": ["گزارش و خروجی", "خروجی خام JSON و اطلاعات بازتولید"],
@@ -509,6 +510,7 @@ function renderDesktopHome() {
       <div class="panel-title">شروع کار</div>
       <p class="muted">یک تا ده شناسه ZTF DR24 وارد کنید. برنامه داده خام را از منبع اصلی دریافت می‌کند و منحنی نوری، QC تشخیصی، آمار توصیفی و منشأ داده را نمایش می‌دهد.</p>
       <button class="primary-button" id="startDr24Explorer" type="button">شروع کاوش داده DR24</button>
+      <button class="secondary-button" id="manageWorkspaces" type="button">مدیریت پروژه‌ها</button>
     </section>
     <section class="panel">
       <div class="panel-title">محدوده علمی این نسخه</div>
@@ -517,6 +519,7 @@ function renderDesktopHome() {
     </section>`;
   setViewHeading("desktop-home");
   document.getElementById("startDr24Explorer").addEventListener("click", () => showView("dr24"));
+  document.getElementById("manageWorkspaces").addEventListener("click", () => showView("workspaces"));
 }
 
 function renderDesktopSources() {
@@ -544,6 +547,91 @@ function renderDesktopSources() {
       </ul>
     </section>`;
   setViewHeading("sources");
+}
+
+async function renderDesktopWorkspaces() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">WORKSPACES</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="panel">
+      <div class="panel-title">ایجاد فضای کاری</div>
+      <p class="muted">هر فضای کاری، فهرست عملیات و خروجی‌های خود را در پوشه کاربری برنامه نگهداری می‌کند.</p>
+      <form id="workspaceCreateForm" class="workspace-create-form">
+        <label for="workspaceName">نام پروژه</label>
+        <input id="workspaceName" name="name" type="text" maxlength="64" required placeholder="مثلاً بررسی اجرام گذرا">
+        <button class="primary-button" type="submit">ایجاد پروژه</button>
+      </form>
+      <p id="workspaceStatus" class="muted" role="status">در حال بارگذاری پروژه‌ها…</p>
+    </section>
+    <section class="panel">
+      <div class="panel-title">پروژه‌های ذخیره‌شده</div>
+      <div id="workspaceList" class="workspace-list"></div>
+    </section>`;
+  setViewHeading("workspaces");
+
+  const status = document.getElementById("workspaceStatus");
+  const list = document.getElementById("workspaceList");
+  const form = document.getElementById("workspaceCreateForm");
+  const nameInput = document.getElementById("workspaceName");
+
+  async function refreshWorkspaces() {
+    const payload = await fetchJson("/v1/workspaces");
+    const items = Array.isArray(payload.items) ? payload.items : [];
+    if (!items.length) {
+      list.innerHTML = '<p class="muted">هنوز پروژه‌ای ایجاد نشده است.</p>';
+    } else {
+      list.innerHTML = items.map(item => {
+        const active = item.is_active;
+        const label = active ? "فعال" : item.status === "CORRUPT" ? "نیازمند بررسی" : "ذخیره‌شده";
+        return `
+          <article class="workspace-list-item">
+            <div><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(label)} · ${escapeHtml(item.created_at_utc || "")}</small></div>
+            <button class="text-button" type="button" data-open-workspace="${escapeHtml(item.workspace_id)}" ${active ? "disabled" : ""}>${active ? "پروژه فعال" : "بازکردن"}</button>
+          </article>`;
+      }).join("");
+      list.querySelectorAll("[data-open-workspace]").forEach(button => {
+        button.addEventListener("click", async () => {
+          button.disabled = true;
+          try {
+            await fetchJson("/v1/workspaces/" + encodeURIComponent(button.dataset.openWorkspace) + "/open", { method: "POST" });
+            status.textContent = "پروژه باز شد و به‌عنوان فضای کاری فعال ذخیره شد.";
+            await refreshWorkspaces();
+          } catch (error) {
+            status.textContent = "بازکردن پروژه ناموفق بود: " + (error.message || "خطای نامشخص");
+            button.disabled = false;
+          }
+        });
+      });
+    }
+    status.textContent = items.length + " پروژه ذخیره‌شده · فضای کاری فعال: " + (payload.active_workspace_id || "هیچ‌کدام");
+  }
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    const name = nameInput.value.trim();
+    if (!name) return;
+    const submit = form.querySelector("button[type=submit]");
+    submit.disabled = true;
+    try {
+      await fetchJson("/v1/workspaces", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name })
+      });
+      nameInput.value = "";
+      status.textContent = "پروژه ایجاد شد.";
+      await refreshWorkspaces();
+    } catch (error) {
+      status.textContent = "ایجاد پروژه ناموفق بود: " + (error.message || "خطای نامشخص");
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  try {
+    await refreshWorkspaces();
+  } catch (error) {
+    status.textContent = "فهرست پروژه‌ها بارگذاری نشد: " + (error.message || "خطای نامشخص");
+  }
 }
 
 function renderDesktopProvenance() {
@@ -1113,6 +1201,7 @@ async function showView(view) {
   if (active) active.classList.add("active");
   if (view === "desktop-home") return renderDesktopHome();
   if (view === "sources") return renderDesktopSources();
+  if (view === "workspaces") return renderDesktopWorkspaces();
   if (view === "desktop-provenance") return renderDesktopProvenance();
   if (view === "desktop-export") return renderDesktopExport();
   if (view === "desktop-settings") return renderDesktopSettings();
@@ -1150,6 +1239,7 @@ if (desktopMode) {
     "dr24",
     "desktop-home",
     "sources",
+    "workspaces",
     "desktop-provenance",
     "desktop-export",
     "desktop-settings",
