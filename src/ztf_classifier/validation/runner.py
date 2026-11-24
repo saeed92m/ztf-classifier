@@ -5,15 +5,16 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
-
-try:
-    import resource
-except ImportError:  # Windows does not provide the resource module.
-    resource = None
 import time
 from dataclasses import dataclass
+from importlib import import_module
 from pathlib import Path
 from typing import Any
+
+try:
+    resource = import_module("resource")
+except ImportError:  # Windows does not provide the resource module.
+    resource = None
 
 import numpy as np
 import pandas as pd
