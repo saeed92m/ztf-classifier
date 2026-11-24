@@ -8,6 +8,10 @@ from fastapi.testclient import TestClient
 
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
+from ztf_classifier.desktop.main import (
+    _install_navigation_guard,
+    _is_trusted_local_url,
+)
 from ztf_classifier.desktop.runtime import (
     DesktopRuntimeError,
     LocalApiServer,
@@ -145,6 +149,78 @@ def test_local_api_surfaces_unexpected_worker_exception(
 
     assert isinstance(error.value.__cause__, KeyError)
     assert not runtime.is_running
+
+
+
+def test_trusted_local_url_requires_exact_loopback_origin() -> None:
+    base_url = "http://127.0.0.1:43127"
+
+    assert _is_trusted_local_url(f"{base_url}/workbench/", base_url)
+    assert _is_trusted_local_url(f"{base_url}/v1/settings?x=1", base_url)
+    assert not _is_trusted_local_url("https://127.0.0.1:43127/workbench/", base_url)
+    assert not _is_trusted_local_url("http://localhost:43127/workbench/", base_url)
+    assert not _is_trusted_local_url("http://127.0.0.1:43128/workbench/", base_url)
+    assert not _is_trusted_local_url("http://127.0.0.1.evil.test:43127/", base_url)
+    assert not _is_trusted_local_url("http://user@127.0.0.1:43127/", base_url)
+    assert not _is_trusted_local_url("http://127.0.0.1:bad/", base_url)
+
+
+def test_native_navigation_guard_blocks_external_navigation() -> None:
+    class FakeEvent:
+        def __init__(self) -> None:
+            self.handlers: list[Callable[..., None]] = []
+
+        def __iadd__(self, handler: Callable[..., None]) -> FakeEvent:
+            self.handlers.append(handler)
+            return self
+
+        def fire(self, sender: Any, args: Any) -> None:
+            for handler in self.handlers:
+                handler(sender, args)
+
+    class FakeCore:
+        def __init__(self) -> None:
+            self.FrameNavigationStarting = FakeEvent()
+            self.LaunchingExternalUriScheme = FakeEvent()
+
+    class FakeControl:
+        def __init__(self) -> None:
+            self.NavigationStarting = FakeEvent()
+            self.CoreWebView2InitializationCompleted = FakeEvent()
+            self.CoreWebView2 = None
+
+    class FakeWindow:
+        def __init__(self) -> None:
+            self.native = type("Native", (), {"webview": FakeControl()})()
+
+    window = FakeWindow()
+    base_url = "http://127.0.0.1:43127"
+    _install_navigation_guard(window, base_url)
+
+    allowed = type("Args", (), {"Uri": f"{base_url}/workbench/", "Cancel": False})()
+    window.native.webview.NavigationStarting.fire(window.native.webview, allowed)
+    assert allowed.Cancel is False
+
+    blocked = type("Args", (), {"Uri": "https://example.com/", "Cancel": False})()
+    window.native.webview.NavigationStarting.fire(window.native.webview, blocked)
+    assert blocked.Cancel is True
+
+    core = FakeCore()
+    window.native.webview.CoreWebView2 = core
+    initialized = type("InitArgs", (), {"IsSuccess": True})()
+    window.native.webview.CoreWebView2InitializationCompleted.fire(
+        window.native.webview,
+        initialized,
+    )
+
+    frame = type("Args", (), {"Uri": "https://example.com/frame", "Cancel": False})()
+    core.FrameNavigationStarting.fire(core, frame)
+    assert frame.Cancel is True
+
+    external_scheme = type("Args", (), {"Uri": "mailto:test@example.com", "Cancel": False})()
+    core.LaunchingExternalUriScheme.fire(core, external_scheme)
+    assert external_scheme.Cancel is True
+    assert len(window._ztf_navigation_handlers) == 3
 
 
 def test_local_api_requires_ready_health_endpoint() -> None:
