@@ -5,6 +5,7 @@ const params = new URLSearchParams(window.location.search);
 const desktopMode = params.get("desktop") === "1";
 let desktopDr24Payload = null;
 let desktopRawExport = null;
+let desktopRawExportPersisted = false;
 const desktopTranslations = {
   "ALPHA": "ZTF CLASSIFIER",
   "Scientific Analysis Workbench": "نسخه آزمایشی دسکتاپ",
@@ -614,7 +615,10 @@ async function renderDesktopWorkspaces() {
               <small>آخرین عملیات: ${escapeHtml(operationText)}</small>
               <small>${escapeHtml(exportText)}</small>
             </div>
-            <button class="text-button" type="button" data-open-workspace="${escapeHtml(item.workspace_id)}" ${active ? "disabled" : ""}>${active ? "پروژه فعال" : "بازکردن"}</button>
+            <div class="workspace-actions">
+              <button class="text-button" type="button" data-open-workspace="${escapeHtml(item.workspace_id)}" ${active ? "disabled" : ""}>${active ? "پروژه فعال" : "بازکردن"}</button>
+              ${item.last_export ? '<button class="text-button" type="button" data-restore-export="' + escapeHtml(item.workspace_id) + '" data-export-file="' + escapeHtml(item.last_export.file_name) + '">بازیابی خروجی</button>' : ""}
+            </div>
           </article>`;
       }).join("");
       list.querySelectorAll("[data-open-workspace]").forEach(button => {
@@ -626,6 +630,29 @@ async function renderDesktopWorkspaces() {
             await refreshWorkspaces();
           } catch (error) {
             status.textContent = "بازکردن پروژه ناموفق بود: " + (error.message || "خطای نامشخص");
+            button.disabled = false;
+          }
+        });
+      });
+      list.querySelectorAll("[data-restore-export]").forEach(button => {
+        button.addEventListener("click", async () => {
+          button.disabled = true;
+          try {
+            const workspaceId = button.dataset.restoreExport;
+            const activeWorkspace = await fetchJson("/v1/workspaces/active");
+            if (activeWorkspace.workspace?.workspace_id !== workspaceId) {
+              await fetchJson("/v1/workspaces/" + encodeURIComponent(workspaceId) + "/open", { method: "POST" });
+            }
+            const restored = await fetchJson(
+              "/v1/workspaces/exports/" + encodeURIComponent(button.dataset.exportFile)
+            );
+            desktopRawExport = restored;
+            desktopDr24Payload = restored.source_payload || null;
+            desktopRawExportPersisted = true;
+            status.textContent = "آخرین خروجی از فضای کاری بازیابی شد.";
+            showView("desktop-export");
+          } catch (error) {
+            status.textContent = "بازیابی خروجی ناموفق بود: " + (error.message || "خطای نامشخص");
             button.disabled = false;
           }
         });
@@ -684,11 +711,15 @@ async function downloadDesktopRawExport() {
     document.getElementById("dr24ExportButton");
   if (button) button.disabled = true;
   try {
-    const metadata = await fetchJson("/v1/workspaces/exports", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(desktopRawExport)
-    });
+    let metadata = null;
+    if (!desktopRawExportPersisted) {
+      metadata = await fetchJson("/v1/workspaces/exports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(desktopRawExport)
+      });
+      desktopRawExportPersisted = true;
+    }
     const blob = new Blob([JSON.stringify(desktopRawExport, null, 2)], {
       type: "application/json"
     });
@@ -701,7 +732,9 @@ async function downloadDesktopRawExport() {
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    setConnectionState("Export saved to active workspace · SHA-256 " + metadata.sha256.slice(0, 12));
+    setConnectionState(metadata
+      ? "Export saved to active workspace · SHA-256 " + metadata.sha256.slice(0, 12)
+      : "Restored workspace export downloaded");
   } catch (error) {
     setConnectionState("Workspace export failed (" + (error.status || "storage") + ")", false);
     const status = document.getElementById("dr24Status");
@@ -1248,6 +1281,7 @@ async function loadDR24Explorer() {
       };
       desktopDr24Payload = payload;
       desktopRawExport = lastRawExport;
+      desktopRawExportPersisted = false;
       translateDesktopText(document.getElementById("dr24Status"));
       exportButton.disabled = false;
       setConnectionState("DR24 raw data loaded");
