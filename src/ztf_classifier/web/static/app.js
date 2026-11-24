@@ -675,7 +675,7 @@ async function loadDR24Explorer() {
         " · returned " + returned.length + " · missing " + missing.length +
         ". No feature generation or inference was performed.";
       lastRawExport = {
-        export_schema_version: "ztf-dr24-raw-export-v0.2",
+        export_schema_version: "ztf-dr24-raw-export-v0.3",
         exported_at_utc: new Date().toISOString(),
         source_payload: payload,
         interpretation: "Raw source payload preserved. QC is diagnostic only; no epochs were filtered or grouped."
