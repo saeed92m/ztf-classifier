@@ -94,9 +94,7 @@ def test_desktop_api_requires_session_bearer_token(tmp_path: Path) -> None:
     async def get_status(path: str, authorization: str | None = None) -> int:
         messages: list[dict[str, Any]] = []
         headers = (
-            [(b"authorization", authorization.encode("ascii"))]
-            if authorization
-            else []
+            [(b"authorization", authorization.encode("ascii"))] if authorization else []
         )
 
         request_sent = False
@@ -135,9 +133,7 @@ def test_desktop_api_requires_session_bearer_token(tmp_path: Path) -> None:
     assert asyncio.run(get_status("/health")) == 200
 
     assert asyncio.run(get_status("/v1/settings")) == 401
-    assert asyncio.run(
-        get_status("/v1/settings", f"Bearer {token}")
-    ) == 200
+    assert asyncio.run(get_status("/v1/settings", f"Bearer {token}")) == 200
 
 
 def test_validation_runner_peak_memory_measurement_is_portable() -> None:
