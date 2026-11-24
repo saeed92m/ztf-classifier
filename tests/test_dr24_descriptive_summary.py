@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+import pytest
+
 from ztf_classifier.validation.dr24_descriptive import (
     SUMMARY_POLICY_STATUS,
     SUMMARY_SCHEMA_VERSION,
@@ -34,8 +36,8 @@ def test_summary_reports_source_native_descriptive_statistics_without_filtering(
     assert result["hmjd_span_days"] == 2.0
     assert result["median_sampling_interval_days"] == 1.0
     assert result["mag_median"] == 19.0
-    assert result["mag_p95"] == 19.9
-    assert result["mag_p95_minus_p05"] == 1.8
+    assert result["mag_p95"] == pytest.approx(19.9)
+    assert result["mag_p95_minus_p05"] == pytest.approx(1.8)
     assert result["catflags_used_for_selection"] is False
     assert result["epoch_filtering_applied"] is False
     assert result["time_conversion_applied"] is False
