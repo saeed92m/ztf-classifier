@@ -676,6 +676,9 @@ async function renderDesktopWorkspaces() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name })
       });
+      desktopRawExport = null;
+      desktopDr24Payload = null;
+      desktopRawExportPersisted = false;
       nameInput.value = "";
       status.textContent = "پروژه ایجاد شد.";
       await refreshWorkspaces();
