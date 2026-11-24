@@ -123,6 +123,31 @@ def test_local_api_starts_on_dynamic_loopback_port_and_stops() -> None:
     assert not runtime.is_running
 
 
+
+def test_local_api_surfaces_unexpected_worker_exception(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FailingServer:
+        def __init__(self, config: object) -> None:
+            self.should_exit = False
+            self.force_exit = False
+
+        def run(self, sockets: list[object]) -> None:
+            raise KeyError("unexpected worker failure")
+
+    monkeypatch.setattr(
+        "ztf_classifier.desktop.runtime.uvicorn.Server",
+        FailingServer,
+    )
+    runtime = LocalApiServer(FastAPI(), startup_timeout=2, shutdown_timeout=1)
+
+    with pytest.raises(DesktopRuntimeError) as error:
+        runtime.start()
+
+    assert isinstance(error.value.__cause__, KeyError)
+    assert not runtime.is_running
+
+
 def test_local_api_requires_ready_health_endpoint() -> None:
     app = FastAPI()
 
