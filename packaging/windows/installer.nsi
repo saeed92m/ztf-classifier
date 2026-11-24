@@ -40,13 +40,15 @@ LangString WebView2Missing ${LANG_ENGLISH} "Microsoft Edge WebView2 Runtime was 
 
 Function .onInit
   SetShellVarContext current
-  SetRegView 32
+  SetRegView 64
   ClearErrors
-  ReadRegStr $0 HKLM "SOFTWARE\Microsoft\EdgeUpdate\Clients\${WEBVIEW2_CLIENT_ID}" "pv"
+  ReadRegStr $0 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\${WEBVIEW2_CLIENT_ID}" "pv"
   ${If} $0 == ""
+  ${OrIf} $0 == "0.0.0.0"
     ReadRegStr $0 HKCU "Software\Microsoft\EdgeUpdate\Clients\${WEBVIEW2_CLIENT_ID}" "pv"
   ${EndIf}
   ${If} $0 == ""
+  ${OrIf} $0 == "0.0.0.0"
     MessageBox MB_ICONEXCLAMATION|MB_YESNO "$(WebView2Missing)" IDYES openWebView2
     Goto webView2CheckDone
     openWebView2:
