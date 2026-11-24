@@ -6,6 +6,13 @@
     <meta name="color-scheme" content="dark light" />
     <meta name="description" content="ZTF Classifier Scientific Analysis Workbench" />
     <title>ZTF Scientific Analysis Workbench</title>
+    <script>
+      if (new URLSearchParams(window.location.search).get("desktop") === "1") {
+        document.documentElement.dataset.desktopPreview = "true";
+        document.documentElement.lang = "fa";
+        document.documentElement.dir = "rtl";
+      }
+    </script>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -30,6 +37,11 @@
           <button class="nav-item active" data-view="overview">Overview</button>
           <button class="nav-item" data-view="observations">Observations</button>
           <button class="nav-item" data-view="dr24">DR24 Explorer (raw)</button>
+          <button class="nav-item desktop-only" data-view="desktop-home" type="button" hidden>داشبورد</button>
+          <button class="nav-item desktop-only" data-view="sources" type="button" hidden>منبع داده</button>
+          <button class="nav-item desktop-only" data-view="desktop-provenance" type="button" hidden>منشأ داده</button>
+          <button class="nav-item desktop-only" data-view="desktop-export" type="button" hidden>گزارش و خروجی</button>
+          <button class="nav-item desktop-only" data-view="desktop-help" type="button" hidden>راهنما</button>
           <button class="nav-item" data-view="features">Features</button>
           <button class="nav-item" data-view="classification">Classification</button>
           <button class="nav-item" data-view="uncertainty">Uncertainty &amp; OOD</button>
