@@ -51,14 +51,14 @@ def test_webview2_runtime_detection_checks_machine_and_user_registry() -> None:
         def __init__(self, values: dict[tuple[str, str], str]) -> None:
             self.values = values
 
-        def OpenKey(self, hive: str, subkey: str) -> FakeKey:  # noqa: N802 - match winreg API
+        def OpenKey(self, hive: str, subkey: str) -> FakeKey:
             try:
                 return FakeKey(self.values[(hive, subkey)])
             except KeyError as exc:
                 raise OSError("Registry value not found") from exc
 
         @staticmethod
-        def QueryValueEx(key: FakeKey, name: str) -> tuple[str, int]:  # noqa: N802 - match winreg API
+        def QueryValueEx(key: FakeKey, name: str) -> tuple[str, int]:
             assert name == "pv"
             return key.value, 1
 
@@ -67,9 +67,7 @@ def test_webview2_runtime_detection_checks_machine_and_user_registry() -> None:
     installed = FakeRegistry({("HKCU", user_key): "126.0.0.0"})
     missing = FakeRegistry({})
 
-    assert _is_webview2_runtime_installed(
-        platform_name="nt", registry_module=installed
-    )
+    assert _is_webview2_runtime_installed(platform_name="nt", registry_module=installed)
     assert not _is_webview2_runtime_installed(
         platform_name="nt", registry_module=missing
     )
