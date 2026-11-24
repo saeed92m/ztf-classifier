@@ -214,14 +214,14 @@ def _run_self_test() -> None:
             if response.status != 200:
                 raise RuntimeError("The local API rejected its session token.")
         checks["api_accepts_session_token"] = "PASS"
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - capture startup failure for the self-test report
         error = f"{type(exc).__name__}: {exc}"
     finally:
         if runtime is not None:
             try:
                 runtime.stop()
                 checks["local_api_shutdown"] = "PASS"
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - record shutdown failure in the self-test report
                 error = error or f"{type(exc).__name__}: {exc}"
                 checks["local_api_shutdown"] = "FAIL"
 
@@ -288,7 +288,7 @@ def main() -> None:
             private_mode=True,
             storage_path=str(user_data / "webview"),
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - show an actionable desktop startup error
         _show_error(
             "The ZTF Classifier desktop application could not start.\n\n"
             f"{exc}\n\n"
