@@ -70,7 +70,9 @@
       "The source documents were reopened and their exact sections were mapped in docs/acceptance/PARK_PROTOTYPE_REQUIREMENTS_TRACEABILITY_2026-11-24.md.",
       "README, Handbook, roadmap and the scope policy were updated on this PR branch.",
       "A local read-only model-artifact audit dated 2026-11-23 was recorded with its SHA-256 and the caveat that its source branch was three commits behind upstream.",
-      "CI on the earlier PR #311 head passed Format Check, Lint, CodeQL, Product Scope Audit and lifecycle-record validation, but the cumulative lifecycle requirement failed because the meaningful PR did not include its own cycle record. The new record has not yet been evaluated."
+      "CI on the earlier PR #311 head passed Format Check, Lint, CodeQL, Product Scope Audit and lifecycle-record validation, but the cumulative lifecycle requirement failed because the meaningful PR did not include its own cycle record. The new record has not yet been evaluated.",
+      "Current-main artifact audit on 2026-11-24: recursive Git tree contained 628 entries and was not truncated; no production baseline_v0.2 artifact directory or manifest was present. Direct expected-path checks returned 404. Releases v1.0.1/v1.0.0/v0.5.0 contain only Python wheel/source archives; v0.4.0/v0.3.0/v0.2.0 have no assets. The only XGBoost v0.2 paths in the tree were three report tables.",
+      "Issue #282 was updated with the current-main and release-asset audit. Production inference remains BLOCKED; no reconstruction or substitute is authorized."
     ]
   },
   "failure_analysis": {
@@ -79,13 +81,15 @@
       "The earlier web-only delivery decision did not match the Founder-selected Windows-installable Park handover.",
       "The submitted worksheet and technical dossier expressed related acceptance commitments at different levels of detail; the repository lacked one source-to-evidence matrix.",
       "README wording could imply that the original production model artifact was available, while Issue #282 and the local audit report show that recovery remains blocked.",
-      "The CI lifecycle gate requires every meaningful PR to add a machine-readable cycle record."
+      "The CI lifecycle gate requires every meaningful PR to add a machine-readable cycle record.",
+      "The current GitHub main tree and inspected release assets do not contain the original frozen v0.2.0 production model artifact; only report tables are present."
     ],
     "unresolved": [
       "The new cycle record must pass the repository lifecycle validator.",
       "The full PR #311 CI run must pass on the updated head.",
       "The scope policy and traceability matrix remain unmerged until reviewed and merged.",
-      "The Park prototype remains NOT READY until its product, model, dataset, validation, Windows installation and handover gates pass."
+      "The Park prototype remains NOT READY until its product, model, dataset, validation, Windows installation and handover gates pass.",
+      "Recover the original production artifact from its authoritative external/local storage source and verify the manifest, hash, schema, feature contract, preprocessing, class order, calibration and provenance."
     ]
   },
   "knowledge_extraction": {
@@ -113,6 +117,7 @@
     "Issue #282 remains the blocker for recovery/authentication of the frozen production model artifact.",
     "The current DR24 explorer is raw/descriptive; it does not establish model inference.",
     "No overall completion percentage is reported without a fixed weighted acceptance denominator and current evidence for every gate.",
-    "No scientific baseline, model, dataset, threshold or CPVS methodology is changed by this cycle."
+    "No scientific baseline, model, dataset, threshold or CPVS methodology is changed by this cycle.",
+    "Current-main tree and published release assets were directly checked on 2026-11-24; the original production model artifact is absent from those sources."
   ]
 }
