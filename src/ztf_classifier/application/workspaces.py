@@ -54,11 +54,7 @@ class WorkspaceStore:
 
     @staticmethod
     def _now() -> str:
-        return (
-            time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-            .isoformat(timespec="seconds")
-            .replace("+00:00", "Z")
-        )
+        return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
     @staticmethod
     def _validate_name(name: str) -> str:
