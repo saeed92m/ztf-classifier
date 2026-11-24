@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import ctypes
+import json
 import os
 import secrets
 import sys
 from collections.abc import Callable
 from typing import Any
+from urllib.error import HTTPError
 from urllib.parse import urlsplit
+from urllib.request import Request, urlopen
 
 from ztf_classifier.api.app import create_app
 from ztf_classifier.desktop.runtime import (
@@ -111,10 +114,126 @@ def _install_navigation_guard(window: Any, base_url: str) -> None:
     window._ztf_navigation_handlers = handlers
 
 
+def _is_webview2_runtime_installed() -> bool:
+    """Check the Evergreen WebView2 Runtime registry values."""
+    if os.name != "nt":
+        return False
+
+    try:
+        import winreg
+    except ImportError:
+        return False
+
+    client_id = "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
+    locations = (
+        (
+            winreg.HKEY_LOCAL_MACHINE,
+            rf"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{client_id}",
+        ),
+        (
+            winreg.HKEY_CURRENT_USER,
+            rf"Software\Microsoft\EdgeUpdate\Clients\{client_id}",
+        ),
+    )
+    for hive, subkey in locations:
+        try:
+            with winreg.OpenKey(hive, subkey) as registry_key:
+                version, _ = winreg.QueryValueEx(registry_key, "pv")
+            if isinstance(version, str) and version not in {"", "0.0.0.0"}:
+                return True
+        except OSError:
+            continue
+    return False
+
+
+def _run_self_test() -> None:
+    """Verify the frozen app, WebView2 runtime, API and static Workbench."""
+    user_data = get_user_data_dir()
+    report_path = user_data / "logs" / "desktop-self-test.json"
+    checks: dict[str, str] = {}
+    error: str | None = None
+    runtime: LocalApiServer | None = None
+
+    try:
+        import webview
+
+        if not hasattr(webview, "create_window") or not _is_webview2_runtime_installed():
+            raise RuntimeError(
+                "Microsoft Edge WebView2 Runtime is not installed. "
+                "Install the Evergreen Runtime from "
+                "https://developer.microsoft.com/microsoft-edge/webview2/"
+            )
+        checks["pywebview_and_webview2_runtime"] = "PASS"
+
+        token = secrets.token_urlsafe(32)
+        settings = build_desktop_settings(token, data_dir=user_data)
+        registry_dir = settings.scientific_registry_dir
+        if not registry_dir.is_dir() or not any(registry_dir.glob("*.json")):
+            raise RuntimeError("The packaged benchmark registry is missing.")
+        checks["benchmark_registry"] = "PASS"
+
+        runtime = LocalApiServer(create_app(settings=settings))
+        base_url = runtime.start()
+        checks["local_api_health"] = "PASS"
+
+        for path in ("/workbench/", "/workbench/app.js", "/workbench/styles.css"):
+            with urlopen(f"{base_url}{path}", timeout=5) as response:
+                if response.status != 200:
+                    raise RuntimeError(f"Unexpected HTTP status for {path}.")
+                body = response.read()
+                if path == "/workbench/" and b"DR24 Explorer" not in body:
+                    raise RuntimeError("The packaged Workbench HTML is incomplete.")
+            checks[f"static:{path}"] = "PASS"
+
+        try:
+            with urlopen(f"{base_url}/v1/settings", timeout=5):
+                raise RuntimeError("The local API accepted a request without a token.")
+        except HTTPError as exc:
+            if exc.code != 401:
+                raise
+        checks["api_rejects_missing_token"] = "PASS"
+
+        request = Request(
+            f"{base_url}/v1/settings",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        with urlopen(request, timeout=5) as response:
+            if response.status != 200:
+                raise RuntimeError("The local API rejected its session token.")
+        checks["api_accepts_session_token"] = "PASS"
+    except Exception as exc:
+        error = f"{type(exc).__name__}: {exc}"
+    finally:
+        if runtime is not None:
+            try:
+                runtime.stop()
+                checks["local_api_shutdown"] = "PASS"
+            except Exception as exc:
+                error = error or f"{type(exc).__name__}: {exc}"
+                checks["local_api_shutdown"] = "FAIL"
+
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report = {
+            "schema_version": "ztf-desktop-self-test-v1",
+            "status": "FAIL" if error else "PASS",
+            "checks": checks,
+            "error": error,
+        }
+        report_path.write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
+    if error:
+        raise SystemExit(1)
+
 def main() -> None:
     """Start the private API, then open the standalone Windows window."""
     if os.name != "nt":
         raise SystemExit("The first desktop preview supports Windows only.")
+    if "--self-test" in sys.argv[1:]:
+        _run_self_test()
+        return
 
     runtime: LocalApiServer | None = None
     try:
