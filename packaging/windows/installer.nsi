@@ -49,11 +49,11 @@ Function .onInit
   ${EndIf}
   ${If} $0 == ""
   ${OrIf} $0 == "0.0.0.0"
-    MessageBox MB_ICONEXCLAMATION|MB_YESNO "$(WebView2Missing)" IDYES openWebView2
-    Goto webView2CheckDone
+    MessageBox MB_ICONEXCLAMATION|MB_YESNO "$(WebView2Missing)" IDYES openWebView2 IDNO abortInstall
     openWebView2:
       ExecShell "open" "https://developer.microsoft.com/microsoft-edge/webview2/"
-    webView2CheckDone:
+    abortInstall:
+      Abort
   ${EndIf}
 FunctionEnd
 
