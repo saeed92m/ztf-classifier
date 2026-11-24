@@ -496,7 +496,7 @@ const titles = {
   "desktop-help": ["راهنما", "راهنمای استفاده و محدوده علمی نسخه"],
 };
 
-function renderDesktopHome() {
+async function renderDesktopHome() {
   mainCanvas.innerHTML = `
     <div class="canvas-header"><div><div class="eyebrow">نسخه آزمایشی پارک فناوری</div>
     <h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
@@ -509,7 +509,8 @@ function renderDesktopHome() {
     <section class="panel">
       <div class="panel-title">شروع کار</div>
       <p class="muted">یک تا ده شناسه ZTF DR24 وارد کنید. برنامه داده خام را از منبع اصلی دریافت می‌کند و منحنی نوری، QC تشخیصی، آمار توصیفی و منشأ داده را نمایش می‌دهد.</p>
-      <button class="primary-button" id="startDr24Explorer" type="button">شروع کاوش داده DR24</button>
+      <p class="muted" id="desktopWorkspaceStatus" role="status">در حال بررسی پروژه فعال…</p>
+      <button class="primary-button" id="startDr24Explorer" type="button" disabled>شروع کاوش داده DR24</button>
       <button class="secondary-button" id="manageWorkspaces" type="button">مدیریت پروژه‌ها</button>
     </section>
     <section class="panel">
@@ -520,6 +521,21 @@ function renderDesktopHome() {
   setViewHeading("desktop-home");
   document.getElementById("startDr24Explorer").addEventListener("click", () => showView("dr24"));
   document.getElementById("manageWorkspaces").addEventListener("click", () => showView("workspaces"));
+  try {
+    const active = await fetchJson("/v1/workspaces/active");
+    const status = document.getElementById("desktopWorkspaceStatus");
+    const start = document.getElementById("startDr24Explorer");
+    if (active.workspace) {
+      status.textContent = "پروژه فعال: " + active.workspace.name;
+      start.disabled = false;
+    } else {
+      status.textContent = "برای ثبت سابقه تحلیل و خروجی، ابتدا یک پروژه ایجاد کنید.";
+      start.disabled = true;
+    }
+  } catch (error) {
+    document.getElementById("desktopWorkspaceStatus").textContent =
+      "وضعیت پروژه قابل دریافت نیست: " + (error.message || "خطای سرویس");
+  }
 }
 
 function renderDesktopSources() {
@@ -582,9 +598,22 @@ async function renderDesktopWorkspaces() {
       list.innerHTML = items.map(item => {
         const active = item.is_active;
         const label = active ? "فعال" : item.status === "CORRUPT" ? "نیازمند بررسی" : "ذخیره‌شده";
+        const operation = item.last_operation;
+        const operationText = operation
+          ? operation.status + " · " + (operation.returned_oids || []).length +
+            "/" + (operation.requested_oids || []).length + " OID"
+          : "هنوز عملیاتی ثبت نشده است";
+        const exportText = item.last_export
+          ? "آخرین خروجی: " + item.last_export.file_name
+          : "هنوز خروجی ذخیره نشده است";
         return `
           <article class="workspace-list-item">
-            <div><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(label)} · ${escapeHtml(item.created_at_utc || "")}</small></div>
+            <div>
+              <strong>${escapeHtml(item.name)}</strong>
+              <small>${escapeHtml(label)} · ${escapeHtml(item.created_at_utc || "")}</small>
+              <small>آخرین عملیات: ${escapeHtml(operationText)}</small>
+              <small>${escapeHtml(exportText)}</small>
+            </div>
             <button class="text-button" type="button" data-open-workspace="${escapeHtml(item.workspace_id)}" ${active ? "disabled" : ""}>${active ? "پروژه فعال" : "بازکردن"}</button>
           </article>`;
       }).join("");
@@ -1252,8 +1281,7 @@ async function loadDR24Explorer() {
       desktopDr24Payload = null;
       desktopRawExport = null;
       document.getElementById("dr24Status").textContent =
-        desktopTranslate("DR24 acquisition failed (") + (error.status || "network") +
-        desktopTranslate("). No fallback source was used.");
+        error.message || desktopTranslate("DR24 acquisition failed. No fallback source was used.");
       translateDesktopText(document.getElementById("dr24Results"));
       setConnectionState("DR24 acquisition failed", false);
     } finally {
