@@ -134,7 +134,16 @@ function desktopTranslate(value) {
     ["Enter between 1 and 10 object IDs.", "بین ۱ تا ۱۰ شناسه وارد کنید."],
     ["Every object ID must be a positive integer.", "هر شناسه باید عدد صحیح مثبت باشد."],
     ["Every object ID must be a safe positive integer.", "هر شناسه باید عدد صحیح مثبت و قابل‌نمایش باشد."],
-    ["Duplicate object IDs are not allowed.", "OID تکراری مجاز نیست."]
+    ["Duplicate object IDs are not allowed.", "OID تکراری مجاز نیست."],
+    [" · filter ", " · فیلتر "],
+    ["Field ", "میدان "],
+    [" · epochs ", " · ردیف زمانی "],
+    [" / catalog ", " / کاتالوگ "],
+    [" · payload SHA-256 ", " · هش SHA-256 داده "],
+    ["Time: HMJD", "زمان: HMJD"],
+    ["native ZTF magnitude", "قدر خام ZTF"],
+    ["vertical bars: reported magerr", "میله‌های عمودی: magerr گزارش‌شده"],
+    ["no cross-OID grouping", "بدون گروه‌بندی بین OIDها"]
   ];
   for (const [source, target] of replacements) {
     translated = translated.replaceAll(source, target);
@@ -866,7 +875,7 @@ async function loadDR24Explorer() {
     '<div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding:12px 0">',
     '<label for="dr24ObjectIds">DR24 object IDs</label>',
     '<textarea id="dr24ObjectIds" rows="3" placeholder="One or more OIDs, separated by commas or spaces" style="min-width:min(100%,520px)"></textarea>',
-    desktopMode ? '<button class="secondary-button" id="dr24SampleButton" type="button">شناسه‌های نمونه آزمون‌شده</button>' : '',
+    desktopMode ? '<button class="secondary-button" id="dr24SampleButton" type="button">شناسه‌های نمونه آزمون‌شده</button><small class="muted">این دو OID نمونه، دو رکورد مستقل‌اند.</small>' : '',
     '<button class="primary-button" id="dr24LoadButton" type="button">Load raw light curves</button>',
     '<button id="dr24ExportButton" type="button" disabled>Download raw JSON + QC</button>',
     '</div><p id="dr24Status" class="muted" role="status">No DR24 objects loaded.</p></section>',
