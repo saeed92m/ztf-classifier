@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
-import resource
 import sys
+
+try:
+    import resource
+except ImportError:  # Windows does not provide the resource module.
+    resource = None
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -79,6 +83,58 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+
+def _peak_rss_mb() -> float:
+    """Return peak resident memory in MiB on supported operating systems."""
+    if resource is not None:
+        peak_rss = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        return peak_rss / (1024.0**2 if sys.platform == "darwin" else 1024.0)
+
+    if sys.platform == "win32":
+        import ctypes
+        from ctypes import wintypes
+
+        class ProcessMemoryCounters(ctypes.Structure):
+            _fields_ = [
+                ("cb", wintypes.DWORD),
+                ("PageFaultCount", wintypes.DWORD),
+                ("PeakWorkingSetSize", ctypes.c_size_t),
+                ("WorkingSetSize", ctypes.c_size_t),
+                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                ("PagefileUsage", ctypes.c_size_t),
+                ("PeakPagefileUsage", ctypes.c_size_t),
+            ]
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        psapi = ctypes.WinDLL("psapi", use_last_error=True)
+        get_current_process = kernel32.GetCurrentProcess
+        get_current_process.restype = wintypes.HANDLE
+        get_process_memory_info = psapi.GetProcessMemoryInfo
+        get_process_memory_info.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(ProcessMemoryCounters),
+            wintypes.DWORD,
+        ]
+        get_process_memory_info.restype = wintypes.BOOL
+
+        counters = ProcessMemoryCounters()
+        counters.cb = ctypes.sizeof(counters)
+        if not get_process_memory_info(
+            get_current_process(),
+            ctypes.byref(counters),
+            counters.cb,
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+        return float(counters.PeakWorkingSetSize) / (1024.0**2)
+
+    raise RuntimeError(
+        f"Peak resident memory measurement is unsupported on {sys.platform}."
+    )
 
 
 def _ece(y_true: np.ndarray, probabilities: np.ndarray, bins: int = 10) -> float:
@@ -287,9 +343,7 @@ def run_table_benchmark(
         blockers.append("provenance")
     status = "PASS" if not blockers else "BLOCKED"
     elapsed = time.perf_counter() - started
-    peak_rss_mb = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) / 1024.0
-    if sys.platform == "darwin":
-        peak_rss_mb /= 1024.0
+    peak_rss_mb = _peak_rss_mb()
     metrics["performance"] = {
         "runtime_seconds": float(elapsed),
         "peak_rss_mb": peak_rss_mb,
