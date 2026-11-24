@@ -86,7 +86,6 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-
 def _peak_rss_mb() -> float:
     """Return peak resident memory in MiB on supported operating systems."""
     if resource is not None:
