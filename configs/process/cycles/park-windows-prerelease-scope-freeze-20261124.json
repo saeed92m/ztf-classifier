@@ -72,7 +72,8 @@
       "A local read-only model-artifact audit dated 2026-11-23 was recorded with its SHA-256 and the caveat that its source branch was three commits behind upstream.",
       "CI on the earlier PR #311 head passed Format Check, Lint, CodeQL, Product Scope Audit and lifecycle-record validation, but the cumulative lifecycle requirement failed because the meaningful PR did not include its own cycle record. The new record has not yet been evaluated.",
       "Current-main artifact audit on 2026-11-24: recursive Git tree contained 628 entries and was not truncated; no production baseline_v0.2 artifact directory or manifest was present. Direct expected-path checks returned 404. Releases v1.0.1/v1.0.0/v0.5.0 contain only Python wheel/source archives; v0.4.0/v0.3.0/v0.2.0 have no assets. The only XGBoost v0.2 paths in the tree were three report tables.",
-      "Issue #282 was updated with the current-main and release-asset audit. Production inference remains BLOCKED; no reconstruction or substitute is authorized."
+      "Issue #282 was updated with the current-main and release-asset audit. Production inference remains BLOCKED; no reconstruction or substitute is authorized.",
+      "The source-traceability matrix now distinguishes the Windows Laboratory Preview from the Full six-month Park MVP. The Founder has not yet selected which acceptance level must be complete before Park presentation; until confirmed, full-MVP-only data/model/uncertainty work remains inactive."
     ]
   },
   "failure_analysis": {
@@ -89,7 +90,8 @@
       "The full PR #311 CI run must pass on the updated head.",
       "The scope policy and traceability matrix remain unmerged until reviewed and merged.",
       "The Park prototype remains NOT READY until its product, model, dataset, validation, Windows installation and handover gates pass.",
-      "Recover the original production artifact from its authoritative external/local storage source and verify the manifest, hash, schema, feature contract, preprocessing, class order, calibration and provenance."
+      "Recover the original production artifact from its authoritative external/local storage source and verify the manifest, hash, schema, feature contract, preprocessing, class order, calibration and provenance.",
+      "Founder confirmation is required to select Windows Laboratory Preview or Full six-month Park MVP as the required pre-presentation acceptance level."
     ]
   },
   "knowledge_extraction": {
@@ -118,6 +120,7 @@
     "The current DR24 explorer is raw/descriptive; it does not establish model inference.",
     "No overall completion percentage is reported without a fixed weighted acceptance denominator and current evidence for every gate.",
     "No scientific baseline, model, dataset, threshold or CPVS methodology is changed by this cycle.",
-    "Current-main tree and published release assets were directly checked on 2026-11-24; the original production model artifact is absent from those sources."
+    "Current-main tree and published release assets were directly checked on 2026-11-24; the original production model artifact is absent from those sources.",
+    "Do not treat the full six-month technical-dossier roadmap as automatically identical to the first Windows beta scope; PR #309 distinguishes the preview from the full MVP."
   ]
 }
