@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "park-windows-desktop-shell-spike-20261124",
+  "objective": "Implement a bounded Windows desktop shell spike that embeds the existing DR24 Workbench, runs FastAPI on a dynamically allocated loopback port, stores runtime state under per-user application data, and authenticates API requests through an in-memory session token. Keep GUI dependencies optional and preserve the scientific baseline.",
+  "previous_knowledge_consumed": [
+    "The owner selected standalone Windows desktop delivery for the first Park preview.",
+    "The current server entry point binds to 127.0.0.1:8000 and has no managed desktop lifecycle.",
+    "FastAPI create_app(settings=...) supports per-instance configuration and Bearer authentication for /v1 endpoints.",
+    "The Workbench uses fetchJson as its shared API request path.",
+    "Current API storage defaults include paths relative to the working directory.",
+    "pywebview provides an embedded Windows Edge WebView2 renderer and a JavaScript/Python bridge."
+  ],
+  "baseline": {
+    "revision": "e1de36a491e77a19d0dd6a5ca39506a6291aa7b1",
+    "status": "Branch is based on the PR #307 DR24 descriptive-summary candidate. No main merge, production model, dataset, frozen feature contract, benchmark or release is changed."
+  },
+  "expected_improvement": [
+    "Managed local API startup and shutdown with a health-readiness check.",
+    "Loopback-only binding and a dynamically allocated port.",
+    "Per-user cache, job, result, settings and scientific-evidence paths.",
+    "Bearer authentication for all /v1 requests in desktop mode.",
+    "Optional Windows desktop dependencies that do not affect server-only installations.",
+    "Normal browser Workbench behaviour remains unchanged when desktop mode is absent."
+  ],
+  "measurement": {
+    "metrics": {
+      "reliability": {
+        "before": "The existing server entry point uses a fixed port and is not managed by a desktop window.",
+        "after": "A testable runtime binds an ephemeral loopback socket, waits for /health and stops the Uvicorn thread."
+      },
+      "reproducibility": {
+        "before": "No Windows desktop runtime or package build exists.",
+        "after": "A Windows CI build and clean-machine validation are planned; neither is accepted by this code-only spike."
+      }
+    },
+    "trade_off": "A small pywebview shell reuses the current Workbench, but WebView2 availability, Windows packaging, native navigation controls and dependency locking remain open."
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Added LocalApiServer with a pre-bound ephemeral socket, loopback restriction, /health readiness check and managed shutdown.",
+      "Added per-user settings for cache, job database, result database, app settings and scientific evidence.",
+      "Added an in-memory token bridge for the desktop Workbench.",
+      "Added desktop-only Bearer headers to fetchJson and a DOM guard against external anchor navigation.",
+      "Added a Windows desktop entry point and optional pywebview/PyInstaller extras.",
+      "Added tests for per-user data paths, token requirements, loopback binding, dynamic-port startup/shutdown and health timeout."
+    ],
+    "blocker": "Run exact-head CI and a Windows x64 package build. Verify the embedded navigation policy at the native WebView boundary and complete clean Windows acceptance."
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The current API entry point hard-codes port 8000 and has no desktop process lifecycle.",
+      "The browser Workbench did not authenticate API calls because browser mode did not require a token.",
+      "Some API data paths are relative to the current working directory."
+    ],
+    "unresolved": [
+      "WebView2 and .NET runtime behavior are not tested on the actual Windows device.",
+      "PyInstaller may need hidden imports and explicit inclusion of static and benchmark data.",
+      "JavaScript navigation guards are not a substitute for a verified native WebView navigation boundary.",
+      "A separate fully resolved Windows dependency lock, signed installer, upgrade/uninstall flow and clean-machine acceptance are not available.",
+      "Persian UX, target-user testing and written Park evaluation terms remain open."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "FastAPI app factory configuration can support a dedicated per-user desktop instance.",
+      "A pre-bound loopback socket can avoid fixed port conflicts, subject to Windows runtime validation.",
+      "The same Workbench can support a desktop-only token flow without changing ordinary browser mode.",
+      "API tokens must stay in memory and must not be written to URLs, logs, settings or exported provenance.",
+      "A PyInstaller one-folder build is an engineering test, not a completed installer."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Pass exact-head Linux tests and Ruff checks.",
+      "Build a Windows one-folder package and verify that static Workbench and benchmark configuration assets are included.",
+      "Test missing WebView2 behavior and verify that no browser fallback occurs.",
+      "Verify that all desktop /v1 requests use the in-memory Bearer token.",
+      "Verify native navigation restrictions against external URLs and untrusted redirects.",
+      "Test startup, shutdown, port collision, health timeout, network loss and process cleanup on Windows.",
+      "Complete clean Windows 11 installation, live DR24 retrieval, JSON export, offline relaunch, upgrade and uninstall.",
+      "Create a fully resolved Windows dependency lock and retain build hash and SBOM.",
+      "Obtain written Park evaluation/demo terms before external distribution."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Windows desktop shell remains an engineering spike, not a distributable application.",
+    "pywebview 6.2.1 and PyInstaller 6.22.3 are optional candidate dependencies, subject to the Windows proof-of-concept.",
+    "The API must bind only to loopback and use a dynamic port.",
+    "The desktop token remains in memory and is provided through the pywebview API bridge.",
+    "The browser Workbench continues to operate when desktop=1 is absent.",
+    "Preserve v0.2.0 and keep DR24 inference blocked.",
+    "No external installer distribution before Windows acceptance and written legal approval."
+  ]
+}
