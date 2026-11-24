@@ -2,6 +2,7 @@ Unicode true
 
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
+!include "x64.nsh"
 
 !define PRODUCT_NAME "ZTF Classifier"
 !define PRODUCT_VERSION "0.1.0-preview.1"
@@ -42,6 +43,10 @@ LangString WebView2Missing ${LANG_ENGLISH} "Microsoft Edge WebView2 Runtime was 
 ; WebView2 is mandatory. If it is absent, open Microsoft's official download page and abort.
 ; Do not continue with a partially installed desktop application.
 Function .onInit
+  ${IfNot} ${RunningX64}
+    MessageBox MB_ICONSTOP "This experimental preview requires 64-bit Windows."
+    Abort
+  ${EndIf}
   SetShellVarContext current
   SetRegView 64
   ClearErrors
