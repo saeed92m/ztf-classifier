@@ -37,8 +37,8 @@ VIAddVersionKey "Comments" "Experimental Park evaluation pre-release; not a scie
 !insertmacro MUI_LANGUAGE "Persian"
 !insertmacro MUI_LANGUAGE "English"
 
-LangString WebView2Missing ${LANG_PERSIAN} "مولفه Microsoft Edge WebView2 Runtime پیدا نشد. برای نصب آن، صفحه رسمی مایکروسافت باز شود؟"
-LangString WebView2Missing ${LANG_ENGLISH} "Microsoft Edge WebView2 Runtime was not detected. Open the official Microsoft download page?"
+LangString WebView2InstallFailed ${LANG_PERSIAN} "نصب خودکار Microsoft Edge WebView2 Runtime موفق نبود (کد خروجی: $1). اتصال اینترنت را بررسی کنید و Runtime را از وب‌سایت رسمی Microsoft نصب کنید."
+LangString WebView2InstallFailed ${LANG_ENGLISH} "Automatic Microsoft Edge WebView2 Runtime installation failed (exit code: $1). Check the internet connection and install the Runtime from the official Microsoft website."
 
 ; WebView2 is mandatory. If it is absent, open Microsoft's official download page and abort.
 ; Do not continue with a partially installed desktop application.
@@ -57,11 +57,22 @@ Function .onInit
   ${EndIf}
   ${If} $0 == ""
   ${OrIf} $0 == "0.0.0.0"
-    MessageBox MB_ICONEXCLAMATION|MB_YESNO "$(WebView2Missing)" IDYES openWebView2 IDNO abortInstall
-    openWebView2:
-      ExecShell "open" "https://developer.microsoft.com/microsoft-edge/webview2/"
-    abortInstall:
+    DetailPrint "Installing Microsoft Edge WebView2 Runtime..."
+    SetOutPath "$TEMP"
+    File /oname=MicrosoftEdgeWebView2Setup.exe "dist\\MicrosoftEdgeWebView2Setup.exe"
+    ExecWait '"$TEMP\\MicrosoftEdgeWebView2Setup.exe" /silent /install' $1
+    Delete "$TEMP\\MicrosoftEdgeWebView2Setup.exe"
+    ClearErrors
+    ReadRegStr $0 HKLM "SOFTWARE\\WOW6432Node\\Microsoft\\EdgeUpdate\\Clients\\${WEBVIEW2_CLIENT_ID}" "pv"
+    ${If} $0 == ""
+    ${OrIf} $0 == "0.0.0.0"
+      ReadRegStr $0 HKCU "Software\\Microsoft\\EdgeUpdate\\Clients\\${WEBVIEW2_CLIENT_ID}" "pv"
+    ${EndIf}
+    ${If} $0 == ""
+    ${OrIf} $0 == "0.0.0.0"
+      MessageBox MB_ICONSTOP "$(WebView2InstallFailed)"
       Abort
+    ${EndIf}
   ${EndIf}
 FunctionEnd
 
