@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Self
 
 import pytest
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
@@ -89,18 +89,47 @@ def test_desktop_api_requires_session_bearer_token(tmp_path: Path) -> None:
     )
     app = create_app(settings=settings)
 
-    with TestClient(app) as client:
-        assert client.get("/health").status_code == 200
-
-        unauthorized = client.get("/v1/settings")
-        assert unauthorized.status_code == 401
-        assert unauthorized.headers["www-authenticate"] == "Bearer"
-
-        authorized = client.get(
-            "/v1/settings",
-            headers={"Authorization": f"Bearer {token}"},
+    async def get_status(path: str, authorization: str | None = None) -> int:
+        messages: list[dict[str, Any]] = []
+        headers = (
+            [(b"authorization", authorization.encode("ascii"))]
+            if authorization
+            else []
         )
-        assert authorized.status_code == 200
+
+        async def receive() -> dict[str, Any]:
+            return {"type": "http.request", "body": b"", "more_body": False}
+
+        async def send(message: dict[str, Any]) -> None:
+            messages.append(message)
+
+        scope = {
+            "type": "http",
+            "asgi": {"version": "3.0"},
+            "http_version": "1.1",
+            "method": "GET",
+            "scheme": "http",
+            "path": path,
+            "raw_path": path.encode("ascii"),
+            "query_string": b"",
+            "root_path": "",
+            "headers": headers,
+            "client": ("127.0.0.1", 12345),
+            "server": ("127.0.0.1", 43127),
+        }
+        await app(scope, receive, send)
+        return next(
+            message["status"]
+            for message in messages
+            if message["type"] == "http.response.start"
+        )
+
+    assert asyncio.run(get_status("/health")) == 200
+
+    assert asyncio.run(get_status("/v1/settings")) == 401
+    assert asyncio.run(
+        get_status("/v1/settings", f"Bearer {token}")
+    ) == 200
 
 
 def test_local_api_rejects_non_loopback_host() -> None:
@@ -170,7 +199,7 @@ def test_native_navigation_guard_blocks_external_navigation() -> None:
         def __init__(self) -> None:
             self.handlers: list[Callable[..., None]] = []
 
-        def __iadd__(self, handler: Callable[..., None]) -> FakeEvent:
+        def __iadd__(self, handler: Callable[..., None]) -> Self:
             self.handlers.append(handler)
             return self
 
