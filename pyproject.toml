@@ -64,6 +64,7 @@ dr24 = [
     "s3fs>=2026.9.0,<2027.0.0",
 ]
 dev = [
+    "httpx2>=2.16.2",
     "pytest",
     "pytest-cov",
     "ruff",
