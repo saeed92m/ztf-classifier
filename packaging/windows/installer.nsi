@@ -22,6 +22,7 @@ VIAddVersionKey "ProductName" "${PRODUCT_NAME}"
 VIAddVersionKey "ProductVersion" "${PRODUCT_VERSION}"
 VIAddVersionKey "FileDescription" "ZTF Classifier Windows experimental desktop"
 VIAddVersionKey "CompanyName" "${PRODUCT_PUBLISHER}"
+VIAddVersionKey "Comments" "Experimental Park evaluation pre-release; not a scientific production release."
 
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_RUN "$INSTDIR\ZTFClassifier.exe"
@@ -38,6 +39,8 @@ VIAddVersionKey "CompanyName" "${PRODUCT_PUBLISHER}"
 LangString WebView2Missing ${LANG_PERSIAN} "مولفه Microsoft Edge WebView2 Runtime پیدا نشد. برای نصب آن، صفحه رسمی مایکروسافت باز شود؟"
 LangString WebView2Missing ${LANG_ENGLISH} "Microsoft Edge WebView2 Runtime was not detected. Open the official Microsoft download page?"
 
+; WebView2 is mandatory. If it is absent, open Microsoft's official download page and abort.
+; Do not continue with a partially installed desktop application.
 Function .onInit
   SetShellVarContext current
   SetRegView 64
@@ -71,6 +74,7 @@ Section "Application" SEC_APPLICATION
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier" "DisplayName" "${PRODUCT_NAME}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier" "DisplayVersion" "${PRODUCT_VERSION}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier" "Publisher" "${PRODUCT_PUBLISHER}"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier" "Comments" "Experimental Park evaluation pre-release; not a scientific production release."
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier" "InstallLocation" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier" "NoModify" 1
