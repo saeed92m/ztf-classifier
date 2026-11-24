@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping, Sequence
+from itertools import pairwise
 from statistics import median
 from typing import Any
 
@@ -58,7 +59,7 @@ def summarize_dr24_epochs(epochs: Sequence[Mapping[str, Any]]) -> dict[str, Any]
     unique_times = sorted(set(times))
     intervals = [
         right - left
-        for left, right in zip(unique_times, unique_times[1:], strict=False)
+        for left, right in pairwise(unique_times)
     ]
     mag_p05 = _percentile(magnitudes, 0.05)
     mag_p95 = _percentile(magnitudes, 0.95)
