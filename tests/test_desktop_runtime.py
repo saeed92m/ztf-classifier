@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from pathlib import Path
+from typing import Self
 from typing import Any, Self
 
 import pytest
@@ -38,7 +39,7 @@ def test_webview2_runtime_detection_checks_machine_and_user_registry() -> None:
         def __init__(self, value: str) -> None:
             self.value = value
 
-        def __enter__(self) -> FakeKey:
+        def __enter__(self) -> Self:
             return self
 
         def __exit__(self, *args: object) -> None:
