@@ -1089,6 +1089,12 @@ async function showView(view) {
   document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
   const active = document.querySelector('.nav-item[data-view="' + view + '"]');
   if (active) active.classList.add("active");
+  if (view === "desktop-home") return renderDesktopHome();
+  if (view === "sources") return renderDesktopSources();
+  if (view === "desktop-provenance") return renderDesktopProvenance();
+  if (view === "desktop-export") return renderDesktopExport();
+  if (view === "desktop-settings") return renderDesktopSettings();
+  if (view === "desktop-help") return renderDesktopHelp();
   if (view === "dr24") return loadDR24Explorer();
   if (view === "overview") {
     mainCanvas.innerHTML = overviewMarkup;
@@ -1109,5 +1115,34 @@ document.querySelectorAll(".nav-item").forEach(button => {
   button.addEventListener("click", () => showView(button.dataset.view));
 });
 
-bindOverviewActions();
-loadObject();
+if (desktopMode) {
+  document.title = "ZTF Classifier | نسخه آزمایشی پارک";
+  document.querySelector(".brand-name").textContent = "ZTF CLASSIFIER";
+  document.querySelector(".brand-product").textContent = "نسخه آزمایشی دسکتاپ";
+  document.querySelector(".connection-state").setAttribute("aria-label", "وضعیت سرویس محلی");
+  document.querySelector(".icon-button").setAttribute("aria-label", "تنظیمات نمایش");
+  const sectionLabels = document.querySelectorAll(".sidebar .section-label");
+  if (sectionLabels[0]) sectionLabels[0].textContent = "فضای کار";
+  if (sectionLabels[1]) sectionLabels[1].hidden = true;
+  const desktopViews = new Set([
+    "dr24",
+    "desktop-home",
+    "sources",
+    "desktop-provenance",
+    "desktop-export",
+    "desktop-settings",
+    "desktop-help",
+  ]);
+  document.querySelectorAll(".nav-item").forEach(button => {
+    button.hidden = !desktopViews.has(button.dataset.view);
+  });
+  document.querySelectorAll(".desktop-only").forEach(button => { button.hidden = false; });
+  document.querySelector(".sidebar-footer").hidden = true;
+  document.querySelector(".inspector").hidden = true;
+  document.querySelector(".object-actions").hidden = true;
+  translateDesktopText(document);
+  void showView("desktop-home");
+} else {
+  bindOverviewActions();
+  loadObject();
+}
