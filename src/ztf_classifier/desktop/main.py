@@ -51,7 +51,6 @@ def _load_webview() -> Any:
     return webview
 
 
-
 def _is_trusted_local_url(candidate: str, base_url: str) -> bool:
     """Accept only the exact loopback origin owned by this desktop session."""
     try:
@@ -76,17 +75,17 @@ def _install_navigation_guard(window: Any, base_url: str) -> None:
     if control is None:
         raise RuntimeError("The native WebView2 control is not available.")
 
-    handlers: list[Callable[..., None]] = [
-        block_untrusted_navigation,
-        block_external_uri_scheme,
-    ]
-
     def block_untrusted_navigation(sender: Any, args: Any) -> None:
         if not _is_trusted_local_url(str(args.Uri), base_url):
             args.Cancel = True
 
     def block_external_uri_scheme(sender: Any, args: Any) -> None:
         args.Cancel = True
+
+    handlers: list[Callable[..., None]] = [
+        block_untrusted_navigation,
+        block_external_uri_scheme,
+    ]
 
     def attach_core_handlers(core: Any) -> None:
         if core is None:
