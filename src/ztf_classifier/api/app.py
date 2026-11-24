@@ -86,6 +86,14 @@ def _error_response(
     )
 
 
+def _apply_security_headers(response: Response) -> Response:
+    """Apply safe defaults to local API and static Workbench responses."""
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["X-Frame-Options"] = "DENY"
+    return response
+
+
 def _registry(settings: ApiSettings) -> FilesystemModelRegistry:
     """Resolve the configured server-side registry."""
     if settings.registry_dir is None:
@@ -334,10 +342,10 @@ def create_app(
                 )
                 response.headers["WWW-Authenticate"] = "Bearer"
                 response.headers["X-Request-ID"] = request_id
-                return response
+                return _apply_security_headers(response)
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
-        return response
+        return _apply_security_headers(response)
 
     @app.exception_handler(ApiContractError)
     async def api_contract_error_handler(
