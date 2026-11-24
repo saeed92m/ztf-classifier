@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "park-windows-prerelease-scope-freeze-20261124",
+  "objective": "Record the Founder-approved scope freeze and trace the submitted Park acceptance worksheet and technical dossier to testable requirements for the Windows-installable Park pre-release. This is a documentation and delivery-governance change only; it does not alter scientific code or artifacts.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Park acceptance worksheet 261007-091750-354.docx",
+      "status": "VERIFIED",
+      "detail": "Reopened directly. Sections 2-4, 2-5, 2-6, 2-7, 2-10 and 4-1 provide the declared use cases, software/dashboard direction, scientific method and four delivery phases."
+    },
+    {
+      "source": "Final technical project dossier PDF",
+      "status": "VERIFIED",
+      "detail": "Reopened directly. Sections 3.2–3.7, 4.3, 5.1 and 7.9 provide data, feature, model, uncertainty, validation, output and six-month roadmap details."
+    },
+    {
+      "source": "Founder instruction 2026-11-24",
+      "status": "VERIFIED",
+      "detail": "Windows-installable GitHub Pre-release is the only active delivery objective until clean-Windows installation/testing and actual Park presentation. Independent workstreams are inactive."
+    },
+    {
+      "source": "PR #303 model availability correction",
+      "status": "VERIFIED",
+      "detail": "The original v0.2.0 production model artifact is currently unavailable in accessible repository/release sources; Issue #282 remains open."
+    }
+  ],
+  "baseline": {
+    "revision": "e30cc80b7a03f0c03e5fccbf6e339f0eb629e54c",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2",
+    "status": "No scientific code, data, model, thresholds, or baseline artifacts are changed by this documentation PR."
+  },
+  "expected_improvement": [
+    "Make the Windows Park pre-release the only active project objective until actual Park delivery.",
+    "Map source-backed acceptance claims to measurable product and scientific gates.",
+    "Separate worksheet commitments, dossier roadmap targets and the Founder-selected Windows delivery format.",
+    "Correct README statements that could imply the original production model artifact is currently available.",
+    "Record explicit current blockers and preserve fail-closed scientific claims."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "before": "The delivery decision, source claims, current product evidence and deferred workstreams were distributed across older documents.",
+        "after": "One binding scope policy and one source-traceability matrix define the active objective, acceptance gates, evidence status and exclusions."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "before": "The six-month delivery plan and Park claims were not mapped in one version-controlled acceptance record.",
+        "after": "The application worksheet and final dossier are mapped to source sections, testable outputs, current evidence and blockers."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "before": "A web-only decision conflicted with the owner's current Windows-installable handover requirement.",
+        "after": "The current policy supersedes the old web-only decision and requires clean-Windows installation, execution, workflow and Park handover."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "before": "README language could be read as asserting the frozen production model artifact is present and production inference is currently available.",
+        "after": "README and acceptance matrix mark the original artifact UNKNOWN/BLOCKED until recovery and independent authentication. This documentation change does not validate the model."
+      }
+    },
+    "trade_off": "The change adds governance and traceability. It does not implement missing product features, recover the model artifact, acquire the Park dataset, or establish scientific validation."
+  },
+  "validation": {
+    "status": "PENDING",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The source documents were reopened and their exact sections were mapped in docs/acceptance/PARK_PROTOTYPE_REQUIREMENTS_TRACEABILITY_2026-11-24.md.",
+      "README, Handbook, roadmap and the scope policy were updated on this PR branch.",
+      "A local read-only model-artifact audit dated 2026-11-23 was recorded with its SHA-256 and the caveat that its source branch was three commits behind upstream.",
+      "CI on the earlier PR #311 head passed Format Check, Lint, CodeQL, Product Scope Audit and lifecycle-record validation, but the cumulative lifecycle requirement failed because the meaningful PR did not include its own cycle record. The new record has not yet been evaluated."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The earlier web-only delivery decision did not match the Founder-selected Windows-installable Park handover.",
+      "The submitted worksheet and technical dossier expressed related acceptance commitments at different levels of detail; the repository lacked one source-to-evidence matrix.",
+      "README wording could imply that the original production model artifact was available, while Issue #282 and the local audit report show that recovery remains blocked.",
+      "The CI lifecycle gate requires every meaningful PR to add a machine-readable cycle record."
+    ],
+    "unresolved": [
+      "The new cycle record must pass the repository lifecycle validator.",
+      "The full PR #311 CI run must pass on the updated head.",
+      "The scope policy and traceability matrix remain unmerged until reviewed and merged.",
+      "The Park prototype remains NOT READY until its product, model, dataset, validation, Windows installation and handover gates pass."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A Windows Pre-release is the owner's required delivery format for this stage; this is not a verbatim requirement quoted from the acceptance worksheet.",
+      "The technical dossier's six-month plan includes the 100,000 labelled-light-curve target, five feature families, baseline and main model, SHAP, uncertainty, anomaly, temporal/external validation, dashboard/API and Park handover.",
+      "A software interface or successful engineering CI does not prove that a production model artifact or scientific capability is available.",
+      "The Founder scope freeze permits only work directly required by the Park acceptance gates."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Pass the cumulative lifecycle gate on the updated PR #311 head.",
+      "Pass the complete PR #311 CI and CodeQL checks on the final head.",
+      "Keep the policy and matrix unmerged until reviewed.",
+      "Keep CPVS, independent CIN work, cross-platform packaging and unrelated platform expansion inactive until Park delivery."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Issue #158 is the sole active Park delivery tracker.",
+    "The Windows Pre-release, clean-machine install/run, end-user workflow and actual Park presentation are separate acceptance gates.",
+    "Issue #282 remains the blocker for recovery/authentication of the frozen production model artifact.",
+    "The current DR24 explorer is raw/descriptive; it does not establish model inference.",
+    "No overall completion percentage is reported without a fixed weighted acceptance denominator and current evidence for every gate.",
+    "No scientific baseline, model, dataset, threshold or CPVS methodology is changed by this cycle."
+  ]
+}
