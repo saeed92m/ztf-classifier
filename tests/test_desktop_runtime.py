@@ -123,7 +123,6 @@ def test_local_api_starts_on_dynamic_loopback_port_and_stops() -> None:
     assert not runtime.is_running
 
 
-
 def test_local_api_surfaces_unexpected_worker_exception(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
