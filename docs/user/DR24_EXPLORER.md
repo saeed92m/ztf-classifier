@@ -115,8 +115,8 @@ Each returned OID now has a separate descriptive summary under
 The summary reports:
 - raw epoch count and finite HMJD/magnitude pair count;
 - HMJD minimum, maximum, span, unique-time count and duplicate-time count;
-- median interval between unique HMJD values;
-- minimum, median, maximum, and 5th/95th percentile native magnitudes;
+- median interval between unique HMJD values (the median of differences between sorted unique HMJD values);
+- minimum, median, maximum, and 5th/95th percentile native magnitudes (linear interpolation, Type 7);
 - median finite, non-negative `magerr`;
 - invalid/missing time-magnitude pair and uncertainty counts.
 
@@ -130,3 +130,7 @@ Status: `DESCRIPTIVE_NOT_CLASSIFICATION`
 These statistics are descriptive. They are not the frozen 42 model features,
 a validated variability classifier, calibrated probabilities, OOD, or anomaly
 detection. The raw epochs and existing diagnostic QC remain available.
+
+
+The machine-readable response contract is defined in
+`schemas/dr24-descriptive-summary-v1.schema.json`.
