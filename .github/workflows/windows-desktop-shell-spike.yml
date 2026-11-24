@@ -93,13 +93,14 @@ jobs:
       - name: Run frozen application self-test
         shell: pwsh
         run: |
-          & "dist/ZTFClassifier/ZTFClassifier.exe" --self-test
-          if ($LASTEXITCODE -ne 0) { throw "Frozen application self-test failed with exit code $LASTEXITCODE." }
           $selfTest = Join-Path $env:LOCALAPPDATA "ZTFClassifier\\logs\\desktop-self-test.json"
-          if (-not (Test-Path $selfTest)) { throw "Frozen application did not write its self-test report." }
+          Remove-Item $selfTest -Force -ErrorAction SilentlyContinue
+          $process = Start-Process -FilePath "dist/ZTFClassifier/ZTFClassifier.exe" -ArgumentList "--self-test" -Wait -PassThru
+          if (-not (Test-Path $selfTest)) { throw "Frozen application did not write its self-test report. Process exit code: $($process.ExitCode)" }
           $report = Get-Content -Raw $selfTest | ConvertFrom-Json
-          if ($report.status -ne "PASS") { throw "Frozen application self-test did not PASS: $($report.error)" }
           Copy-Item $selfTest "dist/desktop-self-test.json" -Force
+          if ($report.status -ne "PASS") { throw "Frozen application self-test did not PASS. Process exit code: $($process.ExitCode). Detail: $($report.error)" }
+          if ($process.ExitCode -ne 0) { throw "Frozen application self-test reported PASS but exited with code $($process.ExitCode)." }
 
       - name: Install pinned NSIS compiler
         shell: pwsh
