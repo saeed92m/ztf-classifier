@@ -167,7 +167,7 @@ jobs:
           $versionOutput = & $compiler /VERSION 2>&1
           $versionExitCode = $LASTEXITCODE
           $versionText = ($versionOutput -join "`n").Trim()
-          if ($versionExitCode -ne 0 -or $versionText -notmatch "3\\.13") {
+          if ($versionExitCode -ne 0 -or $versionText -notmatch '3[.]13') {
             throw "Expected NSIS 3.13; compiler reported '$versionText' (exit $versionExitCode)."
           }
           "NSIS_COMPILER=$compiler" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
