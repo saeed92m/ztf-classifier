@@ -9,7 +9,7 @@ import re
 import shutil
 import tempfile
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from threading import RLock
 from typing import Any
@@ -478,7 +478,7 @@ class WorkspaceStore:
             now = self._now()
             file_name = (
                 "dr24-raw-export-"
-                + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+                + datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
                 + "-"
                 + uuid4().hex[:8]
                 + ".json"
