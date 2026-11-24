@@ -13,7 +13,6 @@ on:
       - "tests/test_workspace_api.py"
       - "tests/integration/test_dr24_batch_workbench_ui.py"
       - "packaging/windows/**"
-      - ".github/workflows/windows-desktop-shell-spike.yml"
   workflow_dispatch:
     inputs:
       park_evaluation_license_approved:
