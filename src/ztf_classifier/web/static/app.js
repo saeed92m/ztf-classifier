@@ -470,7 +470,164 @@ const titles = {
   catalog: ["Catalog", "Catalog query and export module"],
   reports: ["Reports", "Scientific report generation module"],
   validation: ["Scientific Validation", "Release-blocking scientific evidence and provenance"],
+  "desktop-home": ["داشبورد", "نمای کلی نسخه آزمایشی پارک"],
+  sources: ["منبع داده", "منبع فعال و قرارداد دریافت داده"],
+  "desktop-provenance": ["منشأ داده", "فراداده و شواهد دریافت"],
+  "desktop-export": ["گزارش و خروجی", "خروجی خام JSON و اطلاعات بازتولید"],
+  "desktop-settings": ["تنظیمات", "تنظیمات محلی برنامه"],
+  "desktop-help": ["راهنما", "راهنمای استفاده و محدوده علمی نسخه"],
 };
+
+function renderDesktopHome() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">نسخه آزمایشی پارک فناوری</div>
+    <h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="metric-grid">
+      <article class="metric-card"><span>منبع داده</span><strong>ZTF DR24</strong><small>IRSA HATS · دریافت زنده</small></article>
+      <article class="metric-card"><span>حالت پردازش</span><strong>RAW + DESCRIPTIVE</strong><small>داده خام، QC تشخیصی و آمار توصیفی</small></article>
+      <article class="metric-card"><span>مدل طبقه‌بندی</span><strong>NOT RUN</strong><small>در این نسخه فعال نیست</small></article>
+      <article class="metric-card"><span>خروجی</span><strong>JSON + Provenance</strong><small>پس از دریافت موفق داده</small></article>
+    </section>
+    <section class="panel">
+      <div class="panel-title">شروع کار</div>
+      <p class="muted">یک تا ده شناسه ZTF DR24 وارد کنید. برنامه داده خام را از منبع اصلی دریافت می‌کند و منحنی نوری، QC تشخیصی، آمار توصیفی و منشأ داده را نمایش می‌دهد.</p>
+      <button class="primary-button" id="startDr24Explorer" type="button">شروع کاوش داده DR24</button>
+    </section>
+    <section class="panel">
+      <div class="panel-title">محدوده علمی این نسخه</div>
+      <p>این نسخه داده خام و آمار توصیفی را نمایش می‌دهد. طبقه‌بندی، احتمال کالیبره، Abstention، OOD و کشف ناهنجاری در این نسخه اجرا نمی‌شوند.</p>
+      <p class="muted">اگر دریافت داده ناقص یا ناموفق باشد، وضعیت واقعی نمایش داده می‌شود. برنامه از منبع جایگزین استفاده نمی‌کند.</p>
+    </section>`;
+  setViewHeading("desktop-home");
+  document.getElementById("startDr24Explorer").addEventListener("click", () => showView("dr24"));
+}
+
+function renderDesktopSources() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">DATA SOURCE</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="panel">
+      <div class="panel-title">IRSA ZTF DR24 Lightcurves HATS</div>
+      <div class="panel-subtitle">منبع فعال نسخه آزمایشی</div>
+      <dl class="metadata">
+        <div><dt>انتشار</dt><dd>DR24</dd></div>
+        <div><dt>شاخص جست‌وجو</dt><dd>objectid</dd></div>
+        <div><dt>فیلترها</dt><dd>g / r / i</dd></div>
+        <div><dt>حد درخواست</dt><dd>۱ تا ۱۰ OID</dd></div>
+        <div><dt>نیاز شبکه</dt><dd>اتصال اینترنت لازم است</dd></div>
+        <div><dt>منبع جایگزین</dt><dd>استفاده نمی‌شود</dd></div>
+      </dl>
+    </section>
+    <section class="panel">
+      <div class="panel-title">قرارداد داده</div>
+      <ul>
+        <li>زمان خام با ستون HMJD حفظ می‌شود؛ HMJD با MJD یکسان نیست.</li>
+        <li>قدر و خطای قدر خام ZTF حفظ می‌شوند.</li>
+        <li>catflags بدون ماسک‌کردن یا حذف ردیف‌ها نگهداری می‌شود.</li>
+        <li>هر OID یک رکورد مستقل است؛ گروه‌بندی منبع فیزیکی انجام نمی‌شود.</li>
+      </ul>
+    </section>`;
+  setViewHeading("sources");
+}
+
+function renderDesktopProvenance() {
+  const provenance = desktopDr24Payload?.provenance;
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">PROVENANCE</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="panel">
+      <div class="panel-title">وضعیت منشأ داده</div>
+      <p class="muted">${provenance ? "داده از منبع DR24 دریافت شده است." : "NOT RUN · هنوز دریافت داده‌ای انجام نشده است."}</p>
+      <pre class="report-content" id="desktopProvenanceJson">${provenance ? escapeHtml(JSON.stringify(provenance, null, 2)) : "NOT RUN"}</pre>
+    </section>`;
+  setViewHeading("desktop-provenance");
+}
+
+function downloadDesktopRawExport() {
+  if (!desktopRawExport) {
+    setConnectionState("No DR24 export available", false);
+    return;
+  }
+  const blob = new Blob([JSON.stringify(desktopRawExport, null, 2)], {
+    type: "application/json"
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  const ids = desktopRawExport.source_payload?.provenance?.requested_oids || [];
+  link.download = "ztf-dr24-batch-" + ids.join("_") + "-raw-export.json";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function renderDesktopExport() {
+  const available = Boolean(desktopRawExport);
+  const provenance = desktopDr24Payload?.provenance || {};
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">EXPORT</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="panel">
+      <div class="panel-title">خروجی خام JSON</div>
+      <p class="muted">${available ? "آماده دریافت" : "NOT RUN · ابتدا داده DR24 را دریافت کنید."}</p>
+      <dl class="metadata">
+        <div><dt>طرح‌واره خروجی</dt><dd>${available ? "ztf-dr24-raw-export-v0.3" : "—"}</dd></div>
+        <div><dt>OIDهای درخواست‌شده</dt><dd>${escapeHtml((provenance.requested_oids || []).join(", ") || "—")}</dd></div>
+        <div><dt>OIDهای دریافت‌شده</dt><dd>${escapeHtml((provenance.returned_oids || []).join(", ") || "—")}</dd></div>
+        <div><dt>OIDهای مفقود</dt><dd>${escapeHtml((provenance.missing_oids || []).join(", ") || "—")}</dd></div>
+      </dl>
+      <button class="primary-button" id="desktopDownloadJson" type="button" ${available ? "" : "disabled"}>دریافت فایل JSON</button>
+    </section>`;
+  setViewHeading("desktop-export");
+  const button = document.getElementById("desktopDownloadJson");
+  button.addEventListener("click", downloadDesktopRawExport);
+}
+
+async function renderDesktopSettings() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">SETTINGS</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="panel">
+      <div class="panel-title">تنظیمات نمایش</div>
+      <p>برای تغییر پوسته، از دکمه تنظیمات در نوار بالای برنامه استفاده کنید.</p>
+      <p class="muted">تنظیمات و فایل‌های کاری در فضای کاربری Windows ذخیره می‌شوند. حذف برنامه، داده‌های کاربر را حذف نمی‌کند.</p>
+    </section>
+    <section class="panel">
+      <div class="panel-title">وضعیت اتصال</div>
+      <p id="desktopSettingsStatus" class="muted">در حال بررسی سرویس محلی…</p>
+    </section>`;
+  setViewHeading("desktop-settings");
+  const status = document.getElementById("desktopSettingsStatus");
+  try {
+    await fetchJson("/v1/settings");
+    status.textContent = "سرویس محلی در دسترس است.";
+  } catch {
+    status.textContent = "سرویس محلی در دسترس نیست.";
+  }
+}
+
+function renderDesktopHelp() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">HELP & ABOUT</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="panel">
+      <div class="panel-title">راهنمای سریع</div>
+      <ol>
+        <li>به بخش «کاوش DR24» بروید.</li>
+        <li>یک تا ده OID مثبت وارد کنید.</li>
+        <li>دریافت داده را اجرا کنید و وضعیت درخواست را بررسی کنید.</li>
+        <li>منحنی نوری، جدول ردیف‌های خام، QC و آمار توصیفی را بررسی کنید.</li>
+        <li>منشأ داده را بازبینی و فایل JSON را دریافت کنید.</li>
+      </ol>
+    </section>
+    <section class="panel">
+      <div class="panel-title">محدودیت‌ها</div>
+      <ul>
+        <li>دریافت زنده به اتصال اینترنت نیاز دارد.</li>
+        <li>QC این نسخه تشخیصی است و تأیید تولیدی ندارد.</li>
+        <li>آمار توصیفی، ویژگی مدل نیست.</li>
+        <li>طبقه‌بندی و کشف ناهنجاری در این نسخه اجرا نمی‌شوند.</li>
+        <li>OID شناسه کاتالوگی است و به‌تنهایی هویت یک منبع فیزیکی را ثابت نمی‌کند.</li>
+      </ul>
+    </section>`;
+  setViewHeading("desktop-help");
+}
 
 function setViewHeading(view) {
   const heading = document.getElementById("viewTitle");
