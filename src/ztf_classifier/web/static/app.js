@@ -199,8 +199,13 @@ async function persistPreferences(p) {
 }
 async function initializePreferences() {
   let preferences;
-  try { preferences = readPreferencesFromServer(await fetchJson("/v1/settings")); }
-  catch { preferences = localPreferences(); }
+  try {
+    preferences = readPreferencesFromServer(await fetchJson("/v1/settings"));
+    if (desktopMode) setConnectionState("API ready", true);
+  } catch {
+    preferences = localPreferences();
+    if (desktopMode) setConnectionState("Local settings unavailable", false);
+  }
   applyTheme(preferences);
   const themeButton = document.getElementById("themeButton");
   const popover = document.getElementById("themePopover");
@@ -221,7 +226,7 @@ void initializePreferences();
 function setConnectionState(label, ok) {
   const node = document.querySelector(".connection-state");
   if (!node) return;
-  node.innerHTML = '<span class="status-dot"></span>' + label;
+  node.innerHTML = '<span class="status-dot"></span>' + desktopTranslate(label);
   node.querySelector(".status-dot").style.background =
     ok === false ? "var(--color-warning)" : "var(--color-success)";
 }
@@ -470,8 +475,10 @@ const titles = {
 function setViewHeading(view) {
   const heading = document.getElementById("viewTitle");
   const subtitle = document.getElementById("viewSubtitle");
-  heading.textContent = view === "overview" ? (state.oid || "Select an object") : titles[view][0];
-  subtitle.textContent = titles[view][1];
+  heading.textContent = desktopTranslate(
+    view === "overview" ? (state.oid || "Select an object") : titles[view][0]
+  );
+  subtitle.textContent = desktopTranslate(titles[view][1]);
 }
 
 function bindOverviewActions() {
