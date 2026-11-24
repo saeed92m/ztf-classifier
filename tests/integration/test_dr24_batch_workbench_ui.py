@@ -133,6 +133,8 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert page.locator("#dr24Results svg circle").count() == 4
             assert page.locator("#dr24Results svg .dr24-error-bar").count() == 4
             assert page.locator("#dr24Results .report-content").count() == 2
+            assert page.get_by_text("Descriptive time-series summary").count() == 2
+            assert page.get_by_text("Median sampling interval (days)").count() == 2
             assert "DIAGNOSTIC_NOT_PRODUCTION_APPROVED" in page.locator(
                 "#dr24Results"
             ).inner_text()
