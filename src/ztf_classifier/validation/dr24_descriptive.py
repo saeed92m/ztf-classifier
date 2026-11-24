@@ -6,7 +6,6 @@ convert HMJD, apply a catflags mask, generate model features, or classify source
 from __future__ import annotations
 
 import math
-
 from collections.abc import Mapping, Sequence
 from itertools import pairwise
 from statistics import median
