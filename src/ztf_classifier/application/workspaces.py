@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import tempfile
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -240,8 +241,6 @@ class WorkspaceStore:
                 self._write_json_atomic(directory / "workspace.json", manifest)
                 self._save_active_directory(directory)
             except Exception:
-                import shutil
-
                 shutil.rmtree(directory, ignore_errors=True)
                 raise
             return self._summary(directory, manifest, active=True, status="ACTIVE")
@@ -270,7 +269,10 @@ class WorkspaceStore:
 
     def list(self) -> dict[str, Any]:
         with self._lock:
-            active_workspace = self.active()
+            try:
+                active_workspace = self.active()
+            except (WorkspaceError, WorkspaceNotFoundError):
+                active_workspace = None
             active_id = (
                 active_workspace["workspace_id"] if active_workspace else None
             )
