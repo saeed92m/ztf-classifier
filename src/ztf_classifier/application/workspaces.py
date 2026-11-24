@@ -9,7 +9,7 @@ import re
 import shutil
 import tempfile
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from threading import RLock
 from typing import Any
@@ -56,7 +56,7 @@ class WorkspaceStore:
     @staticmethod
     def _now() -> str:
         return (
-            datetime.now(timezone.utc)
+            datetime.now(UTC)
             .isoformat(timespec="seconds")
             .replace("+00:00", "Z")
         )
