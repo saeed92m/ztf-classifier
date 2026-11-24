@@ -10,7 +10,11 @@ from typing import Any
 
 from ztf_classifier.api.app import create_app
 
-from .runtime import LocalApiServer, build_desktop_settings, get_user_data_dir
+from ztf_classifier.desktop.runtime import (
+    LocalApiServer,
+    build_desktop_settings,
+    get_user_data_dir,
+)
 
 
 class DesktopBridge:
