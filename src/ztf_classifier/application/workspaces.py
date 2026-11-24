@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import datetime as dt
 import hashlib
 import json
 import os
 import re
 import shutil
 import tempfile
+import time
 from dataclasses import replace
 from pathlib import Path
 from threading import RLock
@@ -56,7 +56,7 @@ class WorkspaceStore:
     @staticmethod
     def _now() -> str:
         return (
-            dt.datetime.now(dt.UTC)
+            time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
             .isoformat(timespec="seconds")
             .replace("+00:00", "Z")
         )
@@ -478,7 +478,7 @@ class WorkspaceStore:
             now = self._now()
             file_name = (
                 "dr24-raw-export-"
-                + datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+                + time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
                 + "-"
                 + uuid4().hex[:8]
                 + ".json"
