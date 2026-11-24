@@ -36,7 +36,7 @@
     "trade_off": "A small pywebview shell reuses the current Workbench, but WebView2 availability, Windows packaging, native navigation controls and dependency locking remain open."
   },
   "validation": {
-    "status": "PENDING",
+    "status": "IN_PROGRESS",
     "scientific_gate_affected": false,
     "evidence": [
       "Added LocalApiServer with a pre-bound ephemeral socket, loopback restriction, /health readiness check and managed shutdown.",
@@ -44,23 +44,28 @@
       "Added an in-memory token bridge for the desktop Workbench.",
       "Added desktop-only Bearer headers to fetchJson and a DOM guard against external anchor navigation.",
       "Added a Windows desktop entry point and optional pywebview/PyInstaller extras.",
-      "Added tests for per-user data paths, token requirements, loopback binding, dynamic-port startup/shutdown and health timeout."
+      "Added tests for per-user data paths, token requirements, loopback binding, dynamic-port startup/shutdown and health timeout.",
+      "Exact-head Windows run 45471395313 on commit 395307f8e9856855641b71b2e322bb25f65bba28: runtime tests, JavaScript syntax, Ruff, PyInstaller one-folder build and frozen self-test passed. NSIS archive checksum passed, but installer setup failed because the archive contains two makensis.exe copies (root and Bin); no installer, install/uninstall smoke, or build manifest was produced.",
+      "Remediation commits: 61dfaaebd2ed307523a59c15fba731f567b719ea added archive discovery; 395307f8e9856855641b71b2e322bb25f65bba28 made the WebView2 prerequisite fail closed; dc1423f27ef90d32989e76a412a7373eb2a97f57 now prefers the canonical root compiler and verifies Include/Plugins/Stubs; 9534d26be18a470c0002ae1d60ef02f0ed40df8c labels the installer as a Park preview; e838cd0b3c867a248716a1da3433e5b63602e1e1 adds an explicit x64 Windows guard.",
+      "Exact-head rerun 45472658738 is in progress for commit e838cd0b3c867a248716a1da3433e5b63602e1e1. No pass is claimed until the Windows job completes."
     ],
-    "blocker": "Run exact-head CI and a Windows x64 package build. Verify the embedded navigation policy at the native WebView boundary and complete clean Windows acceptance."
+    "blocker": "The exact-head Windows rerun is in progress. Require NSIS 3.13 verification, installer build, silent install/uninstall, checksum and data-preservation evidence. A reviewed Windows dependency lock, clean-machine interactive UI launch, code-signing status and written Park evaluation terms remain open."
   },
   "failure_analysis": {
-    "status": "PARTIALLY_DIAGNOSED",
+    "status": "ROOT_CAUSE_IDENTIFIED_REMEDIATION_PENDING",
     "root_causes": [
       "The current API entry point hard-codes port 8000 and has no desktop process lifecycle.",
       "The browser Workbench did not authenticate API calls because browser mode did not require a token.",
-      "Some API data paths are relative to the current working directory."
+      "Some API data paths are relative to the current working directory.",
+      "The checksum-verified NSIS 3.13 archive contains both a canonical root makensis.exe and a Bin copy; requiring exactly one compiler was an incorrect archive-layout assumption."
     ],
     "unresolved": [
       "WebView2 and .NET runtime behavior are not tested on the actual Windows device.",
       "PyInstaller may need hidden imports and explicit inclusion of static and benchmark data.",
       "JavaScript navigation guards are not a substitute for a verified native WebView navigation boundary.",
       "A separate fully resolved Windows dependency lock, signed installer, upgrade/uninstall flow and clean-machine acceptance are not available.",
-      "Persian UX, target-user testing and written Park evaluation terms remain open."
+      "Persian UX, target-user testing and written Park evaluation terms remain open.",
+      "Canonical root compiler selection and the x64-only installer guard have not yet passed the current exact-head Windows rerun."
     ]
   },
   "knowledge_extraction": {
@@ -77,14 +82,18 @@
     "status": "BLOCKED",
     "open_blockers": [
       "Pass exact-head Linux tests and Ruff checks.",
-      "Build a Windows one-folder package and verify that static Workbench and benchmark configuration assets are included.",
       "Test missing WebView2 behavior and verify that no browser fallback occurs.",
       "Verify that all desktop /v1 requests use the in-memory Bearer token.",
       "Verify native navigation restrictions against external URLs and untrusted redirects.",
       "Test startup, shutdown, port collision, health timeout, network loss and process cleanup on Windows.",
       "Complete clean Windows 11 installation, live DR24 retrieval, JSON export, offline relaunch, upgrade and uninstall.",
       "Create a fully resolved Windows dependency lock and retain build hash and SBOM.",
-      "Obtain written Park evaluation/demo terms before external distribution."
+      "Obtain written Park evaluation/demo terms before external distribution.",
+      "Pass exact-head NSIS 3.13 compiler selection and installer compilation.",
+      "Pass silent installation and uninstallation; verify user projects, logs and exports are preserved.",
+      "Verify interactive native WebView2 launch and external-navigation restrictions on clean x64 Windows.",
+      "Create and use a reviewed, pinned Windows desktop dependency lock; record the lock and build manifest.",
+      "Obtain written Park evaluation terms before external distribution."
     ]
   },
   "decision": "REVISE",
