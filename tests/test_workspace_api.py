@@ -66,3 +66,78 @@ def test_workspace_api_rejects_invalid_names_and_unknown_ids(tmp_path: Path) -> 
     missing = client.post(f"/v1/workspaces/{'0' * 32}/open")
     assert missing.status_code == 404
     assert missing.json()["code"] == "workspace_not_found"
+
+
+def test_workspace_operation_and_export_are_persisted_with_hashes(
+    tmp_path: Path,
+) -> None:
+    client = _client(tmp_path)
+    created = client.post("/v1/workspaces", json={"name": "Park demo"})
+    assert created.status_code == 200
+
+    operation_id = "a" * 32
+    running = client.post(
+        "/v1/workspaces/operations",
+        json={
+            "operation_id": operation_id,
+            "operation_type": "DR24_BATCH_QUERY",
+            "source": "ztf_dr24_hats",
+            "status": "RUNNING",
+            "requested_oids": [123456],
+        },
+    )
+    assert running.status_code == 200
+    assert running.json()["status"] == "RUNNING"
+
+    completed = client.post(
+        "/v1/workspaces/operations",
+        json={
+            "operation_id": operation_id,
+            "operation_type": "DR24_BATCH_QUERY",
+            "source": "ztf_dr24_hats",
+            "status": "SUCCEEDED",
+            "requested_oids": [123456],
+            "returned_oids": [123456],
+            "missing_oids": [],
+            "payload_sha256_by_oid": {"123456": "a" * 64},
+        },
+    )
+    assert completed.status_code == 200
+    assert completed.json()["status"] == "SUCCEEDED"
+
+    export_payload = {
+        "export_schema_version": "ztf-dr24-raw-export-v0.3",
+        "source_payload": {
+            "provenance": {
+                "requested_oids": [123456],
+                "returned_oids": [123456],
+            }
+        },
+    }
+    saved = client.post("/v1/workspaces/exports", json=export_payload)
+    assert saved.status_code == 200
+    metadata = saved.json()
+    assert metadata["file_name"].startswith("dr24-raw-export-")
+    assert len(metadata["sha256"]) == 64
+    assert metadata["size_bytes"] > 0
+
+    active = client.get("/v1/workspaces/active").json()["workspace"]
+    assert active["last_operation"]["status"] == "SUCCEEDED"
+    assert active["last_operation"]["export_file"] == metadata["file_name"]
+    assert active["last_export"]["sha256"] == metadata["sha256"]
+    assert Path(metadata["path"]).is_file()
+
+
+def test_workspace_operation_requires_active_workspace(tmp_path: Path) -> None:
+    response = _client(tmp_path).post(
+        "/v1/workspaces/operations",
+        json={
+            "operation_id": "b" * 32,
+            "operation_type": "DR24_BATCH_QUERY",
+            "source": "ztf_dr24_hats",
+            "status": "RUNNING",
+            "requested_oids": [123456],
+        },
+    )
+    assert response.status_code == 409
+    assert response.json()["code"] == "workspace_not_found"
