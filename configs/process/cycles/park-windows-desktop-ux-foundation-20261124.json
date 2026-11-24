@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "park-windows-desktop-ux-foundation-20261124",
+  "objective": "Translate the owner-approved standalone Windows desktop decision and the submitted Park application requirements into a bounded first-release UX brief, proposed desktop-shell ADR, acceptance contract, and multidisciplinary review without changing executable behavior or scientific baselines.",
+  "previous_knowledge_consumed": [
+    "Park application form AP-02-140503 defines a six-month four-phase R&D plan; unimplemented and unvalidated items remain objectives, not verified capabilities.",
+    "Main revision e30cc80b7a03f0c03e5fccbf6e339f0eb629e54c contains a FastAPI application and static Workbench but no verified Windows desktop shell or installer.",
+    "The current API entrypoint binds to 127.0.0.1:8000; a desktop shell requires managed service lifecycle and collision-safe port allocation.",
+    "DR24 raw inspection is separate from ALeRCE-normalized observations. HMJD, raw photometry, catflags, OID and filter identity must remain explicit.",
+    "The frozen v0.2.0 model artifact and DR24 feature parity remain unauthenticated/unapproved for DR24 inference.",
+    "Issue #293 requires written evaluation/demo licensing before external binary distribution.",
+    "The owner selected standalone Windows desktop delivery and approved parallel UI/UX work on 2026-11-24."
+  ],
+  "baseline": {
+    "revision": "e30cc80b7a03f0c03e5fccbf6e339f0eb629e54c",
+    "description": "Documentation and architecture review against main. No code, data, model, feature schema, benchmark, release, or production configuration was changed."
+  },
+  "expected_improvement": [
+    "correctness",
+    "reproducibility",
+    "maintainability",
+    "user workflow clarity"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "reason": "This cycle defines requirements and acceptance gates. No desktop executable or feature behavior was implemented."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "No Windows package or target-device run exists yet. Required build and evidence manifests are specified for a later cycle."
+      },
+      "lifecycle_contract_coverage": {
+        "status": "NOT_MEASURED",
+        "reason": "The documents define the required gates, but no executable desktop lifecycle has been tested."
+      },
+      "knowledge_artifact_count": {
+        "status": "NOT_MEASURED",
+        "reason": "Documentation artifacts were added, but no quantitative baseline metric was defined."
+      }
+    },
+    "trade_off": "Reuse the existing Workbench and FastAPI application behind a provisional Windows shell candidate. Defer selecting a GUI framework and adding dependencies until a bounded Windows proof-of-concept measures lifecycle, security, compatibility, and resource use."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Reviewed the submitted Park acceptance workbook AP-02-140503 and aligned the first-preview scope with its four-phase, six-month development plan.",
+      "Inspected main revision e30cc80b7a03f0c03e5fccbf6e339f0eb629e54c, including pyproject.toml, API entrypoint, API settings, FastAPI static Workbench mounting, DR24 routes, and observation service.",
+      "Verified that the current API entrypoint uses 127.0.0.1:8000 and that the package metadata does not define a desktop shell or Windows installer.",
+      "Added a UX brief, a provisional desktop-shell ADR, a simulated 16-role review, and a separate acceptance contract in PR #309.",
+      "The unique acceptance contract from duplicate PR #308 was copied to the canonical PR #309 branch; PR #308 was closed as superseded without merging.",
+      "The role-based review is explicitly a simulated AI-assisted review, not independent human peer review.",
+      "The proposed pywebview/WebView2 approach remains provisional. No desktop dependency was added.",
+      "No executable code, frozen baseline artifact, production data, scientific acceptance threshold, or release was changed."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The existing application is currently a local API with a browser-served Workbench, not a standalone Windows program.",
+      "The API entrypoint uses a fixed port and does not yet provide desktop-shell process lifecycle management.",
+      "The package metadata and workflows do not yet build or test a standalone Windows installer."
+    ],
+    "unresolved": [
+      "The Windows shell framework has not passed a comparative proof-of-concept.",
+      "WebView2 runtime handling and clean-machine package behavior are not tested.",
+      "Local endpoint token/origin protections, navigation restrictions and port collision tests are not implemented.",
+      "Windows user-data paths, cache policy and installer upgrade/uninstall behavior are not tested.",
+      "A clean Windows 11 end-to-end DR24 workflow and user usability test remain unexecuted.",
+      "The written Park evaluation/demo license remains open.",
+      "Model artifact authentication, DR24 feature parity, AOIC identity and full Park cohort acceptance remain separate scientific blockers."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A standalone Windows preview is a scope change from the earlier browser-only demonstrator plan and must have its own explicit acceptance contract.",
+      "The first useful user journey is DR24 retrieval, source-native inspection, diagnostic QC, descriptive summary, provenance and JSON export.",
+      "A browser UI displayed inside a desktop shell is not proof of a packaged, self-contained Windows application.",
+      "A successful Linux CI or browser contract test does not prove installation or operation on clean Windows.",
+      "The current fixed port and relative default data paths require explicit desktop runtime design.",
+      "The first preview and the full six-month Park MVP require separate readiness decisions.",
+      "Classification and discovery claims must remain blocked until model, feature, identity and validation gates pass."
+    ]
+  },
+  "regression": {
+    "status": "BLOCKED",
+    "open_blockers": [
+      "Run a bounded Windows shell comparison and select the framework only after the proof-of-concept.",
+      "Implement and test managed local API startup, readiness, ephemeral port selection, loopback-only binding, request protection and shutdown.",
+      "Implement per-user workspace/cache/log paths and verify no protected installation-directory writes.",
+      "Build a Windows x64 package and test install, launch, live retrieval, export, upgrade and uninstall on a clean Windows 11 device.",
+      "Complete Persian-first task-based usability testing.",
+      "Obtain written limited Park evaluation/demo terms and review third-party component licenses.",
+      "Keep original v0.2.0 model, DR24 feature parity, AOIC and CPVS validation gates separate and unchanged."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "PR #309 is the canonical documentation track for Windows desktop UX and architecture.",
+    "PR #308 is superseded and closed; its unique acceptance contract is retained in PR #309.",
+    "No desktop framework or new dependency is approved until the bounded technical spike passes.",
+    "The first Windows preview is limited to real DR24 exploration and descriptive analysis unless further scientific gates pass.",
+    "Preserve v0.2.0 and keep CPVS discrepancy separate.",
+    "No external installer release before clean Windows acceptance and written legal approval."
+  ]
+}
