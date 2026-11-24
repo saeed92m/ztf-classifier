@@ -38,20 +38,17 @@
   ],
   "measurement": {
     "metrics": {
-      "deterministic_unit_cases": {
-        "before": 0,
-        "after": 4,
-        "status": "MEASURED"
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "reason": "The descriptive summary function and integration are implemented, but correctness is not accepted until exact-head tests pass."
       },
-      "raw_epoch_mutation": {
-        "before": "NOT_TESTED",
-        "after": "NO_MUTATION_ASSERTED",
-        "status": "TEST_ADDED"
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "No exact-head live DR24 replay or local Workbench run has been completed."
       },
       "scientific_validity": {
-        "before": "NOT_MEASURED",
-        "after": "NOT_MEASURED",
-        "status": "NOT_MEASURED"
+        "status": "NOT_MEASURED",
+        "reason": "This descriptive-only change does not evaluate physical identity, variability features or classifier validity."
       }
     },
     "trade_off": "This is descriptive analysis only. It does not establish source identity, astrophysical variability, periodicity, feature parity, classifier accuracy, calibration, OOD, or anomaly detection."
@@ -64,7 +61,7 @@
       "CI has not yet run on this branch.",
       "No live DR24 query or local Workbench execution was performed by this change."
     ],
-    "blocker": "Run current-head CI and inspect the Workbench browser test. Then run the pinned live DR24 Workbench procedure on the actual demonstration device."
+    "blocker": "The exact-head CI and the pinned live Workbench execution have not yet passed."
   },
   "failure_analysis": {
     "status": "SUPPORTED",
@@ -94,7 +91,7 @@
       "Repeat the pinned live Workbench run on the exact candidate commit."
     ]
   },
-  "decision": "REVIEW_REQUIRED",
+  "decision": "REVISE",
   "knowledge_carried_forward": [
     "DR24 descriptive summaries use schema ztf-dr24-descriptive-summary-v1 and status DESCRIPTIVE_NOT_CLASSIFICATION.",
     "Every summary is per OID; grouping_applied=false.",
