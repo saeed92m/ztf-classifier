@@ -2,6 +2,15 @@
 const STORAGE_KEY = "ztf-workbench-appearance";
 const defaults = { theme: "auto", dayStart: "06:00", nightStart: "18:00" };
 const params = new URLSearchParams(window.location.search);
+const desktopToken = new URLSearchParams(window.location.hash.slice(1)).get("desktop-token") || "";
+if (desktopToken) {
+  window.history.replaceState(null, "", window.location.pathname + window.location.search);
+}
+function apiHeaders(headers = {}) {
+  const result = { ...headers };
+  if (desktopToken) result.Authorization = "Bearer " + desktopToken;
+  return result;
+}
 const state = {
   oid: params.get("oid") || "",
   survey: params.get("survey") || "ztf",
@@ -81,10 +90,12 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 async function fetchJson(url, options) {
-  const response = await fetch(url, {
-    headers: { Accept: "application/json", ...((options && options.headers) || {}) },
-    ...(options || {}),
+  const requestOptions = { ...(options || {}) };
+  requestOptions.headers = apiHeaders({
+    Accept: "application/json",
+    ...((options && options.headers) || {}),
   });
+  const response = await fetch(url, requestOptions);
   if (!response.ok) { const error = new Error("HTTP " + response.status); error.status = response.status; throw error; }
   return response.json();
 }
@@ -283,7 +294,7 @@ async function exportCurrentReport() {
   try {
     const response = await fetch(
       "/v1/results/" + encodeURIComponent(state.result.result_id) + "/report",
-      { headers: { Accept: "text/markdown" } },
+      { headers: apiHeaders({ Accept: "text/markdown" }) },
     );
     if (!response.ok) throw new Error("HTTP " + response.status);
     const blob = await response.blob();
@@ -392,7 +403,10 @@ async function loadReportView() {
     return;
   }
   try {
-    const response = await fetch("/v1/results/" + encodeURIComponent(state.result.result_id) + "/report");
+    const response = await fetch(
+      "/v1/results/" + encodeURIComponent(state.result.result_id) + "/report",
+      { headers: apiHeaders() },
+    );
     if (!response.ok) throw new Error("HTTP " + response.status);
     const markdown = await response.text();
     document.getElementById("reportContent").textContent = markdown;
