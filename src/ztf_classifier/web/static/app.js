@@ -646,23 +646,40 @@ function renderDesktopProvenance() {
   setViewHeading("desktop-provenance");
 }
 
-function downloadDesktopRawExport() {
+async function downloadDesktopRawExport() {
   if (!desktopRawExport) {
     setConnectionState("No DR24 export available", false);
     return;
   }
-  const blob = new Blob([JSON.stringify(desktopRawExport, null, 2)], {
-    type: "application/json"
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  const ids = desktopRawExport.source_payload?.provenance?.requested_oids || [];
-  link.download = "ztf-dr24-batch-" + ids.join("_") + "-raw-export.json";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const button = document.getElementById("desktopDownloadJson") ||
+    document.getElementById("dr24ExportButton");
+  if (button) button.disabled = true;
+  try {
+    const metadata = await fetchJson("/v1/workspaces/exports", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(desktopRawExport)
+    });
+    const blob = new Blob([JSON.stringify(desktopRawExport, null, 2)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const ids = desktopRawExport.source_payload?.provenance?.requested_oids || [];
+    link.download = "ztf-dr24-batch-" + ids.join("_") + "-raw-export.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setConnectionState("Export saved to active workspace · SHA-256 " + metadata.sha256.slice(0, 12));
+  } catch (error) {
+    setConnectionState("Workspace export failed (" + (error.status || "storage") + ")", false);
+    const status = document.getElementById("dr24Status");
+    if (status) status.textContent = "ذخیره خروجی در پروژه فعال ناموفق بود. فایل دانلود نشد.";
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 function renderDesktopExport() {
@@ -1127,10 +1144,27 @@ async function loadDR24Explorer() {
       return;
     }
     loadButton.disabled = true;
-    document.getElementById("dr24Status").textContent =
-      desktopTranslate("Querying indexed DR24 source for ") + objectids.length +
-      desktopTranslate(" OID(s)…");
+    let operationId = null;
     try {
+      const activeWorkspace = await fetchJson("/v1/workspaces/active");
+      if (!activeWorkspace.workspace) {
+        throw new Error("ابتدا یک پروژه ایجاد یا باز کنید.");
+      }
+      operationId = crypto.randomUUID().replace(/-/g, "");
+      await fetchJson("/v1/workspaces/operations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          operation_id: operationId,
+          operation_type: "DR24_BATCH_QUERY",
+          source: "ztf_dr24_hats",
+          status: "RUNNING",
+          requested_oids: objectids
+        })
+      });
+      document.getElementById("dr24Status").textContent =
+        desktopTranslate("Querying indexed DR24 source for ") + objectids.length +
+        desktopTranslate(" OID(s)…");
       const payload = await fetchJson("/v1/dr24/lightcurves", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1145,6 +1179,20 @@ async function loadDR24Explorer() {
         [String(item.objectid), item]
       ));
       const provenance = payload.provenance || {};
+      await fetchJson("/v1/workspaces/operations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          operation_id: operationId,
+          operation_type: "DR24_BATCH_QUERY",
+          source: "ztf_dr24_hats",
+          status: "SUCCEEDED",
+          requested_oids: objectids,
+          returned_oids: provenance.returned_oids || [],
+          missing_oids: provenance.missing_oids || [],
+          payload_sha256_by_oid: provenance.payload_sha256 || {}
+        })
+      });
       document.getElementById("dr24Provenance").textContent =
         JSON.stringify(provenance, null, 2);
       const rendered = records.map(record =>
@@ -1175,6 +1223,28 @@ async function loadDR24Explorer() {
       exportButton.disabled = false;
       setConnectionState("DR24 raw data loaded");
     } catch (error) {
+      if (operationId) {
+        try {
+          await fetchJson("/v1/workspaces/operations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              operation_id: operationId,
+              operation_type: "DR24_BATCH_QUERY",
+              source: "ztf_dr24_hats",
+              status: "FAILED",
+              requested_oids: objectids,
+              returned_oids: [],
+              missing_oids: objectids,
+              payload_sha256_by_oid: {},
+              error_code: "dr24_acquisition_failed",
+              error_message: "DR24 acquisition failed. No alternate source was used."
+            })
+          });
+        } catch {
+          // Preserve the original acquisition error; the workspace status remains visible.
+        }
+      }
       document.getElementById("dr24Results").innerHTML =
         '<section class="panel muted">DR24 acquisition failed. No fallback source was used.</section>';
       document.getElementById("dr24Provenance").textContent =
