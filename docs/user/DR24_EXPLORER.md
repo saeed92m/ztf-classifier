@@ -105,3 +105,28 @@ This result verifies raw retrieval and display. It does not satisfy the 5–10 o
 The Explorer accepts 1–10 unique positive DR24 OIDs in one request. Separate OID records remain separate. The interface calls `POST /v1/dr24/lightcurves`, displays each returned record, and reports missing OIDs from provenance. It does not infer astrophysical identity across OIDs.
 
 The export contains the raw source payload and the separate server-side diagnostic QC assessments. The QC policy is `DIAGNOSTIC_NOT_PRODUCTION_APPROVED`; no epoch is removed or modified.
+
+
+## Descriptive time-series summary — v1
+
+Each returned OID now has a separate descriptive summary under
+`descriptive_summaries.summaries` in the API response and JSON export.
+
+The summary reports:
+- raw epoch count and finite HMJD/magnitude pair count;
+- HMJD minimum, maximum, span, unique-time count and duplicate-time count;
+- median interval between unique HMJD values;
+- minimum, median, maximum, and 5th/95th percentile native magnitudes;
+- median finite, non-negative `magerr`;
+- invalid/missing time-magnitude pair and uncertainty counts.
+
+The summary uses every finite HMJD/magnitude pair, regardless of `catflags`.
+It does not apply a quality mask. Uncertainty statistics are calculated separately.
+HMJD and native DR24 photometry are not converted. OIDs remain separate.
+
+Schema: `ztf-dr24-descriptive-summary-v1`  
+Status: `DESCRIPTIVE_NOT_CLASSIFICATION`
+
+These statistics are descriptive. They are not the frozen 42 model features,
+a validated variability classifier, calibrated probabilities, OOD, or anomaly
+detection. The raw epochs and existing diagnostic QC remain available.
