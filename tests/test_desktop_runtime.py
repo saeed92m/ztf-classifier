@@ -152,7 +152,6 @@ def test_local_api_surfaces_unexpected_worker_exception(
     assert not runtime.is_running
 
 
-
 def test_trusted_local_url_requires_exact_loopback_origin() -> None:
     base_url = "http://127.0.0.1:43127"
 
@@ -218,7 +217,9 @@ def test_native_navigation_guard_blocks_external_navigation() -> None:
     core.FrameNavigationStarting.fire(core, frame)
     assert frame.Cancel is True
 
-    external_scheme = type("Args", (), {"Uri": "mailto:test@example.com", "Cancel": False})()
+    external_scheme = type(
+        "Args", (), {"Uri": "mailto:test@example.com", "Cancel": False}
+    )()
     core.LaunchingExternalUriScheme.fire(core, external_scheme)
     assert external_scheme.Cancel is True
     assert len(window._ztf_navigation_handlers) == 3
