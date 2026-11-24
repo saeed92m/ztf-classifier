@@ -10,7 +10,7 @@ Production model: baseline_v0.2
 ## Current state
 v1.0.1 is published and immutable. v1.0.0 remains immutable. Scientific Validation, CI, CodeQL, release asset verification, and release publication gates passed for v1.0.1.
 
-The project is now in Platform Expansion: documentation alignment, cross-platform desktop UX, user-facing workflows, independent scientific benchmarking, and controlled discovery-platform expansion.
+Platform expansion is paused under the 2026-11-24 scope freeze. Only work required for the Park Windows test pre-release is active.
 
 ## Product identity
 The canonical product is an Astronomical Data Analysis & Discovery Platform, not merely a classifier.
@@ -21,7 +21,7 @@ source data → ingestion → normalization/QC → scientific feature/context la
 ## Immutable baseline
 v0.2.0 remains immutable: 150 ZTF objects, 15 ALeRCE benchmark classes, 42 frozen features, XGBoost baseline_v0.2, historical cutoff 59447.224132.
 
-## Scientific boundary
+## Historical scientific boundary — CPVS inactive during Park delivery freeze
 CPVS parent: 781,602 rows. Published membership: 730,184 objects. Prior candidate and membership reports are historical diagnostics only. Source-schema review found the audit converted published ZTF names to the parent table's physical row ordinal instead of Table2's documented `Seq` value. The official CPVS ReadMe specifies Table2 `Seq` in bytes 24–29 and the lightcurve attachment's `Seq` as its running SourceID; Table2 has 781,602 rows but Seq values span 1..781,604. Therefore, the comparison in run #38095650470 (725,101 intersection, 16,686 candidate-only, 5,083 published-only) is invalid and superseded. The Seq-based heavy run [#38121913146](https://github.com/saeed92m/ztf-classifier/actions/runs/38121913146) now reports 741,786 candidates, 730,184 intersection, 11,602 candidate-only, 0 published-only, 0 duplicate published names, and 0 unmapped names. Exact reconstruction remains UNRESOLVED because the candidate set still contains 11,602 extras. Do not tune thresholds or flag policy to force cardinality equality. Source: https://cdsarc.cds.unistra.fr/viz-bin/ReadMe/J/ApJS/249/18?format=html&tex=true
 
 ## Diagnostic semantics
@@ -51,7 +51,7 @@ New product requirements are now canonical:
 
 These additions are layered around the immutable v0.2.0 scientific baseline and must not weaken scientific validation or provenance contracts.
 
-## Next work
+## Deferred long-term backlog — inactive until Park delivery or written owner approval
 1. Complete documentation alignment for v1.0.1 and the platform-expansion requirements.
 2. Establish the desktop Application/Core API boundary and cross-platform packaging architecture.
 3. Implement the user-facing Data Manager and Object/Source Explorer.
@@ -71,7 +71,7 @@ Current status: v1.0.1 Released / Platform Expansion Active.
 
 ## Current scientific status — 2026-10-11
 
-### CPVS exact reconstruction: unresolved
+### Historical CPVS record — INACTIVE UNTIL PARK DELIVERY
 - Issue [#170](https://github.com/saeed92m/ztf-classifier/issues/170) remains open.
 - PR [#171](https://github.com/saeed92m/ztf-classifier/pull/171) ensures missing or failed membership-audit evidence cannot default to PASS.
 - PR [#173](https://github.com/saeed92m/ztf-classifier/pull/173) corrected a genuine derivation defect but did not establish exact membership.
