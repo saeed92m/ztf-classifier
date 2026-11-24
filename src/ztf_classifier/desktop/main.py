@@ -249,6 +249,7 @@ def _run_self_test() -> None:
     if error:
         raise SystemExit(1)
 
+
 def main() -> None:
     """Start the private API, then open the standalone Windows window."""
     if os.name != "nt":
