@@ -128,7 +128,9 @@ def test_workspace_operation_and_export_are_persisted_with_hashes(
     assert restored_export.json() == export_payload
 
     restarted_client = _client(tmp_path)
-    active_after_restart = restarted_client.get("/v1/workspaces/active").json()["workspace"]
+    active_after_restart = restarted_client.get("/v1/workspaces/active").json()[
+        "workspace"
+    ]
     assert active_after_restart["last_operation"]["status"] == "SUCCEEDED"
     assert active_after_restart["last_export"]["sha256"] == metadata["sha256"]
 
