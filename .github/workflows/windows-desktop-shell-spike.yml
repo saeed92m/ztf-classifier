@@ -3,6 +3,7 @@ name: Windows Desktop Preview Build
 on:
   pull_request:
     paths:
+      - ".github/workflows/windows-desktop-shell-spike.yml"
       - "pyproject.toml"
       - "src/ztf_classifier/desktop/**"
       - "src/ztf_classifier/application/**"
