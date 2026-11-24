@@ -93,9 +93,13 @@ def _install_navigation_guard(window: Any, base_url: str) -> None:
     def block_external_uri_scheme(sender: Any, args: Any) -> None:
         args.Cancel = True
 
+    def block_new_window(sender: Any, args: Any) -> None:
+        args.Handled = True
+
     handlers: list[Callable[..., None]] = [
         block_untrusted_navigation,
         block_external_uri_scheme,
+        block_new_window,
     ]
 
     def attach_core_handlers(core: Any) -> None:
@@ -103,6 +107,7 @@ def _install_navigation_guard(window: Any, base_url: str) -> None:
             raise RuntimeError("The WebView2 core is not initialized.")
         core.FrameNavigationStarting += block_untrusted_navigation
         core.LaunchingExternalUriScheme += block_external_uri_scheme
+        core.NewWindowRequested += block_new_window
 
     def on_core_initialized(sender: Any, args: Any) -> None:
         if args.IsSuccess:
@@ -179,17 +184,24 @@ def _run_self_test() -> None:
             raise RuntimeError("The packaged benchmark registry is missing.")
         checks["benchmark_registry"] = "PASS"
 
-        runtime = LocalApiServer(create_app(settings=settings))
+        runtime = LocalApiServer(create_app(settings=settings, docs_enabled=False))
         base_url = runtime.start()
         checks["local_api_health"] = "PASS"
 
-        for path in ("/workbench/", "/workbench/app.js", "/workbench/styles.css"):
+        for path in (
+            "/workbench/",
+            "/workbench/app.js",
+            "/workbench/desktop-bootstrap.js",
+            "/workbench/styles.css",
+        ):
             with urlopen(f"{base_url}{path}", timeout=5) as response:
                 if response.status != 200:
                     raise RuntimeError(f"Unexpected HTTP status for {path}.")
                 body = response.read()
                 if path == "/workbench/" and (
-                    b"DR24 Explorer" not in body or b"desktopPreview" not in body
+                    b"DR24 Explorer" not in body
+                    or b"desktop-bootstrap.js" not in body
+                    or b"Content-Security-Policy" not in body
                 ):
                     raise RuntimeError(
                         "The packaged desktop Workbench HTML is incomplete."
@@ -206,6 +218,15 @@ def _run_self_test() -> None:
                         "The packaged desktop Workbench styles are incomplete."
                     )
             checks[f"static:{path}"] = "PASS"
+
+        for path in ("/docs", "/redoc", "/openapi.json"):
+            try:
+                with urlopen(f"{base_url}{path}", timeout=5):
+                    raise RuntimeError(f"Desktop API documentation remained enabled: {path}")
+            except HTTPError as exc:
+                if exc.code != 404:
+                    raise
+            checks[f"api_docs_disabled:{path}"] = "PASS"
 
         try:
             with urlopen(f"{base_url}/v1/settings", timeout=5):
@@ -264,7 +285,7 @@ def main() -> None:
         token = secrets.token_urlsafe(32)
         user_data = get_user_data_dir()
         settings = build_desktop_settings(token, data_dir=user_data)
-        app = create_app(settings=settings)
+        app = create_app(settings=settings, docs_enabled=False)
         runtime = LocalApiServer(app)
         base_url = runtime.start()
 
