@@ -38,7 +38,7 @@
         "status": "NOT_MEASURED"
       },
       "regression_protection_count": {
-        "before": null,
+        "before": 0,
         "after": 4,
         "status": "MEASURED"
       }
