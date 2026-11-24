@@ -26,9 +26,18 @@ class DesktopRuntimeError(RuntimeError):
     """Raised when the managed local API cannot start or stop safely."""
 
 
-def get_user_data_dir(app_name: str = "ZTFClassifier") -> Path:
-    """Return the per-user application data directory."""
-    if os.name == "nt":
+def get_user_data_dir(
+    app_name: str = "ZTFClassifier",
+    *,
+    platform_name: str | None = None,
+) -> Path:
+    """Return the per-user application data directory.
+
+    ``platform_name`` is injectable for tests. Do not patch ``os.name``:
+    pathlib reads that process-global attribute when it creates Path objects.
+    """
+    current_platform = platform_name or os.name
+    if current_platform == "nt":
         root = os.environ.get("LOCALAPPDATA") or (Path.home() / "AppData" / "Local")
         return Path(root).expanduser() / app_name
 
