@@ -151,7 +151,7 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 page.locator("#dr24ExportButton").click()
             download = download_info.value
             exported = json.loads(Path(download.path()).read_text(encoding="utf-8"))
-            assert exported["export_schema_version"] == "ztf-dr24-raw-export-v0.2"
+            assert exported["export_schema_version"] == "ztf-dr24-raw-export-v0.3"
             assert [
                 record["objectid"]
                 for record in exported["source_payload"]["records"]
