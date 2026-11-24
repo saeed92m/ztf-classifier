@@ -119,14 +119,30 @@ jobs:
           New-Item -ItemType Directory -Path $nsisRoot -Force | Out-Null
           Expand-Archive -Path $nsisArchive -DestinationPath $nsisRoot -Force
           $compilerCandidates = @(Get-ChildItem -LiteralPath $nsisRoot -Filter "makensis.exe" -File -Recurse)
-          if ($compilerCandidates.Count -ne 1) {
-            throw "Expected exactly one makensis.exe in the checksum-verified NSIS archive; found $($compilerCandidates.Count)."
+          if ($compilerCandidates.Count -lt 1) {
+            throw "No makensis.exe was found in the checksum-verified NSIS archive."
           }
-          $compiler = $compilerCandidates[0].FullName
-          $nsisHome = Split-Path -Parent (Split-Path -Parent $compiler)
+          # NSIS ships both the root compiler and a Bin copy. Prefer the
+          # canonical root compiler because its sibling Include/Plugins/Stubs
+          # directories define the NSIS installation root.
+          $rankedCandidates = @($compilerCandidates | Sort-Object { $_.FullName.Length })
+          $shortestPathLength = $rankedCandidates[0].FullName.Length
+          $preferredCandidates = @($rankedCandidates | Where-Object { $_.FullName.Length -eq $shortestPathLength })
+          if ($preferredCandidates.Count -ne 1) {
+            throw "Could not identify one canonical root makensis.exe in the NSIS archive."
+          }
+          $compiler = $preferredCandidates[0].FullName
+          $nsisHome = Split-Path -Parent $compiler
           if (-not (Test-Path (Join-Path $nsisHome "Include\\MUI2.nsh"))) {
-            throw "NSIS include directory is missing from the extracted archive."
+            $nsisHome = Split-Path -Parent $nsisHome
           }
+          foreach ($requiredPath in @("Include\\MUI2.nsh", "Plugins", "Stubs")) {
+            if (-not (Test-Path (Join-Path $nsisHome $requiredPath))) {
+              throw "NSIS installation is incomplete: missing $requiredPath under $nsisHome."
+            }
+          }
+          Write-Host "Using NSIS compiler: $compiler"
+          Write-Host "NSIS home: $nsisHome"
           $versionOutput = & $compiler /VERSION 2>&1
           $versionExitCode = $LASTEXITCODE
           $versionText = ($versionOutput -join "`n").Trim()
