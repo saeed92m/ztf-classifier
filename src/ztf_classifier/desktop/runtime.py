@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import socket
+import sys
 import threading
 import time
 from dataclasses import replace
@@ -39,6 +40,14 @@ def get_user_data_dir(app_name: str = "ZTFClassifier") -> Path:
     return Path.home() / ".local" / "share" / app_name
 
 
+def get_application_resource_dir() -> Path:
+    """Return the bundled resource root or the source checkout root."""
+    bundle_root = getattr(sys, "_MEIPASS", None)
+    if bundle_root:
+        return Path(bundle_root).resolve()
+    return Path(__file__).resolve().parents[3]
+
+
 def build_desktop_settings(
     api_token: str,
     *,
@@ -60,13 +69,22 @@ def build_desktop_settings(
     for directory in directories.values():
         directory.mkdir(parents=True, exist_ok=True)
 
+    base = base_settings or ApiSettings.from_environment()
+    benchmark_registry = get_application_resource_dir() / "configs" / "benchmarks"
+    registry_dir = (
+        benchmark_registry
+        if benchmark_registry.is_dir()
+        else base.scientific_registry_dir
+    )
+
     return replace(
-        base_settings or ApiSettings.from_environment(),
+        base,
         observation_cache_dir=directories["cache"],
         job_store_path=directories["jobs"] / "jobs.sqlite3",
         result_store_path=directories["results"] / "results.sqlite3",
         application_state_path=directories["state"] / "settings.json",
         api_key=api_token,
+        scientific_registry_dir=registry_dir,
         scientific_evidence_dir=directories["reports"],
     )
 
