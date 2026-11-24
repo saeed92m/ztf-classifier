@@ -49,9 +49,11 @@
       "Remediation commits: 61dfaaebd2ed307523a59c15fba731f567b719ea added archive discovery; 395307f8e9856855641b71b2e322bb25f65bba28 made the WebView2 prerequisite fail closed; dc1423f27ef90d32989e76a412a7373eb2a97f57 now prefers the canonical root compiler and verifies Include/Plugins/Stubs; 9534d26be18a470c0002ae1d60ef02f0ed40df8c labels the installer as a Park preview; e838cd0b3c867a248716a1da3433e5b63602e1e1 adds an explicit x64 Windows guard.",
       "Exact-head rerun 45472658738 is in progress for commit e838cd0b3c867a248716a1da3433e5b63602e1e1. No pass is claimed until the Windows job completes.",
       "Exact-head Windows run 45473119460: the canonical root NSIS compiler was located and returned version 'v3.13' with exit code 0. The version assertion then failed because the PowerShell regex was over-escaped. NSIS script compilation and installer smoke tests did not run.",
-      "Commit 895cb816ec52aa99393ceba00006950444afe662 corrected the version match to '3[.]13'. A new exact-head run is required; no installer success is claimed."
+      "Commit 895cb816ec52aa99393ceba00006950444afe662 corrected the version match to '3[.]13'. A new exact-head run is required; no installer success is claimed.",
+      "Exact-head Windows run 45474362635: one-folder build and frozen self-test passed; the signed WebView2 Evergreen bootstrapper was staged and verified; NSIS 3.13 was found and version-checked. Installer compilation then failed because the script requested the nonexistent NSIS language file Persian.nlf. The official NSIS language file is Farsi.nlf (language ID 1065, codepage 1256, RTL).",
+      "Commit dbaf7fac79f5fd8ca90252088fbfdc1314bf5e2e changed the NSIS language identifier to Farsi and the language constant to LANG_FARSI. Exact-head installer compilation and install/uninstall tests remain pending."
     ],
-    "blocker": "The next exact-head Windows rerun must pass NSIS version verification, installer compilation, silent install/uninstall, checksum and data-preservation evidence. Windows dependency lock, interactive clean-machine UI launch and written Park evaluation terms remain open."
+    "blocker": "The Farsi language identifier correction must pass exact-head NSIS compilation, followed by silent install/uninstall, checksum and data-preservation tests. Windows dependency lock, interactive clean-machine UI launch and written Park evaluation terms remain open."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED_REMEDIATION_PENDING",
@@ -60,7 +62,8 @@
       "The browser Workbench did not authenticate API calls because browser mode did not require a token.",
       "Some API data paths are relative to the current working directory.",
       "The checksum-verified NSIS 3.13 archive contains both a canonical root makensis.exe and a Bin copy; requiring exactly one compiler was an incorrect archive-layout assumption.",
-      "The NSIS version assertion used an over-escaped PowerShell regex; the compiler correctly reported v3.13 with exit code 0, but the assertion did not match."
+      "The NSIS version assertion used an over-escaped PowerShell regex; the compiler correctly reported v3.13 with exit code 0, but the assertion did not match.",
+      "The installer requested MUI_LANGUAGE 'Persian' and LANG_PERSIAN, but NSIS 3.13 ships the language file as Farsi.nlf and defines LANG_FARSI. The mismatch prevented NSIS compilation."
     ],
     "unresolved": [
       "WebView2 and .NET runtime behavior are not tested on the actual Windows device.",
@@ -69,7 +72,8 @@
       "A separate fully resolved Windows dependency lock, signed installer, upgrade/uninstall flow and clean-machine acceptance are not available.",
       "Persian UX, target-user testing and written Park evaluation terms remain open.",
       "Canonical root compiler selection and the x64-only installer guard have not yet passed the current exact-head Windows rerun.",
-      "The corrected 3[.]13 version assertion and installer compile have not yet passed an exact-head Windows rerun."
+      "The corrected 3[.]13 version assertion and installer compile have not yet passed an exact-head Windows rerun.",
+      "The Farsi language identifier and constant correction have not yet passed an exact-head Windows rerun."
     ]
   },
   "knowledge_extraction": {
