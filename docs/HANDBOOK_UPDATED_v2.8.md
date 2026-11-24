@@ -1,5 +1,7 @@
 # ZTF Classifier — Project Continuity Handbook v2.8
 
+> **2026-11-24 BINDING SCOPE FREEZE:** Until the Park demonstrator is delivered, only work required for the Windows-installable Park test pre-release is active. The build must install, launch, run the required user workflow, export reproducible evidence, and pass clean-Windows tests before presentation. All unrelated workstreams are inactive. The earlier web-only delivery decision is superseded. See [the binding scope policy](acceptance/PARK_WINDOWS_PRERELEASE_SCOPE_FREEZE_2026-11-24.md) and [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158).
+
 Status date: 2026-10-11
 Software release: v1.0.1
 Scientific baseline: v0.2.0 (immutable)
