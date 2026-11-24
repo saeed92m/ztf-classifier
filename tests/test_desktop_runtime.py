@@ -14,6 +14,7 @@ from ztf_classifier.desktop.main import (
     _install_navigation_guard,
     _is_trusted_local_url,
 )
+from ztf_classifier.validation.runner import _peak_rss_mb
 from ztf_classifier.desktop.runtime import (
     DesktopRuntimeError,
     LocalApiServer,
@@ -137,6 +138,11 @@ def test_desktop_api_requires_session_bearer_token(tmp_path: Path) -> None:
     assert asyncio.run(
         get_status("/v1/settings", f"Bearer {token}")
     ) == 200
+
+
+
+def test_validation_runner_peak_memory_measurement_is_portable() -> None:
+    assert _peak_rss_mb() > 0.0
 
 
 def test_local_api_rejects_non_loopback_host() -> None:
