@@ -77,3 +77,8 @@ def test_observation_service_adds_separate_qc_without_mutating_raw_epochs(
     assert payload["qc_assessments"][0]["policy_status"] == (
         "DIAGNOSTIC_NOT_PRODUCTION_APPROVED"
     )
+    summary = payload["descriptive_summaries"]
+    assert summary["grouping_applied"] is False
+    assert summary["summaries"][0]["objectid"] == 123456
+    assert summary["summaries"][0]["summary"]["finite_hmjd_mag_pair_count"] == 2
+    assert summary["summaries"][0]["summary"]["catflags_used_for_selection"] is False
