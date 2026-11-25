@@ -237,6 +237,7 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
     installer = (
         Path(__file__).resolve().parents[1] / "packaging" / "windows" / "installer.nsi"
     ).read_text(encoding="utf-8")
+    assert '!cd "${__FILEDIR__}\\\\..\\\\.."' in installer
     assert '!insertmacro MUI_LANGUAGE "English"' in installer
     assert not any("\u0600" <= char <= "\u06ff" for char in installer)
 
