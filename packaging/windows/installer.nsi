@@ -5,7 +5,7 @@ Unicode true
 !include "x64.nsh"
 
 ; Resolve all build inputs and outputs from the repository root.
-!cd "..\\.."
+!cd "..\.."
 
 !define PRODUCT_NAME "ZTF Classifier"
 !define PRODUCT_VERSION "0.1.0-preview.1"
