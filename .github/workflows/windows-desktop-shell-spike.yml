@@ -14,6 +14,11 @@ on:
       - "tests/test_workspace_api.py"
       - "tests/integration/test_dr24_batch_workbench_ui.py"
       - "packaging/windows/**"
+      - "docs/desktop/**"
+      - "scripts/build_desktop_pdfs.py"
+  push:
+    tags:
+      - "desktop-v*"
   workflow_dispatch:
 
 permissions:
@@ -107,6 +112,17 @@ jobs:
           Copy-Item $selfTest "dist/desktop-self-test.json" -Force
           if ($report.status -ne "PASS") { throw "Frozen application self-test did not PASS. Process exit code: $($process.ExitCode). Detail: $($report.error)" }
           if ($process.ExitCode -ne 0) { throw "Frozen application self-test reported PASS but exited with code $($process.ExitCode)." }
+
+      - name: Build User Manual and Quick Start PDFs
+        shell: pwsh
+        run: |
+          python -m pip install reportlab==4.4.7
+          python scripts/build_desktop_pdfs.py dist
+          foreach ($pdf in @("dist/User_Manual.pdf", "dist/Quick_Start.pdf")) {
+            if (-not (Test-Path $pdf) -or (Get-Item $pdf).Length -lt 1000) {
+              throw "PDF build failed or produced an empty file: $pdf"
+            }
+          }
 
       - name: Stage signed WebView2 Evergreen bootstrapper for installer
         shell: pwsh
@@ -256,7 +272,7 @@ jobs:
           $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "dist/desktop-build-manifest.json"
 
       - name: Upload Windows preview installer and evidence
-        if: (github.event_name == 'pull_request' && startsWith(github.head_ref, 'feat/park-')) || github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'pull_request' && startsWith(github.head_ref, 'feat/park-')) || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/desktop-v'))
         uses: actions/upload-artifact@v6
         with:
           name: ztf-classifier-windows-preview-${{ github.sha }}
@@ -266,5 +282,68 @@ jobs:
             dist/desktop-build-manifest.json
             dist/desktop-windows-dependencies.txt
             dist/desktop-self-test.json
+            dist/User_Manual.pdf
+            dist/Quick_Start.pdf
           if-no-files-found: error
           retention-days: 14
+
+
+  publish-preview:
+    name: Publish GitHub Windows preview pre-release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/desktop-v')
+    needs: windows-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out tagged release notes
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Download Windows installer and evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: ztf-classifier-windows-preview-${{ github.sha }}
+          path: release-assets
+
+      - name: Verify release payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "desktop-v0.1.0-preview.1"
+          cd release-assets
+          sha256sum --check SHA256SUMS.txt
+          test -s ZTFClassifier-0.1.0-preview.1-Setup.exe
+          test -s User_Manual.pdf
+          test -s Quick_Start.pdf
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          manifest = json.loads(Path("desktop-build-manifest.json").read_text(encoding="utf-8-sig"))
+          if manifest.get("source_commit") != os.environ["GITHUB_SHA"]:
+              raise SystemExit("Build manifest source commit does not match the tagged commit.")
+          if manifest.get("signature_status") != "UNSIGNED_CHECKSUMMED":
+              raise SystemExit("Unexpected installer signature status.")
+          PY
+
+      - name: Create GitHub pre-release with installer and documentation
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "A release already exists for $GITHUB_REF_NAME. Refusing to overwrite it."
+            exit 1
+          fi
+          gh release create "$GITHUB_REF_NAME" \
+            "release-assets/ZTFClassifier-0.1.0-preview.1-Setup.exe" \
+            "release-assets/User_Manual.pdf" \
+            "release-assets/Quick_Start.pdf" \
+            "release-assets/SHA256SUMS.txt" \
+            "release-assets/desktop-build-manifest.json" \
+            "release-assets/desktop-windows-dependencies.txt" \
+            "release-assets/desktop-self-test.json" \
+            --title "ZTF Classifier Windows Preview 0.1.0-preview.1" \
+            --notes-file ".github/release-notes/desktop-v0.1.0-preview.1.md" \
+            --prerelease --verify-tag
