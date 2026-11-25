@@ -94,7 +94,7 @@
       "Implement and test managed local API startup, readiness, ephemeral port selection, loopback-only binding, request protection and shutdown.",
       "Implement per-user workspace/cache/log paths and verify no protected installation-directory writes.",
       "Build a Windows x64 package and test install, launch, live retrieval, export, upgrade and uninstall on a clean Windows 11 device.",
-      "Complete Persian-first task-based usability testing.",
+      "Complete English task-based usability testing for the Windows Laboratory Preview (Persian/RTL testing deferred to a later product release).",
       "Obtain written limited Park evaluation/demo terms and review third-party component licenses.",
       "Keep original v0.2.0 model, DR24 feature parity, AOIC and CPVS validation gates separate and unchanged."
     ]
@@ -107,6 +107,7 @@
     "The first Windows preview is limited to real DR24 exploration and descriptive analysis unless further scientific gates pass.",
     "Preserve v0.2.0 and keep CPVS discrepancy separate.",
     "No external installer release before clean Windows acceptance and written legal approval.",
-    "For the current Park delivery, implement only the Windows Laboratory Preview acceptance workflow and gates. Do not interpret the broader six-month dossier roadmap as work that must run in parallel."
+    "For the current Park delivery, implement only the Windows Laboratory Preview acceptance workflow and gates. Do not interpret the broader six-month dossier roadmap as work that must run in parallel.",
+    "English-only UI and English task-based usability are the acceptance requirements for the current Windows Laboratory Preview. Persian/RTL testing is deferred to a later product release."
   ]
 }
