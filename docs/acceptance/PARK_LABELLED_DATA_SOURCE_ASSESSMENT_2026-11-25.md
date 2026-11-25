@@ -8,7 +8,7 @@
 
 ## 1. Decision summary
 
-The ALeRCE 2020 labelled set is a strong primary label-manifest candidate. The paper reports 123,496 labelled sources across the 15-class taxonomy. This exceeds the technical plan's 100,000-source count before DR24 matching. It is not yet a 100,000-source DR24 cohort. The matched count and usable-light-curve count are unknown.
+The ALeRCE 2020 labelled set is a strong primary label-manifest candidate. The paper reports 123,496 labelled sources across the 15-class taxonomy. The technical project document requires at least 100,000 labelled light curves, not 100,000 label-source rows. These counts have different grains. The 123,496 source count does not establish that the target is met. The number of matched DR24 HATS light curves and the number that pass the approved quality and feature criteria are unknown.
 
 Use separate roles for each source:
 - Use ALeRCE 2020 as the frozen 15-class historical reference.
