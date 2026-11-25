@@ -519,8 +519,21 @@ class WorkspaceStore:
             active = self.active()
             if active is None:
                 raise WorkspaceNotFoundError("Create or open a workspace first.")
+            manifest = self._read_manifest(Path(active["directory"]))
+            last_export = manifest.get("last_export")
+            stored_name = (
+                last_export.get("file_name")
+                if isinstance(last_export, dict)
+                else None
+            )
+            if (
+                not isinstance(stored_name, str)
+                or not _EXPORT_NAME_RE.fullmatch(stored_name)
+                or file_name != stored_name
+            ):
+                raise WorkspaceNotFoundError("Workspace export was not found.")
             exports = (Path(active["directory"]) / "exports").resolve(strict=True)
-            candidate = (exports / file_name).resolve(strict=True)
+            candidate = (exports / stored_name).resolve(strict=True)
             if candidate.parent != exports or not candidate.is_file():
                 raise WorkspaceNotFoundError("Workspace export was not found.")
             return candidate
