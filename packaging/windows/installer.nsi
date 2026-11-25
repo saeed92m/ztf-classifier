@@ -27,17 +27,15 @@ VIAddVersionKey "Comments" "Experimental Park evaluation pre-release; not a scie
 
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_RUN "$INSTDIR\ZTFClassifier.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "اجرای ZTF Classifier"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch ZTF Classifier"
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
-!insertmacro MUI_LANGUAGE "Farsi"
 !insertmacro MUI_LANGUAGE "English"
 
-LangString WebView2InstallFailed ${LANG_FARSI} "نصب خودکار Microsoft Edge WebView2 Runtime موفق نبود (کد خروجی: $1). اتصال اینترنت را بررسی کنید و Runtime را از وب‌سایت رسمی Microsoft نصب کنید."
 LangString WebView2InstallFailed ${LANG_ENGLISH} "Automatic Microsoft Edge WebView2 Runtime installation failed (exit code: $1). Check the internet connection and install the Runtime from the official Microsoft website."
 
 ; WebView2 is mandatory. If it is absent, open Microsoft's official download page and abort.
