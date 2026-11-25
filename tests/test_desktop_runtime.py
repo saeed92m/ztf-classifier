@@ -235,10 +235,7 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
     assert "direction: rtl" not in css
 
     installer = (
-        Path(__file__).resolve().parents[1]
-        / "packaging"
-        / "windows"
-        / "installer.nsi"
+        Path(__file__).resolve().parents[1] / "packaging" / "windows" / "installer.nsi"
     ).read_text(encoding="utf-8")
     assert '!insertmacro MUI_LANGUAGE "English"' in installer
     assert not any("\u0600" <= char <= "\u06ff" for char in installer)
