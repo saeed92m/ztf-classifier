@@ -70,7 +70,8 @@ WebView2 Evergreen installation requires network access. Offline Runtime install
 | W21 | Cohort reconciliation | Compare requested, retrieved, missing, empty, partial and rejected records | Counts reconcile. No silent fallback or silent row removal occurs |
 | W22 | Label provenance | Inspect each label source and taxonomy mapping | Every label has a source, version and documented limitation |
 | W23 | Object identity | Compare OID and cross-filter records | OIDs remain separate unless approved identity evidence supports grouping |
-| W24 | DR24 contract | Test time, photometry, filters, quality flags and missing values | Native values and units are preserved. All transformations are versioned and tested |
+| W24 | DR24 contract | Test HATS time, photometry, filters, quality flags and missing values | Native values and units are preserved. All transformations are versioned and tested |
+| W37 | Zubercal cross-match | Query the supplementary DR20 catalogue for a HATS OID. Include zero, one and multiple-candidate cases | Every candidate is preserved with radius and ambiguity state. No candidate is selected or merged automatically |
 
 ## 6. Feature and model tests
 
@@ -137,7 +138,7 @@ Do not report NOT RUN or SKIPPED as PASS.
 
 ## 11. Final acceptance
 
-All applicable tests W01–W36 must pass or have a documented, approved NOT APPLICABLE state. No mandatory scientific gate may remain BLOCKED or NOT RUN.
+All applicable tests W01–W37 must pass or have a documented, approved NOT APPLICABLE state. No mandatory scientific gate may remain BLOCKED or NOT RUN.
 
 The full workflow must run on a clean Windows system. The report must include installation, launch, data retrieval, features, model output, uncertainty, abstention, anomaly analysis, explainability, validation, export and data preservation.
 
