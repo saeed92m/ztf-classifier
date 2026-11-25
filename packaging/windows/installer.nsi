@@ -61,7 +61,7 @@ Function .onInit
     DetailPrint "Installing Microsoft Edge WebView2 Runtime..."
     SetOutPath "$TEMP"
     ; Resolve the staged bootstrapper from the installer source directory.
-    File /oname=MicrosoftEdgeWebView2Setup.exe "${__FILEDIR__}\MicrosoftEdgeWebView2Setup.exe"
+    File /oname=MicrosoftEdgeWebView2Setup.exe "packaging\windows\MicrosoftEdgeWebView2Setup.exe"
     ExecWait '"$TEMP\MicrosoftEdgeWebView2Setup.exe" /silent /install' $1
     Delete "$TEMP\MicrosoftEdgeWebView2Setup.exe"
     ClearErrors
