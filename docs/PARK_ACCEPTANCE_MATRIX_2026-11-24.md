@@ -23,9 +23,16 @@ This matrix is based on the submitted Park acceptance worksheet and the final pr
 
 The worksheet requires a CPU-oriented, reproducible software product. It identifies XGBoost/LightGBM classification, probability calibration, explicit abstention, anomaly detection, explainability, independent and temporal validation, dashboard/API delivery, and an installable application as product goals.
 
-**Acceptance rule:** a capability that is not implemented and tested must remain a roadmap item. A successful build or a user-interface element is not evidence of scientific capability.
+**Acceptance rule:** a capability that is not implemented and tested must remain a roadmap item. A successful build or a user-interface element is not evidence of scientific capability. The 5–10 and 30–50 source-group runs are diagnostic/demo only; Park acceptance requires the complete frozen eligible cohort, with all batches reconciled.
 
 ## Current evidence
+
+### Windows CI update — 2026-11-25
+
+The predecessor PR #310 head `e188fd4eebaa0c9d0115ad8b2c86ca64e0be5216` passed Windows Desktop Preview Build run [#149](https://github.com/saeed92m/ztf-classifier/actions/runs/45628516183). The run passed runtime tests, JavaScript syntax, Ruff, PyInstaller, frozen-app self-test, WebView2 bootstrapper signature verification, NSIS compilation, silent installation, installed-app self-test, shortcut checks, uninstall, user-data preservation and build-manifest/SHA-256 generation.
+
+The artifact upload step was skipped by the license guard. No installer artifact was published. This evidence is for the predecessor head only. The clean mainline port must pass exact-head CI again. A clean install on the actual Park Windows device remains pending.
+
 
 | Requirement | Current state | Evidence and limit |
 |---|---|---|
@@ -41,10 +48,10 @@ The worksheet requires a CPU-oriented, reproducible software product. It identif
 | Explainability | NOT VERIFIED | A complete, reproducible SHAP explanation path for the Park application has not been accepted. |
 | Temporal and external validation | NOT VERIFIED | No final Park-population evaluation report was verified for this delivery branch. |
 | Desktop application | PARTIAL | A Windows pywebview shell, loopback API, in-memory bearer token, native navigation guard and per-user data paths are implemented. Windows acceptance is still running. |
-| Workspace lifecycle | IMPLEMENTED; CI PENDING | Create/open/list, operation logging, export persistence and export restoration APIs and UI are implemented. Exact-head tests are pending. |
+| Workspace lifecycle | IMPLEMENTED; PREDECESSOR CI PASSED; MAINLINE RETEST PENDING | Create/open/list, operation logging, export persistence and export restoration APIs and UI are implemented. The predecessor head passed its Windows tests; the clean mainline port requires exact-head retest. |
 | Reproducibility package | PARTIAL | Raw JSON export, source hashes and workspace metadata are supported. A full data/model/schema/split reproducibility bundle is not yet accepted. |
-| Park guided demonstration | NOT VERIFIED | A 30–50-object end-to-end demonstration has not been accepted. The current desktop workflow is bounded to 1–10 OIDs per acquisition. |
-| Windows installer | RETESTING / NOT ACCEPTED | An earlier exact-head run failed at NSIS compiler selection. The archive contains root and Bin compiler copies; the workflow now selects the canonical root compiler. The installer now checks x64 Windows and embeds a Microsoft-signed Evergreen WebView2 bootstrapper. Exact-head NSIS compile, silent install/uninstall and data-preservation results are pending. |
+| Park guided demonstration | NOT VERIFIED | The 5–10 and 30–50 confirmed-source-group workflows are diagnostic/demo only. They do not replace the complete predeclared eligible cohort. Every batch in the full cohort must be processed and reconciled. |
+| Windows installer | PREDECESSOR CI SMOKE PASSED; MAINLINE RETEST PENDING; CLEAN-MACHINE ACCEPTANCE NOT PASSED | Run #149 passed NSIS compilation, silent install, installed-app self-test, shortcut checks, uninstall, user-data preservation and manifest/checksum generation on predecessor PR #310 head. The new mainline port requires exact-head rerun. No artifact was uploaded because the written-license guard was false. The actual Park Windows device has not passed clean-machine acceptance. |
 | macOS/Linux desktop installers | NOT STARTED | The current standalone desktop preview targets Windows only. |
 
 ## Verified engineering boundaries
@@ -55,7 +62,9 @@ The worksheet requires a CPU-oriented, reproducible software product. It identif
 - DR24 acquisition preserves native source values. It does not silently substitute ALeRCE.
 - DR24 raw acquisition does not perform model inference.
 - Uninstall is designed to preserve user projects, logs and exports.
-- The Windows preview installer is unsigned. A checksum is not a code signature.\n- The NSIS installer is designed to install the Microsoft Evergreen WebView2 Runtime silently when missing. The bootstrapper is checked for a valid Microsoft Authenticode signature before it is embedded. This installer path is not accepted until the exact-head Windows run and a clean-machine test pass.\n- The preview targets x64 Windows only. The installer rejects 32-bit Windows.
+- The Windows preview installer is unsigned. A checksum is not a code signature.\n- The NSIS installer is designed to install the Microsoft Evergreen WebView2 Runtime silently when missing. The bootstrapper is checked for a valid Microsoft Authenticode signature before it is embedded. Run #149 passed the installer smoke on the predecessor head. Exact-head mainline retest and clean-machine WebView2 verification remain open.\n- The preview targets x64 Windows only. The installer rejects 32-bit Windows.
+- The installer is unsigned. SHA-256 checksums do not provide a code signature.
+- No public installer artifact is available. The workflow skipped upload because written Park evaluation terms are not approved.
 
 ## Scientific and delivery blockers
 
