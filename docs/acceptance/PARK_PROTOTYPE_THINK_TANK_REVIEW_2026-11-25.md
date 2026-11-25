@@ -30,6 +30,7 @@ Do not describe the current branch as a complete Park prototype.
 - Issue #282 records that the original model artifact was not found in repository history, release assets, retained CI artifacts, Dropbox or the supplied local audit. A fresh GitHub Releases audit found only Python wheel and source archives in v1.0.1, v1.0.0 and v0.5.0; none contains the model artifact.
 - The supplied local audit also reports that the ALeRCE raw-detection cache is absent. It does not include a fresh audit of the current branch.
 - The desktop branch contains DR24 raw retrieval and descriptive statistics. The descriptive policy explicitly states DESCRIPTIVE_NOT_CLASSIFICATION.
+- The repository's DR24 source contract states that HATS OIDs are per filter, field and quadrant. They are not physical-source IDs. Zubercal uses PS1 object IDs and a different time and photometry system. A bounded query returned multiple PS1 candidates for one ZTF OID.
 - The API has model-registry and inference routes. It requires a valid model artifact.
 - The repository has feature, model, calibration, conformal, OOD and scientific-anomaly components. Their presence does not prove that a complete Park workflow runs.
 - The current desktop UI hides the classification, uncertainty and scientific-validation workspaces.
@@ -63,13 +64,13 @@ Key findings:
 | 2. ZTF Data Specialist | DR24 retrieval is bounded and source-native. It is not yet a validated model-input pipeline. | Validate time, photometry, quality flags, filters and identity contracts. |
 | 3. Time-Domain Astrophysicist | OID does not prove physical-source identity. | Preserve OIDs and require explicit cross-match evidence before grouping. |
 | 4. Statistics Specialist | The 150-object benchmark is too small to support broad population claims. | Use the pinned labelled cohort and leakage-safe evaluation. Report class-level limits. |
-| 5. Astroinformatics / Data Engineering | The 100,000-object target needs a reproducible acquisition pipeline. | Build a manifest-first, chunked DR24 acquisition process. Do not download the full catalogue. |
+| 5. Astroinformatics / Data Engineering | The 100,000-curve target needs a reproducible acquisition pipeline. HATS OIDs are filter-specific. | Build a manifest-first, chunked DR24 acquisition process. Track both light-curve and unique-source counts. Do not download the full catalogue. |
 | 6. Feature Engineering Specialist | The frozen 42-feature schema is defined for the v0.2.0 baseline. DR24 parity is not established. | Validate every feature, unit, missing-value rule and input mapping. Do not silently change v0.2.0. |
 | 7. Machine Learning Specialist | The original production model artifact is missing. | Recover and authenticate it. If recovery fails, propose a separately versioned new model. Do not call it the original baseline. |
 | 8. Model Validation Specialist | Calibration and conformal code exists, but no accepted Park-population evidence is available. | Use separate training, calibration and test sets. Report ECE, MCE, Brier score and Risk–Coverage. |
 | 9. Anomaly Specialist | OOD scores and scientific anomaly evidence are different outputs. | Implement and evaluate a separate anomaly method. Keep the two channels separate. |
 | 10. Explainability Specialist | SHAP is a dependency and code component, not an accepted user workflow. | Produce reproducible explanations tied to exact model, feature schema and input. |
-| 11. Cross-Match Specialist | Cross-filter records must not be grouped by OID alone. | Record identity evidence and preserve unresolved associations. |
+| 11. Cross-Match Specialist | HATS OIDs, ALeRCE OIDs and Zubercal PS1 IDs are not interchangeable. Cross-match ambiguity is observed. | Preserve candidates, radius, candidate count and ambiguity. Never group by OID equality or choose an ambiguous PS1 match automatically. |
 | 12. Software Architect | The local desktop shell is a useful base. The scientific application workflow is incomplete. | Integrate one end-to-end workflow. Avoid unrelated architecture changes. |
 | 13. Backend / API Engineer | Model routes require a configured model registry. The production artifact is absent. | Add clear readiness and failure states. Do not return placeholder predictions. |
 | 14. MLOps / Security Specialist | The installer is unsigned. Runtime security has not passed clean-Windows review. | Complete dependency lock, package audit, local API review, WebView2 tests and signing decision. |
