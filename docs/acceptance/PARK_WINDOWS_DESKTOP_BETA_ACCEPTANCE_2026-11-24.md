@@ -99,7 +99,7 @@ The preview may claim only what is verified:
 
 The prototype must not present a capability as verified until its gate passes. In particular:
 
-- Do not use DR24 for inference until time, photometry, quality, identity and feature compatibility are validated.
+- Do not use DR24 HATS or Zubercal values for inference until time, photometry, quality, identity and feature compatibility are validated. Do not treat HATS OIDs, ALeRCE OIDs and Zubercal PS1 IDs as the same identifier.
 - Do not substitute a lab-smoke model for the authenticated production artifact.
 - Do not report calibrated probabilities without a held-out calibration evaluation.
 - Do not report conformal coverage or abstention performance without measured coverage and risk results.
