@@ -2,6 +2,8 @@
 
 > **PARK DELIVERY SCOPE FREEZE — 2026-11-24:** The only active objective is the Park-ready Windows test pre-release. No independent platform, research, CPVS, or CIN work may start before the pre-release is installed/tested on clean Windows and presented to the Park. All active work must map to the acceptance gates in [the scope-freeze decision](docs/acceptance/PARK_WINDOWS_PRERELEASE_SCOPE_FREEZE_2026-11-24.md), the [Park requirements traceability matrix](docs/acceptance/PARK_PROTOTYPE_REQUIREMENTS_TRACEABILITY_2026-11-24.md), and [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). This founder-approved rule supersedes earlier web-only and broad platform-expansion priorities for the current delivery stage.
 
+The active delivery is the English-only Windows Laboratory Preview defined in the acceptance contract. The Full Park MVP and all independent research remain inactive until the preview is presented to the Park and the Founder authorizes a new scope in writing.
+
 A CPU-first Astronomical Data Analysis & Discovery Platform for Zwicky Transient Facility (ZTF) data, scientific feature generation, machine-learning and statistical analysis, uncertainty/OOD diagnostics, provenance, and discovery-oriented workflows.
 
 ## Project status
