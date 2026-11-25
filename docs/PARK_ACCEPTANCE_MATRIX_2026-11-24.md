@@ -31,7 +31,7 @@ The worksheet requires a CPU-oriented, reproducible software product. It identif
 
 The predecessor PR #310 head `e188fd4eebaa0c9d0115ad8b2c86ca64e0be5216` passed Windows Desktop Preview Build run [#149](https://github.com/saeed92m/ztf-classifier/actions/runs/45628516183). The run passed runtime tests, JavaScript syntax, Ruff, PyInstaller, frozen-app self-test, WebView2 bootstrapper signature verification, NSIS compilation, silent installation, installed-app self-test, shortcut checks, uninstall, user-data preservation and build-manifest/SHA-256 generation.
 
-The artifact upload step was skipped by the license guard. No installer artifact was published. This evidence is for the predecessor head only. The clean mainline port must pass exact-head CI again. A clean install on the actual Park Windows device remains pending.
+The exact mainline port passed Windows Desktop Preview Build run [45667623568](https://github.com/saeed92m/ztf-classifier/actions/runs/45667623568) on 2026-11-25. The run built the installer, ran the frozen-app self-test, and passed silent install, launch, and uninstall smoke tests. The preview artifact was uploaded to Actions. A GitHub Pre-release is a separate publication step. A clean install on the actual Park Windows device remains pending.
 
 
 | Requirement | Current state | Evidence and limit |
@@ -47,11 +47,11 @@ The artifact upload step was skipped by the license guard. No installer artifact
 | Anomaly detection | NOT VERIFIED | Existing OOD diagnostics do not establish an independently evaluated Park anomaly detector. |
 | Explainability | NOT VERIFIED | A complete, reproducible SHAP explanation path for the Park application has not been accepted. |
 | Temporal and external validation | NOT VERIFIED | No final Park-population evaluation report was verified for this delivery branch. |
-| Desktop application | PARTIAL | A Windows pywebview shell, loopback API, in-memory bearer token, native navigation guard and per-user data paths are implemented. Windows acceptance is still running. |
-| Workspace lifecycle | IMPLEMENTED; PREDECESSOR CI PASSED; MAINLINE RETEST PENDING | Create/open/list, operation logging, export persistence and export restoration APIs and UI are implemented. The predecessor head passed its Windows tests; the clean mainline port requires exact-head retest. |
+| Desktop application | PARTIAL | A Windows pywebview shell, loopback API, in-memory bearer token, native navigation guard and per-user data paths are implemented. Exact-head Windows CI passed; actual Park-device acceptance remains pending. |
+| Workspace lifecycle | IMPLEMENTED; EXACT-HEAD CI PASSED | Create/open/list, operation logging, export persistence and export restoration APIs and UI are implemented. The exact mainline head passed its Windows tests. Actual Park-device persistence testing remains pending. |
 | Reproducibility package | PARTIAL | Raw JSON export, source hashes and workspace metadata are supported. A full data/model/schema/split reproducibility bundle is not yet accepted. |
 | Park guided demonstration | NOT VERIFIED | The 5–10 and 30–50 confirmed-source-group workflows are diagnostic/demo only. They do not replace the complete predeclared eligible cohort. Every batch in the full cohort must be processed and reconciled. |
-| Windows installer | PREDECESSOR CI SMOKE PASSED; MAINLINE RETEST PENDING; CLEAN-MACHINE ACCEPTANCE NOT PASSED | Run #149 passed NSIS compilation, silent install, installed-app self-test, shortcut checks, uninstall, user-data preservation and manifest/checksum generation on predecessor PR #310 head. The new mainline port requires exact-head rerun. No artifact was uploaded because the written-license guard was false. The actual Park Windows device has not passed clean-machine acceptance. |
+| Windows installer | EXACT-HEAD CI SMOKE PASSED; PREVIEW ARTIFACT UPLOADED; CLEAN-MACHINE ACCEPTANCE NOT PASSED | Run 45667623568 passed NSIS compilation, silent install, installed-app self-test, shortcut checks, uninstall, user-data preservation and manifest/checksum generation on the exact mainline PR head. The preview artifact is available in Actions. A GitHub Pre-release is being prepared. The actual Park Windows device has not passed clean-machine acceptance. |
 | macOS/Linux desktop installers | NOT STARTED | The current standalone desktop preview targets Windows only. |
 
 ## Verified engineering boundaries
@@ -64,7 +64,7 @@ The artifact upload step was skipped by the license guard. No installer artifact
 - Uninstall is designed to preserve user projects, logs and exports.
 - The Windows preview installer is unsigned. A checksum is not a code signature.\n- The NSIS installer is designed to install the Microsoft Evergreen WebView2 Runtime silently when missing. The bootstrapper is checked for a valid Microsoft Authenticode signature before it is embedded. Run #149 passed the installer smoke on the predecessor head. Exact-head mainline retest and clean-machine WebView2 verification remain open.\n- The preview targets x64 Windows only. The installer rejects 32-bit Windows.
 - The installer is unsigned. SHA-256 checksums do not provide a code signature.
-- No public installer artifact is available. The workflow skipped upload because written Park evaluation terms are not approved.
+- The Windows installer is a preview build. It is unsigned and checksummed. A GitHub Pre-release is for evaluation only and does not establish scientific acceptance or commercial readiness.
 
 ## Scientific and delivery blockers
 
@@ -75,7 +75,7 @@ The artifact upload step was skipped by the license guard. No installer artifact
 5. Validate calibration, abstention, anomaly detection and explainability on the declared Park population.
 6. Complete a 30–50-object guided demonstration and a reproducibility bundle.
 7. Pass clean Windows install, launch, persistence, upgrade/uninstall and data-preservation tests.
-8. Obtain the required written Park evaluation terms before external distribution of the installer.\n9. Verify the WebView2 bootstrapper install path on a clean Windows machine with no pre-installed Runtime.
+8. Complete a clean-machine install, launch, DR24 retrieval, export, uninstall, and user-data preservation test on the Park Windows device.\n9. Verify the WebView2 bootstrapper install path on a clean Windows machine with no pre-installed Runtime.
 
 ## Current delivery decision
 
