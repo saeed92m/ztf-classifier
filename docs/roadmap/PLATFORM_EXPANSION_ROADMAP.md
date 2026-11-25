@@ -30,7 +30,7 @@ Inactive scientific backlog (not a current Park delivery task): [Issue #170](htt
 - [ ] Require exact independent membership audit before claiming exact reconstruction.
 - [ ] Keep Issue #170 open until evidence-based disposition.
 
-### A2. Product-level validation — RELEASE-BLOCKING
+### A2. Product-level validation — INACTIVE UNTIL PARK DELIVERY (except gates explicitly listed in the Park scope-freeze acceptance gates)
 - [ ] Complete pinned ZTF DR24 source-backed adapter execution.
 - [ ] Complete frozen historical ALeRCE reference acquisition/execution and immutable manifests.
 - [ ] Complete object-overlap, duplicate, target leakage, temporal leakage, preprocessing, schema, provenance, and failure-code audits.
