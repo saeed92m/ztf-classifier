@@ -4,6 +4,9 @@ Unicode true
 !include "LogicLib.nsh"
 !include "x64.nsh"
 
+; Resolve all installer input and output paths from the repository root.
+!cd "${__FILEDIR__}\\..\\.."
+
 ; Resolve all build inputs and outputs from the repository root.
 !cd "${__FILEDIR__}\..\.."
 
