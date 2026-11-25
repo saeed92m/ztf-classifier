@@ -129,6 +129,14 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert page.get_by_text("Park acceptance").is_visible()
             assert page.locator("#parkModelStatus").inner_text() == "BLOCKED"
             assert page.locator("#parkScientificGateStatus").is_visible()
+            page.locator('[data-view="workspaces"]').click()
+            page.locator("#workspaceName").fill("CI desktop workspace")
+            page.locator("#workspaceCreateForm button[type=submit]").click()
+            page.wait_for_function(
+                "() => document.querySelector('#workspaceStatus')?.textContent.includes('active workspace:')",
+                timeout=5_000,
+            )
+            assert page.locator("#workspaceStatus").is_visible()
             assert page.locator('[data-view="validation"]').is_visible()
             assert page.locator('[data-view="classification"]').is_hidden()
             page.locator('[data-view="validation"]').click()
