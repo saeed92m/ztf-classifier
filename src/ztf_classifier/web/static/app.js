@@ -334,29 +334,36 @@ const titles = {
 
 async function renderDesktopHome() {
   mainCanvas.innerHTML = `
-    <div class="canvas-header"><div><div class="eyebrow">Park technology preview</div>
+    <div class="canvas-header"><div><div class="eyebrow">PARK LABORATORY PROTOTYPE</div>
     <h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
     <section class="metric-grid">
-      <article class="metric-card"><span>Data source</span><strong>ZTF DR24</strong><small>IRSA HATS · Live retrieval</small></article>
-      <article class="metric-card"><span>Processing mode</span><strong>RAW + DESCRIPTIVE</strong><small>Raw data, diagnostic QC and descriptive statistics</small></article>
-      <article class="metric-card"><span>Classification model</span><strong>NOT RUN</strong><small>Not enabled in this preview</small></article>
-      <article class="metric-card"><span>Export</span><strong>JSON + Provenance</strong><small>After successful retrieval</small></article>
+      <article class="metric-card"><span>Primary data source</span><strong>ZTF DR24</strong><small>IRSA HATS · Bounded retrieval</small></article>
+      <article class="metric-card"><span>Labelled cohort</span><strong>NOT VERIFIED</strong><small>Technical-plan target: 100,000 objects</small></article>
+      <article class="metric-card"><span>Main model</span><strong id="parkModelStatus">NOT VERIFIED</strong><small>Authenticated model artifact required</small></article>
+      <article class="metric-card"><span>Park acceptance</span><strong>NOT READY</strong><small>All four worksheet phases must pass</small></article>
     </section>
     <section class="panel">
-      <div class="panel-title">Get started</div>
-      <p class="muted">Enter one to ten ZTF DR24 object IDs. The app retrieves raw data from the primary source and displays light curves, diagnostic QC, descriptive statistics and provenance.</p>
-      <p class="muted" id="desktopWorkspaceStatus" role="status">Checking active workspace…</p>
+      <div class="panel-title">Acceptance status</div>
+      <p class="muted">This application must complete data, feature, classification, uncertainty, anomaly and validation workflows before Park presentation.</p>
+      <p id="parkScientificGateStatus" role="status">Checking the scientific release gate...</p>
+      <button class="secondary-button" id="openScientificValidation" type="button">View scientific validation</button>
+    </section>
+    <section class="panel">
+      <div class="panel-title">Start data inspection</div>
+      <p class="muted">Enter 1 to 10 ZTF DR24 object IDs. The app retrieves raw light curves. It shows diagnostic QC, descriptive statistics and data provenance.</p>
+      <p class="muted" id="desktopWorkspaceStatus" role="status">Checking the active workspace...</p>
       <button class="primary-button" id="startDr24Explorer" type="button" disabled>Open DR24 Explorer</button>
       <button class="secondary-button" id="manageWorkspaces" type="button">Manage workspaces</button>
     </section>
     <section class="panel">
-      <div class="panel-title">Scientific scope of this preview</div>
-      <p>This preview displays raw data and descriptive statistics. Classification, calibrated probabilities, abstention, OOD and anomaly detection are not run in this preview.</p>
-      <p class="muted">The app reports partial or failed retrieval. It does not use a fallback source.</p>
+      <div class="panel-title">Scientific output limits</div>
+      <p>Raw DR24 retrieval and descriptive summaries are available. Classification, calibrated probabilities, abstention, anomaly analysis and transferability are not accepted for the Park population.</p>
+      <p class="muted">Do not use these summaries as model predictions. Do not treat OOD scores as scientific anomaly evidence.</p>
     </section>`;
   setViewHeading("desktop-home");
   document.getElementById("startDr24Explorer").addEventListener("click", () => showView("dr24"));
   document.getElementById("manageWorkspaces").addEventListener("click", () => showView("workspaces"));
+  document.getElementById("openScientificValidation").addEventListener("click", () => showView("validation"));
   try {
     const active = await fetchJson("/v1/workspaces/active");
     const status = document.getElementById("desktopWorkspaceStatus");
@@ -365,12 +372,27 @@ async function renderDesktopHome() {
       status.textContent = "Active workspace: " + active.workspace.name;
       start.disabled = false;
     } else {
-      status.textContent = "Create a workspace before recording analysis history and exports.";
+      status.textContent = "Create a workspace before you save analysis history and exports.";
       start.disabled = true;
     }
   } catch (error) {
     document.getElementById("desktopWorkspaceStatus").textContent =
-      "Could not retrieve workspace status: " + (error.message || "Service error");
+      "Could not load workspace status: " + (error.message || "Service error");
+  }
+  try {
+    const model = await fetchJson("/v1/model");
+    document.getElementById("parkModelStatus").textContent = model.model_version + " · READY";
+  } catch {
+    document.getElementById("parkModelStatus").textContent = "BLOCKED";
+  }
+  try {
+    const gate = await fetchJson("/v1/scientific-validation");
+    const blockers = Array.isArray(gate.blockers) ? gate.blockers.length : 0;
+    document.getElementById("parkScientificGateStatus").textContent =
+      gate.status + " · " + blockers + " blocker(s)";
+  } catch {
+    document.getElementById("parkScientificGateStatus").textContent =
+      "BLOCKED · Scientific validation status is unavailable.";
   }
 }
 
@@ -1217,6 +1239,7 @@ if (desktopMode) {
     "desktop-export",
     "desktop-settings",
     "desktop-help",
+    "validation",
   ]);
   document.querySelectorAll(".nav-item").forEach(button => {
     button.hidden = !desktopViews.has(button.dataset.view);
