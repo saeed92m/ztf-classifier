@@ -61,11 +61,12 @@ Only the following work is authorised.
 ### Phase 1 — Infrastructure, data and features
 
 - Build and test the Windows desktop shell and local service lifecycle.
-- Acquire the declared ZTF DR24 data.
+- Acquire the declared ZTF DR24 HATS data.
+- Query Zubercal DR20 as a bounded supplementary calibration source. Preserve all cross-match candidates and ambiguity states.
 - Build a pinned labelled cohort. The technical-plan target is at least 100,000 light curves.
 - Record source, release, query, object IDs, filters, labels, schemas, hashes and acquisition times.
-- Validate object identity and cross-filter grouping.
-- Define and test the photometry, time, quality and missing-data contracts.
+- Validate object identity and cross-filter grouping. Do not group HATS records by OID equality.
+- Define and test the HATS and Zubercal photometry, time, quality and missing-data contracts.
 - Build the versioned feature pipeline.
 - Record feature definitions, units, software versions and failure states.
 
