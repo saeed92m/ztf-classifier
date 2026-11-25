@@ -122,9 +122,10 @@ jobs:
           if ($signature.Status -ne "Valid" -or $signature.SignerCertificate.Subject -notmatch "Microsoft Corporation") {
             throw "The WebView2 bootstrapper does not have a valid Microsoft Authenticode signature."
           }
-          $destination = Join-Path $PWD "dist/MicrosoftEdgeWebView2Setup.exe"
+          $destination = Join-Path $PWD "packaging/windows/MicrosoftEdgeWebView2Setup.exe"
           Copy-Item -LiteralPath $source -Destination $destination -Force
           $hash = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant()
+          if (-not (Test-Path -LiteralPath $destination)) { throw "The staged WebView2 bootstrapper is missing from packaging/windows." }
           "WEBVIEW2_BOOTSTRAPPER_SHA256=$hash" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           Write-Host "Verified Microsoft WebView2 bootstrapper SHA-256: $hash"
 
