@@ -2,11 +2,13 @@
 
 **Date:** 2026-11-24  
 **Status:** Proposed execution contract; not an acceptance result  
-**Owner decision:** Standalone Windows desktop application; UI/UX proceeds in parallel  
+**Owner decision:** Standalone Windows desktop application; English-only Windows experimental preview  
 **Primary tracker:** Issue #158  
 **Scientific baseline:** Preserve v0.2.0 and all frozen artifacts
 
 ## 1. Purpose and acceptance boundary
+
+**Active delivery selection (Founder, 2026-11-25):** The first deliverable is the Windows laboratory preview in Sections 1, 3–7 and its W0–W13 gates. The Full Park MVP in Section 8 is a separate later milestone. It is not part of this preview and must not displace preview acceptance work. The project scope freeze remains active until the preview is installed and tested on clean Windows and presented to the Park.
 
 Deliver the first useful, installable Windows desktop preview for a Science and Technology Park demonstration. It must provide a real and reproducible scientific workflow. A screenshot-only mock-up or an installer that opens a broken web page does not pass.
 
@@ -113,7 +115,7 @@ The existing descriptive summary status is DESCRIPTIVE_NOT_CLASSIFICATION. The c
 - Show clear states for local service, network, acquisition, processing, export and errors.
 - Do not show a green connection state when a service is unavailable.
 - Distinguish missing records, empty light curves, partial results, rejected records and source errors.
-- The first domestic Park presentation should support Persian and right-to-left layout. Preserve standard astronomical terms, units and identifiers.
+- **Owner amendment (2026-11-25):** The Windows experimental preview is English-only. Persian localization and right-to-left layout are not acceptance requirements for this preview. Consider them for a later product release only. Preserve standard astronomical terms, units and identifiers.
 - Plot labels must match the real source time scale. DR24 HMJD must never be labelled MJD.
 - Show magnitude units, filter, error bars and missing-data indicators.
 - Use accessible contrast, keyboard navigation, visible focus and readable scaling.
