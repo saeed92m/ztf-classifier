@@ -2,7 +2,7 @@
 
 > **2026-11-24 BINDING SCOPE FREEZE:** Until the Park demonstrator is delivered, only work required for the Windows-installable Park test pre-release is active. The build must install, launch, run the required user workflow, export reproducible evidence, and pass clean-Windows tests before presentation. All unrelated workstreams are inactive. The earlier web-only delivery decision is superseded. See [the binding scope policy](acceptance/PARK_WINDOWS_PRERELEASE_SCOPE_FREEZE_2026-11-24.md), [the Park requirements traceability matrix](acceptance/PARK_PROTOTYPE_REQUIREMENTS_TRACEABILITY_2026-11-24.md), and [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158).
 
-**Delivery-level decision — 2026-11-25:** The active deliverable is the English-only Windows Laboratory Preview, not the Full six-month Park MVP. Follow the workflow and W0–W13 gates in the beta acceptance contract. Full-MVP-only work and CPVS remain inactive until Park presentation and a new written Founder decision.
+**Delivery decision — 2026-11-25:** The active deliverable is one English-only Windows-installable Park laboratory prototype. It must implement and validate all four phases in the acceptance worksheet and the six-month technical plan. This includes DR24 data, labelled cohort, features, classification, calibrated uncertainty, abstention, anomaly analysis, explainability, temporal/external validation, dashboard, reports and Windows packaging. A raw-data viewer or installer alone does not pass. CPVS and unrelated work remain frozen until Park presentation.
 
 Status date: 2026-10-11
 Software release: v1.0.1
@@ -53,7 +53,7 @@ New product requirements are now canonical:
 
 These additions are layered around the immutable v0.2.0 scientific baseline and must not weaken scientific validation or provenance contracts.
 
-## Deferred long-term backlog — inactive until Park delivery or written owner approval
+## Frozen workstreams — inactive until Park presentation or written owner approval
 1. Complete documentation alignment for v1.0.1 and the platform-expansion requirements.
 2. Establish the desktop Application/Core API boundary and cross-platform packaging architecture.
 3. Implement the user-facing Data Manager and Object/Source Explorer.
