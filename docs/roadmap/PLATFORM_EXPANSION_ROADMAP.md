@@ -2,7 +2,7 @@
 
 > **2026-11-24 ACTIVE ROADMAP OVERRIDE — PARK WINDOWS PRE-RELEASE ONLY:** This roadmap is now gated by [the founder-approved scope freeze](../acceptance/PARK_WINDOWS_PRERELEASE_SCOPE_FREEZE_2026-11-24.md). Until the Windows-installable Park test pre-release has passed clean-machine install/run tests and has been presented to the Park, only tasks directly required for those acceptance gates may execute. All other tracks, including independent scientific research, CPVS, CIN runtime, cross-platform packaging and broad platform expansion, are inactive backlog. The previous web-only delivery decision is superseded for this stage. See the [Park requirements traceability matrix](../acceptance/PARK_PROTOTYPE_REQUIREMENTS_TRACEABILITY_2026-11-24.md) and [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158).
 
-**Selected active milestone — 2026-11-25:** English-only Windows Laboratory Preview. The Full Park MVP, 100,000-curve labelled cohort, model/uncertainty work and all independent research are inactive during this freeze. Reopen them only after Park presentation and a new written Founder decision.
+**Selected active milestone — 2026-11-25:** One English-only Windows-installable Park laboratory prototype. All four worksheet phases and the six-month technical roadmap are active as one delivery target: DR24 cohort, features, classification, calibration, abstention, anomaly analysis, SHAP, temporal/external validation, dashboard, reports and Windows packaging. CPVS, CIN, cross-survey expansion, macOS/Linux packaging and unrelated work remain frozen until Park presentation.
 
 Status date: 2026-10-11  
 Current immutable software release: v1.0.1  
@@ -17,7 +17,7 @@ Inactive scientific backlog (not a current Park delivery task): [Issue #170](htt
 - Prefer source-backed, versioned adapters over copying datasets into Git.
 - Every meaningful change updates its lifecycle record, tests, failure-prevention knowledge, and affected docs.
 
-## Track A — Inactive scientific backlog (do not execute before Park delivery)
+## Track A — Active Park prototype scientific acceptance work
 
 ### A1. CPVS exact-reproduction investigation — INACTIVE / FROZEN UNTIL PARK DELIVERY
 - [ ] Trigger heavy workflow on an intended ci/heavy/* ref and verify source-provenance/scientific-gate-readiness executes.
@@ -30,7 +30,7 @@ Inactive scientific backlog (not a current Park delivery task): [Issue #170](htt
 - [ ] Require exact independent membership audit before claiming exact reconstruction.
 - [ ] Keep Issue #170 open until evidence-based disposition.
 
-### A2. Product-level validation — INACTIVE UNTIL PARK DELIVERY (except gates explicitly listed in the Park scope-freeze acceptance gates)
+### A2. Park prototype product and scientific acceptance — ACTIVE
 - [ ] Complete pinned ZTF DR24 source-backed adapter execution.
 - [ ] Complete frozen historical ALeRCE reference acquisition/execution and immutable manifests.
 - [ ] Complete object-overlap, duplicate, target leakage, temporal leakage, preprocessing, schema, provenance, and failure-code audits.
@@ -61,7 +61,7 @@ Inactive scientific backlog (not a current Park delivery task): [Issue #170](htt
 - [ ] CPU-first performance and memory test on modest hardware.
 - [ ] Installer integrity, checksums, release provenance and rollback/uninstall behavior.
 
-## Track C — Scientific capability expansion — INACTIVE UNTIL PARK DELIVERY
+## Track C — Unrelated scientific capability expansion — INACTIVE UNTIL PARK DELIVERY
 - [ ] Independent labeled benchmark and cross-match evidence.
 - [ ] Model comparison/ensemble only where labels are comparable and splits are leakage-safe.
 - [ ] Dedicated scientific anomaly analysis; do not label OOD as anomaly detection.
