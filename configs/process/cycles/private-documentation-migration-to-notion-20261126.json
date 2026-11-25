@@ -55,7 +55,11 @@
       "README product direction section replaced with a short public-safe summary and a link to the public technical architecture.",
       "The 51 selected source files were deleted only on the migration branch; main remains unchanged until PR review and merge.",
       "All 68 historical configs/process/cycles/*.json records from the source main commit were copied to the private Notion archive, with source path, source commit and Git blob SHA.",
-      "The CI workflow was inspected: it requires at least one cycle JSON file, validates every present record, and requires a cycle record for meaningful PRs. It does not require all historical cycle records to remain in GitHub."
+      "The CI workflow was inspected: it requires at least one cycle JSON file, validates every present record, and requires a cycle record for meaningful PRs. It does not require all historical cycle records to remain in GitHub.",
+      "Final PR-tree audit at head 02e7d71564e926a32df083e706f3dacf00878b56: all 51 internal documentation paths and all 68 historical lifecycle-record paths are absent; only this current migration record remains under configs/process/cycles/.",
+      "The private Notion archive root contains 120 child pages: 51 internal documentation copies, 68 historical lifecycle-record copies, and the archive index. Representative source documents and lifecycle JSON pages were fetched back.",
+      "Public installation, Quick Start, user guide, API v1, model card, data card and scientific methodology files remain in the PR tree.",
+      "The public README was checked after both edits; it contains no handbook-version or docs/roadmap links."
     ]
   },
   "failure_analysis": {
@@ -81,7 +85,8 @@
       "Verify all 51 intended files are absent from the PR tree and all public user-facing docs remain present.",
       "Check the public README for broken links and confirm no internal roadmap details remain.",
       "After merge, verify main branch and confirm private archive access remains private.",
-      "Verify that the migration PR retains a valid current cycle record and passes the lifecycle gate after historical cycle records are removed."
+      "Verify that the migration PR retains a valid current cycle record and passes the lifecycle gate after historical cycle records are removed.",
+      "Complete required PR checks on the final head; source-backed scientific evidence jobs are expected to remain skipped and must not be represented as Scientific-PASS."
     ]
   },
   "decision": "REVISE",
