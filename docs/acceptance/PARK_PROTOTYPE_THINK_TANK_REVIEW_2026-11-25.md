@@ -44,6 +44,17 @@ Do not describe the current branch as a complete Park prototype.
 - The technical document describes a targeted subset of several hundred thousand curves. It does not require downloading the full 5.32-billion-curve DR24 release.
 - The technical document defines a CPU-first XGBoost/LightGBM workflow, calibration, abstention, anomaly analysis, temporal validation and an installable dashboard.
 
+## Label-source assessment
+
+The data-source assessment is recorded in PARK_LABELLED_DATA_SOURCE_ASSESSMENT_2026-11-25.md.
+
+Key findings:
+- ALeRCE 2020 provides a frozen 15-class labelled set through 2020-06-09. Its 868,371-object output file contains predictions for an unlabeled population. Do not use those predictions as ground truth.
+- ALeRCE TAP is the current supported access path for public ZTF object, detection, feature, probability and taxonomy tables. Use TAP or the API. Do not use retired direct database connections. Broker probabilities are not independent labels.
+- SCoPe provides 170,632 light curves and 85,136 manually reviewed sources. Its multi-label taxonomy differs from ALeRCE. Use it only for a reviewed external evaluation or a separately versioned model.
+- The 2025 ALeRCE paper reports 219,792 labelled sources and 16 subclasses, including TDE. The inspected paper does not provide a clear public DOI for the complete labelled-source manifest. Do not add TDE to the frozen 15-class taxonomy.
+- No source has yet been accepted as the complete 100,000-labelled-light-curve DR24 cohort.
+
 ## Sixteen role reviews
 
 | Role | Finding | Required action |
