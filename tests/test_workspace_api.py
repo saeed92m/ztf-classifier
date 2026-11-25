@@ -127,6 +127,13 @@ def test_workspace_operation_and_export_are_persisted_with_hashes(
     assert restored_export.status_code == 200
     assert restored_export.json() == export_payload
 
+    unrelated_name = "dr24-raw-export-20260101T000000Z-ffffffff.json"
+    unrelated_export = client.get("/v1/workspaces/exports/" + unrelated_name)
+    assert unrelated_export.status_code == 404
+
+    invalid_name = client.get("/v1/workspaces/exports/../workspace.json")
+    assert invalid_name.status_code in {404, 422}
+
     restarted_client = _client(tmp_path)
     active_after_restart = restarted_client.get("/v1/workspaces/active").json()[
         "workspace"
