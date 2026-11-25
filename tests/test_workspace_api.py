@@ -128,6 +128,9 @@ def test_workspace_operation_and_export_are_persisted_with_hashes(
     assert restored_export.json() == export_payload
 
     unrelated_name = "dr24-raw-export-20260101T000000Z-ffffffff.json"
+    unrelated_path = Path(metadata["path"]).parent / unrelated_name
+    unrelated_path.write_text("{}\\n", encoding="utf-8")
+    assert unrelated_path.is_file()
     unrelated_export = client.get("/v1/workspaces/exports/" + unrelated_name)
     assert unrelated_export.status_code == 404
 
