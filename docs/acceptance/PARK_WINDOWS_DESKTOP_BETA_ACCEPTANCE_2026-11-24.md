@@ -201,7 +201,7 @@ Allowed states: PASS, FAIL, BLOCKED, NOT RUN, NOT APPLICABLE.
 | W12 Reproducibility | Pinned input can be repeated and reconciled | Run manifest, IDs, hashes and tolerances |
 | W13 Handoff | Park package and limitations are complete | Guide, demo script, sample export and limitations |
 
-Skipped jobs are not PASS. A CI browser test does not prove a clean Windows installation. An API query does not prove source identity or model validity.
+These 13 gates are the high-level acceptance gates. The detailed Windows and scientific test plan defines tests W01–W36 for them. Every applicable detailed test must pass or have an approved NOT APPLICABLE state. Skipped jobs are not PASS. A CI browser test does not prove a clean Windows installation. An API query does not prove source identity or model validity.
 
 ## 8. Required scientific and product acceptance
 
@@ -215,7 +215,9 @@ The following requirements are part of the current Park prototype acceptance tar
 - Per-class metrics on eligible labelled data.
 - Calibration, uncertainty and abstention evaluation.
 - Scientific anomaly outputs separate from OOD diagnostics.
-- Independent evaluation with population and taxonomy limits.
+- Reproducible SHAP explanations tied to the exact model and feature schema.
+- Temporal and independent external evaluation with population and taxonomy limits.
+- Transferability report with known failure cases.
 - Reproducible technical report and catalog export.
 - Environment and run manifests.
 - Complete workflow through the application, not scripts alone.
