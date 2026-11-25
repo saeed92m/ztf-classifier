@@ -328,21 +328,21 @@ class WorkspaceStore:
             status = payload.get("status")
             operation_type = payload.get("operation_type")
             source = payload.get("source")
-            requested = payload.get("requested_oids")
             if operation_type != "DR24_BATCH_QUERY":
                 raise WorkspaceError("Unsupported workspace operation type.")
             if source != "ztf_dr24_hats":
                 raise WorkspaceError("Unsupported DR24 data source.")
-            if (
-                not isinstance(requested, list)
-                or not requested
-                or len(requested) > 10
-                or any(type(value) is not int or value <= 0 for value in requested)
-                or len(requested) != len(set(requested))
-            ):
-                raise WorkspaceError("Requested OIDs are invalid.")
             current = manifest.get("last_operation")
             if status == "RUNNING":
+                requested = payload.get("requested_oids")
+                if (
+                    not isinstance(requested, list)
+                    or not requested
+                    or len(requested) > 10
+                    or any(type(value) is not int or value <= 0 for value in requested)
+                    or len(requested) != len(set(requested))
+                ):
+                    raise WorkspaceError("Requested OIDs are invalid.")
                 if (
                     isinstance(current, dict)
                     and current.get("status") == "RUNNING"
@@ -362,8 +362,10 @@ class WorkspaceStore:
                         str(current.get("operation_id", ""))
                     )
                     self._append_operation_log(directory, current)
-                operation_id = payload.get("operation_id") or uuid4().hex
-                if not _WORKSPACE_ID_RE.fullmatch(operation_id):
+                operation_id = payload.get("operation_id")
+                if operation_id is None:
+                    operation_id = uuid4().hex
+                if not isinstance(operation_id, str) or not _WORKSPACE_ID_RE.fullmatch(operation_id):
                     raise WorkspaceError("Operation identifier is invalid.")
                 operation = {
                     "operation_id": operation_id,
@@ -393,6 +395,20 @@ class WorkspaceStore:
                         "Operation completion does not match the active operation."
                     )
                 operation = current
+                requested = current.get("requested_oids")
+                if (
+                    not isinstance(requested, list)
+                    or not requested
+                    or len(requested) > 10
+                    or any(type(value) is not int or value <= 0 for value in requested)
+                    or len(requested) != len(set(requested))
+                ):
+                    raise WorkspaceError("Stored requested OIDs are invalid.")
+                supplied_requested = payload.get("requested_oids")
+                if supplied_requested is not None and supplied_requested != requested:
+                    raise WorkspaceError(
+                        "Completion requested OIDs do not match the active operation."
+                    )
                 returned = payload.get("returned_oids", [])
                 missing = payload.get("missing_oids", [])
                 hashes = payload.get("payload_sha256_by_oid", {})
