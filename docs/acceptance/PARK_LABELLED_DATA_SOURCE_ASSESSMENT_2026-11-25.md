@@ -8,7 +8,7 @@
 
 ## 1. Decision summary
 
-No single inspected source can be treated as a drop-in, 100,000-object, 15-class, DR24-labelled training set.
+The ALeRCE 2020 labelled set is a strong primary label-manifest candidate. The paper reports 123,496 labelled sources across the 15-class taxonomy. This exceeds the technical plan's 100,000-source count before DR24 matching. It is not yet a 100,000-source DR24 cohort. The matched count and usable-light-curve count are unknown.
 
 Use separate roles for each source:
 - Use ALeRCE 2020 as the frozen 15-class historical reference.
@@ -31,13 +31,18 @@ The 150-object v0.2.0 benchmark is a frozen benchmark. It is not the Park cohort
   - features_for_lc_classifier_20200609.csv;
   - ALeRCE_lc_classifier_outputs_ZTF_unlabeled_set_20200609.csv.
 - The data ends on 2020-06-09.
-- The labelled CSV is the 15-class ALeRCE labelled set.
+- The labelled CSV contains `objectId` and `classALeRCE` and represents the 15-class ALeRCE labelled set.
+- The 2020 paper reports 123,496 labelled sources: 87,065 periodic, 34,713 stochastic and 1,718 transient sources. The class-level taxonomy remains the 15-class ALeRCE taxonomy.
 - The 868,371-object output file contains predictions for an unlabeled set. Do not treat those predictions as ground truth.
+- The labelled CSV does not provide the full DR24 HATS coordinates. Resolve ALeRCE OIDs through the documented TAP service before cross-matching to DR24.
 
 Use:
+- primary candidate label manifest for the new Park cohort;
 - frozen historical benchmark comparison;
 - taxonomy and label-source inspection;
 - a historical reference for the v0.2.0 pipeline.
+
+The 123,496 source count is not the DR24 cohort count. The DR24 match rate, number of unique physical sources, number of usable filter-specific HATS light curves and post-QC count must be measured. The cohort passes only if the predeclared minimum is met after identity and quality checks.
 
 Do not use:
 - the unlabeled prediction table as training labels;
@@ -52,7 +57,7 @@ Do not use:
 - The public service exposes ZTF tables such as object, detection, feature, probability, taxonomy, forced_photometry and dataquality.
 
 Use:
-- current object metadata and coordinates;
+- resolve the 123,496 ALeRCE label OIDs to current object metadata and coordinates;
 - detection and forced-photometry retrieval where required;
 - published feature and taxonomy metadata;
 - source-backed query provenance.
@@ -188,6 +193,7 @@ A new model does not resolve the missing original artifact. Record both facts.
 |---|---|
 | ALeRCE 2020 record identified | VERIFIED |
 | ALeRCE 2020 archive acquired and hashed in the current run | NOT RUN |
+| ALeRCE 2020 labelled-set source count | VERIFIED | 123,496 sources reported by the 2020 paper; not yet matched to DR24 |
 | ALeRCE TAP endpoint and current schema identified | VERIFIED |
 | ALeRCE 2025 paper and labelled-set size identified | VERIFIED |
 | ALeRCE 2025 source manifest acquired | BLOCKED / NOT FOUND IN INSPECTED PAPER |
