@@ -123,28 +123,28 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 "http://127.0.0.1:8766/workbench/?desktop=1",
                 wait_until="domcontentloaded",
             )
-            assert page.locator("html").get_attribute("lang") == "fa"
-            assert page.locator("html").get_attribute("dir") == "rtl"
-            assert page.get_by_text("داشبورد").is_visible()
+            assert page.locator("html").get_attribute("lang") == "en"
+            assert page.locator("html").get_attribute("dir") == "ltr"
+            assert page.get_by_text("Dashboard").is_visible()
             assert page.locator('[data-view="classification"]').is_hidden()
             page.locator('[data-view="dr24"]').click()
             page.locator("#dr24ObjectIds").wait_for(state="visible")
             page.locator("#dr24ObjectIds").fill("101, 202")
             page.locator("#dr24LoadButton").click()
             page.wait_for_function(
-                "() => document.querySelector('#dr24Status')?.textContent.includes('پاسخ خام DR24 دریافت شد')",
+                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
                 timeout=10_000,
             )
 
             assert backend.calls == [(101, 202)]
             assert page.locator("#dr24Results .panel").count() == 2
-            assert page.get_by_text("OID 101 · فیلتر g").is_visible()
-            assert page.get_by_text("OID 202 · فیلتر r").is_visible()
+            assert page.get_by_text("OID 101 · filter g").is_visible()
+            assert page.get_by_text("OID 202 · filter r").is_visible()
             assert page.locator("#dr24Results svg circle").count() == 4
             assert page.locator("#dr24Results svg .dr24-error-bar").count() == 4
             assert page.locator("#dr24Results .report-content").count() == 2
-            assert page.get_by_text("خلاصه توصیفی سری زمانی").count() == 2
-            assert page.get_by_text("میانه فاصله نمونه‌برداری (روز)").count() == 2
+            assert page.get_by_text("Descriptive time-series summary").count() == 2
+            assert page.get_by_text("Median sampling interval (days)").count() == 2
             assert "DIAGNOSTIC_NOT_PRODUCTION_APPROVED" in page.locator(
                 "#dr24Results"
             ).inner_text()
@@ -177,14 +177,14 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator('[data-view="dr24"]').click()
             page.locator("#dr24ObjectIds").fill("101,101")
             page.locator("#dr24LoadButton").click()
-            assert "OID تکراری مجاز نیست" in page.locator("#dr24Status").inner_text()
+            assert "Duplicate object IDs are not allowed" in page.locator("#dr24Status").inner_text()
             assert backend.calls == [(101, 202)]
 
             page.locator("#dr24ObjectIds").fill(
                 ",".join(str(value) for value in range(1, 12))
             )
             page.locator("#dr24LoadButton").click()
-            assert "بین ۱ تا ۱۰ شناسه وارد کنید" in page.locator("#dr24Status").inner_text()
+            assert "Enter between 1 and 10 object IDs." in page.locator("#dr24Status").inner_text()
             assert backend.calls == [(101, 202)]
             browser.close()
     finally:

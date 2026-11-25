@@ -224,7 +224,13 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
     assert "connect-src 'self'" in html
     assert 'src="./desktop-bootstrap.js"' in html
     assert "<script>" not in html
-    assert 'document.documentElement.dir = "rtl"' in bootstrap
+    assert 'document.documentElement.lang = "en"' in bootstrap
+    assert 'document.documentElement.dir = "ltr"' in bootstrap
+
+    for asset_name in ("index.html", "app.js", "desktop-bootstrap.js", "styles.css"):
+        asset = (static_dir / asset_name).read_text(encoding="utf-8")
+        assert not any("\u0600" <= char <= "\u06FF" for char in asset), asset_name
+
 
 
 def test_validation_runner_peak_memory_measurement_is_portable() -> None:

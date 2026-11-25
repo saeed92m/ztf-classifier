@@ -57,14 +57,14 @@ Function .onInit
   ${OrIf} $0 == "0.0.0.0"
     DetailPrint "Installing Microsoft Edge WebView2 Runtime..."
     SetOutPath "$TEMP"
-    File /oname=MicrosoftEdgeWebView2Setup.exe "dist\\MicrosoftEdgeWebView2Setup.exe"
-    ExecWait '"$TEMP\\MicrosoftEdgeWebView2Setup.exe" /silent /install' $1
-    Delete "$TEMP\\MicrosoftEdgeWebView2Setup.exe"
+    File /oname=MicrosoftEdgeWebView2Setup.exe "dist\MicrosoftEdgeWebView2Setup.exe"
+    ExecWait '"$TEMP\MicrosoftEdgeWebView2Setup.exe" /silent /install' $1
+    Delete "$TEMP\MicrosoftEdgeWebView2Setup.exe"
     ClearErrors
-    ReadRegStr $0 HKLM "SOFTWARE\\WOW6432Node\\Microsoft\\EdgeUpdate\\Clients\\${WEBVIEW2_CLIENT_ID}" "pv"
+    ReadRegStr $0 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\${WEBVIEW2_CLIENT_ID}" "pv"
     ${If} $0 == ""
     ${OrIf} $0 == "0.0.0.0"
-      ReadRegStr $0 HKCU "Software\\Microsoft\\EdgeUpdate\\Clients\\${WEBVIEW2_CLIENT_ID}" "pv"
+      ReadRegStr $0 HKCU "Software\Microsoft\EdgeUpdate\Clients\${WEBVIEW2_CLIENT_ID}" "pv"
     ${EndIf}
     ${If} $0 == ""
     ${OrIf} $0 == "0.0.0.0"

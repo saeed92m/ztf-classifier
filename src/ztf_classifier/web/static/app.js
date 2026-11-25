@@ -6,174 +6,9 @@ const desktopMode = params.get("desktop") === "1";
 let desktopDr24Payload = null;
 let desktopRawExport = null;
 let desktopRawExportPersisted = false;
-const desktopTranslations = {
-  "ALPHA": "ZTF CLASSIFIER",
-  "Scientific Analysis Workbench": "نسخه آزمایشی دسکتاپ",
-  "API ready": "اتصال محلی برقرار است",
-  "Open theme settings": "تنظیمات نمایش",
-  "ANALYSIS": "کاوش داده",
-  "Overview": "نمای کلی",
-  "Observations": "رصدها",
-  "DR24 Explorer (raw)": "کاوش داده‌های خام DR24",
-  "Features": "ویژگی‌ها",
-  "Classification": "طبقه‌بندی",
-  "Uncertainty & OOD": "عدم‌قطعیت و OOD",
-  "Provenance": "منشأ داده",
-  "WORKSPACE": "فضای کار",
-  "Batch jobs": "پردازش دسته‌ای",
-  "Catalog": "کاتالوگ",
-  "Reports": "گزارش‌ها",
-  "Scientific Validation": "اعتبارسنجی علمی",
-  "MODEL": "مدل",
-  "API": "رابط محلی",
-  "v1 · API-backed": "نسخه آزمایشی · API محلی",
-  "OBJECT ANALYSIS": "تحلیل جرم",
-  "Select an object": "شناسه جرم را وارد کنید",
-  "Provide an object ID to load scientific data": "برای دریافت داده، شناسه DR24 را وارد کنید",
-  "Export report": "خروجی گزارش",
-  "Run analysis": "اجرای تحلیل",
-  "Predicted class": "کلاس پیش‌بینی‌شده",
-  "Top probability": "بیشترین احتمال",
-  "Conformal set": "مجموعه همدیس",
-  "OOD percentile": "صدک OOD",
-  "Light curve": "منحنی نوری",
-  "Observation-domain view · flux/magnitude history": "نمای داده رصدی · تاریخچه شار/قدر",
-  "observations": "رصدها",
-  "uncertainty": "عدم‌قطعیت",
-  "mag": "قدر",
-  "Calibrated probability distribution": "توزیع احتمال کالیبره",
-  "Details": "جزئیات",
-  "Scientific context": "زمینه علمی",
-  "Traceable analysis metadata": "فراداده تحلیل قابل ردیابی",
-  "Object ID": "شناسه جرم",
-  "Feature schema": "طرح‌واره ویژگی",
-  "Model": "مدل",
-  "Calibration": "کالیبراسیون",
-  "Data provenance": "منشأ داده",
-  "OBJECT INSPECTOR": "بازرس جرم",
-  "ZTF OBJECT": "جرم ZTF",
-  "Coordinates from loaded observation metadata": "مختصات از فراداده رصد دریافت‌شده",
-  "ANALYSIS STATE": "وضعیت تحلیل",
-  "Inference": "استنتاج",
-  "Conformal": "همدیس",
-  "Dataset": "مجموعه‌داده",
-  "Model artifact": "آرتیفکت مدل",
-  "Schema": "طرح‌واره",
-  "Open provenance graph": "نمایش گراف منشأ",
-  "Appearance": "ظاهر",
-  "Theme": "پوسته",
-  "Auto": "خودکار",
-  "System": "سیستم",
-  "Deep Space": "فضای ژرف",
-  "Alpha Theme": "پوسته Alpha",
-  "Light": "روشن",
-  "Day starts": "شروع روز",
-  "Night starts": "شروع شب",
-  "Auto follows local clock; System follows the operating-system preference.": "حالت خودکار از ساعت محلی پیروی می‌کند؛ حالت سیستم از تنظیمات Windows.",
-  "SOURCE EXPLORER · EXPERIMENTAL": "کاوشگر منبع · آزمایشی",
-  "DR24 Explorer": "کاوشگر DR24",
-  "Native DR24 data only. No feature normalization or model inference.": "فقط داده خام DR24. هیچ نرمال‌سازی ویژگی یا استنتاج مدلی انجام نمی‌شود.",
-  "Indexed multi-OID lookup": "جست‌وجوی شاخص‌محور چندشناسه‌ای",
-  "Enter 1–10 positive ZTF DR24 object IDs. Separate OIDs remain separate records; no broad catalog scan is performed.": "۱ تا ۱۰ شناسه مثبت ZTF DR24 وارد کنید. هر OID یک رکورد مستقل است؛ اسکن گسترده کاتالوگ انجام نمی‌شود.",
-  "DR24 object IDs": "شناسه‌های جرم DR24",
-  "One or more OIDs, separated by commas or spaces": "یک یا چند OID؛ با ویرگول یا فاصله جدا کنید",
-  "Load raw light curves": "دریافت منحنی‌های نوری خام",
-  "Download raw JSON + QC": "دریافت JSON خام + QC",
-  "No DR24 objects loaded.": "هنوز داده‌ای از DR24 دریافت نشده است.",
-  "Enter up to 10 OIDs to inspect native DR24 records.": "برای مشاهده داده خام، حداکثر ۱۰ OID وارد کنید.",
-  "Acquisition provenance": "منشأ دریافت داده",
-  "Source, schema, query, missing OIDs and payload hashes": "منبع، طرح‌واره، پرس‌وجو، OIDهای مفقود و هش داده",
-  "No acquisition performed.": "هنوز دریافت داده انجام نشده است.",
-  "Raw epoch records (first 50)": "ردیف‌های خام زمانی (۵۰ مورد نخست)",
-  "Raw-preserving QC assessment": "ارزیابی QC با حفظ داده خام",
-  "No epochs in payload.": "در این داده ردیف زمانی وجود ندارد.",
-  "No server-side QC assessment was returned. Raw epochs are still preserved.": "ارزیابی QC از سرور دریافت نشد. ردیف‌های خام حفظ شده‌اند.",
-  "No DR24 export available": "خروجی DR24 در دسترس نیست",
-  "DR24 acquisition failed": "دریافت DR24 ناموفق بود",
-  "Local settings unavailable": "تنظیمات محلی در دسترس نیست",
-  "Object required": "شناسه جرم لازم است",
-  "Descriptive time-series summary": "خلاصه توصیفی سری زمانی",
-  "Source-native descriptive statistics · not model features or classification": "آمار توصیفی مستقیم از منبع · نه ویژگی مدل و نه طبقه‌بندی",
-  "Finite HMJD/mag pairs": "زوج‌های معتبر HMJD/قدر",
-  "HMJD span (days)": "بازه HMJD (روز)",
-  "Median sampling interval (days)": "میانه فاصله نمونه‌برداری (روز)",
-  "Median magnitude": "میانه قدر",
-  "Magnitude P05–P95 range": "بازه قدر P05–P95",
-  "Median non-negative magerr": "میانه خطای قدر غیرمنفی",
-  "All finite HMJD/magnitude pairs are included, regardless of catflags. No epoch filtering, time conversion, photometry conversion, OID grouping, feature generation, or inference was performed.": "تمام زوج‌های معتبر HMJD/قدر، بدون توجه به catflags، در آمار آمده‌اند. هیچ ردیف زمانی حذف نشده و تبدیل زمان، تبدیل نورسنجی، گروه‌بندی OID، تولید ویژگی یا استنتاج انجام نشده است.",
-  "Time: HMJD · native ZTF magnitude · vertical bars: reported magerr · no cross-OID grouping": "زمان: HMJD · قدر خام ZTF · میله‌های عمودی: magerr گزارش‌شده · بدون گروه‌بندی بین OIDها",
-  "Field": "میدان",
-  "filter": "فیلتر",
-  "rcid": "rcid",
-  "epochs": "ردیف‌های زمانی",
-  "catalog": "کاتالوگ",
-  "payload SHA-256": "هش SHA-256 داده",
-  "No finite numeric HMJD/magnitude pairs are available to plot. Raw rows remain available below and in the JSON export.": "زوج عددی معتبر HMJD/قدر برای نمودار وجود ندارد. ردیف‌های خام در جدول و خروجی JSON حفظ شده‌اند.",
-  "HMJD": "HMJD",
-  "magerr": "magerr",
-  "clrcoeff": "clrcoeff",
-  "catflags": "catflags",
-  "Diagnostic QC": "کنترل کیفیت تشخیصی",
-  "DIAGNOSTIC_NOT_PRODUCTION_APPROVED": "تشخیصی · تأییدنشده برای تولید",
-  "DR24 raw data loaded": "داده خام DR24 دریافت شد",
-  "No catalog rows were returned. No alternate source was used.": "هیچ ردیفی از کاتالوگ بازنگشت. منبع جایگزین استفاده نشد.",
-  "DR24 acquisition failed. No fallback source was used.": "دریافت DR24 ناموفق بود. منبع جایگزین استفاده نشد.",
-  "Unavailable: DR24 acquisition failed.": "در دسترس نیست: دریافت DR24 ناموفق بود."
-};
-function desktopTranslate(value) {
-  if (!desktopMode || typeof value !== "string") return value;
-  let translated = desktopTranslations[value] || value;
-  const replacements = [
-    ["Querying indexed DR24 source for ", "در حال پرس‌وجوی منبع شاخص‌گذاری‌شده DR24 برای "],
-    [" OID(s)…", " OID…"],
-    ["Raw DR24 response received. Requested ", "پاسخ خام DR24 دریافت شد. درخواست‌شده: "],
-    [" · returned ", " · دریافت‌شده: "],
-    [" · missing ", " · مفقود: "],
-    [". No feature generation or inference was performed.", ". هیچ ویژگی یا استنتاجی تولید نشد."],
-    ["DR24 acquisition failed (", "دریافت DR24 ناموفق بود ("],
-    ["). No fallback source was used.", "). منبع جایگزین استفاده نشد."],
-    ["Enter between 1 and 10 object IDs.", "بین ۱ تا ۱۰ شناسه وارد کنید."],
-    ["Every object ID must be a positive integer.", "هر شناسه باید عدد صحیح مثبت باشد."],
-    ["Every object ID must be a safe positive integer.", "هر شناسه باید عدد صحیح مثبت و قابل‌نمایش باشد."],
-    ["Duplicate object IDs are not allowed.", "OID تکراری مجاز نیست."],
-    [" · filter ", " · فیلتر "],
-    ["Field ", "میدان "],
-    [" · epochs ", " · ردیف زمانی "],
-    [" / catalog ", " / کاتالوگ "],
-    [" · payload SHA-256 ", " · هش SHA-256 داده "],
-    ["Time: HMJD", "زمان: HMJD"],
-    ["native ZTF magnitude", "قدر خام ZTF"],
-    ["vertical bars: reported magerr", "میله‌های عمودی: magerr گزارش‌شده"],
-    ["no cross-OID grouping", "بدون گروه‌بندی بین OIDها"]
-  ];
-  for (const [source, target] of replacements) {
-    translated = translated.replaceAll(source, target);
-  }
-  return translated;
-}
-function translateDesktopText(root = document) {
-  if (!desktopMode || !root) return;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  const nodes = [];
-  while (walker.nextNode()) nodes.push(walker.currentNode);
-  for (const node of nodes) {
-    const original = node.nodeValue || "";
-    const trimmed = original.trim();
-    if (!trimmed) continue;
-    const translated = desktopTranslate(trimmed);
-    if (translated !== trimmed) node.nodeValue = original.replace(trimmed, translated);
-  }
-  if (root.querySelectorAll) {
-    root.querySelectorAll("[placeholder], [aria-label]").forEach(element => {
-      if (element.hasAttribute("placeholder")) {
-        element.setAttribute("placeholder", desktopTranslate(element.getAttribute("placeholder")));
-      }
-      if (element.hasAttribute("aria-label")) {
-        element.setAttribute("aria-label", desktopTranslate(element.getAttribute("aria-label")));
-      }
-    });
-  }
-}
+function desktopTranslate(value) { return value; }
+function translateDesktopText() {}
+
 const state = {
   oid: params.get("oid") || "",
   survey: params.get("survey") || "ztf",
@@ -488,36 +323,36 @@ const titles = {
   catalog: ["Catalog", "Catalog query and export module"],
   reports: ["Reports", "Scientific report generation module"],
   validation: ["Scientific Validation", "Release-blocking scientific evidence and provenance"],
-  "desktop-home": ["داشبورد", "نمای کلی نسخه آزمایشی پارک"],
-  workspaces: ["پروژه‌ها", "ساخت و بازگشایی فضای کاری"],
-  sources: ["منبع داده", "منبع فعال و قرارداد دریافت داده"],
-  "desktop-provenance": ["منشأ داده", "فراداده و شواهد دریافت"],
-  "desktop-export": ["گزارش و خروجی", "خروجی خام JSON و اطلاعات بازتولید"],
-  "desktop-settings": ["تنظیمات", "تنظیمات محلی برنامه"],
-  "desktop-help": ["راهنما", "راهنمای استفاده و محدوده علمی نسخه"],
+  "desktop-home": ["Dashboard", "Park preview overview"],
+  workspaces: ["Workspaces", "Create and open workspaces"],
+  sources: ["Data source", "Active source and retrieval contract"],
+  "desktop-provenance": ["Provenance", "Retrieval metadata and evidence"],
+  "desktop-export": ["Reports and exports", "Raw JSON export and reproducibility metadata"],
+  "desktop-settings": ["Settings", "Local application settings"],
+  "desktop-help": ["Help", "User guide and scientific scope"],
 };
 
 async function renderDesktopHome() {
   mainCanvas.innerHTML = `
-    <div class="canvas-header"><div><div class="eyebrow">نسخه آزمایشی پارک فناوری</div>
+    <div class="canvas-header"><div><div class="eyebrow">Park technology preview</div>
     <h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
     <section class="metric-grid">
-      <article class="metric-card"><span>منبع داده</span><strong>ZTF DR24</strong><small>IRSA HATS · دریافت زنده</small></article>
-      <article class="metric-card"><span>حالت پردازش</span><strong>RAW + DESCRIPTIVE</strong><small>داده خام، QC تشخیصی و آمار توصیفی</small></article>
-      <article class="metric-card"><span>مدل طبقه‌بندی</span><strong>NOT RUN</strong><small>در این نسخه فعال نیست</small></article>
-      <article class="metric-card"><span>خروجی</span><strong>JSON + Provenance</strong><small>پس از دریافت موفق داده</small></article>
+      <article class="metric-card"><span>Data source</span><strong>ZTF DR24</strong><small>IRSA HATS · Live retrieval</small></article>
+      <article class="metric-card"><span>Processing mode</span><strong>RAW + DESCRIPTIVE</strong><small>Raw data, diagnostic QC and descriptive statistics</small></article>
+      <article class="metric-card"><span>Classification model</span><strong>NOT RUN</strong><small>Not enabled in this preview</small></article>
+      <article class="metric-card"><span>Export</span><strong>JSON + Provenance</strong><small>After successful retrieval</small></article>
     </section>
     <section class="panel">
-      <div class="panel-title">شروع کار</div>
-      <p class="muted">یک تا ده شناسه ZTF DR24 وارد کنید. برنامه داده خام را از منبع اصلی دریافت می‌کند و منحنی نوری، QC تشخیصی، آمار توصیفی و منشأ داده را نمایش می‌دهد.</p>
-      <p class="muted" id="desktopWorkspaceStatus" role="status">در حال بررسی پروژه فعال…</p>
-      <button class="primary-button" id="startDr24Explorer" type="button" disabled>شروع کاوش داده DR24</button>
-      <button class="secondary-button" id="manageWorkspaces" type="button">مدیریت پروژه‌ها</button>
+      <div class="panel-title">Get started</div>
+      <p class="muted">Enter one to ten ZTF DR24 object IDs. The app retrieves raw data from the primary source and displays light curves, diagnostic QC, descriptive statistics and provenance.</p>
+      <p class="muted" id="desktopWorkspaceStatus" role="status">Checking active workspace…</p>
+      <button class="primary-button" id="startDr24Explorer" type="button" disabled>Open DR24 Explorer</button>
+      <button class="secondary-button" id="manageWorkspaces" type="button">Manage workspaces</button>
     </section>
     <section class="panel">
-      <div class="panel-title">محدوده علمی این نسخه</div>
-      <p>این نسخه داده خام و آمار توصیفی را نمایش می‌دهد. طبقه‌بندی، احتمال کالیبره، Abstention، OOD و کشف ناهنجاری در این نسخه اجرا نمی‌شوند.</p>
-      <p class="muted">اگر دریافت داده ناقص یا ناموفق باشد، وضعیت واقعی نمایش داده می‌شود. برنامه از منبع جایگزین استفاده نمی‌کند.</p>
+      <div class="panel-title">Scientific scope of this preview</div>
+      <p>This preview displays raw data and descriptive statistics. Classification, calibrated probabilities, abstention, OOD and anomaly detection are not run in this preview.</p>
+      <p class="muted">The app reports partial or failed retrieval. It does not use a fallback source.</p>
     </section>`;
   setViewHeading("desktop-home");
   document.getElementById("startDr24Explorer").addEventListener("click", () => showView("dr24"));
@@ -527,15 +362,15 @@ async function renderDesktopHome() {
     const status = document.getElementById("desktopWorkspaceStatus");
     const start = document.getElementById("startDr24Explorer");
     if (active.workspace) {
-      status.textContent = "پروژه فعال: " + active.workspace.name;
+      status.textContent = "Active workspace: " + active.workspace.name;
       start.disabled = false;
     } else {
-      status.textContent = "برای ثبت سابقه تحلیل و خروجی، ابتدا یک پروژه ایجاد کنید.";
+      status.textContent = "Create a workspace before recording analysis history and exports.";
       start.disabled = true;
     }
   } catch (error) {
     document.getElementById("desktopWorkspaceStatus").textContent =
-      "وضعیت پروژه قابل دریافت نیست: " + (error.message || "خطای سرویس");
+      "Could not retrieve workspace status: " + (error.message || "Service error");
   }
 }
 
@@ -544,23 +379,23 @@ function renderDesktopSources() {
     <div class="canvas-header"><div><div class="eyebrow">DATA SOURCE</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
     <section class="panel">
       <div class="panel-title">IRSA ZTF DR24 Lightcurves HATS</div>
-      <div class="panel-subtitle">منبع فعال نسخه آزمایشی</div>
+      <div class="panel-subtitle">Active preview source</div>
       <dl class="metadata">
-        <div><dt>انتشار</dt><dd>DR24</dd></div>
-        <div><dt>شاخص جست‌وجو</dt><dd>objectid</dd></div>
-        <div><dt>فیلترها</dt><dd>g / r / i</dd></div>
-        <div><dt>حد درخواست</dt><dd>۱ تا ۱۰ OID</dd></div>
-        <div><dt>نیاز شبکه</dt><dd>اتصال اینترنت لازم است</dd></div>
-        <div><dt>منبع جایگزین</dt><dd>استفاده نمی‌شود</dd></div>
+        <div><dt>Release</dt><dd>DR24</dd></div>
+        <div><dt>Search index</dt><dd>objectid</dd></div>
+        <div><dt>Filters</dt><dd>g / r / i</dd></div>
+        <div><dt>Request limit</dt><dd>1–10 OIDs</dd></div>
+        <div><dt>Network requirement</dt><dd>Internet connection required</dd></div>
+        <div><dt>Fallback source</dt><dd>Not used</dd></div>
       </dl>
     </section>
     <section class="panel">
-      <div class="panel-title">قرارداد داده</div>
+      <div class="panel-title">Data contract</div>
       <ul>
-        <li>زمان خام با ستون HMJD حفظ می‌شود؛ HMJD با MJD یکسان نیست.</li>
-        <li>قدر و خطای قدر خام ZTF حفظ می‌شوند.</li>
-        <li>catflags بدون ماسک‌کردن یا حذف ردیف‌ها نگهداری می‌شود.</li>
-        <li>هر OID یک رکورد مستقل است؛ گروه‌بندی منبع فیزیکی انجام نمی‌شود.</li>
+        <li>Raw time is preserved in the HMJD column; HMJD is not the same as MJD.</li>
+        <li>Native ZTF magnitude and magnitude error are preserved.</li>
+        <li>catflags are preserved; no masking or row removal is applied.</li>
+        <li>Each OID remains a separate record; no physical-source grouping is performed.</li>
       </ul>
     </section>`;
   setViewHeading("sources");
@@ -570,17 +405,17 @@ async function renderDesktopWorkspaces() {
   mainCanvas.innerHTML = `
     <div class="canvas-header"><div><div class="eyebrow">WORKSPACES</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
     <section class="panel">
-      <div class="panel-title">ایجاد فضای کاری</div>
-      <p class="muted">هر فضای کاری، فهرست عملیات و خروجی‌های خود را در پوشه کاربری برنامه نگهداری می‌کند.</p>
+      <div class="panel-title">Create workspace</div>
+      <p class="muted">Each workspace stores its operation history and exports in the app's user-data directory.</p>
       <form id="workspaceCreateForm" class="workspace-create-form">
-        <label for="workspaceName">نام پروژه</label>
-        <input id="workspaceName" name="name" type="text" maxlength="64" required placeholder="مثلاً بررسی اجرام گذرا">
-        <button class="primary-button" type="submit">ایجاد پروژه</button>
+        <label for="workspaceName">Workspace name</label>
+        <input id="workspaceName" name="name" type="text" maxlength="64" required placeholder="e.g. Transient-object review">
+        <button class="primary-button" type="submit">Create workspace</button>
       </form>
-      <p id="workspaceStatus" class="muted" role="status">در حال بارگذاری پروژه‌ها…</p>
+      <p id="workspaceStatus" class="muted" role="status">Loading workspaces…</p>
     </section>
     <section class="panel">
-      <div class="panel-title">پروژه‌های ذخیره‌شده</div>
+      <div class="panel-title">Saved workspaces</div>
       <div id="workspaceList" class="workspace-list"></div>
     </section>`;
   setViewHeading("workspaces");
@@ -594,30 +429,30 @@ async function renderDesktopWorkspaces() {
     const payload = await fetchJson("/v1/workspaces");
     const items = Array.isArray(payload.items) ? payload.items : [];
     if (!items.length) {
-      list.innerHTML = '<p class="muted">هنوز پروژه‌ای ایجاد نشده است.</p>';
+      list.innerHTML = '<p class="muted">No workspaces created yet.</p>';
     } else {
       list.innerHTML = items.map(item => {
         const active = item.is_active;
-        const label = active ? "فعال" : item.status === "CORRUPT" ? "نیازمند بررسی" : "ذخیره‌شده";
+        const label = active ? "Active" : item.status === "CORRUPT" ? "Needs review" : "Saved";
         const operation = item.last_operation;
         const operationText = operation
           ? operation.status + " · " + (operation.returned_oids || []).length +
             "/" + (operation.requested_oids || []).length + " OID"
-          : "هنوز عملیاتی ثبت نشده است";
+          : "No operations recorded yet";
         const exportText = item.last_export
-          ? "آخرین خروجی: " + item.last_export.file_name
-          : "هنوز خروجی ذخیره نشده است";
+          ? "Last export: " + item.last_export.file_name
+          : "No export saved yet";
         return `
           <article class="workspace-list-item">
             <div>
               <strong>${escapeHtml(item.name)}</strong>
               <small>${escapeHtml(label)} · ${escapeHtml(item.created_at_utc || "")}</small>
-              <small>آخرین عملیات: ${escapeHtml(operationText)}</small>
+              <small>Last operation: ${escapeHtml(operationText)}</small>
               <small>${escapeHtml(exportText)}</small>
             </div>
             <div class="workspace-actions">
-              <button class="text-button" type="button" data-open-workspace="${escapeHtml(item.workspace_id)}" ${active ? "disabled" : ""}>${active ? "پروژه فعال" : "بازکردن"}</button>
-              ${item.last_export ? '<button class="text-button" type="button" data-restore-export="' + escapeHtml(item.workspace_id) + '" data-export-file="' + escapeHtml(item.last_export.file_name) + '">بازیابی خروجی</button>' : ""}
+              <button class="text-button" type="button" data-open-workspace="${escapeHtml(item.workspace_id)}" ${active ? "disabled" : ""}>${active ? "Active workspace" : "Open"}</button>
+              ${item.last_export ? '<button class="text-button" type="button" data-restore-export="' + escapeHtml(item.workspace_id) + '" data-export-file="' + escapeHtml(item.last_export.file_name) + '">Restore export</button>' : ""}
             </div>
           </article>`;
       }).join("");
@@ -629,10 +464,10 @@ async function renderDesktopWorkspaces() {
             desktopRawExport = null;
             desktopDr24Payload = null;
             desktopRawExportPersisted = false;
-            status.textContent = "پروژه باز شد و به‌عنوان فضای کاری فعال ذخیره شد.";
+            status.textContent = "Workspace opened and set as active.";
             await refreshWorkspaces();
           } catch (error) {
-            status.textContent = "بازکردن پروژه ناموفق بود: " + (error.message || "خطای نامشخص");
+            status.textContent = "Could not open workspace: " + (error.message || "Unknown error");
             button.disabled = false;
           }
         });
@@ -652,16 +487,16 @@ async function renderDesktopWorkspaces() {
             desktopRawExport = restored;
             desktopDr24Payload = restored.source_payload || null;
             desktopRawExportPersisted = true;
-            status.textContent = "آخرین خروجی از فضای کاری بازیابی شد.";
+            status.textContent = "Latest export restored from workspace.";
             showView("desktop-export");
           } catch (error) {
-            status.textContent = "بازیابی خروجی ناموفق بود: " + (error.message || "خطای نامشخص");
+            status.textContent = "Could not restore export: " + (error.message || "Unknown error");
             button.disabled = false;
           }
         });
       });
     }
-    status.textContent = items.length + " پروژه ذخیره‌شده · فضای کاری فعال: " + (payload.active_workspace_id || "هیچ‌کدام");
+    status.textContent = items.length + " saved workspaces · active workspace: " + (payload.active_workspace_id || "None");
   }
 
   form.addEventListener("submit", async event => {
@@ -680,10 +515,10 @@ async function renderDesktopWorkspaces() {
       desktopDr24Payload = null;
       desktopRawExportPersisted = false;
       nameInput.value = "";
-      status.textContent = "پروژه ایجاد شد.";
+      status.textContent = "Workspace created.";
       await refreshWorkspaces();
     } catch (error) {
-      status.textContent = "ایجاد پروژه ناموفق بود: " + (error.message || "خطای نامشخص");
+      status.textContent = "Could not create workspace: " + (error.message || "Unknown error");
     } finally {
       submit.disabled = false;
     }
@@ -692,7 +527,7 @@ async function renderDesktopWorkspaces() {
   try {
     await refreshWorkspaces();
   } catch (error) {
-    status.textContent = "فهرست پروژه‌ها بارگذاری نشد: " + (error.message || "خطای نامشخص");
+    status.textContent = "Could not load workspaces: " + (error.message || "Unknown error");
   }
 }
 
@@ -701,8 +536,8 @@ function renderDesktopProvenance() {
   mainCanvas.innerHTML = `
     <div class="canvas-header"><div><div class="eyebrow">PROVENANCE</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
     <section class="panel">
-      <div class="panel-title">وضعیت منشأ داده</div>
-      <p class="muted">${provenance ? "داده از منبع DR24 دریافت شده است." : "NOT RUN · هنوز دریافت داده‌ای انجام نشده است."}</p>
+      <div class="panel-title">Provenance status</div>
+      <p class="muted">${provenance ? "Data was retrieved from the DR24 source." : "NOT RUN · No data retrieval has been performed."}</p>
       <pre class="report-content" id="desktopProvenanceJson">${provenance ? escapeHtml(JSON.stringify(provenance, null, 2)) : "NOT RUN"}</pre>
     </section>`;
   setViewHeading("desktop-provenance");
@@ -744,7 +579,7 @@ async function downloadDesktopRawExport() {
   } catch (error) {
     setConnectionState("Workspace export failed (" + (error.status || "storage") + ")", false);
     const status = document.getElementById("dr24Status");
-    if (status) status.textContent = "ذخیره خروجی در پروژه فعال ناموفق بود. فایل دانلود نشد.";
+    if (status) status.textContent = "Could not save the export to the active workspace. The file was not downloaded.";
   } finally {
     if (button) button.disabled = false;
   }
@@ -756,15 +591,15 @@ function renderDesktopExport() {
   mainCanvas.innerHTML = `
     <div class="canvas-header"><div><div class="eyebrow">EXPORT</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
     <section class="panel">
-      <div class="panel-title">خروجی خام JSON</div>
-      <p class="muted">${available ? "آماده دریافت" : "NOT RUN · ابتدا داده DR24 را دریافت کنید."}</p>
+      <div class="panel-title">Raw JSON export</div>
+      <p class="muted">${available ? "Ready to download" : "NOT RUN · Retrieve DR24 data first."}</p>
       <dl class="metadata">
-        <div><dt>طرح‌واره خروجی</dt><dd>${available ? "ztf-dr24-raw-export-v0.3" : "—"}</dd></div>
-        <div><dt>OIDهای درخواست‌شده</dt><dd>${escapeHtml((provenance.requested_oids || []).join(", ") || "—")}</dd></div>
-        <div><dt>OIDهای دریافت‌شده</dt><dd>${escapeHtml((provenance.returned_oids || []).join(", ") || "—")}</dd></div>
-        <div><dt>OIDهای مفقود</dt><dd>${escapeHtml((provenance.missing_oids || []).join(", ") || "—")}</dd></div>
+        <div><dt>Export schema</dt><dd>${available ? "ztf-dr24-raw-export-v0.3" : "—"}</dd></div>
+        <div><dt>Requested OIDs</dt><dd>${escapeHtml((provenance.requested_oids || []).join(", ") || "—")}</dd></div>
+        <div><dt>Returned OIDs</dt><dd>${escapeHtml((provenance.returned_oids || []).join(", ") || "—")}</dd></div>
+        <div><dt>Missing OIDs</dt><dd>${escapeHtml((provenance.missing_oids || []).join(", ") || "—")}</dd></div>
       </dl>
-      <button class="primary-button" id="desktopDownloadJson" type="button" ${available ? "" : "disabled"}>دریافت فایل JSON</button>
+      <button class="primary-button" id="desktopDownloadJson" type="button" ${available ? "" : "disabled"}>Download JSON file</button>
     </section>`;
   setViewHeading("desktop-export");
   const button = document.getElementById("desktopDownloadJson");
@@ -775,21 +610,21 @@ async function renderDesktopSettings() {
   mainCanvas.innerHTML = `
     <div class="canvas-header"><div><div class="eyebrow">SETTINGS</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
     <section class="panel">
-      <div class="panel-title">تنظیمات نمایش</div>
-      <p>برای تغییر پوسته، از دکمه تنظیمات در نوار بالای برنامه استفاده کنید.</p>
-      <p class="muted">تنظیمات و فایل‌های کاری در فضای کاربری Windows ذخیره می‌شوند. حذف برنامه، داده‌های کاربر را حذف نمی‌کند.</p>
+      <div class="panel-title">Display settings</div>
+      <p>Use the settings button in the application header to change the theme.</p>
+      <p class="muted">Settings and workspace files are stored in the Windows user-data directory. Uninstalling the app does not delete user data.</p>
     </section>
     <section class="panel">
-      <div class="panel-title">وضعیت اتصال</div>
-      <p id="desktopSettingsStatus" class="muted">در حال بررسی سرویس محلی…</p>
+      <div class="panel-title">Connection status</div>
+      <p id="desktopSettingsStatus" class="muted">Checking local service…</p>
     </section>`;
   setViewHeading("desktop-settings");
   const status = document.getElementById("desktopSettingsStatus");
   try {
     await fetchJson("/v1/settings");
-    status.textContent = "سرویس محلی در دسترس است.";
+    status.textContent = "Local service is available.";
   } catch {
-    status.textContent = "سرویس محلی در دسترس نیست.";
+    status.textContent = "Local service is unavailable.";
   }
 }
 
@@ -797,23 +632,23 @@ function renderDesktopHelp() {
   mainCanvas.innerHTML = `
     <div class="canvas-header"><div><div class="eyebrow">HELP & ABOUT</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
     <section class="panel">
-      <div class="panel-title">راهنمای سریع</div>
+      <div class="panel-title">Quick guide</div>
       <ol>
-        <li>به بخش «کاوش DR24» بروید.</li>
-        <li>یک تا ده OID مثبت وارد کنید.</li>
-        <li>دریافت داده را اجرا کنید و وضعیت درخواست را بررسی کنید.</li>
-        <li>منحنی نوری، جدول ردیف‌های خام، QC و آمار توصیفی را بررسی کنید.</li>
-        <li>منشأ داده را بازبینی و فایل JSON را دریافت کنید.</li>
+        <li>Open the DR24 Explorer.</li>
+        <li>Enter one to ten positive OIDs.</li>
+        <li>Run the retrieval and review the request status.</li>
+        <li>Review the light curve, raw observation table, QC and descriptive statistics.</li>
+        <li>Review provenance and download the JSON file.</li>
       </ol>
     </section>
     <section class="panel">
-      <div class="panel-title">محدودیت‌ها</div>
+      <div class="panel-title">Limitations</div>
       <ul>
-        <li>دریافت زنده به اتصال اینترنت نیاز دارد.</li>
-        <li>QC این نسخه تشخیصی است و تأیید تولیدی ندارد.</li>
-        <li>آمار توصیفی، ویژگی مدل نیست.</li>
-        <li>طبقه‌بندی و کشف ناهنجاری در این نسخه اجرا نمی‌شوند.</li>
-        <li>OID شناسه کاتالوگی است و به‌تنهایی هویت یک منبع فیزیکی را ثابت نمی‌کند.</li>
+        <li>Live retrieval requires an internet connection.</li>
+        <li>QC in this preview is diagnostic and is not production-approved.</li>
+        <li>Descriptive statistics are not model features.</li>
+        <li>Classification and anomaly detection are not run in this preview.</li>
+        <li>An OID is a catalog identifier. It does not prove physical-source identity.</li>
       </ul>
     </section>`;
   setViewHeading("desktop-help");
@@ -1048,7 +883,7 @@ async function loadDR24Explorer() {
     '<div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding:12px 0">',
     '<label for="dr24ObjectIds">DR24 object IDs</label>',
     '<textarea id="dr24ObjectIds" rows="3" placeholder="One or more OIDs, separated by commas or spaces" style="min-width:min(100%,520px)"></textarea>',
-    desktopMode ? '<button class="secondary-button" id="dr24SampleButton" type="button">شناسه‌های نمونه آزمون‌شده</button><small class="muted">این دو OID نمونه، دو رکورد مستقل‌اند.</small>' : '',
+    desktopMode ? '<button class="secondary-button" id="dr24SampleButton" type="button">Tested sample OIDs</button><small class="muted">These two sample OIDs are separate records.</small>' : '',
     '<button class="primary-button" id="dr24LoadButton" type="button">Load raw light curves</button>',
     '<button id="dr24ExportButton" type="button" disabled>Download raw JSON + QC</button>',
     '</div><p id="dr24Status" class="muted" role="status">No DR24 objects loaded.</p></section>',
@@ -1216,7 +1051,7 @@ async function loadDR24Explorer() {
     try {
       const activeWorkspace = await fetchJson("/v1/workspaces/active");
       if (!activeWorkspace.workspace) {
-        throw new Error("ابتدا یک پروژه ایجاد یا باز کنید.");
+        throw new Error("Create or open a workspace first.");
       }
       operationId = crypto.randomUUID().replace(/-/g, "");
       await fetchJson("/v1/workspaces/operations", {
@@ -1365,13 +1200,13 @@ document.querySelectorAll(".nav-item").forEach(button => {
 });
 
 if (desktopMode) {
-  document.title = "ZTF Classifier | نسخه آزمایشی پارک";
+  document.title = "ZTF Classifier | Park preview";
   document.querySelector(".brand-name").textContent = "ZTF CLASSIFIER";
-  document.querySelector(".brand-product").textContent = "نسخه آزمایشی دسکتاپ";
-  document.querySelector(".connection-state").setAttribute("aria-label", "وضعیت سرویس محلی");
-  document.querySelector(".icon-button").setAttribute("aria-label", "تنظیمات نمایش");
+  document.querySelector(".brand-product").textContent = "Desktop preview";
+  document.querySelector(".connection-state").setAttribute("aria-label", "Local service status");
+  document.querySelector(".icon-button").setAttribute("aria-label", "Display settings");
   const sectionLabels = document.querySelectorAll(".sidebar .section-label");
-  if (sectionLabels[0]) sectionLabels[0].textContent = "فضای کار";
+  if (sectionLabels[0]) sectionLabels[0].textContent = "Workspace";
   if (sectionLabels[1]) sectionLabels[1].hidden = true;
   const desktopViews = new Set([
     "dr24",

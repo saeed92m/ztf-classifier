@@ -9,6 +9,6 @@
   }
 
   document.documentElement.dataset.desktopPreview = "true";
-  document.documentElement.lang = "fa";
-  document.documentElement.dir = "rtl";
+  document.documentElement.lang = "en";
+  document.documentElement.dir = "ltr";
 })();

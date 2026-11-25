@@ -52,9 +52,11 @@
       "Commit 895cb816ec52aa99393ceba00006950444afe662 corrected the version match to '3[.]13'. A new exact-head run is required; no installer success is claimed.",
       "Exact-head Windows run 45474362635: one-folder build and frozen self-test passed; the signed WebView2 Evergreen bootstrapper was staged and verified; NSIS 3.13 was found and version-checked. Installer compilation then failed because the script requested the nonexistent NSIS language file Persian.nlf. The official NSIS language file is Farsi.nlf (language ID 1065, codepage 1256, RTL).",
       "Commit dbaf7fac79f5fd8ca90252088fbfdc1314bf5e2e changed the NSIS language identifier to Farsi and the language constant to LANG_FARSI. Exact-head installer compilation and install/uninstall tests remain pending.",
-      "Owner decision (2026-11-25): the Windows experimental pre-release is English-only. Persian UI/localization is not an acceptance requirement for this preview. Installer now uses NSIS English language only and English finish-page/runtime-error text; no Persian/Farsi language resource is required."
+      "Owner decision (2026-11-25): the Windows experimental pre-release is English-only. Persian UI/localization is not an acceptance requirement for this preview. Installer now uses NSIS English language only and English finish-page/runtime-error text; no Persian/Farsi language resource is required.",
+      "Exact-head Windows run 45559828597: dependency checks, 18 desktop/workspace tests, JavaScript syntax, Ruff, PyInstaller one-folder build, frozen self-test, signed WebView2 bootstrapper verification and NSIS 3.13 discovery passed. NSIS compilation failed because the installer script contained doubled path separators in the staged WebView2 bootstrapper path; NSIS could not find the file.",
+      "The installer path separators were normalized to Windows single backslashes. The English-only decision applies to the full desktop Workbench: Persian translation strings and RTL layout are removed; desktop language/direction are en/ltr and regression tests assert that no Arabic/Persian characters remain in UI assets."
     ],
-    "blocker": "Await exact-head Windows rerun after the English-only installer change. Required evidence: NSIS compilation, silent install, installed-file verification, launch/self-test, silent uninstall, and preservation of user data. The beta remains unaccepted until these checks pass."
+    "blocker": "Exact-head rerun must verify English/LTR UI, NSIS compilation, silent install, launch, uninstall, user-data preservation and build-manifest/checksum generation."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED_REMEDIATION_PENDING",
@@ -64,7 +66,8 @@
       "Some API data paths are relative to the current working directory.",
       "The checksum-verified NSIS 3.13 archive contains both a canonical root makensis.exe and a Bin copy; requiring exactly one compiler was an incorrect archive-layout assumption.",
       "The NSIS version assertion used an over-escaped PowerShell regex; the compiler correctly reported v3.13 with exit code 0, but the assertion did not match.",
-      "The installer requested MUI_LANGUAGE 'Persian' and LANG_PERSIAN, but NSIS 3.13 ships the language file as Farsi.nlf and defines LANG_FARSI. The mismatch prevented NSIS compilation."
+      "The installer requested MUI_LANGUAGE 'Persian' and LANG_PERSIAN, but NSIS 3.13 ships the language file as Farsi.nlf and defines LANG_FARSI. The mismatch prevented NSIS compilation.",
+      "The NSIS File instruction used doubled backslash separators in the relative WebView2 bootstrapper path, so the compiler searched for a non-existent path and aborted at installer.nsi line 60."
     ],
     "unresolved": [
       "WebView2 and .NET runtime behavior are not tested on the actual Windows device.",
