@@ -6,7 +6,7 @@ The first Park delivery is one Windows-installable laboratory prototype that imp
 
 The preview and installer are English-only and use left-to-right layout. Use STE100-style plain English in all user-facing content.
 
-CPVS and the 11,602-object discrepancy remain frozen and outside active scope until Park presentation. This does not resolve the scientific issue.
+The CPVS candidate-membership discrepancy remains an open scientific validation blocker. Do not treat it as resolved or remove it from the scientific risk register.
 
 The technical project document sets a minimum target of 100,000 labelled light curves. This number comes from the technical document, not from the acceptance worksheet itself.
 
@@ -62,7 +62,9 @@ The exact mainline port passed Windows Desktop Preview Build run [45667623568](h
 - DR24 acquisition preserves native source values. It does not silently substitute ALeRCE.
 - DR24 raw acquisition does not perform model inference.
 - Uninstall is designed to preserve user projects, logs and exports.
-- The Windows preview installer is unsigned. A checksum is not a code signature.\n- The NSIS installer is designed to install the Microsoft Evergreen WebView2 Runtime silently when missing. The bootstrapper is checked for a valid Microsoft Authenticode signature before it is embedded. Run #149 passed the installer smoke on the predecessor head. Exact-head mainline retest and clean-machine WebView2 verification remain open.\n- The preview targets x64 Windows only. The installer rejects 32-bit Windows.
+- The Windows preview installer is unsigned. A checksum is not a code signature.
+- The NSIS installer is designed to install the Microsoft Evergreen WebView2 Runtime silently when missing. The bootstrapper is checked for a valid Microsoft Authenticode signature before it is embedded. Exact-head run 45667623568 passed the Windows installer smoke. Clean-machine WebView2 verification remains open.
+- The preview targets x64 Windows only. The installer rejects 32-bit Windows.
 - The installer is unsigned. SHA-256 checksums do not provide a code signature.
 - The Windows installer is a preview build. It is unsigned and checksummed. A GitHub Pre-release is for evaluation only and does not establish scientific acceptance or commercial readiness.
 
@@ -75,7 +77,8 @@ The exact mainline port passed Windows Desktop Preview Build run [45667623568](h
 5. Validate calibration, abstention, anomaly detection and explainability on the declared Park population.
 6. Complete a 30–50-object guided demonstration and a reproducibility bundle.
 7. Pass clean Windows install, launch, persistence, upgrade/uninstall and data-preservation tests.
-8. Complete a clean-machine install, launch, DR24 retrieval, export, uninstall, and user-data preservation test on the Park Windows device.\n9. Verify the WebView2 bootstrapper install path on a clean Windows machine with no pre-installed Runtime.
+8. Complete a clean-machine install, launch, DR24 retrieval, export, uninstall, and user-data preservation test on the Park Windows device.
+9. Verify the WebView2 bootstrapper install path on a clean Windows machine with no pre-installed Runtime.
 
 ## Current delivery decision
 
