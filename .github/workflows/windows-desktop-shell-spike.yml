@@ -207,8 +207,25 @@ jobs:
           $desktopShortcut = Join-Path $env:USERPROFILE "Desktop\\ZTF Classifier.lnk"
           if (-not (Test-Path $startMenuShortcut)) { throw "Start Menu shortcut is missing." }
           if (-not (Test-Path $desktopShortcut)) { throw "Desktop shortcut is missing." }
+          $builtExe = (Resolve-Path "dist/ZTFClassifier/ZTFClassifier.exe").Path
+          $builtHash = (Get-FileHash -LiteralPath $builtExe -Algorithm SHA256).Hash
+          $installedHash = (Get-FileHash -LiteralPath $installedExe -Algorithm SHA256).Hash
+          if ($builtHash -ne $installedHash) {
+            throw "Installed executable differs from the verified PyInstaller build."
+          }
           & $installedExe --self-test
-          if ($LASTEXITCODE -ne 0) { throw "Installed application self-test failed." }
+          $selfTestExitCode = $LASTEXITCODE
+          $selfTestReport = Join-Path $env:LOCALAPPDATA "ZTFClassifier/logs/desktop-self-test.json"
+          if (Test-Path -LiteralPath $selfTestReport) {
+            Write-Host "Installed application self-test report:"
+            Get-Content -LiteralPath $selfTestReport -Raw | Write-Host
+          }
+          else {
+            throw "Installed application did not write its self-test report."
+          }
+          if ($selfTestExitCode -ne 0) {
+            throw "Installed application self-test failed with exit code $selfTestExitCode."
+          }
           $userData = Join-Path $env:LOCALAPPDATA "ZTFClassifier"
           $uninstaller = Join-Path $installDir "Uninstall.exe"
           $uninstall = Start-Process -FilePath $uninstaller -ArgumentList "/S" -Wait -PassThru
