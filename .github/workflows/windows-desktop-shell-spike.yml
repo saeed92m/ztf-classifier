@@ -213,18 +213,19 @@ jobs:
           if ($builtHash -ne $installedHash) {
             throw "Installed executable differs from the verified PyInstaller build."
           }
-          & $installedExe --self-test
-          $selfTestExitCode = $LASTEXITCODE
+          $selfTest = Start-Process -FilePath $installedExe -ArgumentList "--self-test" -Wait -PassThru
           $selfTestReport = Join-Path $env:LOCALAPPDATA "ZTFClassifier/logs/desktop-self-test.json"
-          if (Test-Path -LiteralPath $selfTestReport) {
-            Write-Host "Installed application self-test report:"
-            Get-Content -LiteralPath $selfTestReport -Raw | Write-Host
+          if (-not (Test-Path -LiteralPath $selfTestReport)) {
+            throw "Installed application did not write its self-test report. Process exit code: $($selfTest.ExitCode)"
           }
-          else {
-            throw "Installed application did not write its self-test report."
+          Write-Host "Installed application self-test report:"
+          Get-Content -LiteralPath $selfTestReport -Raw | Write-Host
+          $report = Get-Content -LiteralPath $selfTestReport -Raw | ConvertFrom-Json
+          if ($report.status -ne "PASS") {
+            throw "Installed application self-test did not PASS. Process exit code: $($selfTest.ExitCode). Detail: $($report.error)"
           }
-          if ($selfTestExitCode -ne 0) {
-            throw "Installed application self-test failed with exit code $selfTestExitCode."
+          if ($selfTest.ExitCode -ne 0) {
+            throw "Installed application self-test reported PASS but exited with code $($selfTest.ExitCode)."
           }
           $userData = Join-Path $env:LOCALAPPDATA "ZTFClassifier"
           $uninstaller = Join-Path $installDir "Uninstall.exe"
