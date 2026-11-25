@@ -25,25 +25,10 @@ The current benchmark contains **150 ZTF objects across 15 ALeRCE classes**. ALe
 
 ## Product direction
 
-ZTF Classifier is being expanded into a cross-platform **Astronomical Data Analysis & Discovery Platform**.
+ZTF Classifier is evolving from a research classifier into a broader astronomical data analysis platform. The public repository documents implemented interfaces, supported workflows, scientific contracts, and user guidance. Internal roadmaps, project governance, Park planning, and operational knowledge are maintained in the private project workspace.
 
-The planned end-user experience is a self-contained desktop application for Windows, macOS, and Linux. Users should not need to install Python, pip, virtual environments, Git, or use a terminal for normal operation. CLI and API interfaces remain available for advanced users.
+See [the technical architecture](docs/architecture/ARCHITECTURE_v0.3.md) for the public architecture reference.
 
-The product expansion includes:
-- Data Manager and ingestion abstraction;
-- Object/Source Explorer;
-- light-curve and scientific visualization;
-- classification, uncertainty, calibration, conformal prediction, and OOD;
-- separate scientific-anomaly and Real/Bogus channels;
-- discovery candidate generation and transparent ranking;
-- catalog/cross-match evidence;
-- similar-object search;
-- human-in-the-loop review and feedback;
-- explainability and provenance/evidence views;
-- integrated Help and Troubleshooting;
-- reproducible reports and exports.
-
-See `docs/ECOSYSTEM_REVIEW_PRODUCT_EXPANSION_2026-10-08.md` and `docs/architecture/V1_PRODUCT_ARCHITECTURE.md` for the canonical expansion record.
 
 ## Scientific objective
 
@@ -416,11 +401,3 @@ The platform architecture now has executable domain contracts for external catal
 The current production model explicitly does **not** claim a scientific-anomaly detector: OOD diagnostics and scientific anomaly evidence are separate result channels. Scientific anomaly evidence remains `not_evaluated` until a dedicated analysis mode supplies and versions such evidence.
 
 
-## Current project roadmap and status (2026-10-11)
-
-- Current immutable software release: **v1.0.1**; frozen scientific baseline: **v0.2.0**.
-- Canonical continuity handbook: [HANDBOOK_UPDATED_v2.8.md](docs/HANDBOOK_UPDATED_v2.8.md).
-- Canonical cross-platform product roadmap: [PLATFORM_EXPANSION_ROADMAP.md](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md).
-- Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
-- Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
-- Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.
