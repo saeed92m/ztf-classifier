@@ -233,9 +233,14 @@ async function loadObject() {
 }
 async function runAnalysis() {
   const button = document.getElementById("runAnalysisButton");
+  const oid = typeof state.oid === "string" ? state.oid.trim() : "";
+  if (!oid) {
+    setConnectionState("Enter an object ID before analysis", false);
+    return;
+  }
   button.disabled = true; button.textContent = "Running…";
   try {
-    const result = await fetchJson("/v1/objects/" + encodeURIComponent(state.oid) + "/analysis", {
+    const result = await fetchJson("/v1/objects/" + encodeURIComponent(oid) + "/analysis", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ survey: state.survey }),
     });
