@@ -317,13 +317,13 @@ const titles = {
   dr24: ["DR24 Explorer", "Native DR24 light curve · raw data only"],
   features: ["Features", "Scientific Feature Engine output"],
   classification: ["Classification", "Model prediction and probabilities"],
-  uncertainty: ["Uncertainty / OOD / Anomaly", "Independent diagnostic channels"],
+  uncertainty: ["Uncertainty, OOD and anomaly", "Separate diagnostic outputs"],
   provenance: ["Provenance", "Traceable scientific metadata"],
   batch: ["Batch jobs", "Durable analysis jobs"],
   catalog: ["Catalog", "Catalog query and export module"],
   reports: ["Reports", "Scientific report generation module"],
   validation: ["Scientific Validation", "Release-blocking scientific evidence and provenance"],
-  "desktop-home": ["Dashboard", "Park preview overview"],
+  "desktop-home": ["Dashboard", "Park prototype overview"],
   workspaces: ["Workspaces", "Create and open workspaces"],
   sources: ["Data source", "Active source and retrieval contract"],
   "desktop-provenance": ["Provenance", "Retrieval metadata and evidence"],
@@ -338,7 +338,7 @@ async function renderDesktopHome() {
     <h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
     <section class="metric-grid">
       <article class="metric-card"><span>Primary data source</span><strong>ZTF DR24</strong><small>IRSA HATS · Bounded retrieval</small></article>
-      <article class="metric-card"><span>Labelled cohort</span><strong>NOT VERIFIED</strong><small>Technical-plan target: 100,000 objects</small></article>
+      <article class="metric-card"><span>Labelled cohort</span><strong>NOT VERIFIED</strong><small>Technical-plan target: 100,000 labelled light curves</small></article>
       <article class="metric-card"><span>Main model</span><strong id="parkModelStatus">NOT VERIFIED</strong><small>Authenticated model artifact required</small></article>
       <article class="metric-card"><span>Park acceptance</span><strong>NOT READY</strong><small>All four worksheet phases must pass</small></article>
     </section>
