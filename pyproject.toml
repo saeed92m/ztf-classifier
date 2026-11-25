@@ -48,6 +48,7 @@ dependencies = [
 ztf-classifier = "ztf_classifier.cli.main:main"
 ztf-classifier-api = "ztf_classifier.api.server:main"
 ztf-classifier-worker = "ztf_classifier.jobs.runner:main"
+ztf-classifier-desktop = "ztf_classifier.desktop.main:main"
 
 [project.optional-dependencies]
 notebook = [
@@ -63,11 +64,18 @@ dr24 = [
     "s3fs>=2026.9.0,<2027.0.0",
 ]
 dev = [
+    "httpx2>=2.16.2,<3",
     "pytest",
     "pytest-cov",
     "ruff",
     "build",
     "pip-audit",
+]
+desktop-windows = [
+    "pywebview==6.2.1",
+]
+desktop-build = [
+    "pyinstaller==6.22.3",
 ]
 
 [tool.setuptools.packages.find]
