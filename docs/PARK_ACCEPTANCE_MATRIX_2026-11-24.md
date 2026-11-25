@@ -1,5 +1,15 @@
 # Park Prototype Acceptance Matrix — 2026-11-24
 
+## Binding delivery decision — 2026-11-25
+
+The first Park delivery is one Windows-installable laboratory prototype that implements all four worksheet phases and the six-month technical roadmap. It is not a raw-data viewer-only preview. The required capabilities include DR24 data and a pinned labelled cohort, feature engineering, baseline and XGBoost/LightGBM classification, calibrated uncertainty, abstention, separate anomaly analysis, SHAP explainability, temporal and external validation, dashboard, reproducible reports and Windows packaging.
+
+The preview and installer are English-only and use left-to-right layout. Use STE100-style plain English in all user-facing content.
+
+CPVS and the 11,602-object discrepancy remain frozen and outside active scope until Park presentation. This does not resolve the scientific issue.
+
+The technical project document sets a minimum target of 100,000 labelled light curves. This number comes from the technical document, not from the acceptance worksheet itself.
+
 ## Source of requirements
 
 This matrix is based on the submitted Park acceptance worksheet and the final project proposal. It preserves the declared six-month delivery structure:
