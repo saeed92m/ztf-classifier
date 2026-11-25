@@ -54,9 +54,10 @@
       "Commit dbaf7fac79f5fd8ca90252088fbfdc1314bf5e2e changed the NSIS language identifier to Farsi and the language constant to LANG_FARSI. Exact-head installer compilation and install/uninstall tests remain pending.",
       "Owner decision (2026-11-25): the Windows experimental pre-release is English-only. Persian UI/localization is not an acceptance requirement for this preview. Installer now uses NSIS English language only and English finish-page/runtime-error text; no Persian/Farsi language resource is required.",
       "Exact-head Windows run 45559828597: dependency checks, 18 desktop/workspace tests, JavaScript syntax, Ruff, PyInstaller one-folder build, frozen self-test, signed WebView2 bootstrapper verification and NSIS 3.13 discovery passed. NSIS compilation failed because the installer script contained doubled path separators in the staged WebView2 bootstrapper path; NSIS could not find the file.",
-      "The installer path separators were normalized to Windows single backslashes. The English-only decision applies to the full desktop Workbench: Persian translation strings and RTL layout are removed; desktop language/direction are en/ltr and regression tests assert that no Arabic/Persian characters remain in UI assets."
+      "The installer path separators were normalized to Windows single backslashes. The English-only decision applies to the full desktop Workbench: Persian translation strings and RTL layout are removed; desktop language/direction are en/ltr and regression tests assert that no Arabic/Persian characters remain in UI assets.",
+      "Exact-head Windows run 45561457913: dependency checks, DR24 imports, all 18 desktop/workspace tests and JavaScript syntax passed. Ruff lint passed. Ruff format failed only because the Unicode range endpoint used uppercase hex digits (`\\\\u06FF`); the formatter requires lowercase `\\\\u06ff`. The Windows build and installer steps were skipped after this formatting failure."
     ],
-    "blocker": "Exact-head rerun must verify English/LTR UI, NSIS compilation, silent install, launch, uninstall, user-data preservation and build-manifest/checksum generation."
+    "blocker": "Exact-head rerun must pass Ruff format, then complete PyInstaller build, frozen self-test, WebView2 verification, NSIS compile, silent install/launch/uninstall, user-data preservation and manifest/checksum generation."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED_REMEDIATION_PENDING",
@@ -67,7 +68,8 @@
       "The checksum-verified NSIS 3.13 archive contains both a canonical root makensis.exe and a Bin copy; requiring exactly one compiler was an incorrect archive-layout assumption.",
       "The NSIS version assertion used an over-escaped PowerShell regex; the compiler correctly reported v3.13 with exit code 0, but the assertion did not match.",
       "The installer requested MUI_LANGUAGE 'Persian' and LANG_PERSIAN, but NSIS 3.13 ships the language file as Farsi.nlf and defines LANG_FARSI. The mismatch prevented NSIS compilation.",
-      "The NSIS File instruction used doubled backslash separators in the relative WebView2 bootstrapper path, so the compiler searched for a non-existent path and aborted at installer.nsi line 60."
+      "The NSIS File instruction used doubled backslash separators in the relative WebView2 bootstrapper path, so the compiler searched for a non-existent path and aborted at installer.nsi line 60.",
+      "Ruff format rejected the uppercase hexadecimal spelling in the English-only UI regression test's Unicode range endpoint. This is a formatting-only failure, not a runtime or installer failure."
     ],
     "unresolved": [
       "WebView2 and .NET runtime behavior are not tested on the actual Windows device.",

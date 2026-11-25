@@ -229,7 +229,7 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
 
     for asset_name in ("index.html", "app.js", "desktop-bootstrap.js", "styles.css"):
         asset = (static_dir / asset_name).read_text(encoding="utf-8")
-        assert not any("\u0600" <= char <= "\u06FF" for char in asset), asset_name
+        assert not any("\u0600" <= char <= "\u06ff" for char in asset), asset_name
 
 
 
