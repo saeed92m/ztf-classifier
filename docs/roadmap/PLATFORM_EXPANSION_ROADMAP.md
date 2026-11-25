@@ -2,6 +2,8 @@
 
 > **2026-11-24 ACTIVE ROADMAP OVERRIDE — PARK WINDOWS PRE-RELEASE ONLY:** This roadmap is now gated by [the founder-approved scope freeze](../acceptance/PARK_WINDOWS_PRERELEASE_SCOPE_FREEZE_2026-11-24.md). Until the Windows-installable Park test pre-release has passed clean-machine install/run tests and has been presented to the Park, only tasks directly required for those acceptance gates may execute. All other tracks, including independent scientific research, CPVS, CIN runtime, cross-platform packaging and broad platform expansion, are inactive backlog. The previous web-only delivery decision is superseded for this stage. See the [Park requirements traceability matrix](../acceptance/PARK_PROTOTYPE_REQUIREMENTS_TRACEABILITY_2026-11-24.md) and [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158).
 
+**Selected active milestone — 2026-11-25:** English-only Windows Laboratory Preview. The Full Park MVP, 100,000-curve labelled cohort, model/uncertainty work and all independent research are inactive during this freeze. Reopen them only after Park presentation and a new written Founder decision.
+
 Status date: 2026-10-11  
 Current immutable software release: v1.0.1  
 Product implementation tracker: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158)  
