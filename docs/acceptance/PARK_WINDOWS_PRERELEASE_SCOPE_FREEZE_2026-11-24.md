@@ -1,139 +1,200 @@
-# انجماد دامنه پروژه تا تحویل نسخه آزمایشی Windows به پارک
+# Park Windows Prototype — Binding Scope Freeze
 
-- **تاریخ تصمیم:** 2026-11-24
-- **وضعیت:** ACTIVE / FOUNDER-APPROVED / SCOPE FREEZE
-- **مالک تصمیم:** Founder / Project Owner
-- **ردیاب تحویل:** [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158)
+- Decision date: 2026-11-25
+- Status: ACTIVE / FOUNDER-APPROVED
+- Owner: Founder / Project Owner
+- Delivery tracker: Issue #158
+- Primary acceptance contract: PARK_WINDOWS_DESKTOP_BETA_ACCEPTANCE_2026-11-24.md
+- Source documents: Park acceptance worksheet AP-02-140503 and the final technical project document
 
-## 1. تصمیم الزام‌آور
+## 1. Binding decision
 
-**تعیین سطح تحویل — 2026-11-25:** هدف فعال، Windows Laboratory Preview تعریف‌شده در قرارداد پذیرش PR #309 است. Full Park MVP شش‌ماهه، مرحله‌ای جداگانه و غیرفعال است؛ شروع آن پس از تحویل نسخه آزمایشی به پارک نیز به تصمیم کتبی جدید مالک نیاز دارد. **زبان نسخه آزمایشی انگلیسی است** و فارسی‌سازی/RTL در معیار پذیرش این نسخه نیست.
+The only active project objective is to deliver the first useful, Windows-installable Park laboratory prototype.
 
-از تاریخ این تصمیم، تنها هدف فعال ZTF Classifier تکمیل نسخه آزمایشی کاربردی مطابق تعهدات کاربرگ پذیرش و سند فنی ارائه‌شده به پارک علم و فناوری است.
+The prototype must implement and validate the four phases in the submitted acceptance worksheet:
 
-خروجی این مرحله باید یک **GitHub Pre-release قابل نصب روی Windows** باشد. ارزیاب پارک باید بتواند آن را روی یک Windows تمیز نصب کند، اجرا کند، گردش‌کار اصلی را انجام دهد و خروجی‌ها را آزمایش کند.
+1. Infrastructure, DR24 data, a labelled cohort and feature engineering.
+2. Baseline and main XGBoost or LightGBM classification with initial evaluation.
+3. Calibrated uncertainty, abstention, anomaly analysis and validation.
+4. Dashboard, documentation, reproducible reports and software-registration preparation.
 
-ساخت Pre-release، آزمون روی Windows و ارائه واقعی به پارک سه شرط جداگانه‌اند. انجماد دامنه تا ثبت ارائه و نتیجه آن ادامه دارد.
+A raw-data viewer, a desktop shell or a successful installer alone does not meet the Park claims.
 
-## 2. مبنای مستنداتی
+The final technical project document sets a minimum target of 100,000 labelled light curves for the first six-month roadmap. The acceptance worksheet does not state this number. Treat it as a technical-plan requirement, not as a quotation from the worksheet.
 
-منابع بررسی‌شده:
+The preview and installer must be English-only. Use plain, direct English. Use short sentences and familiar terms. Keep standard astronomical terms, units, identifiers and scientific labels unchanged. The UI must use left-to-right layout. Do not add Persian text or RTL layout to this delivery.
 
-1. کاربرگ پذیرش مرکز رشد، فایل `261007-091750-354.docx`:
-   - بخش 2-5، بند 6: مسیر توسعه نسخه‌های قابل نصب و داشبورد تحلیلی.
-   - بخش 2-10: داده ZTF، پیش‌پردازش، مهندسی ویژگی، مدل، عدم‌قطعیت، اعتبارسنجی و توسعه محصول.
-   - بخش 4-1 و جدول زمان‌بندی: چهار مرحله داده/ویژگی، مدل، عدم‌قطعیت/اعتبارسنجی و داشبورد/مستندسازی.
-2. سند فنی پروژه: بسته بازتولید باید شامل مخزن کد، راهنما و محیط قابل نصب باشد تا داور بتواند نتیجه را مستقل بازتولید کند.
-3. دستور صریح مالک در 2026-11-24: نسخه آزمایشی باید به‌صورت Pre-release برای نصب، اجرا و تست روی Windows آماده و به پارک ارائه شود.
+The scope freeze remains active until:
+- all required scientific and product gates pass;
+- the exact Windows installer passes clean-machine tests;
+- the complete workflow runs from the installed application;
+- the package and evidence are presented to the Park; and
+- the presentation result is recorded.
 
-**تفکیک منبع و تصمیم:** اسناد ارائه‌شده مسیر محصول قابل نصب و بازتولید را پشتیبانی می‌کنند. الزام مشخص Windows Pre-release و انجماد تمام فعالیت‌های مستقل، تصمیم اجرایی صریح مالک پروژه است؛ این دو مورد نقل‌قول مستقیم از کاربرگ نیستند.
+## 2. Source and decision hierarchy
 
-مرجع ردیابی دقیق هر ادعای کاربرگ و سند فنی به معیار آزمون، وضعیت شواهد و blockerها در [ماتریس ردیابی تعهدات نسخه آزمایشی پارک](PARK_PROTOTYPE_REQUIREMENTS_TRACEABILITY_2026-11-24.md) ثبت شده است. روش آزمون clean-Windows در [برنامه آزمون پذیرش Windows Pre-release](PARK_WINDOWS_PRERELEASE_TEST_PLAN.md) آمده است. در صورت تعارض خلاصه‌های قدیمی، این ماتریس و تصمیم انجماد دامنه جاری ملاک هستند.
+The active scope uses these sources:
 
-## 3. دامنه مجاز — Windows Laboratory Preview
+1. Park acceptance worksheet 261007-091750-354.docx, form AP-02-140503:
+   - Section 2.4: product purpose and scientific claims.
+   - Section 2.5: product use cases and installable software.
+   - Section 2.6: R&D complexity.
+   - Sections 2.9–2.10: architecture, data, features, models, uncertainty, anomaly analysis, validation and delivery.
+   - Section 4.1: four phases and the six-month schedule.
+2. Final technical project document:
+   - prototype scope and taxonomy;
+   - the 100,000-labelled-light-curve minimum;
+   - feature families, model plan and evaluation metrics;
+   - six-month roadmap and measurable outputs.
+3. Founder decisions in this project:
+   - deliver a Windows-installable prototype;
+   - use English only for this experimental release;
+   - keep CPVS and the 11,602-object discrepancy outside the active work;
+   - stop all work that does not directly support Park acceptance.
 
-فقط کارهای زیر فعال‌اند:
+If a summary conflicts with the source documents, use the source documents and this current Founder decision. Do not describe a Founder decision as a direct quotation from the worksheet.
 
-1. تکمیل desktop shell و مدیریت امن lifecycle سرویس محلی.
-2. تکمیل installer انگلیسی، dependency lock، checksum و build manifest.
-3. اجرای گردش‌کار واقعی DR24 در محدوده cohort و درخواست‌های کوچک و از پیش تعریف‌شده: انتخاب منبع/OID، retrieval، نمایش raw light curve به تفکیک OID و filter، QC تشخیصی و descriptive summary مجاز.
-4. تکمیل workspace و ذخیره/بازیابی وضعیت عملیات.
-5. ثبت provenance شامل source، release، OID، filter، schema، زمان retrieval و hashها.
-6. export JSON و آزمون تطبیق خروجی با ورودی.
-7. کنترل امنیت local API، WebView، فایل‌های محلی و مدیریت خطا.
-8. آزمون W01–W19، نصب و اجرای کامل روی Windows تمیز، restart، uninstall و حفظ داده کاربر.
-9. راهنمای نصب و کاربری، گزارش آزمون، release notes، demo script و بسته تحویل پارک.
-10. رفع نقصی که مستقیماً یکی از Gateهای همین نسخه را مسدود می‌کند.
+## 3. Active work
 
-طبقه‌بندی و کشف علمی فقط وقتی مجاز است که در قرارداد Windows Laboratory Preview صریحاً آمده باشد و Gate علمی آن پاس شده باشد. قرارداد فعلی Preview شامل ادعای classification یا model performance نیست.
+Only the following work is authorised.
 
-هر Issue، PR، Commit یا کار محلی باید به یکی از معیارهای پذیرش همین Preview متصل باشد. اگر ارتباط مستقیم روشن نیست، کار شروع نمی‌شود.
+### Phase 1 — Infrastructure, data and features
 
-## 4. فعالیت‌های خارج از دامنه و متوقف
+- Build and test the Windows desktop shell and local service lifecycle.
+- Acquire the declared ZTF DR24 data.
+- Build a pinned labelled cohort. The technical-plan target is at least 100,000 light curves.
+- Record source, release, query, object IDs, filters, labels, schemas, hashes and acquisition times.
+- Validate object identity and cross-filter grouping.
+- Define and test the photometry, time, quality and missing-data contracts.
+- Build the versioned feature pipeline.
+- Record feature definitions, units, software versions and failure states.
 
-تا زمان ارائه نسخه آزمایشی به پارک، هیچ فعالیت مستقلی در موارد زیر مجاز نیست:
+### Phase 2 — Baseline and main model
 
-- پژوهش، بازسازی، اجرای workflow یا تغییر کد مربوط به CPVS؛
-- اجرای مستقل یا توسعه Runtime مربوط به Cosmic Intelligence Network؛
-- توسعه قابلیت‌های پلتفرمی که برای نسخه تحویلی لازم نیست؛
-- پژوهش مدل، benchmark، دیتاست 100,000 منحنی و Full Park MVP؛
-- بسته‌بندی macOS/Linux در این مرحله؛
-- توسعه اتصال‌ها، سرویس‌ها، داشبوردها یا قابلیت‌های جانبی غیرضروری؛
-- بازطراحی معماری یا افزودن وابستگی بدون نیاز اثبات‌شده برای تحویل؛
-- فارسی‌سازی/RTL نسخه آزمایشی؛
-- هر فعالیتی که فقط به‌دلیل ارزش بلندمدت پیشنهاد می‌شود.
+- Reproduce the approved baseline.
+- Train and evaluate the selected CPU-first XGBoost or LightGBM model.
+- Use object-level and time-aware data splits.
+- Prevent object, label, temporal and feature leakage.
+- Report per-class metrics, Balanced Accuracy, Macro-F1, precision, recall, confusion matrix, ROC-AUC and PR-AUC where valid.
+- Record the model artifact, taxonomy, feature set, split, configuration and hashes.
 
-این موارد حذف یا حل‌شده نیستند؛ فقط از برنامه فعال خارج شده‌اند. CPVS همچنان یک موضوع علمی حل‌نشده است، اما در این مرحله هیچ بررسی، اجرای workflow، تغییر کد یا تحلیل مرتبط با آن مجاز نیست. هیچ کد، تست، داده، workflow یا معیار پذیرش مربوط به کارهای خارج از دامنه در این مرحله تغییر نمی‌کند.
+### Phase 3 — Uncertainty, anomaly and validation
 
-## 5. Gateهای تحویل Windows Pre-release
+- Calibrate probabilities on a separate calibration set.
+- Evaluate calibration with ECE, MCE and Brier score.
+- Implement and evaluate the abstention policy.
+- Report Risk–Coverage and selective error.
+- Implement a separate anomaly-analysis path. Do not treat OOD scores as anomaly evidence.
+- Add SHAP explanations for eligible model outputs.
+- Run temporal validation and an independent external evaluation.
+- Produce a transferability report with population limits and failure cases.
 
-| Gate | مدرک لازم |
+### Phase 4 — Product and handoff
+
+- Integrate the full workflow into the Windows application.
+- Provide a dashboard for data, features, model outputs, uncertainty, abstention, anomalies and reports.
+- Provide reproducible exports and run manifests.
+- Complete user and installation guides.
+- Complete release notes, known limitations and the Park demo script.
+- Build the Windows installer and verify it on a clean Windows system.
+- Present the installed prototype and record Park feedback.
+
+Every task, issue, pull request, commit and workflow must map to one of these acceptance items.
+
+## 4. Frozen workstreams
+
+The following work must not run before Park presentation:
+
+- CPVS reconstruction, the 11,602-object discrepancy, CPVS diagnostics, data retrieval or code changes.
+- Cosmic Intelligence Network implementation.
+- Cross-survey expansion to Rubin/LSST or other surveys.
+- macOS or Linux desktop packaging.
+- New platform services, user networks or unrelated integrations.
+- New models or datasets that do not support the stated Park taxonomy and acceptance claims.
+- Broad refactoring or dependency changes without a direct acceptance need.
+- Commercial features that are not required for the Park prototype.
+- Persian localization or right-to-left layout.
+
+CPVS remains an unresolved scientific issue. This freeze does not resolve it. Do not change its status or claim that it is fixed. Keep its historical evidence intact. Do not run its workflows during this delivery stage.
+
+The v0.2.0 scientific baseline remains protected. Do not change its model, features, class order, benchmark, cutoff or acceptance criteria without a separate evidence-based review and written approval. Use the approved baseline where it supports the Park workflow.
+
+## 5. Mandatory scope gate
+
+Before starting work, answer this question:
+
+> Does this task directly implement, test, document or unblock one of the four Park phases or a required Windows acceptance gate?
+
+- Yes: the task may proceed. Define its acceptance test and evidence first.
+- No: do not start the task. Keep it in the inactive backlog.
+- Unclear: stop and clarify the link to an acceptance item.
+- Scope changes require a new written Founder decision.
+
+An existing issue, pull request, scheduled workflow, CI job or think-tank suggestion is not permission to expand scope.
+
+## 6. Acceptance gates
+
+Use only these states: PASS, FAIL, BLOCKED, NOT RUN or NOT APPLICABLE.
+
+| Gate | Required result |
 |---|---|
-| G1 — Scope | ماتریس ردیابی ادعاهای کاربرگ به قابلیت، آزمون و خروجی |
-| G2 — Build | بسته نصب Windows، نسخه، commit، dependency lock و checksum |
-| G3 — Clean install | نصب روی Windows تمیز، بدون نیاز کاربر عادی به Python، pip، Git یا ترمینال |
-| G4 — Launch | اجرای موفق، راه‌اندازی مجدد و رفتار روشن در خطا |
-| G5 — User workflow | اجرای گردش‌کار اصلی از رابط برنامه، نه با اسکریپت توسعه‌دهنده |
-| G6 — Data & provenance | نمایش منبع، نسخه، شناسه اجرا، وضعیت داده و علت رکوردهای ناقص |
-| G7 — Scientific claims | فقط خروجی‌هایی نمایش داده شوند که Gate متناظر را گذرانده‌اند؛ موارد تأییدنشده BLOCKED/NOT VERIFIED بمانند |
-| G8 — Reproducibility | اجرای مجدد با ورودی و تنظیمات pin‌شده و بررسی خروجی‌ها |
-| G9 — QA | گزارش آزمون نصب و اجرای Windows، خطاها و محدودیت‌ها |
-| G10 — Handover | راهنمای نصب/اجرا، release notes، demo script و بسته ارائه |
-| G11 — Park delivery | مدرک ارائه واقعی نسخه به پارک و ثبت نتیجه/بازخورد |
+| G1 — Scope | Every UI claim maps to a requirement and an acceptance test. |
+| G2 — Data | DR24 cohort, labels, identity and provenance are pinned and reconciled. |
+| G3 — Features | The versioned feature pipeline passes schema, numerical and regression tests. |
+| G4 — Baseline | The approved baseline is reproduced without changes to frozen artifacts. |
+| G5 — Main model | XGBoost or LightGBM evaluation passes leakage-safe tests. |
+| G6 — Calibration | Calibration metrics and plots are produced on a separate eligible set. |
+| G7 — Abstention | Risk–Coverage and selective error are measured. |
+| G8 — Anomaly | Anomaly results use a separate validated method and evidence. |
+| G9 — Explainability | SHAP output is reproducible and tied to the exact model and input. |
+| G10 — Transferability | Temporal and external evaluation reports are complete. |
+| G11 — Desktop | The full workflow runs from the installed Windows application. |
+| G12 — Security | Local API, WebView, file access and dependencies pass review. |
+| G13 — Installer | Clean Windows install, launch, restart, update/uninstall and data preservation pass. |
+| G14 — Reproducibility | Inputs, code, features, model, split, outputs and hashes are recorded. |
+| G15 — Handoff | Guides, limitations, demo script, release notes and evidence are complete. |
+| G16 — Park delivery | The prototype is presented and the result is recorded. |
 
-ساخت Pre-release به‌تنهایی به معنی پذیرش محصول یا تأیید علمی نیست. هیچ ادعای عملکردی بدون شواهد متناظر مجاز نیست.
+A skipped test is not PASS. A green CI workflow does not prove scientific validity. A successful installer does not prove the scientific workflow.
 
-## 6. Scope Gate
+## 7. English and STE100 requirement
 
-قبل از شروع هر کار این پرسش باید پاسخ مثبت داشته باشد:
+All user-facing preview content must be in English:
+- installer pages and error messages;
+- desktop navigation and screens;
+- status messages and validation errors;
+- plots, tables, labels and tooltips;
+- help, about, export labels and report headings.
 
-> آیا این کار مستقیماً یکی از Gateهای G1 تا G11 را تکمیل می‌کند یا مانع واقعی آن را رفع می‌کند؟
+Use short sentences. Use one instruction per sentence. Prefer active voice. Use consistent terms. Do not use Persian characters or RTL layout in preview assets.
 
-- **بله:** کار می‌تواند وارد برنامه فعال شود؛ معیار پذیرش و آزمون آن باید مشخص باشد.
-- **خیر یا نامشخص:** کار ممنوع است و فقط می‌تواند در backlog غیرفعال ثبت شود.
-- تغییر دامنه فقط با تأیید کتبی جدید Founder / Project Owner مجاز است.
-- هیچ عضو اتاق فکر، توسعه‌دهنده یا عامل خودکار حق گسترش یک‌طرفه دامنه را ندارد.
-- CI سبز، Issue موجود، زمان‌بندی خودکار یا پیشنهاد PR به‌تنهایی مجوز شروع کار نیست.
+Add automated tests that fail if Persian text or RTL settings return to the preview UI.
 
-## 7. تصمیم قبلی Web-only
+## 8. Think-tank oversight
 
-تصمیم 2026-11-18 درباره کافی‌بودن Web Application و موکول‌کردن نصب‌کننده دسکتاپ به مرحله بعد، برای تحویل فعلی **SUPERSEDED** است.
+The 16 think-tank roles provide simulated specialist reviews. They are not 16 independent human approvals.
 
-رابط وب می‌تواند بخشی از معماری داخلی باشد، اما به‌تنهایی خروجی نهایی این مرحله نیست. خروجی نهایی باید Pre-release قابل نصب و آزمون روی Windows باشد.
+The review must cover:
+- scientific correctness and claim limits;
+- ZTF data and astrophysical identity;
+- statistics, feature engineering and leakage;
+- model quality, calibration and abstention;
+- anomaly evidence and explainability;
+- independent and temporal validation;
+- application architecture and Windows runtime;
+- security, QA, usability and reproducibility;
+- documentation and Park handoff.
 
-## 8. بازبینی اتاق فکر و Red Team
+Each review must identify evidence, risks, blockers and the next acceptance test. No role may expand the scope without written Founder approval.
 
-این بازبینی بر اساس 16 جایگاه تخصصی منشور اتاق فکر انجام شده است. این جایگاه‌ها دیدگاه‌های شبیه‌سازی‌شده‌اند و نباید به‌عنوان تأیید 16 متخصص انسانی مستقل معرفی شوند.
+## 9. End of freeze
 
-| جایگاه | نظر و کنترل لازم |
-|---|---|
-| Chief Scientist / PI | ادعاهای علمی باید به آزمون و شواهد قابل بررسی متصل باشند. |
-| متخصص داده ZTF | مسیر داده واقعی و قرارداد منبع باید در نسخه تحویلی کار کنند. |
-| اخترفیزیک‌دان اجرام متغیر و گذرا | خروجی‌ها باید با دامنه واقعی داده و کلاس‌ها سازگار باشند. |
-| متخصص آمار و سری زمانی | QC، داده نامنظم و عدم‌قطعیت نباید پنهان شوند. |
-| Astroinformatics / Big Data | پردازش باید متناسب با cohort تحویلی و منابع CPU باشد. |
-| Cross-Matching | هویت و association مبهم نباید قطعی نمایش داده شوند. |
-| AI / ML | مدل فقط با ورودی و artifact احراز‌شده اجرا شود. |
-| Scientific Validation | معیارها، split و ادعاها باید قابل بازبینی باشند. |
-| Software Architect | یک مسیر عمودی end-to-end را کامل کنید؛ از تورم معماری پرهیز شود. |
-| Backend | رابط عادی باید از سرویس واقعی استفاده کند؛ دمو نباید اسکریپت جداگانه باشد. |
-| MLOps / DevOps / Security | بسته نصب، وابستگی، checksum، لاگ و امنیت باید قابل بررسی باشند. |
-| QA / Reliability | نصب و اجرای clean-machine روی Windows معیار اصلی است. |
-| Scientific UX / UI | کاربر پارک باید بدون ابزار توسعه گردش‌کار اصلی را اجرا کند. |
-| Product Manager | فقط نیازهای قابل ردیابی وارد برنامه فعال شوند. |
-| Technical Documentation | راهنمای نصب، اجرا، خطاها و محدودیت‌ها بخشی از محصول است. |
-| Independent Evaluator / Red Team | قابلیت نمایشی بدون پشتوانه باید رد شود؛ نصب موفق بدون workflow واقعی کافی نیست. |
+The Founder / Project Owner is the only authority who can end this freeze.
 
-**جمع‌بندی پنل:** انجماد دامنه تصمیم درست است. خطر اصلی، پراکندگی منابع روی کارهای مستقل از تحویل پارک است. معیار خروج باید یک نسخه Windows نصب‌پذیر، قابل اجرا، قابل آزمون و دارای شواهد باشد.
+The freeze ends only after all four conditions pass:
+1. All required worksheet and technical-plan gates pass.
+2. The Windows installer and complete workflow pass on a clean Windows system.
+3. The prototype is presented to the Park.
+4. The result and any required follow-up actions are recorded.
 
-## 9. پایان انجماد
-
-Founder / Project Owner تنها مرجع مجاز برای تغییر دامنه یا پایان انجماد است.
-
-انجماد فقط پس از تحقق هر سه شرط پایان می‌یابد:
-
-1. GitHub Pre-release ویندوز ساخته و artifact آن بررسی شده باشد.
-2. نصب و اجرای نسخه روی Windows تمیز با گزارش آزمون تأیید شده باشد.
-3. نسخه به پارک ارائه شده و نتیجه یا بازخورد آن ثبت شده باشد.
-
-تا آن زمان، هیچ فعالیت خارج از این دامنه شروع نمی‌شود.
+Until then, no inactive workstream may start.
