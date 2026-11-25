@@ -222,7 +222,9 @@ def _run_self_test() -> None:
         for path in ("/docs", "/redoc", "/openapi.json"):
             try:
                 with urlopen(f"{base_url}{path}", timeout=5):
-                    raise RuntimeError(f"Desktop API documentation remained enabled: {path}")
+                    raise RuntimeError(
+                        f"Desktop API documentation remained enabled: {path}"
+                    )
             except HTTPError as exc:
                 if exc.code != 404:
                     raise
