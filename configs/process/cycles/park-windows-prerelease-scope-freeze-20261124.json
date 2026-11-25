@@ -78,7 +78,8 @@
       "Founder decision on 2026-11-25 sets the experimental Windows preview and installer language to English only; Persian localization and RTL are deferred.",
       "Traceability matrix, scope-freeze policy, W01–W36 test plan, README, Handbook v2.8 and roadmap reflect the complete four-phase prototype and English-only Windows delivery.",
       "Direct source review: worksheet AP-02-140503, Section 4.1 (pages 7–8), defines four phases over six months with 2+1+2+1 months. The final technical project document, Section 5.1 (page 13), sets a minimum of 100,000 labelled light curves in Month 1 and then features/baseline, main model/SHAP, uncertainty/anomaly, temporal/external validation and dashboard/reporting.",
-      "Automatic main-push Scientific Validation run 45561667676 completed DR24/ALeRCE source evidence, frozen historical ALeRCE reference and StarEmbed acquisition. No CPVS job ran. StarEmbed is outside the submitted Park technical plan and will not be used for Park acceptance. Future external acquisition is now manual-only; StarEmbed requires a separate explicit input."
+      "Automatic main-push Scientific Validation run 45561667676 completed DR24/ALeRCE source evidence, frozen historical ALeRCE reference and StarEmbed acquisition. No CPVS job ran. StarEmbed is outside the submitted Park technical plan and will not be used for Park acceptance. Future external acquisition is now manual-only; StarEmbed requires a separate explicit input.",
+      "Corrected the data-source assessment to distinguish the 123,496 ALeRCE label-source rows from the technical project's minimum of 100,000 labelled light curves. The source count does not prove the light-curve target is met."
     ]
   },
   "failure_analysis": {
@@ -105,7 +106,8 @@
       "A Windows Pre-release is the owner's required delivery format for this stage; this is not a verbatim requirement quoted from the acceptance worksheet.",
       "The technical dossier's six-month plan includes the 100,000 labelled-light-curve target, five feature families, baseline and main model, SHAP, uncertainty, anomaly, temporal/external validation, dashboard/API and Park handover.",
       "A software interface or successful engineering CI does not prove that a production model artifact or scientific capability is available.",
-      "The Founder scope freeze permits only work directly required by the Park acceptance gates."
+      "The Founder scope freeze permits only work directly required by the Park acceptance gates.",
+      "The technical project's 100,000 target is labelled light curves. ALeRCE's 123,496 label-source rows have a different counting grain and cannot be used to claim the target."
     ]
   },
   "regression": {
@@ -114,7 +116,8 @@
       "Pass the cumulative lifecycle gate on the updated PR #311 head.",
       "Pass the complete PR #311 CI and CodeQL checks on the final head.",
       "Keep the policy and matrix unmerged until reviewed.",
-      "Keep CPVS, independent CIN work, cross-platform packaging and unrelated platform expansion inactive until Park delivery."
+      "Keep CPVS, independent CIN work, cross-platform packaging and unrelated platform expansion inactive until Park delivery.",
+      "Measure the number of non-empty, unambiguously labelled DR24 HATS light curves that pass the approved QC and feature criteria. Do not infer target attainment from the ALeRCE source count."
     ]
   },
   "decision": "REVISE",
