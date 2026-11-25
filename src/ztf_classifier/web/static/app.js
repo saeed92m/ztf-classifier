@@ -96,28 +96,29 @@ let desktopTokenPromise = null;
 function getDesktopApiToken() {
   if (params.get("desktop") !== "1") return Promise.resolve(null);
   if (!desktopTokenPromise) {
-    desktopTokenPromise = new Promise((resolve, reject) => {
+    const pending = new Promise((resolve, reject) => {
+      let timeout = null;
       const readToken = () => {
-        const getter = window.pywebview && window.pywebview.api &&
-          window.pywebview.api.get_api_token;
-        if (typeof getter !== "function") {
-          reject(new Error("Desktop authentication bridge is unavailable."));
-          return;
-        }
-        Promise.resolve(getter()).then(resolve, reject);
+        const getter = window.pywebview?.api?.get_api_token;
+        if (typeof getter !== "function") return false;
+        if (timeout !== null) window.clearTimeout(timeout);
+        Promise.resolve().then(() => getter()).then(resolve, reject);
+        return true;
       };
-      if (window.pywebview && window.pywebview.api) {
-        readToken();
-        return;
-      }
-      const timeout = window.setTimeout(
+      if (readToken()) return;
+      timeout = window.setTimeout(
         () => reject(new Error("Desktop authentication bridge did not become ready.")),
         10000
       );
       window.addEventListener("pywebviewready", () => {
-        window.clearTimeout(timeout);
-        readToken();
+        if (!readToken()) {
+          reject(new Error("Desktop authentication bridge is unavailable."));
+        }
       }, { once: true });
+    });
+    desktopTokenPromise = pending.catch(error => {
+      desktopTokenPromise = null;
+      throw error;
     });
   }
   return desktopTokenPromise;
