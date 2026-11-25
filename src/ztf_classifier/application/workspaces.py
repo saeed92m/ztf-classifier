@@ -365,7 +365,10 @@ class WorkspaceStore:
                 operation_id = payload.get("operation_id")
                 if operation_id is None:
                     operation_id = uuid4().hex
-                if not isinstance(operation_id, str) or not _WORKSPACE_ID_RE.fullmatch(operation_id):
+                if (
+                    not isinstance(operation_id, str)
+                    or not _WORKSPACE_ID_RE.fullmatch(operation_id)
+                ):
                     raise WorkspaceError("Operation identifier is invalid.")
                 operation = {
                     "operation_id": operation_id,
