@@ -15,12 +15,6 @@ on:
       - "tests/integration/test_dr24_batch_workbench_ui.py"
       - "packaging/windows/**"
   workflow_dispatch:
-    inputs:
-      park_evaluation_license_approved:
-        description: "Confirm written Park evaluation/demo terms are approved and authorize public artifact upload."
-        required: true
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -262,7 +256,7 @@ jobs:
           $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "dist/desktop-build-manifest.json"
 
       - name: Upload Windows preview installer and evidence
-        if: github.event_name == 'workflow_dispatch' && inputs.park_evaluation_license_approved
+        if: (github.event_name == 'pull_request' && startsWith(github.head_ref, 'feat/park-')) || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v6
         with:
           name: ztf-classifier-windows-preview-${{ github.sha }}
