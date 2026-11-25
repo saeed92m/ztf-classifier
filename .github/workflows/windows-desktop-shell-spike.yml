@@ -18,10 +18,13 @@ on:
       - "scripts/build_desktop_pdfs.py"
       - ".github/release-notes/desktop-v0.1.0-preview.1.md"
       - "docs/PARK_ACCEPTANCE_MATRIX_2026-11-24.md"
-  push:
-    tags:
-      - "desktop-v*"
   workflow_dispatch:
+    inputs:
+      publish_preview:
+        description: "Create the public Windows evaluation pre-release after the exact main-branch build passes"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -274,7 +277,7 @@ jobs:
           $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "dist/desktop-build-manifest.json"
 
       - name: Upload Windows preview installer and evidence
-        if: (github.event_name == 'pull_request' && startsWith(github.head_ref, 'feat/park-')) || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/desktop-v'))
+        if: (github.event_name == 'pull_request' && startsWith(github.head_ref, 'feat/park-')) || github.event_name == 'workflow_dispatch' 
         uses: actions/upload-artifact@v6
         with:
           name: ztf-classifier-windows-preview-${{ github.sha }}
@@ -292,7 +295,7 @@ jobs:
 
   publish-preview:
     name: Publish GitHub Windows preview pre-release
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/desktop-v')
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_preview == true
     needs: windows-build
     runs-on: ubuntu-latest
     permissions:
@@ -301,7 +304,7 @@ jobs:
       - name: Check out tagged release notes
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.sha }}
 
       - name: Download Windows installer and evidence
         uses: actions/download-artifact@v8
@@ -334,11 +337,20 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            echo "A release already exists for $GITHUB_REF_NAME. Refusing to overwrite it."
+          TAG="desktop-v0.1.0-preview.1"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "A release already exists for $TAG. Refusing to overwrite it."
             exit 1
           fi
-          gh release create "$GITHUB_REF_NAME" \
+          existing_tag="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.sha' 2>/dev/null || true)"
+          if [ -n "$existing_tag" ] && [ "$existing_tag" != "$GITHUB_SHA" ]; then
+            echo "Tag $TAG already points to $existing_tag, not $GITHUB_SHA. Refusing to move it."
+            exit 1
+          fi
+          if [ -z "$existing_tag" ]; then
+            gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" -f "ref=refs/tags/$TAG" -f "sha=$GITHUB_SHA"
+          fi
+          gh release create "$TAG" \
             "release-assets/ZTFClassifier-0.1.0-preview.1-Setup.exe" \
             "release-assets/User_Manual.pdf" \
             "release-assets/Quick_Start.pdf" \
