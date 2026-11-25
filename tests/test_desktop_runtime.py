@@ -233,6 +233,23 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
 
 
 
+def test_desktop_preview_is_english_and_left_to_right() -> None:
+    static_dir = (
+        Path(__file__).resolve().parents[1]
+        / "src"
+        / "ztf_classifier"
+        / "web"
+        / "static"
+    )
+    for name in ("index.html", "app.js", "desktop-bootstrap.js", "styles.css"):
+        content = (static_dir / name).read_text(encoding="utf-8")
+        assert not any("\\u0600" <= char <= "\\u06FF" for char in content), name
+    html = (static_dir / "index.html").read_text(encoding="utf-8")
+    css = (static_dir / "styles.css").read_text(encoding="utf-8")
+    assert '<html lang="en">' in html
+    assert "direction: rtl" not in css
+
+
 def test_validation_runner_peak_memory_measurement_is_portable() -> None:
     assert _peak_rss_mb() > 0.0
 
