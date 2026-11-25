@@ -47,7 +47,8 @@ The Windows-installable delivery requirement and the freeze on unrelated work ar
 
 ### 3.1 Data and cohort
 
-- Primary source: ZTF DR24 light curves in g, r and i filters.
+- Primary source: ZTF DR24 HATS light curves in g, r and i filters.
+- Supplementary calibration source: Zubercal DR20. Keep it separate from HATS and preserve cross-match ambiguity.
 - Label sources: ALeRCE and SCoPe. Record each label source and its limits.
 - Supplementary data: AllWISE and Gaia only when cross-matching is implemented and validated.
 - The technical roadmap sets a minimum of 100,000 labelled light curves in Month 1.
@@ -60,7 +61,7 @@ Data acceptance:
 3. Keep labels and label provenance separate from raw data.
 4. Do not silently drop incomplete records. Record the reason for each exclusion.
 5. Store manifests and hashes for input and output data.
-6. Keep survey OIDs separate from physical-source identity unless an approved identity record supports grouping.
+6. Keep HATS OIDs, ALeRCE OIDs and Zubercal PS1 IDs separate. Group records only when an approved identity record supports it.
 
 ### 3.2 Taxonomy and feature engineering
 
