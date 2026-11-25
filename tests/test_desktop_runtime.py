@@ -232,7 +232,6 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
         assert not any("\u0600" <= char <= "\u06ff" for char in asset), asset_name
 
 
-
 def test_validation_runner_peak_memory_measurement_is_portable() -> None:
     assert _peak_rss_mb() > 0.0
 
