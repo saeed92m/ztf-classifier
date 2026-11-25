@@ -64,9 +64,11 @@
       "Predecessor PR #310 exact-head Windows run #149 (run ID 45628516183) on commit e188fd4eebaa0c9d0115ad8b2c86ca64e0be5216 completed SUCCESS. It passed desktop runtime tests, JavaScript syntax, Ruff, PyInstaller one-folder build, frozen application self-test, WebView2 bootstrapper signature verification, NSIS compilation, silent install, installed executable self-test, shortcut checks, uninstall, user-data preservation, and build manifest/SHA-256 generation.",
       "The predecessor run's installer/evidence upload step was SKIPPED by the license guard. The run has no downloadable GitHub Actions artifact. No public installer was uploaded.",
       "Created a clean mainline port from main@3ba78f93727edf79321baa2a1796a5eb37ba0782. Git compare confirms the port is 19 commits ahead, zero behind, with 19 changed files. The 19 file contents were ported from the verified PR #310 branch; this is not exact-head Windows evidence for the new branch.",
-      "Exact-head Windows workflow, general CI, and clean-machine acceptance for the new mainline port remain pending."
+      "Exact-head Windows workflow, general CI, and clean-machine acceptance for the new mainline port remain pending.",
+      "First mainline-port DR24 Workbench browser run #47 failed one existing Playwright assertion because `get_by_text('Dashboard')` matched both the desktop navigation button and the page heading. The application rendered both expected elements; the locator was ambiguous.",
+      "Commit ee6eac94e12e525fa4429caa719d5a4fe3629f47 changes the regression assertion to `get_by_role('heading', name='Dashboard')`. This is a test-only selector correction. Exact-head CI and Windows run are pending."
     ],
-    "blocker": "Run exact-head CI on feat/park-windows-desktop-mainline-20261125 and inspect every Windows job step. Then complete clean Windows 11 install, interactive launch, live DR24 retrieval, export, offline relaunch, upgrade/uninstall, user-data preservation, and WebView2 behavior on the actual Park device. Written Park evaluation terms and a reviewed Windows dependency lock remain separate release blockers."
+    "blocker": "Re-run the complete exact-head CI, DR24 Workbench UI contract and Windows installer workflow on ee6eac94e12e525fa4429caa719d5a4fe3629f47. Then complete clean Windows 11 acceptance on the actual Park device. Written Park evaluation terms and a reviewed Windows dependency lock remain separate blockers."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED_REMEDIATION_PENDING",
@@ -81,14 +83,16 @@
       "Ruff format rejected the uppercase hexadecimal spelling in the English-only UI regression test's Unicode range endpoint. This is a formatting-only failure, not a runtime or installer failure.",
       "Exact-head run #136 showed that the WebView2 File path included ${__FILEDIR__} even though the script already used a repository-root working-directory rule. NSIS resolved the relative path twice and searched under packaging/windows/packaging/windows. Commit 78c485c changed the File path to the repository-root-relative staged path; this correction has not yet passed a new Windows installer build.",
       "The predecessor PR #310 branch was based on a feature branch whose history diverged from main after PR #307 was squash-merged. Retargeting it directly would expose 205 commits and 27 changed files relative to main. A clean mainline branch was created to port the 19-file desktop delta without replaying the already merged DR24 summary history.",
-      "The predecessor Windows run #148 wrote a PASS self-test report but PowerShell captured a blank native-process exit code through $LASTEXITCODE. The workflow now uses Start-Process -PassThru and validates both process exit code and report status; predecessor run #149 passed."
+      "The predecessor Windows run #148 wrote a PASS self-test report but PowerShell captured a blank native-process exit code through $LASTEXITCODE. The workflow now uses Start-Process -PassThru and validates both process exit code and report status; predecessor run #149 passed.",
+      "The first mainline-port Playwright test used get_by_text('Dashboard'), which became ambiguous after the desktop navigation button and the page heading both used that label. The failure was a locator strict-mode violation, not an application render failure."
     ],
     "unresolved": [
       "Exact-head Windows and full CI checks must pass on the clean mainline port.",
       "The actual Park Windows device has not passed clean-machine interactive install, launch, WebView2, live DR24 retrieval, export, upgrade/uninstall and data-preservation acceptance.",
       "A reviewed and pinned Windows dependency lock is not yet accepted.",
       "Written Park evaluation/demo terms and third-party rights review remain unresolved; no public installer artifact may be uploaded before approval.",
-      "The complete four-phase Park cohort, feature, model, uncertainty, anomaly, SHAP, temporal/external validation and reproducibility gates remain open."
+      "The complete four-phase Park cohort, feature, model, uncertainty, anomaly, SHAP, temporal/external validation and reproducibility gates remain open.",
+      "The locator correction is committed, but the exact-head browser regression has not yet passed on the corrected mainline head."
     ]
   },
   "knowledge_extraction": {
@@ -104,6 +108,7 @@
   "regression": {
     "status": "BLOCKED",
     "open_blockers": [
+      "Re-run the DR24 Workbench browser contract after the Dashboard heading locator correction.",
       "Pass exact-head general CI and Windows installer workflow on feat/park-windows-desktop-mainline-20261125.",
       "Verify all 18 desktop/workspace tests and the installed-app self-test on the exact mainline port.",
       "Complete clean Windows 11 acceptance on the actual Park device, including WebView2 runtime behavior and user-data preservation.",
