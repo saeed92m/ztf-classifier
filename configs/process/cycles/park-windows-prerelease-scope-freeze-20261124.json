@@ -73,10 +73,12 @@
       "CI on the earlier PR #311 head passed Format Check, Lint, CodeQL, Product Scope Audit and lifecycle-record validation, but the cumulative lifecycle requirement failed because the meaningful PR did not include its own cycle record. The new record has not yet been evaluated.",
       "Current-main artifact audit on 2026-11-24: recursive Git tree contained 628 entries and was not truncated; no production baseline_v0.2 artifact directory or manifest was present. Direct expected-path checks returned 404. Releases v1.0.1/v1.0.0/v0.5.0 contain only Python wheel/source archives; v0.4.0/v0.3.0/v0.2.0 have no assets. The only XGBoost v0.2 paths in the tree were three report tables.",
       "Issue #282 was updated with the current-main and release-asset audit. Production inference remains BLOCKED; no reconstruction or substitute is authorized.",
-      "The source-traceability matrix now distinguishes the Windows Laboratory Preview from the Full six-month Park MVP. The Founder has not yet selected which acceptance level must be complete before Park presentation; until confirmed, full-MVP-only data/model/uncertainty work remains inactive.",
-      "Founder decision on 2026-11-25 selects the Windows Laboratory Preview in PR #309 as the sole active delivery milestone; Full six-month Park MVP remains inactive until after Park presentation and a new written Founder decision.",
+      "SUPERSEDED: the original Park acceptance worksheet and technical project document define one four-phase prototype. The Windows pre-release is the installable package for that complete prototype; there is no separate reduced-scope raw-data preview.",
+      "SUPERSEDED: Founder/source review confirms one four-phase Park prototype is the active acceptance target. All data, model, uncertainty, anomaly, validation, dashboard and Windows packaging phases are active.",
       "Founder decision on 2026-11-25 sets the experimental Windows preview and installer language to English only; Persian localization and RTL are deferred.",
-      "Traceability matrix, scope-freeze policy, Windows test plan, README, Handbook v2.8 and roadmap were updated to reflect the selected preview scope. Roadmap review comment about A2 status was fixed and resolved."
+      "Traceability matrix, scope-freeze policy, W01–W36 test plan, README, Handbook v2.8 and roadmap reflect the complete four-phase prototype and English-only Windows delivery.",
+      "Direct source review: worksheet AP-02-140503, Section 4.1 (pages 7–8), defines four phases over six months with 2+1+2+1 months. The final technical project document, Section 5.1 (page 13), sets a minimum of 100,000 labelled light curves in Month 1 and then features/baseline, main model/SHAP, uncertainty/anomaly, temporal/external validation and dashboard/reporting.",
+      "Automatic main-push Scientific Validation run 45561667676 completed DR24/ALeRCE source evidence, frozen historical ALeRCE reference and StarEmbed acquisition. No CPVS job ran. StarEmbed is outside the submitted Park technical plan and will not be used for Park acceptance. Future external acquisition is now manual-only; StarEmbed requires a separate explicit input."
     ]
   },
   "failure_analysis": {
@@ -94,7 +96,7 @@
       "The scope policy and traceability matrix remain unmerged until reviewed and merged.",
       "The Park prototype remains NOT READY until its product, model, dataset, validation, Windows installation and handover gates pass.",
       "Recover the original production artifact from its authoritative external/local storage source and verify the manifest, hash, schema, feature contract, preprocessing, class order, calibration and provenance.",
-      "Acceptance gates W01-W19, clean-Windows install/run, Park data workflow, legal approval and actual Park presentation remain incomplete."
+      "Acceptance gates W01-W36, the complete four-phase workflow, clean-Windows install/run, legal approval and actual Park presentation remain incomplete."
     ]
   },
   "knowledge_extraction": {
@@ -124,6 +126,7 @@
     "No overall completion percentage is reported without a fixed weighted acceptance denominator and current evidence for every gate.",
     "No scientific baseline, model, dataset, threshold or CPVS methodology is changed by this cycle.",
     "Current-main tree and published release assets were directly checked on 2026-11-24; the original production model artifact is absent from those sources.",
-    "Do not treat the full six-month technical-dossier roadmap as automatically identical to the first Windows beta scope; PR #309 distinguishes the preview from the full MVP."
+    "The worksheet and technical plan define one four-phase Park prototype. The Windows pre-release is the delivery package; a raw-data viewer alone is not sufficient.",
+    "DR24 and ALeRCE acquisition are in-scope but must be manually authorized with run_heavy=true. StarEmbed is outside the current Park scope and remains disabled until a new written Founder decision after Park presentation."
   ]
 }

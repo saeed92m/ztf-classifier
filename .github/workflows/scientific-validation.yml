@@ -13,9 +13,14 @@ on:
   workflow_dispatch:
     inputs:
       run_heavy:
-        description: "Run bounded DR24 and ALeRCE source-evidence acquisition"
+        description: "Explicitly authorize in-scope DR24/ALeRCE source-evidence acquisition"
         required: false
-        default: true
+        default: false
+        type: boolean
+      run_independent_benchmark:
+        description: "Authorize an independent benchmark acquisition outside the current Park scope"
+        required: false
+        default: false
         type: boolean
 
 permissions:
@@ -54,12 +59,7 @@ jobs:
 
   independent-benchmark-acquisition:
     name: Acquire independent StarEmbed product benchmark evidence
-    if: >-
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/ci/heavy/'))) ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
-      (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
+    if: github.event_name == 'workflow_dispatch' && inputs.run_independent_benchmark == true
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -128,10 +128,8 @@ jobs:
   external-source-evidence:
     name: Execute DR24 and ALeRCE source-backed evidence
     if: >-
-      github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) ||
-      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/ci/heavy/'))) ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/ci/heavy/') || startsWith(github.ref, 'refs/tags/v'))) ||
       (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -177,10 +175,8 @@ jobs:
   frozen-historical-reference:
     name: Verify immutable historical ALeRCE reference
     if: >-
-      github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch' && inputs.run_heavy == true) ||
-      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/ci/heavy/'))) ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/ci/heavy/') || startsWith(github.ref, 'refs/tags/v'))) ||
       (github.event_name == 'pull_request' && startsWith(github.head_ref, 'ci/heavy/'))
     runs-on: ubuntu-latest
     timeout-minutes: 150
@@ -235,10 +231,7 @@ jobs:
 
   scheduled-scientific-validation:
     name: Source provenance acquisition and scientific gate readiness
-    if: >-
-      github.event_name == 'schedule' ||
-      (github.event_name == 'workflow_dispatch') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: github.event_name == 'workflow_dispatch' && inputs.run_heavy == true
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

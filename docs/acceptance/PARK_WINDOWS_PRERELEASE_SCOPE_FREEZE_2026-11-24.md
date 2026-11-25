@@ -119,6 +119,15 @@ CPVS remains an unresolved scientific issue. This freeze does not resolve it. Do
 
 The v0.2.0 scientific baseline remains protected. Do not change its model, features, class order, benchmark, cutoff or acceptance criteria without a separate evidence-based review and written approval. Use the approved baseline where it supports the Park workflow.
 
+## 4.1. External data and benchmark workflow controls
+
+- DR24 and ALeRCE acquisition are in-scope inputs for Phases 1–3. Run them only through an explicit `workflow_dispatch` with `run_heavy=true`, or a dedicated `ci/heavy/**` branch. The default is false.
+- Frozen historical ALeRCE reference verification follows the same explicit gate.
+- Do not acquire external data automatically on ordinary `main` pushes or on a schedule during this delivery.
+- StarEmbed is not named in the accepted Park worksheet or technical plan. Its independent benchmark acquisition is outside this delivery. Keep it disabled unless the Founder gives a new written approval after Park presentation.
+- Lightweight registry, schema, lifecycle and code-contract tests remain automatic. This change does not lower scientific thresholds or acceptance criteria.
+- No CPVS or 11,602-object workflow may run during this delivery.
+
 ## 5. Mandatory scope gate
 
 Before starting work, answer this question:
