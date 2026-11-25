@@ -26,12 +26,16 @@ The 150-object v0.2.0 benchmark is a frozen benchmark. It is not the Park cohort
 - DOI: 10.5281/zenodo.4279623
 - Public record: https://zenodo.org/records/4279623
 - Archive size: 1.1 GB.
+- Archive MD5: `f0c8c47fb530613718a3cf0c4678a3e4`.
+- Download: https://zenodo.org/records/4279623/files/files_for_lc_classifier_SanchezSaez2020.tar.gz?download=1
+- The public ALeRCE code repository includes a 2,000-row label sample with columns `objectId` and `classALeRCE`. Treat this as a schema example, not the full dataset.
 - The archive includes:
   - labelled_set_lc_classifier_SanchezSaez_2020.csv;
   - features_for_lc_classifier_20200609.csv;
   - ALeRCE_lc_classifier_outputs_ZTF_unlabeled_set_20200609.csv.
 - The data ends on 2020-06-09.
-- The labelled CSV contains `objectId` and `classALeRCE` and represents the 15-class ALeRCE labelled set.
+- The labelled CSV is expected to contain `objectId` and `classALeRCE`, based on the public 2,000-row sample. Verify the full file schema after download.
+- The sample does not include per-object source-catalog provenance. Do not infer an individual catalogue source from the class name. Record the dataset-level ALeRCE label provenance and document this limitation.
 - The 2020 paper reports 123,496 labelled sources: 87,065 periodic, 34,713 stochastic and 1,718 transient sources. The class-level taxonomy remains the 15-class ALeRCE taxonomy.
 - The 868,371-object output file contains predictions for an unlabeled set. Do not treat those predictions as ground truth.
 - The labelled CSV does not provide the full DR24 HATS coordinates. Resolve ALeRCE OIDs through the documented TAP service before cross-matching to DR24.
@@ -166,7 +170,7 @@ Required controls:
 
 ## 4. Recommended acquisition sequence
 
-1. Recover the complete ALeRCE 2020 labelled-set archive. Verify its DOI, archive checksum, file checksums, row counts and class counts.
+1. Download the 1.1 GB ALeRCE 2020 archive. Verify MD5 `f0c8c47fb530613718a3cf0c4678a3e4` before extraction. Extract only the labelled CSV. Verify its SHA-256, schema, row count and class counts.
 2. Inspect the exact SCoPe training_set.parquet version. Record its schema and row grain. Do not yet use it for training.
 3. Request the ALeRCE 2025 labelled-source manifest and its class-level provenance from the ALeRCE authors or an official data endpoint.
 4. Build a source-label table. Preserve all source labels and conflicts. Do not collapse them without a declared rule.
