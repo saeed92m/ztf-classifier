@@ -60,7 +60,7 @@ jobs:
   pinned-live-dr24-browser-validation:
     name: Pinned live DR24 Workbench browser validation
     needs: deterministic-browser-contract
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && startsWith(github.head_ref, 'park/')) }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && (startsWith(github.head_ref, 'park/') || startsWith(github.head_ref, 'feat/park-'))) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
