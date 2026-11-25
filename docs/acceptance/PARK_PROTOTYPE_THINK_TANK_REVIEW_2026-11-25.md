@@ -26,8 +26,8 @@ Do not describe the current branch as a complete Park prototype.
 ### Repository evidence
 
 - The frozen v0.2.0 benchmark manifest records 150 objects, 15 classes and 42 features.
-- The frozen production model artifact is not present in the inspected repository tree.
-- Issue #282 records that the original model artifact was not found in repository history, release assets, retained CI artifacts, Dropbox or the supplied local audit.
+- The frozen production model artifact is not present in the inspected repository tree or the supplied all-refs Git bundle. A scan of all bundled refs found no production model artifact.
+- Issue #282 records that the original model artifact was not found in repository history, release assets, retained CI artifacts, Dropbox or the supplied local audit. A fresh GitHub Releases audit found only Python wheel and source archives in v1.0.1, v1.0.0 and v0.5.0; none contains the model artifact.
 - The supplied local audit also reports that the ALeRCE raw-detection cache is absent. It does not include a fresh audit of the current branch.
 - The desktop branch contains DR24 raw retrieval and descriptive statistics. The descriptive policy explicitly states DESCRIPTIVE_NOT_CLASSIFICATION.
 - The API has model-registry and inference routes. It requires a valid model artifact.
