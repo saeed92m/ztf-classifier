@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "stage_id": "private-documentation-migration-to-notion-20261126",
-  "objective": "Move internal ZTF Classifier handbooks, roadmaps, project knowledge, Park planning, research notes and internal architecture/decision records out of the public GitHub working tree after creating source-pinned private Notion archive copies. Keep public user documentation, API references, scientific contracts, code and required CI lifecycle records.",
+  "objective": "Move internal ZTF Classifier handbooks, roadmaps, project knowledge, Park planning, research notes, internal architecture/decision records, and historical cumulative lifecycle records out of the public GitHub working tree after creating source-pinned private Notion archive copies. Keep public user documentation, API references, scientific contracts, code and required CI lifecycle records.",
   "previous_knowledge_consumed": [
     {
       "source": "GitHub main 2008dbd4e4fc0c3589692138938305955b39731b",
@@ -28,7 +28,8 @@
     "Remove internal handbooks and roadmaps from the public main branch after verified archival.",
     "Move internal project strategy, status, knowledge, research and Park acceptance material to the private Notion archive.",
     "Keep public installation, user, API and scientific contract documentation available.",
-    "Remove internal roadmap detail and dead private-document links from the public README."
+    "Remove internal roadmap detail and dead private-document links from the public README.",
+    "Archive historical machine-readable lifecycle records in Notion while retaining one current migration record so the CI lifecycle gate remains executable."
   ],
   "measurement": {
     "metrics": {
@@ -52,7 +53,9 @@
       "51 source documents copied into Notion with source commit and blob SHA metadata.",
       "Representative handbook v2.8, roadmap v2.4, CPVS report and Park acceptance matrix fetched back from Notion; their source path and Git blob SHA markers were present.",
       "README product direction section replaced with a short public-safe summary and a link to the public technical architecture.",
-      "The 51 selected source files were deleted only on the migration branch; main remains unchanged until PR review and merge."
+      "The 51 selected source files were deleted only on the migration branch; main remains unchanged until PR review and merge.",
+      "All 68 historical configs/process/cycles/*.json records from the source main commit were copied to the private Notion archive, with source path, source commit and Git blob SHA.",
+      "The CI workflow was inspected: it requires at least one cycle JSON file, validates every present record, and requires a cycle record for meaningful PRs. It does not require all historical cycle records to remain in GitHub."
     ]
   },
   "failure_analysis": {
@@ -67,7 +70,8 @@
     "findings": [
       "A private Notion archive can preserve exact source snapshots with source commit and Git blob SHA provenance.",
       "Public software repositories should separate user-facing technical documentation from internal project governance, product roadmap, Park planning and private research records.",
-      "The current archive copies are historical snapshots and do not automatically become current authoritative project status."
+      "The current archive copies are historical snapshots and do not automatically become current authoritative project status.",
+      "Historical lifecycle records can be retained in the private Notion archive while the public repository keeps the current machine-readable record required by CI."
     ]
   },
   "regression": {
@@ -76,7 +80,8 @@
       "Run lifecycle validation, CI, CodeQL, Product Scope Audit and relevant documentation checks on the migration PR.",
       "Verify all 51 intended files are absent from the PR tree and all public user-facing docs remain present.",
       "Check the public README for broken links and confirm no internal roadmap details remain.",
-      "After merge, verify main branch and confirm private archive access remains private."
+      "After merge, verify main branch and confirm private archive access remains private.",
+      "Verify that the migration PR retains a valid current cycle record and passes the lifecycle gate after historical cycle records are removed."
     ]
   },
   "decision": "REVISE",
