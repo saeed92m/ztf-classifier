@@ -239,7 +239,7 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
     ).read_text(encoding="utf-8")
     assert '!cd "..\\.."' in installer
     assert (
-        'File /oname=MicrosoftEdgeWebView2Setup.exe '
+        "File /oname=MicrosoftEdgeWebView2Setup.exe "
         '"packaging\\windows\\MicrosoftEdgeWebView2Setup.exe"'
     ) in installer
     assert '!insertmacro MUI_LANGUAGE "English"' in installer
