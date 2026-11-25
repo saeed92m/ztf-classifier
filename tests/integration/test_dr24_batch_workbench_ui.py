@@ -125,7 +125,7 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             )
             assert page.locator("html").get_attribute("lang") == "en"
             assert page.locator("html").get_attribute("dir") == "ltr"
-            assert page.get_by_text("Dashboard").is_visible()
+            assert page.get_by_role("heading", name="Dashboard").is_visible()
             assert page.get_by_text("Park acceptance").is_visible()
             assert page.locator("#parkModelStatus").inner_text() == "BLOCKED"
             assert page.locator("#parkScientificGateStatus").is_visible()
