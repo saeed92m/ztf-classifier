@@ -117,6 +117,8 @@ Each feature record must identify:
 
 The split manifest must group records by confirmed canonical source identity. It must prevent the same physical source from appearing in training, calibration and test sets. A survey OID alone is not a safe cross-filter grouping key.
 
+Keep BTS spectroscopic transient labels in a separate layer for scoped independent evaluation only. Do not use them as general training labels or collapse them into ALeRCE labels.
+
 ## 4. Proposed count definitions
 
 The technical project document states a target of at least 100,000 labelled light curves. It does not define the counting grain in the material reviewed for this audit.
@@ -144,6 +146,7 @@ This interpretation is a proposal. It must be confirmed against the Park accepta
 | ALeRCE TAP | Resolve source metadata and retrieve documented public tables | Broker probabilities are not independent labels |
 | DR24 HATS | Primary raw light-curve source for the Park cohort | Native values are not yet validated v0.2 model inputs |
 | SCoPe / Zenodo 8410825 | Candidate independent external evaluation after taxonomy review | DR16 multi-label data; do not count toward the DR24 cohort or merge labels directly |
+| BTS spectroscopic labels | Scoped independent evaluation for supported transient classes after AOIC identity and leakage checks | Not a general training-label source; retain its separate provenance and selection limits |
 | ALeRCE 2025 expansion | Request the labelled-source manifest and provenance | Do not assume the full manifest is publicly available; do not add TDE to the frozen 15-class taxonomy |
 | Zubercal DR20 | Supplementary, separately versioned comparison stream | PS1 IDs, MJD(TDB), photometry and flags must not be merged with DR24 HATS fields |
 
@@ -153,12 +156,13 @@ This interpretation is a proposal. It must be confirmed against the Park accepta
 2. Extract only the labelled-set CSV. Record SHA-256, schema, row count, class counts, duplicates and missing values.
 3. Resolve label-source metadata through the documented ALeRCE TAP/API. Do not use retired direct database access.
 4. Build the cross-match ledger. Retain candidate counts and ambiguity.
-5. Run a fixed 5–10 confirmed-source sample through label resolution, DR24 HATS retrieval, raw export and Workbench display.
-6. Run a 30–50 confirmed-source guided sample. Preserve all per-filter HATS OIDs and source-group decisions.
+5. Run a fixed 5–10 confirmed-source-group smoke test through label resolution, DR24 HATS retrieval, raw export and Workbench display. This is a diagnostic only.
+6. Run a 30–50 confirmed-source-group guided UI workflow across multiple object types. This is also a diagnostic/demo only; it is not Park acceptance and must not replace the full cohort.
 7. Reconcile all requested, matched, ambiguous, unmatched, retrieved, empty, partial, failed and rejected records.
 8. Approve the time, photometry, filter, quality and feature contracts before generating model features.
-9. Freeze the dataset manifest and leakage-safe source-group split before training.
-10. Scale to the 100,000-light-curve target through resumable, bounded batches. Do not download the full DR24 archive.
+9. Freeze the complete source-defined cohort and leakage-safe source-group split before model evaluation.
+10. Process the complete eligible cohort. Batching is allowed for memory/runtime, but every batch must be processed and reconciled. Do not replace the cohort with a random sample.
+11. Scale to and verify the 100,000-light-curve target through resumable, bounded batches. Do not download the full DR24 archive.
 
 External DR24/ALeRCE acquisition remains manual-only through the repository's explicit heavy-workflow gate. This audit did not run a download or a live source query.
 
