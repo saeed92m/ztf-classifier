@@ -53,7 +53,9 @@
       "The unique acceptance contract from duplicate PR #308 was copied to the canonical PR #309 branch; PR #308 was closed as superseded without merging.",
       "The role-based review is explicitly a simulated AI-assisted review, not independent human peer review.",
       "The proposed pywebview/WebView2 approach remains provisional. No desktop dependency was added.",
-      "No executable code, frozen baseline artifact, production data, scientific acceptance threshold, or release was changed."
+      "No executable code, frozen baseline artifact, production data, scientific acceptance threshold, or release was changed.",
+      "Founder clarification on 2026-11-25 selects the Windows Laboratory Preview in this acceptance contract as the first delivery milestone; the Full six-month Park MVP remains inactive during the current scope freeze.",
+      "Founder clarification on 2026-11-25 supersedes the Persian/RTL UX requirement for this experimental preview. The Windows preview and installer are English-only; Persian localization may be considered for a later product release."
     ]
   },
   "failure_analysis": {
@@ -104,6 +106,7 @@
     "No desktop framework or new dependency is approved until the bounded technical spike passes.",
     "The first Windows preview is limited to real DR24 exploration and descriptive analysis unless further scientific gates pass.",
     "Preserve v0.2.0 and keep CPVS discrepancy separate.",
-    "No external installer release before clean Windows acceptance and written legal approval."
+    "No external installer release before clean Windows acceptance and written legal approval.",
+    "For the current Park delivery, implement only the Windows Laboratory Preview acceptance workflow and gates. Do not interpret the broader six-month dossier roadmap as work that must run in parallel."
   ]
 }
