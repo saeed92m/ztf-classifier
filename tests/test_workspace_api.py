@@ -198,6 +198,7 @@ def test_workspace_operation_completion_uses_stored_requested_oids(
         "missing_oids": [234567],
         "payload_sha256_by_oid": {"123456": "a" * 64},
     }
+    valid_completion.pop("requested_oids")
     completed = client.post(
         "/v1/workspaces/operations", json=valid_completion
     )
