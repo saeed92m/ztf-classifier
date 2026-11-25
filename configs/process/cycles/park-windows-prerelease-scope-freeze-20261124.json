@@ -73,7 +73,10 @@
       "CI on the earlier PR #311 head passed Format Check, Lint, CodeQL, Product Scope Audit and lifecycle-record validation, but the cumulative lifecycle requirement failed because the meaningful PR did not include its own cycle record. The new record has not yet been evaluated.",
       "Current-main artifact audit on 2026-11-24: recursive Git tree contained 628 entries and was not truncated; no production baseline_v0.2 artifact directory or manifest was present. Direct expected-path checks returned 404. Releases v1.0.1/v1.0.0/v0.5.0 contain only Python wheel/source archives; v0.4.0/v0.3.0/v0.2.0 have no assets. The only XGBoost v0.2 paths in the tree were three report tables.",
       "Issue #282 was updated with the current-main and release-asset audit. Production inference remains BLOCKED; no reconstruction or substitute is authorized.",
-      "The source-traceability matrix now distinguishes the Windows Laboratory Preview from the Full six-month Park MVP. The Founder has not yet selected which acceptance level must be complete before Park presentation; until confirmed, full-MVP-only data/model/uncertainty work remains inactive."
+      "The source-traceability matrix now distinguishes the Windows Laboratory Preview from the Full six-month Park MVP. The Founder has not yet selected which acceptance level must be complete before Park presentation; until confirmed, full-MVP-only data/model/uncertainty work remains inactive.",
+      "Founder decision on 2026-11-25 selects the Windows Laboratory Preview in PR #309 as the sole active delivery milestone; Full six-month Park MVP remains inactive until after Park presentation and a new written Founder decision.",
+      "Founder decision on 2026-11-25 sets the experimental Windows preview and installer language to English only; Persian localization and RTL are deferred.",
+      "Traceability matrix, scope-freeze policy, Windows test plan, README, Handbook v2.8 and roadmap were updated to reflect the selected preview scope. Roadmap review comment about A2 status was fixed and resolved."
     ]
   },
   "failure_analysis": {
@@ -91,7 +94,7 @@
       "The scope policy and traceability matrix remain unmerged until reviewed and merged.",
       "The Park prototype remains NOT READY until its product, model, dataset, validation, Windows installation and handover gates pass.",
       "Recover the original production artifact from its authoritative external/local storage source and verify the manifest, hash, schema, feature contract, preprocessing, class order, calibration and provenance.",
-      "Founder confirmation is required to select Windows Laboratory Preview or Full six-month Park MVP as the required pre-presentation acceptance level."
+      "Acceptance gates W01-W19, clean-Windows install/run, Park data workflow, legal approval and actual Park presentation remain incomplete."
     ]
   },
   "knowledge_extraction": {
