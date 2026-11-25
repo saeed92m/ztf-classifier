@@ -171,9 +171,7 @@ def test_desktop_api_requires_session_bearer_token(tmp_path: Path) -> None:
         }
         await app(scope, receive, send)
         start = next(
-            message
-            for message in messages
-            if message["type"] == "http.response.start"
+            message for message in messages if message["type"] == "http.response.start"
         )
         response_headers = {
             key.decode("latin-1").lower(): value.decode("latin-1")
