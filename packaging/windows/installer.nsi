@@ -4,6 +4,9 @@ Unicode true
 !include "LogicLib.nsh"
 !include "x64.nsh"
 
+; Resolve all build inputs and outputs from the repository root.
+!cd "${__FILEDIR__}\\..\\.."
+
 !define PRODUCT_NAME "ZTF Classifier"
 !define PRODUCT_VERSION "0.1.0-preview.1"
 !define PRODUCT_PUBLISHER "Pishgaman Novandish Fanavargostar Keyhan"
