@@ -25,25 +25,10 @@ The current benchmark contains **150 ZTF objects across 15 ALeRCE classes**. ALe
 
 ## Product direction
 
-ZTF Classifier is being expanded into a cross-platform **Astronomical Data Analysis & Discovery Platform**.
+ZTF Classifier is evolving from a research classifier into a broader astronomical data analysis platform. The public repository documents implemented interfaces, supported workflows, scientific contracts, and user guidance. Internal roadmaps, project governance, Park planning, and operational knowledge are maintained in the private project workspace.
 
-The planned end-user experience is a self-contained desktop application for Windows, macOS, and Linux. Users should not need to install Python, pip, virtual environments, Git, or use a terminal for normal operation. CLI and API interfaces remain available for advanced users.
+See [the technical architecture](docs/architecture/ARCHITECTURE_v0.3.md) for the public architecture reference.
 
-The product expansion includes:
-- Data Manager and ingestion abstraction;
-- Object/Source Explorer;
-- light-curve and scientific visualization;
-- classification, uncertainty, calibration, conformal prediction, and OOD;
-- separate scientific-anomaly and Real/Bogus channels;
-- discovery candidate generation and transparent ranking;
-- catalog/cross-match evidence;
-- similar-object search;
-- human-in-the-loop review and feedback;
-- explainability and provenance/evidence views;
-- integrated Help and Troubleshooting;
-- reproducible reports and exports.
-
-See `docs/ECOSYSTEM_REVIEW_PRODUCT_EXPANSION_2026-10-08.md` and `docs/architecture/V1_PRODUCT_ARCHITECTURE.md` for the canonical expansion record.
 
 ## Scientific objective
 
