@@ -126,7 +126,13 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert page.locator("html").get_attribute("lang") == "en"
             assert page.locator("html").get_attribute("dir") == "ltr"
             assert page.get_by_text("Dashboard").is_visible()
+            assert page.get_by_text("Park acceptance").is_visible()
+            assert page.locator("#parkModelStatus").inner_text() == "BLOCKED"
+            assert page.locator("#parkScientificGateStatus").is_visible()
+            assert page.locator('[data-view="validation"]').is_visible()
             assert page.locator('[data-view="classification"]').is_hidden()
+            page.locator('[data-view="validation"]').click()
+            assert page.locator("#validationStatus").is_visible()
             page.locator('[data-view="dr24"]').click()
             page.locator("#dr24ObjectIds").wait_for(state="visible")
             page.locator("#dr24ObjectIds").fill("101, 202")
