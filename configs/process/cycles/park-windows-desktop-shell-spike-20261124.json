@@ -55,9 +55,14 @@
       "Owner decision (2026-11-25): the Windows experimental pre-release is English-only. Persian UI/localization is not an acceptance requirement for this preview. Installer now uses NSIS English language only and English finish-page/runtime-error text; no Persian/Farsi language resource is required.",
       "Exact-head Windows run 45559828597: dependency checks, 18 desktop/workspace tests, JavaScript syntax, Ruff, PyInstaller one-folder build, frozen self-test, signed WebView2 bootstrapper verification and NSIS 3.13 discovery passed. NSIS compilation failed because the installer script contained doubled path separators in the staged WebView2 bootstrapper path; NSIS could not find the file.",
       "The installer path separators were normalized to Windows single backslashes. The English-only decision applies to the full desktop Workbench: Persian translation strings and RTL layout are removed; desktop language/direction are en/ltr and regression tests assert that no Arabic/Persian characters remain in UI assets.",
-      "Exact-head Windows run 45561457913: dependency checks, DR24 imports, all 18 desktop/workspace tests and JavaScript syntax passed. Ruff lint passed. Ruff format failed only because the Unicode range endpoint used uppercase hex digits (`\\\\u06FF`); the formatter requires lowercase `\\\\u06ff`. The Windows build and installer steps were skipped after this formatting failure."
+      "Exact-head Windows run 45561457913: dependency checks, DR24 imports, all 18 desktop/workspace tests and JavaScript syntax passed. Ruff lint passed. Ruff format failed only because the Unicode range endpoint used uppercase hex digits (`\\\\u06FF`); the formatter requires lowercase `\\\\u06ff`. The Windows build and installer steps were skipped after this formatting failure.",
+      "Exact-head Windows run 45593775758 (#136) on commit 6064f9ab87b5a542ece22fb083064d6ab3e3382a: dependency checks, DR24 imports, desktop runtime tests, JavaScript syntax, Ruff, PyInstaller one-folder build, frozen self-test, signed WebView2 bootstrapper verification and NSIS 3.13 setup passed. NSIS compilation failed because the staged bootstrapper path resolved to packaging/windows/packaging/windows/MicrosoftEdgeWebView2Setup.exe. Install/uninstall and manifest steps were skipped.",
+      "Commit 78c485cdad7044a437218b11798c6fe63614cb8e changed the NSIS File directive to packaging/windows/MicrosoftEdgeWebView2Setup.exe relative to the repository root. GitHub readback verified the exact directive. Windows run #137 was cancelled by a later commit before its job reached the installer step.",
+      "PR review found that workspace completion trusted requested_oids from the completion payload and that a non-string operation_id could raise TypeError. Commits 46d1f0eb5bafa5e1ad11aec41e6ac6bf36a805ed and 603b5ceafd7cba536236f886cd3625e17a9d6309 use the stored requested OIDs, reject conflicting completion payloads, and type-check operation IDs. Commit 744f99b4c53a1a7732d3d01c90cb114cd4a54dd3 adds regression tests for both cases. Source and test readback passed; CI verification is pending.",
+      "Exact-head Windows run #140 (run ID 45612337666) for commit 744f99b4c53a1a7732d3d01c90cb114cd4a54dd3 is PENDING with no job allocated at the latest inspection. No installer, install/uninstall result, checksum manifest or package artifact is verified for this head.",
+      "Scientific Validation run #3037 completed SUCCESS for the benchmark/lifecycle contract job. Source provenance, DR24/ALeRCE source-backed evidence, StarEmbed and immutable historical-reference jobs were SKIPPED. This is not classifier scientific validation."
     ],
-    "blocker": "Exact-head rerun must pass Ruff format, then complete PyInstaller build, frozen self-test, WebView2 verification, NSIS compile, silent install/launch/uninstall, user-data preservation and manifest/checksum generation."
+    "blocker": "Exact-head run #140 must start and pass the NSIS installer compile, then complete silent install, installed-app self-test, shortcut verification, uninstall, user-data preservation and manifest/checksum generation. A reviewed Windows dependency lock, clean-machine interactive WebView2 verification, written Park evaluation terms and the full four-phase Park acceptance workflow remain separate blockers."
   },
   "failure_analysis": {
     "status": "ROOT_CAUSE_IDENTIFIED_REMEDIATION_PENDING",
@@ -69,16 +74,17 @@
       "The NSIS version assertion used an over-escaped PowerShell regex; the compiler correctly reported v3.13 with exit code 0, but the assertion did not match.",
       "The installer requested MUI_LANGUAGE 'Persian' and LANG_PERSIAN, but NSIS 3.13 ships the language file as Farsi.nlf and defines LANG_FARSI. The mismatch prevented NSIS compilation.",
       "The NSIS File instruction used doubled backslash separators in the relative WebView2 bootstrapper path, so the compiler searched for a non-existent path and aborted at installer.nsi line 60.",
-      "Ruff format rejected the uppercase hexadecimal spelling in the English-only UI regression test's Unicode range endpoint. This is a formatting-only failure, not a runtime or installer failure."
+      "Ruff format rejected the uppercase hexadecimal spelling in the English-only UI regression test's Unicode range endpoint. This is a formatting-only failure, not a runtime or installer failure.",
+      "Exact-head run #136 showed that the WebView2 File path included ${__FILEDIR__} even though the script already used a repository-root working-directory rule. NSIS resolved the relative path twice and searched under packaging/windows/packaging/windows. Commit 78c485c changed the File path to the repository-root-relative staged path; this correction has not yet passed a new Windows installer build."
     ],
     "unresolved": [
       "WebView2 and .NET runtime behavior are not tested on the actual Windows device.",
       "PyInstaller may need hidden imports and explicit inclusion of static and benchmark data.",
       "JavaScript navigation guards are not a substitute for a verified native WebView navigation boundary.",
       "A separate fully resolved Windows dependency lock, signed installer, upgrade/uninstall flow and clean-machine acceptance are not available.",
-      "Persian UX, target-user testing and written Park evaluation terms remain open.",
-      "Canonical root compiler selection and the x64-only installer guard have not yet passed the current exact-head Windows rerun.",
-      "The corrected 3[.]13 version assertion and installer compile have not yet passed an exact-head Windows rerun."
+      "The corrected WebView2 NSIS input path has not yet passed an exact-head installer compile.",
+      "The current Windows run #140 is pending and has not allocated a job.",
+      "Workspace OID-accounting and operation-ID regression tests were added but have not yet passed exact-head CI."
     ]
   },
   "knowledge_extraction": {
@@ -102,11 +108,12 @@
       "Complete clean Windows 11 installation, live DR24 retrieval, JSON export, offline relaunch, upgrade and uninstall.",
       "Create a fully resolved Windows dependency lock and retain build hash and SBOM.",
       "Obtain written Park evaluation/demo terms before external distribution.",
-      "Pass exact-head NSIS 3.13 compiler selection and installer compilation.",
       "Pass silent installation and uninstallation; verify user projects, logs and exports are preserved.",
       "Verify interactive native WebView2 launch and external-navigation restrictions on clean x64 Windows.",
       "Create and use a reviewed, pinned Windows desktop dependency lock; record the lock and build manifest.",
-      "Obtain written Park evaluation terms before external distribution."
+      "Obtain written Park evaluation terms before external distribution.",
+      "Pass the corrected WebView2 path through NSIS compilation on the exact current head.",
+      "Pass the new workspace stored-OID accounting and non-string operation-ID regression tests."
     ]
   },
   "decision": "REVISE",
@@ -118,6 +125,6 @@
     "The browser Workbench continues to operate when desktop=1 is absent.",
     "Preserve v0.2.0 and keep DR24 inference blocked.",
     "No external installer distribution before Windows acceptance and written legal approval.",
-    "Windows Park preview language: English only. Do not spend time on Persian NSIS language files or localization. Persian localization can be evaluated for a later product release."
+    "The current Windows preview is English-only and LTR. Persian localization is not an acceptance requirement for this experimental delivery."
   ]
 }
