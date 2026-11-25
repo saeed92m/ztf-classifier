@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/windows-desktop-shell-spike.yml"
       - "pyproject.toml"
+      - "requirements-windows-desktop.lock"
       - "src/ztf_classifier/desktop/**"
       - "src/ztf_classifier/application/**"
       - "src/ztf_classifier/api/**"
@@ -42,11 +43,13 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install project and desktop extras
+      - name: Install pinned Windows desktop environment
         shell: pwsh
         run: |
           python -m pip install --upgrade pip==26.2 setuptools==84.1.0 wheel==0.48.0
-          python -m pip install -e ".[dev,dr24,desktop-windows,desktop-build]"
+          python -m pip install -r requirements-windows-desktop.lock
+          python -m pip install --no-deps --no-build-isolation -e .
+          python -m pip check
 
       - name: Ensure Evergreen WebView2 Runtime is available
         shell: pwsh
@@ -251,6 +254,8 @@ jobs:
             webview2_bootstrapper_sha256 = $env:WEBVIEW2_BOOTSTRAPPER_SHA256
             build_utc = [DateTime]::UtcNow.ToString("o")
             dependency_manifest = "desktop-windows-dependencies.txt"
+            dependency_lock = "requirements-windows-desktop.lock"
+            dependency_lock_sha256 = (Get-FileHash -Path "requirements-windows-desktop.lock" -Algorithm SHA256).Hash.ToLowerInvariant()
             self_test_report = "desktop-self-test.json"
             signature_status = "UNSIGNED_CHECKSUMMED"
           }
