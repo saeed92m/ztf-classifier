@@ -17,7 +17,7 @@
 
 **مرز مهم:** کاربرگ، مسیر محصول نرم‌افزاری، نسخه‌های قابل نصب و داشبورد را ذکر می‌کند. سند فنی، مشخصات کمی و مراحل توسعه را کامل‌تر می‌کند. الزام Windows Pre-release و توقف تمام کارهای مستقل، دستور اجرایی مالک پروژه در 2026-11-24 است. این الزام را به‌عنوان نقل‌قول مستقیم از کاربرگ معرفی نکنید.
 
-**تصمیم سطح پذیرش هنوز باز است:** قرارداد UX در PR #309 بین Windows Laboratory Preview و Full six-month Park MVP تفاوت می‌گذارد. جدول‌های بخش‌های 2 تا 4، تعهدات منبع و نقشه راه کامل را ثبت می‌کنند؛ این موارد به‌تنهایی اثبات نمی‌کنند که تمام قابلیت‌های MVP باید در اولین Windows beta حاضر باشند. تا انتخاب مالک، فقط بسته‌بندی/امنیت Windows و مسیر bounded DR24 preview فعال است. توسعه داده/مدل/عدم‌قطعیت مختص Full MVP شروع نمی‌شود.
+**تصمیم قطعی مالک — 2026-11-25:** خروجی فعال این مرحله، Windows Laboratory Preview است؛ نه Full six-month Park MVP. دامنه نسخه آزمایشی مطابق قرارداد پذیرش PR #309 و گردش‌کار بخش 3 آن است: نصب Windows، اجرای desktop، workspace، دریافت واقعی DR24، نمایش raw light curve و QC/descriptive summary، provenance، export و آزمون روی Windows تمیز. Full Park MVP یک milestone مستقل و غیرفعال است. پس از ارائه نسخه آزمایشی به پارک، شروع آن فقط با تصمیم کتبی جدید مالک مجاز است. **زبان نسخه آزمایشی انگلیسی است**؛ فارسی‌سازی و RTL خارج از معیار پذیرش این نسخه است.
 
 ## 2. تعهدات کاربرگ پذیرش
 
@@ -168,25 +168,24 @@ OOD، عدم‌قطعیت طبقه‌بندی و anomaly detection سه خروج
 
 **ممیزی مستقل current-main — 2026-11-24:** درخت بازگشتی GitHub main شامل 628 ورودی بود و truncate نشده بود. هیچ مسیر `model_baseline_v0.2_production`، `baseline_v0.2` یا manifest آرتیفکت تولیدی وجود نداشت. فقط سه جدول گزارش XGBoost v0.2 یافت شد: class names، CV metrics و OOF predictions. Releaseهای v1.0.1، v1.0.0 و v0.5.0 فقط wheel و source archive دارند؛ releaseهای v0.4.0، v0.3.0 و v0.2.0 هیچ asset ندارند. بررسی مستقیم مسیرهای مورد انتظار در root، `artifacts/` و `models/` نیز 404 داد. نتیجه: آرتیفکت اصلی در current main و release assets موجود نیست. Issue #282 مرجع بازیابی باقی می‌ماند.
 
-## 7. مسیر اجرایی بر اساس سطح پذیرش انتخاب‌شده توسط مالک
+## 7. مسیر اجرایی فعال — Windows Laboratory Preview
 
-### 7.1 کارهای مشترک و فعال تا زمان انتخاب سطح
+1. تکمیل Windows desktop shell و چرخه عمر سرویس محلی.
+2. تکمیل NSIS installer انگلیسی، dependency lock، checksum و build manifest.
+3. تکمیل مسیر bounded DR24: انتخاب صریح منبع و OID، دریافت داده واقعی، نمایش جداگانه هر OID و filter، raw observations، QC تشخیصی و descriptive summary مجاز.
+4. تکمیل workspace، ذخیره/بازیابی وضعیت، provenance، شناسه‌ها، زمان دریافت و payload/export hashes.
+5. تکمیل JSON export و بازبینی تطبیق آن با داده ورودی.
+6. تکمیل کنترل‌های امنیتی local API و WebView، مدیریت خطا و پیام‌های قابل اقدام.
+7. اجرای W01–W19 و آزمون کامل نصب، اجرا، restart، workflow، export، uninstall و حفظ داده روی Windows تمیز.
+8. تکمیل راهنما، محدودیت‌های علمی، release notes، demo script و مدارک تحویل.
 
-1. تکمیل و آزمون Windows shell، NSIS installer، dependency lock و کنترل‌های امنیتی.
-2. تکمیل مسیر bounded DR24 preview: انتخاب منبع، دریافت raw light curve، QC/descriptive summary، workspace، provenance و export.
-3. آزمون مسیر کاربر و نصب روی Windows تمیز.
-4. ثبت دقیق محدودیت‌ها؛ هیچ طبقه‌بندی یا خروجی علمی تأییدنشده نمایش داده نشود.
+هیچ قابلیت طبقه‌بندی، پیش‌بینی، calibrated probability، anomaly discovery یا ادعای اعتبار مدل به این نسخه اضافه نمی‌شود مگر اینکه در قرارداد پذیرش Preview آمده باشد و Gate علمی مربوطه را بگذراند.
 
-### 7.2 فقط در صورت انتخاب Full six-month Park MVP
+### 7.1 Full Park MVP — INACTIVE
 
-1. تکمیل dataset acquisition هدف 100,000 منحنی برچسب‌دار و قراردادهای هویت/label.
-2. رفع blocker بازیابی آرتیفکت اصلی مدل از منبع معتبر؛ بدون بازسازی یا جایگزینی.
-3. اجرای feature/baseline/main model فقط با ورودی معتبر و split قابل دفاع.
-4. تکمیل calibration، conformal، abstention، anomaly و SHAP با ارزیابی جداگانه.
-5. اجرای temporal و external validation و ساخت گزارش.
-6. تکمیل داشبورد، کاتالوگ و بسته علمی قابل بازتولید.
+هدف 100,000 منحنی برچسب‌دار، feature pipeline کامل، baseline/main model، SHAP، calibration، conformal، abstention، anomaly evaluation و temporal/external validation متعلق به Full Park MVP است. این milestone در دوره انجماد فعلی فعال نیست. پس از ارائه Windows Laboratory Preview به پارک، شروع آن فقط با تصمیم کتبی جدید مالک مجاز است.
 
-**تا زمانی که مالک سطح پذیرش را انتخاب نکرده است، بخش 7.2 فعال نیست.** هیچ کار مستقل خارج از این مسیر مجاز نیست.
+**هیچ کار مستقل خارج از فهرست فعال بالا مجاز نیست.**
 
 ## 8. موارد خارج از دامنه فعال
 
