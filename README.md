@@ -1,6 +1,10 @@
 # ZTF Classifier
 
-A CPU-first Astronomical Data Analysis & Discovery Platform for Zwicky Transient Facility (ZTF) data, scientific feature generation, machine-learning and statistical analysis, uncertainty/OOD diagnostics, provenance, and discovery-oriented workflows.
+> **PARK DELIVERY SCOPE FREEZE — 2026-11-24:** The only active objective is the complete Windows-installable Park laboratory prototype. Work required by all four acceptance-worksheet phases is active. No unrelated platform work, CPVS, CIN, cross-survey expansion or other out-of-scope work may start before the prototype is installed/tested on clean Windows and presented to the Park. All active work must map to the acceptance gates in [the scope-freeze decision](docs/acceptance/PARK_WINDOWS_PRERELEASE_SCOPE_FREEZE_2026-11-24.md), the [Park requirements traceability matrix](docs/acceptance/PARK_PROTOTYPE_REQUIREMENTS_TRACEABILITY_2026-11-24.md), and [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). This founder-approved rule supersedes earlier web-only and broad platform-expansion priorities for the current delivery stage.
+
+The active delivery is one English-only, Windows-installable Park laboratory prototype. It must implement and validate all four phases in the submitted acceptance worksheet and the six-month technical project roadmap: DR24 data and features, classification, calibrated uncertainty and abstention, anomaly analysis, explainability, temporal/external validation, dashboard, reports and Windows packaging. A raw-data viewer or installer alone does not pass.
+
+A CPU-first Astronomical Data Analysis and Discovery Platform for Zwicky Transient Facility (ZTF) data. The Park prototype must deliver the tested data, feature, classification, uncertainty, abstention, anomaly, validation and reporting workflow.
 
 ## Project status
 
@@ -17,8 +21,8 @@ The v0.2 core pipeline includes:
 * conformal prediction;
 * out-of-distribution (OOD) scoring;
 * historical and temporal evaluation;
-* persisted production model artifacts;
-* production inference;
+* production inference interfaces and artifact-loading contracts;
+* frozen production model artifact recovery and authentication (currently blocked; see [Issue #282](https://github.com/saeed92m/ztf-classifier/issues/282));
 * single-object and batch inference interfaces.
 
 The current benchmark contains **150 ZTF objects across 15 ALeRCE classes**. ALeRCE classifications are used as benchmark labels and are not treated as independent ground truth.
@@ -115,20 +119,11 @@ reports/tables/final_feature_set_v0.2.parquet
 
 ## Model and calibration
 
-The production model uses the frozen v0.2 model configuration and persists the complete inference artifact.
+The frozen v0.2.0 production model is `baseline_v0.2` and uses the 42-feature contract. Its original production artifact is **not currently present in the accessible repository or verified release assets**. Recovery and independent authentication remain open in [Issue #282](https://github.com/saeed92m/ztf-classifier/issues/282).
 
-The artifact includes:
+The expected production artifact contract includes the model configuration, trained classifier, preprocessing state, feature schema, calibration, provenance, and applicable conformal/OOD components. The separate schema-1.1 lab-smoke artifact is not an acceptable substitute for the frozen schema-1.0 production artifact.
 
-* model configuration;
-* trained classifier;
-* preprocessing state;
-* feature schema;
-* probability calibration;
-* provenance information;
-* conformal prediction diagnostics;
-* OOD diagnostics and production OOD model.
-
-The current artifact schema is **1.1** and remains backward-compatible with schema **1.0** artifacts.
+Until the original artifact is recovered and independently authenticated, production-model availability is **UNKNOWN / BLOCKED**. Do not interpret the interface or contract tests as proof that the production weights are available.
 
 ## Conformal prediction
 
@@ -165,9 +160,9 @@ The OOD feature contract contains **42 features**, matching the frozen model fea
 
 ## Production inference
 
-The production inference layer loads a persisted artifact and performs inference using the stored model, preprocessing, calibration, conformal diagnostics, and OOD configuration.
+The software contains production-inference interfaces that load a persisted artifact and preserve model and diagnostic metadata. However, the original frozen `baseline_v0.2` artifact is not currently available in the accessible repository sources and remains under recovery (Issue #282).
 
-Production outputs preserve model and diagnostic metadata so that downstream consumers can distinguish the exact artifact contract used for inference.
+The CLI examples below describe the supported interface. They are executable only when the user supplies an independently authenticated, compatible artifact or registry. The repository does not currently provide a verified copy of the original production weights.
 
 ## Command-line interface
 
@@ -285,24 +280,13 @@ The repository contains reproducibility, provenance, checksum validation, ingest
 
 ## Validation status
 
-The production inference and batch-output contracts are covered by focused automated tests.
+Automated tests cover inference interfaces, artifact contracts, and batch-output behavior. A test that uses fixtures or a lab-smoke artifact does not authenticate the frozen production weights.
 
-Current validated areas include:
+The latest accessible artifact audit and recovery record identify the original `baseline_v0.2` production artifact as missing or incomplete. Production inference tests that require those original weights or shared scientific inputs cannot be treated as passed when they are skipped. See [Issue #282](https://github.com/saeed92m/ztf-classifier/issues/282) for the required chain-of-custody and acceptance evidence.
 
-* model artifact loading and schema compatibility;
-* calibration;
-* conformal diagnostics;
-* OOD diagnostics;
-* production inference;
-* CLI prediction output;
-* batch Parquet output;
-* batch metadata contract;
-* batch schema and flag validation;
-* rejection of empty batch outputs.
+The full test suite is an engineering release gate. CI installation, lint, tests, package builds, and security checks do not replace source-backed scientific validation or production-artifact authentication.
 
-The full test suite is the release gate. CI runs installation, dependency verification, Ruff, the complete pytest suite, and package import verification. Registry-backed prediction and batch paths are covered by real subprocess E2E tests.
-
-The immutable scientific baseline is tag `v0.2.0`; the production model artifact remains version `baseline_v0.2` while the current software release is `v1.0.1`.
+The immutable scientific baseline is tag `v0.2.0`; the intended production model version remains `baseline_v0.2`. Its original artifact remains **UNKNOWN / BLOCKED** until recovery and independent authentication succeed. The software release `v1.0.1` does not prove that the model artifact is present.
 
 ## Repository structure
 
@@ -345,7 +329,7 @@ The project is evolving from a classifier-centered research pipeline into an **A
 
 A benchmark is evidence about this system; it is not the system's architecture.
 
-### Current CPVS reconstruction finding
+### Historical CPVS reconstruction record — inactive during Park delivery freeze
 
 | Population | Objects |
 |---|---:|
@@ -422,5 +406,5 @@ The current production model explicitly does **not** claim a scientific-anomaly 
 - Canonical continuity handbook: [HANDBOOK_UPDATED_v2.8.md](docs/HANDBOOK_UPDATED_v2.8.md).
 - Canonical cross-platform product roadmap: [PLATFORM_EXPANSION_ROADMAP.md](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md).
 - Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
-- Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
+- Inactive scientific backlog: CPVS [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170) remains historical/open, but no CPVS work is authorized before Park delivery. Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
 - Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.
