@@ -352,7 +352,13 @@ jobs:
             echo "A release already exists for $TAG. Refusing to overwrite it."
             exit 1
           fi
-          existing_tag="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.sha' 2>/dev/null || true)"
+          tag_response="$(mktemp)"
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" >"$tag_response" 2>/dev/null; then
+            existing_tag="$(jq -r '.object.sha // empty' "$tag_response")"
+          else
+            existing_tag=""
+          fi
+          rm -f "$tag_response"
           if [ -n "$existing_tag" ] && [ "$existing_tag" != "$GITHUB_SHA" ]; then
             echo "Tag $TAG already points to $existing_tag, not $GITHUB_SHA. Refusing to move it."
             exit 1
