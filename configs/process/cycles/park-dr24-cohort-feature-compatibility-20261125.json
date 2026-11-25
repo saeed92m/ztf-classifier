@@ -27,6 +27,11 @@
       "source": "PR #311: PARK_LABELLED_DATA_SOURCE_ASSESSMENT_2026-11-25.md",
       "status": "VERIFIED",
       "detail": "ALeRCE 2020 is a candidate label manifest; acquisition, DR24 matching, taxonomy mapping and the 100,000-light-curve cohort remain unverified."
+    },
+    {
+      "source": "Project Owner clarifications in Issue #253 comments 6934162328, 6935189069 and 6935356705",
+      "status": "VERIFIED",
+      "detail": "The full source-defined eligible cohort must be processed and reconciled. 5–10 and 30–50 source-group runs are diagnostic/demo only. ALeRCE labels, DR24 HATS observations, BTS independent transient labels and AOIC identity evidence remain separate layers."
     }
   ],
   "baseline": {
@@ -73,7 +78,8 @@
       "Verified that DR24 HATS returns HMJD and native photometry fields without conversion or QC selection.",
       "Verified that the source identity module defines contracts only and does not perform cross-matching.",
       "Added the proposed cohort and feature-compatibility contract at docs/acceptance/PARK_DR24_COHORT_AND_FEATURE_COMPATIBILITY_CONTRACT_2026-11-25.md.",
-      "No external acquisition, data download, cross-match, feature run, or model training was performed."
+      "No external acquisition, data download, cross-match, feature run, or model training was performed.",
+      "Re-read the Project Owner's Issue #253 acceptance clarifications. Updated the contract to state that small source-group runs are diagnostic/demo only and that the complete frozen eligible cohort must be processed and reconciled; added BTS as a separate scoped independent-evaluation layer."
     ],
     "blocker": "Acquire and verify the labelled source manifest through the approved manual workflow, implement and validate the cross-match ledger, approve the DR24 time/photometry/QC/feature contract, and then run bounded source-backed tests."
   },
@@ -90,7 +96,8 @@
       "ALeRCE label-to-DR24 match rate and ambiguity distribution are unknown.",
       "The approved count basis and DR24 QC eligibility policy remain to be confirmed.",
       "No DR24 feature mapping or parity evidence exists.",
-      "The original v0.2.0 production model artifact remains blocked under Issue #282."
+      "The original v0.2.0 production model artifact remains blocked under Issue #282.",
+      "The full eligible cohort and 100,000 labelled-light-curve target must be acquired and reconciled; a small diagnostic sample cannot satisfy full-cohort acceptance."
     ]
   },
   "knowledge_extraction": {
@@ -100,7 +107,8 @@
       "A 100,000 label-source count is not equivalent to 100,000 DR24 light curves or 100,000 unique astrophysical sources.",
       "Count light curves, source groups, ambiguous matches and retrieval failures separately.",
       "Split by confirmed astrophysical source group to prevent cross-filter leakage.",
-      "Keep any new Park model and feature schema separate from the frozen v0.2.0 baseline."
+      "Keep any new Park model and feature schema separate from the frozen v0.2.0 baseline.",
+      "The 5–10 and 30–50 confirmed-source-group runs are diagnostics/demo only; Park acceptance requires the complete predeclared eligible cohort, processed in fully reconciled batches."
     ]
   },
   "regression": {
@@ -122,6 +130,7 @@
     "The DR24 adapter is a bounded raw-native acquisition path, not a validated model-input path.",
     "The v0.2.0 baseline, 42-feature schema, class order, historical cutoff and acceptance criteria remain unchanged.",
     "The 100,000-light-curve target must not be claimed from the ALeRCE 2020 source count or the SCoPe DR16 light-curve count.",
-    "No Park model training or scientific validation is authorized by this audit."
+    "No Park model training or scientific validation is authorized by this audit.",
+    "Keep DR24 HATS as primary source observations, ALeRCE as weak/reference labels, BTS spectroscopic labels for scoped independent transient evaluation only, and AOIC associations as a separate provenance layer."
   ]
 }
