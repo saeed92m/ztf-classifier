@@ -1,209 +1,192 @@
-# ماتریس ردیابی تعهدات نسخه آزمایشی پارک — 2026-11-24
+# Park Prototype Requirements Traceability Matrix
 
-**وضعیت:** مرجع فعال برنامه تحویل Windows Pre-release  
-**برنامه آزمون:** [PARK_WINDOWS_PRERELEASE_TEST_PLAN.md](PARK_WINDOWS_PRERELEASE_TEST_PLAN.md)  
-**مالک پذیرش:** Founder / Project Owner  
-**ردیاب اصلی:** [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158)  
-**سیاست دامنه:** [PARK_WINDOWS_PRERELEASE_SCOPE_FREEZE_2026-11-24.md](PARK_WINDOWS_PRERELEASE_SCOPE_FREEZE_2026-11-24.md)
+- Status: Active acceptance reference for the Windows-installable Park prototype
+- Acceptance owner: Founder / Project Owner
+- Primary tracker: Issue #158
+- Scope policy: PARK_WINDOWS_PRERELEASE_SCOPE_FREEZE_2026-11-24.md
+- Test plan: PARK_WINDOWS_PRERELEASE_TEST_PLAN.md
+- Evidence date for the status table: 2026-11-24
 
-## 1. منابع و مرز تفسیر
+## 1. Source documents and interpretation
 
-این ماتریس از دو منبع ارسالی استخراج شده است:
+This matrix uses the following submitted documents:
 
-1. کاربرگ پذیرش مرکز رشد: `261007-091750-354.docx`.
-2. سند فنی، نقشه راه و طرح راهبردی: `سند_پروژه_نسخه_نهایی.pdf`.
+1. Park acceptance worksheet: 261007-091750-354.docx, form AP-02-140503.
+2. Final technical project document: سند_پروژه_نسخه_نهایی.pdf.
+3. Park presentation: ارائه_پارک_علم_و_فناوری_نسخه_نهایی.pdf.
 
-ارائه پارک نیز ادعای محصول و دموی زنده را شرح می‌دهد: `ارائه_پارک_علم_و_فناوری_نسخه_نهایی.pdf`.
+The worksheet defines the product purpose, use cases, technical R&D areas and four delivery phases. The technical project document adds the prototype scope, model and feature plan, evaluation metrics, and the six-month monthly roadmap.
 
-**مرز مهم:** کاربرگ، مسیر محصول نرم‌افزاری، نسخه‌های قابل نصب و داشبورد را ذکر می‌کند. سند فنی، مشخصات کمی و مراحل توسعه را کامل‌تر می‌کند. الزام Windows Pre-release و توقف تمام کارهای مستقل، دستور اجرایی مالک پروژه در 2026-11-24 است. این الزام را به‌عنوان نقل‌قول مستقیم از کاربرگ معرفی نکنید.
+The Windows-installable delivery requirement and the freeze on unrelated work are explicit Founder decisions. Do not describe these decisions as direct quotations from the worksheet.
 
-**تصمیم قطعی مالک — 2026-11-25:** خروجی فعال این مرحله، Windows Laboratory Preview است؛ نه Full six-month Park MVP. دامنه نسخه آزمایشی مطابق قرارداد پذیرش PR #309 و گردش‌کار بخش 3 آن است: نصب Windows، اجرای desktop، workspace، دریافت واقعی DR24، نمایش raw light curve و QC/descriptive summary، provenance، export و آزمون روی Windows تمیز. Full Park MVP یک milestone مستقل و غیرفعال است. پس از ارائه نسخه آزمایشی به پارک، شروع آن فقط با تصمیم کتبی جدید مالک مجاز است. **زبان نسخه آزمایشی انگلیسی است**؛ فارسی‌سازی و RTL خارج از معیار پذیرش این نسخه است.
+**Binding Founder decision — 2026-11-25:** The active delivery is one Windows-installable laboratory prototype that implements and validates all four worksheet phases. It is not a raw-data viewer-only preview. The active scope includes DR24 data, a labelled cohort, feature engineering, classification, calibrated uncertainty, abstention, anomaly analysis, explainability, temporal and external validation, a dashboard, reproducible reports and Windows packaging. The preview and installer are English-only and use left-to-right layout.
 
-## 2. تعهدات کاربرگ پذیرش
+## 2. Requirements from the acceptance worksheet
 
-| مرجع | تعهد ثبت‌شده | معیار قابل آزمون در نسخه |
+| Source | Declared requirement | Testable acceptance evidence |
 |---|---|---|
-| 2-4 | تحلیل منحنی‌های نوری عمومی ZTF و طبقه‌بندی اجرام متغیر/گذرا | اجرای واقعی مسیر داده تا خروجی روی داده مشخص و نسخه‌دار |
-| 2-4 | اولویت‌بندی نامزدها، ناهنجاری و عدم‌قطعیت | خروجی‌های جداگانه، تعریف‌شده و دارای شواهد |
-| 2-5 بند 1 | تحلیل خودکار داده نجومی | ورود/انتخاب داده و اجرای گردش‌کار از رابط کاربر |
-| 2-5 بند 2 | اولویت‌بندی نامزدهای رصدی | رتبه‌بندی مستند بر پایه خروجی مدل، کیفیت و عدم‌قطعیت |
-| 2-5 بند 3 | کشف موارد نادر و ناهنجار | روش مشخص و ارزیابی‌شده؛ OOD به‌تنهایی «کشف ناهنجاری علمی» نیست |
-| 2-5 بند 4 | ابزار تحلیل، گزارش و بررسی خروجی | Object Explorer، نمودار، گزارش و export قابل بازبینی |
-| 2-5 بند 6 | نسخه‌های قابل نصب و داشبورد تحلیلی | Windows Pre-release قابل نصب و داشبورد عملیاتی |
-| 2-6 | QC، ویژگی‌سازی، مدل‌سازی، عدم‌قطعیت، ناهنجاری، انتقال‌پذیری و معماری سبک | آزمون و گزارش مستقل برای هر محور |
-| 2-7 | احتمال کالیبره و امتناع از پیش‌بینی قطعی | calibration و risk–coverage روی داده ارزیابی مناسب |
-| 2-10 مرحله 1 | داده ZTF، شناسه، منشأ برچسب و سوابق پردازش | manifest داده و label provenance |
-| 2-10 مرحله 2 | پیش‌پردازش و ویژگی‌های آماری، تناوبی، زمانی و شکل منحنی | نسخه‌بندی feature pipeline و گزارش QC |
-| 2-10 مرحله 3 | XGBoost و LightGBM، ارزیابی بدون leakage | baseline، مدل اصلی و ارزیابی object/time-safe |
-| 2-10 مرحله 4 | calibration، conformal، abstention، anomaly و SHAP | خروجی و ارزیابی جداگانه؛ فقط قابلیت‌های تأییدشده فعال شوند |
-| 2-10 مرحله 5 | اعتبارسنجی مستقل و زمانی، ثبت نسخه‌ها و نتایج | گزارش validation، split، hashes و محدودیت‌ها |
-| 2-10 مرحله 6 | نرم‌افزار، dashboard و API، ورودی یک/چند منحنی و خروجی تحلیل | اجرای end-to-end و export |
-| 4-1 | چهار فاز در مجموع 6 ماه | خروجی‌های فازها در بخش 4 این ماتریس |
+| 2.4 | Analyse public ZTF light curves and classify variable and transient objects | Run the full data-to-prediction workflow on a pinned and versioned population |
+| 2.4 | Prioritise candidates and identify unusual objects | Separate ranking and anomaly outputs with documented methods |
+| 2.4 | Provide confidence and uncertainty; abstain when evidence is weak | Calibrated probabilities, uncertainty metrics and a tested abstention policy |
+| 2.4 | Use a CPU-first architecture | Build and run the supported workflow without a required high-end GPU |
+| 2.5.1 | Automatic astronomical data analysis | Run the workflow from the application UI |
+| 2.5.2 | Prioritise follow-up candidates | Rank candidates by model output, data quality and uncertainty |
+| 2.5.3 | Identify rare and anomalous candidates | Use a defined anomaly method and an evaluated candidate list |
+| 2.5.4 | Support research and reporting | Provide inspection, analysis, reports and exports |
+| 2.5.6 | Provide installable software and an analytical dashboard | Install and use the Windows application without developer tools |
+| 2.6 | Handle irregular, noisy light curves and class imbalance | QC, feature and model tests cover missing data, uneven sampling and class imbalance |
+| 2.6 | Prevent overfitting and data leakage | Object-level and time-aware split tests |
+| 2.6 | Calibrate probabilities and estimate uncertainty | Calibration evaluation on a separate eligible set |
+| 2.6 | Support abstention | Risk–Coverage and selective-error report |
+| 2.6 | Detect anomalies and explain outputs | Separate anomaly evaluation and reproducible SHAP output |
+| 2.6 | Test generalisation | Temporal and independent external evaluation |
+| 2.9–2.10 | Use DR24, preprocessing, feature extraction, XGBoost/LightGBM, uncertainty and anomaly methods | End-to-end workflow with versioned data, features, model and reports |
+| 4.1 | Deliver four phases in six months | Evidence for each phase and the final Windows prototype |
 
-**ملاحظه CPVS:** بند 2-10 کاربرگ به اختلاف بازسازی CPVS اشاره می‌کند. دستور مالک در 2026-11-24 این جریان را از دامنه فعال نسخه پارک خارج کرده است. این مورد حل‌شده نیست و در این مرحله بررسی نمی‌شود. هیچ ادعای رفع آن مجاز نیست. این تصمیم دامنه، مجوز تغییر معیار علمی نیست.
+## 3. Requirements from the technical project document
 
-## 3. تعهدات تکمیلی سند فنی
+### 3.1 Data and cohort
 
-### 3.1 داده و اندازه مجموعه
+- Primary source: ZTF DR24 light curves in g, r and i filters.
+- Label sources: ALeRCE and SCoPe. Record each label source and its limits.
+- Supplementary data: AllWISE and Gaia only when cross-matching is implemented and validated.
+- The technical roadmap sets a minimum of 100,000 labelled light curves in Month 1.
+- The technical document also describes a targeted cohort of several hundred thousand curves. Do not download the full 5.32-billion-curve release.
+- The exact cohort size above the 100,000 minimum must follow the pinned acquisition plan and available resources.
 
-- منبع اصلی: ZTF DR24 و منحنی‌های نوری g/r/i.
-- داده‌های برچسب‌دار: ALeRCE و SCoPe با ثبت منبع و نقش label.
-- داده مکمل: AllWISE و Gaia، فقط در صورت پیاده‌سازی و cross-match معتبر.
-- سند فنی، هدف حداقل **100,000 منحنی نوری برچسب‌دار** را در ماه اول نقشه راه شش‌ماهه تعریف می‌کند.
-- سند فنی می‌گوید کل 5.32 میلیارد منحنی دانلود نشود؛ یک زیرمجموعه هدفمند در حد چند صد هزار منحنی استخراج شود.
+Data acceptance:
+1. Preserve source identifiers and object identifiers.
+2. Record release, query, acquisition time, input/output counts and failures.
+3. Keep labels and label provenance separate from raw data.
+4. Do not silently drop incomplete records. Record the reason for each exclusion.
+5. Store manifests and hashes for input and output data.
+6. Keep survey OIDs separate from physical-source identity unless an approved identity record supports grouping.
 
-معیار پذیرش داده:
-1. شناسه منبع و شناسه شیء حفظ شود.
-2. نسخه، query، زمان دریافت، تعداد ورودی/خروجی و خطاها ثبت شود.
-3. برچسب و منبع برچسب جدا از داده خام نگهداری شود.
-4. داده ناقص حذف خاموش نشود؛ دلیل عدم صلاحیت ثبت شود.
-5. فایل manifest و hash برای ورودی و خروجی وجود داشته باشد.
+### 3.2 Taxonomy and feature engineering
 
-### 3.2 طبقه‌بندی و ویژگی
+The prototype taxonomy includes transient, stochastic, periodic and eclipsing groups. It also includes Artifact / Unknown / Dubious as a quality-control class. Preserve the approved class definitions and order.
 
-- Taxonomy هدف، سلسله‌مراتبی است و کلاس Artifact / Unknown / Dubious را برای کنترل کیفیت در نظر می‌گیرد.
-- پنج خانواده اصلی ویژگی در سند فنی عبارت‌اند از:
-  1. آماری پایه؛
-  2. نسبت‌های مقداری / Quantile؛
-  3. تناوبی / فرکانسی؛
-  4. شکل منحنی نوری؛
-  5. رنگ و اطلاعات جانبی.
-- خانواده QC و اعتبارسنجی باید برای تشخیص کفایت داده و خطای اندازه‌گیری حفظ شود.
-- مدل‌های مقایسه‌ای: Logistic Regression / k-NN و Balanced Random Forest.
-- مدل اصلی هدف: XGBoost / LightGBM با وزن‌دهی کلاس.
-- SHAP برای توضیح سهم ویژگی‌ها در سند فنی هدف‌گذاری شده است.
+The technical document lists these feature families:
+1. Basic statistical features.
+2. Quantile features.
+3. Periodic and frequency features.
+4. Light-curve shape features.
+5. Colour and supplementary catalogue features.
+6. Quality and validation features.
 
-هیچ‌یک از موارد بالا نباید صرفاً با وجود کد یا UI به‌عنوان تکمیل‌شده اعلام شود. داده، آرتیفکت، آزمون و گزارش باید موجود باشند.
+Each feature must have a definition, unit, schema version, missing-data rule and test. Do not silently alter the frozen v0.2.0 feature contract.
 
-### 3.3 عدم‌قطعیت، ناهنجاری و اعتبارسنجی
+### 3.3 Models and evaluation
 
-روش‌ها و معیارهای هدف در سند فنی:
+The technical document proposes:
+- Logistic Regression and k-NN as simple baselines.
+- Balanced Random Forest as a baseline.
+- XGBoost or LightGBM as the main CPU-first model.
+- Isotonic or Platt calibration and conformal prediction for uncertainty.
+- Isolation Forest or a suitable semi-supervised method for anomaly analysis.
+- SHAP for model explanations.
 
-- Probability calibration: ECE، MCE و Brier score.
-- Conformal prediction و سیاست abstention.
-- Risk–Coverage و خطا در بخش پیش‌بینی‌های پذیرفته‌شده.
-- Isolation Forest برای مسیر ناهنجاری تجربی.
-- Balanced Accuracy و Macro-F1.
-- Precision / Recall به تفکیک کلاس.
-- Confusion Matrix نرمال‌شده.
-- ROC-AUC و PR-AUC هر کلاس.
-- Temporal split؛ آموزش روی دوره‌های قدیمی و آزمون روی دوره‌های بعدی.
-- External / cross-survey evaluation با منبع مستقل و پروتکل مشخص.
-- بررسی هم‌پوشانی شناسه‌ها بین train و test.
+Required evaluation includes:
+- Balanced Accuracy and Macro-F1.
+- Per-class precision and recall.
+- Confusion matrix.
+- ROC-AUC and PR-AUC where valid.
+- ECE, MCE and Brier score.
+- Risk–Coverage and selective error.
+- Temporal split.
+- Independent external evaluation.
 
-OOD، عدم‌قطعیت طبقه‌بندی و anomaly detection سه خروجی متفاوت‌اند. آن‌ها را ادغام نکنید.
+Use object-level and temporal splits. Check overlap between training, calibration and test populations. ALeRCE labels are benchmark labels. Do not describe them as independent ground truth.
 
-### 3.4 خروجی‌های قابل ارائه
+## 4. Six-month delivery plan
 
-سند فنی پنج خروجی اصلی را مشخص می‌کند:
-
-1. کاتالوگ نمونه در CSV/Parquet با شناسه، مختصات در صورت وجود، کلاس، احتمال و وضعیت عدم‌قطعیت.
-2. داشبورد تعاملی برای جست‌وجوی جرم، منحنی نوری، کلاس، احتمال و پرچم ناهنجاری.
-3. گزارش فنی خودکار با confusion matrix، calibration curves، مقایسه baseline و Risk–Coverage.
-4. مقاله یا پیش‌چاپ علمی.
-5. بسته بازتولید شامل مخزن کد، راهنما و محیط قابل نصب برای بازتولید مستقل توسط داور.
-
-نسخه آزمایشی باید مسیر کاربر را از دریافت/ورود داده تا مشاهده و export خروجی پوشش دهد. اسلاید یا mock UI به‌تنهایی پذیرش نیست.
-
-## 4. نقشه راه شش‌ماهه سند فنی و کاربرگ
-
-| زمان | مرحله | فعالیت | خروجی قابل سنجش |
+| Month | Phase | Main work | Required output |
 |---|---|---|---|
-| ماه 1 | زیرساخت و داده | محیط اجرا، DR24، زیرمجموعه برچسب‌دار، retrieval و cache | حداقل 100,000 منحنی نوری برچسب‌دار با مستند داده |
-| ماه 2 | ویژگی و baseline | پنج خانواده ویژگی، Balanced Random Forest | گزارش ویژگی، confusion matrix و baseline |
-| ماه 3 | مدل اصلی | XGBoost/LightGBM، تنظیم مدل و SHAP | مدل و گزارش مقایسه با baseline |
-| ماه 4 | عدم‌قطعیت و ناهنجاری | calibration، conformal، abstention، Isolation Forest | calibration curve، Risk–Coverage و فهرست نامزدهای anomaly |
-| ماه 5 | اعتبارسنجی و انتقال‌پذیری | temporal split، external test، تحلیل خطا | گزارش مقایسه‌ای و تحلیل خطا |
-| ماه 6 | نمایش و مستندسازی | dashboard/API، پیش‌چاپ، پرونده پذیرش | دموی زنده، بسته فنی و پرونده ارائه پارک |
+| 1 | Infrastructure and data | Environment, DR24, labelled cohort, retrieval and cache | At least 100,000 labelled curves with a data manifest |
+| 2 | Features and baseline | Feature families and Balanced Random Forest | Feature report, confusion matrix and baseline |
+| 3 | Main model | XGBoost/LightGBM, tuning and SHAP | Main model and baseline comparison |
+| 4 | Uncertainty and anomaly | Calibration, conformal prediction, abstention and Isolation Forest | Calibration curves, Risk–Coverage and anomaly candidates |
+| 5 | Validation and transferability | Temporal split, external test and error analysis | Comparative validation report |
+| 6 | Demonstration and documentation | Dashboard/API, paper draft, Park acceptance file | Live demo, technical package and Park handoff |
 
-کاربرگ، چهار فاز 2+1+2+1 ماهه را تعریف می‌کند. جدول بالا، همان مسیر را با جزئیات ماهانه سند فنی نشان می‌دهد. این جدول برنامه پیشنهادی سند است؛ مدرک تکمیل هیچ مرحله‌ای نیست.
+The worksheet groups the work into four phases of 2 + 1 + 2 + 1 months. This table provides the monthly detail from the technical project document. It is a plan, not evidence of completion.
 
-### 4.1 نقاط کنترل 90 روز نخست
+## 5. Windows delivery requirements
 
-- روز 1–30: محیط، دسترسی DR24 و زیرمجموعه برچسب‌دار.
-- روز 31–60: feature pipeline و مدل baseline.
-- روز 61–90: مدل اصلی، لایه عدم‌قطعیت و داشبورد demo.
+The Founder requires a GitHub Pre-release that installs on Windows.
 
-این نقاط کنترل نیز باید با artifact و گزارش واقعی اثبات شوند.
+Acceptance tests:
+- Install on a clean Windows system.
+- Launch without Python, pip, Git or a terminal.
+- Run the full scientific workflow from the application.
+- Retrieve data and show provenance.
+- Save and reopen a workspace and its results.
+- Test failure handling and restart.
+- Uninstall without deleting user data.
+- Provide a build manifest, dependency lock, checksum and test report.
 
-## 5. شرط اختصاصی تحویل Windows
+The installer is unsigned unless a valid code signature is added. A checksum is not a code signature. Obtain written Park evaluation terms before external distribution.
 
-دستور مالک پروژه، خروجی این مرحله را به یک **GitHub Pre-release قابل نصب روی Windows** محدود می‌کند.
+## 6. Evidence status recorded on 2026-11-24
 
-آزمون‌های لازم:
-- نصب روی Windows تمیز؛
-- اجرای برنامه بدون Python، pip، Git یا ترمینال برای کاربر عادی؛
-- اجرای گردش‌کار واقعی از رابط برنامه؛
-- دریافت/ورود داده و نمایش provenance؛
-- ذخیره و بازیابی پروژه و خروجی؛
-- آزمون خطا و راه‌اندازی مجدد؛
-- حذف برنامه بدون حذف داده کاربر؛
-- manifest، dependency lock، checksum و گزارش آزمون.
-
-نسخه unsigned باید صریحاً unsigned معرفی شود. checksum جایگزین امضای کد نیست. پیش از توزیع خارجی، شرایط مجوز/ارزیابی پارک باید مکتوب و تأیید شود.
-
-## 6. وضعیت شواهد در 2026-11-24
-
-| معیار | وضعیت فعلی | شواهد و محدودیت |
+| Requirement | Recorded state | Evidence and limitation |
 |---|---|---|
-| DR24 raw acquisition | PARTIAL | PR #307 و #310 مسیر bounded HATS را برای 1–10 OID در هر درخواست دارند. |
-| Descriptive summaries | PARTIAL | آمار منبع‌محور وجود دارد؛ این آمار feature مدل نیست. |
-| Windows shell | PARTIAL | PyInstaller one-folder و self-test در اجرای قبلی موفق شدند. |
-| Windows installer | BLOCKED / RETESTING | اجرای قبلی در یافتن مسیر NSIS شکست خورد. مسیر lookup اصلاح شده است؛ اجرای جدید هنوز نتیجه نهایی نداده است. |
-| Clean Windows user launch | NOT VERIFIED | self-test فعلی API و فایل‌های static را بررسی می‌کند؛ اجرای تعاملی کامل UI روی دستگاه واقعی هنوز اثبات نشده است. |
-| Windows dependency lock | BLOCKED | workflow فعلی `pip freeze` تولید می‌کند، اما lock ورودی و بازبینی‌شده برای Windows desktop هنوز موجود نیست. |
-| 100,000 labelled curves | NOT VERIFIED | manifest و گزارش acquisition کامل برای هدف سند فنی در این snapshot تأیید نشده است. |
-| Feature pipeline for Park population | PARTIAL / NOT ACCEPTED | baseline feature contract موجود است؛ parity و خروجی روی cohort پارک اثبات نشده است. |
-| Frozen v0.2.0 production model | BLOCKED | Issue #282؛ گزارش audit محلی 2026-11-23، آرتیفکت اصلی و cache خام ALeRCE را پیدا نکرده است. آرتیفکت lab-smoke جایگزین مجاز نیست. |
-| Main XGBoost/LightGBM Park model | NOT VERIFIED | مدل Park با داده و split تعریف‌شده و گزارش مستقل پذیرفته نشده است. |
-| SHAP explanations | NOT VERIFIED | مسیر end-to-end پذیرفته‌شده برای cohort پارک ثبت نشده است. |
-| Calibration / conformal / abstention | NOT VERIFIED for Park population | خروجی‌ها فقط پس از artifact معتبر و ارزیابی روی population تعریف‌شده قابل ارائه‌اند. |
-| Anomaly detection | NOT VERIFIED | OOD diagnostics به‌تنهایی معیار پذیرش anomaly نیستند. |
-| Temporal / external validation | NOT VERIFIED | گزارش نهایی برای جمعیت پارک ثبت نشده است. |
-| Catalog/report exports | PARTIAL | raw JSON export موجود است؛ catalog علمی و گزارش ارزیابی کامل پذیرفته نشده‌اند. |
-| 30–50 object guided demo | NOT ACCEPTED | Issue #158 این cohort را تعریف می‌کند؛ مسیر فعلی هر درخواست را به 1–10 OID محدود می‌کند. |
-| Park handover | NOT STARTED | نسخه نصب‌پذیر تأییدشده و مدرک ارائه وجود ندارد. |
+| DR24 raw acquisition | PARTIAL | Bounded HATS retrieval exists for 1–10 OIDs per request. |
+| Descriptive summaries | PARTIAL | Source-native descriptive statistics exist. They are not model features. |
+| Windows shell | PARTIAL | PyInstaller one-folder build and frozen self-test passed in an earlier run. |
+| Windows installer | BLOCKED / RETESTING | Earlier runs failed at NSIS discovery or language setup. The installer was changed to English-only. Exact-head installer evidence is required. |
+| Clean Windows user launch | NOT VERIFIED | A frozen self-test does not prove the complete interactive workflow on a clean device. |
+| Windows dependency lock | BLOCKED | A pip freeze output is not a reviewed, reproducible input lock. |
+| 100,000 labelled curves | NOT VERIFIED | No complete pinned cohort manifest and acquisition report were accepted in this evidence snapshot. |
+| Feature pipeline on Park cohort | NOT ACCEPTED | The frozen feature contract exists. DR24 parity and cohort outputs are not proven. |
+| Frozen v0.2.0 production model | BLOCKED | Issue #282 records the artifact-recovery blocker. A lab-smoke artifact is not a substitute. |
+| Main XGBoost/LightGBM Park model | NOT VERIFIED | No accepted Park-population model and independent report were verified. |
+| SHAP explanations | NOT VERIFIED | No accepted end-to-end SHAP path for the Park cohort was verified. |
+| Calibration / conformal / abstention | NOT VERIFIED for Park population | Requires an authenticated model and separate eligible evaluation sets. |
+| Anomaly detection | NOT VERIFIED | OOD diagnostics alone do not prove anomaly detection. |
+| Temporal / external validation | NOT VERIFIED | No final Park-population transferability report was verified. |
+| Scientific reports and exports | PARTIAL | Raw JSON export exists. The full scientific report and catalogue are not accepted. |
+| Guided demonstration | NOT ACCEPTED | A 30–50-object end-to-end demo is not yet accepted. Current retrieval is limited to 1–10 OIDs per request. |
+| Park handoff | NOT STARTED | No accepted Windows installer or presentation record exists. |
 
-**گزارش محلی مدل:** `local_scientific_artifact_audit.json` در snapshot محلی با SHA-256 برابر `e866399c0785c0a5b072801c140c9c235fefe24644c73780c10a10228096ef9b` ثبت شده است. آن snapshot از شاخه‌ای سه commit عقب‌تر از upstream تهیه شده بود؛ بنابراین این گزارش شاهد محلی مهم است، نه audit نهایی current-main.
+These states are historical evidence from the stated date. Refresh them from exact commits and workflow runs before a release decision.
 
-**ممیزی مستقل current-main — 2026-11-24:** درخت بازگشتی GitHub main شامل 628 ورودی بود و truncate نشده بود. هیچ مسیر `model_baseline_v0.2_production`، `baseline_v0.2` یا manifest آرتیفکت تولیدی وجود نداشت. فقط سه جدول گزارش XGBoost v0.2 یافت شد: class names، CV metrics و OOF predictions. Releaseهای v1.0.1، v1.0.0 و v0.5.0 فقط wheel و source archive دارند؛ releaseهای v0.4.0، v0.3.0 و v0.2.0 هیچ asset ندارند. بررسی مستقیم مسیرهای مورد انتظار در root، `artifacts/` و `models/` نیز 404 داد. نتیجه: آرتیفکت اصلی در current main و release assets موجود نیست. Issue #282 مرجع بازیابی باقی می‌ماند.
+## 7. Active execution path
 
-## 7. مسیر اجرایی فعال — Windows Laboratory Preview
+All four worksheet phases are active because they form one Park prototype acceptance target.
 
-1. تکمیل Windows desktop shell و چرخه عمر سرویس محلی.
-2. تکمیل NSIS installer انگلیسی، dependency lock، checksum و build manifest.
-3. تکمیل مسیر bounded DR24: انتخاب صریح منبع و OID، دریافت داده واقعی، نمایش جداگانه هر OID و filter، raw observations، QC تشخیصی و descriptive summary مجاز.
-4. تکمیل workspace، ذخیره/بازیابی وضعیت، provenance، شناسه‌ها، زمان دریافت و payload/export hashes.
-5. تکمیل JSON export و بازبینی تطبیق آن با داده ورودی.
-6. تکمیل کنترل‌های امنیتی local API و WebView، مدیریت خطا و پیام‌های قابل اقدام.
-7. اجرای W01–W19 و آزمون کامل نصب، اجرا، restart، workflow، export، uninstall و حفظ داده روی Windows تمیز.
-8. تکمیل راهنما، محدودیت‌های علمی، release notes، demo script و مدارک تحویل.
+1. Complete DR24 data, identity, cohort and provenance contracts.
+2. Complete and validate the feature pipeline on the pinned cohort.
+3. Resolve the approved model-artifact and input-compatibility blockers.
+4. Reproduce the baseline and evaluate the main model.
+5. Implement calibration, uncertainty and abstention with separate evaluation evidence.
+6. Implement anomaly analysis separately from OOD diagnostics.
+7. Implement SHAP explanations and reproducible technical reports.
+8. Complete temporal and independent external validation.
+9. Integrate the complete workflow into the English-only Windows application.
+10. Complete installer, clean-machine tests, documentation and Park handoff.
 
-هیچ قابلیت طبقه‌بندی، پیش‌بینی، calibrated probability، anomaly discovery یا ادعای اعتبار مدل به این نسخه اضافه نمی‌شود مگر اینکه در قرارداد پذیرش Preview آمده باشد و Gate علمی مربوطه را بگذراند.
+Do not present a blocked capability as complete. The Park prototype is NOT READY until every mandatory gate passes.
 
-### 7.1 Full Park MVP — INACTIVE
+## 8. Frozen workstreams
 
-هدف 100,000 منحنی برچسب‌دار، feature pipeline کامل، baseline/main model، SHAP، calibration، conformal، abstention، anomaly evaluation و temporal/external validation متعلق به Full Park MVP است. این milestone در دوره انجماد فعلی فعال نیست. پس از ارائه Windows Laboratory Preview به پارک، شروع آن فقط با تصمیم کتبی جدید مالک مجاز است.
+The following work remains outside the active delivery:
+- CPVS reconstruction and the 11,602-object discrepancy.
+- Independent CPVS diagnostics, retrieval and code changes.
+- Cosmic Intelligence Network implementation.
+- macOS/Linux packaging.
+- Cross-survey expansion and unrelated platform work.
 
-**هیچ کار مستقل خارج از فهرست فعال بالا مجاز نیست.**
+The CPVS discrepancy remains unresolved. This scope decision does not resolve it. Keep its historical evidence intact. Do not run CPVS workflows before Park presentation.
 
-## 8. موارد خارج از دامنه فعال
+## 9. Final readiness definition
 
-- CPVS research/reconstruction و هر workflow مستقل آن؛
-- توسعه مستقل Cosmic Intelligence Network؛
-- پشتیبانی macOS/Linux در این مرحله؛
-- توسعه عمومی پلتفرم یا تحقیق مدل خارج از تعهدات نسخه پارک.
+The prototype is ready for presentation only when:
+1. Every required worksheet and technical-plan item has a tested implementation and evidence.
+2. The UI and reports do not overstate any capability.
+3. The full workflow passes from the installed application on clean Windows.
+4. Data, feature, model, split, output and provenance manifests are complete.
+5. The GitHub Pre-release and installation documents are ready.
+6. The prototype is presented to the Park and the result is recorded.
 
-این موارد backlog غیرفعال‌اند. ثبت آن‌ها به معنی حل‌شدن نیست. تغییر دامنه فقط با تأیید کتبی مالک پروژه مجاز است.
-
-## 9. تعریف نهایی آماده‌بودن
-
-نسخه زمانی آماده ارائه است که:
-1. تعهدات فنی قابل ارائه در ماتریس بالا، با artifact و آزمون واقعی پوشش داده شده باشند؛
-2. هیچ قابلیت تأییدنشده در UI یا ارائه به‌عنوان قابلیت عملیاتی معرفی نشود؛
-3. نصب، اجرا، گردش‌کار، ذخیره/بازیابی و export روی Windows تمیز آزمون شده باشند؛
-4. manifest، dependency lock، checksum، release notes و راهنما موجود باشند؛
-5. GitHub Pre-release ساخته شود؛
-6. نسخه واقعاً به پارک ارائه شود و نتیجه ثبت گردد.
-
-تا تحقق این موارد، وضعیت کلی **NOT READY FOR PARK PRESENTATION** باقی می‌ماند.
+Until then, the status remains **NOT READY FOR PARK PRESENTATION**.
