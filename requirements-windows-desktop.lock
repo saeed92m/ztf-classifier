@@ -1,0 +1,30 @@
+# Windows x64 CPython 3.11 lock, captured from Windows Preview Build #158.
+# Exact version pins; wheel hashes are not yet recorded.
+pywebview==6.2.1
+pyinstaller==6.22.3
+lsdb==0.10.4
+s3fs==2026.9.0
+httpx2==2.16.2
+fastapi==0.142.4
+uvicorn==0.53.0
+numpy==2.4.6
+pandas==2.3.3
+scipy==1.17.1
+matplotlib==3.11.2
+astropy==8.0.3
+astroquery==0.4.11
+alerce==2.3.1
+pyarrow==26.0.1
+scikit-learn==1.9.1
+joblib==1.6.0
+xgboost==3.2.0
+lightgbm==4.7.0
+shap==0.51.0
+requests==2.34.2
+pytest==9.2.0
+pytest-cov==7.1.0
+ruff==0.17.6
+build==1.6.1
+pip-audit==2.10.1
+pythonnet==3.2.1
+clr_loader==0.3.1
