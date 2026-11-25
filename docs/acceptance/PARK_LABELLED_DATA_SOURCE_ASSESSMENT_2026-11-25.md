@@ -73,8 +73,10 @@ Do not use direct database credentials or raw SQL connections. Use the documente
 - Public dataset: https://zenodo.org/records/8410826
 - Training set DOI: 10.5281/zenodo.8410825
 - Current Zenodo record: https://zenodo.org/records/18891510
-- The paper reports 170,632 light curves and 85,136 manually reviewed sources.
+- The paper reports a manually constructed training set with 170,632 light curves. It is associated with 85,136 manually reviewed sources.
 - The public training_set.parquet file is approximately 436 MB.
+- The paper uses ZTF DR16 observations from 2018 March to 2023 January.
+- The authors remove observations with nonzero catflags and require at least 50 epochs for the training light curves.
 - SCoPe uses hierarchical ontological and phenomenological taxonomies.
 - It trains separate binary classifiers. A source can have more than one label.
 - The data used in the paper is based on ZTF DR16, not DR24.
@@ -83,6 +85,8 @@ Use:
 - independent external evaluation for taxonomy classes with a defensible mapping;
 - cross-taxonomy robustness analysis;
 - a separate model comparison only when feature and label contracts are compatible.
+
+The 170,632 light curves exceed the technical plan's numerical 100,000-curve target. They do not meet the DR24 cohort requirement. They use DR16 and a different multi-label taxonomy. Do not count them as the required DR24 cohort.
 
 Do not use:
 - the SCoPe XGBoost artifact as the ZTF Classifier production model;
@@ -167,6 +171,7 @@ A new model does not resolve the missing original artifact. Record both facts.
 | SCoPe training set and paper identified | VERIFIED |
 | SCoPe schema and row grain inspected locally | NOT RUN |
 | Taxonomy mapping approved | NOT RUN |
+| SCoPe numerical 100,000-curve target | CANDIDATE | 170,632 DR16 light curves are reported. They are not a DR24 cohort and do not use the ALeRCE 15-class taxonomy. |
 | 100,000 labelled DR24 light curves acquired | NOT RUN |
 | DR24 cross-match validated | NOT RUN |
 | DR24 feature compatibility validated | NOT RUN |
