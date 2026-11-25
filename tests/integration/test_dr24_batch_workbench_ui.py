@@ -71,6 +71,9 @@ class FakeDR24Backend:
                 "requested_oids": list(objectids),
                 "returned_oids": list(objectids),
                 "missing_oids": [],
+                "payload_sha256": {
+                    str(record.objectid): record.payload_sha256 for record in records
+                },
             },
         )
 
