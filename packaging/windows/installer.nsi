@@ -60,7 +60,8 @@ Function .onInit
   ${OrIf} $0 == "0.0.0.0"
     DetailPrint "Installing Microsoft Edge WebView2 Runtime..."
     SetOutPath "$TEMP"
-    File /oname=MicrosoftEdgeWebView2Setup.exe "dist\MicrosoftEdgeWebView2Setup.exe"
+    ; Resolve the staged bootstrapper from the installer source directory.
+    File /oname=MicrosoftEdgeWebView2Setup.exe "${__FILEDIR__}\..\..\dist\MicrosoftEdgeWebView2Setup.exe"
     ExecWait '"$TEMP\MicrosoftEdgeWebView2Setup.exe" /silent /install' $1
     Delete "$TEMP\MicrosoftEdgeWebView2Setup.exe"
     ClearErrors
