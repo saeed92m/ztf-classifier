@@ -401,11 +401,3 @@ The platform architecture now has executable domain contracts for external catal
 The current production model explicitly does **not** claim a scientific-anomaly detector: OOD diagnostics and scientific anomaly evidence are separate result channels. Scientific anomaly evidence remains `not_evaluated` until a dedicated analysis mode supplies and versions such evidence.
 
 
-## Current project roadmap and status (2026-10-11)
-
-- Current immutable software release: **v1.0.1**; frozen scientific baseline: **v0.2.0**.
-- Canonical continuity handbook: [HANDBOOK_UPDATED_v2.8.md](docs/HANDBOOK_UPDATED_v2.8.md).
-- Canonical cross-platform product roadmap: [PLATFORM_EXPANSION_ROADMAP.md](docs/roadmap/PLATFORM_EXPANSION_ROADMAP.md).
-- Scientific validation roadmap: [SCIENTIFIC_VALIDATION_ROADMAP.md](docs/roadmap/SCIENTIFIC_VALIDATION_ROADMAP.md).
-- Current CPVS exact-reconstruction blocker: [Issue #170](https://github.com/saeed92m/ztf-classifier/issues/170). Schema review identified that both derivation and audit substituted physical row ordinals for CPVS Table2 Seq / lightcurve SourceID. The 725,101 / 16,686 / 5,083 metrics from run [#38095650470](https://github.com/saeed92m/ztf-classifier/actions/runs/38095650470) are therefore invalid. PR #176 now reads actual Seq IDs and adds non-contiguous-ID regression coverage; updated heavy evidence is required before making membership claims.
-- Desktop product acceptance target: [Issue #158](https://github.com/saeed92m/ztf-classifier/issues/158). The platform is not considered complete until clean-machine, non-developer end-to-end workflows and supported-OS packaging are verified.
