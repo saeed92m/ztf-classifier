@@ -182,8 +182,15 @@ jobs:
           if (-not $env:NSIS_COMPILER -or -not (Test-Path $env:NSIS_COMPILER)) {
             throw "The verified NSIS compiler path was not exported by the setup step."
           }
-          & $env:NSIS_COMPILER /V3 packaging/windows/installer.nsi
-          if ($LASTEXITCODE -ne 0) { throw "NSIS installer build failed with exit code $LASTEXITCODE." }
+          Push-Location "packaging/windows"
+          try {
+            & $env:NSIS_COMPILER /V3 "installer.nsi"
+            $nsisExitCode = $LASTEXITCODE
+          }
+          finally {
+            Pop-Location
+          }
+          if ($nsisExitCode -ne 0) { throw "NSIS installer build failed with exit code $nsisExitCode." }
           $setup = "dist/ZTFClassifier-0.1.0-preview.1-Setup.exe"
           if (-not (Test-Path $setup)) { throw "The Windows installer was not created." }
 
