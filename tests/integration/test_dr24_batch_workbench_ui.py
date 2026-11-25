@@ -146,8 +146,12 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator("#dr24ObjectIds").fill("101, 202")
             page.locator("#dr24LoadButton").click()
             page.wait_for_function(
-                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
+                "() => { const text = document.querySelector('#dr24Status')?.textContent || ''; return text.includes('Raw DR24 response received') || text.includes('failed') || text.includes('HTTP '); }",
                 timeout=10_000,
+            )
+            status_text = page.locator("#dr24Status").inner_text()
+            assert "Raw DR24 response received" in status_text, (
+                f"DR24 browser request did not complete successfully: {status_text}"
             )
 
             assert backend.calls == [(101, 202)]
