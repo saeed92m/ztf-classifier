@@ -8,19 +8,20 @@
 
 ## 1. Purpose and acceptance boundary
 
-**Active delivery selection (Founder, 2026-11-25):** The first deliverable is the Windows laboratory preview in Sections 1, 3–7 and its W0–W13 gates. The Full Park MVP in Section 8 is a separate later milestone. It is not part of this preview and must not displace preview acceptance work. The project scope freeze remains active until the preview is installed and tested on clean Windows and presented to the Park.
+**Binding Founder decision (2026-11-25):** The first Park delivery is one Windows-installable laboratory prototype that implements and validates the four phases in the submitted acceptance worksheet and the six-month technical roadmap. It is not a raw-data viewer-only preview. The active scope includes data and features, classification, uncertainty and abstention, anomaly analysis, independent/temporal validation, dashboard, documentation and Windows packaging. The scope freeze remains active until the complete workflow passes acceptance on clean Windows and the prototype is presented to the Park.
 
 Deliver the first useful, installable Windows desktop preview for a Science and Technology Park demonstration. It must provide a real and reproducible scientific workflow. A screenshot-only mock-up or an installer that opens a broken web page does not pass.
 
 The submitted Park workbook AP-02-140503 identifies the current product state as a laboratory prototype with no sales. It describes a CPU-first platform for ZTF light-curve analysis and rare-transient discovery. It also states that capabilities which are not implemented or validated remain development objectives. They must not be presented as verified product features.
 
-Keep three deliverables separate:
+Treat the four worksheet phases as one acceptance target:
 
-1. **Windows laboratory preview:** installable, real-data workflow with source inspection, diagnostics, provenance and export.
-2. **Full Park MVP:** the wider six-month R&D plan, including a provenance-backed labelled dataset, feature pipeline, model evaluation, uncertainty, anomaly analysis and reproducible technical report.
-3. **Long-term platform:** broader discovery workflows and cross-survey support.
+1. **Phase 1 — Infrastructure, data and feature engineering:** DR24 access, a pinned labelled cohort, provenance, quality controls and versioned features.
+2. **Phase 2 — Main model:** baseline and XGBoost/LightGBM model with leakage-safe initial evaluation.
+3. **Phase 3 — Uncertainty, anomaly and validation:** calibrated confidence, explicit abstention, anomaly scores, explainability and transferability evidence.
+4. **Phase 4 — Product delivery:** an interactive dashboard, reproducible reports, user documentation and a Windows-installable application.
 
-Passing the preview does not pass the full Park MVP.
+A working installer or raw-data viewer alone does not pass this acceptance target. Long-term cross-survey expansion remains outside this delivery.
 
 ## 2. Requirements derived from the Park workbook
 
@@ -89,22 +90,25 @@ The preview may claim only what is verified:
 - Raw source-native observation display.
 - Per-OID and per-filter inspection.
 - Diagnostic QC under the versioned diagnostic policy.
-- Per-OID descriptive statistics, if the current PR #307 change passes integration and validation.
-- JSON export with provenance and hashes, after end-to-end verification.
+- Versioned features from the approved DR24 preprocessing and feature contract.
+- Baseline and main classification outputs from the authenticated model artifact.
+- Calibrated probabilities, uncertainty and abstention only after the corresponding evaluation passes.
+- Anomaly scores and SHAP explanations as separate, evidence-backed outputs.
+- Temporal and independent external validation reports.
+- Reproducible exports with data, feature, model, taxonomy, split, schema and provenance hashes.
 
-The preview must not claim:
+The prototype must not present a capability as verified until its gate passes. In particular:
 
-- DR24-to-v0.2.0 feature parity.
-- Validated DR24 classification.
-- Availability of an authenticated v0.2.0 production model unless its artifact is recovered and verified.
-- Calibrated probabilities on an eligible independent evaluation cohort.
-- Validated conformal coverage or abstention performance.
-- Scientific anomaly discovery from OOD scores.
-- Physical-source identity across OIDs without accepted AOIC evidence.
-- General model performance across all ZTF sources.
-- Completion of the 100,000-light-curve Park cohort.
+- Do not use DR24 for inference until time, photometry, quality, identity and feature compatibility are validated.
+- Do not substitute a lab-smoke model for the authenticated production artifact.
+- Do not report calibrated probabilities without a held-out calibration evaluation.
+- Do not report conformal coverage or abstention performance without measured coverage and risk results.
+- Do not call an OOD score a scientific anomaly result.
+- Do not claim physical-source identity across OIDs without accepted identity evidence.
+- Do not generalise results beyond the evaluated population.
+- Do not claim the labelled-cohort target is complete without a pinned manifest and acquisition report.
 
-The existing descriptive summary status is DESCRIPTIVE_NOT_CLASSIFICATION. The current DR24 QC status is diagnostic and not production-approved. Raw values must remain available.
+If a required capability remains blocked, the application may show its status and limitation. The Park delivery remains NOT READY until all mandatory worksheet claims are implemented and validated. Preserve raw values and provenance.
 
 ## 5. Desktop requirements
 
@@ -174,7 +178,7 @@ The two previously tested OIDs are separate survey OIDs. Do not present them as 
 
 Grow the sample in stages: the existing two-OID smoke test, then a predeclared 5–10-object diagnostic set, then a 30–50-object guided demonstration after identity and availability are verified. Do not replace records after reviewing outcomes merely to reach a desired count.
 
-The 100,000-light-curve labelled cohort remains a separate full-Park-MVP target. Process and reconcile the complete eligible cohort under a declared rule.
+The technical project document sets a target of at least 100,000 labelled light curves for the first six-month roadmap. The worksheet itself does not state this number. Treat 100,000 as a technical-plan target, not as a quotation from the worksheet. Pin the cohort selection rule, source, labels, versions and hashes. Process and reconcile the eligible cohort under a declared rule.
 
 ## 7. Hard acceptance gates
 
@@ -199,9 +203,9 @@ Allowed states: PASS, FAIL, BLOCKED, NOT RUN, NOT APPLICABLE.
 
 Skipped jobs are not PASS. A CI browser test does not prove a clean Windows installation. An API query does not prove source identity or model validity.
 
-## 8. Full Park MVP remains a separate gate
+## 8. Required scientific and product acceptance
 
-The full Park MVP requires:
+The following requirements are part of the current Park prototype acceptance target, not a later optional phase:
 
 - Provenance-backed labelled DR24 cohort, target at least 100,000 light curves.
 - Explicit source identity and cross-filter grouping.
@@ -216,7 +220,7 @@ The full Park MVP requires:
 - Environment and run manifests.
 - Complete workflow through the application, not scripts alone.
 
-Do not mark the full Park MVP accepted when only the Windows preview passes.
+Do not accept the Park prototype when only the installer, shell or raw DR24 viewer passes. All four worksheet phases and their evidence gates must pass.
 
 ## 9. Release deliverables
 
@@ -261,4 +265,4 @@ At draft time:
 - Original production model authentication and DR24 feature compatibility remain blockers for classification.
 - Written Park evaluation terms remain a legal blocker.
 
-**Disposition: NOT READY FOR DISTRIBUTION.** Next: stabilise DR24 integration, prototype desktop shell, build Windows package, and complete clean-machine acceptance.
+**Disposition: NOT READY FOR PARK PRESENTATION.** The current desktop path provides raw DR24 retrieval, diagnostics, provenance and workspace functions. It does not yet meet the worksheet's full classification, calibration, abstention, anomaly, explainability, transferability and reproducible-report claims. Complete and validate those capabilities before Park presentation.
