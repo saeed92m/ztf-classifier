@@ -231,6 +231,18 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
         asset = (static_dir / asset_name).read_text(encoding="utf-8")
         assert not any("\u0600" <= char <= "\u06ff" for char in asset), asset_name
 
+    css = (static_dir / "styles.css").read_text(encoding="utf-8")
+    assert "direction: rtl" not in css
+
+    installer = (
+        Path(__file__).resolve().parents[1]
+        / "packaging"
+        / "windows"
+        / "installer.nsi"
+    ).read_text(encoding="utf-8")
+    assert '!insertmacro MUI_LANGUAGE "English"' in installer
+    assert not any("\u0600" <= char <= "\u06ff" for char in installer)
+
 
 def test_validation_runner_peak_memory_measurement_is_portable() -> None:
     assert _peak_rss_mb() > 0.0
