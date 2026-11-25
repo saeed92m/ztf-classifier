@@ -154,3 +154,72 @@ def test_workspace_operation_requires_active_workspace(tmp_path: Path) -> None:
     )
     assert response.status_code == 409
     assert response.json()["code"] == "workspace_not_found"
+
+
+def test_workspace_operation_completion_uses_stored_requested_oids(
+    tmp_path: Path,
+) -> None:
+    client = _client(tmp_path)
+    created = client.post("/v1/workspaces", json={"name": "OID accounting"})
+    assert created.status_code == 200
+
+    operation_id = "c" * 32
+    running_payload = {
+        "operation_id": operation_id,
+        "operation_type": "DR24_BATCH_QUERY",
+        "source": "ztf_dr24_hats",
+        "status": "RUNNING",
+        "requested_oids": [123456, 234567],
+    }
+    running = client.post("/v1/workspaces/operations", json=running_payload)
+    assert running.status_code == 200
+
+    tampered_completion = {
+        **running_payload,
+        "status": "SUCCEEDED",
+        "requested_oids": [123456],
+        "returned_oids": [123456],
+        "missing_oids": [],
+        "payload_sha256_by_oid": {"123456": "a" * 64},
+    }
+    rejected = client.post(
+        "/v1/workspaces/operations", json=tampered_completion
+    )
+    assert rejected.status_code == 422
+
+    active = client.get("/v1/workspaces/active").json()["workspace"]
+    assert active["last_operation"]["status"] == "RUNNING"
+    assert active["last_operation"]["requested_oids"] == [123456, 234567]
+
+    valid_completion = {
+        **running_payload,
+        "status": "SUCCEEDED",
+        "returned_oids": [123456],
+        "missing_oids": [234567],
+        "payload_sha256_by_oid": {"123456": "a" * 64},
+    }
+    completed = client.post(
+        "/v1/workspaces/operations", json=valid_completion
+    )
+    assert completed.status_code == 200
+    assert completed.json()["status"] == "SUCCEEDED"
+
+
+def test_workspace_operation_rejects_non_string_operation_id(
+    tmp_path: Path,
+) -> None:
+    client = _client(tmp_path)
+    created = client.post("/v1/workspaces", json={"name": "Invalid operation ID"})
+    assert created.status_code == 200
+
+    response = client.post(
+        "/v1/workspaces/operations",
+        json={
+            "operation_id": 123,
+            "operation_type": "DR24_BATCH_QUERY",
+            "source": "ztf_dr24_hats",
+            "status": "RUNNING",
+            "requested_oids": [123456],
+        },
+    )
+    assert response.status_code == 422
