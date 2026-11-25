@@ -122,6 +122,28 @@ Do not:
 - treat ALeRCE model predictions as ground-truth labels;
 - change the frozen class order.
 
+### 2.5 DR24 HATS and Zubercal identity contract
+
+The repository source contract is authoritative for the current adapter design:
+
+- DR24 HATS is the primary raw time-series stream.
+- One HATS row represents one ZTF OID with nested epoch arrays.
+- HATS OIDs are defined per filter, field and quadrant. They are not canonical astrophysical source IDs.
+- HATS provides HMJD, native magnitude, magnitude error, colour coefficient and catflags.
+- HMJD is not the same time scale as Zubercal MJD(TDB).
+- Zubercal DR20 is a separate supplementary calibration product.
+- Zubercal uses PS1 object IDs. A PS1 object ID is not a ZTF OID.
+- A bounded Zubercal query returned more than one PS1 candidate for one ZTF OID. Ambiguity is an observed condition.
+
+Required controls:
+1. Preserve HATS OID, filter, field and quadrant.
+2. Preserve native HATS and Zubercal values in separate columns.
+3. Store every cross-match candidate, match radius, candidate count and ambiguity state.
+4. Do not select an ambiguous counterpart automatically.
+5. Do not combine g/r/i light curves by OID equality.
+6. Do not feed HATS or Zubercal values to the frozen v0.2.0 model until the feature mapping and parity tests pass.
+7. Use bounded remote queries. Do not download the full Zubercal product.
+
 ## 3. Data-source risks
 
 | Risk | Why it matters | Required control |
@@ -131,7 +153,8 @@ Do not:
 | Different taxonomies | Class names do not imply equivalent definitions | Use a reviewed, versioned mapping table |
 | Multi-label versus single-label data | A source may belong to more than one class | Define the conversion policy before training |
 | DR16 versus DR24 | Cadence, coverage and photometry may differ | Reacquire the mapped cohort from DR24 and compare |
-| OID mismatch | ALeRCE OID and DR24 numeric objectid may differ | Use an explicit cross-match with ambiguity states |
+| OID mismatch | ALeRCE OID, DR24 HATS OID and Zubercal PS1 object ID are different identifiers | Use an explicit cross-match with candidate counts, separation and ambiguity states |
+| HATS/Zubercal mismatch | HMJD, MJD(TDB), native photometry and calibrated photometry differ | Keep source-native fields separate. Require feature parity tests before model input |
 | Filter-specific records | One source may have separate records per filter | Preserve filter and identity evidence |
 | Selection bias | Catalogs favour known and observable classes | Report class and population limits |
 | Data leakage | The same source can occur in multiple datasets or splits | Use source-level and temporal deduplication |
