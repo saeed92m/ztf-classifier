@@ -55,7 +55,8 @@
       "The proposed pywebview/WebView2 approach remains provisional. No desktop dependency was added.",
       "No executable code, frozen baseline artifact, production data, scientific acceptance threshold, or release was changed.",
       "Founder clarification on 2026-11-25 selects the Windows Laboratory Preview in this acceptance contract as the first delivery milestone; the Full six-month Park MVP remains inactive during the current scope freeze.",
-      "Founder clarification on 2026-11-25 supersedes the Persian/RTL UX requirement for this experimental preview. The Windows preview and installer are English-only; Persian localization may be considered for a later product release."
+      "Founder clarification on 2026-11-25 supersedes the Persian/RTL UX requirement for this experimental preview. The Windows preview and installer are English-only; Persian localization may be considered for a later product release.",
+      "Direct source review on 2026-11-25 confirmed that AP-02-140503 Section 4.1 defines four phases over six months (2+1+2+1). The final technical project document Section 5.1 adds a 100,000-labelled-light-curve target and month-by-month feature/model/uncertainty/validation/dashboard outputs. The first Windows pre-release must package this complete workflow."
     ]
   },
   "failure_analysis": {
@@ -94,7 +95,7 @@
       "Implement and test managed local API startup, readiness, ephemeral port selection, loopback-only binding, request protection and shutdown.",
       "Implement per-user workspace/cache/log paths and verify no protected installation-directory writes.",
       "Build a Windows x64 package and test install, launch, live retrieval, export, upgrade and uninstall on a clean Windows 11 device.",
-      "Complete English task-based usability testing for the Windows Laboratory Preview (Persian/RTL testing deferred to a later product release).",
+      "Complete English task-based usability testing of the full four-phase Windows prototype (not only the DR24 raw-data explorer).",
       "Obtain written limited Park evaluation/demo terms and review third-party component licenses.",
       "Keep original v0.2.0 model, DR24 feature parity, AOIC and CPVS validation gates separate and unchanged."
     ]
@@ -104,10 +105,8 @@
     "PR #309 is the canonical documentation track for Windows desktop UX and architecture.",
     "PR #308 is superseded and closed; its unique acceptance contract is retained in PR #309.",
     "No desktop framework or new dependency is approved until the bounded technical spike passes.",
-    "The first Windows preview is limited to real DR24 exploration and descriptive analysis unless further scientific gates pass.",
     "Preserve v0.2.0 and keep CPVS discrepancy separate.",
     "No external installer release before clean Windows acceptance and written legal approval.",
-    "For the current Park delivery, implement only the Windows Laboratory Preview acceptance workflow and gates. Do not interpret the broader six-month dossier roadmap as work that must run in parallel.",
-    "English-only UI and English task-based usability are the acceptance requirements for the current Windows Laboratory Preview. Persian/RTL testing is deferred to a later product release."
+    "The Park acceptance worksheet and final technical plan define one four-phase prototype. The Windows pre-release is its delivery package, not a reduced-scope raw-data viewer. All four phases must be complete before Park presentation."
   ]
 }
