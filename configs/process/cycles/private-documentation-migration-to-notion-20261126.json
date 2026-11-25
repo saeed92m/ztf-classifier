@@ -57,7 +57,7 @@
       "All 68 historical configs/process/cycles/*.json records from the source main commit were copied to the private Notion archive, with source path, source commit and Git blob SHA.",
       "The CI workflow was inspected: it requires at least one cycle JSON file, validates every present record, and requires a cycle record for meaningful PRs. It does not require all historical cycle records to remain in GitHub.",
       "Final PR-tree audit at head 02e7d71564e926a32df083e706f3dacf00878b56: all 51 internal documentation paths and all 68 historical lifecycle-record paths are absent; only this current migration record remains under configs/process/cycles/.",
-      "The private Notion archive root contains 120 child pages: 51 internal documentation copies, 68 historical lifecycle-record copies, and the archive index. Representative source documents and lifecycle JSON pages were fetched back.",
+      "The private Notion archive contains 119 child archive pages (51 internal documentation copies and 68 historical lifecycle-record copies), plus the archive index page itself. Representative source documents and lifecycle JSON pages were fetched back.",
       "Public installation, Quick Start, user guide, API v1, model card, data card and scientific methodology files remain in the PR tree.",
       "The public README was checked after both edits; it contains no handbook-version or docs/roadmap links."
     ]
