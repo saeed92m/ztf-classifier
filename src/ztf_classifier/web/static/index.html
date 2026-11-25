@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark light" />
     <meta name="description" content="ZTF Classifier Scientific Analysis Workbench" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'"
+    />
     <title>ZTF Scientific Analysis Workbench</title>
+    <script src="./desktop-bootstrap.js" defer></script>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -30,6 +36,13 @@
           <button class="nav-item active" data-view="overview">Overview</button>
           <button class="nav-item" data-view="observations">Observations</button>
           <button class="nav-item" data-view="dr24">DR24 Explorer (raw)</button>
+          <button class="nav-item desktop-only" data-view="desktop-home" type="button" hidden>Dashboard</button>
+          <button class="nav-item desktop-only" data-view="workspaces" type="button" hidden>Workspaces</button>
+          <button class="nav-item desktop-only" data-view="sources" type="button" hidden>Data source</button>
+          <button class="nav-item desktop-only" data-view="desktop-provenance" type="button" hidden>Provenance</button>
+          <button class="nav-item desktop-only" data-view="desktop-export" type="button" hidden>Reports and exports</button>
+          <button class="nav-item desktop-only" data-view="desktop-settings" type="button" hidden>Settings</button>
+          <button class="nav-item desktop-only" data-view="desktop-help" type="button" hidden>Help</button>
           <button class="nav-item" data-view="features">Features</button>
           <button class="nav-item" data-view="classification">Classification</button>
           <button class="nav-item" data-view="uncertainty">Uncertainty &amp; OOD</button>

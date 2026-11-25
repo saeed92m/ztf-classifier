@@ -46,6 +46,12 @@ from ztf_classifier.application.errors import (
 from ztf_classifier.application.observations import ObservationService
 from ztf_classifier.application.service import ApplicationService
 from ztf_classifier.application.state import ApplicationSettings, ApplicationStateStore
+from ztf_classifier.application.workspaces import (
+    WorkspaceConflictError,
+    WorkspaceError,
+    WorkspaceNotFoundError,
+    WorkspaceStore,
+)
 from ztf_classifier.catalog import ScientificCatalogService
 from ztf_classifier.features import ScientificFeatureEngine
 from ztf_classifier.jobs.executor import SourceBackedAnalysisExecutor
@@ -78,6 +84,14 @@ def _error_response(
         status_code=error.status_code,
         content=payload.model_dump(),
     )
+
+
+def _apply_security_headers(response: Response) -> Response:
+    """Apply safe defaults to local API and static Workbench responses."""
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["X-Frame-Options"] = "DENY"
+    return response
 
 
 def _registry(settings: ApiSettings) -> FilesystemModelRegistry:
@@ -261,6 +275,8 @@ def create_app(
     observation_service: ObservationService | None = None,
     analysis_executor: SourceBackedAnalysisExecutor | None = None,
     feature_engine: ScientificFeatureEngine | None = None,
+    *,
+    docs_enabled: bool = True,
 ) -> FastAPI:
     """Create the production API application."""
     api_settings = settings or ApiSettings.from_environment()
@@ -274,10 +290,17 @@ def create_app(
         title="ZTF Classifier API",
         version="1.0",
         description="Versioned scientific inference boundary for the ZTF Classifier platform.",
+        docs_url="/docs" if docs_enabled else None,
+        redoc_url="/redoc" if docs_enabled else None,
+        openapi_url="/openapi.json" if docs_enabled else None,
     )
     app.state.settings = api_settings
     app.state.application_service = service
     settings_store = ApplicationStateStore(api_settings.application_state_path)
+    workspace_store = WorkspaceStore(
+        api_settings.application_state_path.parent / "workspaces",
+        settings_store,
+    )
     jobs = JobStore(api_settings.job_store_path)
     results = ScientificResultStore(api_settings.result_store_path)
     catalog = ScientificCatalogService(results)
@@ -319,10 +342,10 @@ def create_app(
                 )
                 response.headers["WWW-Authenticate"] = "Bearer"
                 response.headers["X-Request-ID"] = request_id
-                return response
+                return _apply_security_headers(response)
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
-        return response
+        return _apply_security_headers(response)
 
     @app.exception_handler(ApiContractError)
     async def api_contract_error_handler(
@@ -421,6 +444,192 @@ def create_app(
                 status_code=422,
             ) from exc
         return ApplicationSettingsRequest(**stored.__dict__)
+
+    @app.get("/v1/workspaces", tags=["workspaces"])
+    def list_workspaces() -> dict[str, Any]:
+        """List local workspaces and identify the active workspace."""
+        try:
+            return workspace_store.list()
+        except OSError as exc:
+            raise ApiContractError(
+                "workspace_list_unavailable",
+                "Local workspaces could not be listed.",
+                status_code=500,
+            ) from exc
+
+    @app.get("/v1/workspaces/active", tags=["workspaces"])
+    def get_active_workspace() -> dict[str, Any]:
+        """Return the active local workspace, or null when none is active."""
+        try:
+            return {"workspace": workspace_store.active()}
+        except WorkspaceNotFoundError as exc:
+            raise ApiContractError(
+                "workspace_not_found",
+                "The active workspace could not be found.",
+                status_code=404,
+            ) from exc
+        except (WorkspaceError, OSError) as exc:
+            raise ApiContractError(
+                "workspace_state_invalid",
+                "The active workspace state is invalid or unreadable.",
+                status_code=500,
+            ) from exc
+
+    @app.post("/v1/workspaces", tags=["workspaces"])
+    def create_workspace(payload: dict[str, Any]) -> dict[str, Any]:
+        """Create and activate a named local workspace."""
+        name = payload.get("name")
+        if not isinstance(name, str):
+            raise ApiContractError(
+                "workspace_name_invalid",
+                "Workspace name must be a string.",
+                status_code=422,
+            )
+        try:
+            return workspace_store.create(name)
+        except WorkspaceConflictError as exc:
+            raise ApiContractError(
+                "workspace_name_conflict",
+                "A workspace with this name already exists.",
+                status_code=409,
+            ) from exc
+        except WorkspaceError as exc:
+            raise ApiContractError(
+                "workspace_name_invalid",
+                str(exc),
+                status_code=422,
+            ) from exc
+        except OSError as exc:
+            raise ApiContractError(
+                "workspace_create_failed",
+                "The workspace could not be created.",
+                status_code=500,
+            ) from exc
+
+    @app.post("/v1/workspaces/{workspace_id}/open", tags=["workspaces"])
+    def open_workspace(workspace_id: str) -> dict[str, Any]:
+        """Activate an existing local workspace."""
+        try:
+            return workspace_store.open(workspace_id)
+        except WorkspaceNotFoundError as exc:
+            raise ApiContractError(
+                "workspace_not_found",
+                "The requested workspace does not exist.",
+                status_code=404,
+            ) from exc
+        except WorkspaceConflictError as exc:
+            raise ApiContractError(
+                "workspace_open_conflict",
+                "The workspace cannot be opened in its current state.",
+                status_code=409,
+            ) from exc
+        except WorkspaceError as exc:
+            raise ApiContractError(
+                "workspace_invalid",
+                "The requested workspace is invalid.",
+                status_code=422,
+            ) from exc
+        except OSError as exc:
+            raise ApiContractError(
+                "workspace_open_failed",
+                "The workspace could not be opened.",
+                status_code=500,
+            ) from exc
+
+    @app.post("/v1/workspaces/operations", tags=["workspaces"])
+    def record_workspace_operation(payload: dict[str, Any]) -> dict[str, Any]:
+        """Persist a DR24 acquisition lifecycle event in the active workspace."""
+        try:
+            return workspace_store.record_operation(payload)
+        except WorkspaceNotFoundError as exc:
+            raise ApiContractError(
+                "workspace_not_found",
+                "Create or open a workspace before recording an operation.",
+                status_code=409,
+            ) from exc
+        except WorkspaceConflictError as exc:
+            raise ApiContractError(
+                "workspace_operation_conflict",
+                str(exc),
+                status_code=409,
+            ) from exc
+        except WorkspaceError as exc:
+            raise ApiContractError(
+                "workspace_operation_invalid",
+                str(exc),
+                status_code=422,
+            ) from exc
+        except OSError as exc:
+            raise ApiContractError(
+                "workspace_operation_persist_failed",
+                "The workspace operation could not be saved.",
+                status_code=500,
+            ) from exc
+
+    @app.get(
+        "/v1/workspaces/exports/{file_name}",
+        response_class=Response,
+        tags=["workspaces"],
+    )
+    def get_workspace_export(file_name: str) -> Response:
+        """Read one verified export from the active workspace."""
+        try:
+            export_path = workspace_store.export_path(file_name)
+            return Response(
+                content=export_path.read_bytes(),
+                media_type="application/json",
+                headers={
+                    "Content-Disposition": f'attachment; filename="{file_name}"'
+                },
+            )
+        except WorkspaceNotFoundError as exc:
+            raise ApiContractError(
+                "workspace_export_not_found",
+                "The requested workspace export was not found.",
+                status_code=404,
+            ) from exc
+        except WorkspaceError as exc:
+            raise ApiContractError(
+                "workspace_export_invalid",
+                "The requested workspace export is invalid.",
+                status_code=422,
+            ) from exc
+        except OSError as exc:
+            raise ApiContractError(
+                "workspace_export_read_failed",
+                "The workspace export could not be read.",
+                status_code=500,
+            ) from exc
+
+    @app.post("/v1/workspaces/exports", tags=["workspaces"])
+    def save_workspace_export(payload: dict[str, Any]) -> dict[str, Any]:
+        """Save a reproducible raw DR24 export inside the active workspace."""
+        try:
+            return workspace_store.save_export(payload)
+        except WorkspaceNotFoundError as exc:
+            raise ApiContractError(
+                "workspace_not_found",
+                "Create or open a workspace before saving an export.",
+                status_code=409,
+            ) from exc
+        except WorkspaceConflictError as exc:
+            raise ApiContractError(
+                "workspace_export_conflict",
+                str(exc),
+                status_code=409,
+            ) from exc
+        except WorkspaceError as exc:
+            raise ApiContractError(
+                "workspace_export_invalid",
+                str(exc),
+                status_code=422,
+            ) from exc
+        except OSError as exc:
+            raise ApiContractError(
+                "workspace_export_persist_failed",
+                "The workspace export could not be saved.",
+                status_code=500,
+            ) from exc
 
     @app.get(
         "/ready",

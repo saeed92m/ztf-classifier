@@ -71,6 +71,9 @@ class FakeDR24Backend:
                 "requested_oids": list(objectids),
                 "returned_oids": list(objectids),
                 "missing_oids": [],
+                "payload_sha256": {
+                    str(record.objectid): record.payload_sha256 for record in records
+                },
             },
         )
 
@@ -116,14 +119,46 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page()
-            page.goto("http://127.0.0.1:8766/workbench", wait_until="domcontentloaded")
+            page.add_init_script(
+                "window.pywebview = {api: {}};"
+                "window.setTimeout(() => {"
+                "window.pywebview.api.get_api_token = () => Promise.resolve('test-only-token');"
+                "window.dispatchEvent(new Event('pywebviewready'));"
+                "}, 50);"
+            )
+            page.goto(
+                "http://127.0.0.1:8766/workbench/?desktop=1",
+                wait_until="domcontentloaded",
+            )
+            assert page.locator("html").get_attribute("lang") == "en"
+            assert page.locator("html").get_attribute("dir") == "ltr"
+            assert page.get_by_role("heading", name="Dashboard").is_visible()
+            assert page.get_by_text("Park acceptance").is_visible()
+            assert page.locator("#parkModelStatus").inner_text() == "BLOCKED"
+            assert page.locator("#parkScientificGateStatus").is_visible()
+            page.locator('[data-view="workspaces"]').click()
+            page.locator("#workspaceName").fill("CI desktop workspace")
+            page.locator("#workspaceCreateForm button[type=submit]").click()
+            page.wait_for_function(
+                "() => document.querySelector('#workspaceStatus')?.textContent.includes('active workspace:')",
+                timeout=5_000,
+            )
+            assert page.locator("#workspaceStatus").is_visible()
+            assert page.locator('[data-view="validation"]').is_visible()
+            assert page.locator('[data-view="classification"]').is_hidden()
+            page.locator('[data-view="validation"]').click()
+            assert page.locator("#validationStatus").is_visible()
             page.locator('[data-view="dr24"]').click()
             page.locator("#dr24ObjectIds").wait_for(state="visible")
             page.locator("#dr24ObjectIds").fill("101, 202")
             page.locator("#dr24LoadButton").click()
             page.wait_for_function(
-                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
+                "() => { const text = document.querySelector('#dr24Status')?.textContent || ''; return text.includes('Raw DR24 response received') || text.includes('failed') || text.includes('HTTP '); }",
                 timeout=10_000,
+            )
+            status_text = page.locator("#dr24Status").inner_text()
+            assert "Raw DR24 response received" in status_text, (
+                f"DR24 browser request did not complete successfully: {status_text}"
             )
 
             assert backend.calls == [(101, 202)]
@@ -159,16 +194,22 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert len(exported["source_payload"]["qc_assessments"]) == 2
             assert exported["source_payload"]["records"][0]["epochs"][2]["hmjd"] is None
 
+            page.locator('[data-view="desktop-provenance"]').click()
+            assert "requested_oids" in page.locator("#desktopProvenanceJson").inner_text()
+            page.locator('[data-view="desktop-export"]').click()
+            assert page.locator("#desktopDownloadJson").is_enabled()
+
+            page.locator('[data-view="dr24"]').click()
             page.locator("#dr24ObjectIds").fill("101,101")
             page.locator("#dr24LoadButton").click()
-            assert "Duplicate object IDs" in page.locator("#dr24Status").inner_text()
+            assert "Duplicate object IDs are not allowed" in page.locator("#dr24Status").inner_text()
             assert backend.calls == [(101, 202)]
 
             page.locator("#dr24ObjectIds").fill(
                 ",".join(str(value) for value in range(1, 12))
             )
             page.locator("#dr24LoadButton").click()
-            assert "between 1 and 10" in page.locator("#dr24Status").inner_text()
+            assert "Enter between 1 and 10 object IDs." in page.locator("#dr24Status").inner_text()
             assert backend.calls == [(101, 202)]
             browser.close()
     finally:

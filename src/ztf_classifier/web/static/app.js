@@ -2,6 +2,13 @@
 const STORAGE_KEY = "ztf-workbench-appearance";
 const defaults = { theme: "auto", dayStart: "06:00", nightStart: "18:00" };
 const params = new URLSearchParams(window.location.search);
+const desktopMode = params.get("desktop") === "1";
+let desktopDr24Payload = null;
+let desktopRawExport = null;
+let desktopRawExportPersisted = false;
+function desktopTranslate(value) { return value; }
+function translateDesktopText() {}
+
 const state = {
   oid: params.get("oid") || "",
   survey: params.get("survey") || "ztf",
@@ -45,8 +52,13 @@ async function persistPreferences(p) {
 }
 async function initializePreferences() {
   let preferences;
-  try { preferences = readPreferencesFromServer(await fetchJson("/v1/settings")); }
-  catch { preferences = localPreferences(); }
+  try {
+    preferences = readPreferencesFromServer(await fetchJson("/v1/settings"));
+    if (desktopMode) setConnectionState("API ready", true);
+  } catch {
+    preferences = localPreferences();
+    if (desktopMode) setConnectionState("Local settings unavailable", false);
+  }
   applyTheme(preferences);
   const themeButton = document.getElementById("themeButton");
   const popover = document.getElementById("themePopover");
@@ -67,7 +79,7 @@ void initializePreferences();
 function setConnectionState(label, ok) {
   const node = document.querySelector(".connection-state");
   if (!node) return;
-  node.innerHTML = '<span class="status-dot"></span>' + label;
+  node.innerHTML = '<span class="status-dot"></span>' + desktopTranslate(label);
   node.querySelector(".status-dot").style.background =
     ok === false ? "var(--color-warning)" : "var(--color-success)";
 }
@@ -80,10 +92,63 @@ function escapeHtml(value) {
   return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
+let desktopTokenPromise = null;
+function getDesktopApiToken() {
+  if (params.get("desktop") !== "1") return Promise.resolve(null);
+  if (!desktopTokenPromise) {
+    const pending = new Promise((resolve, reject) => {
+      let timeout = null;
+      const readToken = () => {
+        const getter = window.pywebview?.api?.get_api_token;
+        if (typeof getter !== "function") return false;
+        if (timeout !== null) window.clearTimeout(timeout);
+        Promise.resolve().then(() => getter()).then(resolve, reject);
+        return true;
+      };
+      if (readToken()) return;
+      timeout = window.setTimeout(
+        () => reject(new Error("Desktop authentication bridge did not become ready.")),
+        10000
+      );
+      window.addEventListener("pywebviewready", () => {
+        if (!readToken()) {
+          reject(new Error("Desktop authentication bridge is unavailable."));
+        }
+      }, { once: true });
+    });
+    desktopTokenPromise = pending.catch(error => {
+      desktopTokenPromise = null;
+      throw error;
+    });
+  }
+  return desktopTokenPromise;
+}
+
+if (params.get("desktop") === "1") {
+  document.addEventListener("click", event => {
+    const anchor = event.target instanceof Element
+      ? event.target.closest("a[href]")
+      : null;
+    if (!anchor) return;
+    const target = new URL(anchor.getAttribute("href"), window.location.href);
+    if (target.origin !== window.location.origin) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, true);
+  window.open = () => null;
+}
+
 async function fetchJson(url, options) {
+  const headers = {
+    Accept: "application/json",
+    ...((options && options.headers) || {}),
+  };
+  const token = await getDesktopApiToken();
+  if (token) headers.Authorization = "Bearer " + token;
   const response = await fetch(url, {
-    headers: { Accept: "application/json", ...((options && options.headers) || {}) },
     ...(options || {}),
+    headers,
   });
   if (!response.ok) { const error = new Error("HTTP " + response.status); error.status = response.status; throw error; }
   return response.json();
@@ -253,19 +318,372 @@ const titles = {
   dr24: ["DR24 Explorer", "Native DR24 light curve · raw data only"],
   features: ["Features", "Scientific Feature Engine output"],
   classification: ["Classification", "Model prediction and probabilities"],
-  uncertainty: ["Uncertainty / OOD / Anomaly", "Independent diagnostic channels"],
+  uncertainty: ["Uncertainty, OOD and anomaly", "Separate diagnostic outputs"],
   provenance: ["Provenance", "Traceable scientific metadata"],
   batch: ["Batch jobs", "Durable analysis jobs"],
   catalog: ["Catalog", "Catalog query and export module"],
   reports: ["Reports", "Scientific report generation module"],
   validation: ["Scientific Validation", "Release-blocking scientific evidence and provenance"],
+  "desktop-home": ["Dashboard", "Park prototype overview"],
+  workspaces: ["Workspaces", "Create and open workspaces"],
+  sources: ["Data source", "Active source and retrieval contract"],
+  "desktop-provenance": ["Provenance", "Retrieval metadata and evidence"],
+  "desktop-export": ["Reports and exports", "Raw JSON export and reproducibility metadata"],
+  "desktop-settings": ["Settings", "Local application settings"],
+  "desktop-help": ["Help", "User guide and scientific scope"],
 };
+
+async function renderDesktopHome() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">PARK LABORATORY PROTOTYPE</div>
+    <h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="metric-grid">
+      <article class="metric-card"><span>Primary data source</span><strong>ZTF DR24</strong><small>IRSA HATS · Bounded retrieval</small></article>
+      <article class="metric-card"><span>Labelled cohort</span><strong>NOT VERIFIED</strong><small>Technical-plan target: 100,000 labelled light curves</small></article>
+      <article class="metric-card"><span>Main model</span><strong id="parkModelStatus">NOT VERIFIED</strong><small>Authenticated model artifact required</small></article>
+      <article class="metric-card"><span>Park acceptance</span><strong>NOT READY</strong><small>All four worksheet phases must pass</small></article>
+    </section>
+    <section class="panel">
+      <div class="panel-title">Acceptance status</div>
+      <p class="muted">This application must complete data, feature, classification, uncertainty, anomaly and validation workflows before Park presentation.</p>
+      <p id="parkScientificGateStatus" role="status">Checking the scientific release gate...</p>
+      <button class="secondary-button" id="openScientificValidation" type="button">View scientific validation</button>
+    </section>
+    <section class="panel">
+      <div class="panel-title">Start data inspection</div>
+      <p class="muted">Enter 1 to 10 ZTF DR24 object IDs. The app retrieves raw light curves. It shows diagnostic QC, descriptive statistics and data provenance.</p>
+      <p class="muted" id="desktopWorkspaceStatus" role="status">Checking the active workspace...</p>
+      <button class="primary-button" id="startDr24Explorer" type="button" disabled>Open DR24 Explorer</button>
+      <button class="secondary-button" id="manageWorkspaces" type="button">Manage workspaces</button>
+    </section>
+    <section class="panel">
+      <div class="panel-title">Scientific output limits</div>
+      <p>Raw DR24 retrieval and descriptive summaries are available. Classification, calibrated probabilities, abstention, anomaly analysis and transferability are not accepted for the Park population.</p>
+      <p class="muted">Do not use these summaries as model predictions. Do not treat OOD scores as scientific anomaly evidence.</p>
+    </section>`;
+  setViewHeading("desktop-home");
+  document.getElementById("startDr24Explorer").addEventListener("click", () => showView("dr24"));
+  document.getElementById("manageWorkspaces").addEventListener("click", () => showView("workspaces"));
+  document.getElementById("openScientificValidation").addEventListener("click", () => showView("validation"));
+  try {
+    const active = await fetchJson("/v1/workspaces/active");
+    const status = document.getElementById("desktopWorkspaceStatus");
+    const start = document.getElementById("startDr24Explorer");
+    if (active.workspace) {
+      status.textContent = "Active workspace: " + active.workspace.name;
+      start.disabled = false;
+    } else {
+      status.textContent = "Create a workspace before you save analysis history and exports.";
+      start.disabled = true;
+    }
+  } catch (error) {
+    document.getElementById("desktopWorkspaceStatus").textContent =
+      "Could not load workspace status: " + (error.message || "Service error");
+  }
+  try {
+    const model = await fetchJson("/v1/model");
+    document.getElementById("parkModelStatus").textContent = model.model_version + " · READY";
+  } catch {
+    document.getElementById("parkModelStatus").textContent = "BLOCKED";
+  }
+  try {
+    const gate = await fetchJson("/v1/scientific-validation");
+    const blockers = Array.isArray(gate.blockers) ? gate.blockers.length : 0;
+    document.getElementById("parkScientificGateStatus").textContent =
+      gate.status + " · " + blockers + " blocker(s)";
+  } catch {
+    document.getElementById("parkScientificGateStatus").textContent =
+      "BLOCKED · Scientific validation status is unavailable.";
+  }
+}
+
+function renderDesktopSources() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">DATA SOURCE</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="panel">
+      <div class="panel-title">IRSA ZTF DR24 Lightcurves HATS</div>
+      <div class="panel-subtitle">Active preview source</div>
+      <dl class="metadata">
+        <div><dt>Release</dt><dd>DR24</dd></div>
+        <div><dt>Search index</dt><dd>objectid</dd></div>
+        <div><dt>Filters</dt><dd>g / r / i</dd></div>
+        <div><dt>Request limit</dt><dd>1–10 OIDs</dd></div>
+        <div><dt>Network requirement</dt><dd>Internet connection required</dd></div>
+        <div><dt>Fallback source</dt><dd>Not used</dd></div>
+      </dl>
+    </section>
+    <section class="panel">
+      <div class="panel-title">Data contract</div>
+      <ul>
+        <li>Raw time is preserved in the HMJD column; HMJD is not the same as MJD.</li>
+        <li>Native ZTF magnitude and magnitude error are preserved.</li>
+        <li>catflags are preserved; no masking or row removal is applied.</li>
+        <li>Each OID remains a separate record; no physical-source grouping is performed.</li>
+      </ul>
+    </section>`;
+  setViewHeading("sources");
+}
+
+async function renderDesktopWorkspaces() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">WORKSPACES</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="panel">
+      <div class="panel-title">Create workspace</div>
+      <p class="muted">Each workspace stores its operation history and exports in the app's user-data directory.</p>
+      <form id="workspaceCreateForm" class="workspace-create-form">
+        <label for="workspaceName">Workspace name</label>
+        <input id="workspaceName" name="name" type="text" maxlength="64" required placeholder="e.g. Transient-object review">
+        <button class="primary-button" type="submit">Create workspace</button>
+      </form>
+      <p id="workspaceStatus" class="muted" role="status">Loading workspaces…</p>
+    </section>
+    <section class="panel">
+      <div class="panel-title">Saved workspaces</div>
+      <div id="workspaceList" class="workspace-list"></div>
+    </section>`;
+  setViewHeading("workspaces");
+
+  const status = document.getElementById("workspaceStatus");
+  const list = document.getElementById("workspaceList");
+  const form = document.getElementById("workspaceCreateForm");
+  const nameInput = document.getElementById("workspaceName");
+
+  async function refreshWorkspaces() {
+    const payload = await fetchJson("/v1/workspaces");
+    const items = Array.isArray(payload.items) ? payload.items : [];
+    if (!items.length) {
+      list.innerHTML = '<p class="muted">No workspaces created yet.</p>';
+    } else {
+      list.innerHTML = items.map(item => {
+        const active = item.is_active;
+        const label = active ? "Active" : item.status === "CORRUPT" ? "Needs review" : "Saved";
+        const operation = item.last_operation;
+        const operationText = operation
+          ? operation.status + " · " + (operation.returned_oids || []).length +
+            "/" + (operation.requested_oids || []).length + " OID"
+          : "No operations recorded yet";
+        const exportText = item.last_export
+          ? "Last export: " + item.last_export.file_name
+          : "No export saved yet";
+        return `
+          <article class="workspace-list-item">
+            <div>
+              <strong>${escapeHtml(item.name)}</strong>
+              <small>${escapeHtml(label)} · ${escapeHtml(item.created_at_utc || "")}</small>
+              <small>Last operation: ${escapeHtml(operationText)}</small>
+              <small>${escapeHtml(exportText)}</small>
+            </div>
+            <div class="workspace-actions">
+              <button class="text-button" type="button" data-open-workspace="${escapeHtml(item.workspace_id)}" ${active ? "disabled" : ""}>${active ? "Active workspace" : "Open"}</button>
+              ${item.last_export ? '<button class="text-button" type="button" data-restore-export="' + escapeHtml(item.workspace_id) + '" data-export-file="' + escapeHtml(item.last_export.file_name) + '">Restore export</button>' : ""}
+            </div>
+          </article>`;
+      }).join("");
+      list.querySelectorAll("[data-open-workspace]").forEach(button => {
+        button.addEventListener("click", async () => {
+          button.disabled = true;
+          try {
+            await fetchJson("/v1/workspaces/" + encodeURIComponent(button.dataset.openWorkspace) + "/open", { method: "POST" });
+            desktopRawExport = null;
+            desktopDr24Payload = null;
+            desktopRawExportPersisted = false;
+            status.textContent = "Workspace opened and set as active.";
+            await refreshWorkspaces();
+          } catch (error) {
+            status.textContent = "Could not open workspace: " + (error.message || "Unknown error");
+            button.disabled = false;
+          }
+        });
+      });
+      list.querySelectorAll("[data-restore-export]").forEach(button => {
+        button.addEventListener("click", async () => {
+          button.disabled = true;
+          try {
+            const workspaceId = button.dataset.restoreExport;
+            const activeWorkspace = await fetchJson("/v1/workspaces/active");
+            if (activeWorkspace.workspace?.workspace_id !== workspaceId) {
+              await fetchJson("/v1/workspaces/" + encodeURIComponent(workspaceId) + "/open", { method: "POST" });
+            }
+            const restored = await fetchJson(
+              "/v1/workspaces/exports/" + encodeURIComponent(button.dataset.exportFile)
+            );
+            desktopRawExport = restored;
+            desktopDr24Payload = restored.source_payload || null;
+            desktopRawExportPersisted = true;
+            status.textContent = "Latest export restored from workspace.";
+            showView("desktop-export");
+          } catch (error) {
+            status.textContent = "Could not restore export: " + (error.message || "Unknown error");
+            button.disabled = false;
+          }
+        });
+      });
+    }
+    status.textContent = items.length + " saved workspaces · active workspace: " + (payload.active_workspace_id || "None");
+  }
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    const name = nameInput.value.trim();
+    if (!name) return;
+    const submit = form.querySelector("button[type=submit]");
+    submit.disabled = true;
+    try {
+      await fetchJson("/v1/workspaces", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name })
+      });
+      desktopRawExport = null;
+      desktopDr24Payload = null;
+      desktopRawExportPersisted = false;
+      nameInput.value = "";
+      status.textContent = "Workspace created.";
+      await refreshWorkspaces();
+    } catch (error) {
+      status.textContent = "Could not create workspace: " + (error.message || "Unknown error");
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  try {
+    await refreshWorkspaces();
+  } catch (error) {
+    status.textContent = "Could not load workspaces: " + (error.message || "Unknown error");
+  }
+}
+
+function renderDesktopProvenance() {
+  const provenance = desktopDr24Payload?.provenance;
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">PROVENANCE</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="panel">
+      <div class="panel-title">Provenance status</div>
+      <p class="muted">${provenance ? "Data was retrieved from the DR24 source." : "NOT RUN · No data retrieval has been performed."}</p>
+      <pre class="report-content" id="desktopProvenanceJson">${provenance ? escapeHtml(JSON.stringify(provenance, null, 2)) : "NOT RUN"}</pre>
+    </section>`;
+  setViewHeading("desktop-provenance");
+}
+
+async function downloadDesktopRawExport() {
+  if (!desktopRawExport) {
+    setConnectionState("No DR24 export available", false);
+    return;
+  }
+  const button = document.getElementById("desktopDownloadJson") ||
+    document.getElementById("dr24ExportButton");
+  if (button) button.disabled = true;
+  try {
+    let metadata = null;
+    if (!desktopRawExportPersisted) {
+      metadata = await fetchJson("/v1/workspaces/exports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(desktopRawExport)
+      });
+      desktopRawExportPersisted = true;
+    }
+    const blob = new Blob([JSON.stringify(desktopRawExport, null, 2)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const ids = desktopRawExport.source_payload?.provenance?.requested_oids || [];
+    link.download = "ztf-dr24-batch-" + ids.join("_") + "-raw-export.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setConnectionState(metadata
+      ? "Export saved to active workspace · SHA-256 " + metadata.sha256.slice(0, 12)
+      : "Restored workspace export downloaded");
+  } catch (error) {
+    setConnectionState("Workspace export failed (" + (error.status || "storage") + ")", false);
+    const status = document.getElementById("dr24Status");
+    if (status) status.textContent = "Could not save the export to the active workspace. The file was not downloaded.";
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+function renderDesktopExport() {
+  const available = Boolean(desktopRawExport);
+  const provenance = desktopDr24Payload?.provenance || {};
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">EXPORT</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="panel">
+      <div class="panel-title">Raw JSON export</div>
+      <p class="muted">${available ? "Ready to download" : "NOT RUN · Retrieve DR24 data first."}</p>
+      <dl class="metadata">
+        <div><dt>Export schema</dt><dd>${available ? "ztf-dr24-raw-export-v0.3" : "—"}</dd></div>
+        <div><dt>Requested OIDs</dt><dd>${escapeHtml((provenance.requested_oids || []).join(", ") || "—")}</dd></div>
+        <div><dt>Returned OIDs</dt><dd>${escapeHtml((provenance.returned_oids || []).join(", ") || "—")}</dd></div>
+        <div><dt>Missing OIDs</dt><dd>${escapeHtml((provenance.missing_oids || []).join(", ") || "—")}</dd></div>
+      </dl>
+      <button class="primary-button" id="desktopDownloadJson" type="button" ${available ? "" : "disabled"}>Download JSON file</button>
+    </section>`;
+  setViewHeading("desktop-export");
+  const button = document.getElementById("desktopDownloadJson");
+  button.addEventListener("click", downloadDesktopRawExport);
+}
+
+async function renderDesktopSettings() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">SETTINGS</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="panel">
+      <div class="panel-title">Display settings</div>
+      <p>Use the settings button in the application header to change the theme.</p>
+      <p class="muted">Settings and workspace files are stored in the Windows user-data directory. Uninstalling the app does not delete user data.</p>
+    </section>
+    <section class="panel">
+      <div class="panel-title">Connection status</div>
+      <p id="desktopSettingsStatus" class="muted">Checking local service…</p>
+    </section>`;
+  setViewHeading("desktop-settings");
+  const status = document.getElementById("desktopSettingsStatus");
+  try {
+    await fetchJson("/v1/settings");
+    status.textContent = "Local service is available.";
+  } catch {
+    status.textContent = "Local service is unavailable.";
+  }
+}
+
+function renderDesktopHelp() {
+  mainCanvas.innerHTML = `
+    <div class="canvas-header"><div><div class="eyebrow">HELP & ABOUT</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
+    <section class="panel">
+      <div class="panel-title">Quick guide</div>
+      <ol>
+        <li>Open the DR24 Explorer.</li>
+        <li>Enter one to ten positive OIDs.</li>
+        <li>Run the retrieval and review the request status.</li>
+        <li>Review the light curve, raw observation table, QC and descriptive statistics.</li>
+        <li>Review provenance and download the JSON file.</li>
+      </ol>
+    </section>
+    <section class="panel">
+      <div class="panel-title">Limitations</div>
+      <ul>
+        <li>Live retrieval requires an internet connection.</li>
+        <li>QC in this preview is diagnostic and is not production-approved.</li>
+        <li>Descriptive statistics are not model features.</li>
+        <li>Classification and anomaly detection are not run in this preview.</li>
+        <li>An OID is a catalog identifier. It does not prove physical-source identity.</li>
+      </ul>
+    </section>`;
+  setViewHeading("desktop-help");
+}
 
 function setViewHeading(view) {
   const heading = document.getElementById("viewTitle");
   const subtitle = document.getElementById("viewSubtitle");
-  heading.textContent = view === "overview" ? (state.oid || "Select an object") : titles[view][0];
-  subtitle.textContent = titles[view][1];
+  heading.textContent = desktopTranslate(
+    view === "overview" ? (state.oid || "Select an object") : titles[view][0]
+  );
+  subtitle.textContent = desktopTranslate(titles[view][1]);
 }
 
 function bindOverviewActions() {
@@ -488,6 +906,7 @@ async function loadDR24Explorer() {
     '<div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding:12px 0">',
     '<label for="dr24ObjectIds">DR24 object IDs</label>',
     '<textarea id="dr24ObjectIds" rows="3" placeholder="One or more OIDs, separated by commas or spaces" style="min-width:min(100%,520px)"></textarea>',
+    desktopMode ? '<button class="secondary-button" id="dr24SampleButton" type="button">Tested sample OIDs</button><small class="muted">These two sample OIDs are separate records.</small>' : '',
     '<button class="primary-button" id="dr24LoadButton" type="button">Load raw light curves</button>',
     '<button id="dr24ExportButton" type="button" disabled>Download raw JSON + QC</button>',
     '</div><p id="dr24Status" class="muted" role="status">No DR24 objects loaded.</p></section>',
@@ -497,12 +916,21 @@ async function loadDR24Explorer() {
     '<pre id="dr24Provenance" class="report-content">No acquisition performed.</pre></section>'
   ].join("");
   setViewHeading("dr24");
+  translateDesktopText(mainCanvas);
+  desktopDr24Payload = null;
+  desktopRawExport = null;
   const input = document.getElementById("dr24ObjectIds");
   const loadButton = document.getElementById("dr24LoadButton");
   const exportButton = document.getElementById("dr24ExportButton");
   let lastRawExport = null;
   const initialIds = params.get("objectids") || params.get("objectid") || "";
   if (initialIds) input.value = initialIds;
+  const sampleButton = document.getElementById("dr24SampleButton");
+  if (sampleButton) {
+    sampleButton.addEventListener("click", () => {
+      input.value = "264114400013085, 264214400000912";
+    });
+  }
 
   function parseObjectIds(value) {
     const tokens = value.split(/[\s,;]+/).filter(Boolean);
@@ -631,18 +1059,38 @@ async function loadDR24Explorer() {
 
   async function loadRaw() {
     lastRawExport = null;
+    desktopDr24Payload = null;
+    desktopRawExport = null;
     exportButton.disabled = true;
     let objectids;
     try {
       objectids = parseObjectIds(input.value.trim());
     } catch (error) {
-      document.getElementById("dr24Status").textContent = error.message;
+      document.getElementById("dr24Status").textContent = desktopTranslate(error.message);
       return;
     }
     loadButton.disabled = true;
-    document.getElementById("dr24Status").textContent =
-      "Querying indexed DR24 source for " + objectids.length + " OID(s)…";
+    let operationId = null;
     try {
+      const activeWorkspace = await fetchJson("/v1/workspaces/active");
+      if (!activeWorkspace.workspace) {
+        throw new Error("Create or open a workspace first.");
+      }
+      operationId = crypto.randomUUID().replace(/-/g, "");
+      await fetchJson("/v1/workspaces/operations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          operation_id: operationId,
+          operation_type: "DR24_BATCH_QUERY",
+          source: "ztf_dr24_hats",
+          status: "RUNNING",
+          requested_oids: objectids
+        })
+      });
+      document.getElementById("dr24Status").textContent =
+        desktopTranslate("Querying indexed DR24 source for ") + objectids.length +
+        desktopTranslate(" OID(s)…");
       const payload = await fetchJson("/v1/dr24/lightcurves", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -657,6 +1105,20 @@ async function loadDR24Explorer() {
         [String(item.objectid), item]
       ));
       const provenance = payload.provenance || {};
+      await fetchJson("/v1/workspaces/operations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          operation_id: operationId,
+          operation_type: "DR24_BATCH_QUERY",
+          source: "ztf_dr24_hats",
+          status: "SUCCEEDED",
+          requested_oids: objectids,
+          returned_oids: provenance.returned_oids || [],
+          missing_oids: provenance.missing_oids || [],
+          payload_sha256_by_oid: provenance.payload_sha256 || {}
+        })
+      });
       document.getElementById("dr24Provenance").textContent =
         JSON.stringify(provenance, null, 2);
       const rendered = records.map(record =>
@@ -668,6 +1130,7 @@ async function loadDR24Explorer() {
       );
       document.getElementById("dr24Results").innerHTML = rendered.join("") ||
         '<section class="panel muted">No catalog rows were returned. No alternate source was used.</section>';
+      translateDesktopText(document.getElementById("dr24Results"));
       const missing = provenance.missing_oids || [];
       const returned = provenance.returned_oids || records.map(record => record.objectid);
       document.getElementById("dr24Status").textContent =
@@ -680,16 +1143,44 @@ async function loadDR24Explorer() {
         source_payload: payload,
         interpretation: "Raw source payload preserved. QC is diagnostic only; no epochs were filtered or grouped."
       };
+      desktopDr24Payload = payload;
+      desktopRawExport = lastRawExport;
+      desktopRawExportPersisted = false;
+      translateDesktopText(document.getElementById("dr24Status"));
       exportButton.disabled = false;
       setConnectionState("DR24 raw data loaded");
     } catch (error) {
+      if (operationId) {
+        try {
+          await fetchJson("/v1/workspaces/operations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              operation_id: operationId,
+              operation_type: "DR24_BATCH_QUERY",
+              source: "ztf_dr24_hats",
+              status: "FAILED",
+              requested_oids: objectids,
+              returned_oids: [],
+              missing_oids: objectids,
+              payload_sha256_by_oid: {},
+              error_code: "dr24_acquisition_failed",
+              error_message: "DR24 acquisition failed. No alternate source was used."
+            })
+          });
+        } catch {
+          // Preserve the original acquisition error; the workspace status remains visible.
+        }
+      }
       document.getElementById("dr24Results").innerHTML =
         '<section class="panel muted">DR24 acquisition failed. No fallback source was used.</section>';
       document.getElementById("dr24Provenance").textContent =
-        "Unavailable: DR24 acquisition failed.";
+        desktopTranslate("Unavailable: DR24 acquisition failed.");
+      desktopDr24Payload = null;
+      desktopRawExport = null;
       document.getElementById("dr24Status").textContent =
-        "DR24 acquisition failed (" + (error.status || "network") +
-        "). No fallback source was used.";
+        error.message || desktopTranslate("DR24 acquisition failed. No fallback source was used.");
+      translateDesktopText(document.getElementById("dr24Results"));
       setConnectionState("DR24 acquisition failed", false);
     } finally {
       loadButton.disabled = false;
@@ -697,28 +1188,20 @@ async function loadDR24Explorer() {
   }
 
   loadButton.addEventListener("click", loadRaw);
-  exportButton.addEventListener("click", () => {
-    if (!lastRawExport) return;
-    const blob = new Blob([JSON.stringify(lastRawExport, null, 2)], {
-      type: "application/json"
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "ztf-dr24-batch-" +
-      (lastRawExport.source_payload.provenance.requested_oids || []).join("_") +
-      "-raw-export.json";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  });
+  exportButton.addEventListener("click", downloadDesktopRawExport);
   if (input.value) await loadRaw();
 }
 async function showView(view) {
   document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
   const active = document.querySelector('.nav-item[data-view="' + view + '"]');
   if (active) active.classList.add("active");
+  if (view === "desktop-home") return renderDesktopHome();
+  if (view === "sources") return renderDesktopSources();
+  if (view === "workspaces") return renderDesktopWorkspaces();
+  if (view === "desktop-provenance") return renderDesktopProvenance();
+  if (view === "desktop-export") return renderDesktopExport();
+  if (view === "desktop-settings") return renderDesktopSettings();
+  if (view === "desktop-help") return renderDesktopHelp();
   if (view === "dr24") return loadDR24Explorer();
   if (view === "overview") {
     mainCanvas.innerHTML = overviewMarkup;
@@ -739,5 +1222,36 @@ document.querySelectorAll(".nav-item").forEach(button => {
   button.addEventListener("click", () => showView(button.dataset.view));
 });
 
-bindOverviewActions();
-loadObject();
+if (desktopMode) {
+  document.title = "ZTF Classifier | Park preview";
+  document.querySelector(".brand-name").textContent = "ZTF CLASSIFIER";
+  document.querySelector(".brand-product").textContent = "Desktop preview";
+  document.querySelector(".connection-state").setAttribute("aria-label", "Local service status");
+  document.querySelector(".icon-button").setAttribute("aria-label", "Display settings");
+  const sectionLabels = document.querySelectorAll(".sidebar .section-label");
+  if (sectionLabels[0]) sectionLabels[0].textContent = "Workspace";
+  if (sectionLabels[1]) sectionLabels[1].hidden = true;
+  const desktopViews = new Set([
+    "dr24",
+    "desktop-home",
+    "sources",
+    "workspaces",
+    "desktop-provenance",
+    "desktop-export",
+    "desktop-settings",
+    "desktop-help",
+    "validation",
+  ]);
+  document.querySelectorAll(".nav-item").forEach(button => {
+    button.hidden = !desktopViews.has(button.dataset.view);
+  });
+  document.querySelectorAll(".desktop-only").forEach(button => { button.hidden = false; });
+  document.querySelector(".sidebar-footer").hidden = true;
+  document.querySelector(".inspector").hidden = true;
+  document.querySelector(".object-actions").hidden = true;
+  translateDesktopText(document);
+  void showView("desktop-home");
+} else {
+  bindOverviewActions();
+  loadObject();
+}

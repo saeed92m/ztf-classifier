@@ -1,0 +1,363 @@
+name: Windows Desktop Preview Build
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/windows-desktop-shell-spike.yml"
+      - "pyproject.toml"
+      - "requirements-windows-desktop.lock"
+      - "src/ztf_classifier/desktop/**"
+      - "src/ztf_classifier/application/**"
+      - "src/ztf_classifier/api/**"
+      - "src/ztf_classifier/web/static/**"
+      - "tests/test_desktop_runtime.py"
+      - "tests/test_workspace_api.py"
+      - "tests/integration/test_dr24_batch_workbench_ui.py"
+      - "packaging/windows/**"
+      - "docs/desktop/**"
+      - "scripts/build_desktop_pdfs.py"
+      - ".github/release-notes/desktop-v0.1.0-preview.1.md"
+      - "docs/PARK_ACCEPTANCE_MATRIX_2026-11-24.md"
+  workflow_dispatch:
+    inputs:
+      publish_preview:
+        description: "Create the public Windows evaluation pre-release after the exact main-branch build passes"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-desktop-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-build:
+    name: Windows runtime, installer and install/uninstall smoke
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install pinned Windows desktop environment
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip==26.2 setuptools==84.1.0 wheel==0.48.0
+          python -m pip install -r requirements-windows-desktop.lock
+          python -m pip install --no-deps --no-build-isolation -e .
+          python -m pip check
+
+      - name: Ensure Evergreen WebView2 Runtime is available
+        shell: pwsh
+        run: |
+          $clientId = "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
+          $registryPaths = @(
+            "HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\EdgeUpdate\\Clients\\$clientId",
+            "HKCU:\\Software\\Microsoft\\EdgeUpdate\\Clients\\$clientId"
+          )
+          $runtimeFound = $false
+          foreach ($path in $registryPaths) {
+            $entry = Get-ItemProperty -Path $path -Name pv -ErrorAction SilentlyContinue
+            if ($entry -and $entry.pv -and $entry.pv -ne "0.0.0.0") { $runtimeFound = $true }
+          }
+          if (-not $runtimeFound) {
+            $bootstrapper = Join-Path $env:RUNNER_TEMP "MicrosoftEdgeWebView2Setup.exe"
+            Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile $bootstrapper
+            $signature = Get-AuthenticodeSignature -LiteralPath $bootstrapper
+            if ($signature.Status -ne "Valid" -or $signature.SignerCertificate.Subject -notmatch "Microsoft Corporation") {
+              throw "The downloaded WebView2 bootstrapper does not have a valid Microsoft Authenticode signature."
+            }
+            $process = Start-Process -FilePath $bootstrapper -ArgumentList "/silent", "/install" -Wait -PassThru
+            if ($process.ExitCode -ne 0) { throw "WebView2 Evergreen Runtime installation failed: $($process.ExitCode)" }
+          }
+
+      - name: Verify dependency environment
+        run: python -m pip check
+
+      - name: Verify DR24 runtime dependencies
+        run: python -c "import lsdb, s3fs; print('DR24 dependencies import successfully')"
+
+      - name: Run desktop runtime tests
+        run: python -m pytest -q tests/test_desktop_runtime.py tests/test_workspace_api.py
+
+      - name: Validate Workbench JavaScript syntax
+        run: |
+          node --check src/ztf_classifier/web/static/app.js
+          node --check src/ztf_classifier/web/static/desktop-bootstrap.js
+
+      - name: Run Ruff checks
+        run: |
+          python -m ruff check src/ztf_classifier/desktop tests/test_desktop_runtime.py
+          python -m ruff format --check src/ztf_classifier/desktop tests/test_desktop_runtime.py
+
+      - name: Build Windows one-folder application
+        shell: pwsh
+        run: |
+          pyinstaller --noconfirm --clean --onedir --windowed --name ZTFClassifier --collect-all webview --collect-all pythonnet --collect-all clr_loader --collect-all lsdb --collect-all s3fs --collect-all fsspec --collect-all alerce --add-data "src/ztf_classifier/web/static;ztf_classifier/web/static" --add-data "configs/benchmarks;configs/benchmarks" src/ztf_classifier/desktop/main.py
+          if (-not (Test-Path "dist/ZTFClassifier/ZTFClassifier.exe")) { throw "PyInstaller did not create the expected Windows executable." }
+          if (-not (Test-Path "dist/ZTFClassifier/_internal/alerce/default_config.json")) { throw "The ALeRCE default configuration was not bundled." }
+          python -m pip freeze --all | Out-File -Encoding utf8 "dist/desktop-windows-dependencies.txt"
+
+      - name: Run frozen application self-test
+        shell: pwsh
+        run: |
+          $selfTest = Join-Path $env:LOCALAPPDATA "ZTFClassifier\\logs\\desktop-self-test.json"
+          Remove-Item $selfTest -Force -ErrorAction SilentlyContinue
+          $process = Start-Process -FilePath "dist/ZTFClassifier/ZTFClassifier.exe" -ArgumentList "--self-test" -Wait -PassThru
+          if (-not (Test-Path $selfTest)) { throw "Frozen application did not write its self-test report. Process exit code: $($process.ExitCode)" }
+          $report = Get-Content -Raw $selfTest | ConvertFrom-Json
+          Copy-Item $selfTest "dist/desktop-self-test.json" -Force
+          if ($report.status -ne "PASS") { throw "Frozen application self-test did not PASS. Process exit code: $($process.ExitCode). Detail: $($report.error)" }
+          if ($process.ExitCode -ne 0) { throw "Frozen application self-test reported PASS but exited with code $($process.ExitCode)." }
+
+      - name: Build User Manual and Quick Start PDFs
+        shell: pwsh
+        run: |
+          python -m pip install reportlab==4.4.7
+          python scripts/build_desktop_pdfs.py dist
+          foreach ($pdf in @("dist/User_Manual.pdf", "dist/Quick_Start.pdf")) {
+            if (-not (Test-Path $pdf) -or (Get-Item $pdf).Length -lt 1000) {
+              throw "PDF build failed or produced an empty file: $pdf"
+            }
+          }
+
+      - name: Stage signed WebView2 Evergreen bootstrapper for installer
+        shell: pwsh
+        run: |
+          $source = Join-Path $env:RUNNER_TEMP "MicrosoftEdgeWebView2Setup.exe"
+          if (-not (Test-Path $source)) {
+            Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile $source
+          }
+          $signature = Get-AuthenticodeSignature -LiteralPath $source
+          if ($signature.Status -ne "Valid" -or $signature.SignerCertificate.Subject -notmatch "Microsoft Corporation") {
+            throw "The WebView2 bootstrapper does not have a valid Microsoft Authenticode signature."
+          }
+          $destination = Join-Path $PWD "packaging/windows/MicrosoftEdgeWebView2Setup.exe"
+          Copy-Item -LiteralPath $source -Destination $destination -Force
+          $hash = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant()
+          if (-not (Test-Path -LiteralPath $destination)) { throw "The staged WebView2 bootstrapper is missing from packaging/windows." }
+          "WEBVIEW2_BOOTSTRAPPER_SHA256=$hash" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Verified Microsoft WebView2 bootstrapper SHA-256: $hash"
+
+      - name: Install pinned NSIS compiler
+        shell: pwsh
+        run: |
+          $nsisArchive = Join-Path $env:RUNNER_TEMP "nsis-3.13.zip"
+          $downloadUrl = "https://sourceforge.net/projects/nsis/files/NSIS%203/3.13/nsis-3.13.zip/download?use_mirror=autoselect"
+          curl.exe --fail --location --retry 3 --output $nsisArchive $downloadUrl
+          if ($LASTEXITCODE -ne 0) { throw "NSIS archive download failed: $LASTEXITCODE" }
+          $actualHash = (Get-FileHash -Path $nsisArchive -Algorithm SHA256).Hash
+          $expectedHash = "BA63DFFC4410EE89193E1CB5A41989991BD77C61068DA17E3156D136B7B0B3D8"
+          if ($actualHash -ne $expectedHash) { throw "NSIS archive SHA-256 mismatch: $actualHash" }
+          $nsisRoot = Join-Path ${env:ProgramFiles(x86)} "NSIS"
+          New-Item -ItemType Directory -Path $nsisRoot -Force | Out-Null
+          Expand-Archive -Path $nsisArchive -DestinationPath $nsisRoot -Force
+          $compilerCandidates = @(Get-ChildItem -LiteralPath $nsisRoot -Filter "makensis.exe" -File -Recurse)
+          if ($compilerCandidates.Count -lt 1) {
+            throw "No makensis.exe was found in the checksum-verified NSIS archive."
+          }
+          # NSIS ships both the root compiler and a Bin copy. Prefer the
+          # canonical root compiler because its sibling Include/Plugins/Stubs
+          # directories define the NSIS installation root.
+          $rankedCandidates = @($compilerCandidates | Sort-Object { $_.FullName.Length })
+          $shortestPathLength = $rankedCandidates[0].FullName.Length
+          $preferredCandidates = @($rankedCandidates | Where-Object { $_.FullName.Length -eq $shortestPathLength })
+          if ($preferredCandidates.Count -ne 1) {
+            throw "Could not identify one canonical root makensis.exe in the NSIS archive."
+          }
+          $compiler = $preferredCandidates[0].FullName
+          $nsisHome = Split-Path -Parent $compiler
+          if (-not (Test-Path (Join-Path $nsisHome "Include\\MUI2.nsh"))) {
+            $nsisHome = Split-Path -Parent $nsisHome
+          }
+          foreach ($requiredPath in @("Include\\MUI2.nsh", "Plugins", "Stubs")) {
+            if (-not (Test-Path (Join-Path $nsisHome $requiredPath))) {
+              throw "NSIS installation is incomplete: missing $requiredPath under $nsisHome."
+            }
+          }
+          Write-Host "Using NSIS compiler: $compiler"
+          Write-Host "NSIS home: $nsisHome"
+          $versionOutput = & $compiler /VERSION 2>&1
+          $versionExitCode = $LASTEXITCODE
+          $versionText = ($versionOutput -join "`n").Trim()
+          if ($versionExitCode -ne 0 -or $versionText -notmatch '3[.]13') {
+            throw "Expected NSIS 3.13; compiler reported '$versionText' (exit $versionExitCode)."
+          }
+          "NSIS_COMPILER=$compiler" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "NSISDIR=$nsisHome" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          if (-not $env:NSIS_COMPILER -or -not (Test-Path $env:NSIS_COMPILER)) {
+            throw "The verified NSIS compiler path was not exported by the setup step."
+          }
+          Push-Location "packaging/windows"
+          try {
+            & $env:NSIS_COMPILER /V3 "installer.nsi"
+            $nsisExitCode = $LASTEXITCODE
+          }
+          finally {
+            Pop-Location
+          }
+          if ($nsisExitCode -ne 0) { throw "NSIS installer build failed with exit code $nsisExitCode." }
+          $setup = "dist/ZTFClassifier-0.1.0-preview.1-Setup.exe"
+          if (-not (Test-Path $setup)) { throw "The Windows installer was not created." }
+
+      - name: Test silent install, launch and uninstall
+        shell: pwsh
+        run: |
+          $setup = (Resolve-Path "dist/ZTFClassifier-0.1.0-preview.1-Setup.exe").Path
+          $install = Start-Process -FilePath $setup -ArgumentList "/S" -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "Silent install failed: $($install.ExitCode)" }
+          $installDir = Join-Path $env:LOCALAPPDATA "Programs\\ZTFClassifier"
+          $installedExe = Join-Path $installDir "ZTFClassifier.exe"
+          if (-not (Test-Path $installedExe)) { throw "Installed executable is missing." }
+          $startMenuShortcut = Join-Path $env:APPDATA "Microsoft\\Windows\\Start Menu\\Programs\\ZTF Classifier\\ZTF Classifier.lnk"
+          $desktopShortcut = Join-Path $env:USERPROFILE "Desktop\\ZTF Classifier.lnk"
+          if (-not (Test-Path $startMenuShortcut)) { throw "Start Menu shortcut is missing." }
+          if (-not (Test-Path $desktopShortcut)) { throw "Desktop shortcut is missing." }
+          $builtExe = (Resolve-Path "dist/ZTFClassifier/ZTFClassifier.exe").Path
+          $builtHash = (Get-FileHash -LiteralPath $builtExe -Algorithm SHA256).Hash
+          $installedHash = (Get-FileHash -LiteralPath $installedExe -Algorithm SHA256).Hash
+          if ($builtHash -ne $installedHash) {
+            throw "Installed executable differs from the verified PyInstaller build."
+          }
+          $selfTest = Start-Process -FilePath $installedExe -ArgumentList "--self-test" -Wait -PassThru
+          $selfTestReport = Join-Path $env:LOCALAPPDATA "ZTFClassifier/logs/desktop-self-test.json"
+          if (-not (Test-Path -LiteralPath $selfTestReport)) {
+            throw "Installed application did not write its self-test report. Process exit code: $($selfTest.ExitCode)"
+          }
+          Write-Host "Installed application self-test report:"
+          Get-Content -LiteralPath $selfTestReport -Raw | Write-Host
+          $report = Get-Content -LiteralPath $selfTestReport -Raw | ConvertFrom-Json
+          if ($report.status -ne "PASS") {
+            throw "Installed application self-test did not PASS. Process exit code: $($selfTest.ExitCode). Detail: $($report.error)"
+          }
+          if ($selfTest.ExitCode -ne 0) {
+            throw "Installed application self-test reported PASS but exited with code $($selfTest.ExitCode)."
+          }
+          $userData = Join-Path $env:LOCALAPPDATA "ZTFClassifier"
+          $uninstaller = Join-Path $installDir "Uninstall.exe"
+          $uninstall = Start-Process -FilePath $uninstaller -ArgumentList "/S" -Wait -PassThru
+          if ($uninstall.ExitCode -ne 0) { throw "Silent uninstall failed: $($uninstall.ExitCode)" }
+          if (Test-Path $installDir) { throw "Install directory remains after uninstall." }
+          if (-not (Test-Path (Join-Path $userData "logs\\desktop-self-test.json"))) { throw "User data was removed during uninstall." }
+
+      - name: Create build manifest and SHA-256 checksum
+        shell: pwsh
+        run: |
+          $packageVersion = python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])"
+          $setup = "dist/ZTFClassifier-0.1.0-preview.1-Setup.exe"
+          $hash = (Get-FileHash -Path $setup -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  ZTFClassifier-0.1.0-preview.1-Setup.exe" | Set-Content -Encoding ascii "dist/SHA256SUMS.txt"
+          $manifest = [ordered]@{
+            schema_version = "ztf-windows-desktop-build-v1"
+            desktop_version = "0.1.0-preview.1"
+            python_package_version = $packageVersion
+            source_commit = "${{ github.sha }}"
+            installer_sha256 = $hash
+            nsis_version = "3.13"
+            webview2_bootstrapper_sha256 = $env:WEBVIEW2_BOOTSTRAPPER_SHA256
+            build_utc = [DateTime]::UtcNow.ToString("o")
+            dependency_manifest = "desktop-windows-dependencies.txt"
+            dependency_lock = "requirements-windows-desktop.lock"
+            dependency_lock_sha256 = (Get-FileHash -Path "requirements-windows-desktop.lock" -Algorithm SHA256).Hash.ToLowerInvariant()
+            self_test_report = "desktop-self-test.json"
+            signature_status = "UNSIGNED_CHECKSUMMED"
+          }
+          $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "dist/desktop-build-manifest.json"
+
+      - name: Upload Windows preview installer and evidence
+        if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.head_ref, 'feat/park-')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        uses: actions/upload-artifact@v6
+        with:
+          name: ztf-classifier-windows-preview-${{ github.sha }}
+          path: |
+            dist/ZTFClassifier-0.1.0-preview.1-Setup.exe
+            dist/SHA256SUMS.txt
+            dist/desktop-build-manifest.json
+            dist/desktop-windows-dependencies.txt
+            dist/desktop-self-test.json
+            dist/User_Manual.pdf
+            dist/Quick_Start.pdf
+          if-no-files-found: error
+          retention-days: 14
+
+
+  publish-preview:
+    name: Publish GitHub Windows preview pre-release
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_preview == true
+    needs: windows-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out tagged release notes
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Download Windows installer and evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: ztf-classifier-windows-preview-${{ github.sha }}
+          path: release-assets
+
+      - name: Verify release payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+          cd release-assets
+          sha256sum --check SHA256SUMS.txt
+          test -s ZTFClassifier-0.1.0-preview.1-Setup.exe
+          test -s User_Manual.pdf
+          test -s Quick_Start.pdf
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          manifest = json.loads(Path("desktop-build-manifest.json").read_text(encoding="utf-8-sig"))
+          if manifest.get("source_commit") != os.environ["GITHUB_SHA"]:
+              raise SystemExit("Build manifest source commit does not match the tagged commit.")
+          if manifest.get("signature_status") != "UNSIGNED_CHECKSUMMED":
+              raise SystemExit("Unexpected installer signature status.")
+          PY
+
+      - name: Create GitHub pre-release with installer and documentation
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="desktop-v0.1.0-preview.1"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "A release already exists for $TAG. Refusing to overwrite it."
+            exit 1
+          fi
+          existing_tag="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.sha' 2>/dev/null || true)"
+          if [ -n "$existing_tag" ] && [ "$existing_tag" != "$GITHUB_SHA" ]; then
+            echo "Tag $TAG already points to $existing_tag, not $GITHUB_SHA. Refusing to move it."
+            exit 1
+          fi
+          if [ -z "$existing_tag" ]; then
+            gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" -f "ref=refs/tags/$TAG" -f "sha=$GITHUB_SHA"
+          fi
+          gh release create "$TAG" \
+            "release-assets/ZTFClassifier-0.1.0-preview.1-Setup.exe" \
+            "release-assets/User_Manual.pdf" \
+            "release-assets/Quick_Start.pdf" \
+            "release-assets/SHA256SUMS.txt" \
+            "release-assets/desktop-build-manifest.json" \
+            "release-assets/desktop-windows-dependencies.txt" \
+            "release-assets/desktop-self-test.json" \
+            --title "ZTF Classifier Windows Preview 0.1.0-preview.1" \
+            --notes-file ".github/release-notes/desktop-v0.1.0-preview.1.md" \
+            --prerelease --verify-tag
