@@ -35,8 +35,8 @@ Do not describe the current branch as a complete Park prototype.
 - The repository has feature, model, calibration, conformal, OOD and scientific-anomaly components. Their presence does not prove that a complete Park workflow runs.
 - The current desktop UI hides the classification, uncertainty and scientific-validation workspaces.
 - The Windows installer uses the English NSIS language resource. The desktop static assets use English and left-to-right layout.
-- Exact-head Windows workflow run 45561977822 failed at Ruff formatting. It passed 18 desktop/workspace tests and JavaScript syntax checks. The build, installer and install/uninstall steps were skipped.
-- The next Windows workflow run was started after the formatting correction. Its result must be checked against the exact current head.
+- Exact-head Windows workflow run 45563751681 passed Ruff, 18 desktop/workspace tests, JavaScript syntax checks, the PyInstaller one-folder build and the frozen application self-test. It verified the Microsoft WebView2 bootstrapper signature and installed NSIS 3.13. The NSIS compile then failed because input paths were resolved from the script directory instead of the repository root. The language resource was not the cause of this failure.
+- The installer script now sets its working directory from the script path to the repository root. A regression test checks this rule. The next exact-head Windows run must verify the installer compile and install/uninstall steps.
 
 ### Source-document evidence
 
