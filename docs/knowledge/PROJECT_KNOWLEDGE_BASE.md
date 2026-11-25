@@ -12,6 +12,17 @@ Only FACT, VERIFIED, and SUPPORTED findings may become normative baseline rules 
 
 Every implementation cycle consumes validated prior knowledge, records its inherited baseline, measures relevant change, extracts new knowledge, and carries that knowledge into the next cycle. A stage is never isolated from earlier stages.
 
+## Current verified knowledge — 2026-11-19
+
+- Main CI #44515762167 passed: 702 passed, 13 skipped, 9 warnings. — VERIFIED
+- The original v0.2.0 production artifact is not available in accessible remote sources; recovery remains open in Issue #282. — VERIFIED / UNRESOLVED
+- The DR24 Explorer is bounded raw-data inspection, not validated DR24 inference. — VERIFIED
+- Scientific Validation #44515762163 acquired separate 150-row DR24 Objects Table and ALeRCE reference snapshots; they are not cross-matched. — VERIFIED
+- Park MVP remains NOT ACCEPTED until the complete predeclared cohort passes the API/Workbench and scientific gates. — VERIFIED
+- PR #289 security fix merged; main Dependency Audit passed. — VERIFIED
+- CPVS Seq-based comparison remains unresolved with 11,602 candidate-only objects; reverify source artifacts before new claims. — VERIFIED / UNRESOLVED
+- Issue #293 license/distribution policy requires owner decision before wider release. — UNRESOLVED
+
 ## Current verified knowledge
 
 - v0.2.0 is an immutable scientific baseline and must never be rewritten. — VERIFIED

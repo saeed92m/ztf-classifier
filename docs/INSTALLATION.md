@@ -1,30 +1,56 @@
 # Installation
 
-## Requirements
+**Software release:** v1.0.1  
+**Supported Python:** >=3.11.5,<3.12  
+**Recommended development environment:** Ubuntu or WSL2
 
-Python 3.11 is the supported release environment. A Linux/WSL environment is recommended for scientific workflows.
+## Install the published package
 
-## Install
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install ztf-classifier==1.0.1
+ztf-classifier --help
+```
 
-Create a virtual environment and install the published package:
+The package provides CLI and API entry points. It does not include the full ZTF archive, the frozen benchmark data, or the original v0.2.0 production model artifact.
 
-    python -m venv .venv
-    source .venv/bin/activate
-    python -m pip install --upgrade pip
-    python -m pip install ztf-classifier==1.0.0
+## Start the API and Workbench
 
-Verify:
+```bash
+ztf-classifier-api
+```
 
-    ztf-classifier --help
+Open `http://127.0.0.1:8000/workbench/` in a browser on the same machine.
 
-## Source installation
+## Install DR24 Explorer dependencies from source
 
-Clone the repository, create the environment, and install the project in editable mode when developing or extending the platform.
+The bounded DR24 raw Explorer requires the optional `dr24` dependencies. Use an isolated checkout:
+
+```bash
+git clone https://github.com/saeed92m/ztf-classifier.git
+cd ztf-classifier
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.lock
+python -m pip install -e ".[dr24]"
+ztf-classifier-api
+```
+
+The DR24 Explorer supports raw light-curve retrieval and inspection. It does not run the frozen v0.2.0 classifier on DR24.
+
+## Model artifact requirement
+
+Production inference requires a trusted, authenticated model artifact. The original `baseline_v0.2` artifact is not included in the v1.0.1 wheel or source archive and has not been recovered from accessible remote sources. See [Issue #282](https://github.com/saeed92m/ztf-classifier/issues/282).
+
+Do not use the schema-1.1 lab-smoke artifact as a production substitute. Do not claim that model inference is ready until the original artifact and its independent provenance are verified.
 
 ## Data
 
-The software does not require the complete ZTF archive to be stored locally. Use the documented acquisition and source contracts for targeted data retrieval.
+Do not download the full multi-terabyte ZTF archive for normal use. Use bounded, documented source adapters. Preserve source release, query, identifiers, schemas, retrieval time, row counts, and hashes.
 
-## Next step
+## Park demonstrator
 
-Continue with the Quick Start and API/Workbench documentation.
+Follow the [Park Laboratory Demonstrator Runbook](acceptance/PARK_LABORATORY_DEMONSTRATOR_RUNBOOK_2026-11-18.md). A failed or skipped live test is not acceptance.

@@ -1,3 +1,24 @@
+# Platform Expansion Roadmap — current status 2026-11-19
+
+**Canonical current plan:** [Master Execution Roadmap 2026-11-19](../MASTER_EXECUTION_ROADMAP_2026-11-19.md)  
+**Current continuity record:** [Handbook v3.1](../HANDBOOK_UPDATED_v3.1.md)  
+**Park acceptance contract:** [Full-cohort Park MVP acceptance](PARK_MVP_REAL_DATASET_END_TO_END_ACCEPTANCE_2026-11-17.md)
+
+## Current verified state
+
+- Main revision: `dcedccf50ae5a4541ababc29cfc7471a7d0ea14a`.
+- Software release: v1.0.1; no Park demo prerelease has been created.
+- Main CI #44515762167: PASS; 702 passed, 13 skipped, 9 warnings.
+- Scientific Validation #44515762163: all five workflow jobs succeeded and produced source evidence. The 150-row DR24 Objects Table response and 150-row ALeRCE response are separate, unpaired snapshots; they are not an accepted labeled cohort or model evaluation.
+- The original `baseline_v0.2` production artifact remains unavailable in accessible remote sources (Issue #282).
+- The raw DR24 Explorer is not a validated DR24 classifier.
+- The Park MVP is NOT ACCEPTED until the full predeclared cohort passes the API/Workbench and scientific/product gates.
+- CPVS Issue #170 remains UNRESOLVED with 11,602 candidate-only objects. It is separate from the Park critical path.
+
+The remainder of this document is retained as a historical platform-expansion plan. Use the dated master roadmap above for current priorities.
+
+---
+
 # Astronomical Data Analysis & Discovery Platform — Product Roadmap
 
 Status date: 2026-10-11  

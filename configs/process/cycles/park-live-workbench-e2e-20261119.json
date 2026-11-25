@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "park-live-workbench-e2e-20261119",
+  "objective": "Verify the pinned, live DR24 HATS source-to-API-to-Workbench-to-JSON-export path while keeping scientific classification and production inference outside this test's claim boundary.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "PR #297 Park laboratory demonstrator runbook",
+      "status": "VERIFIED",
+      "detail": "The raw DR24 Explorer supports bounded OID inspection, source-native epoch display, diagnostic QC, acquisition provenance, and JSON export. Local execution on the presentation device remains required."
+    },
+    {
+      "source": "DR24 live API parity test",
+      "status": "VERIFIED",
+      "detail": "The pinned OIDs are returned through the actual API with expected epoch counts and payload hashes."
+    },
+    {
+      "source": "Deterministic Workbench browser contract",
+      "status": "VERIFIED",
+      "detail": "A fake backend provides an offline browser test for rendering, QC, provenance, validation errors, and raw JSON export."
+    }
+  ],
+  "baseline": {
+    "revision": "b933af4bf91c00d0cdbb9fdebeeec7ae7b799474",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "change": {
+    "scope": "Add an opt-in Playwright test that exercises the actual Workbench against public DR24 HATS for two pinned OIDs. Isolate the live test from the deterministic offline UI test. No application model, feature mapping, scientific threshold, benchmark, or baseline is changed.",
+    "rationale": "API parity and a fake-backend browser test are separate proofs. A bounded live browser test verifies the real source-to-Workbench-to-export path without making ordinary offline CI depend on public HATS availability."
+  },
+  "expected_improvement": [
+    "Verify the actual Workbench can retrieve and render the two pinned live DR24 OIDs.",
+    "Verify separate g/r OID panels, native epoch counts, diagnostic QC, provenance, and payload hashes in the browser.",
+    "Verify the downloadable JSON preserves the live source payloads and QC assessments.",
+    "Keep the live integration test opt-in and separate from ordinary deterministic offline CI."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "The API live test and fake-backend Workbench test exercised separate paths.",
+        "after": "The dedicated live browser test exercised the real HATS source through the Workbench and verified both pinned OIDs, their filters, epoch counts, and payload hashes.",
+        "evidence": "Workflow run 44943450666: pinned live Workbench test passed 1 test in 27.57 seconds."
+      },
+      "reproducibility": {
+        "before": "The fake-backend UI test did not exercise the real source payload in the browser.",
+        "after": "The live browser test used fixed OIDs and pinned expected payload hashes, then verified the JSON export.",
+        "evidence": "The live browser job passed 1 test in 27.57 seconds; the companion live API parity test passed 1 test in 18.73 seconds."
+      },
+      "reliability": {
+        "before": "A live HATS request could not be verified in the visible browser workflow.",
+        "after": "The deterministic offline test and the gated live HATS browser test run in separate jobs.",
+        "evidence": "Workflow run 44943450666: deterministic test passed 1 test in 4.12 seconds; live test passed 1 test in 27.57 seconds."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "This test verifies bounded data retrieval and display only. It does not validate physical-source identity, production QC, feature compatibility, model inference, calibrated probabilities, or astrophysical classification."
+      }
+    },
+    "trade_off": "The live browser test depends on public DR24 HATS availability and is therefore gated to Park branches or manual execution. It supplements, but does not replace, a local Workbench run on the actual presentation device."
+  },
+  "validation": {
+    "status": "VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Deterministic offline Workbench browser job in run 44943450666 passed: 1 passed, 1 deselected in 4.12 seconds.",
+      "Pinned live DR24 Workbench browser job in run 44943450666 passed: 1 passed, 1 deselected in 27.57 seconds.",
+      "DR24 Batch API Live Source Parity run 44943450694 passed: 1 test in 18.73 seconds, with 1 warning.",
+      "The live Workbench test asserts the two fixed OIDs, separate g/r filters, expected 78/123 epochs, pinned payload hashes, provenance, and JSON export.",
+      "CodeQL run 44943450719 passed.",
+      "Product Scope Audit run 44943450681 passed.",
+      "PR #297 CI run 44943450712 passed all eight jobs, including Format, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke, Package Build, Dependency Audit, and CI Gate.",
+      "The PR #297 Test Suite reported 743 passed, 15 skipped, 9 warnings, and 84% line coverage.",
+      "Scientific Validation run 44943450753 passed its benchmark/lifecycle contract job. Four source-backed evidence jobs were skipped; those skips are not scientific passes."
+    ]
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "root_causes": [
+      "The original combined workflow enabled a live HATS request in the same job as the offline deterministic browser contract.",
+      "The workflow was revised in commit e6f03b5898c6cbca8fe9f5a0e1fd829d95d2a0f7 to isolate the live test in a separate gated job."
+    ],
+    "unresolved": [
+      "The actual presentation device has not yet completed the local Workbench runbook.",
+      "The full Park MVP and scientific acceptance gates remain open."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "The bounded source-to-API-to-Workbench-to-export path has a passing live browser test for the pinned two-OID sample.",
+      "The deterministic offline browser test now runs separately from the live external-source test.",
+      "Pinned retrieval and payload hashes support repeatability for this sample only.",
+      "A live Workbench browser pass does not prove physical-source identity, production QC, model validity, or population-level performance."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": []
+  },
+  "decision": "ACCEPT",
+  "knowledge_carried_forward": [
+    "ACCEPT applies only to the bounded pinned live Workbench E2E test.",
+    "The local Workbench run on the actual presentation device remains mandatory before the laboratory demonstrator is marked READY WITH LIMITATIONS.",
+    "Keep DR24 raw inspection separate from frozen v0.2.0 production inference.",
+    "Preserve native HMJD, mag, magerr, clrcoeff, catflags, OID, and filter values.",
+    "Keep QC policy ztf-dr24-raw-qc-diagnostic-v1 in DIAGNOSTIC_NOT_PRODUCTION_APPROVED status.",
+    "Do not claim calibrated probabilities, validated anomaly discovery, physical-source identity, or DR24 classification.",
+    "The full Park MVP remains NOT ACCEPTED until its complete predeclared dataset and end-to-end gates pass."
+  ]
+}

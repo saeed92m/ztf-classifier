@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "parallel-dataset-execution-plan-20261117",
+  "objective": "Record the approved parallel execution strategy for DR24 product ingestion, independent StarEmbed and BTS benchmark candidates, supplementary Zubercal reference photometry, and the separate CPVS reconstruction workstream.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Approved CPVS convergence policy",
+      "status": "VERIFIED",
+      "detail": "CPVS discrepancy remains a scientific validation blocker. Diagnostic filters must not enter production without independent evidence and regression protection."
+    },
+    {
+      "source": "Project dossier and Park presentation",
+      "status": "VERIFIED",
+      "detail": "DR24 HATS/Parquet is the primary time-series source. Zubercal is supplementary reference photometry."
+    },
+    {
+      "source": "Issue #253 and merged DR24 source-contract work",
+      "status": "VERIFIED",
+      "detail": "DR24 and Zubercal have distinct identifiers, time scales, photometry, uncertainty semantics and quality flags."
+    },
+    {
+      "source": "StarEmbed ZTF_40k audit history",
+      "status": "SUPPORTED",
+      "detail": "StarEmbed remains a candidate benchmark until duplicate SourceID and cross-split identity findings are resolved."
+    },
+    {
+      "source": "BTS-to-DR24 bounded pilot history",
+      "status": "SUPPORTED",
+      "detail": "The pilot establishes data availability only. It does not establish source identity, label completeness, photometric quality or benchmark validity."
+    }
+  ],
+  "baseline": {
+    "revision": "f681408fae8d8062dd72ff74791872c1590f6ee8",
+    "scientific_baseline": "v0.2.0 immutable",
+    "feature_count": 42,
+    "model_version": "baseline_v0.2"
+  },
+  "expected_improvement": [
+    "Separate product delivery from the unresolved CPVS reconstruction workstream.",
+    "Use DR24 HATS as the primary broad-coverage time-series ingestion stream.",
+    "Keep Zubercal DR20 as a separate supplementary PS1-matched reference-photometry stream.",
+    "Define independent source, identity, label, quality and leakage audits for StarEmbed and BTS benchmark candidates.",
+    "Preserve the frozen v0.2.0 model, feature contract, class order, cutoff, thresholds and scientific acceptance criteria."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "before": "Execution responsibilities and acceptance gates were distributed across existing issues and pull requests.",
+        "after": "A single version-controlled plan defines the parallel workstreams, source boundaries, acceptance gates and execution order."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "before": "No consolidated execution plan was present on the base revision.",
+        "after": "The plan requires pinned source versions, deterministic samples, manifests, hashes and retained evidence for each workstream."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "This is a planning document. No new source-backed dataset execution or scientific acceptance was performed."
+      }
+    },
+    "trade_off": "Parallel work reduces the dependency of product development on CPVS reconstruction. It increases the need to keep source-specific schemas, identities, taxonomies and validation records separate."
+  },
+  "validation": {
+    "status": "PARTIALLY_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Documentation-only PR #296, commit 2136387e2d66f101bc210a27c4cd4820b006bc08.",
+      "CodeQL Python completed successfully on run 43970807580.",
+      "Format Check and Lint completed successfully on run 43970807631.",
+      "Product Scope Audit completed successfully on run 43970807413.",
+      "Scientific validation contract and cumulative lifecycle record regression tests completed successfully on run 43970807599.",
+      "The immutable historical ALeRCE, source provenance readiness, DR24/ALeRCE source-backed evidence and StarEmbed source-backed evidence jobs were skipped on run 43970807599.",
+      "The initial Cumulative Lifecycle Gate failed on run 43970807631 because this PR did not yet include a cycle record. This record addresses that process-contract failure; a new current-head CI run is still required."
+    ]
+  },
+  "failure_analysis": {
+    "status": "PARTIALLY_DIAGNOSED",
+    "root_causes": [
+      "The initial PR contained a meaningful documentation change but did not include the machine-readable cumulative cycle record required by the CI workflow."
+    ],
+    "unresolved": [
+      "The current-head CI result after adding this record is not yet available.",
+      "No new source-backed DR24, StarEmbed or BTS scientific evidence was produced by this documentation change.",
+      "StarEmbed and BTS benchmark acceptance remains unresolved.",
+      "The CPVS 11,602-object discrepancy remains unresolved."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "VERIFIED",
+    "findings": [
+      "DR24 HATS/Parquet is the primary time-series source for product ingestion.",
+      "Zubercal DR20 is supplementary reference photometry and must remain a separate source stream.",
+      "StarEmbed and BTS are candidate benchmarks, not accepted benchmarks.",
+      "CPVS reconstruction must continue as an independent historical-reproduction workstream.",
+      "OID is not a canonical astrophysical source identity. Identity resolution requires explicit, uncertainty-aware provenance.",
+      "No source, taxonomy, photometry or time-scale normalization may be combined without a validated contract.",
+      "The frozen v0.2.0 baseline remains unchanged."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Rerun and inspect all current-head CI jobs after this lifecycle record is committed.",
+      "Complete the exact-source StarEmbed audit and deterministic 50-object diagnostic.",
+      "Complete the BTS-to-DR24 identity, label provenance, coverage, QC and leakage audit.",
+      "Complete DR24 application integration and independent scientific evaluation.",
+      "Keep CPVS blocked until the discrepancy has a reproducible root cause and object-level evidence."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Use the parallel dataset execution plan as the workstream coordination record.",
+    "Do not treat planning or contract tests as scientific validation.",
+    "Do not accept StarEmbed or BTS until their source-backed audits pass.",
+    "Keep DR24 and Zubercal data products separate.",
+    "Keep CPVS unresolved without blocking independent product development.",
+    "Preserve v0.2.0 and all existing scientific acceptance criteria."
+  ]
+}
