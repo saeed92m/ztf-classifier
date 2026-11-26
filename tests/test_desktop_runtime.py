@@ -246,6 +246,8 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
         Path(__file__).resolve().parents[1] / "packaging" / "windows" / "installer.nsi"
     ).read_text(encoding="utf-8")
     assert '!cd "..\\.."' in installer
+    assert String.raw`!define MUI_ICON "src\ztf_classifier\web\static\ztf-logo.ico"` in installer
+    assert String.raw`!define MUI_UNICON "src\ztf_classifier\web\static\ztf-logo.ico"` in installer
     assert (
         "File /oname=MicrosoftEdgeWebView2Setup.exe "
         '"packaging\\windows\\MicrosoftEdgeWebView2Setup.exe"'
@@ -417,6 +419,8 @@ def test_splash_page_uses_embedded_image_and_indeterminate_status() -> None:
     assert "default-src 'none'" in html
     assert "img-src data:" in html
     assert "window.updateStartupStatus" in html
+    assert 'id="startup-close"' in html
+    assert "close_splash" in html
     assert 'aria-live="polite"' in html
     assert "progress-sweep" in html
     assert "100% complete" not in html
@@ -582,12 +586,18 @@ def test_main_shows_splash_before_api_and_handles_startup_failure(
 
     splash_window = webview.windows[0]
     assert webview.window_arguments[0][1]["html"].startswith("<!doctype html>")
+    assert webview.window_arguments[0][1]["frameless"] is False
+    assert webview.window_arguments[0][1]["on_top"] is False
+    assert webview.window_arguments[0][1]["js_api"] is not None
 
     if api_start_failure:
         assert len(webview.windows) == 1
         assert not splash_window.destroyed
         assert statuses[-1][0].startswith("Startup failed: RuntimeError")
         assert statuses[-1][1] is True
+        splash_bridge = webview.window_arguments[0][1]["js_api"]
+        splash_bridge.close_splash()
+        assert splash_window.destroyed
     else:
         assert len(webview.windows) == 2
         main_window = webview.windows[1]
