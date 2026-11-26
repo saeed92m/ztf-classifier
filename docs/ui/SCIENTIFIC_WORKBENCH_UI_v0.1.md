@@ -120,6 +120,10 @@ The dashboard is evidence presentation only. It must not convert reference-syste
 
 The Windows desktop preview uses the Mission Control layout as its dashboard reference. The dashboard is an evidence view. It must read current application state from the versioned local API.
 
+### Desktop-wide visual system
+
+The visual language applies to the dashboard and all existing desktop views. It uses the same header, navigation, typography, panel treatment, form controls, buttons and color contrast. A page must not fall back to the old Workbench grey surfaces.
+
 ### Dashboard composition
 
 - Header banner: product identity, current page and the exact scientific gate status.
