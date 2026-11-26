@@ -431,6 +431,7 @@ def test_splash_page_uses_embedded_image_and_indeterminate_status() -> None:
     assert "default-src 'none'" in html
     assert "img-src data:" in html
     assert "window.updateStartupStatus" in html
+    assert "report_splash_status" in html
     assert 'id="startup-close"' in html
     assert "close_splash" in html
     assert 'aria-live="polite"' in html
@@ -488,6 +489,18 @@ def test_desktop_bridge_reports_frontend_errors(caplog: pytest.LogCaptureFixture
     assert bridge._frontend_status_event.is_set()
     assert bridge._frontend_status["app_root_visible"] is True
     assert "Workbench frontend error: test frontend failure" in caplog.text
+
+
+def test_splash_bridge_reports_image_decode_status(caplog: pytest.LogCaptureFixture) -> None:
+    bridge = desktop_main.SplashBridge()
+    bridge.report_splash_status({
+        "image_loaded": True,
+        "natural_width": 1536,
+        "natural_height": 864,
+    })
+    assert bridge._image_status_event.is_set()
+    assert bridge._image_status["image_loaded"] is True
+    assert "Splash image status" in caplog.text
 
 
 @pytest.mark.parametrize("api_start_failure", [False, True])
@@ -563,6 +576,11 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
             splash_window.shown = True
             events.append("splash-shown")
             splash_window.events.loaded.fire(splash_window)
+            splash_window.bridge.report_splash_status({
+                "image_loaded": True,
+                "natural_width": 1536,
+                "natural_height": 864,
+            })
             func(*args)
 
     class FakeRuntime:
