@@ -234,6 +234,8 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
     assert "<script>" not in html
     assert 'document.documentElement.lang = "en"' in bootstrap
     assert 'document.documentElement.dir = "ltr"' in bootstrap
+    assert "report_frontend_status" in bootstrap
+    assert "unhandledrejection" in bootstrap
 
     for asset_name in ("index.html", "app.js", "desktop-bootstrap.js", "styles.css"):
         asset = (static_dir / asset_name).read_text(encoding="utf-8")
@@ -249,6 +251,14 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
     assert r'!define MUI_ICON "src\ztf_classifier\web\static\ztf-logo.ico"' in installer
     assert (
         r'!define MUI_UNICON "src\ztf_classifier\web\static\ztf-logo.ico"' in installer
+    )
+    assert (
+        r'CreateShortcut "$DESKTOP\ZTF Classifier.lnk" "$INSTDIR\ZTFClassifier.exe" "" "$INSTDIR\ZTFClassifier.exe" 0'
+        in installer
+    )
+    assert (
+        r'CreateShortcut "$SMPROGRAMS\ZTF Classifier\ZTF Classifier.lnk" "$INSTDIR\ZTFClassifier.exe" "" "$INSTDIR\ZTFClassifier.exe" 0'
+        in installer
     )
     assert (
         "File /oname=MicrosoftEdgeWebView2Setup.exe "
@@ -469,6 +479,14 @@ def test_desktop_bridge_reports_frontend_errors(caplog: pytest.LogCaptureFixture
     bridge = desktop_main.DesktopBridge("test-token")
     assert bridge.get_api_token() == "test-token"
     bridge.report_frontend_error("test frontend failure")
+    bridge.report_frontend_status({
+        "title": "ZTF Classifier — Scientific Workbench",
+        "app_root_present": True,
+        "app_root_visible": True,
+        "body_text_length": 100,
+    })
+    assert bridge._frontend_status_event.is_set()
+    assert bridge._frontend_status["app_root_visible"] is True
     assert "Workbench frontend error: test frontend failure" in caplog.text
 
 
@@ -503,14 +521,19 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
             )
             self.destroyed = False
             self.shown = False
-            self.dom = SimpleNamespace(
-                get_element=lambda selector: object() if selector == "#app" else None
-            )
+            self.bridge: Any | None = None
 
         def show(self) -> None:
             self.shown = True
             self.events.before_show.fire(self)
             self.events.loaded.fire(self)
+            if self.bridge is not None and hasattr(self.bridge, "report_frontend_status"):
+                self.bridge.report_frontend_status({
+                    "title": "ZTF Classifier — Scientific Workbench",
+                    "app_root_present": True,
+                    "app_root_visible": True,
+                    "body_text_length": 100,
+                })
 
         def destroy(self) -> None:
             self.destroyed = True
@@ -526,6 +549,7 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
 
         def create_window(self, title: str, **kwargs: Any) -> FakeWindow:
             window = FakeWindow()
+            window.bridge = kwargs.get("js_api")
             self.windows.append(window)
             self.window_arguments.append((title, kwargs))
             events.append(f"window-created:{title}")
@@ -567,10 +591,15 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
     monkeypatch.setattr(desktop_main, "_load_webview", lambda: webview)
     monkeypatch.setattr(desktop_main, "_get_desktop_asset_path", lambda name: assets[name])
     monkeypatch.setattr(desktop_main, "get_user_data_dir", lambda: tmp_path / "user-data")
+    def fake_configure_logging(path: Path) -> Path:
+        log_dir = path / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        return log_dir / "desktop.log"
+
     monkeypatch.setattr(
         desktop_main,
         "_configure_desktop_logging",
-        lambda path: path / "logs" / "desktop.log",
+        fake_configure_logging,
     )
     monkeypatch.setattr(
         desktop_main,
