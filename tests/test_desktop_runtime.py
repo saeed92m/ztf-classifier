@@ -425,12 +425,14 @@ def test_desktop_brand_assets_are_present_and_valid() -> None:
     assert icon_path.read_bytes().startswith(b"\x00\x00\x01\x00")
 
 
-def test_splash_page_uses_embedded_image_and_indeterminate_status() -> None:
-    html = _build_splash_html(b"\x89PNG\r\n\x1a\nfixture")
+def test_splash_page_uses_loopback_image_and_indeterminate_status() -> None:
+    html = _build_splash_html()
 
-    assert "data:image/png;base64," in html
+    assert len(html.encode("utf-8")) < 2 * 1024 * 1024
+    assert "data:image/png;base64," not in html
+    assert "setSplashImageUrl" in html
     assert "default-src 'none'" in html
-    assert "img-src data:" in html
+    assert "img-src data: http://127.0.0.1:*" in html
     assert "window.updateStartupStatus" in html
     assert "report_splash_status" in html
     assert 'id="startup-close"' in html
@@ -451,9 +453,9 @@ def test_desktop_asset_path_uses_pyinstaller_bundle_root(
     )
 
 
-def test_splash_builder_rejects_non_png_assets() -> None:
+def test_splash_asset_validator_rejects_non_png_assets() -> None:
     with pytest.raises(ValueError, match="valid PNG"):
-        _build_splash_html(b"not-an-image")
+        desktop_main._validate_splash_asset(b"not-an-image")
 
 
 def test_desktop_asset_path_rejects_unknown_names() -> None:
@@ -557,6 +559,10 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
             self.destroyed = False
             self.shown = False
             self.bridge: Any | None = None
+            self.scripts: list[str] = []
+
+        def run_js(self, script: str) -> None:
+            self.scripts.append(script)
 
         def show(self) -> None:
             self.shown = True
@@ -711,6 +717,11 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
         assert webview.window_arguments[1][1]["hidden"] is True
         assert main_window.shown
         assert splash_window.destroyed
+        assert any(
+            "setSplashImageUrl" in script
+            and "/workbench/ztf-splash.PNG" in script
+            for script in splash_window.scripts
+        )
         assert statuses[-1][0].startswith("Local services are ready")
         assert statuses[-1][1] is False
         if gui_smoke_test:
