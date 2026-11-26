@@ -521,8 +521,8 @@ def test_main_shows_splash_before_api_and_handles_startup_failure(
 
     splash_asset = tmp_path / "ztf-splash.PNG"
     icon_asset = tmp_path / "ztf-logo.ico"
-    splash_asset.write_bytes(b"\\x89PNG\\r\\n\\x1a\\nfixture")
-    icon_asset.write_bytes(b"\\x00\\x00\\x01\\x00fixture")
+    splash_asset.write_bytes(bytes.fromhex("89504e470d0a1a0a") + b"fixture")
+    icon_asset.write_bytes(bytes.fromhex("00000100") + b"fixture")
     assets = {
         "ztf-splash.PNG": splash_asset,
         "ztf-logo.ico": icon_asset,

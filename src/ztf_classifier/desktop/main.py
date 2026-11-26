@@ -23,7 +23,6 @@ from ztf_classifier.desktop.runtime import (
     get_user_data_dir,
 )
 
-
 LOGGER = logging.getLogger(__name__)
 
 

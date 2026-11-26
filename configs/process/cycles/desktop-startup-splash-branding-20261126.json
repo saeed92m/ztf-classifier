@@ -71,7 +71,8 @@
       "Pywebview documentation states that loaded fires when the DOM is ready, event handlers are asynchronous by default, and backend logic can run in a separate thread; this informs the splash-to-workbench lifecycle design.",
       "Exact-head Windows run for the earlier commit ad22d4106926b63df5c96ec5b7fdab3845bd2b51 completed 25 desktop runtime tests successfully and passed Workbench JavaScript syntax validation.",
       "That Windows run stopped at Ruff: cleanup exception handling was flagged for swallowing errors, first-party test imports were out of order, and desktop helper formatting differed from Ruff output. Follow-up commits added exception logging, corrected import grouping and applied the reported formatting. The latest commit still requires a fresh exact-head run.",
-      "The latest CI Ruff run found three unused BLE001 noqa comments and three LOG015 findings because cleanup used the root logger. These findings were traced to the new cleanup logging code and are being corrected with a module-level logger; the CI lint rule remains unchanged."
+      "The latest CI Ruff run found three unused BLE001 noqa comments and three LOG015 findings because cleanup used the root logger. These findings were traced to the new cleanup logging code and are being corrected with a module-level logger; the CI lint rule remains unchanged.",
+      "The exact-head Windows run on commit 6a5811f reported 25 existing desktop runtime tests passing and two new lifecycle tests failing before the splash window was created. The fixture used escaped text instead of actual PNG/ICO signature bytes; the tests are corrected to construct the signatures with bytes.fromhex. The same run found one Ruff I001 issue caused by two blank lines before the module logger; that spacing is corrected."
     ]
   },
   "failure_analysis": {
@@ -81,7 +82,9 @@
       "The supplied PNG and ICO were stored as static package files but were not connected to desktop startup, the Workbench header, the executable icon or the NSIS installer icon.",
       "A frozen PyInstaller bundle uses a different resource root from a source checkout; the resource lookup must account for both.",
       "The first exact-head Ruff run found best-effort cleanup branches that silently swallowed secondary failures, plus import ordering and formatting violations. The code was corrected without disabling or weakening lint rules.",
-      "Cleanup diagnostics used root logging and unnecessary noqa comments, which caused LOG015 and RUF100 lint failures."
+      "Cleanup diagnostics used root logging and unnecessary noqa comments, which caused LOG015 and RUF100 lint failures.",
+      "The lifecycle test fixture encoded PNG/ICO magic signatures as literal backslash text instead of binary bytes, so the production integrity check correctly rejected the mock icon.",
+      "The new module logger had two blank lines after the import block, which Ruff's import-order check rejected."
     ]
   },
   "knowledge_extraction": {
@@ -93,7 +96,9 @@
       "Asset presence in the repository is not sufficient evidence that the final executable and installer contain or display those assets.",
       "Cleanup exceptions must be logged rather than silently ignored, even when the original startup failure remains the primary error.",
       "Passing tests on an earlier commit cannot be carried forward as acceptance evidence after subsequent source changes; rerun gates on the exact final commit.",
-      "Use a module-scoped logger for cleanup diagnostics. Do not retain noqa directives when Ruff reports the underlying rule as unused."
+      "Use a module-scoped logger for cleanup diagnostics. Do not retain noqa directives when Ruff reports the underlying rule as unused.",
+      "Binary file fixtures should use explicit byte arrays or bytes.fromhex where Python string escaping can be ambiguous.",
+      "Module-level values must follow the project's exact Ruff import-block spacing."
     ]
   },
   "regression": {
