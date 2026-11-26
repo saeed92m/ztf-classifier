@@ -694,7 +694,7 @@ def main() -> None:
                 splash_window.destroy()
                 if gui_smoke_test:
                     workbench_window.destroy()
-            except Exception as exc:  # noqa: BLE001 - keep startup errors visible and logged
+            except Exception as exc:
                 LOGGER.exception("Desktop startup failed.")
                 if gui_smoke_test and gui_smoke_report_path is not None:
                     gui_smoke_report_path.parent.mkdir(parents=True, exist_ok=True)
