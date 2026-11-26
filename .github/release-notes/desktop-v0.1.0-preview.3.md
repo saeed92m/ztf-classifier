@@ -25,6 +25,16 @@ This evaluation pre-release repairs the Windows desktop startup and WebView2 han
 - User Manual and Quick Start PDFs.
 - Build manifest, dependency inventory, self-test report, real WebView2 GUI smoke reports, and SHA-256 checksum.
 
+## Verified Windows build evidence
+
+A Windows preview build completed successfully on main commit `cb9481091904e40771c61b17ffd43fc2bfac6b66` in GitHub Actions run [45882456540](https://github.com/saeed92m/ztf-classifier/actions/runs/45882456540).
+
+The Windows job passed the desktop runtime tests, JavaScript syntax checks, Ruff checks, PyInstaller build, frozen self-test, real WebView2 GUI smoke test, PDF generation, NSIS installer build, silent install, installed launch, installed WebView2 GUI smoke test, silent uninstall, build manifest generation, SHA-256 generation, and artifact upload.
+
+The verified artifact was `15148147866` (archive SHA-256: `3034de5b62df120a48008a0318b18af326a2779297e045ccc14be08c0b283b8`). Its manifest records installer SHA-256 `f83ede58f40f6e3e38708018fe4e4e6efb3a4a86960d73c5b279d72531e09edc`. Both build and installed GUI reports record `PASS`, with the splash image loaded, Workbench DOM ready, visible application root, and zero frontend errors.
+
+The original run did not publish the pre-release because its `publish_preview` input was false. The publication workflow must rebuild and verify the exact commit that creates the release. This evidence records the completed preflight build; it does not claim that the GitHub Release has already been published.
+
 ## Validation required for this release
 
 The exact main-branch commit must pass:
