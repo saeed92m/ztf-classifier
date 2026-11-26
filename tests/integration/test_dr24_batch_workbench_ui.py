@@ -153,6 +153,16 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 path=str(artifact_dir / "mission-control-dashboard.png"),
                 full_page=True,
             )
+            page.locator('[data-view="dr24"]').click()
+            page.locator("#dr24ObjectIds").fill("101, 202")
+            page.locator("#dr24LoadButton").click()
+            assert "Create or open a workspace before requesting DR24 data." in page.locator(
+                "#dr24Status"
+            ).inner_text()
+            assert "No DR24 request was sent" in page.locator("#dr24Results").inner_text()
+            assert "NOT RUN" in page.locator("#dr24Provenance").inner_text()
+            assert page.locator("#dr24ExportButton").is_disabled()
+            assert backend.calls == []
             page.locator('[data-view="workspaces"]').click()
             page.locator("#workspaceName").fill("CI desktop workspace")
             page.locator("#workspaceCreateForm button[type=submit]").click()
