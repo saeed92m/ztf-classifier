@@ -87,10 +87,14 @@ def test_desktop_mission_control_dashboard_uses_live_api_evidence() -> None:
     page = client.get("/workbench/")
     script = client.get("/workbench/app.js")
     styles = client.get("/workbench/styles.css")
+    banner = client.get("/workbench/mission-control-banner.svg")
 
     assert page.status_code == 200
     assert script.status_code == 200
     assert styles.status_code == 200
+    assert banner.status_code == 200
+    assert "<svg" in banner.text
+    assert 'url("./mission-control-banner.svg")' in styles.text
     assert "Scientific Mission Control" in script.text
     assert "mission-banner" in script.text
     assert "mission-main-grid" in styles.text
