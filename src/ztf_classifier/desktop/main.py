@@ -9,7 +9,9 @@ import logging
 import os
 import secrets
 import sys
+import threading
 from collections.abc import Callable
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError
@@ -35,6 +37,10 @@ class DesktopBridge:
     def get_api_token(self) -> str:
         """Return the in-memory token to the local desktop WebView."""
         return self._api_token
+
+    def report_frontend_error(self, message: str) -> None:
+        """Record a bounded JavaScript error from the trusted local Workbench."""
+        LOGGER.error("Workbench frontend error: %s", str(message)[:2000])
 
 
 class SplashBridge:
@@ -165,7 +171,35 @@ def _set_splash_status(window: Any, message: str, *, failed: bool = False) -> No
     """Update the splash status without inserting untrusted HTML."""
     status = json.dumps(message)
     failure_state = "true" if failed else "false"
-    window.evaluate_js(f"window.updateStartupStatus({status}, {failure_state});")
+    # run_js executes the script directly. evaluate_js uses eval and is blocked
+    # by the deliberately strict splash CSP (which does not allow unsafe-eval).
+    window.run_js(f"window.updateStartupStatus({status}, {failure_state});")
+
+
+def _configure_desktop_logging(user_data_dir: Path) -> Path:
+    """Create a bounded per-user diagnostic log for desktop startup."""
+    log_dir = user_data_dir / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "desktop.log"
+    root_logger = logging.getLogger()
+    if not any(
+        isinstance(handler, RotatingFileHandler)
+        and Path(handler.baseFilename) == log_path
+        for handler in root_logger.handlers
+    ):
+        handler = RotatingFileHandler(
+            log_path,
+            maxBytes=2 * 1024 * 1024,
+            backupCount=3,
+            encoding="utf-8",
+        )
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+        )
+        root_logger.addHandler(handler)
+    root_logger.setLevel(logging.INFO)
+    LOGGER.info("Desktop diagnostics initialized.")
+    return log_path
 
 
 def _show_error(message: str) -> None:
@@ -421,7 +455,7 @@ def _run_self_test() -> None:
 
 
 def main() -> None:
-    """Start the private API, then open the standalone Windows window."""
+    """Start the splash, initialize services off the GUI thread, then show Workbench."""
     if os.name != "nt":
         raise SystemExit("The first desktop preview supports Windows only.")
     if "--self-test" in sys.argv[1:]:
@@ -430,6 +464,10 @@ def main() -> None:
 
     runtime: LocalApiServer | None = None
     try:
+        user_data = get_user_data_dir()
+        log_path = _configure_desktop_logging(user_data)
+        LOGGER.info("Starting ZTF Classifier desktop application.")
+
         webview = _load_webview()
         webview.settings["ALLOW_DOWNLOADS"] = True
         webview.settings["ALLOW_FILE_URLS"] = False
@@ -437,21 +475,20 @@ def main() -> None:
         webview.settings["OPEN_DEVTOOLS_IN_DEBUG"] = False
         webview.settings["REMOTE_DEBUGGING_PORT"] = None
 
-        user_data = get_user_data_dir()
         splash_image = _get_desktop_asset_path("ztf-splash.PNG").read_bytes()
         icon_path = _get_desktop_asset_path("ztf-logo.ico")
         if not icon_path.is_file() or not icon_path.read_bytes().startswith(
-            b"\x00\x00\x01\x00"
+            b"\\x00\\x00\\x01\\x00"
         ):
             raise RuntimeError(
                 "The packaged ZTF Classifier application icon is missing or invalid."
             )
 
-        splash_bridge = SplashBridge()
+        splash_loaded = threading.Event()
         splash_window = webview.create_window(
             "ZTF Classifier",
             html=_build_splash_html(splash_image),
-            js_api=splash_bridge,
+            js_api=SplashBridge(),
             width=768,
             height=512,
             min_size=(768, 512),
@@ -464,11 +501,26 @@ def main() -> None:
             text_select=False,
             zoomable=False,
         )
-        splash_bridge.bind_window(splash_window)
 
-        def start_desktop_session(current_window: Any) -> None:
+        def mark_splash_loaded(current_window: Any) -> None:
+            LOGGER.info("Splash DOM reached the loaded event.")
+            splash_loaded.set()
+
+        splash_window.events.loaded += mark_splash_loaded
+
+        def start_desktop_session(
+            current_window: Any,
+            ready_event: threading.Event,
+        ) -> None:
             nonlocal runtime
+            workbench_window: Any | None = None
             try:
+                LOGGER.info("Desktop bootstrap worker started.")
+                if not ready_event.wait(timeout=25):
+                    raise RuntimeError(
+                        "The splash page did not reach DOM-ready state within 25 seconds."
+                    )
+
                 _set_splash_status(
                     splash_window,
                     "Preparing local workspace and application settings…",
@@ -483,12 +535,14 @@ def main() -> None:
                 )
                 runtime = LocalApiServer(app)
                 base_url = runtime.start()
+                LOGGER.info("Private local API is ready at %s.", base_url)
 
                 _set_splash_status(
                     splash_window,
                     "Local services are ready. Opening the Workbench…",
                 )
-                window = webview.create_window(
+                workbench_loaded = threading.Event()
+                workbench_window = webview.create_window(
                     "ZTF Classifier — Scientific Workbench",
                     url=f"{base_url}/workbench/?desktop=1",
                     js_api=DesktopBridge(token),
@@ -500,56 +554,89 @@ def main() -> None:
                     zoomable=False,
                     hidden=True,
                 )
-                if window is None:
+                if workbench_window is None:
                     raise RuntimeError("The Workbench window could not be created.")
 
-                window.events.closed += runtime.stop
+                workbench_window.events.closed += runtime.stop
 
                 def install_navigation_guard(current_window: Any) -> None:
+                    LOGGER.info("Installing the WebView2 navigation guard.")
                     _install_navigation_guard(current_window, base_url)
 
-                def dismiss_splash(current_window: Any) -> None:
-                    try:
-                        splash_window.destroy()
-                    except Exception:
-                        LOGGER.exception("Could not close the desktop splash window.")
+                def mark_workbench_loaded(current_window: Any) -> None:
+                    LOGGER.info("Workbench DOM reached the loaded event.")
+                    workbench_loaded.set()
 
-                window.events.before_show += install_navigation_guard
-                window.events.loaded += dismiss_splash
-                window.show()
-            except Exception as exc:  # noqa: BLE001 - keep startup errors visible in the splash window
+                workbench_window.events.before_show += install_navigation_guard
+                workbench_window.events.loaded += mark_workbench_loaded
+                workbench_window.show()
+
+                if not workbench_loaded.wait(timeout=45):
+                    raise RuntimeError(
+                        "The Workbench did not reach DOM-ready state within 45 seconds."
+                    )
+
+                app_shell = workbench_window.dom.get_element("#app")
+                if app_shell is None:
+                    raise RuntimeError(
+                        "The Workbench loaded without its required #app root element."
+                    )
+
+                LOGGER.info(
+                    "Workbench DOM verified. Closing splash after successful handoff."
+                )
+                splash_window.destroy()
+            except Exception as exc:  # noqa: BLE001 - keep startup errors visible and logged
+                LOGGER.exception("Desktop startup failed.")
+                if workbench_window is not None:
+                    try:
+                        workbench_window.destroy()
+                    except Exception:
+                        LOGGER.exception("Could not close the failed Workbench window.")
                 if runtime is not None:
                     try:
                         runtime.stop()
                     except Exception:
-                        LOGGER.exception(
-                            "Could not stop the local API after startup failure."
-                        )
+                        LOGGER.exception("Could not stop the local API after startup failure.")
                     runtime = None
-                try:
-                    _set_splash_status(
-                        splash_window,
-                        f"Startup failed: {type(exc).__name__}: {exc}",
-                        failed=True,
-                    )
-                except Exception:
-                    LOGGER.exception(
-                        "Could not display the startup failure on the splash."
+                if splash_loaded.is_set():
+                    try:
+                        _set_splash_status(
+                            splash_window,
+                            f"Startup failed: {type(exc).__name__}: {exc}. "
+                            f"Diagnostic log: {log_path}",
+                            failed=True,
+                        )
+                    except Exception:
+                        LOGGER.exception("Could not display the startup failure on Splash.")
+                        _show_error(
+                            f"ZTF Classifier could not start.\\n\\n{exc}\\n\\n"
+                            f"Diagnostic log: {log_path}"
+                        )
+                else:
+                    _show_error(
+                        f"ZTF Classifier could not load its startup screen.\\n\\n"
+                        f"{type(exc).__name__}: {exc}\\n\\n"
+                        f"Diagnostic log: {log_path}"
                     )
 
-        splash_window.events.loaded += start_desktop_session
+        # The documented pywebview start callback runs backend work on a
+        # background thread. Splash rendering is observed, not used as the
+        # only trigger for starting the application.
         webview.start(
+            func=start_desktop_session,
+            args=(splash_window, splash_loaded),
             gui="edgechromium",
             debug=False,
             private_mode=True,
             storage_path=str(user_data / "webview"),
         )
     except Exception as exc:
+        LOGGER.exception("The desktop GUI could not start.")
         _show_error(
-            "The ZTF Classifier desktop application could not start.\n\n"
-            f"{exc}\n\n"
-            "Check that Microsoft Edge WebView2 Runtime is installed. "
-            "The application did not switch to an external browser."
+            "The ZTF Classifier desktop application could not start.\\n\\n"
+            f"{exc}\\n\\n"
+            "Check the diagnostic log under %LOCALAPPDATA%\\ZTFClassifier\\logs."
         )
         raise SystemExit(1) from exc
     finally:
