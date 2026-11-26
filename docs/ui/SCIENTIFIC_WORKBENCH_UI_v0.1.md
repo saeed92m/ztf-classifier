@@ -120,6 +120,10 @@ The dashboard is evidence presentation only. It must not convert reference-syste
 
 The Windows desktop preview uses the Mission Control layout as its dashboard reference. The dashboard is an evidence view. It must read current application state from the versioned local API.
 
+### Brand asset
+
+The desktop Workbench header and web favicon use the local `ztf-logo.svg` vector asset. The existing `ztf-logo.ico` remains the Windows executable/shortcut icon asset and fallback. The SVG is included in the frozen application self-test. This change does not by itself prove that the installed desktop shortcut displays the intended icon; that remains a separate visual acceptance check.
+
 ### Desktop-wide visual system
 
 The visual language applies to the dashboard and all existing desktop views. It uses the same header, navigation, typography, panel treatment, form controls, buttons and color contrast. A page must not fall back to the old Workbench grey surfaces.
