@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import base64
 import ctypes
 import json
 import os
 import secrets
 import sys
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError
 from urllib.parse import urlsplit
@@ -30,6 +32,105 @@ class DesktopBridge:
     def get_api_token(self) -> str:
         """Return the in-memory token to the local desktop WebView."""
         return self._api_token
+
+
+def _get_desktop_asset_path(asset_name: str) -> Path:
+    """Return a path to a bundled desktop asset with a fixed allowlist."""
+    allowed_assets = {"ztf-splash.PNG", "ztf-logo.ico"}
+    if asset_name not in allowed_assets:
+        raise ValueError(f"Unsupported desktop asset: {asset_name}")
+    return Path(__file__).resolve().parents[1] / "web" / "static" / asset_name
+
+
+def _build_splash_html(splash_image: bytes) -> str:
+    """Build a self-contained splash page with an indeterminate progress bar."""
+    png_signature = b"\x89PNG\r\n\x1a\n"
+    if not splash_image.startswith(png_signature):
+        raise ValueError("The desktop splash asset is not a valid PNG file.")
+
+    encoded_image = base64.b64encode(splash_image).decode("ascii")
+    template = """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>ZTF Classifier — Starting</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #030b19; }
+    body { position: relative; color: #f8fbff; font-family: "Segoe UI", Arial, sans-serif; }
+    .mission-art { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .startup-panel {
+      position: absolute; left: 23.5%; right: 23.5%; top: 51.5%; height: 13%;
+      display: flex; flex-direction: column; justify-content: center; gap: 13px;
+      padding: 6px 10px; border-radius: 8px;
+      background: rgba(2, 10, 27, .94);
+    }
+    .startup-status {
+      min-height: 22px; display: flex; align-items: center; justify-content: center;
+      text-align: center; font-size: clamp(11px, 2vw, 16px); line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+    .progress-track {
+      height: 7px; width: 100%; overflow: hidden; border: 1px solid #27b7ef;
+      border-radius: 99px; background: #071a35;
+    }
+    .progress-indicator {
+      display: block; width: 28%; height: 100%; border-radius: inherit;
+      background: linear-gradient(90deg, #087de0, #31d7ff, #087de0);
+      animation: progress-sweep 1.6s ease-in-out infinite alternate;
+    }
+    .progress-track.failed { border-color: #f87171; }
+    .progress-track.failed .progress-indicator { display: none; }
+    .startup-hint {
+      display: none; color: #fca5a5; font-size: 11px; line-height: 1.35;
+      text-align: center;
+    }
+    .startup-hint.visible { display: block; }
+    @keyframes progress-sweep {
+      from { transform: translateX(-105%); }
+      to { transform: translateX(360%); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .progress-indicator { animation: none; transform: translateX(120%); }
+    }
+  </style>
+</head>
+<body>
+  <img class="mission-art" src="data:image/png;base64,__SPLASH_IMAGE__" alt="">
+  <section class="startup-panel" aria-label="Application startup">
+    <div id="startup-status" class="startup-status" role="status" aria-live="polite">
+      Preparing desktop session…
+    </div>
+    <div id="startup-progress" class="progress-track" aria-label="Startup in progress">
+      <span class="progress-indicator"></span>
+    </div>
+    <div id="startup-hint" class="startup-hint">
+      Close this window and restart ZTF Classifier.
+    </div>
+  </section>
+  <script>
+    window.updateStartupStatus = function (message, failed) {
+      document.getElementById("startup-status").textContent = String(message);
+      document.getElementById("startup-progress").classList.toggle("failed", Boolean(failed));
+      document.getElementById("startup-hint").classList.toggle("visible", Boolean(failed));
+    };
+  </script>
+</body>
+</html>
+"""
+    return template.replace("__SPLASH_IMAGE__", encoded_image)
+
+
+def _set_splash_status(window: Any, message: str, *, failed: bool = False) -> None:
+    """Update the splash status without inserting untrusted HTML."""
+    status = json.dumps(message)
+    failure_state = "true" if failed else "false"
+    window.evaluate_js(
+        f"window.updateStartupStatus({status}, {failure_state});"
+    )
 
 
 def _show_error(message: str) -> None:
@@ -193,6 +294,8 @@ def _run_self_test() -> None:
             "/workbench/app.js",
             "/workbench/desktop-bootstrap.js",
             "/workbench/styles.css",
+            "/workbench/ztf-splash.PNG",
+            "/workbench/ztf-logo.ico",
         ):
             with urlopen(f"{base_url}{path}", timeout=5) as response:
                 if response.status != 200:
@@ -201,6 +304,7 @@ def _run_self_test() -> None:
                 if path == "/workbench/" and (
                     b"DR24 Explorer" not in body
                     or b"desktop-bootstrap.js" not in body
+                    or b'./ztf-logo.ico' not in body
                     or b"Content-Security-Policy" not in body
                 ):
                     raise RuntimeError(
@@ -217,6 +321,14 @@ def _run_self_test() -> None:
                     raise RuntimeError(
                         "The packaged desktop Workbench styles are incomplete."
                     )
+                if path == "/workbench/ztf-splash.PNG" and not body.startswith(
+                    b"\x89PNG\r\n\x1a\n"
+                ):
+                    raise RuntimeError("The packaged desktop splash image is invalid.")
+                if path == "/workbench/ztf-logo.ico" and not body.startswith(
+                    b"\x00\x00\x01\x00"
+                ):
+                    raise RuntimeError("The packaged desktop icon is invalid.")
             checks[f"static:{path}"] = "PASS"
 
         for path in ("/docs", "/redoc", "/openapi.json"):
@@ -284,37 +396,106 @@ def main() -> None:
     runtime: LocalApiServer | None = None
     try:
         webview = _load_webview()
-        token = secrets.token_urlsafe(32)
-        user_data = get_user_data_dir()
-        settings = build_desktop_settings(token, data_dir=user_data)
-        app = create_app(settings=settings, docs_enabled=False)
-        runtime = LocalApiServer(app)
-        base_url = runtime.start()
-
         webview.settings["ALLOW_DOWNLOADS"] = True
         webview.settings["ALLOW_FILE_URLS"] = False
         webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = False
         webview.settings["OPEN_DEVTOOLS_IN_DEBUG"] = False
         webview.settings["REMOTE_DEBUGGING_PORT"] = None
 
-        window = webview.create_window(
-            "ZTF Classifier — Scientific Workbench",
-            url=f"{base_url}/workbench/?desktop=1",
-            js_api=DesktopBridge(token),
-            width=1360,
-            height=900,
-            min_size=(1024, 700),
-            resizable=True,
-            text_select=True,
+        user_data = get_user_data_dir()
+        splash_image = _get_desktop_asset_path("ztf-splash.PNG").read_bytes()
+        icon_path = _get_desktop_asset_path("ztf-logo.ico")
+        if not icon_path.is_file() or not icon_path.read_bytes().startswith(
+            b"\x00\x00\x01\x00"
+        ):
+            raise RuntimeError(
+                "The packaged ZTF Classifier application icon is missing or invalid."
+            )
+
+        splash_window = webview.create_window(
+            "ZTF Classifier",
+            html=_build_splash_html(splash_image),
+            width=768,
+            height=512,
+            min_size=(768, 512),
+            resizable=False,
+            frameless=True,
+            easy_drag=True,
+            shadow=True,
+            on_top=True,
+            background_color="#030b19",
+            text_select=False,
             zoomable=False,
         )
-        window.events.closed += runtime.stop
 
-        def install_navigation_guard(current_window: Any) -> None:
-            _install_navigation_guard(current_window, base_url)
+        def start_desktop_session(current_window: Any) -> None:
+            nonlocal runtime
+            try:
+                _set_splash_status(
+                    splash_window,
+                    "Preparing local workspace and application settings…",
+                )
+                token = secrets.token_urlsafe(32)
+                settings = build_desktop_settings(token, data_dir=user_data)
+                app = create_app(settings=settings, docs_enabled=False)
 
-        window.events.before_show += install_navigation_guard
+                _set_splash_status(
+                    splash_window,
+                    "Starting the private local API and checking readiness…",
+                )
+                runtime = LocalApiServer(app)
+                base_url = runtime.start()
 
+                _set_splash_status(
+                    splash_window,
+                    "Local services are ready. Opening the Workbench…",
+                )
+                window = webview.create_window(
+                    "ZTF Classifier — Scientific Workbench",
+                    url=f"{base_url}/workbench/?desktop=1",
+                    js_api=DesktopBridge(token),
+                    width=1360,
+                    height=900,
+                    min_size=(1024, 700),
+                    resizable=True,
+                    text_select=True,
+                    zoomable=False,
+                    hidden=True,
+                )
+                if window is None:
+                    raise RuntimeError("The Workbench window could not be created.")
+
+                window.events.closed += runtime.stop
+
+                def install_navigation_guard(current_window: Any) -> None:
+                    _install_navigation_guard(current_window, base_url)
+
+                def dismiss_splash(current_window: Any) -> None:
+                    try:
+                        splash_window.destroy()
+                    except Exception:
+                        pass
+
+                window.events.before_show += install_navigation_guard
+                window.events.loaded += dismiss_splash
+                window.show()
+            except Exception as exc:  # noqa: BLE001 - keep startup errors visible in the splash window
+                if runtime is not None:
+                    try:
+                        runtime.stop()
+                    except Exception:
+                        pass
+                    runtime = None
+                try:
+                    _set_splash_status(
+                        splash_window,
+                        f"Startup failed: {type(exc).__name__}: {exc}",
+                        failed=True,
+                    )
+                except Exception:
+                    pass
+
+        splash_window.events.loaded += start_desktop_session
         webview.start(
             gui="edgechromium",
             debug=False,

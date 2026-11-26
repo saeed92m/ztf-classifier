@@ -11,6 +11,8 @@ from fastapi import FastAPI
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.desktop.main import (
+    _build_splash_html,
+    _get_desktop_asset_path,
     _install_navigation_guard,
     _is_trusted_local_url,
     _is_webview2_runtime_installed,
@@ -223,6 +225,9 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
     assert "script-src 'self'" in html
     assert "connect-src 'self'" in html
     assert 'src="./desktop-bootstrap.js"' in html
+    assert 'rel="icon" href="./ztf-logo.ico"' in html
+    assert 'src="./ztf-logo.ico"' in html
+    assert "ZTF CLASSIFIER" in html
     assert "<script>" not in html
     assert 'document.documentElement.lang = "en"' in bootstrap
     assert 'document.documentElement.dir = "ltr"' in bootstrap
@@ -390,3 +395,36 @@ def test_local_api_requires_ready_health_endpoint() -> None:
     with pytest.raises(DesktopRuntimeError, match="did not become ready"):
         runtime.start()
     assert not runtime.is_running
+
+
+
+def test_desktop_brand_assets_are_present_and_valid() -> None:
+    splash_path = _get_desktop_asset_path("ztf-splash.PNG")
+    icon_path = _get_desktop_asset_path("ztf-logo.ico")
+
+    assert splash_path.is_file()
+    assert icon_path.is_file()
+    assert splash_path.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+    assert icon_path.read_bytes().startswith(b"\x00\x00\x01\x00")
+
+
+def test_splash_page_uses_embedded_image_and_indeterminate_status() -> None:
+    html = _build_splash_html(b"\x89PNG\r\n\x1a\nfixture")
+
+    assert "data:image/png;base64," in html
+    assert "default-src 'none'" in html
+    assert "img-src data:" in html
+    assert "window.updateStartupStatus" in html
+    assert 'aria-live="polite"' in html
+    assert "progress-sweep" in html
+    assert "100% complete" not in html
+
+
+def test_splash_builder_rejects_non_png_assets() -> None:
+    with pytest.raises(ValueError, match="valid PNG"):
+        _build_splash_html(b"not-an-image")
+
+
+def test_desktop_asset_path_rejects_unknown_names() -> None:
+    with pytest.raises(ValueError, match="Unsupported desktop asset"):
+        _get_desktop_asset_path("unexpected.txt")
