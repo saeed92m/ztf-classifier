@@ -6,8 +6,9 @@ This is an evaluation pre-release of the Windows desktop prototype. It adds the 
 
 - Show the supplied ZTF splash screen before workspace setup and local API startup.
 - Report actual startup milestones with an indeterminate progress animation. No fabricated completion percentage is shown.
-- Keep startup errors visible in the splash screen and stop the local API if startup fails.
-- Use the supplied application icon in the Workbench header, favicon, Windows executable, installer, and uninstaller.
+- Keep startup errors visible, provide a working Close action, and stop the local API if startup fails.
+- Keep the splash window out of the always-on-top state so it does not block other applications.
+- Use the supplied application icon in the Workbench header, favicon, Windows executable, NSIS installer, and uninstaller. Configure installer icons through the MUI2 icon definitions.
 - Verify packaged splash and icon assets during the frozen application self-test.
 - Add regression tests for startup order, startup failure handling, asset signatures, splash security policy, and asset path allowlisting.
 
