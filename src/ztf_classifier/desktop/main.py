@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import base64
 import ctypes
 import json
 import logging
@@ -101,20 +100,21 @@ def _get_desktop_asset_path(asset_name: str) -> Path:
     return Path(__file__).resolve().parents[1] / "web" / "static" / asset_name
 
 
-def _build_splash_html(splash_image: bytes) -> str:
-    """Build a self-contained splash page with an indeterminate progress bar."""
-    png_signature = b"\x89PNG\r\n\x1a\n"
-    if not splash_image.startswith(png_signature):
+def _validate_splash_asset(splash_image: bytes) -> None:
+    """Validate the packaged splash image without embedding it in HTML."""
+    if not splash_image.startswith(b"\x89PNG\r\n\x1a\n"):
         raise ValueError("The desktop splash asset is not a valid PNG file.")
 
-    encoded_image = base64.b64encode(splash_image).decode("ascii")
+
+def _build_splash_html() -> str:
+    """Build a small splash page; artwork is loaded from the loopback API."""
     template = """<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'">
+        content="default-src 'none'; img-src data: http://127.0.0.1:*; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'">
   <title>ZTF Classifier — Starting</title>
   <style>
     * { box-sizing: border-box; }
@@ -165,7 +165,7 @@ def _build_splash_html(splash_image: bytes) -> str:
   </style>
 </head>
 <body>
-  <img class="mission-art" src="data:image/png;base64,__SPLASH_IMAGE__" alt="">
+  <img class="mission-art" alt="">
   <section class="startup-panel" aria-label="Application startup">
     <div id="startup-status" class="startup-status" role="status" aria-live="polite">
       Preparing desktop session…
@@ -190,12 +190,25 @@ def _build_splash_html(splash_image: bytes) -> str:
     const splashImage = document.querySelector(".mission-art");
     let splashBridgeReady = Boolean(window.pywebview && window.pywebview.api);
     const reportSplashImage = function () {
-      if (!splashBridgeReady || !splashImage.complete) return;
+      if (
+        !splashBridgeReady ||
+        !splashImage.dataset.sourceUrl ||
+        !splashImage.complete
+      ) return;
       window.pywebview.api.report_splash_status({
         image_loaded: splashImage.naturalWidth > 0 && splashImage.naturalHeight > 0,
         natural_width: splashImage.naturalWidth,
         natural_height: splashImage.naturalHeight
       });
+    };
+    window.setSplashImageUrl = function (url) {
+      const parsed = new URL(String(url));
+      if (parsed.protocol !== "http:" || parsed.hostname !== "127.0.0.1") {
+        throw new Error("Splash artwork must be served from the loopback API.");
+      }
+      splashImage.dataset.sourceUrl = parsed.href;
+      splashImage.src = parsed.href;
+      if (splashImage.complete) reportSplashImage();
     };
     splashImage.addEventListener("load", reportSplashImage, { once: true });
     splashImage.addEventListener("error", reportSplashImage, { once: true });
@@ -214,7 +227,7 @@ def _build_splash_html(splash_image: bytes) -> str:
 </body>
 </html>
 """
-    return template.replace("__SPLASH_IMAGE__", encoded_image)
+    return template
 
 
 def _set_splash_status(window: Any, message: str, *, failed: bool = False) -> None:
@@ -531,6 +544,7 @@ def main() -> None:
         webview.settings["REMOTE_DEBUGGING_PORT"] = None
 
         splash_image = _get_desktop_asset_path("ztf-splash.PNG").read_bytes()
+        _validate_splash_asset(splash_image)
         icon_path = _get_desktop_asset_path("ztf-logo.ico")
         if not icon_path.is_file() or not icon_path.read_bytes().startswith(
             b"\x00\x00\x01\x00"
@@ -544,7 +558,7 @@ def main() -> None:
         splash_bridge = SplashBridge()
         splash_window = webview.create_window(
             "ZTF Classifier",
-            html=_build_splash_html(splash_image),
+            html=_build_splash_html(),
             js_api=splash_bridge,
             width=768,
             height=512,
@@ -579,14 +593,6 @@ def main() -> None:
                     raise RuntimeError(
                         "The splash page did not reach DOM-ready state within 25 seconds."
                     )
-                if not splash_bridge._image_status_event.wait(timeout=15):
-                    raise RuntimeError(
-                        "The splash page did not report its embedded image load status."
-                    )
-                splash_image_status = splash_bridge._image_status or {}
-                if not splash_image_status.get("image_loaded"):
-                    raise RuntimeError("The splash image did not decode in WebView2.")
-
                 _set_splash_status(
                     splash_window,
                     "Preparing local workspace and application settings…",
@@ -602,6 +608,23 @@ def main() -> None:
                 runtime = LocalApiServer(app)
                 base_url = runtime.start()
                 LOGGER.info("Private local API is ready at %s.", base_url)
+
+                splash_image_url = f"{base_url}/workbench/ztf-splash.PNG"
+                LOGGER.info("Loading splash artwork from the loopback API.")
+                splash_window.run_js(
+                    "window.setSplashImageUrl("
+                    + json.dumps(splash_image_url)
+                    + ");"
+                )
+                if not splash_bridge._image_status_event.wait(timeout=15):
+                    raise RuntimeError(
+                        "The splash image did not report its load status from the loopback API."
+                    )
+                splash_image_status = splash_bridge._image_status or {}
+                if not splash_image_status.get("image_loaded"):
+                    raise RuntimeError(
+                        "The splash image did not decode from the loopback API."
+                    )
 
                 _set_splash_status(
                     splash_window,
