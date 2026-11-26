@@ -54,6 +54,10 @@ class DesktopBridge:
             "app_root_present": bool(status.get("app_root_present")),
             "app_root_visible": bool(status.get("app_root_visible")),
             "body_text_length": int(status.get("body_text_length", 0) or 0),
+            "frontend_errors": [
+                str(message)[:2000]
+                for message in status.get("frontend_errors", [])[:20]
+            ],
         }
         self._frontend_status_event.set()
         LOGGER.info("Workbench frontend status: %s", self._frontend_status)
@@ -651,10 +655,14 @@ def main() -> None:
                     raise RuntimeError(
                         "The Workbench DOM loaded, but its application root is missing or not visible."
                     )
-                if desktop_bridge._frontend_errors:
+                frontend_errors = (
+                    frontend_status.get("frontend_errors", [])
+                    + desktop_bridge._frontend_errors
+                )
+                if frontend_errors:
                     raise RuntimeError(
                         "The Workbench reported a JavaScript startup error: "
-                        + desktop_bridge._frontend_errors[0]
+                        + frontend_errors[0]
                     )
 
                 LOGGER.info(
@@ -673,7 +681,7 @@ def main() -> None:
                                     "workbench_dom_ready": True,
                                     "app_root_present": frontend_status["app_root_present"],
                                     "app_root_visible": frontend_status["app_root_visible"],
-                                    "frontend_errors": 0,
+                                    "frontend_errors": len(frontend_errors),
                                 },
                                 "frontend_status": frontend_status,
                                 "error": None,
