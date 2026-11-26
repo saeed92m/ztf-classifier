@@ -156,6 +156,10 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator('[data-view="dr24"]').click()
             page.locator("#dr24ObjectIds").fill("101, 202")
             page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('Create or open a workspace')",
+                timeout=5_000,
+            )
             assert "Create or open a workspace before requesting DR24 data." in page.locator(
                 "#dr24Status"
             ).inner_text()
@@ -176,6 +180,19 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert page.locator('[data-view="features"]').is_hidden()
             assert page.locator('[data-view="observations"]').is_hidden()
             assert page.locator(".sidebar .nav-item:not([hidden])").count() == 11
+            assert page.locator(".sidebar .nav-item:not([hidden])").all_text_contents() == [
+                "Overview",
+                "DR24 Explorer",
+                "Workspaces",
+                "Result Catalog",
+                "Analysis Jobs",
+                "Data Sources",
+                "Provenance",
+                "Scientific Validation",
+                "Reports & Exports",
+                "Settings",
+                "Help",
+            ]
             page.locator('[data-view="validation"]').click()
             assert page.locator("#validationStatus").is_visible()
             page.locator('[data-view="dr24"]').click()
