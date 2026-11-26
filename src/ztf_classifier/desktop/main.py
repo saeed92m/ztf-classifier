@@ -496,8 +496,7 @@ def _run_self_test() -> None:
             "error": error,
         }
         report_path.write_text(
-            json.dumps(report, indent=2, sort_keys=True)
-                        + "\n",
+            json.dumps(report, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
 
@@ -790,7 +789,7 @@ def main() -> None:
                     indent=2,
                     sort_keys=True,
                 )
-                        + "\n",
+                + "\n",
                 encoding="utf-8",
             )
         if not gui_smoke_test:
