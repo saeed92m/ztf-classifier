@@ -120,6 +120,10 @@ The dashboard is evidence presentation only. It must not convert reference-syste
 
 The Windows desktop preview uses the Mission Control layout as its dashboard reference. The dashboard is an evidence view. It must read current application state from the versioned local API.
 
+### Mission Control banner artwork
+
+The top application header uses a local SVG banner with a restrained nebula and spiral-galaxy composition. It is static decorative artwork only. It must not display or imply a specific real astronomical observation. The file is packaged with the Workbench and checked by the frozen self-test.
+
 ### Brand asset
 
 The desktop Workbench header and web favicon use the local `ztf-logo.svg` vector asset. The existing `ztf-logo.ico` remains the Windows executable/shortcut icon asset and fallback. The SVG is included in the frozen application self-test. This change does not by itself prove that the installed desktop shortcut displays the intended icon; that remains a separate visual acceptance check.
@@ -134,7 +138,7 @@ The visual language applies to the dashboard and all existing desktop views. It 
 - Summary cards: configured primary source, active workspaces, saved scientific result records and scientific validation status.
 - Main row: a light-curve panel and a Mission Status panel.
 - Lower row: saved analysis results, recent asynchronous analysis jobs and system health.
-- Navigation: Overview, DR24 Explorer, Workspaces, Data Sources, Provenance, Reports and Exports, Scientific Validation, Result Catalog, Analysis Jobs, Settings and Help.
+- Navigation order: Overview, DR24 Explorer, Workspaces, Result Catalog, Analysis Jobs, Data Sources, Provenance, Scientific Validation, Reports and Exports, Settings and Help.
 
 ### DR24 workspace preflight
 
