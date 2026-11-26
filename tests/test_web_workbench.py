@@ -76,3 +76,27 @@ def test_workbench_exposes_scientific_validation_dashboard() -> None:
     assert "Scientific Validation" in page.text
     assert script.status_code == 200
     assert "/v1/scientific-validation" in script.text
+
+
+def test_desktop_mission_control_dashboard_uses_live_api_evidence() -> None:
+    client = TestClient(create_app())
+    page = client.get("/workbench/")
+    script = client.get("/workbench/app.js")
+    styles = client.get("/workbench/styles.css")
+
+    assert page.status_code == 200
+    assert script.status_code == 200
+    assert styles.status_code == 200
+    assert "Scientific Mission Control" in script.text
+    assert "mission-banner" in script.text
+    assert "mission-main-grid" in styles.text
+    assert 'fetchJson("/health")' in script.text
+    assert 'fetchJson("/v1/workspaces")' in script.text
+    assert 'fetchJson("/v1/workspaces/active")' in script.text
+    assert 'fetchJson("/v1/model")' in script.text
+    assert 'fetchJson("/v1/scientific-validation")' in script.text
+    assert 'fetchJson("/v1/jobs?limit=5")' in script.text
+    assert 'fetchJson("/v1/catalog/results?limit=8")' in script.text
+    assert "No demo data" in script.text
+    assert "ZTF20aaaaaaaa" not in script.text
+    assert "0.0%" not in script.text
