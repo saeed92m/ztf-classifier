@@ -644,3 +644,85 @@ h1 { margin: 5px 0 4px; font-size: 22px; letter-spacing: -.02em; }
   :root[data-desktop-preview="true"] .mission-gate { align-self: flex-start; }
   :root[data-desktop-preview="true"] .mission-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+
+/* Apply the same visual language to every desktop Workbench page. */
+:root[data-desktop-preview="true"] .canvas-header {
+  margin-bottom: 18px;
+  padding: 5px 2px 13px;
+  border-bottom: 1px solid rgba(74, 164, 235, .20);
+}
+:root[data-desktop-preview="true"] .canvas-header .eyebrow {
+  color: #60b9ed;
+  font-size: 10px;
+  letter-spacing: .16em;
+}
+:root[data-desktop-preview="true"] .canvas-header h1 {
+  margin: 7px 0 4px;
+  color: #f4f9ff;
+  font-size: clamp(22px, 2vw, 30px);
+  font-weight: 750;
+}
+:root[data-desktop-preview="true"] .canvas-header p {
+  margin: 0;
+  color: #99b8d5;
+  font-size: 12px;
+}
+:root[data-desktop-preview="true"] .panel,
+:root[data-desktop-preview="true"] .metric-card {
+  border: 1px solid var(--mission-edge);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(9, 35, 69, .93), rgba(5, 19, 41, .94));
+  box-shadow: 0 13px 34px rgba(0, 0, 0, .18), inset 0 1px rgba(173, 222, 255, .035);
+}
+:root[data-desktop-preview="true"] .panel-title {
+  color: #f0f7ff;
+  font-size: 14px;
+  font-weight: 750;
+}
+:root[data-desktop-preview="true"] .panel-subtitle {
+  color: #85a7c8;
+  font-size: 10px;
+}
+:root[data-desktop-preview="true"] input,
+:root[data-desktop-preview="true"] textarea,
+:root[data-desktop-preview="true"] select {
+  color: #eaf5ff;
+  border-color: rgba(74, 164, 235, .38);
+  border-radius: 8px;
+  background: rgba(3, 15, 32, .82);
+}
+:root[data-desktop-preview="true"] input:focus,
+:root[data-desktop-preview="true"] textarea:focus,
+:root[data-desktop-preview="true"] select:focus {
+  outline: 2px solid rgba(40, 197, 244, .52);
+  outline-offset: 1px;
+}
+:root[data-desktop-preview="true"] .primary-button,
+:root[data-desktop-preview="true"] .mission-primary-button {
+  border: 1px solid rgba(31, 157, 245, .60);
+  border-radius: 8px;
+  color: #f4f9ff;
+  background: linear-gradient(100deg, #0757bb, #0877df);
+  font-weight: 700;
+}
+:root[data-desktop-preview="true"] .secondary-button {
+  border: 1px solid rgba(74, 164, 235, .38);
+  border-radius: 8px;
+  color: #d9edff;
+  background: rgba(10, 48, 87, .56);
+}
+:root[data-desktop-preview="true"] .catalog-table-wrap {
+  border-color: rgba(74, 164, 235, .22);
+}
+:root[data-desktop-preview="true"] .metadata th {
+  color: #9fc3e3;
+}
+:root[data-desktop-preview="true"] .metadata td {
+  color: #d7e8f8;
+  border-color: rgba(74, 164, 235, .16);
+}
+:root[data-desktop-preview="true"] .muted,
+:root[data-desktop-preview="true"] .metadata dt {
+  color: #8eacc9;
+}
