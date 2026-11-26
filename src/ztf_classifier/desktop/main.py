@@ -550,7 +550,9 @@ def main() -> None:
 
                 splash_page_url = f"{base_url}/workbench/desktop-splash.html"
                 LOGGER.info("Loading the static splash page from the local API.")
-                _install_navigation_guard(splash_window, base_url)
+                # The splash contains no navigation controls. Keep native WebView2
+                # event wiring on the Workbench's before_show UI-thread callback;
+                # accessing CoreWebView2 from this bootstrap worker is not safe.
                 splash_window.load_url(splash_page_url)
                 if not splash_bridge._image_status_event.wait(timeout=15):
                     raise RuntimeError(
