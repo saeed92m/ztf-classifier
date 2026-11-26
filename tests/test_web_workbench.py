@@ -90,6 +90,9 @@ def test_desktop_mission_control_dashboard_uses_live_api_evidence() -> None:
     assert "Scientific Mission Control" in script.text
     assert "mission-banner" in script.text
     assert "mission-main-grid" in styles.text
+    assert ".canvas-header h1" in styles.text
+    assert ".panel," in styles.text
+    assert "input:focus" in styles.text
     assert 'fetchJson("/health")' in script.text
     assert 'fetchJson("/v1/workspaces")' in script.text
     assert 'fetchJson("/v1/workspaces/active")' in script.text
