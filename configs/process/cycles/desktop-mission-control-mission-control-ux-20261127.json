@@ -75,7 +75,8 @@
       "The Windows runtime workflow ran 31 tests in its last completed attempt; 31 passed and 1 failed because a test still expected the ICO to be the primary favicon. The test expectation was updated to require SVG primary and ICO fallback.",
       "The browser workflow captured a 1600x1000 screenshot. Its preceding run failed because the test asserted the workspace-preflight text before awaiting the asynchronous request. The test now waits for the expected preflight response.",
       "The browser screenshot from the earlier run showed the first dashboard layout and truthful empty states. It also exposed duplicate navigation because .nav-item display:flex overrode the hidden attribute. A targeted CSS rule now preserves hidden state, and the browser contract checks the visible navigation count and order.",
-      "The exact-head Product Scope Audit and CodeQL passed on a previous code head; the latest commits add the galaxy banner, navigation order, browser wait, package test and this cycle record, so all gates must run again on the final head."
+      "The exact-head Product Scope Audit and CodeQL passed on a previous code head; the latest commits add the galaxy banner, navigation order, browser wait, package test and this cycle record, so all gates must run again on the final head.",
+      "The Windows preview artifact upload filter initially excluded this isolated feat/desktop- branch, so the Windows CI job would build and test the installer but not publish its artifact. The upload filter was expanded to allow feat/desktop- PR branches. This only uploads CI artifacts; it does not publish a GitHub release."
     ]
   },
   "failure_analysis": {
@@ -110,7 +111,8 @@
       "Verify the latest packaged app preserves Splash Screen, automatic handoff and visible Workbench.",
       "Verify Desktop and Start Menu shortcut icon and taskbar icon on installed Windows. Issue #320 remains open for the native Windows icon investigation.",
       "Compare the installed Windows application screenshot with the founder-supplied reference before accepting the UX redesign.",
-      "Do not describe AI classification, rare-object discovery, or scientific validation as accepted capabilities unless their own gates pass."
+      "Do not describe AI classification, rare-object discovery, or scientific validation as accepted capabilities unless their own gates pass.",
+      "Re-run the exact-head Windows workflow after enabling upload of the installer/evidence artifact for feat/desktop- branches."
     ]
   },
   "decision": "REVISE",
