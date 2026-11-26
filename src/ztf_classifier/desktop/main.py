@@ -514,7 +514,7 @@ def main() -> None:
         splash_bridge.bind_window(splash_window)
         LOGGER.info("Splash window created. Starting the WebView GUI loop.")
 
-        def mark_splash_loaded() -> None:
+        def mark_splash_loaded(*_args: Any) -> None:
             LOGGER.info("Splash DOM reached the loaded event.")
             splash_loaded.set()
 
