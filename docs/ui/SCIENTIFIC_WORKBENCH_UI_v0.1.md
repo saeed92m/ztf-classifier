@@ -114,3 +114,43 @@ Required panels:
 - release decision evidence.
 
 The dashboard is evidence presentation only. It must not convert reference-system agreement into ground truth or suppress unresolved scientific blockers.
+
+
+## Desktop Scientific Mission Control — UI revision
+
+The Windows desktop preview uses the Mission Control layout as its dashboard reference. The dashboard is an evidence view. It must read current application state from the versioned local API.
+
+### Dashboard composition
+
+- Header banner: product identity, current page and the exact scientific gate status.
+- Summary cards: configured primary source, active workspaces, saved scientific result records and scientific validation status.
+- Main row: a light-curve panel and a Mission Status panel.
+- Lower row: saved analysis results, recent asynchronous analysis jobs and system health.
+- Navigation: Overview, DR24 Explorer, Workspaces, Data Sources, Provenance, Reports and Exports, Scientific Validation, Result Catalog, Analysis Jobs, Settings and Help.
+
+### Data-binding rules
+
+| UI element | API source | Interpretation |
+| --- | --- | --- |
+| Local API | `GET /health` | Process liveness only; not model or scientific readiness. |
+| Active workspaces | `GET /v1/workspaces` and `GET /v1/workspaces/active` | Count only workspaces explicitly marked active. |
+| Model registry | `GET /v1/model` | Model metadata is available; this does not prove scientific acceptance. |
+| Scientific gate | `GET /v1/scientific-validation` | Display the exact fail-closed status and blocker count. |
+| Recent operations | `GET /v1/jobs?limit=5` | Display persisted asynchronous analysis jobs only. |
+| Saved results | `GET /v1/catalog/results?limit=8` | Display persisted scientific result records only. |
+| Light curve | Latest saved result with an observation array | Plot only returned observation values. Show an empty state when no result contains observations. |
+
+### Scientific and UX constraints
+
+- Do not insert sample object IDs, synthetic light-curve points, made-up probabilities, fake queue rows, fake uptime, or fabricated service health.
+- Do not describe an OOD score as a scientific anomaly.
+- Do not describe a model registry response as a passed scientific validation gate.
+- Keep the DR24 raw-data path separate from normalized observation data. Preserve the source time field and its units.
+- The dashboard must remain useful when one API call fails. Show an explicit unavailable state for that service.
+- Keep the original scientific validation screen and its fail-closed meaning.
+- The visual theme must not alter API contracts, data transformations, model behavior, or scientific thresholds.
+- The desktop splash and startup handoff are protected regression requirements.
+
+### Verification
+
+The UI contract test checks the required API bindings, Mission Control markup and style layer. The Windows preview workflow must also pass JavaScript syntax checks, packaged self-test, and real WebView2 GUI smoke tests. A CI pass alone does not prove visual fidelity; the installed application must be captured and compared with the reference screen before the UI redesign is accepted.
