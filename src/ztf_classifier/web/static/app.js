@@ -504,7 +504,7 @@ async function renderDesktopHome() {
           const record = await fetchJson("/v1/results/" + encodeURIComponent(button.dataset.missionResult));
           state.result = record;
           state.oid = record.oid;
-          await showView("overview");
+          await showView("overview", { result: record });
         } catch {
           setConnectionState("Saved result could not be opened", false);
           button.disabled = false;
@@ -1354,7 +1354,7 @@ async function loadDR24Explorer() {
   exportButton.addEventListener("click", downloadDesktopRawExport);
   if (input.value) await loadRaw();
 }
-async function showView(view) {
+async function showView(view, options = {}) {
   document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
   const active = document.querySelector('.nav-item[data-view="' + view + '"]');
   if (active) active.classList.add("active");
@@ -1370,7 +1370,15 @@ async function showView(view) {
     mainCanvas.innerHTML = overviewMarkup;
     bindOverviewActions();
     setViewHeading(view);
-    await loadObject();
+    const selectedResult = options.result;
+    if (selectedResult) {
+      state.oid = selectedResult.oid || state.oid;
+      state.survey = selectedResult.survey || state.survey;
+      renderResult(selectedResult);
+      setConnectionState("Saved result loaded", true);
+    } else {
+      await loadObject();
+    }
     return;
   }
   if (view === "catalog") return loadCatalog();
