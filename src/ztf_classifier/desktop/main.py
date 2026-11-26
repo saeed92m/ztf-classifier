@@ -374,7 +374,7 @@ def _run_self_test() -> None:
                         "The packaged desktop Workbench HTML is incomplete."
                     )
                 if path == "/workbench/desktop-splash.html" and (
-                    b'img-src \'self\'' not in body
+                    b"img-src 'self'" not in body
                     or b'src="ztf-splash.PNG"' not in body
                     or b"report_splash_status" not in body
                 ):
