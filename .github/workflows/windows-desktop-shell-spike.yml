@@ -16,14 +16,14 @@ on:
       - "packaging/windows/**"
       - "docs/desktop/**"
       - "scripts/build_desktop_pdfs.py"
-      - ".github/release-notes/desktop-v0.1.0-preview.1.md"
+      - ".github/release-notes/desktop-v0.1.0-preview.2.md"
       - "docs/PARK_ACCEPTANCE_MATRIX_2026-11-24.md"
   push:
     branches:
       - main
     paths:
       - ".github/workflows/windows-desktop-shell-spike.yml"
-      - ".github/release-notes/desktop-v0.1.0-preview.1.md"
+      - ".github/release-notes/desktop-v0.1.0-preview.2.md"
       - "docs/desktop/**"
       - "docs/PARK_ACCEPTANCE_MATRIX_2026-11-24.md"
       - "scripts/build_desktop_pdfs.py"
@@ -219,13 +219,13 @@ jobs:
             Pop-Location
           }
           if ($nsisExitCode -ne 0) { throw "NSIS installer build failed with exit code $nsisExitCode." }
-          $setup = "dist/ZTFClassifier-0.1.0-preview.1-Setup.exe"
+          $setup = "dist/ZTFClassifier-0.1.0-preview.2-Setup.exe"
           if (-not (Test-Path $setup)) { throw "The Windows installer was not created." }
 
       - name: Test silent install, launch and uninstall
         shell: pwsh
         run: |
-          $setup = (Resolve-Path "dist/ZTFClassifier-0.1.0-preview.1-Setup.exe").Path
+          $setup = (Resolve-Path "dist/ZTFClassifier-0.1.0-preview.2-Setup.exe").Path
           $install = Start-Process -FilePath $setup -ArgumentList "/S" -Wait -PassThru
           if ($install.ExitCode -ne 0) { throw "Silent install failed: $($install.ExitCode)" }
           $installDir = Join-Path $env:LOCALAPPDATA "Programs\\ZTFClassifier"
@@ -266,12 +266,12 @@ jobs:
         shell: pwsh
         run: |
           $packageVersion = python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])"
-          $setup = "dist/ZTFClassifier-0.1.0-preview.1-Setup.exe"
+          $setup = "dist/ZTFClassifier-0.1.0-preview.2-Setup.exe"
           $hash = (Get-FileHash -Path $setup -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  ZTFClassifier-0.1.0-preview.1-Setup.exe" | Set-Content -Encoding ascii "dist/SHA256SUMS.txt"
+          "$hash  ZTFClassifier-0.1.0-preview.2-Setup.exe" | Set-Content -Encoding ascii "dist/SHA256SUMS.txt"
           $manifest = [ordered]@{
             schema_version = "ztf-windows-desktop-build-v1"
-            desktop_version = "0.1.0-preview.1"
+            desktop_version = "0.1.0-preview.2"
             python_package_version = $packageVersion
             source_commit = "${{ github.sha }}"
             installer_sha256 = $hash
@@ -292,7 +292,7 @@ jobs:
         with:
           name: ztf-classifier-windows-preview-${{ github.sha }}
           path: |
-            dist/ZTFClassifier-0.1.0-preview.1-Setup.exe
+            dist/ZTFClassifier-0.1.0-preview.2-Setup.exe
             dist/SHA256SUMS.txt
             dist/desktop-build-manifest.json
             dist/desktop-windows-dependencies.txt
@@ -329,7 +329,7 @@ jobs:
           test "$GITHUB_REF" = "refs/heads/main"
           cd release-assets
           sha256sum --check SHA256SUMS.txt
-          test -s ZTFClassifier-0.1.0-preview.1-Setup.exe
+          test -s ZTFClassifier-0.1.0-preview.2-Setup.exe
           test -s User_Manual.pdf
           test -s Quick_Start.pdf
           python - <<'PY'
@@ -347,7 +347,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          TAG="desktop-v0.1.0-preview.1"
+          TAG="desktop-v0.1.0-preview.2"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "A release already exists for $TAG. Refusing to overwrite it."
             exit 1
@@ -367,13 +367,13 @@ jobs:
             gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" -f "ref=refs/tags/$TAG" -f "sha=$GITHUB_SHA"
           fi
           gh release create "$TAG" \
-            "release-assets/ZTFClassifier-0.1.0-preview.1-Setup.exe" \
+            "release-assets/ZTFClassifier-0.1.0-preview.2-Setup.exe" \
             "release-assets/User_Manual.pdf" \
             "release-assets/Quick_Start.pdf" \
             "release-assets/SHA256SUMS.txt" \
             "release-assets/desktop-build-manifest.json" \
             "release-assets/desktop-windows-dependencies.txt" \
             "release-assets/desktop-self-test.json" \
-            --title "ZTF Classifier Windows Preview 0.1.0-preview.1" \
-            --notes-file ".github/release-notes/desktop-v0.1.0-preview.1.md" \
+            --title "ZTF Classifier Windows Preview 0.1.0-preview.2" \
+            --notes-file ".github/release-notes/desktop-v0.1.0-preview.2.md" \
             --prerelease --verify-tag
