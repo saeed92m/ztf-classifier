@@ -449,8 +449,31 @@ def test_desktop_asset_path_rejects_unknown_names() -> None:
         _get_desktop_asset_path("unexpected.txt")
 
 
+def test_set_splash_status_uses_run_js_not_eval() -> None:
+    calls: list[str] = []
+
+    class FakeWindow:
+        def run_js(self, script: str) -> None:
+            calls.append(script)
+
+        def evaluate_js(self, script: str) -> None:
+            pytest.fail("evaluate_js must not be used under the strict splash CSP")
+
+    desktop_main._set_splash_status(FakeWindow(), "API ready")
+    assert len(calls) == 1
+    assert "window.updateStartupStatus" in calls[0]
+    assert "API ready" in calls[0]
+
+
+def test_desktop_bridge_reports_frontend_errors(caplog: pytest.LogCaptureFixture) -> None:
+    bridge = desktop_main.DesktopBridge("test-token")
+    assert bridge.get_api_token() == "test-token"
+    bridge.report_frontend_error("test frontend failure")
+    assert "Workbench frontend error: test frontend failure" in caplog.text
+
+
 @pytest.mark.parametrize("api_start_failure", [False, True])
-def test_main_shows_splash_before_api_and_handles_startup_failure(
+def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     api_start_failure: bool,
@@ -480,6 +503,9 @@ def test_main_shows_splash_before_api_and_handles_startup_failure(
             )
             self.destroyed = False
             self.shown = False
+            self.dom = SimpleNamespace(
+                get_element=lambda selector: object() if selector == "#app" else None
+            )
 
         def show(self) -> None:
             self.shown = True
@@ -488,13 +514,15 @@ def test_main_shows_splash_before_api_and_handles_startup_failure(
 
         def destroy(self) -> None:
             self.destroyed = True
-            events.append("splash-destroyed")
+            events.append("window-destroyed")
 
     class FakeWebview:
         def __init__(self) -> None:
             self.settings: dict[str, Any] = {}
             self.windows: list[FakeWindow] = []
             self.window_arguments: list[tuple[str, dict[str, Any]]] = []
+            self.start_callback: Callable[..., Any] | None = None
+            self.start_args: tuple[Any, ...] = ()
 
         def create_window(self, title: str, **kwargs: Any) -> FakeWindow:
             window = FakeWindow()
@@ -503,12 +531,15 @@ def test_main_shows_splash_before_api_and_handles_startup_failure(
             events.append(f"window-created:{title}")
             return window
 
-        def start(self, **kwargs: Any) -> None:
+        def start(self, func: Callable[..., Any], args: tuple[Any, ...], **kwargs: Any) -> None:
+            self.start_callback = func
+            self.start_args = args
             self.start_arguments = kwargs
             splash_window = self.windows[0]
             splash_window.shown = True
             events.append("splash-shown")
             splash_window.events.loaded.fire(splash_window)
+            func(*args)
 
     class FakeRuntime:
         def __init__(self, app: Any) -> None:
@@ -528,41 +559,27 @@ def test_main_shows_splash_before_api_and_handles_startup_failure(
     icon_asset = tmp_path / "ztf-logo.ico"
     splash_asset.write_bytes(bytes.fromhex("89504e470d0a1a0a") + b"fixture")
     icon_asset.write_bytes(bytes.fromhex("00000100") + b"fixture")
-    assets = {
-        "ztf-splash.PNG": splash_asset,
-        "ztf-logo.ico": icon_asset,
-    }
+    assets = {"ztf-splash.PNG": splash_asset, "ztf-logo.ico": icon_asset}
     webview = FakeWebview()
 
     monkeypatch.setattr(desktop_main, "os", SimpleNamespace(name="nt"))
     monkeypatch.setattr(desktop_main.sys, "argv", ["ZTFClassifier.exe"])
     monkeypatch.setattr(desktop_main, "_load_webview", lambda: webview)
+    monkeypatch.setattr(desktop_main, "_get_desktop_asset_path", lambda name: assets[name])
+    monkeypatch.setattr(desktop_main, "get_user_data_dir", lambda: tmp_path / "user-data")
     monkeypatch.setattr(
         desktop_main,
-        "_get_desktop_asset_path",
-        lambda name: assets[name],
-    )
-    monkeypatch.setattr(
-        desktop_main,
-        "get_user_data_dir",
-        lambda: tmp_path / "user-data",
+        "_configure_desktop_logging",
+        lambda path: path / "logs" / "desktop.log",
     )
     monkeypatch.setattr(
         desktop_main,
         "build_desktop_settings",
         lambda token, data_dir: {"token": token, "data_dir": data_dir},
     )
-    monkeypatch.setattr(
-        desktop_main,
-        "create_app",
-        lambda settings, docs_enabled: object(),
-    )
+    monkeypatch.setattr(desktop_main, "create_app", lambda settings, docs_enabled: object())
     monkeypatch.setattr(desktop_main, "LocalApiServer", FakeRuntime)
-    monkeypatch.setattr(
-        desktop_main.secrets,
-        "token_urlsafe",
-        lambda length: "test-api-token",
-    )
+    monkeypatch.setattr(desktop_main.secrets, "token_urlsafe", lambda length: "test-api-token")
     monkeypatch.setattr(
         desktop_main,
         "_install_navigation_guard",
@@ -573,18 +590,17 @@ def test_main_shows_splash_before_api_and_handles_startup_failure(
         "_set_splash_status",
         lambda window, message, failed=False: statuses.append((message, failed)),
     )
-    monkeypatch.setattr(
-        desktop_main,
-        "_show_error",
-        lambda message: errors.append(message),
-    )
+    monkeypatch.setattr(desktop_main, "_show_error", lambda message: errors.append(message))
 
     desktop_main.main()
 
     assert not errors
+    assert webview.start_callback is not None
+    assert webview.start_args[0] is webview.windows[0]
     assert events.index("splash-shown") < events.index("api-started")
     assert statuses[0][0].startswith("Preparing local workspace")
     assert statuses[1][0].startswith("Starting the private local API")
+    assert webview.start_arguments["gui"] == "edgechromium"
 
     splash_window = webview.windows[0]
     assert webview.window_arguments[0][1]["html"].startswith("<!doctype html>")
@@ -597,9 +613,6 @@ def test_main_shows_splash_before_api_and_handles_startup_failure(
         assert not splash_window.destroyed
         assert statuses[-1][0].startswith("Startup failed: RuntimeError")
         assert statuses[-1][1] is True
-        splash_bridge = webview.window_arguments[0][1]["js_api"]
-        splash_bridge.close_splash()
-        assert splash_window.destroyed
     else:
         assert len(webview.windows) == 2
         main_window = webview.windows[1]
