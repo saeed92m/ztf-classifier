@@ -719,8 +719,7 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
         assert main_window.shown
         assert splash_window.destroyed
         assert any(
-            "setSplashImageUrl" in script
-            and "/workbench/ztf-splash.PNG" in script
+            "setSplashImageUrl" in script and "/workbench/ztf-splash.PNG" in script
             for script in splash_window.scripts
         )
         assert statuses[-1][0].startswith("Local services are ready")
