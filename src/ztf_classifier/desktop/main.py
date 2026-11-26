@@ -496,7 +496,8 @@ def _run_self_test() -> None:
             "error": error,
         }
         report_path.write_text(
-            json.dumps(report, indent=2, sort_keys=True) + "\n",
+            json.dumps(report, indent=2, sort_keys=True)
+                        + "\n",
             encoding="utf-8",
         )
 
@@ -582,9 +583,7 @@ def main() -> None:
                     )
                 splash_image_status = splash_bridge._image_status or {}
                 if not splash_image_status.get("image_loaded"):
-                    raise RuntimeError(
-                        "The splash image did not decode in WebView2."
-                    )
+                    raise RuntimeError("The splash image did not decode in WebView2.")
 
                 _set_splash_status(
                     splash_window,
@@ -677,10 +676,16 @@ def main() -> None:
                                 "status": "PASS",
                                 "checks": {
                                     "splash_dom_ready": True,
-                                    "splash_image_loaded": splash_image_status["image_loaded"],
+                                    "splash_image_loaded": splash_image_status[
+                                        "image_loaded"
+                                    ],
                                     "workbench_dom_ready": True,
-                                    "app_root_present": frontend_status["app_root_present"],
-                                    "app_root_visible": frontend_status["app_root_visible"],
+                                    "app_root_present": frontend_status[
+                                        "app_root_present"
+                                    ],
+                                    "app_root_visible": frontend_status[
+                                        "app_root_visible"
+                                    ],
                                     "frontend_errors": len(frontend_errors),
                                 },
                                 "frontend_status": frontend_status,
@@ -688,7 +693,8 @@ def main() -> None:
                             },
                             indent=2,
                             sort_keys=True,
-                        ) + "\n",
+                        )
+                        + "\n",
                         encoding="utf-8",
                     )
                 splash_window.destroy()
@@ -708,7 +714,8 @@ def main() -> None:
                             },
                             indent=2,
                             sort_keys=True,
-                        ) + "\n",
+                        )
+                        + "\n",
                         encoding="utf-8",
                     )
                 if workbench_window is not None:
@@ -720,7 +727,9 @@ def main() -> None:
                     try:
                         runtime.stop()
                     except Exception:
-                        LOGGER.exception("Could not stop the local API after startup failure.")
+                        LOGGER.exception(
+                            "Could not stop the local API after startup failure."
+                        )
                     runtime = None
                 if splash_loaded.is_set():
                     try:
@@ -731,7 +740,9 @@ def main() -> None:
                             failed=True,
                         )
                     except Exception:
-                        LOGGER.exception("Could not display the startup failure on Splash.")
+                        LOGGER.exception(
+                            "Could not display the startup failure on Splash."
+                        )
                         if not gui_smoke_test:
                             _show_error(
                                 f"ZTF Classifier could not start.\n\n{exc}\n\n"
@@ -778,7 +789,8 @@ def main() -> None:
                     },
                     indent=2,
                     sort_keys=True,
-                ) + "\n",
+                )
+                        + "\n",
                 encoding="utf-8",
             )
         if not gui_smoke_test:
