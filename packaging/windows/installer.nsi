@@ -4,6 +4,9 @@ Unicode true
 !include "LogicLib.nsh"
 !include "x64.nsh"
 
+!define MUI_ICON "src\ztf_classifier\web\static\ztf-logo.ico"
+!define MUI_UNICON "src\ztf_classifier\web\static\ztf-logo.ico"
+
 ; Resolve all build inputs and outputs from the repository root.
 !cd "..\.."
 
@@ -14,8 +17,6 @@ Unicode true
 
 Name "${PRODUCT_NAME}"
 OutFile "dist\ZTFClassifier-0.1.0-preview.2-Setup.exe"
-Icon "src\ztf_classifier\web\static\ztf-logo.ico"
-UninstallIcon "src\ztf_classifier\web\static\ztf-logo.ico"
 InstallDir "$LOCALAPPDATA\Programs\ZTFClassifier"
 InstallDirRegKey HKCU "Software\ZTFClassifier" "InstallDir"
 RequestExecutionLevel user
