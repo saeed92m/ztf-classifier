@@ -247,7 +247,9 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
     ).read_text(encoding="utf-8")
     assert '!cd "..\\.."' in installer
     assert r'!define MUI_ICON "src\ztf_classifier\web\static\ztf-logo.ico"' in installer
-    assert r'!define MUI_UNICON "src\ztf_classifier\web\static\ztf-logo.ico"' in installer
+    assert (
+        r'!define MUI_UNICON "src\ztf_classifier\web\static\ztf-logo.ico"' in installer
+    )
     assert (
         "File /oname=MicrosoftEdgeWebView2Setup.exe "
         '"packaging\\windows\\MicrosoftEdgeWebView2Setup.exe"'
