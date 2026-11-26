@@ -4,6 +4,7 @@ import asyncio
 import sys
 from collections.abc import Callable
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Self
 
 import pytest
@@ -11,6 +12,7 @@ from fastapi import FastAPI
 
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
+from ztf_classifier.desktop import main as desktop_main
 from ztf_classifier.desktop.main import (
     _build_splash_html,
     _get_desktop_asset_path,
@@ -439,3 +441,161 @@ def test_splash_builder_rejects_non_png_assets() -> None:
 def test_desktop_asset_path_rejects_unknown_names() -> None:
     with pytest.raises(ValueError, match="Unsupported desktop asset"):
         _get_desktop_asset_path("unexpected.txt")
+
+
+
+@pytest.mark.parametrize("api_start_failure", [False, True])
+def test_main_shows_splash_before_api_and_handles_startup_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    api_start_failure: bool,
+) -> None:
+    events: list[str] = []
+    statuses: list[tuple[str, bool]] = []
+    errors: list[str] = []
+
+    class FakeEvent:
+        def __init__(self) -> None:
+            self.callbacks: list[Callable[..., Any]] = []
+
+        def __iadd__(self, callback: Callable[..., Any]) -> Self:
+            self.callbacks.append(callback)
+            return self
+
+        def fire(self, window: Any) -> None:
+            for callback in tuple(self.callbacks):
+                callback(window)
+
+    class FakeWindow:
+        def __init__(self) -> None:
+            self.events = SimpleNamespace(
+                closed=FakeEvent(),
+                before_show=FakeEvent(),
+                loaded=FakeEvent(),
+            )
+            self.destroyed = False
+            self.shown = False
+
+        def show(self) -> None:
+            self.shown = True
+            self.events.before_show.fire(self)
+            self.events.loaded.fire(self)
+
+        def destroy(self) -> None:
+            self.destroyed = True
+            events.append("splash-destroyed")
+
+    class FakeWebview:
+        def __init__(self) -> None:
+            self.settings: dict[str, Any] = {}
+            self.windows: list[FakeWindow] = []
+            self.window_arguments: list[tuple[str, dict[str, Any]]] = []
+
+        def create_window(self, title: str, **kwargs: Any) -> FakeWindow:
+            window = FakeWindow()
+            self.windows.append(window)
+            self.window_arguments.append((title, kwargs))
+            events.append(f"window-created:{title}")
+            return window
+
+        def start(self, **kwargs: Any) -> None:
+            self.start_arguments = kwargs
+            splash_window = self.windows[0]
+            splash_window.shown = True
+            events.append("splash-shown")
+            splash_window.events.loaded.fire(splash_window)
+
+    class FakeRuntime:
+        def __init__(self, app: Any) -> None:
+            self.app = app
+            events.append("api-created")
+
+        def start(self) -> str:
+            events.append("api-started")
+            if api_start_failure:
+                raise RuntimeError("test API startup failed")
+            return "http://127.0.0.1:43210"
+
+        def stop(self) -> None:
+            events.append("api-stopped")
+
+    splash_asset = tmp_path / "ztf-splash.PNG"
+    icon_asset = tmp_path / "ztf-logo.ico"
+    splash_asset.write_bytes(b"\\x89PNG\\r\\n\\x1a\\nfixture")
+    icon_asset.write_bytes(b"\\x00\\x00\\x01\\x00fixture")
+    assets = {
+        "ztf-splash.PNG": splash_asset,
+        "ztf-logo.ico": icon_asset,
+    }
+    webview = FakeWebview()
+
+    monkeypatch.setattr(desktop_main, "os", SimpleNamespace(name="nt"))
+    monkeypatch.setattr(desktop_main.sys, "argv", ["ZTFClassifier.exe"])
+    monkeypatch.setattr(desktop_main, "_load_webview", lambda: webview)
+    monkeypatch.setattr(
+        desktop_main,
+        "_get_desktop_asset_path",
+        lambda name: assets[name],
+    )
+    monkeypatch.setattr(
+        desktop_main,
+        "get_user_data_dir",
+        lambda: tmp_path / "user-data",
+    )
+    monkeypatch.setattr(
+        desktop_main,
+        "build_desktop_settings",
+        lambda token, data_dir: {"token": token, "data_dir": data_dir},
+    )
+    monkeypatch.setattr(
+        desktop_main,
+        "create_app",
+        lambda settings, docs_enabled: object(),
+    )
+    monkeypatch.setattr(desktop_main, "LocalApiServer", FakeRuntime)
+    monkeypatch.setattr(
+        desktop_main.secrets,
+        "token_urlsafe",
+        lambda length: "test-api-token",
+    )
+    monkeypatch.setattr(
+        desktop_main,
+        "_install_navigation_guard",
+        lambda window, base_url: events.append("navigation-guard-installed"),
+    )
+    monkeypatch.setattr(
+        desktop_main,
+        "_set_splash_status",
+        lambda window, message, failed=False: statuses.append((message, failed)),
+    )
+    monkeypatch.setattr(
+        desktop_main,
+        "_show_error",
+        lambda message: errors.append(message),
+    )
+
+    desktop_main.main()
+
+    assert not errors
+    assert events.index("splash-shown") < events.index("api-started")
+    assert statuses[0][0].startswith("Preparing local workspace")
+    assert statuses[1][0].startswith("Starting the private local API")
+
+    splash_window = webview.windows[0]
+    assert webview.window_arguments[0][1]["html"].startswith("<!doctype html>")
+
+    if api_start_failure:
+        assert len(webview.windows) == 1
+        assert not splash_window.destroyed
+        assert statuses[-1][0].startswith("Startup failed: RuntimeError")
+        assert statuses[-1][1] is True
+    else:
+        assert len(webview.windows) == 2
+        main_window = webview.windows[1]
+        assert webview.window_arguments[1][1]["hidden"] is True
+        assert main_window.shown
+        assert splash_window.destroyed
+        assert statuses[-1][0].startswith("Local services are ready")
+        assert statuses[-1][1] is False
+
+    assert events.count("api-stopped") == 1
