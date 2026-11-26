@@ -732,11 +732,12 @@ def main() -> None:
                         )
                     except Exception:
                         LOGGER.exception("Could not display the startup failure on Splash.")
-                        _show_error(
-                            f"ZTF Classifier could not start.\n\n{exc}\n\n"
-                            f"Diagnostic log: {log_path}"
-                        )
-                else:
+                        if not gui_smoke_test:
+                            _show_error(
+                                f"ZTF Classifier could not start.\n\n{exc}\n\n"
+                                f"Diagnostic log: {log_path}"
+                            )
+                elif not gui_smoke_test:
                     _show_error(
                         f"ZTF Classifier could not load its startup screen.\n\n"
                         f"{type(exc).__name__}: {exc}\n\n"
@@ -780,11 +781,12 @@ def main() -> None:
                 ) + "\n",
                 encoding="utf-8",
             )
-        _show_error(
-            "The ZTF Classifier desktop application could not start.\n\n"
-            f"{exc}\n\n"
-            "Check the diagnostic log under %LOCALAPPDATA%\\ZTFClassifier\\logs."
-        )
+        if not gui_smoke_test:
+            _show_error(
+                "The ZTF Classifier desktop application could not start.\n\n"
+                f"{exc}\n\n"
+                "Check the diagnostic log under %LOCALAPPDATA%\\ZTFClassifier\\logs."
+            )
         raise SystemExit(1) from exc
     finally:
         if runtime is not None:
