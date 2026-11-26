@@ -114,7 +114,7 @@ def _build_splash_html() -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; img-src data: http://127.0.0.1:*; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'">
+        content="default-src 'none'; img-src http://127.0.0.1:*; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'">
   <title>ZTF Classifier — Starting</title>
   <style>
     * { box-sizing: border-box; }
@@ -203,8 +203,14 @@ def _build_splash_html() -> str:
     };
     window.setSplashImageUrl = function (url) {
       const parsed = new URL(String(url));
-      if (parsed.protocol !== "http:" || parsed.hostname !== "127.0.0.1") {
-        throw new Error("Splash artwork must be served from the loopback API.");
+      if (
+        parsed.protocol !== "http:" ||
+        parsed.hostname !== "127.0.0.1" ||
+        parsed.pathname !== "/workbench/ztf-splash.PNG" ||
+        parsed.username ||
+        parsed.password
+      ) {
+        throw new Error("Splash artwork must use the packaged loopback asset path.");
       }
       splashImage.dataset.sourceUrl = parsed.href;
       splashImage.src = parsed.href;
