@@ -126,16 +126,41 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 "window.dispatchEvent(new Event('pywebviewready'));"
                 "}, 50);"
             )
+            page = browser.new_page(viewport={"width": 1600, "height": 1000})
+            page.add_init_script(
+                "window.pywebview = {api: {}};"
+                "window.setTimeout(() => {"
+                "window.pywebview.api.get_api_token = () => Promise.resolve('test-only-token');"
+                "window.dispatchEvent(new Event('pywebviewready'));"
+                "}, 50);"
+            )
             page.goto(
                 "http://127.0.0.1:8766/workbench/?desktop=1",
                 wait_until="domcontentloaded",
             )
             assert page.locator("html").get_attribute("lang") == "en"
             assert page.locator("html").get_attribute("dir") == "ltr"
-            assert page.get_by_role("heading", name="Dashboard").is_visible()
-            assert page.get_by_text("Park acceptance").is_visible()
-            assert page.locator("#parkModelStatus").inner_text() == "BLOCKED"
-            assert page.locator("#parkScientificGateStatus").is_visible()
+            assert page.get_by_role("heading", name="Scientific Overview").is_visible()
+            assert page.locator(".mission-banner").is_visible()
+            assert page.locator(".mission-metrics .mission-metric").count() == 4
+            assert page.locator("#missionStatusRows .mission-status-row").count() == 5
+            assert page.locator("#missionHealthRows .mission-health-row").count() == 4
+            assert page.locator("#missionValidationStatus").inner_text() not in {"", "CHECKING"}
+            assert page.locator("#missionResultCount").inner_text() == "0"
+            assert "No saved scientific results are available yet." in page.locator(
+                "#missionReviewQueue"
+            ).inner_text()
+            assert page.get_by_text("SCIENTIFIC GATE:", exact=False).is_visible()
+            page.wait_for_function(
+                "() => document.querySelectorAll('#missionStatusRows .mission-status-row').length === 5",
+                timeout=5_000,
+            )
+            artifact_dir = Path("test-artifacts")
+            artifact_dir.mkdir(parents=True, exist_ok=True)
+            page.screenshot(
+                path=str(artifact_dir / "mission-control-dashboard.png"),
+                full_page=True,
+            )
             page.locator('[data-view="workspaces"]').click()
             page.locator("#workspaceName").fill("CI desktop workspace")
             page.locator("#workspaceCreateForm button[type=submit]").click()
