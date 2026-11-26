@@ -425,14 +425,31 @@ def test_desktop_brand_assets_are_present_and_valid() -> None:
     assert icon_path.read_bytes().startswith(b"\x00\x00\x01\x00")
 
 
-def test_splash_page_uses_loopback_image_and_indeterminate_status() -> None:
+def test_splash_placeholder_is_small_and_does_not_embed_assets() -> None:
     html = _build_splash_html()
 
     assert len(html.encode("utf-8")) < 2 * 1024 * 1024
     assert "data:image/png;base64," not in html
-    assert "setSplashImageUrl" in html
+    assert "setSplashImageUrl" not in html
     assert "default-src 'none'" in html
-    assert "img-src http://127.0.0.1:*" in html
+    assert "Starting desktop services" in html
+
+
+def test_static_splash_page_uses_same_origin_image() -> None:
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "src"
+        / "ztf_classifier"
+        / "web"
+        / "static"
+        / "desktop-splash.html"
+    )
+    html = path.read_text(encoding="utf-8")
+
+    assert "img-src 'self'" in html
+    assert 'src="ztf-splash.PNG"' in html
+    assert "report_splash_status" in html
+    assert "data:image/png;base64," not in html
     assert "window.updateStartupStatus" in html
     assert "report_splash_status" in html
     assert 'id="startup-close"' in html
@@ -563,7 +580,11 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
 
         def run_js(self, script: str) -> None:
             self.scripts.append(script)
-            if self.bridge is not None and "setSplashImageUrl" in script:
+
+        def load_url(self, url: str) -> None:
+            self.loaded_url = url
+            events.append("splash-page-loaded")
+            if self.bridge is not None:
                 self.bridge.report_splash_status(
                     {
                         "image_loaded": True,
@@ -718,10 +739,10 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
         assert webview.window_arguments[1][1]["hidden"] is True
         assert main_window.shown
         assert splash_window.destroyed
-        assert any(
-            "setSplashImageUrl" in script and "/workbench/ztf-splash.PNG" in script
-            for script in splash_window.scripts
+        assert splash_window.loaded_url == (
+            "http://127.0.0.1:43210/workbench/desktop-splash.html"
         )
+        assert "splash-page-loaded" in events
         assert statuses[-1][0].startswith("Local services are ready")
         assert statuses[-1][1] is False
         if gui_smoke_test:
