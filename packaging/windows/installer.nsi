@@ -15,6 +15,7 @@ Unicode true
 Name "${PRODUCT_NAME}"
 OutFile "dist\ZTFClassifier-0.1.0-preview.1-Setup.exe"
 Icon "src\ztf_classifier\web\static\ztf-logo.ico"
+UninstallIcon "src\ztf_classifier\web\static\ztf-logo.ico"
 InstallDir "$LOCALAPPDATA\Programs\ZTFClassifier"
 InstallDirRegKey HKCU "Software\ZTFClassifier" "InstallDir"
 RequestExecutionLevel user

@@ -10,6 +10,8 @@ from fastapi import FastAPI
 
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
+import sys
+
 from ztf_classifier.desktop.main import (
     _build_splash_html,
     _get_desktop_asset_path,
@@ -418,6 +420,16 @@ def test_splash_page_uses_embedded_image_and_indeterminate_status() -> None:
     assert 'aria-live="polite"' in html
     assert "progress-sweep" in html
     assert "100% complete" not in html
+
+def test_desktop_asset_path_uses_pyinstaller_bundle_root(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(sys, "_MEIPASS", str(tmp_path), raising=False)
+
+    assert _get_desktop_asset_path("ztf-splash.PNG") == (
+        tmp_path / "ztf_classifier" / "web" / "static" / "ztf-splash.PNG"
+    )
 
 
 def test_splash_builder_rejects_non_png_assets() -> None:

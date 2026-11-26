@@ -39,6 +39,15 @@ def _get_desktop_asset_path(asset_name: str) -> Path:
     allowed_assets = {"ztf-splash.PNG", "ztf-logo.ico"}
     if asset_name not in allowed_assets:
         raise ValueError(f"Unsupported desktop asset: {asset_name}")
+    bundle_root = getattr(sys, "_MEIPASS", None)
+    if bundle_root:
+        return (
+            Path(bundle_root)
+            / "ztf_classifier"
+            / "web"
+            / "static"
+            / asset_name
+        )
     return Path(__file__).resolve().parents[1] / "web" / "static" / asset_name
 
 
