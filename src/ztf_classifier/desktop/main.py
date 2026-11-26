@@ -33,6 +33,9 @@ class DesktopBridge:
 
     def __init__(self, api_token: str) -> None:
         self._api_token = api_token
+        self._frontend_status: dict[str, Any] | None = None
+        self._frontend_status_event = threading.Event()
+        self._frontend_errors: list[str] = []
 
     def get_api_token(self) -> str:
         """Return the in-memory token to the local desktop WebView."""
@@ -40,7 +43,20 @@ class DesktopBridge:
 
     def report_frontend_error(self, message: str) -> None:
         """Record a bounded JavaScript error from the trusted local Workbench."""
-        LOGGER.error("Workbench frontend error: %s", str(message)[:2000])
+        safe_message = str(message)[:2000]
+        self._frontend_errors.append(safe_message)
+        LOGGER.error("Workbench frontend error: %s", safe_message)
+
+    def report_frontend_status(self, status: dict[str, Any]) -> None:
+        """Record the DOM and visible-root status reported by the Workbench."""
+        self._frontend_status = {
+            "title": str(status.get("title", ""))[:200],
+            "app_root_present": bool(status.get("app_root_present")),
+            "app_root_visible": bool(status.get("app_root_visible")),
+            "body_text_length": int(status.get("body_text_length", 0) or 0),
+        }
+        self._frontend_status_event.set()
+        LOGGER.info("Workbench frontend status: %s", self._frontend_status)
 
 
 class SplashBridge:
@@ -461,11 +477,15 @@ def main() -> None:
     if "--self-test" in sys.argv[1:]:
         _run_self_test()
         return
+    gui_smoke_test = "--gui-smoke-test" in sys.argv[1:]
 
     runtime: LocalApiServer | None = None
+    gui_smoke_report_path: Path | None = None
     try:
         user_data = get_user_data_dir()
         log_path = _configure_desktop_logging(user_data)
+        if gui_smoke_test:
+            gui_smoke_report_path = log_path.parent / "desktop-gui-smoke-test.json"
         LOGGER.info("Starting ZTF Classifier desktop application.")
 
         webview = _load_webview()
@@ -542,10 +562,11 @@ def main() -> None:
                     "Local services are ready. Opening the Workbench…",
                 )
                 workbench_loaded = threading.Event()
+                desktop_bridge = DesktopBridge(token)
                 workbench_window = webview.create_window(
                     "ZTF Classifier — Scientific Workbench",
                     url=f"{base_url}/workbench/?desktop=1",
-                    js_api=DesktopBridge(token),
+                    js_api=desktop_bridge,
                     width=1360,
                     height=900,
                     min_size=(1024, 700),
@@ -576,18 +597,70 @@ def main() -> None:
                         "The Workbench did not reach DOM-ready state within 45 seconds."
                     )
 
-                app_shell = workbench_window.dom.get_element("#app")
-                if app_shell is None:
+                if not desktop_bridge._frontend_status_event.wait(timeout=15):
                     raise RuntimeError(
-                        "The Workbench loaded without its required #app root element."
+                        "The Workbench did not report its DOM status through the desktop bridge."
+                    )
+                frontend_status = desktop_bridge._frontend_status or {}
+                if (
+                    not frontend_status.get("app_root_present")
+                    or not frontend_status.get("app_root_visible")
+                    or frontend_status.get("body_text_length", 0) <= 0
+                ):
+                    raise RuntimeError(
+                        "The Workbench DOM loaded, but its application root is missing or not visible."
+                    )
+                if desktop_bridge._frontend_errors:
+                    raise RuntimeError(
+                        "The Workbench reported a JavaScript startup error: "
+                        + desktop_bridge._frontend_errors[0]
                     )
 
                 LOGGER.info(
-                    "Workbench DOM verified. Closing splash after successful handoff."
+                    "Workbench DOM and visible application root verified. "
+                    "Closing splash after successful handoff."
                 )
+                if gui_smoke_test and gui_smoke_report_path is not None:
+                    gui_smoke_report_path.write_text(
+                        json.dumps(
+                            {
+                                "schema_version": "ztf-desktop-gui-smoke-v1",
+                                "status": "PASS",
+                                "checks": {
+                                    "splash_dom_ready": True,
+                                    "workbench_dom_ready": True,
+                                    "app_root_present": frontend_status["app_root_present"],
+                                    "app_root_visible": frontend_status["app_root_visible"],
+                                    "frontend_errors": 0,
+                                },
+                                "frontend_status": frontend_status,
+                                "error": None,
+                            },
+                            indent=2,
+                            sort_keys=True,
+                        ) + "\\n",
+                        encoding="utf-8",
+                    )
                 splash_window.destroy()
+                if gui_smoke_test:
+                    workbench_window.destroy()
             except Exception as exc:  # noqa: BLE001 - keep startup errors visible and logged
                 LOGGER.exception("Desktop startup failed.")
+                if gui_smoke_test and gui_smoke_report_path is not None:
+                    gui_smoke_report_path.parent.mkdir(parents=True, exist_ok=True)
+                    gui_smoke_report_path.write_text(
+                        json.dumps(
+                            {
+                                "schema_version": "ztf-desktop-gui-smoke-v1",
+                                "status": "FAIL",
+                                "checks": {},
+                                "error": f"{type(exc).__name__}: {exc}",
+                            },
+                            indent=2,
+                            sort_keys=True,
+                        ) + "\\n",
+                        encoding="utf-8",
+                    )
                 if workbench_window is not None:
                     try:
                         workbench_window.destroy()
@@ -619,6 +692,11 @@ def main() -> None:
                         f"{type(exc).__name__}: {exc}\\n\\n"
                         f"Diagnostic log: {log_path}"
                     )
+                if gui_smoke_test:
+                    try:
+                        splash_window.destroy()
+                    except Exception:
+                        LOGGER.exception("Could not close the GUI smoke-test splash.")
 
         # The documented pywebview start callback runs backend work on a
         # background thread. Splash rendering is observed, not used as the
@@ -631,8 +709,27 @@ def main() -> None:
             private_mode=True,
             storage_path=str(user_data / "webview"),
         )
+        if gui_smoke_test and gui_smoke_report_path is not None:
+            report = json.loads(gui_smoke_report_path.read_text(encoding="utf-8"))
+            if report.get("status") != "PASS":
+                raise SystemExit(1)
     except Exception as exc:
         LOGGER.exception("The desktop GUI could not start.")
+        if gui_smoke_test and gui_smoke_report_path is not None:
+            gui_smoke_report_path.parent.mkdir(parents=True, exist_ok=True)
+            gui_smoke_report_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "ztf-desktop-gui-smoke-v1",
+                        "status": "FAIL",
+                        "checks": {},
+                        "error": f"{type(exc).__name__}: {exc}",
+                    },
+                    indent=2,
+                    sort_keys=True,
+                ) + "\\n",
+                encoding="utf-8",
+            )
         _show_error(
             "The ZTF Classifier desktop application could not start.\\n\\n"
             f"{exc}\\n\\n"
