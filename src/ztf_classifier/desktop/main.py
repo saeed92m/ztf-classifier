@@ -248,6 +248,7 @@ def _configure_desktop_logging(user_data_dir: Path) -> Path:
         )
         root_logger.addHandler(handler)
     root_logger.setLevel(logging.INFO)
+    logging.getLogger("pywebview").setLevel(logging.DEBUG)
     LOGGER.info("Desktop diagnostics initialized.")
     return log_path
 
@@ -538,6 +539,7 @@ def main() -> None:
                 "The packaged ZTF Classifier application icon is missing or invalid."
             )
 
+        LOGGER.info("Creating the splash window with the EdgeChromium backend.")
         splash_loaded = threading.Event()
         splash_bridge = SplashBridge()
         splash_window = webview.create_window(
@@ -557,6 +559,7 @@ def main() -> None:
             zoomable=False,
         )
         splash_bridge.bind_window(splash_window)
+        LOGGER.info("Splash window created. Starting the WebView GUI loop.")
 
         def mark_splash_loaded(current_window: Any) -> None:
             LOGGER.info("Splash DOM reached the loaded event.")
@@ -762,6 +765,7 @@ def main() -> None:
         # The documented pywebview start callback runs backend work on a
         # background thread. Splash rendering is observed, not used as the
         # only trigger for starting the application.
+        LOGGER.info("Calling pywebview.start().")
         webview.start(
             func=start_desktop_session,
             args=(splash_window, splash_loaded),
@@ -770,6 +774,7 @@ def main() -> None:
             private_mode=True,
             storage_path=str(user_data / "webview"),
         )
+        LOGGER.info("pywebview.start() returned.")
         if gui_smoke_test and gui_smoke_report_path is not None:
             report = json.loads(gui_smoke_report_path.read_text(encoding="utf-8"))
             if report.get("status") != "PASS":
