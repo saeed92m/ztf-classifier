@@ -88,8 +88,8 @@ Section "Application" SEC_APPLICATION
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
   CreateDirectory "$SMPROGRAMS\ZTF Classifier"
-  CreateShortcut "$SMPROGRAMS\ZTF Classifier\ZTF Classifier.lnk" "$INSTDIR\ZTFClassifier.exe"
-  CreateShortcut "$DESKTOP\ZTF Classifier.lnk" "$INSTDIR\ZTFClassifier.exe"
+  CreateShortcut "$SMPROGRAMS\ZTF Classifier\ZTF Classifier.lnk" "$INSTDIR\ZTFClassifier.exe" "" "$INSTDIR\ZTFClassifier.exe" 0
+  CreateShortcut "$DESKTOP\ZTF Classifier.lnk" "$INSTDIR\ZTFClassifier.exe" "" "$INSTDIR\ZTFClassifier.exe" 0
 
   WriteRegStr HKCU "Software\ZTFClassifier" "InstallDir" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier" "DisplayName" "${PRODUCT_NAME}"
