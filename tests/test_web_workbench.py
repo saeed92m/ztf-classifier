@@ -8,6 +8,10 @@ def test_workbench_static_entrypoint_is_served() -> None:
     response = client.get("/workbench/")
     assert response.status_code == 200
     assert "Scientific Analysis Workbench" in response.text
+    assert 'src="./ztf-logo.svg"' in response.text
+    logo = client.get("/workbench/ztf-logo.svg")
+    assert logo.status_code == 200
+    assert "<svg" in logo.text
 
 
 def test_workbench_theme_contract_is_present() -> None:
