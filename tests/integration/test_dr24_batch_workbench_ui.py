@@ -163,6 +163,9 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert page.locator("#workspaceStatus").is_visible()
             assert page.locator('[data-view="validation"]').is_visible()
             assert page.locator('[data-view="classification"]').is_hidden()
+            assert page.locator('[data-view="features"]').is_hidden()
+            assert page.locator('[data-view="observations"]').is_hidden()
+            assert page.locator(".sidebar .nav-item:not([hidden])").count() == 11
             page.locator('[data-view="validation"]').click()
             assert page.locator("#validationStatus").is_visible()
             page.locator('[data-view="dr24"]').click()
