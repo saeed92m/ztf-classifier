@@ -432,7 +432,7 @@ def test_splash_page_uses_loopback_image_and_indeterminate_status() -> None:
     assert "data:image/png;base64," not in html
     assert "setSplashImageUrl" in html
     assert "default-src 'none'" in html
-    assert "img-src data: http://127.0.0.1:*" in html
+    assert "img-src http://127.0.0.1:*" in html
     assert "window.updateStartupStatus" in html
     assert "report_splash_status" in html
     assert 'id="startup-close"' in html
