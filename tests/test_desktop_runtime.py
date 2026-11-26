@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -691,7 +692,7 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
         if gui_smoke_test:
             assert main_window.destroyed
             report_path = tmp_path / "user-data" / "logs" / "desktop-gui-smoke-test.json"
-            report = __import__("json").loads(report_path.read_text(encoding="utf-8"))
+            report = json.loads(report_path.read_text(encoding="utf-8"))
             assert report["status"] == "PASS"
             assert report["checks"]["splash_image_loaded"] is True
         else:
