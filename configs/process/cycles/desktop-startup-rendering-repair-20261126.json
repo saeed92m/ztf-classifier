@@ -89,7 +89,7 @@
       "The latest workflow run must be checked on the final commit. Earlier green runs cannot be carried forward as exact-head acceptance evidence.",
       "The exact failure log from Windows GUI smoke run 45868132070 records `CoreWebView2.NavigateToString(String htmlContent)` throwing `Value does not fall within the expected range`.",
       "The packaged `ztf-splash.PNG` asset is 1,873,208 bytes. Base64 expansion is 2,497,612 bytes, before adding HTML. This exceeds WebView2 NavigateToString's 2 MiB input limit and explains why the splash document did not reach DOM-ready.",
-      "The repair removes the image data URI from splash HTML. The splash document now loads as a small HTML string, starts the loopback API, then loads `/workbench/ztf-splash.PNG` from the loopback API. The splash CSP permits only the required loopback image origin plus data images."
+      "The repair removes the image data URI from NavigateToString. It shows a small placeholder first, starts the loopback API, then navigates the splash window to `/workbench/desktop-splash.html`; the static splash page loads `ztf-splash.PNG` from the same origin under `img-src 'self'`."
     ]
   },
   "failure_analysis": {
@@ -115,7 +115,8 @@
       "The real WebView2 smoke test must run on both the frozen build and the installed application.",
       "The installer must set explicit icon paths on Desktop and Start Menu shortcuts. CI must inspect the resulting shortcut metadata.",
       "A Windows runner smoke test does not replace manual acceptance on the target laptop. Display scaling, graphics drivers, desktop icon cache and user-profile behavior still require target-device verification.",
-      "Do not weaken CSP, scientific validation criteria or release gates to make CI pass."
+      "Do not weaken CSP, scientific validation criteria or release gates to make CI pass.",
+      "Do not load relative images from a NavigateToString document. Use a small placeholder for immediate startup, then navigate the WebView to a static page served by the loopback API. This gives the splash page a normal same-origin URL for its image, CSS and script resources."
     ]
   },
   "regression": {
@@ -128,7 +129,7 @@
       "Inspect the exact-head build artifact and verify the preview.3 installer checksum before publication.",
       "Install preview.3 on the target Windows machine and verify splash appearance, automatic handoff, visible Workbench, Desktop shortcut icon and Taskbar icon.",
       "If target-device startup still fails, inspect %LOCALAPPDATA%\\ZTFClassifier\\logs\\desktop.log and desktop-gui-smoke-test.json before making further changes.",
-      "Verify the new small splash HTML stays below 2 MiB and the loopback-served splash image decodes in real WebView2."
+      "Verify the WebView navigates from the small placeholder to `/workbench/desktop-splash.html`, and the same-origin splash image decodes in real WebView2."
     ]
   },
   "decision": "REVISE",
