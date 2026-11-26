@@ -485,6 +485,7 @@ def test_desktop_bridge_reports_frontend_errors(caplog: pytest.LogCaptureFixture
         "app_root_present": True,
         "app_root_visible": True,
         "body_text_length": 100,
+        "frontend_errors": [],
     })
     assert bridge._frontend_status_event.is_set()
     assert bridge._frontend_status["app_root_visible"] is True
