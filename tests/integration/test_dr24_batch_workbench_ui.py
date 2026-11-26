@@ -163,7 +163,8 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert "Create or open a workspace before requesting DR24 data." in page.locator(
                 "#dr24Status"
             ).inner_text()
-            assert "No DR24 request was sent" in page.locator("#dr24Results").inner_text()
+            assert "No acquisition was attempted" in page.locator("#dr24Results").inner_text()
+            assert "Create or open a workspace" in page.locator("#dr24Results").inner_text()
             assert "NOT RUN" in page.locator("#dr24Provenance").inner_text()
             assert page.locator("#dr24ExportButton").is_disabled()
             assert backend.calls == []
