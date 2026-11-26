@@ -132,6 +132,12 @@ The visual language applies to the dashboard and all existing desktop views. It 
 - Lower row: saved analysis results, recent asynchronous analysis jobs and system health.
 - Navigation: Overview, DR24 Explorer, Workspaces, Data Sources, Provenance, Reports and Exports, Scientific Validation, Result Catalog, Analysis Jobs, Settings and Help.
 
+### DR24 workspace preflight
+
+Before a DR24 request, the desktop client must verify that a workspace is active. If none exists, show a workspace requirement, record the acquisition as NOT RUN in the UI, keep export disabled, and do not send a request to the DR24 source. If the workspace-state endpoint is unavailable, report that the preflight could not be completed. Neither case may be labelled as a DR24 acquisition failure.
+
+The Help page must explain the correct sequence: create/open a workspace, then acquire DR24 records, review raw data and diagnostic QC, inspect provenance, and export.
+
 ### Data-binding rules
 
 | UI element | API source | Interpretation |
