@@ -107,134 +107,57 @@ def _validate_splash_asset(splash_image: bytes) -> None:
 
 
 def _build_splash_html() -> str:
-    """Build a small splash page; artwork is loaded from the loopback API."""
-    template = """<!doctype html>
+    """Build a small placeholder page before the local API is ready."""
+    return """<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; img-src http://127.0.0.1:*; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'">
+        content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'">
   <title>ZTF Classifier — Starting</title>
   <style>
     * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #030b19; }
-    body { position: relative; color: #f8fbff; font-family: "Segoe UI", Arial, sans-serif; }
-    .mission-art { display: block; width: 100%; height: 100%; object-fit: contain; }
-    .startup-panel {
-      position: absolute; left: 23.5%; right: 23.5%; top: 51.5%; height: 13%;
-      display: flex; flex-direction: column; justify-content: center; gap: 13px;
-      padding: 6px 10px; border-radius: 8px;
-      background: rgba(2, 10, 27, .94);
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: #f5f7fb;
+      background: radial-gradient(circle at 50% 35%, #17304c 0, #081321 55%, #030811 100%);
+      font-family: "Segoe UI", Arial, sans-serif;
     }
-    .startup-status {
-      min-height: 22px; display: flex; align-items: center; justify-content: center;
-      text-align: center; font-size: clamp(11px, 2vw, 16px); line-height: 1.3;
-      overflow-wrap: anywhere;
+    main { width: min(560px, 84vw); text-align: center; }
+    .mark { color: #e4bd69; font-size: 12px; letter-spacing: .28em; }
+    h1 { margin: 18px 0 10px; font-size: clamp(22px, 3vw, 34px); letter-spacing: .18em; }
+    p { min-height: 24px; color: #b9c7d7; font-size: 13px; }
+    .track { height: 3px; overflow: hidden; background: #26394e; }
+    .track span {
+      display: block;
+      width: 35%;
+      height: 100%;
+      background: linear-gradient(90deg, #55d5e8, #e4bd69);
+      animation: sweep 1.4s ease-in-out infinite;
     }
-    .progress-track {
-      height: 7px; width: 100%; overflow: hidden; border: 1px solid #27b7ef;
-      border-radius: 99px; background: #071a35;
-    }
-    .progress-indicator {
-      display: block; width: 28%; height: 100%; border-radius: inherit;
-      background: linear-gradient(90deg, #087de0, #31d7ff, #087de0);
-      animation: progress-sweep 1.6s ease-in-out infinite alternate;
-    }
-    .progress-track.failed { border-color: #f87171; }
-    .progress-track.failed .progress-indicator { display: none; }
-    .startup-hint {
-      display: none; color: #fca5a5; font-size: 11px; line-height: 1.35;
-      text-align: center;
-    }
-    .startup-hint.visible { display: block; }
-    .startup-close {
-      display: none; align-self: center; padding: 7px 18px; border: 1px solid #38bdf8;
-      border-radius: 5px; color: #f8fbff; background: #0b3154; font: inherit;
-      cursor: pointer;
-    }
-    .startup-close.visible { display: inline-block; }
-    .startup-close:focus-visible { outline: 2px solid #f8fbff; outline-offset: 3px; }
-    @keyframes progress-sweep {
-      from { transform: translateX(-105%); }
-      to { transform: translateX(360%); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .progress-indicator { animation: none; transform: translateX(120%); }
-    }
+    @keyframes sweep { from { transform: translateX(-110%); } to { transform: translateX(310%); } }
   </style>
 </head>
 <body>
-  <img class="mission-art" alt="">
-  <section class="startup-panel" aria-label="Application startup">
-    <div id="startup-status" class="startup-status" role="status" aria-live="polite">
-      Preparing desktop session…
-    </div>
-    <div id="startup-progress" class="progress-track" aria-label="Startup in progress">
-      <span class="progress-indicator"></span>
-    </div>
-    <div id="startup-hint" class="startup-hint">
-      Startup did not complete. Close this window and restart ZTF Classifier.
-    </div>
-    <button id="startup-close" class="startup-close" type="button" hidden>Close</button>
-  </section>
+  <main>
+    <div class="mark">SCIENTIFIC MISSION CONTROL</div>
+    <h1>ZTF CLASSIFIER</h1>
+    <p id="startup-status">Starting desktop services…</p>
+    <div class="track"><span></span></div>
+  </main>
   <script>
     window.updateStartupStatus = function (message, failed) {
-      document.getElementById("startup-status").textContent = String(message);
-      document.getElementById("startup-progress").classList.toggle("failed", Boolean(failed));
-      document.getElementById("startup-hint").classList.toggle("visible", Boolean(failed));
-      const closeButton = document.getElementById("startup-close");
-      closeButton.hidden = !failed;
-      closeButton.classList.toggle("visible", Boolean(failed));
+      const status = document.getElementById("startup-status");
+      status.textContent = message;
+      status.dataset.failed = failed ? "true" : "false";
     };
-    const splashImage = document.querySelector(".mission-art");
-    let splashBridgeReady = Boolean(window.pywebview && window.pywebview.api);
-    const reportSplashImage = function () {
-      if (
-        !splashBridgeReady ||
-        !splashImage.dataset.sourceUrl ||
-        !splashImage.complete
-      ) return;
-      window.pywebview.api.report_splash_status({
-        image_loaded: splashImage.naturalWidth > 0 && splashImage.naturalHeight > 0,
-        natural_width: splashImage.naturalWidth,
-        natural_height: splashImage.naturalHeight
-      });
-    };
-    window.setSplashImageUrl = function (url) {
-      const parsed = new URL(String(url));
-      if (
-        parsed.protocol !== "http:" ||
-        parsed.hostname !== "127.0.0.1" ||
-        parsed.pathname !== "/workbench/ztf-splash.PNG" ||
-        parsed.username ||
-        parsed.password
-      ) {
-        throw new Error("Splash artwork must use the packaged loopback asset path.");
-      }
-      splashImage.dataset.sourceUrl = parsed.href;
-      splashImage.src = parsed.href;
-      if (splashImage.complete) reportSplashImage();
-    };
-    splashImage.addEventListener("load", reportSplashImage, { once: true });
-    splashImage.addEventListener("error", reportSplashImage, { once: true });
-    window.addEventListener("pywebviewready", function () {
-      splashBridgeReady = true;
-      reportSplashImage();
-    }, { once: true });
-    if (splashBridgeReady) reportSplashImage();
-
-    document.getElementById("startup-close").addEventListener("click", function () {
-      if (window.pywebview && window.pywebview.api) {
-        window.pywebview.api.close_splash();
-      }
-    });
   </script>
 </body>
-</html>
-"""
-    return template
-
+</html>"""
 
 def _set_splash_status(window: Any, message: str, *, failed: bool = False) -> None:
     """Update the splash status without inserting untrusted HTML."""
@@ -433,6 +356,7 @@ def _run_self_test() -> None:
             "/workbench/app.js",
             "/workbench/desktop-bootstrap.js",
             "/workbench/styles.css",
+            "/workbench/desktop-splash.html",
             "/workbench/ztf-splash.PNG",
             "/workbench/ztf-logo.ico",
         ):
@@ -448,6 +372,14 @@ def _run_self_test() -> None:
                 ):
                     raise RuntimeError(
                         "The packaged desktop Workbench HTML is incomplete."
+                    )
+                if path == "/workbench/desktop-splash.html" and (
+                    b'img-src \'self\'' not in body
+                    or b'src="ztf-splash.PNG"' not in body
+                    or b"report_splash_status" not in body
+                ):
+                    raise RuntimeError(
+                        "The packaged desktop splash page is incomplete."
                     )
                 if path == "/workbench/app.js" and b"desktop-home" not in body:
                     raise RuntimeError(
@@ -615,19 +547,18 @@ def main() -> None:
                 base_url = runtime.start()
                 LOGGER.info("Private local API is ready at %s.", base_url)
 
-                splash_image_url = f"{base_url}/workbench/ztf-splash.PNG"
-                LOGGER.info("Loading splash artwork from the loopback API.")
-                splash_window.run_js(
-                    "window.setSplashImageUrl(" + json.dumps(splash_image_url) + ");"
-                )
+                splash_page_url = f"{base_url}/workbench/desktop-splash.html"
+                LOGGER.info("Loading the static splash page from the local API.")
+                _install_navigation_guard(splash_window, base_url)
+                splash_window.load_url(splash_page_url)
                 if not splash_bridge._image_status_event.wait(timeout=15):
                     raise RuntimeError(
-                        "The splash image did not report its load status from the loopback API."
+                        "The static splash page did not report its image load status."
                     )
                 splash_image_status = splash_bridge._image_status or {}
                 if not splash_image_status.get("image_loaded"):
                     raise RuntimeError(
-                        "The splash image did not decode from the loopback API."
+                        "The splash image did not decode from the static splash page."
                     )
 
                 _set_splash_status(
