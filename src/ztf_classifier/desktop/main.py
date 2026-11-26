@@ -24,6 +24,9 @@ from ztf_classifier.desktop.runtime import (
 )
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 class DesktopBridge:
     """Expose only the session API token to the trusted local Workbench."""
 
@@ -475,8 +478,8 @@ def main() -> None:
                 def dismiss_splash(current_window: Any) -> None:
                     try:
                         splash_window.destroy()
-                    except Exception:  # noqa: BLE001 - closing the splash must not interrupt the Workbench
-                        logging.exception("Could not close the desktop splash window.")
+                    except Exception:
+                        LOGGER.exception("Could not close the desktop splash window.")
 
                 window.events.before_show += install_navigation_guard
                 window.events.loaded += dismiss_splash
@@ -485,8 +488,8 @@ def main() -> None:
                 if runtime is not None:
                     try:
                         runtime.stop()
-                    except Exception:  # noqa: BLE001 - keep the original startup error visible
-                        logging.exception("Could not stop the local API after startup failure.")
+                    except Exception:
+                        LOGGER.exception("Could not stop the local API after startup failure.")
                     runtime = None
                 try:
                     _set_splash_status(
@@ -494,8 +497,8 @@ def main() -> None:
                         f"Startup failed: {type(exc).__name__}: {exc}",
                         failed=True,
                     )
-                except Exception:  # noqa: BLE001 - record failure to update the splash
-                    logging.exception("Could not display the startup failure on the splash.")
+                except Exception:
+                    LOGGER.exception("Could not display the startup failure on the splash.")
 
         splash_window.events.loaded += start_desktop_session
         webview.start(
