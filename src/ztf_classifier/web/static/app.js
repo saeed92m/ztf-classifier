@@ -797,11 +797,12 @@ function renderDesktopHelp() {
     <section class="panel">
       <div class="panel-title">Quick guide</div>
       <ol>
+        <li>Create or open a workspace from the Workspaces page. DR24 retrieval does not start without an active workspace.</li>
         <li>Open the DR24 Explorer.</li>
-        <li>Enter one to ten positive OIDs.</li>
-        <li>Run the retrieval and review the request status.</li>
-        <li>Review the light curve, raw observation table, QC and descriptive statistics.</li>
-        <li>Review provenance and download the JSON file.</li>
+        <li>Enter one to ten positive ZTF object IDs.</li>
+        <li>Run the retrieval and review the request status. A missing workspace is a preflight requirement, not a DR24 source failure.</li>
+        <li>Review the native light curve, raw observation table, diagnostic QC and descriptive statistics.</li>
+        <li>Review acquisition provenance and download the raw JSON + QC export.</li>
       </ol>
     </section>
     <section class="panel">
@@ -1210,12 +1211,34 @@ async function loadDR24Explorer() {
       return;
     }
     loadButton.disabled = true;
+    let activeWorkspace;
+    try {
+      activeWorkspace = await fetchJson("/v1/workspaces/active");
+    } catch (error) {
+      document.getElementById("dr24Results").innerHTML =
+        '<section class="panel muted">Workspace status is unavailable. No DR24 request was sent.</section>';
+      document.getElementById("dr24Provenance").textContent =
+        "NOT RUN — active workspace status could not be verified.";
+      document.getElementById("dr24Status").textContent =
+        "Unable to verify an active workspace. DR24 request was not sent: " +
+        (error.message || "workspace service unavailable");
+      setConnectionState("Workspace check unavailable", false);
+      loadButton.disabled = false;
+      return;
+    }
+    if (!activeWorkspace.workspace) {
+      document.getElementById("dr24Results").innerHTML =
+        '<section class="panel muted">No acquisition was attempted. Create or open a workspace, then retry the DR24 request.</section>';
+      document.getElementById("dr24Provenance").textContent =
+        "NOT RUN — no active workspace. No DR24 request was sent.";
+      document.getElementById("dr24Status").textContent =
+        "Create or open a workspace before requesting DR24 data.";
+      setConnectionState("Local API online", true);
+      loadButton.disabled = false;
+      return;
+    }
     let operationId = null;
     try {
-      const activeWorkspace = await fetchJson("/v1/workspaces/active");
-      if (!activeWorkspace.workspace) {
-        throw new Error("Create or open a workspace first.");
-      }
       operationId = crypto.randomUUID().replace(/-/g, "");
       await fetchJson("/v1/workspaces/operations", {
         method: "POST",
