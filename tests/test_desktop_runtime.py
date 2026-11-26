@@ -647,6 +647,7 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
     monkeypatch.setattr(
         desktop_main, "get_user_data_dir", lambda: tmp_path / "user-data"
     )
+
     def fake_configure_logging(path: Path) -> Path:
         log_dir = path / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
