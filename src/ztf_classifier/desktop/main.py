@@ -591,7 +591,7 @@ def main() -> None:
                     LOGGER.info("Installing the WebView2 navigation guard.")
                     _install_navigation_guard(current_window, base_url)
 
-                def mark_workbench_loaded(current_window: Any) -> None:
+                def mark_workbench_loaded(*_args: Any) -> None:
                     LOGGER.info("Workbench DOM reached the loaded event.")
                     workbench_loaded.set()
 
