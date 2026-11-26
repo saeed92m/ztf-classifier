@@ -60,13 +60,25 @@ class DesktopBridge:
 
 
 class SplashBridge:
-    """Expose a controlled close action for the startup splash."""
+    """Expose controlled startup status and close actions for the splash."""
 
     def __init__(self) -> None:
         self._window: Any | None = None
+        self._image_status: dict[str, Any] | None = None
+        self._image_status_event = threading.Event()
 
     def bind_window(self, window: Any) -> None:
         self._window = window
+
+    def report_splash_status(self, status: dict[str, Any]) -> None:
+        """Record whether the embedded splash image decoded in WebView2."""
+        self._image_status = {
+            "image_loaded": bool(status.get("image_loaded")),
+            "natural_width": int(status.get("natural_width", 0) or 0),
+            "natural_height": int(status.get("natural_height", 0) or 0),
+        }
+        self._image_status_event.set()
+        LOGGER.info("Splash image status: %s", self._image_status)
 
     def close_splash(self) -> None:
         """Close the splash after a startup failure."""
@@ -171,6 +183,24 @@ def _build_splash_html(splash_image: bytes) -> str:
       closeButton.hidden = !failed;
       closeButton.classList.toggle("visible", Boolean(failed));
     };
+    const splashImage = document.querySelector(".mission-art");
+    let splashBridgeReady = Boolean(window.pywebview && window.pywebview.api);
+    const reportSplashImage = function () {
+      if (!splashBridgeReady || !splashImage.complete) return;
+      window.pywebview.api.report_splash_status({
+        image_loaded: splashImage.naturalWidth > 0 && splashImage.naturalHeight > 0,
+        natural_width: splashImage.naturalWidth,
+        natural_height: splashImage.naturalHeight
+      });
+    };
+    splashImage.addEventListener("load", reportSplashImage, { once: true });
+    splashImage.addEventListener("error", reportSplashImage, { once: true });
+    window.addEventListener("pywebviewready", function () {
+      splashBridgeReady = true;
+      reportSplashImage();
+    }, { once: true });
+    if (splashBridgeReady) reportSplashImage();
+
     document.getElementById("startup-close").addEventListener("click", function () {
       if (window.pywebview && window.pywebview.api) {
         window.pywebview.api.close_splash();
@@ -505,10 +535,11 @@ def main() -> None:
             )
 
         splash_loaded = threading.Event()
+        splash_bridge = SplashBridge()
         splash_window = webview.create_window(
             "ZTF Classifier",
             html=_build_splash_html(splash_image),
-            js_api=SplashBridge(),
+            js_api=splash_bridge,
             width=768,
             height=512,
             min_size=(768, 512),
@@ -539,6 +570,15 @@ def main() -> None:
                 if not ready_event.wait(timeout=25):
                     raise RuntimeError(
                         "The splash page did not reach DOM-ready state within 25 seconds."
+                    )
+                if not splash_bridge._image_status_event.wait(timeout=15):
+                    raise RuntimeError(
+                        "The splash page did not report its embedded image load status."
+                    )
+                splash_image_status = splash_bridge._image_status or {}
+                if not splash_image_status.get("image_loaded"):
+                    raise RuntimeError(
+                        "The splash image did not decode in WebView2."
                     )
 
                 _set_splash_status(
@@ -628,6 +668,7 @@ def main() -> None:
                                 "status": "PASS",
                                 "checks": {
                                     "splash_dom_ready": True,
+                                    "splash_image_loaded": splash_image_status["image_loaded"],
                                     "workbench_dom_ready": True,
                                     "app_root_present": frontend_status["app_root_present"],
                                     "app_root_visible": frontend_status["app_root_visible"],
