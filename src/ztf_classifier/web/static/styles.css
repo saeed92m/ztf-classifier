@@ -316,6 +316,9 @@ h1 { margin: 5px 0 4px; font-size: 22px; letter-spacing: -.02em; }
   letter-spacing: .16em;
   padding: 10px 12px 12px;
 }
+:root[data-desktop-preview="true"] .nav-item[hidden] {
+  display: none !important;
+}
 :root[data-desktop-preview="true"] .nav-item {
   display: flex;
   align-items: center;
