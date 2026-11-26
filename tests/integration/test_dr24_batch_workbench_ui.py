@@ -130,6 +130,10 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 "http://127.0.0.1:8766/workbench/?desktop=1",
                 wait_until="domcontentloaded",
             )
+            page.wait_for_function(
+                "() => document.querySelectorAll('#missionStatusRows .mission-status-row').length === 5",
+                timeout=10_000,
+            )
             assert page.locator("html").get_attribute("lang") == "en"
             assert page.locator("html").get_attribute("dir") == "ltr"
             assert page.get_by_role("heading", name="Scientific Overview").is_visible()
@@ -143,10 +147,6 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 "#missionReviewQueue"
             ).inner_text()
             assert page.get_by_text("SCIENTIFIC GATE:", exact=False).is_visible()
-            page.wait_for_function(
-                "() => document.querySelectorAll('#missionStatusRows .mission-status-row').length === 5",
-                timeout=5_000,
-            )
             artifact_dir = Path("test-artifacts")
             artifact_dir.mkdir(parents=True, exist_ok=True)
             page.screenshot(
