@@ -563,6 +563,14 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
 
         def run_js(self, script: str) -> None:
             self.scripts.append(script)
+            if self.bridge is not None and "setSplashImageUrl" in script:
+                self.bridge.report_splash_status(
+                    {
+                        "image_loaded": True,
+                        "natural_width": 1536,
+                        "natural_height": 864,
+                    }
+                )
 
         def show(self) -> None:
             self.shown = True
@@ -610,13 +618,6 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
             splash_window.shown = True
             events.append("splash-shown")
             splash_window.events.loaded.fire(splash_window)
-            splash_window.bridge.report_splash_status(
-                {
-                    "image_loaded": True,
-                    "natural_width": 1536,
-                    "natural_height": 864,
-                }
-            )
             func(*args)
 
     class FakeRuntime:
