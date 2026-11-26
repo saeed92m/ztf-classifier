@@ -4,8 +4,8 @@ This evaluation pre-release repairs the Windows desktop startup and WebView2 han
 
 ## Changes in this preview
 
-- Replace splash status updates through `evaluate_js()` with CSP-compatible `run_js()`. The splash CSP remains strict and does not allow `unsafe-eval`.
-- Start backend initialization through the documented pywebview background callback. The startup worker waits for the splash DOM without blocking the GUI loop.
+- Replace splash status updates through `evaluate_js()` with CSP-compatible `run_js()`. The splash CSP remains strict and does not allow `unsafe-eval`. The splash image is no longer embedded in the HTML. It is loaded from the loopback API because WebView2 `NavigateToString` rejects HTML strings larger than 2 MiB.
+- Start backend initialization through the documented pywebview background callback. The startup worker waits for the small splash DOM without blocking the GUI loop, then loads the artwork from the loopback API.
 - Verify that the embedded splash image decodes in WebView2 before continuing.
 - Keep the splash visible until the Workbench reports a ready DOM, a present and visible `#app` root, and non-empty page content.
 - Record frontend JavaScript errors and readiness telemetry in `%LOCALAPPDATA%\\ZTFClassifier\\logs\\desktop.log`.
