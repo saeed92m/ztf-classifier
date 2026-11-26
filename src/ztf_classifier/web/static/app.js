@@ -1444,6 +1444,27 @@ if (desktopMode) {
       button.prepend(symbol);
     }
   });
+  const desktopNavigationOrder = [
+    "desktop-home",
+    "dr24",
+    "workspaces",
+    "catalog",
+    "batch",
+    "sources",
+    "desktop-provenance",
+    "validation",
+    "desktop-export",
+    "desktop-settings",
+    "desktop-help",
+  ];
+  let navigationAnchor = sectionLabels[0];
+  for (const view of desktopNavigationOrder) {
+    const item = document.querySelector('.nav-item[data-view="' + view + '"]');
+    if (item) {
+      navigationAnchor.after(item);
+      navigationAnchor = item;
+    }
+  }
   document.querySelectorAll(".desktop-only").forEach(button => { button.hidden = false; });
   document.querySelector(".sidebar-footer").hidden = true;
   document.querySelector(".inspector").hidden = true;
