@@ -27,6 +27,11 @@
       "source": "PR #318 / fix/windows-webview-startup-rendering-20261126",
       "status": "SUPPORTED",
       "detail": "The repair branch contains CSP-safe splash status updates, explicit GUI startup lifecycle, splash image telemetry, Workbench DOM readiness telemetry, frontend error logging, shortcut icon paths, and a real WebView2 GUI smoke mode."
+    },
+    {
+      "source": "Windows GUI smoke failure, run 45868132070",
+      "status": "VERIFIED",
+      "detail": "The GUI smoke report failed before Splash DOM readiness. The diagnostic desktop log recorded CoreWebView2.NavigateToString throwing 'Value does not fall within the expected range'. The packaged PNG asset is 1,873,208 bytes; base64 encoding expands it to 2,497,612 bytes before HTML markup, exceeding the documented 2 MiB NavigateToString limit."
     }
   ],
   "baseline": {
@@ -81,12 +86,16 @@
       "The Windows workflow on the latest branch head passed 31 desktop runtime/workspace tests, JavaScript syntax, and Ruff checks in its prior attempt; the only failure was a formatting gate, now corrected. A fresh exact-head Windows build and GUI smoke run remains pending.",
       "The repair branch adds --gui-smoke-test. It checks splash DOM readiness, splash image decoding, Workbench DOM readiness, a present and visible #app root, non-empty page text and zero startup JavaScript errors. The Windows workflow runs it on both the frozen build and installed application.",
       "The repair branch adds installed shortcut IconLocation assertions for Desktop and Start Menu.",
-      "The latest workflow run must be checked on the final commit. Earlier green runs cannot be carried forward as exact-head acceptance evidence."
+      "The latest workflow run must be checked on the final commit. Earlier green runs cannot be carried forward as exact-head acceptance evidence.",
+      "The exact failure log from Windows GUI smoke run 45868132070 records `CoreWebView2.NavigateToString(String htmlContent)` throwing `Value does not fall within the expected range`.",
+      "The packaged `ztf-splash.PNG` asset is 1,873,208 bytes. Base64 expansion is 2,497,612 bytes, before adding HTML. This exceeds WebView2 NavigateToString's 2 MiB input limit and explains why the splash document did not reach DOM-ready.",
+      "The repair removes the image data URI from splash HTML. The splash document now loads as a small HTML string, starts the loopback API, then loads `/workbench/ztf-splash.PNG` from the loopback API. The splash CSP permits only the required loopback image origin plus data images."
     ]
   },
   "failure_analysis": {
     "status": "SUPPORTED",
     "root_causes": [
+      "Primary root cause confirmed by the Windows log: the splash PNG (1,873,208 bytes) was base64-embedded in the HTML, expanding to 2,497,612 bytes before markup. WebView2 NavigateToString has a 2 MiB input limit and threw 'Value does not fall within the expected range'. This prevented the splash document from loading and blocked the DOM-ready event.",
       "The splash status update called evaluate_js under a Content Security Policy that excludes unsafe-eval. This is a concrete startup-path incompatibility.",
       "The startup sequence depended on one WebView loaded event to start backend initialization. The prior tests mocked this event and did not prove the real WebView2 lifecycle.",
       "The application treated local HTTP/static asset availability as sufficient readiness. It did not verify that the Workbench DOM rendered or that its application root was visible.",
@@ -97,6 +106,7 @@
   "knowledge_extraction": {
     "status": "SUPPORTED",
     "findings": [
+      "Do not embed large binary images as base64 in HTML passed to WebView2 NavigateToString. Base64 expands data by roughly one third, and NavigateToString has a 2 MiB input limit. Serve large packaged assets through the loopback API or a controlled virtual host mapping.",
       "A passing API/static self-test does not prove that WebView2 created a visible window or rendered the Workbench.",
       "Do not use evaluate_js for splash status updates under a CSP that excludes unsafe-eval. Use the supported run_js path.",
       "Do not make GUI initialization depend only on a WebView loaded event. Run backend startup in the pywebview background callback and coordinate with bounded readiness events.",
@@ -117,7 +127,8 @@
       "Pass NSIS build, silent install/uninstall, Desktop and Start Menu shortcut icon checks, manifest and SHA-256 generation.",
       "Inspect the exact-head build artifact and verify the preview.3 installer checksum before publication.",
       "Install preview.3 on the target Windows machine and verify splash appearance, automatic handoff, visible Workbench, Desktop shortcut icon and Taskbar icon.",
-      "If target-device startup still fails, inspect %LOCALAPPDATA%\\ZTFClassifier\\logs\\desktop.log and desktop-gui-smoke-test.json before making further changes."
+      "If target-device startup still fails, inspect %LOCALAPPDATA%\\ZTFClassifier\\logs\\desktop.log and desktop-gui-smoke-test.json before making further changes.",
+      "Verify the new small splash HTML stays below 2 MiB and the loopback-served splash image decodes in real WebView2."
     ]
   },
   "decision": "REVISE",
