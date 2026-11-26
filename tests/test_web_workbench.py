@@ -82,6 +82,18 @@ def test_workbench_exposes_scientific_validation_dashboard() -> None:
     assert "/v1/scientific-validation" in script.text
 
 
+def test_desktop_mission_control_opens_the_selected_saved_result() -> None:
+    client = TestClient(create_app())
+    response = client.get("/workbench/app.js")
+
+    assert response.status_code == 200
+    assert 'await showView("overview", { result: record })' in response.text
+    assert "async function showView(view, options = {})" in response.text
+    assert "const selectedResult = options.result;" in response.text
+    assert "state.survey = selectedResult.survey || state.survey;" in response.text
+    assert "renderResult(selectedResult);" in response.text
+
+
 def test_desktop_mission_control_dashboard_uses_live_api_evidence() -> None:
     client = TestClient(create_app())
     page = client.get("/workbench/")
