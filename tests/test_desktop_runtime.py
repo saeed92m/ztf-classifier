@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Self
@@ -10,7 +11,6 @@ from fastapi import FastAPI
 
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
-import sys
 
 from ztf_classifier.desktop.main import (
     _build_splash_html,
