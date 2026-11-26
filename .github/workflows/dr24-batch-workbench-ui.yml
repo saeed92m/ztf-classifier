@@ -56,3 +56,12 @@ jobs:
         run: python -m playwright install --with-deps chromium
       - name: Run deterministic batch UI test
         run: python -m pytest -q tests/integration/test_dr24_batch_workbench_ui.py -k "not live"
+
+      - name: Upload rendered Mission Control screenshot
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: mission-control-dashboard-${{ github.sha }}
+          path: test-artifacts/mission-control-dashboard.png
+          if-no-files-found: warn
+          retention-days: 7
