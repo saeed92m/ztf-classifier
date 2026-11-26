@@ -74,7 +74,7 @@ class SplashBridge:
         self._window = window
 
     def report_splash_status(self, status: dict[str, Any]) -> None:
-        """Record whether the embedded splash image decoded in WebView2."""
+        """Record whether the loopback-served splash image decoded in WebView2."""
         self._image_status = {
             "image_loaded": bool(status.get("image_loaded")),
             "natural_width": int(status.get("natural_width", 0) or 0),
