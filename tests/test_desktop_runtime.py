@@ -493,7 +493,18 @@ def test_desktop_bridge_reports_frontend_errors(caplog: pytest.LogCaptureFixture
 
 
 def test_splash_bridge_reports_image_decode_status(caplog: pytest.LogCaptureFixture) -> None:
+    class FakeWindow:
+        destroyed = False
+
+        def destroy(self) -> None:
+            self.destroyed = True
+
     bridge = desktop_main.SplashBridge()
+    fake_window = FakeWindow()
+    bridge.bind_window(fake_window)
+    bridge.close_splash()
+    assert fake_window.destroyed
+
     bridge.report_splash_status({
         "image_loaded": True,
         "natural_width": 1536,
@@ -504,11 +515,15 @@ def test_splash_bridge_reports_image_decode_status(caplog: pytest.LogCaptureFixt
     assert "Splash image status" in caplog.text
 
 
-@pytest.mark.parametrize("api_start_failure", [False, True])
+@pytest.mark.parametrize(
+    ("api_start_failure", "gui_smoke_test"),
+    [(False, False), (True, False), (False, True)],
+)
 def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     api_start_failure: bool,
+    gui_smoke_test: bool,
 ) -> None:
     events: list[str] = []
     statuses: list[tuple[str, bool]] = []
@@ -606,7 +621,11 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
     webview = FakeWebview()
 
     monkeypatch.setattr(desktop_main, "os", SimpleNamespace(name="nt"))
-    monkeypatch.setattr(desktop_main.sys, "argv", ["ZTFClassifier.exe"])
+    monkeypatch.setattr(
+        desktop_main.sys,
+        "argv",
+        ["ZTFClassifier.exe"] + (["--gui-smoke-test"] if gui_smoke_test else []),
+    )
     monkeypatch.setattr(desktop_main, "_load_webview", lambda: webview)
     monkeypatch.setattr(desktop_main, "_get_desktop_asset_path", lambda name: assets[name])
     monkeypatch.setattr(desktop_main, "get_user_data_dir", lambda: tmp_path / "user-data")
@@ -669,5 +688,13 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
         assert splash_window.destroyed
         assert statuses[-1][0].startswith("Local services are ready")
         assert statuses[-1][1] is False
+        if gui_smoke_test:
+            assert main_window.destroyed
+            report_path = tmp_path / "user-data" / "logs" / "desktop-gui-smoke-test.json"
+            report = __import__("json").loads(report_path.read_text(encoding="utf-8"))
+            assert report["status"] == "PASS"
+            assert report["checks"]["splash_image_loaded"] is True
+        else:
+            assert not main_window.destroyed
 
     assert events.count("api-stopped") == 1
