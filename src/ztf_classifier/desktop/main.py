@@ -159,6 +159,7 @@ def _build_splash_html() -> str:
 </body>
 </html>"""
 
+
 def _set_splash_status(window: Any, message: str, *, failed: bool = False) -> None:
     """Update the splash status without inserting untrusted HTML."""
     status = json.dumps(message)
