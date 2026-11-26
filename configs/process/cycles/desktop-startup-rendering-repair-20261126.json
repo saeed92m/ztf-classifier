@@ -46,7 +46,7 @@
   "measurement": {
     "metrics": {
       "correctness": {
-        "status": "PARTIALLY_MEASURED",
+        "status": "NOT_MEASURED",
         "reason": "The installed application's self-test passed 15 checks on the user's machine. The latest repair branch passed 31 desktop runtime tests and the JavaScript syntax check. Actual WebView2 GUI smoke validation remains pending."
       },
       "reliability": {
@@ -54,7 +54,7 @@
         "reason": "No successful exact-head real WebView2 smoke test or target-device post-repair startup has yet been confirmed."
       },
       "reproducibility": {
-        "status": "PARTIALLY_MEASURED",
+        "status": "NOT_MEASURED",
         "reason": "The Windows workflow is configured to emit build and installed GUI smoke reports, manifest and SHA-256 evidence. The latest exact-head workflow must complete before these artifacts are accepted."
       },
       "runtime": {
