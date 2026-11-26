@@ -42,13 +42,7 @@ def _get_desktop_asset_path(asset_name: str) -> Path:
         raise ValueError(f"Unsupported desktop asset: {asset_name}")
     bundle_root = getattr(sys, "_MEIPASS", None)
     if bundle_root:
-        return (
-            Path(bundle_root)
-            / "ztf_classifier"
-            / "web"
-            / "static"
-            / asset_name
-        )
+        return Path(bundle_root) / "ztf_classifier" / "web" / "static" / asset_name
     return Path(__file__).resolve().parents[1] / "web" / "static" / asset_name
 
 
@@ -138,9 +132,7 @@ def _set_splash_status(window: Any, message: str, *, failed: bool = False) -> No
     """Update the splash status without inserting untrusted HTML."""
     status = json.dumps(message)
     failure_state = "true" if failed else "false"
-    window.evaluate_js(
-        f"window.updateStartupStatus({status}, {failure_state});"
-    )
+    window.evaluate_js(f"window.updateStartupStatus({status}, {failure_state});")
 
 
 def _show_error(message: str) -> None:
@@ -314,7 +306,7 @@ def _run_self_test() -> None:
                 if path == "/workbench/" and (
                     b"DR24 Explorer" not in body
                     or b"desktop-bootstrap.js" not in body
-                    or b'./ztf-logo.ico' not in body
+                    or b"./ztf-logo.ico" not in body
                     or b"Content-Security-Policy" not in body
                 ):
                     raise RuntimeError(
