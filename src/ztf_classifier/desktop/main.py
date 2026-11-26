@@ -528,7 +528,7 @@ def main() -> None:
         splash_image = _get_desktop_asset_path("ztf-splash.PNG").read_bytes()
         icon_path = _get_desktop_asset_path("ztf-logo.ico")
         if not icon_path.is_file() or not icon_path.read_bytes().startswith(
-            b"\\x00\\x00\\x01\\x00"
+            b"\x00\x00\x01\x00"
         ):
             raise RuntimeError(
                 "The packaged ZTF Classifier application icon is missing or invalid."
@@ -680,7 +680,7 @@ def main() -> None:
                             },
                             indent=2,
                             sort_keys=True,
-                        ) + "\\n",
+                        ) + "\n",
                         encoding="utf-8",
                     )
                 splash_window.destroy()
@@ -700,7 +700,7 @@ def main() -> None:
                             },
                             indent=2,
                             sort_keys=True,
-                        ) + "\\n",
+                        ) + "\n",
                         encoding="utf-8",
                     )
                 if workbench_window is not None:
@@ -725,13 +725,13 @@ def main() -> None:
                     except Exception:
                         LOGGER.exception("Could not display the startup failure on Splash.")
                         _show_error(
-                            f"ZTF Classifier could not start.\\n\\n{exc}\\n\\n"
+                            f"ZTF Classifier could not start.\n\n{exc}\n\n"
                             f"Diagnostic log: {log_path}"
                         )
                 else:
                     _show_error(
-                        f"ZTF Classifier could not load its startup screen.\\n\\n"
-                        f"{type(exc).__name__}: {exc}\\n\\n"
+                        f"ZTF Classifier could not load its startup screen.\n\n"
+                        f"{type(exc).__name__}: {exc}\n\n"
                         f"Diagnostic log: {log_path}"
                     )
                 if gui_smoke_test:
@@ -769,12 +769,12 @@ def main() -> None:
                     },
                     indent=2,
                     sort_keys=True,
-                ) + "\\n",
+                ) + "\n",
                 encoding="utf-8",
             )
         _show_error(
-            "The ZTF Classifier desktop application could not start.\\n\\n"
-            f"{exc}\\n\\n"
+            "The ZTF Classifier desktop application could not start.\n\n"
+            f"{exc}\n\n"
             "Check the diagnostic log under %LOCALAPPDATA%\\ZTFClassifier\\logs."
         )
         raise SystemExit(1) from exc
