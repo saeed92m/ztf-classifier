@@ -138,6 +138,11 @@ jobs:
           $result = Get-Content $report -Raw | ConvertFrom-Json
           if ($process.ExitCode -ne 0 -or $result.status -ne "PASS") {
             Get-Content $report -Raw
+            $desktopLog = Join-Path $env:LOCALAPPDATA "ZTFClassifier\\logs\\desktop.log"
+            if (Test-Path -LiteralPath $desktopLog) {
+              Write-Host "---- desktop.log (last 200 lines) ----"
+              Get-Content -LiteralPath $desktopLog -Tail 200
+            }
             throw "The real WebView2 GUI smoke test failed (exit code: $($process.ExitCode))."
           }
           Copy-Item -LiteralPath $report -Destination "dist/desktop-gui-smoke-test-build.json" -Force
