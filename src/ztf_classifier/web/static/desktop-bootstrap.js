@@ -13,10 +13,12 @@
   document.documentElement.dir = "ltr";
 
   const pendingErrors = [];
+  const frontendErrors = [];
   let bridgeReady = Boolean(window.pywebview && window.pywebview.api);
   let domReady = document.readyState === "interactive" || document.readyState === "complete";
 
   const sendError = (message) => {
+    frontendErrors.push(message);
     const api = window.pywebview && window.pywebview.api;
     if (bridgeReady && api && typeof api.report_frontend_error === "function") {
       Promise.resolve(api.report_frontend_error(message)).catch(() => {});
@@ -39,7 +41,8 @@
         root && rect && rect.width > 0 && rect.height > 0 &&
         style && style.display !== "none" && style.visibility !== "hidden"
       ),
-      body_text_length: document.body ? document.body.innerText.trim().length : 0
+      body_text_length: document.body ? document.body.innerText.trim().length : 0,
+      frontend_errors: frontendErrors.slice(0, 20)
     };
     Promise.resolve(api.report_frontend_status(status)).catch((error) => {
       sendError("Could not report Workbench DOM status: " + String(error));
