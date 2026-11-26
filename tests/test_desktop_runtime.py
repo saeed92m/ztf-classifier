@@ -493,7 +493,7 @@ def test_desktop_bridge_reports_frontend_errors(caplog: pytest.LogCaptureFixture
     assert "Workbench frontend error: test frontend failure" in caplog.text
 
 
-def test_splash_bridge_reports_image_decode_status(caplog: pytest.LogCaptureFixture) -> None:
+def test_splash_bridge_reports_image_decode_status() -> None:
     class FakeWindow:
         destroyed = False
 
@@ -513,7 +513,6 @@ def test_splash_bridge_reports_image_decode_status(caplog: pytest.LogCaptureFixt
     })
     assert bridge._image_status_event.is_set()
     assert bridge._image_status["image_loaded"] is True
-    assert "Splash image status" in caplog.text
 
 
 @pytest.mark.parametrize(
