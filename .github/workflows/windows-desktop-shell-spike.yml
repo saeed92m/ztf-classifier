@@ -278,6 +278,7 @@ jobs:
           if ($selfTest.ExitCode -ne 0) {
             throw "Installed application self-test reported PASS but exited with code $($selfTest.ExitCode)."
           }
+          $userData = Join-Path $env:LOCALAPPDATA "ZTFClassifier"
           $guiSmokeReport = Join-Path $userData "logs\\desktop-gui-smoke-test.json"
           Remove-Item -LiteralPath $guiSmokeReport -Force -ErrorAction SilentlyContinue
           $guiSmoke = Start-Process -FilePath $installedExe -ArgumentList "--gui-smoke-test" -Wait -PassThru
@@ -290,7 +291,6 @@ jobs:
             throw "Installed application GUI smoke test failed (exit code: $($guiSmoke.ExitCode))."
           }
           Copy-Item -LiteralPath $guiSmokeReport -Destination "dist/desktop-gui-smoke-test-installed.json" -Force
-          $userData = Join-Path $env:LOCALAPPDATA "ZTFClassifier"
           $uninstaller = Join-Path $installDir "Uninstall.exe"
           $uninstall = Start-Process -FilePath $uninstaller -ArgumentList "/S" -Wait -PassThru
           if ($uninstall.ExitCode -ne 0) { throw "Silent uninstall failed: $($uninstall.ExitCode)" }
