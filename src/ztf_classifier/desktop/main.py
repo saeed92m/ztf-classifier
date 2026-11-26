@@ -552,6 +552,7 @@ def main() -> None:
             text_select=False,
             zoomable=False,
         )
+        splash_bridge.bind_window(splash_window)
 
         def mark_splash_loaded(current_window: Any) -> None:
             LOGGER.info("Splash DOM reached the loaded event.")
