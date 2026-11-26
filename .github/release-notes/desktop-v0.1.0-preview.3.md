@@ -1,6 +1,6 @@
 # ZTF Classifier Windows Preview 0.1.0-preview.3
 
-This evaluation pre-release repairs the Windows desktop startup and WebView2 handoff defects reported in preview.2. It adds real WebView2 GUI validation to the Windows build and installed-application checks.
+This evaluation pre-release repairs the Windows desktop startup and WebView2 handoff defects reported in preview.2. The confirmed primary cause was an oversized splash HTML document: the 1,873,208-byte PNG expanded to 2,497,612 bytes when base64-embedded, exceeding WebView2 NavigateToString's 2 MiB input limit. The splash now loads the image from the loopback API after its small HTML document is ready. The release also adds real WebView2 GUI validation to the Windows build and installed-application checks.
 
 ## Changes in this preview
 
