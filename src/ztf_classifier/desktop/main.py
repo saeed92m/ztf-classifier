@@ -37,6 +37,21 @@ class DesktopBridge:
         return self._api_token
 
 
+class SplashBridge:
+    """Expose a controlled close action for the startup splash."""
+
+    def __init__(self) -> None:
+        self._window: Any | None = None
+
+    def bind_window(self, window: Any) -> None:
+        self._window = window
+
+    def close_splash(self) -> None:
+        """Close the splash after a startup failure."""
+        if self._window is not None:
+            self._window.destroy()
+
+
 def _get_desktop_asset_path(asset_name: str) -> Path:
     """Return a path to a bundled desktop asset with a fixed allowlist."""
     allowed_assets = {"ztf-splash.PNG", "ztf-logo.ico"}
@@ -95,6 +110,13 @@ def _build_splash_html(splash_image: bytes) -> str:
       text-align: center;
     }
     .startup-hint.visible { display: block; }
+    .startup-close {
+      display: none; align-self: center; padding: 7px 18px; border: 1px solid #38bdf8;
+      border-radius: 5px; color: #f8fbff; background: #0b3154; font: inherit;
+      cursor: pointer;
+    }
+    .startup-close.visible { display: inline-block; }
+    .startup-close:focus-visible { outline: 2px solid #f8fbff; outline-offset: 3px; }
     @keyframes progress-sweep {
       from { transform: translateX(-105%); }
       to { transform: translateX(360%); }
@@ -114,15 +136,24 @@ def _build_splash_html(splash_image: bytes) -> str:
       <span class="progress-indicator"></span>
     </div>
     <div id="startup-hint" class="startup-hint">
-      Close this window and restart ZTF Classifier.
+      Startup did not complete. Close this window and restart ZTF Classifier.
     </div>
+    <button id="startup-close" class="startup-close" type="button" hidden>Close</button>
   </section>
   <script>
     window.updateStartupStatus = function (message, failed) {
       document.getElementById("startup-status").textContent = String(message);
       document.getElementById("startup-progress").classList.toggle("failed", Boolean(failed));
       document.getElementById("startup-hint").classList.toggle("visible", Boolean(failed));
+      const closeButton = document.getElementById("startup-close");
+      closeButton.hidden = !failed;
+      closeButton.classList.toggle("visible", Boolean(failed));
     };
+    document.getElementById("startup-close").addEventListener("click", function () {
+      if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.close_splash();
+      }
+    });
   </script>
 </body>
 </html>
@@ -416,21 +447,24 @@ def main() -> None:
                 "The packaged ZTF Classifier application icon is missing or invalid."
             )
 
+        splash_bridge = SplashBridge()
         splash_window = webview.create_window(
             "ZTF Classifier",
             html=_build_splash_html(splash_image),
+            js_api=splash_bridge,
             width=768,
             height=512,
             min_size=(768, 512),
             resizable=False,
-            frameless=True,
-            easy_drag=True,
+            frameless=False,
+            easy_drag=False,
             shadow=True,
-            on_top=True,
+            on_top=False,
             background_color="#030b19",
             text_select=False,
             zoomable=False,
         )
+        splash_bridge.bind_window(splash_window)
 
         def start_desktop_session(current_window: Any) -> None:
             nonlocal runtime
