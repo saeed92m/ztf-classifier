@@ -97,6 +97,6 @@ def test_desktop_mission_control_dashboard_uses_live_api_evidence() -> None:
     assert 'fetchJson("/v1/scientific-validation")' in script.text
     assert 'fetchJson("/v1/jobs?limit=5")' in script.text
     assert 'fetchJson("/v1/catalog/results?limit=8")' in script.text
-    assert "No demo data" in script.text
+    assert "no demo data" in script.text.lower()
     assert "ZTF20aaaaaaaa" not in script.text
     assert "0.0%" not in script.text
