@@ -118,14 +118,6 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
-            page = browser.new_page()
-            page.add_init_script(
-                "window.pywebview = {api: {}};"
-                "window.setTimeout(() => {"
-                "window.pywebview.api.get_api_token = () => Promise.resolve('test-only-token');"
-                "window.dispatchEvent(new Event('pywebviewready'));"
-                "}, 50);"
-            )
             page = browser.new_page(viewport={"width": 1600, "height": 1000})
             page.add_init_script(
                 "window.pywebview = {api: {}};"
