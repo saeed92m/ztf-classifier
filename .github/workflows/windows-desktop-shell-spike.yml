@@ -329,7 +329,7 @@ jobs:
           $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "dist/desktop-build-manifest.json"
 
       - name: Upload Windows preview installer and evidence
-        if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (startsWith(github.head_ref, 'feat/park-') || startsWith(github.head_ref, 'fix/windows-'))) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (startsWith(github.head_ref, 'feat/park-') || startsWith(github.head_ref, 'fix/windows-') || startsWith(github.head_ref, 'feat/desktop-'))) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         uses: actions/upload-artifact@v6
         with:
           name: ztf-classifier-windows-preview-${{ github.sha }}
