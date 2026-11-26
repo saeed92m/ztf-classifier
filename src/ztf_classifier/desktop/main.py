@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-import base64
 import ctypes
 import json
 import logging
 import os
 import secrets
 import sys
+import threading
 from collections.abc import Callable
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError
@@ -31,20 +32,56 @@ class DesktopBridge:
 
     def __init__(self, api_token: str) -> None:
         self._api_token = api_token
+        self._frontend_status: dict[str, Any] | None = None
+        self._frontend_status_event = threading.Event()
+        self._frontend_errors: list[str] = []
 
     def get_api_token(self) -> str:
         """Return the in-memory token to the local desktop WebView."""
         return self._api_token
 
+    def report_frontend_error(self, message: str) -> None:
+        """Record a bounded JavaScript error from the trusted local Workbench."""
+        safe_message = str(message)[:2000]
+        self._frontend_errors.append(safe_message)
+        LOGGER.error("Workbench frontend error: %s", safe_message)
+
+    def report_frontend_status(self, status: dict[str, Any]) -> None:
+        """Record the DOM and visible-root status reported by the Workbench."""
+        self._frontend_status = {
+            "title": str(status.get("title", ""))[:200],
+            "app_root_present": bool(status.get("app_root_present")),
+            "app_root_visible": bool(status.get("app_root_visible")),
+            "body_text_length": int(status.get("body_text_length", 0) or 0),
+            "frontend_errors": [
+                str(message)[:2000]
+                for message in status.get("frontend_errors", [])[:20]
+            ],
+        }
+        self._frontend_status_event.set()
+        LOGGER.info("Workbench frontend status: %s", self._frontend_status)
+
 
 class SplashBridge:
-    """Expose a controlled close action for the startup splash."""
+    """Expose controlled startup status and close actions for the splash."""
 
     def __init__(self) -> None:
         self._window: Any | None = None
+        self._image_status: dict[str, Any] | None = None
+        self._image_status_event = threading.Event()
 
     def bind_window(self, window: Any) -> None:
         self._window = window
+
+    def report_splash_status(self, status: dict[str, Any]) -> None:
+        """Record whether the loopback-served splash image decoded in WebView2."""
+        self._image_status = {
+            "image_loaded": bool(status.get("image_loaded")),
+            "natural_width": int(status.get("natural_width", 0) or 0),
+            "natural_height": int(status.get("natural_height", 0) or 0),
+        }
+        self._image_status_event.set()
+        LOGGER.info("Splash image status: %s", self._image_status)
 
     def close_splash(self) -> None:
         """Close the splash after a startup failure."""
@@ -63,109 +100,100 @@ def _get_desktop_asset_path(asset_name: str) -> Path:
     return Path(__file__).resolve().parents[1] / "web" / "static" / asset_name
 
 
-def _build_splash_html(splash_image: bytes) -> str:
-    """Build a self-contained splash page with an indeterminate progress bar."""
-    png_signature = b"\x89PNG\r\n\x1a\n"
-    if not splash_image.startswith(png_signature):
+def _validate_splash_asset(splash_image: bytes) -> None:
+    """Validate the packaged splash image without embedding it in HTML."""
+    if not splash_image.startswith(b"\x89PNG\r\n\x1a\n"):
         raise ValueError("The desktop splash asset is not a valid PNG file.")
 
-    encoded_image = base64.b64encode(splash_image).decode("ascii")
-    template = """<!doctype html>
+
+def _build_splash_html() -> str:
+    """Build a small placeholder page before the local API is ready."""
+    return """<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'">
+        content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'">
   <title>ZTF Classifier — Starting</title>
   <style>
     * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #030b19; }
-    body { position: relative; color: #f8fbff; font-family: "Segoe UI", Arial, sans-serif; }
-    .mission-art { display: block; width: 100%; height: 100%; object-fit: contain; }
-    .startup-panel {
-      position: absolute; left: 23.5%; right: 23.5%; top: 51.5%; height: 13%;
-      display: flex; flex-direction: column; justify-content: center; gap: 13px;
-      padding: 6px 10px; border-radius: 8px;
-      background: rgba(2, 10, 27, .94);
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: #f5f7fb;
+      background: radial-gradient(circle at 50% 35%, #17304c 0, #081321 55%, #030811 100%);
+      font-family: "Segoe UI", Arial, sans-serif;
     }
-    .startup-status {
-      min-height: 22px; display: flex; align-items: center; justify-content: center;
-      text-align: center; font-size: clamp(11px, 2vw, 16px); line-height: 1.3;
-      overflow-wrap: anywhere;
+    main { width: min(560px, 84vw); text-align: center; }
+    .mark { color: #e4bd69; font-size: 12px; letter-spacing: .28em; }
+    h1 { margin: 18px 0 10px; font-size: clamp(22px, 3vw, 34px); letter-spacing: .18em; }
+    p { min-height: 24px; color: #b9c7d7; font-size: 13px; }
+    .track { height: 3px; overflow: hidden; background: #26394e; }
+    .track span {
+      display: block;
+      width: 35%;
+      height: 100%;
+      background: linear-gradient(90deg, #55d5e8, #e4bd69);
+      animation: sweep 1.4s ease-in-out infinite;
     }
-    .progress-track {
-      height: 7px; width: 100%; overflow: hidden; border: 1px solid #27b7ef;
-      border-radius: 99px; background: #071a35;
-    }
-    .progress-indicator {
-      display: block; width: 28%; height: 100%; border-radius: inherit;
-      background: linear-gradient(90deg, #087de0, #31d7ff, #087de0);
-      animation: progress-sweep 1.6s ease-in-out infinite alternate;
-    }
-    .progress-track.failed { border-color: #f87171; }
-    .progress-track.failed .progress-indicator { display: none; }
-    .startup-hint {
-      display: none; color: #fca5a5; font-size: 11px; line-height: 1.35;
-      text-align: center;
-    }
-    .startup-hint.visible { display: block; }
-    .startup-close {
-      display: none; align-self: center; padding: 7px 18px; border: 1px solid #38bdf8;
-      border-radius: 5px; color: #f8fbff; background: #0b3154; font: inherit;
-      cursor: pointer;
-    }
-    .startup-close.visible { display: inline-block; }
-    .startup-close:focus-visible { outline: 2px solid #f8fbff; outline-offset: 3px; }
-    @keyframes progress-sweep {
-      from { transform: translateX(-105%); }
-      to { transform: translateX(360%); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .progress-indicator { animation: none; transform: translateX(120%); }
-    }
+    @keyframes sweep { from { transform: translateX(-110%); } to { transform: translateX(310%); } }
   </style>
 </head>
 <body>
-  <img class="mission-art" src="data:image/png;base64,__SPLASH_IMAGE__" alt="">
-  <section class="startup-panel" aria-label="Application startup">
-    <div id="startup-status" class="startup-status" role="status" aria-live="polite">
-      Preparing desktop session…
-    </div>
-    <div id="startup-progress" class="progress-track" aria-label="Startup in progress">
-      <span class="progress-indicator"></span>
-    </div>
-    <div id="startup-hint" class="startup-hint">
-      Startup did not complete. Close this window and restart ZTF Classifier.
-    </div>
-    <button id="startup-close" class="startup-close" type="button" hidden>Close</button>
-  </section>
+  <main>
+    <div class="mark">SCIENTIFIC MISSION CONTROL</div>
+    <h1>ZTF CLASSIFIER</h1>
+    <p id="startup-status">Starting desktop services…</p>
+    <div class="track"><span></span></div>
+  </main>
   <script>
     window.updateStartupStatus = function (message, failed) {
-      document.getElementById("startup-status").textContent = String(message);
-      document.getElementById("startup-progress").classList.toggle("failed", Boolean(failed));
-      document.getElementById("startup-hint").classList.toggle("visible", Boolean(failed));
-      const closeButton = document.getElementById("startup-close");
-      closeButton.hidden = !failed;
-      closeButton.classList.toggle("visible", Boolean(failed));
+      const status = document.getElementById("startup-status");
+      status.textContent = message;
+      status.dataset.failed = failed ? "true" : "false";
     };
-    document.getElementById("startup-close").addEventListener("click", function () {
-      if (window.pywebview && window.pywebview.api) {
-        window.pywebview.api.close_splash();
-      }
-    });
   </script>
 </body>
-</html>
-"""
-    return template.replace("__SPLASH_IMAGE__", encoded_image)
+</html>"""
 
 
 def _set_splash_status(window: Any, message: str, *, failed: bool = False) -> None:
     """Update the splash status without inserting untrusted HTML."""
     status = json.dumps(message)
     failure_state = "true" if failed else "false"
-    window.evaluate_js(f"window.updateStartupStatus({status}, {failure_state});")
+    # run_js executes the script directly. evaluate_js uses eval and is blocked
+    # by the deliberately strict splash CSP (which does not allow unsafe-eval).
+    window.run_js(f"window.updateStartupStatus({status}, {failure_state});")
+
+
+def _configure_desktop_logging(user_data_dir: Path) -> Path:
+    """Create a bounded per-user diagnostic log for desktop startup."""
+    log_dir = user_data_dir / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "desktop.log"
+    root_logger = logging.getLogger()
+    if not any(
+        isinstance(handler, RotatingFileHandler)
+        and Path(handler.baseFilename) == log_path
+        for handler in root_logger.handlers
+    ):
+        handler = RotatingFileHandler(
+            log_path,
+            maxBytes=2 * 1024 * 1024,
+            backupCount=3,
+            encoding="utf-8",
+        )
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+        )
+        root_logger.addHandler(handler)
+    root_logger.setLevel(logging.INFO)
+    logging.getLogger("pywebview").setLevel(logging.DEBUG)
+    LOGGER.info("Desktop diagnostics initialized.")
+    return log_path
 
 
 def _show_error(message: str) -> None:
@@ -329,6 +357,7 @@ def _run_self_test() -> None:
             "/workbench/app.js",
             "/workbench/desktop-bootstrap.js",
             "/workbench/styles.css",
+            "/workbench/desktop-splash.html",
             "/workbench/ztf-splash.PNG",
             "/workbench/ztf-logo.ico",
         ):
@@ -344,6 +373,14 @@ def _run_self_test() -> None:
                 ):
                     raise RuntimeError(
                         "The packaged desktop Workbench HTML is incomplete."
+                    )
+                if path == "/workbench/desktop-splash.html" and (
+                    b"img-src 'self'" not in body
+                    or b'src="ztf-splash.PNG"' not in body
+                    or b"report_splash_status" not in body
+                ):
+                    raise RuntimeError(
+                        "The packaged desktop splash page is incomplete."
                     )
                 if path == "/workbench/app.js" and b"desktop-home" not in body:
                     raise RuntimeError(
@@ -421,15 +458,23 @@ def _run_self_test() -> None:
 
 
 def main() -> None:
-    """Start the private API, then open the standalone Windows window."""
+    """Start the splash, initialize services off the GUI thread, then show Workbench."""
     if os.name != "nt":
         raise SystemExit("The first desktop preview supports Windows only.")
     if "--self-test" in sys.argv[1:]:
         _run_self_test()
         return
+    gui_smoke_test = "--gui-smoke-test" in sys.argv[1:]
 
     runtime: LocalApiServer | None = None
+    gui_smoke_report_path: Path | None = None
     try:
+        user_data = get_user_data_dir()
+        log_path = _configure_desktop_logging(user_data)
+        if gui_smoke_test:
+            gui_smoke_report_path = log_path.parent / "desktop-gui-smoke-test.json"
+        LOGGER.info("Starting ZTF Classifier desktop application.")
+
         webview = _load_webview()
         webview.settings["ALLOW_DOWNLOADS"] = True
         webview.settings["ALLOW_FILE_URLS"] = False
@@ -437,8 +482,8 @@ def main() -> None:
         webview.settings["OPEN_DEVTOOLS_IN_DEBUG"] = False
         webview.settings["REMOTE_DEBUGGING_PORT"] = None
 
-        user_data = get_user_data_dir()
         splash_image = _get_desktop_asset_path("ztf-splash.PNG").read_bytes()
+        _validate_splash_asset(splash_image)
         icon_path = _get_desktop_asset_path("ztf-logo.ico")
         if not icon_path.is_file() or not icon_path.read_bytes().startswith(
             b"\x00\x00\x01\x00"
@@ -447,10 +492,12 @@ def main() -> None:
                 "The packaged ZTF Classifier application icon is missing or invalid."
             )
 
+        LOGGER.info("Creating the splash window with the EdgeChromium backend.")
+        splash_loaded = threading.Event()
         splash_bridge = SplashBridge()
         splash_window = webview.create_window(
             "ZTF Classifier",
-            html=_build_splash_html(splash_image),
+            html=_build_splash_html(),
             js_api=splash_bridge,
             width=768,
             height=512,
@@ -465,10 +512,26 @@ def main() -> None:
             zoomable=False,
         )
         splash_bridge.bind_window(splash_window)
+        LOGGER.info("Splash window created. Starting the WebView GUI loop.")
 
-        def start_desktop_session(current_window: Any) -> None:
+        def mark_splash_loaded(*_args: Any) -> None:
+            LOGGER.info("Splash DOM reached the loaded event.")
+            splash_loaded.set()
+
+        splash_window.events.loaded += mark_splash_loaded
+
+        def start_desktop_session(
+            current_window: Any,
+            ready_event: threading.Event,
+        ) -> None:
             nonlocal runtime
+            workbench_window: Any | None = None
             try:
+                LOGGER.info("Desktop bootstrap worker started.")
+                if not ready_event.wait(timeout=25):
+                    raise RuntimeError(
+                        "The splash page did not reach DOM-ready state within 25 seconds."
+                    )
                 _set_splash_status(
                     splash_window,
                     "Preparing local workspace and application settings…",
@@ -483,15 +546,34 @@ def main() -> None:
                 )
                 runtime = LocalApiServer(app)
                 base_url = runtime.start()
+                LOGGER.info("Private local API is ready at %s.", base_url)
+
+                splash_page_url = f"{base_url}/workbench/desktop-splash.html"
+                LOGGER.info("Loading the static splash page from the local API.")
+                # The splash contains no navigation controls. Keep native WebView2
+                # event wiring on the Workbench's before_show UI-thread callback;
+                # accessing CoreWebView2 from this bootstrap worker is not safe.
+                splash_window.load_url(splash_page_url)
+                if not splash_bridge._image_status_event.wait(timeout=15):
+                    raise RuntimeError(
+                        "The static splash page did not report its image load status."
+                    )
+                splash_image_status = splash_bridge._image_status or {}
+                if not splash_image_status.get("image_loaded"):
+                    raise RuntimeError(
+                        "The splash image did not decode from the static splash page."
+                    )
 
                 _set_splash_status(
                     splash_window,
                     "Local services are ready. Opening the Workbench…",
                 )
-                window = webview.create_window(
+                workbench_loaded = threading.Event()
+                desktop_bridge = DesktopBridge(token)
+                workbench_window = webview.create_window(
                     "ZTF Classifier — Scientific Workbench",
                     url=f"{base_url}/workbench/?desktop=1",
-                    js_api=DesktopBridge(token),
+                    js_api=desktop_bridge,
                     width=1360,
                     height=900,
                     min_size=(1024, 700),
@@ -500,24 +582,110 @@ def main() -> None:
                     zoomable=False,
                     hidden=True,
                 )
-                if window is None:
+                if workbench_window is None:
                     raise RuntimeError("The Workbench window could not be created.")
 
-                window.events.closed += runtime.stop
+                workbench_window.events.closed += runtime.stop
 
                 def install_navigation_guard(current_window: Any) -> None:
+                    LOGGER.info("Installing the WebView2 navigation guard.")
                     _install_navigation_guard(current_window, base_url)
 
-                def dismiss_splash(current_window: Any) -> None:
-                    try:
-                        splash_window.destroy()
-                    except Exception:
-                        LOGGER.exception("Could not close the desktop splash window.")
+                def mark_workbench_loaded(*_args: Any) -> None:
+                    LOGGER.info("Workbench DOM reached the loaded event.")
+                    workbench_loaded.set()
 
-                window.events.before_show += install_navigation_guard
-                window.events.loaded += dismiss_splash
-                window.show()
-            except Exception as exc:  # noqa: BLE001 - keep startup errors visible in the splash window
+                workbench_window.events.before_show += install_navigation_guard
+                workbench_window.events.loaded += mark_workbench_loaded
+                workbench_window.show()
+
+                if not workbench_loaded.wait(timeout=45):
+                    raise RuntimeError(
+                        "The Workbench did not reach DOM-ready state within 45 seconds."
+                    )
+
+                if not desktop_bridge._frontend_status_event.wait(timeout=15):
+                    raise RuntimeError(
+                        "The Workbench did not report its DOM status through the desktop bridge."
+                    )
+                frontend_status = desktop_bridge._frontend_status or {}
+                if (
+                    not frontend_status.get("app_root_present")
+                    or not frontend_status.get("app_root_visible")
+                    or frontend_status.get("body_text_length", 0) <= 0
+                ):
+                    raise RuntimeError(
+                        "The Workbench DOM loaded, but its application root is missing or not visible."
+                    )
+                frontend_errors = (
+                    frontend_status.get("frontend_errors", [])
+                    + desktop_bridge._frontend_errors
+                )
+                if frontend_errors:
+                    raise RuntimeError(
+                        "The Workbench reported a JavaScript startup error: "
+                        + frontend_errors[0]
+                    )
+
+                LOGGER.info(
+                    "Workbench DOM and visible application root verified. "
+                    "Closing splash after successful handoff."
+                )
+                if gui_smoke_test and gui_smoke_report_path is not None:
+                    gui_smoke_report_path.write_text(
+                        json.dumps(
+                            {
+                                "schema_version": "ztf-desktop-gui-smoke-v1",
+                                "status": "PASS",
+                                "checks": {
+                                    "splash_dom_ready": True,
+                                    "splash_image_loaded": splash_image_status[
+                                        "image_loaded"
+                                    ],
+                                    "workbench_dom_ready": True,
+                                    "app_root_present": frontend_status[
+                                        "app_root_present"
+                                    ],
+                                    "app_root_visible": frontend_status[
+                                        "app_root_visible"
+                                    ],
+                                    "frontend_errors": len(frontend_errors),
+                                },
+                                "frontend_status": frontend_status,
+                                "error": None,
+                            },
+                            indent=2,
+                            sort_keys=True,
+                        )
+                        + "\n",
+                        encoding="utf-8",
+                    )
+                splash_window.destroy()
+                if gui_smoke_test:
+                    workbench_window.destroy()
+            except Exception as exc:
+                LOGGER.exception("Desktop startup failed.")
+                if gui_smoke_test and gui_smoke_report_path is not None:
+                    gui_smoke_report_path.parent.mkdir(parents=True, exist_ok=True)
+                    gui_smoke_report_path.write_text(
+                        json.dumps(
+                            {
+                                "schema_version": "ztf-desktop-gui-smoke-v1",
+                                "status": "FAIL",
+                                "checks": {},
+                                "error": f"{type(exc).__name__}: {exc}",
+                            },
+                            indent=2,
+                            sort_keys=True,
+                        )
+                        + "\n",
+                        encoding="utf-8",
+                    )
+                if workbench_window is not None:
+                    try:
+                        workbench_window.destroy()
+                    except Exception:
+                        LOGGER.exception("Could not close the failed Workbench window.")
                 if runtime is not None:
                     try:
                         runtime.stop()
@@ -526,31 +694,76 @@ def main() -> None:
                             "Could not stop the local API after startup failure."
                         )
                     runtime = None
-                try:
-                    _set_splash_status(
-                        splash_window,
-                        f"Startup failed: {type(exc).__name__}: {exc}",
-                        failed=True,
+                if splash_loaded.is_set():
+                    try:
+                        _set_splash_status(
+                            splash_window,
+                            f"Startup failed: {type(exc).__name__}: {exc}. "
+                            f"Diagnostic log: {log_path}",
+                            failed=True,
+                        )
+                    except Exception:
+                        LOGGER.exception(
+                            "Could not display the startup failure on Splash."
+                        )
+                        if not gui_smoke_test:
+                            _show_error(
+                                f"ZTF Classifier could not start.\n\n{exc}\n\n"
+                                f"Diagnostic log: {log_path}"
+                            )
+                elif not gui_smoke_test:
+                    _show_error(
+                        f"ZTF Classifier could not load its startup screen.\n\n"
+                        f"{type(exc).__name__}: {exc}\n\n"
+                        f"Diagnostic log: {log_path}"
                     )
-                except Exception:
-                    LOGGER.exception(
-                        "Could not display the startup failure on the splash."
-                    )
+                if gui_smoke_test:
+                    try:
+                        splash_window.destroy()
+                    except Exception:
+                        LOGGER.exception("Could not close the GUI smoke-test splash.")
 
-        splash_window.events.loaded += start_desktop_session
+        # The documented pywebview start callback runs backend work on a
+        # background thread. Splash rendering is observed, not used as the
+        # only trigger for starting the application.
+        LOGGER.info("Calling pywebview.start().")
         webview.start(
+            func=start_desktop_session,
+            args=(splash_window, splash_loaded),
             gui="edgechromium",
             debug=False,
             private_mode=True,
             storage_path=str(user_data / "webview"),
         )
+        LOGGER.info("pywebview.start() returned.")
+        if gui_smoke_test and gui_smoke_report_path is not None:
+            report = json.loads(gui_smoke_report_path.read_text(encoding="utf-8"))
+            if report.get("status") != "PASS":
+                raise SystemExit(1)
     except Exception as exc:
-        _show_error(
-            "The ZTF Classifier desktop application could not start.\n\n"
-            f"{exc}\n\n"
-            "Check that Microsoft Edge WebView2 Runtime is installed. "
-            "The application did not switch to an external browser."
-        )
+        LOGGER.exception("The desktop GUI could not start.")
+        if gui_smoke_test and gui_smoke_report_path is not None:
+            gui_smoke_report_path.parent.mkdir(parents=True, exist_ok=True)
+            gui_smoke_report_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "ztf-desktop-gui-smoke-v1",
+                        "status": "FAIL",
+                        "checks": {},
+                        "error": f"{type(exc).__name__}: {exc}",
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+        if not gui_smoke_test:
+            _show_error(
+                "The ZTF Classifier desktop application could not start.\n\n"
+                f"{exc}\n\n"
+                "Check the diagnostic log under %LOCALAPPDATA%\\ZTFClassifier\\logs."
+            )
         raise SystemExit(1) from exc
     finally:
         if runtime is not None:

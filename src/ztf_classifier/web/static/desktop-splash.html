@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>ZTF Classifier — Starting</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #030b19; }
+    body { position: relative; color: #f8fbff; font-family: "Segoe UI", Arial, sans-serif; }
+    .mission-art { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .startup-panel {
+      position: absolute; left: 23.5%; right: 23.5%; top: 51.5%; height: 13%;
+      display: flex; flex-direction: column; justify-content: center; gap: 13px;
+      padding: 6px 10px; border-radius: 8px;
+      background: rgba(2, 10, 27, .94);
+    }
+    .startup-status {
+      min-height: 22px; display: flex; align-items: center; justify-content: center;
+      text-align: center; font-size: clamp(11px, 2vw, 16px); line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+    .progress-track {
+      height: 7px; width: 100%; overflow: hidden; border: 1px solid #27b7ef;
+      border-radius: 99px; background: #071a35;
+    }
+    .progress-indicator {
+      display: block; width: 28%; height: 100%; border-radius: inherit;
+      background: linear-gradient(90deg, #087de0, #31d7ff, #087de0);
+      animation: progress-sweep 1.6s ease-in-out infinite alternate;
+    }
+    .progress-track.failed { border-color: #f87171; }
+    .progress-track.failed .progress-indicator { display: none; }
+    .startup-hint {
+      display: none; color: #fca5a5; font-size: 11px; line-height: 1.35;
+      text-align: center;
+    }
+    .startup-hint.visible { display: block; }
+    .startup-close {
+      display: none; align-self: center; padding: 7px 18px; border: 1px solid #38bdf8;
+      border-radius: 5px; color: #f8fbff; background: #0b3154; font: inherit;
+      cursor: pointer;
+    }
+    .startup-close.visible { display: inline-block; }
+    .startup-close:focus-visible { outline: 2px solid #f8fbff; outline-offset: 3px; }
+    @keyframes progress-sweep {
+      from { transform: translateX(-105%); }
+      to { transform: translateX(360%); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .progress-indicator { animation: none; transform: translateX(120%); }
+    }
+  </style>
+</head>
+<body>
+  <img class="mission-art" src="ztf-splash.PNG" alt="">
+  <section class="startup-panel" aria-label="Application startup">
+    <div id="startup-status" class="startup-status" role="status" aria-live="polite">
+      Preparing desktop session…
+    </div>
+    <div id="startup-progress" class="progress-track" aria-label="Startup in progress">
+      <span class="progress-indicator"></span>
+    </div>
+    <div id="startup-hint" class="startup-hint">
+      Startup did not complete. Close this window and restart ZTF Classifier.
+    </div>
+    <button id="startup-close" class="startup-close" type="button" hidden>Close</button>
+  </section>
+  <script>
+    window.updateStartupStatus = function (message, failed) {
+      document.getElementById("startup-status").textContent = String(message);
+      document.getElementById("startup-progress").classList.toggle("failed", Boolean(failed));
+      document.getElementById("startup-hint").classList.toggle("visible", Boolean(failed));
+      const closeButton = document.getElementById("startup-close");
+      closeButton.hidden = !failed;
+      closeButton.classList.toggle("visible", Boolean(failed));
+    };
+    const splashImage = document.querySelector(".mission-art");
+    let splashBridgeReady = Boolean(window.pywebview && window.pywebview.api);
+    const reportSplashImage = function () {
+      if (
+        !splashBridgeReady ||
+        !splashImage.complete
+      ) return;
+      window.pywebview.api.report_splash_status({
+        image_loaded: splashImage.naturalWidth > 0 && splashImage.naturalHeight > 0,
+        natural_width: splashImage.naturalWidth,
+        natural_height: splashImage.naturalHeight
+      });
+    };
+    splashImage.addEventListener("load", reportSplashImage, { once: true });
+    splashImage.addEventListener("error", reportSplashImage, { once: true });
+    window.addEventListener("pywebviewready", function () {
+      splashBridgeReady = true;
+      reportSplashImage();
+    }, { once: true });
+    if (splashBridgeReady) reportSplashImage();
+
+    document.getElementById("startup-close").addEventListener("click", function () {
+      if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.close_splash();
+      }
+    });
+  </script>
+</body>
+</html>

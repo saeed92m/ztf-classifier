@@ -11,12 +11,12 @@ Unicode true
 !cd "..\.."
 
 !define PRODUCT_NAME "ZTF Classifier"
-!define PRODUCT_VERSION "0.1.0-preview.2"
+!define PRODUCT_VERSION "0.1.0-preview.3"
 !define PRODUCT_PUBLISHER "Pishgaman Novandish Fanavargostar Keyhan"
 !define WEBVIEW2_CLIENT_ID "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
 
 Name "${PRODUCT_NAME}"
-OutFile "dist\ZTFClassifier-0.1.0-preview.2-Setup.exe"
+OutFile "dist\ZTFClassifier-0.1.0-preview.3-Setup.exe"
 InstallDir "$LOCALAPPDATA\Programs\ZTFClassifier"
 InstallDirRegKey HKCU "Software\ZTFClassifier" "InstallDir"
 RequestExecutionLevel user
@@ -24,7 +24,7 @@ SetCompressor /SOLID lzma
 ShowInstDetails show
 ShowUninstDetails show
 
-VIProductVersion "0.1.0.2"
+VIProductVersion "0.1.0.3"
 VIAddVersionKey "ProductName" "${PRODUCT_NAME}"
 VIAddVersionKey "ProductVersion" "${PRODUCT_VERSION}"
 VIAddVersionKey "FileDescription" "ZTF Classifier Windows experimental desktop"
@@ -88,8 +88,8 @@ Section "Application" SEC_APPLICATION
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
   CreateDirectory "$SMPROGRAMS\ZTF Classifier"
-  CreateShortcut "$SMPROGRAMS\ZTF Classifier\ZTF Classifier.lnk" "$INSTDIR\ZTFClassifier.exe"
-  CreateShortcut "$DESKTOP\ZTF Classifier.lnk" "$INSTDIR\ZTFClassifier.exe"
+  CreateShortcut "$SMPROGRAMS\ZTF Classifier\ZTF Classifier.lnk" "$INSTDIR\ZTFClassifier.exe" "" "$INSTDIR\ZTFClassifier.exe" 0
+  CreateShortcut "$DESKTOP\ZTF Classifier.lnk" "$INSTDIR\ZTFClassifier.exe" "" "$INSTDIR\ZTFClassifier.exe" 0
 
   WriteRegStr HKCU "Software\ZTFClassifier" "InstallDir" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier" "DisplayName" "${PRODUCT_NAME}"
