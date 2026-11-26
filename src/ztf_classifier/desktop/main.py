@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import ctypes
 import json
+import logging
 import os
 import secrets
 import sys
@@ -482,8 +483,8 @@ def main() -> None:
                 def dismiss_splash(current_window: Any) -> None:
                     try:
                         splash_window.destroy()
-                    except Exception:
-                        pass
+                    except Exception:  # noqa: BLE001 - closing the splash must not interrupt the Workbench
+                        logging.exception("Could not close the desktop splash window.")
 
                 window.events.before_show += install_navigation_guard
                 window.events.loaded += dismiss_splash
@@ -492,8 +493,8 @@ def main() -> None:
                 if runtime is not None:
                     try:
                         runtime.stop()
-                    except Exception:
-                        pass
+                    except Exception:  # noqa: BLE001 - keep the original startup error visible
+                        logging.exception("Could not stop the local API after startup failure.")
                     runtime = None
                 try:
                     _set_splash_status(
@@ -501,8 +502,8 @@ def main() -> None:
                         f"Startup failed: {type(exc).__name__}: {exc}",
                         failed=True,
                     )
-                except Exception:
-                    pass
+                except Exception:  # noqa: BLE001 - record failure to update the splash
+                    logging.exception("Could not display the startup failure on the splash.")
 
         splash_window.events.loaded += start_desktop_session
         webview.start(

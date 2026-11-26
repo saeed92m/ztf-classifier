@@ -11,7 +11,6 @@ from fastapi import FastAPI
 
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
-
 from ztf_classifier.desktop.main import (
     _build_splash_html,
     _get_desktop_asset_path,
