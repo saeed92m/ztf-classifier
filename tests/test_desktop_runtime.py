@@ -477,17 +477,21 @@ def test_set_splash_status_uses_run_js_not_eval() -> None:
     assert "API ready" in calls[0]
 
 
-def test_desktop_bridge_reports_frontend_errors(caplog: pytest.LogCaptureFixture) -> None:
+def test_desktop_bridge_reports_frontend_errors(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     bridge = desktop_main.DesktopBridge("test-token")
     assert bridge.get_api_token() == "test-token"
     bridge.report_frontend_error("test frontend failure")
-    bridge.report_frontend_status({
-        "title": "ZTF Classifier — Scientific Workbench",
-        "app_root_present": True,
-        "app_root_visible": True,
-        "body_text_length": 100,
-        "frontend_errors": [],
-    })
+    bridge.report_frontend_status(
+        {
+            "title": "ZTF Classifier — Scientific Workbench",
+            "app_root_present": True,
+            "app_root_visible": True,
+            "body_text_length": 100,
+            "frontend_errors": [],
+        }
+    )
     assert bridge._frontend_status_event.is_set()
     assert bridge._frontend_status["app_root_visible"] is True
     assert "Workbench frontend error: test frontend failure" in caplog.text
@@ -506,11 +510,13 @@ def test_splash_bridge_reports_image_decode_status() -> None:
     bridge.close_splash()
     assert fake_window.destroyed
 
-    bridge.report_splash_status({
-        "image_loaded": True,
-        "natural_width": 1536,
-        "natural_height": 864,
-    })
+    bridge.report_splash_status(
+        {
+            "image_loaded": True,
+            "natural_width": 1536,
+            "natural_height": 864,
+        }
+    )
     assert bridge._image_status_event.is_set()
     assert bridge._image_status["image_loaded"] is True
 
@@ -556,13 +562,17 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
             self.shown = True
             self.events.before_show.fire(self)
             self.events.loaded.fire(self)
-            if self.bridge is not None and hasattr(self.bridge, "report_frontend_status"):
-                self.bridge.report_frontend_status({
-                    "title": "ZTF Classifier — Scientific Workbench",
-                    "app_root_present": True,
-                    "app_root_visible": True,
-                    "body_text_length": 100,
-                })
+            if self.bridge is not None and hasattr(
+                self.bridge, "report_frontend_status"
+            ):
+                self.bridge.report_frontend_status(
+                    {
+                        "title": "ZTF Classifier — Scientific Workbench",
+                        "app_root_present": True,
+                        "app_root_visible": True,
+                        "body_text_length": 100,
+                    }
+                )
 
         def destroy(self) -> None:
             self.destroyed = True
@@ -584,7 +594,9 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
             events.append(f"window-created:{title}")
             return window
 
-        def start(self, func: Callable[..., Any], args: tuple[Any, ...], **kwargs: Any) -> None:
+        def start(
+            self, func: Callable[..., Any], args: tuple[Any, ...], **kwargs: Any
+        ) -> None:
             self.start_callback = func
             self.start_args = args
             self.start_arguments = kwargs
@@ -592,11 +604,13 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
             splash_window.shown = True
             events.append("splash-shown")
             splash_window.events.loaded.fire(splash_window)
-            splash_window.bridge.report_splash_status({
-                "image_loaded": True,
-                "natural_width": 1536,
-                "natural_height": 864,
-            })
+            splash_window.bridge.report_splash_status(
+                {
+                    "image_loaded": True,
+                    "natural_width": 1536,
+                    "natural_height": 864,
+                }
+            )
             func(*args)
 
     class FakeRuntime:
@@ -627,8 +641,12 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
         ["ZTFClassifier.exe"] + (["--gui-smoke-test"] if gui_smoke_test else []),
     )
     monkeypatch.setattr(desktop_main, "_load_webview", lambda: webview)
-    monkeypatch.setattr(desktop_main, "_get_desktop_asset_path", lambda name: assets[name])
-    monkeypatch.setattr(desktop_main, "get_user_data_dir", lambda: tmp_path / "user-data")
+    monkeypatch.setattr(
+        desktop_main, "_get_desktop_asset_path", lambda name: assets[name]
+    )
+    monkeypatch.setattr(
+        desktop_main, "get_user_data_dir", lambda: tmp_path / "user-data"
+    )
     def fake_configure_logging(path: Path) -> Path:
         log_dir = path / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -644,9 +662,13 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
         "build_desktop_settings",
         lambda token, data_dir: {"token": token, "data_dir": data_dir},
     )
-    monkeypatch.setattr(desktop_main, "create_app", lambda settings, docs_enabled: object())
+    monkeypatch.setattr(
+        desktop_main, "create_app", lambda settings, docs_enabled: object()
+    )
     monkeypatch.setattr(desktop_main, "LocalApiServer", FakeRuntime)
-    monkeypatch.setattr(desktop_main.secrets, "token_urlsafe", lambda length: "test-api-token")
+    monkeypatch.setattr(
+        desktop_main.secrets, "token_urlsafe", lambda length: "test-api-token"
+    )
     monkeypatch.setattr(
         desktop_main,
         "_install_navigation_guard",
@@ -657,7 +679,9 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
         "_set_splash_status",
         lambda window, message, failed=False: statuses.append((message, failed)),
     )
-    monkeypatch.setattr(desktop_main, "_show_error", lambda message: errors.append(message))
+    monkeypatch.setattr(
+        desktop_main, "_show_error", lambda message: errors.append(message)
+    )
 
     desktop_main.main()
 
@@ -690,7 +714,9 @@ def test_main_starts_backend_from_webview_callback_and_hands_off_after_dom_ready
         assert statuses[-1][1] is False
         if gui_smoke_test:
             assert main_window.destroyed
-            report_path = tmp_path / "user-data" / "logs" / "desktop-gui-smoke-test.json"
+            report_path = (
+                tmp_path / "user-data" / "logs" / "desktop-gui-smoke-test.json"
+            )
             report = json.loads(report_path.read_text(encoding="utf-8"))
             assert report["status"] == "PASS"
             assert report["checks"]["splash_image_loaded"] is True
