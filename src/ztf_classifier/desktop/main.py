@@ -612,9 +612,7 @@ def main() -> None:
                 splash_image_url = f"{base_url}/workbench/ztf-splash.PNG"
                 LOGGER.info("Loading splash artwork from the loopback API.")
                 splash_window.run_js(
-                    "window.setSplashImageUrl("
-                    + json.dumps(splash_image_url)
-                    + ");"
+                    "window.setSplashImageUrl(" + json.dumps(splash_image_url) + ");"
                 )
                 if not splash_bridge._image_status_event.wait(timeout=15):
                     raise RuntimeError(
