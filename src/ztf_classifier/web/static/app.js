@@ -334,66 +334,206 @@ const titles = {
 };
 
 async function renderDesktopHome() {
-  mainCanvas.innerHTML = `
-    <div class="canvas-header"><div><div class="eyebrow">PARK LABORATORY PROTOTYPE</div>
-    <h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
-    <section class="metric-grid">
-      <article class="metric-card"><span>Primary data source</span><strong>ZTF DR24</strong><small>IRSA HATS · Bounded retrieval</small></article>
-      <article class="metric-card"><span>Labelled cohort</span><strong>NOT VERIFIED</strong><small>Technical-plan target: 100,000 labelled light curves</small></article>
-      <article class="metric-card"><span>Main model</span><strong id="parkModelStatus">NOT VERIFIED</strong><small>Authenticated model artifact required</small></article>
-      <article class="metric-card"><span>Park acceptance</span><strong>NOT READY</strong><small>All four worksheet phases must pass</small></article>
-    </section>
-    <section class="panel">
-      <div class="panel-title">Acceptance status</div>
-      <p class="muted">This application must complete data, feature, classification, uncertainty, anomaly and validation workflows before Park presentation.</p>
-      <p id="parkScientificGateStatus" role="status">Checking the scientific release gate...</p>
-      <button class="secondary-button" id="openScientificValidation" type="button">View scientific validation</button>
-    </section>
-    <section class="panel">
-      <div class="panel-title">Start data inspection</div>
-      <p class="muted">Enter 1 to 10 ZTF DR24 object IDs. The app retrieves raw light curves. It shows diagnostic QC, descriptive statistics and data provenance.</p>
-      <p class="muted" id="desktopWorkspaceStatus" role="status">Checking the active workspace...</p>
-      <button class="primary-button" id="startDr24Explorer" type="button" disabled>Open DR24 Explorer</button>
-      <button class="secondary-button" id="manageWorkspaces" type="button">Manage workspaces</button>
-    </section>
-    <section class="panel">
-      <div class="panel-title">Scientific output limits</div>
-      <p>Raw DR24 retrieval and descriptive summaries are available. Classification, calibrated probabilities, abstention, anomaly analysis and transferability are not accepted for the Park population.</p>
-      <p class="muted">Do not use these summaries as model predictions. Do not treat OOD scores as scientific anomaly evidence.</p>
-    </section>`;
+  mainCanvas.innerHTML = [
+    '<section class="mission-banner">',
+      '<div class="mission-banner-copy">',
+        '<div class="eyebrow">ZTF CLASSIFIER · SCIENTIFIC MISSION CONTROL</div>',
+        '<h1 id="viewTitle">Scientific Overview</h1>',
+        '<p id="viewSubtitle">Explore ZTF data, review saved analyses and monitor scientific evidence.</p>',
+      '</div>',
+      '<div class="mission-gate" id="missionGateBadge" data-state="warning">',
+        '<span class="mission-gate-indicator"></span><span>SCIENTIFIC GATE: CHECKING</span>',
+      '</div>',
+    '</section>',
+    '<section class="mission-metrics" aria-label="Platform summary">',
+      '<article class="mission-metric metric-source"><span class="metric-icon" aria-hidden="true">◉</span><div><small>PRIMARY DATA SOURCE</small><strong>IRSA ZTF DR24</strong><span>Native light-curve records</span></div></article>',
+      '<article class="mission-metric"><span class="metric-icon" aria-hidden="true">▣</span><div><small>ACTIVE WORKSPACES</small><strong id="missionWorkspaceCount">—</strong><span id="missionWorkspaceDetail">Checking local workspaces</span></div></article>',
+      '<article class="mission-metric"><span class="metric-icon" aria-hidden="true">◈</span><div><small>SAVED ANALYSIS RESULTS</small><strong id="missionResultCount">—</strong><span>Durable result records</span></div></article>',
+      '<article class="mission-metric metric-gate"><span class="metric-icon" aria-hidden="true">⚠</span><div><small>SCIENTIFIC VALIDATION</small><strong id="missionValidationStatus">CHECKING</strong><span id="missionValidationDetail">Fail-closed release gate</span></div></article>',
+    '</section>',
+    '<section class="mission-main-grid">',
+      '<article class="mission-panel mission-lightcurve">',
+        '<div class="mission-panel-header"><div><div class="mission-panel-title"><span class="panel-symbol">⌁</span>Light-curve workspace</div><div class="mission-panel-subtitle" id="missionCurveSubtitle">Latest saved scientific result · no demo data</div></div>',
+          '<button class="mission-link-button" id="missionOpenCatalog" type="button">Result catalog <span aria-hidden="true">→</span></button>',
+        '</div>',
+        '<div class="mission-chart-wrap">',
+          '<svg id="missionLightCurveSvg" viewBox="0 0 900 280" preserveAspectRatio="none" role="img" aria-label="Light curve from the latest saved scientific result">',
+            '<g class="grid-lines"><line x1="0" y1="55" x2="900" y2="55"></line><line x1="0" y1="110" x2="900" y2="110"></line><line x1="0" y1="165" x2="900" y2="165"></line><line x1="0" y1="220" x2="900" y2="220"></line></g>',
+          '</svg>',
+          '<div class="axis-label x">MJD →</div><div class="axis-label y">mag</div>',
+        '</div>',
+        '<div class="mission-chart-footer"><span id="missionCurveObject">No saved light curve loaded.</span><span id="missionCurveCount">— observations</span></div>',
+      '</article>',
+      '<article class="mission-panel mission-status-panel">',
+        '<div class="mission-panel-header"><div><div class="mission-panel-title"><span class="panel-symbol">⌁</span>Mission status</div><div class="mission-panel-subtitle">Live application and evidence state</div></div></div>',
+        '<div id="missionStatusRows" class="mission-status-rows"><p class="muted">Reading application status…</p></div>',
+        '<button class="mission-primary-button" id="missionViewValidation" type="button">View scientific validation <span aria-hidden="true">→</span></button>',
+      '</article>',
+    '</section>',
+    '<section class="mission-bottom-grid">',
+      '<article class="mission-panel">',
+        '<div class="mission-panel-header"><div><div class="mission-panel-title"><span class="panel-symbol">✧</span>Analysis review</div><div class="mission-panel-subtitle">Persisted results available for review</div></div></div>',
+        '<div id="missionReviewQueue" class="mission-list"><p class="muted">Loading saved results…</p></div>',
+      '</article>',
+      '<article class="mission-panel">',
+        '<div class="mission-panel-header"><div><div class="mission-panel-title"><span class="panel-symbol">◷</span>Recent operations</div><div class="mission-panel-subtitle">Recorded asynchronous analysis jobs</div></div><button class="mission-link-button" id="missionOpenJobs" type="button">View all <span aria-hidden="true">→</span></button></div>',
+        '<div id="missionRecentOperations" class="mission-list"><p class="muted">Loading analysis jobs…</p></div>',
+      '</article>',
+      '<article class="mission-panel mission-health-panel">',
+        '<div class="mission-panel-header"><div><div class="mission-panel-title"><span class="panel-symbol">♡</span>System health</div><div class="mission-panel-subtitle">Checks reported by local services</div></div></div>',
+        '<div id="missionHealthRows" class="mission-health-rows"><p class="muted">Checking local services…</p></div>',
+      '</article>',
+    '</section>',
+    '<div class="mission-footer-note">Scientific data and status values come from the local API. Missing evidence remains visible and is never shown as PASS.</div>'
+  ].join("");
   setViewHeading("desktop-home");
-  document.getElementById("startDr24Explorer").addEventListener("click", () => showView("dr24"));
-  document.getElementById("manageWorkspaces").addEventListener("click", () => showView("workspaces"));
-  document.getElementById("openScientificValidation").addEventListener("click", () => showView("validation"));
-  try {
-    const active = await fetchJson("/v1/workspaces/active");
-    const status = document.getElementById("desktopWorkspaceStatus");
-    const start = document.getElementById("startDr24Explorer");
-    if (active.workspace) {
-      status.textContent = "Active workspace: " + active.workspace.name;
-      start.disabled = false;
-    } else {
-      status.textContent = "Create a workspace before you save analysis history and exports.";
-      start.disabled = true;
-    }
-  } catch (error) {
-    document.getElementById("desktopWorkspaceStatus").textContent =
-      "Could not load workspace status: " + (error.message || "Service error");
+
+  document.getElementById("missionOpenCatalog").addEventListener("click", () => showView("catalog"));
+  document.getElementById("missionOpenJobs").addEventListener("click", () => showView("batch"));
+  document.getElementById("missionViewValidation").addEventListener("click", () => showView("validation"));
+
+  const requests = await Promise.allSettled([
+    fetchJson("/health"),
+    fetchJson("/v1/workspaces"),
+    fetchJson("/v1/workspaces/active"),
+    fetchJson("/v1/model"),
+    fetchJson("/v1/scientific-validation"),
+    fetchJson("/v1/jobs?limit=5"),
+    fetchJson("/v1/catalog/results?limit=8")
+  ]);
+  const valueAt = index => requests[index].status === "fulfilled" ? requests[index].value : null;
+  const health = valueAt(0);
+  const workspaceList = valueAt(1);
+  const activeResponse = valueAt(2);
+  const model = valueAt(3);
+  const gate = valueAt(4);
+  const jobsPage = valueAt(5);
+  const catalog = valueAt(6);
+  const activeWorkspace = activeResponse?.workspace || null;
+  const lastOperation = activeWorkspace?.last_operation || null;
+  const jobs = Array.isArray(jobsPage?.items) ? jobsPage.items : [];
+  const results = Array.isArray(catalog?.items) ? catalog.items : [];
+
+  const activeCount = Array.isArray(workspaceList?.items)
+    ? workspaceList.items.filter(item => item.is_active).length
+    : null;
+  document.getElementById("missionWorkspaceCount").textContent =
+    activeCount === null ? "—" : String(activeCount);
+  document.getElementById("missionWorkspaceDetail").textContent =
+    activeCount === null ? "Workspace service unavailable" :
+      (activeWorkspace ? "Active: " + activeWorkspace.name : "No active workspace");
+  document.getElementById("missionResultCount").textContent =
+    catalog && Number.isInteger(catalog.total) ? String(catalog.total) : "—";
+
+  const gateStatus = gate?.status || "UNAVAILABLE";
+  document.getElementById("missionValidationStatus").textContent = gateStatus;
+  document.getElementById("missionValidationDetail").textContent = gate
+    ? String((gate.blockers || []).length) + " release blocker(s)"
+    : "Validation service unavailable";
+  const gateBadge = document.getElementById("missionGateBadge");
+  gateBadge.dataset.state = gateStatus === "PASS" ? "good" : "warning";
+  gateBadge.lastElementChild.textContent = "SCIENTIFIC GATE: " + gateStatus.replaceAll("_", " ");
+
+  const retrievalStatus = !activeWorkspace ? "NO WORKSPACE" :
+    !lastOperation ? "NOT RUN" : String(lastOperation.status || "UNKNOWN");
+  const retrievalDetail = !activeWorkspace ? "Create or open a workspace" :
+    !lastOperation ? "No DR24 request recorded" :
+      "Last request: " + String(lastOperation.completed_at_utc || lastOperation.started_at_utc || "time unavailable");
+  const modelStatus = model ? "REGISTERED" : "UNAVAILABLE";
+  const modelDetail = model
+    ? String(model.model_version || "Model version available")
+    : "Model registry did not return an artifact";
+  const apiHealthy = health?.status === "ok";
+  if (apiHealthy) setConnectionState("Local API online", true);
+  else setConnectionState("Local API unavailable", false);
+
+  const statusRows = [
+    ["Local API", apiHealthy ? "ONLINE" : "UNAVAILABLE", apiHealthy ? "good" : "danger"],
+    ["DR24 acquisition", retrievalStatus, retrievalStatus === "SUCCEEDED" ? "good" : (retrievalStatus === "FAILED" || retrievalStatus === "INTERRUPTED" ? "danger" : "neutral")],
+    ["Workspace", activeWorkspace ? "ACTIVE" : "NOT OPEN", activeWorkspace ? "good" : "warning"],
+    ["Model registry", modelStatus, model ? "good" : "warning"],
+    ["Scientific validation", gateStatus, gateStatus === "PASS" ? "good" : "warning"]
+  ];
+  document.getElementById("missionStatusRows").innerHTML = statusRows.map(row =>
+    '<div class="mission-status-row"><span><i class="mission-status-icon ' + row[2] + '"></i>' +
+    escapeHtml(row[0]) + '</span><strong class="mission-status-value ' + row[2] + '">' +
+    escapeHtml(row[1]) + '</strong></div>'
+  ).join("");
+
+  document.getElementById("missionHealthRows").innerHTML = [
+    '<div class="mission-health-row"><span>Application API</span><strong class="' + (apiHealthy ? "good" : "danger") + '">' + (apiHealthy ? "Healthy" : "Unavailable") + '</strong></div>',
+    '<div class="mission-health-row"><span>Workspace service</span><strong class="' + (workspaceList && activeResponse ? "good" : "warning") + '">' + (workspaceList && activeResponse ? "Available" : "Not verified") + '</strong></div>',
+    '<div class="mission-health-row"><span>Model registry</span><strong class="' + (model ? "good" : "warning") + '">' + (model ? "Available" : "Not available") + '</strong></div>',
+    '<div class="mission-health-row"><span>Scientific gate</span><strong class="' + (gateStatus === "PASS" ? "good" : "warning") + '">' + escapeHtml(gateStatus) + '</strong></div>'
+  ].join("");
+
+  const jobsContainer = document.getElementById("missionRecentOperations");
+  if (!jobsPage) {
+    jobsContainer.innerHTML = '<p class="muted">Analysis job service is unavailable.</p>';
+  } else if (!jobs.length) {
+    jobsContainer.innerHTML = '<p class="mission-empty">No analysis jobs have been recorded.</p>';
+  } else {
+    jobsContainer.innerHTML = jobs.slice(0, 5).map(job =>
+      '<div class="mission-operation-row"><span class="mission-operation-dot ' +
+      (String(job.status).toLowerCase() === "succeeded" ? "good" :
+        (String(job.status).toLowerCase() === "failed" ? "danger" : "neutral")) +
+      '"></span><div class="mission-operation-copy"><strong>' + escapeHtml(job.oid) +
+      '</strong><span>' + escapeHtml(job.status) + ' · ' + escapeHtml(job.updated_at || job.created_at || "time unavailable") +
+      '</span></div></div>'
+    ).join("");
   }
-  try {
-    const model = await fetchJson("/v1/model");
-    document.getElementById("parkModelStatus").textContent = model.model_version + " · READY";
-  } catch {
-    document.getElementById("parkModelStatus").textContent = "BLOCKED";
+
+  const reviewQueue = document.getElementById("missionReviewQueue");
+  if (!catalog) {
+    reviewQueue.innerHTML = '<p class="muted">Saved result catalog is unavailable.</p>';
+  } else if (!results.length) {
+    reviewQueue.innerHTML = '<p class="mission-empty">No saved scientific results are available yet. Results will appear here after a completed analysis.</p>';
+  } else {
+    reviewQueue.innerHTML = results.slice(0, 5).map(item => {
+      const predicted = item.payload?.prediction?.predicted_class || "No prediction field";
+      return '<button class="mission-review-item" type="button" data-mission-result="' +
+        escapeHtml(item.result_id) + '"><span class="mission-review-oid">' +
+        escapeHtml(item.oid) + '</span><span class="mission-review-class">' +
+        escapeHtml(predicted) + '</span><span class="mission-review-date">' +
+        escapeHtml(item.created_at || "time unavailable") + '</span><span aria-hidden="true">→</span></button>';
+    }).join("");
+    reviewQueue.querySelectorAll("[data-mission-result]").forEach(button => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        try {
+          const record = await fetchJson("/v1/results/" + encodeURIComponent(button.dataset.missionResult));
+          state.result = record;
+          state.oid = record.oid;
+          await showView("overview");
+        } catch {
+          setConnectionState("Saved result could not be opened", false);
+          button.disabled = false;
+        }
+      });
+    });
   }
-  try {
-    const gate = await fetchJson("/v1/scientific-validation");
-    const blockers = Array.isArray(gate.blockers) ? gate.blockers.length : 0;
-    document.getElementById("parkScientificGateStatus").textContent =
-      gate.status + " · " + blockers + " blocker(s)";
-  } catch {
-    document.getElementById("parkScientificGateStatus").textContent =
-      "BLOCKED · Scientific validation status is unavailable.";
+
+  const chartResult = results.find(item =>
+    Array.isArray(item.payload?.observations) && item.payload.observations.length > 0
+  );
+  const chartSvg = document.getElementById("missionLightCurveSvg");
+  if (chartResult) {
+    renderLightCurve(chartSvg, chartResult.payload.observations);
+    document.getElementById("missionCurveObject").textContent =
+      "Object " + chartResult.oid + " · saved result";
+    document.getElementById("missionCurveCount").textContent =
+      String(chartResult.payload.observations.length) + " observations";
+    document.getElementById("missionCurveSubtitle").textContent =
+      "Latest available saved result · normalized observation data";
+  } else {
+    renderLightCurve(chartSvg, []);
+    document.getElementById("missionCurveObject").textContent =
+      "No saved result contains light-curve observations.";
+    document.getElementById("missionCurveCount").textContent = "No data";
+  }
+
+  if (!workspaceList && !activeResponse && !model && !gate && !jobsPage && !catalog && !health) {
+    setConnectionState("Local services unavailable", false);
   }
 }
 
@@ -1223,27 +1363,63 @@ document.querySelectorAll(".nav-item").forEach(button => {
 });
 
 if (desktopMode) {
-  document.title = "ZTF Classifier | Park preview";
+  document.title = "ZTF Classifier — Scientific Mission Control";
   document.querySelector(".brand-name").textContent = "ZTF CLASSIFIER";
-  document.querySelector(".brand-product").textContent = "Desktop preview";
+  document.querySelector(".brand-product").textContent = "Scientific Mission Control";
   document.querySelector(".connection-state").setAttribute("aria-label", "Local service status");
   document.querySelector(".icon-button").setAttribute("aria-label", "Display settings");
   const sectionLabels = document.querySelectorAll(".sidebar .section-label");
-  if (sectionLabels[0]) sectionLabels[0].textContent = "Workspace";
+  if (sectionLabels[0]) sectionLabels[0].textContent = "MISSION CONTROL";
   if (sectionLabels[1]) sectionLabels[1].hidden = true;
   const desktopViews = new Set([
     "dr24",
     "desktop-home",
-    "sources",
     "workspaces",
+    "sources",
     "desktop-provenance",
     "desktop-export",
     "desktop-settings",
     "desktop-help",
     "validation",
+    "catalog",
+    "batch",
   ]);
+  const desktopLabels = {
+    "desktop-home": "Overview",
+    "dr24": "DR24 Explorer",
+    "workspaces": "Workspaces",
+    "sources": "Data Sources",
+    "desktop-provenance": "Provenance",
+    "desktop-export": "Reports & Exports",
+    "validation": "Scientific Validation",
+    "catalog": "Result Catalog",
+    "batch": "Analysis Jobs",
+    "desktop-settings": "Settings",
+    "desktop-help": "Help"
+  };
+  const desktopSymbols = {
+    "desktop-home": "⌂",
+    "dr24": "⌁",
+    "workspaces": "▣",
+    "sources": "◉",
+    "desktop-provenance": "◇",
+    "desktop-export": "▤",
+    "validation": "⚑",
+    "catalog": "▦",
+    "batch": "◷",
+    "desktop-settings": "⚙",
+    "desktop-help": "?"
+  };
   document.querySelectorAll(".nav-item").forEach(button => {
     button.hidden = !desktopViews.has(button.dataset.view);
+    if (desktopLabels[button.dataset.view]) {
+      button.textContent = desktopLabels[button.dataset.view];
+      const symbol = document.createElement("span");
+      symbol.className = "nav-symbol";
+      symbol.setAttribute("aria-hidden", "true");
+      symbol.textContent = desktopSymbols[button.dataset.view] || "·";
+      button.prepend(symbol);
+    }
   });
   document.querySelectorAll(".desktop-only").forEach(button => { button.hidden = false; });
   document.querySelector(".sidebar-footer").hidden = true;
