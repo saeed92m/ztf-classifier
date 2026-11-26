@@ -324,7 +324,7 @@ const titles = {
   catalog: ["Catalog", "Catalog query and export module"],
   reports: ["Reports", "Scientific report generation module"],
   validation: ["Scientific Validation", "Release-blocking scientific evidence and provenance"],
-  "desktop-home": ["Dashboard", "Park prototype overview"],
+  "desktop-home": ["Scientific Overview", "Live application state, saved analyses and scientific evidence"],
   workspaces: ["Workspaces", "Create and open workspaces"],
   sources: ["Data source", "Active source and retrieval contract"],
   "desktop-provenance": ["Provenance", "Retrieval metadata and evidence"],
