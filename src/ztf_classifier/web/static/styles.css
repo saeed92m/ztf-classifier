@@ -275,7 +275,8 @@ h1 { margin: 5px 0 4px; font-size: 22px; letter-spacing: -.02em; }
   padding: 0 24px;
   border-bottom: 1px solid rgba(52, 166, 247, .55);
   background:
-    radial-gradient(ellipse at 72% 50%, rgba(33, 112, 200, .36), transparent 42%),
+    linear-gradient(90deg, rgba(3, 13, 29, .78), rgba(4, 20, 42, .28) 46%, rgba(3, 13, 29, .40)),
+    url("./mission-control-banner.svg") center / cover no-repeat,
     linear-gradient(100deg, #061329 0%, #0a2140 52%, #06152a 100%);
   box-shadow: 0 4px 24px rgba(0, 104, 220, .16);
 }
