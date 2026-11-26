@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "desktop-startup-splash-branding-20261126",
+  "objective": "Integrate the founder-supplied ZTF splash image and ICO into the Windows desktop startup and packaging path without changing scientific behavior or release baselines.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "main@3bdadf0ee0ccae0c78a83dcd70af0f466bf670ef",
+      "status": "VERIFIED",
+      "detail": "The supplied ztf-splash.PNG and ztf-logo.ico assets were added under src/ztf_classifier/web/static/."
+    },
+    {
+      "source": "PR #313 / mainline desktop shell",
+      "status": "VERIFIED",
+      "detail": "The Windows pywebview/WebView2 desktop shell, local loopback API, PyInstaller one-folder build, NSIS installer, and frozen self-test were already present in main."
+    },
+    {
+      "source": "configs/process/cycles/private-documentation-migration-to-notion-20261126.json",
+      "status": "VERIFIED",
+      "detail": "Meaningful pull requests require a machine-readable cumulative cycle record and must not claim acceptance before validation."
+    },
+    {
+      "source": "PR #309 Windows UX and shell review",
+      "status": "SUPPORTED",
+      "detail": "The 16-role think-tank review is a simulated role-based review, not independent external human peer review. English-only LTR is the preview scope."
+    }
+  ],
+  "baseline": {
+    "revision": "3bdadf0ee0ccae0c78a83dcd70af0f466bf670ef",
+    "public_repo": "saeed92m/ztf-classifier",
+    "desktop_baseline": "Windows experimental preview shell from merged PR #313",
+    "scientific_baseline": "v0.2.0 unchanged",
+    "branch": "feat/park-desktop-startup-splash-20261126"
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "reason": "The branch has not yet completed the exact-head Windows build and frozen asset self-test."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "No target-device startup/close/failure-path run has been completed."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "The exact-head Windows installer and build manifest are pending CI."
+      },
+      "runtime": {
+        "status": "NOT_MEASURED",
+        "reason": "No startup duration baseline or post-change measurement is available."
+      }
+    },
+    "trade_off": "Use an indeterminate progress animation and factual startup-stage messages because no reliable startup percentage is measured. Embed the splash image in a restrictive local HTML document so it can appear before the local API starts. Preserve scientific behavior and existing per-user data."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "Inspected the current pywebview entry point, local API lifecycle, API static mount, package-data declaration, PyInstaller command, NSIS installer and existing desktop tests.",
+      "Verified both uploaded asset paths and their GitHub blob identifiers on main.",
+      "Added splash-first startup, real startup-stage status messages, an indeterminate progress indicator and a visible startup failure state.",
+      "Added Workbench header and favicon branding using ztf-logo.ico.",
+      "Added PyInstaller executable icon and NSIS installer and uninstaller icons.",
+      "Added frozen-build asset path handling and regression tests for source and PyInstaller resource roots.",
+      "Opened Draft PR #317 at the current feature branch head. CI and Windows packaging checks are pending.",
+      "Pywebview documentation states that loaded fires when the DOM is ready, event handlers are asynchronous by default, and backend logic can run in a separate thread; this informs the splash-to-workbench lifecycle design."
+    ]
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "root_causes": [
+      "The previous desktop entry point started and waited for the local API before creating the first window, so users saw no application UI during startup.",
+      "The supplied PNG and ICO were stored as static package files but were not connected to desktop startup, the Workbench header, the executable icon or the NSIS installer icon.",
+      "A frozen PyInstaller bundle uses a different resource root from a source checkout; the resource lookup must account for both."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "The splash must be shown by the desktop shell before application settings and the local API are initialized.",
+      "A progress indicator without measured percentage must remain indeterminate.",
+      "A frozen application must resolve static resources from the PyInstaller bundle root, while a source checkout resolves them from the package directory.",
+      "Asset presence in the repository is not sufficient evidence that the final executable and installer contain or display those assets."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Complete exact-head CI and Ruff checks for PR #317.",
+      "Complete the Windows PyInstaller build, frozen self-test, NSIS build, silent install/uninstall smoke and artifact inspection.",
+      "Verify Splash appears during a real Windows startup and disappears only after the Workbench is loaded.",
+      "Verify startup failure remains visible and the local API shuts down safely.",
+      "Verify executable, installer, uninstaller and shortcuts display the supplied ICO on Windows.",
+      "Run a clean install and startup on the target Windows machine with the installed WebView2 runtime."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not mark the splash or desktop packaging task complete until the exact-head Windows build and frozen self-test pass.",
+    "Do not merge PR #317 until the Windows install/uninstall smoke and target-machine startup checks are reviewed.",
+    "Do not publish a release or change main as part of this task.",
+    "Do not claim scientific validation; this change does not authenticate the v0.2.0 model or establish DR24 feature compatibility.",
+    "Keep the Park prototype scope, English-only LTR preview, fail-closed scientific gate and immutable scientific baseline unchanged."
+  ]
+}
