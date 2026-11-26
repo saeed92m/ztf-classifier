@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 from collections.abc import Callable
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Self
 
 import pytest
@@ -10,7 +12,10 @@ from fastapi import FastAPI
 
 from ztf_classifier.api.app import create_app
 from ztf_classifier.api.config import ApiSettings
+from ztf_classifier.desktop import main as desktop_main
 from ztf_classifier.desktop.main import (
+    _build_splash_html,
+    _get_desktop_asset_path,
     _install_navigation_guard,
     _is_trusted_local_url,
     _is_webview2_runtime_installed,
@@ -223,6 +228,9 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
     assert "script-src 'self'" in html
     assert "connect-src 'self'" in html
     assert 'src="./desktop-bootstrap.js"' in html
+    assert 'rel="icon" href="./ztf-logo.ico"' in html
+    assert 'src="./ztf-logo.ico"' in html
+    assert "ZTF CLASSIFIER" in html
     assert "<script>" not in html
     assert 'document.documentElement.lang = "en"' in bootstrap
     assert 'document.documentElement.dir = "ltr"' in bootstrap
@@ -238,6 +246,10 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
         Path(__file__).resolve().parents[1] / "packaging" / "windows" / "installer.nsi"
     ).read_text(encoding="utf-8")
     assert '!cd "..\\.."' in installer
+    assert r'!define MUI_ICON "src\ztf_classifier\web\static\ztf-logo.ico"' in installer
+    assert (
+        r'!define MUI_UNICON "src\ztf_classifier\web\static\ztf-logo.ico"' in installer
+    )
     assert (
         "File /oname=MicrosoftEdgeWebView2Setup.exe "
         '"packaging\\windows\\MicrosoftEdgeWebView2Setup.exe"'
@@ -390,3 +402,211 @@ def test_local_api_requires_ready_health_endpoint() -> None:
     with pytest.raises(DesktopRuntimeError, match="did not become ready"):
         runtime.start()
     assert not runtime.is_running
+
+
+def test_desktop_brand_assets_are_present_and_valid() -> None:
+    splash_path = _get_desktop_asset_path("ztf-splash.PNG")
+    icon_path = _get_desktop_asset_path("ztf-logo.ico")
+
+    assert splash_path.is_file()
+    assert icon_path.is_file()
+    assert splash_path.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+    assert icon_path.read_bytes().startswith(b"\x00\x00\x01\x00")
+
+
+def test_splash_page_uses_embedded_image_and_indeterminate_status() -> None:
+    html = _build_splash_html(b"\x89PNG\r\n\x1a\nfixture")
+
+    assert "data:image/png;base64," in html
+    assert "default-src 'none'" in html
+    assert "img-src data:" in html
+    assert "window.updateStartupStatus" in html
+    assert 'id="startup-close"' in html
+    assert "close_splash" in html
+    assert 'aria-live="polite"' in html
+    assert "progress-sweep" in html
+    assert "100% complete" not in html
+
+
+def test_desktop_asset_path_uses_pyinstaller_bundle_root(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(sys, "_MEIPASS", str(tmp_path), raising=False)
+
+    assert _get_desktop_asset_path("ztf-splash.PNG") == (
+        tmp_path / "ztf_classifier" / "web" / "static" / "ztf-splash.PNG"
+    )
+
+
+def test_splash_builder_rejects_non_png_assets() -> None:
+    with pytest.raises(ValueError, match="valid PNG"):
+        _build_splash_html(b"not-an-image")
+
+
+def test_desktop_asset_path_rejects_unknown_names() -> None:
+    with pytest.raises(ValueError, match="Unsupported desktop asset"):
+        _get_desktop_asset_path("unexpected.txt")
+
+
+@pytest.mark.parametrize("api_start_failure", [False, True])
+def test_main_shows_splash_before_api_and_handles_startup_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    api_start_failure: bool,
+) -> None:
+    events: list[str] = []
+    statuses: list[tuple[str, bool]] = []
+    errors: list[str] = []
+
+    class FakeEvent:
+        def __init__(self) -> None:
+            self.callbacks: list[Callable[..., Any]] = []
+
+        def __iadd__(self, callback: Callable[..., Any]) -> Self:
+            self.callbacks.append(callback)
+            return self
+
+        def fire(self, window: Any) -> None:
+            for callback in tuple(self.callbacks):
+                callback(window)
+
+    class FakeWindow:
+        def __init__(self) -> None:
+            self.events = SimpleNamespace(
+                closed=FakeEvent(),
+                before_show=FakeEvent(),
+                loaded=FakeEvent(),
+            )
+            self.destroyed = False
+            self.shown = False
+
+        def show(self) -> None:
+            self.shown = True
+            self.events.before_show.fire(self)
+            self.events.loaded.fire(self)
+
+        def destroy(self) -> None:
+            self.destroyed = True
+            events.append("splash-destroyed")
+
+    class FakeWebview:
+        def __init__(self) -> None:
+            self.settings: dict[str, Any] = {}
+            self.windows: list[FakeWindow] = []
+            self.window_arguments: list[tuple[str, dict[str, Any]]] = []
+
+        def create_window(self, title: str, **kwargs: Any) -> FakeWindow:
+            window = FakeWindow()
+            self.windows.append(window)
+            self.window_arguments.append((title, kwargs))
+            events.append(f"window-created:{title}")
+            return window
+
+        def start(self, **kwargs: Any) -> None:
+            self.start_arguments = kwargs
+            splash_window = self.windows[0]
+            splash_window.shown = True
+            events.append("splash-shown")
+            splash_window.events.loaded.fire(splash_window)
+
+    class FakeRuntime:
+        def __init__(self, app: Any) -> None:
+            self.app = app
+            events.append("api-created")
+
+        def start(self) -> str:
+            events.append("api-started")
+            if api_start_failure:
+                raise RuntimeError("test API startup failed")
+            return "http://127.0.0.1:43210"
+
+        def stop(self) -> None:
+            events.append("api-stopped")
+
+    splash_asset = tmp_path / "ztf-splash.PNG"
+    icon_asset = tmp_path / "ztf-logo.ico"
+    splash_asset.write_bytes(bytes.fromhex("89504e470d0a1a0a") + b"fixture")
+    icon_asset.write_bytes(bytes.fromhex("00000100") + b"fixture")
+    assets = {
+        "ztf-splash.PNG": splash_asset,
+        "ztf-logo.ico": icon_asset,
+    }
+    webview = FakeWebview()
+
+    monkeypatch.setattr(desktop_main, "os", SimpleNamespace(name="nt"))
+    monkeypatch.setattr(desktop_main.sys, "argv", ["ZTFClassifier.exe"])
+    monkeypatch.setattr(desktop_main, "_load_webview", lambda: webview)
+    monkeypatch.setattr(
+        desktop_main,
+        "_get_desktop_asset_path",
+        lambda name: assets[name],
+    )
+    monkeypatch.setattr(
+        desktop_main,
+        "get_user_data_dir",
+        lambda: tmp_path / "user-data",
+    )
+    monkeypatch.setattr(
+        desktop_main,
+        "build_desktop_settings",
+        lambda token, data_dir: {"token": token, "data_dir": data_dir},
+    )
+    monkeypatch.setattr(
+        desktop_main,
+        "create_app",
+        lambda settings, docs_enabled: object(),
+    )
+    monkeypatch.setattr(desktop_main, "LocalApiServer", FakeRuntime)
+    monkeypatch.setattr(
+        desktop_main.secrets,
+        "token_urlsafe",
+        lambda length: "test-api-token",
+    )
+    monkeypatch.setattr(
+        desktop_main,
+        "_install_navigation_guard",
+        lambda window, base_url: events.append("navigation-guard-installed"),
+    )
+    monkeypatch.setattr(
+        desktop_main,
+        "_set_splash_status",
+        lambda window, message, failed=False: statuses.append((message, failed)),
+    )
+    monkeypatch.setattr(
+        desktop_main,
+        "_show_error",
+        lambda message: errors.append(message),
+    )
+
+    desktop_main.main()
+
+    assert not errors
+    assert events.index("splash-shown") < events.index("api-started")
+    assert statuses[0][0].startswith("Preparing local workspace")
+    assert statuses[1][0].startswith("Starting the private local API")
+
+    splash_window = webview.windows[0]
+    assert webview.window_arguments[0][1]["html"].startswith("<!doctype html>")
+    assert webview.window_arguments[0][1]["frameless"] is False
+    assert webview.window_arguments[0][1]["on_top"] is False
+    assert webview.window_arguments[0][1]["js_api"] is not None
+
+    if api_start_failure:
+        assert len(webview.windows) == 1
+        assert not splash_window.destroyed
+        assert statuses[-1][0].startswith("Startup failed: RuntimeError")
+        assert statuses[-1][1] is True
+        splash_bridge = webview.window_arguments[0][1]["js_api"]
+        splash_bridge.close_splash()
+        assert splash_window.destroyed
+    else:
+        assert len(webview.windows) == 2
+        main_window = webview.windows[1]
+        assert webview.window_arguments[1][1]["hidden"] is True
+        assert main_window.shown
+        assert splash_window.destroyed
+        assert statuses[-1][0].startswith("Local services are ready")
+        assert statuses[-1][1] is False
+
+    assert events.count("api-stopped") == 1
