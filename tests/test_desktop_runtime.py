@@ -443,7 +443,6 @@ def test_desktop_asset_path_rejects_unknown_names() -> None:
         _get_desktop_asset_path("unexpected.txt")
 
 
-
 @pytest.mark.parametrize("api_start_failure", [False, True])
 def test_main_shows_splash_before_api_and_handles_startup_failure(
     monkeypatch: pytest.MonkeyPatch,

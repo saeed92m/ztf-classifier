@@ -488,7 +488,9 @@ def main() -> None:
                     try:
                         runtime.stop()
                     except Exception:
-                        LOGGER.exception("Could not stop the local API after startup failure.")
+                        LOGGER.exception(
+                            "Could not stop the local API after startup failure."
+                        )
                     runtime = None
                 try:
                     _set_splash_status(
@@ -497,7 +499,9 @@ def main() -> None:
                         failed=True,
                     )
                 except Exception:
-                    LOGGER.exception("Could not display the startup failure on the splash.")
+                    LOGGER.exception(
+                        "Could not display the startup failure on the splash."
+                    )
 
         splash_window.events.loaded += start_desktop_session
         webview.start(
