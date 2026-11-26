@@ -399,7 +399,6 @@ def test_local_api_requires_ready_health_endpoint() -> None:
     assert not runtime.is_running
 
 
-
 def test_desktop_brand_assets_are_present_and_valid() -> None:
     splash_path = _get_desktop_asset_path("ztf-splash.PNG")
     icon_path = _get_desktop_asset_path("ztf-logo.ico")
@@ -420,6 +419,7 @@ def test_splash_page_uses_embedded_image_and_indeterminate_status() -> None:
     assert 'aria-live="polite"' in html
     assert "progress-sweep" in html
     assert "100% complete" not in html
+
 
 def test_desktop_asset_path_uses_pyinstaller_bundle_root(
     monkeypatch: pytest.MonkeyPatch,
