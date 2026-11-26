@@ -1,0 +1,132 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "desktop-startup-rendering-repair-20261126",
+  "objective": "Repair the Windows desktop startup path after preview.2 opened without the expected splash and rendered a blank Workbench. Verify the splash image, CSP-safe status updates, real WebView2 DOM rendering, visible application root, frontend error reporting, and Windows shortcut icons without changing scientific behavior or release baselines.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "main@acb49a527f44a1056ac789583f0d1974f26ccade",
+      "status": "VERIFIED",
+      "detail": "Windows preview.2 is merged on main. It includes a pywebview/WebView2 shell, splash window, local loopback API, PyInstaller build and NSIS installer."
+    },
+    {
+      "source": "PR #317 / desktop-startup-splash-branding-20261126 cycle",
+      "status": "VERIFIED",
+      "detail": "The earlier splash work passed mocked lifecycle tests and build/install smoke tests, but did not verify actual WebView2 rendering on a real desktop."
+    },
+    {
+      "source": "User-provided Windows PowerShell diagnostics, 2026-11-26",
+      "status": "VERIFIED",
+      "detail": "The installed executable exists. --self-test exits 0 and reports 15 PASS checks, including WebView2 runtime detection and static asset/API checks. Installed WebView2 runtime reports 158.0.4370.33. The normal startup log directory was absent before this repair."
+    },
+    {
+      "source": "configs/process/cycles/desktop-startup-splash-branding-20261126.json",
+      "status": "VERIFIED",
+      "detail": "The previous cycle requires exact-head Windows validation and target-device startup acceptance. It also requires preserving scientific baseline and fail-closed gates."
+    },
+    {
+      "source": "PR #318 / fix/windows-webview-startup-rendering-20261126",
+      "status": "SUPPORTED",
+      "detail": "The repair branch contains CSP-safe splash status updates, explicit GUI startup lifecycle, splash image telemetry, Workbench DOM readiness telemetry, frontend error logging, shortcut icon paths, and a real WebView2 GUI smoke mode."
+    }
+  ],
+  "baseline": {
+    "revision": "acb49a527f44a1056ac789583f0d1974f26ccade",
+    "public_repo": "saeed92m/ztf-classifier",
+    "desktop_baseline": "Windows desktop preview 0.1.0-preview.2",
+    "planned_desktop_release": "0.1.0-preview.3",
+    "scientific_baseline": "v0.2.0 unchanged",
+    "branch": "fix/windows-webview-startup-rendering-20261126",
+    "pull_request": 318
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "PARTIALLY_MEASURED",
+        "reason": "The installed application's self-test passed 15 checks on the user's machine. The latest repair branch passed 31 desktop runtime tests and the JavaScript syntax check. Actual WebView2 GUI smoke validation remains pending."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "No successful exact-head real WebView2 smoke test or target-device post-repair startup has yet been confirmed."
+      },
+      "reproducibility": {
+        "status": "PARTIALLY_MEASURED",
+        "reason": "The Windows workflow is configured to emit build and installed GUI smoke reports, manifest and SHA-256 evidence. The latest exact-head workflow must complete before these artifacts are accepted."
+      },
+      "runtime": {
+        "status": "NOT_MEASURED",
+        "reason": "No startup duration baseline or post-repair measurement is available."
+      }
+    },
+    "trade_off": "Keep the splash visible until the embedded image has decoded and the Workbench reports a visible application root. Use bounded waits and explicit error telemetry rather than a fabricated progress percentage. Do not weaken CSP, remove scientific gates, or treat HTTP availability as proof of GUI readiness."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "The user observed three defects in preview.2: splash content did not appear, the Workbench window was blank, and the Desktop shortcut had no explicit icon location.",
+      "The user's installed --self-test completed with exit code 0 and status PASS across 15 checks. It verified WebView2 runtime detection, local API health and authentication, and availability of Workbench HTML, JavaScript, CSS, logo and splash assets. It did not create a WebView2 window or verify rendered DOM.",
+      "The splash status helper used pywebview evaluate_js while the splash CSP deliberately excludes unsafe-eval. This is a concrete code-level incompatibility. The repair uses run_js and preserves the strict CSP.",
+      "The earlier startup path relied on the splash loaded event as the only trigger for backend initialization. The repair uses the documented webview.start background callback and waits for splash readiness without blocking the GUI loop.",
+      "The Workbench previously had no positive DOM-visible readiness handshake. The repair reports DOM readiness, #app presence, visible bounds, page text length and JavaScript startup errors through the trusted desktop bridge.",
+      "The repair verifies the embedded splash image's natural dimensions after WebView2 decodes it.",
+      "The NSIS Desktop and Start Menu shortcut commands previously omitted explicit icon locations. The repair points both shortcuts to the executable's embedded icon and adds CI assertions.",
+      "On the previous exact-head repair commit 8a91cecccc8800cb7cbf17e9244b19a562d3f573, the Windows workflow passed 31 desktop runtime/workspace tests and JavaScript syntax validation. It then stopped at Ruff formatting; no GUI smoke test ran on that commit.",
+      "A follow-up exact-head run passed Ruff check but identified formatting differences. Those differences were corrected without changing logic.",
+      "The exact-head CI Format Check passed after the formatting correction. The Lint job also passed.",
+      "The Windows workflow on the latest branch head passed 31 desktop runtime/workspace tests, JavaScript syntax, and Ruff checks in its prior attempt; the only failure was a formatting gate, now corrected. A fresh exact-head Windows build and GUI smoke run remains pending.",
+      "The repair branch adds --gui-smoke-test. It checks splash DOM readiness, splash image decoding, Workbench DOM readiness, a present and visible #app root, non-empty page text and zero startup JavaScript errors. The Windows workflow runs it on both the frozen build and installed application.",
+      "The repair branch adds installed shortcut IconLocation assertions for Desktop and Start Menu.",
+      "The latest workflow run must be checked on the final commit. Earlier green runs cannot be carried forward as exact-head acceptance evidence."
+    ]
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "root_causes": [
+      "The splash status update called evaluate_js under a Content Security Policy that excludes unsafe-eval. This is a concrete startup-path incompatibility.",
+      "The startup sequence depended on one WebView loaded event to start backend initialization. The prior tests mocked this event and did not prove the real WebView2 lifecycle.",
+      "The application treated local HTTP/static asset availability as sufficient readiness. It did not verify that the Workbench DOM rendered or that its application root was visible.",
+      "Frontend JavaScript exceptions were not recorded in a persistent desktop diagnostic log.",
+      "The NSIS shortcut commands did not specify an icon file or icon index. The executable's taskbar icon could therefore appear while the Desktop shortcut had no explicit icon location."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A passing API/static self-test does not prove that WebView2 created a visible window or rendered the Workbench.",
+      "Do not use evaluate_js for splash status updates under a CSP that excludes unsafe-eval. Use the supported run_js path.",
+      "Do not make GUI initialization depend only on a WebView loaded event. Run backend startup in the pywebview background callback and coordinate with bounded readiness events.",
+      "Keep the splash visible until the embedded image has decoded and the Workbench reports a visible application root.",
+      "Capture JavaScript errors and DOM readiness state in a persistent log. A blank window must produce evidence, not an unobservable wait.",
+      "The real WebView2 smoke test must run on both the frozen build and the installed application.",
+      "The installer must set explicit icon paths on Desktop and Start Menu shortcuts. CI must inspect the resulting shortcut metadata.",
+      "A Windows runner smoke test does not replace manual acceptance on the target laptop. Display scaling, graphics drivers, desktop icon cache and user-profile behavior still require target-device verification.",
+      "Do not weaken CSP, scientific validation criteria or release gates to make CI pass."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Complete exact-head Windows workflow after the latest formatting-only correction.",
+      "Pass the real WebView2 GUI smoke test on the frozen build, including splash image decoding and visible Workbench root.",
+      "Pass the installed-application WebView2 GUI smoke test.",
+      "Pass NSIS build, silent install/uninstall, Desktop and Start Menu shortcut icon checks, manifest and SHA-256 generation.",
+      "Inspect the exact-head build artifact and verify the preview.3 installer checksum before publication.",
+      "Install preview.3 on the target Windows machine and verify splash appearance, automatic handoff, visible Workbench, Desktop shortcut icon and Taskbar icon.",
+      "If target-device startup still fails, inspect %LOCALAPPDATA%\\ZTFClassifier\\logs\\desktop.log and desktop-gui-smoke-test.json before making further changes."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not merge PR #318 or publish preview.3 until exact-head Windows GUI smoke, installed GUI smoke, installer and shortcut icon checks pass.",
+    "Do not overwrite or replace immutable preview.2. The repair candidate is preview.3.",
+    "Do not mark the desktop task complete until the target Windows machine passes manual acceptance.",
+    "Do not claim scientific validation. The repair does not change the v0.2.0 model, feature contract, datasets, CPVS membership or scientific acceptance criteria.",
+    "Keep CPVS membership discrepancy as an independent scientific validation blocker.",
+    "Keep the existing strict CSP, loopback API security, session token, navigation guard and per-user data preservation."
+  ]
+}
