@@ -380,7 +380,8 @@ def _run_self_test() -> None:
                 raise ImportError("A DR24 dependency did not load as a module.")
         except ImportError as exc:
             raise RuntimeError(
-                "The packaged DR24 runtime dependencies are incomplete."
+                "The packaged DR24 runtime dependencies are incomplete: "
+                f"{type(exc).__name__}: {exc}"
             ) from exc
         checks["dr24_runtime_dependencies"] = "PASS"
 
