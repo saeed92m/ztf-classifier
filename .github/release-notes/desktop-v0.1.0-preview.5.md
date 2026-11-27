@@ -26,7 +26,7 @@ This preview improves DR24 acquisition diagnostics and makes the scientific rele
 
 ## Verification
 
-The exact source commit must pass the Windows Desktop Preview workflow, CI, and Scientific Validation contract workflow. The Windows workflow verifies dependency imports, JavaScript syntax, desktop runtime, frozen application startup, WebView2 GUI smoke, installer creation, silent install, launch, uninstall, and SHA-256 generation.
+The exact source commit must pass the Windows Desktop Preview workflow, CI, and Scientific Validation contract workflow. The Windows workflow verifies dependency imports, a live DR24 single- and multi-OID HATS smoke test, JavaScript syntax, desktop runtime, frozen application startup, WebView2 GUI smoke, installer creation, silent install, launch, uninstall, and SHA-256 generation. The live smoke report is included in the release assets and checksummed.
 
 The release must include the exact source commit, build manifest, installer checksum, self-test report, GUI smoke reports, dependency manifest, and user documentation.
 
