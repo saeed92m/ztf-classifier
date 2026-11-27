@@ -171,6 +171,7 @@ def test_desktop_updater_compares_installed_version_without_claiming_unknown_as_
 
 def test_desktop_release_api_filters_stable_and_preview_installers(monkeypatch) -> None:
     import json
+
     import ztf_classifier.api.app as api_module
 
     digest = "sha256:" + ("a" * 64)
@@ -242,8 +243,8 @@ def _exercise_desktop_installer_download(
         "asset"
     ),
 ):
-    import hashlib
     import json
+
     import ztf_classifier.api.app as api_module
 
     asset_url = (
