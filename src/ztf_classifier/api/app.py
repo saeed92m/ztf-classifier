@@ -2,18 +2,25 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import secrets
+import tempfile
 from pathlib import Path
 from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
+from urllib.request import Request as UrlRequest
+from urllib.request import urlopen
 from uuid import uuid4
 
 import pandas as pd
 from alerce.core import Alerce
 from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.background import BackgroundTask
 
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.api.errors import ApiContractError
@@ -401,6 +408,204 @@ def create_app(
     def health() -> ServiceStatusResponse:
         """Return process-level liveness."""
         return ServiceStatusResponse(status="ok")
+
+
+    def _desktop_release_candidates(channel: str) -> list[dict[str, Any]]:
+        """Fetch official GitHub releases and return Windows installer metadata."""
+        if channel not in {"stable", "preview"}:
+            raise ApiContractError(
+                "desktop_update_channel_invalid",
+                "Update channel must be stable or preview.",
+                status_code=422,
+            )
+        request = UrlRequest(
+            "https://api.github.com/repos/saeed92m/ztf-classifier/releases?per_page=50",
+            headers={
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+                "User-Agent": "ZTF-Classifier-Desktop-Updater",
+            },
+        )
+        try:
+            with urlopen(request, timeout=20) as response:
+                payload = json.loads(response.read())
+        except (HTTPError, URLError, TimeoutError, OSError, ValueError) as exc:
+            raise ApiContractError(
+                "desktop_release_service_unavailable",
+                "Official GitHub Releases could not be reached.",
+                status_code=502,
+            ) from exc
+        if not isinstance(payload, list):
+            raise ApiContractError(
+                "desktop_release_response_invalid",
+                "GitHub returned an invalid release list.",
+                status_code=502,
+            )
+        candidates: list[dict[str, Any]] = []
+        for release in payload:
+            if not isinstance(release, dict) or release.get("draft"):
+                continue
+            if bool(release.get("prerelease")) != (channel == "preview"):
+                continue
+            for asset in release.get("assets", []):
+                if not isinstance(asset, dict):
+                    continue
+                name = asset.get("name")
+                digest = asset.get("digest")
+                url = asset.get("browser_download_url")
+                size = asset.get("size")
+                if (
+                    not isinstance(name, str)
+                    or not name.lower().endswith("-setup.exe")
+                    or not isinstance(digest, str)
+                    or len(digest) != 71
+                    or not digest.lower().startswith("sha256:")
+                    or any(char not in "0123456789abcdef" for char in digest[7:].lower())
+                    or not isinstance(size, int)
+                    or size <= 0
+                    or size > 512 * 1024 * 1024
+                    or not isinstance(url, str)
+                ):
+                    continue
+                parsed = urlsplit(url)
+                if (
+                    parsed.scheme != "https"
+                    or parsed.hostname != "github.com"
+                    or parsed.username is not None
+                    or parsed.password is not None
+                    or not parsed.path.startswith(
+                        "/saeed92m/ztf-classifier/releases/download/"
+                    )
+                ):
+                    continue
+                candidates.append({
+                    "tag_name": str(release.get("tag_name", "")),
+                    "published_at": release.get("published_at"),
+                    "body": str(release.get("body") or "")[:12000],
+                    "name": name,
+                    "size": size,
+                    "digest": digest.lower(),
+                    "download_url": url,
+                })
+        candidates.sort(
+            key=lambda item: str(item.get("published_at") or ""),
+            reverse=True,
+        )
+        return candidates
+
+    @app.get("/v1/desktop/releases", tags=["desktop-updates"])
+    def list_desktop_releases(
+        channel: str = Query(default="stable"),
+    ) -> dict[str, Any]:
+        """Return the newest published installer for the selected channel."""
+        candidates = _desktop_release_candidates(channel)
+        release = candidates[0].copy() if candidates else None
+        if release is not None:
+            release.pop("download_url", None)
+        return {"channel": channel, "release": release}
+
+    @app.get("/v1/desktop/releases/{tag}/installer", tags=["desktop-updates"])
+    def download_desktop_installer(tag: str) -> FileResponse:
+        """Download and verify an official installer before returning it."""
+        if not tag or len(tag) > 100 or any(
+            char not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-"
+            for char in tag
+        ):
+            raise ApiContractError(
+                "desktop_release_tag_invalid",
+                "Release tag is invalid.",
+                status_code=422,
+            )
+        matches = [
+            item for item in _desktop_release_candidates("stable")
+            if item["tag_name"] == tag
+        ]
+        if not matches:
+            matches = [
+                item for item in _desktop_release_candidates("preview")
+                if item["tag_name"] == tag
+            ]
+        if not matches:
+            raise ApiContractError(
+                "desktop_release_not_found",
+                "The requested published Windows installer was not found.",
+                status_code=404,
+            )
+        asset = matches[0]
+        temp_path: Path | None = None
+        digest = hashlib.sha256()
+        received = 0
+        try:
+            request = UrlRequest(
+                asset["download_url"],
+                headers={"User-Agent": "ZTF-Classifier-Desktop-Updater"},
+            )
+            with urlopen(request, timeout=60) as response:
+                final_url = urlsplit(response.geturl())
+                if (
+                    final_url.scheme != "https"
+                    or final_url.hostname not in {
+                        "github.com",
+                        "release-assets.githubusercontent.com",
+                    }
+                    or final_url.username is not None
+                    or final_url.password is not None
+                    or final_url.port not in {None, 443}
+                ):
+                    raise ApiContractError(
+                        "desktop_installer_host_invalid",
+                        "GitHub redirected the installer to an untrusted host.",
+                        status_code=502,
+                    )
+                with tempfile.NamedTemporaryFile(
+                    prefix="ztf-classifier-update-",
+                    suffix=".exe",
+                    delete=False,
+                ) as output:
+                    temp_path = Path(output.name)
+                    while True:
+                        chunk = response.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        received += len(chunk)
+                        if received > asset["size"] or received > 512 * 1024 * 1024:
+                            raise ApiContractError(
+                                "desktop_installer_size_invalid",
+                                "Downloaded installer exceeds the published asset size.",
+                                status_code=502,
+                            )
+                        digest.update(chunk)
+                        output.write(chunk)
+            if received != asset["size"]:
+                raise ApiContractError(
+                    "desktop_installer_size_mismatch",
+                    "Downloaded installer size does not match GitHub metadata.",
+                    status_code=502,
+                )
+            if "sha256:" + digest.hexdigest() != asset["digest"]:
+                raise ApiContractError(
+                    "desktop_installer_digest_mismatch",
+                    "Downloaded installer failed SHA-256 verification.",
+                    status_code=502,
+                )
+            return FileResponse(
+                temp_path,
+                media_type="application/vnd.microsoft.portable-executable",
+                filename=asset["name"],
+                background=BackgroundTask(temp_path.unlink, missing_ok=True),
+            )
+        except ApiContractError:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
+            raise
+        except (HTTPError, URLError, TimeoutError, OSError) as exc:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
+            raise ApiContractError(
+                "desktop_installer_download_failed",
+                "The official installer could not be downloaded and verified.",
+                status_code=502,
+            ) from exc
 
     @app.get(
         "/v1/settings",

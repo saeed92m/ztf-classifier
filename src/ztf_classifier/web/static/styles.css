@@ -727,3 +727,16 @@ h1 { margin: 5px 0 4px; font-size: 22px; letter-spacing: -.02em; }
 :root[data-desktop-preview="true"] .metadata dt {
   color: #8eacc9;
 }
+
+:root[data-desktop-preview="true"] .desktop-update-panel { display:grid; gap:12px; }
+:root[data-desktop-preview="true"] .desktop-update-label { color:#a9c9e5; font-size:11px; font-weight:700; }
+:root[data-desktop-preview="true"] .desktop-update-select { width:min(100%,520px); min-height:40px; padding:8px 12px; }
+:root[data-desktop-preview="true"] .desktop-update-meta { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+:root[data-desktop-preview="true"] .desktop-update-meta>div { display:grid; gap:5px; padding:12px; border:1px solid var(--mission-edge); border-radius:9px; background:rgba(3,15,32,.55); }
+:root[data-desktop-preview="true"] .desktop-update-meta span { color:#86a9c9; font-size:10px; }
+:root[data-desktop-preview="true"] .desktop-update-meta strong { color:#e6f3ff; font-size:13px; overflow-wrap:anywhere; }
+:root[data-desktop-preview="true"] .desktop-release-notes { max-height:180px; overflow:auto; white-space:pre-wrap; padding:12px; border:1px solid var(--mission-edge); border-radius:8px; color:#b5cde4; background:rgba(2,12,27,.52); font-size:11px; line-height:1.55; }
+:root[data-desktop-preview="true"] .desktop-update-actions { display:flex; flex-wrap:wrap; gap:10px; }
+:root[data-desktop-preview="true"] #desktopUpdateStatus[data-kind="success"] { color:#78ddb0; }
+:root[data-desktop-preview="true"] #desktopUpdateStatus[data-kind="warning"] { color:#f1c16e; }
+:root[data-desktop-preview="true"] #desktopUpdateStatus[data-kind="error"] { color:#ff9c9c; }

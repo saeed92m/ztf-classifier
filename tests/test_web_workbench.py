@@ -123,3 +123,275 @@ def test_desktop_mission_control_dashboard_uses_live_api_evidence() -> None:
     assert "no demo data" in script.text.lower()
     assert "ZTF20aaaaaaaa" not in script.text
     assert "0.0%" not in script.text
+
+
+def test_desktop_updater_uses_authenticated_local_api_and_defaults_to_stable() -> None:
+    client = TestClient(create_app())
+    page = client.get("/workbench/")
+    script = client.get("/workbench/desktop-updater.js")
+
+    assert page.status_code == 200
+    assert 'src="./desktop-updater.js"' in page.text
+    assert "connect-src 'self'" in page.text
+    assert script.status_code == 200
+    assert "/v1/desktop/releases?channel=" in script.text
+    assert "/v1/desktop/releases/" in script.text
+    assert 'localStorage.getItem(KEY) === "preview" ? "preview" : "stable"' in script.text
+    assert "api.github.com" not in script.text
+    assert 'crypto.subtle.digest("SHA-256"' in script.text
+
+
+def test_desktop_release_api_filters_stable_and_preview_installers(monkeypatch) -> None:
+    import json
+
+    import ztf_classifier.api.app as api_module
+
+    digest = "sha256:" + ("a" * 64)
+    def release(tag: str, prerelease: bool, name: str = "ZTF-Classifier-Setup.exe"):
+        return {
+            "tag_name": tag,
+            "draft": False,
+            "prerelease": prerelease,
+            "published_at": "2026-11-27T08:00:00Z",
+            "body": "Release notes",
+            "assets": [{
+                "name": name,
+                "size": 1024,
+                "digest": digest,
+                "browser_download_url": (
+                    "https://github.com/saeed92m/ztf-classifier/releases/download/"
+                    + tag + "/" + name
+                ),
+            }],
+        }
+
+    payload = [
+        release("v4.0.0-preview.1", True),
+        release("v3.0.0", False),
+        release("v2.0.0", False, "ztf_classifier.whl"),
+        {**release("v1.0.0", False), "assets": [{
+            "name": "ZTF-Classifier-Setup.exe",
+            "size": 1024,
+            "browser_download_url": "https://github.com/saeed92m/ztf-classifier/releases/download/v1.0.0/setup.exe",
+        }]},
+    ]
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, *_args):
+            return None
+        def read(self):
+            return json.dumps(payload).encode("utf-8")
+
+    monkeypatch.setattr(api_module, "urlopen", lambda *_args, **_kwargs: FakeResponse())
+    client = TestClient(create_app())
+
+    stable = client.get("/v1/desktop/releases?channel=stable")
+    preview = client.get("/v1/desktop/releases?channel=preview")
+
+    assert stable.status_code == 200
+    assert stable.json()["release"]["tag_name"] == "v3.0.0"
+    assert preview.status_code == 200
+    assert preview.json()["release"]["tag_name"] == "v4.0.0-preview.1"
+
+
+def test_desktop_release_api_rejects_unknown_channel() -> None:
+    client = TestClient(create_app())
+    response = client.get("/v1/desktop/releases?channel=nightly")
+    assert response.status_code == 422
+
+
+
+def _exercise_desktop_installer_download(
+    monkeypatch,
+    tmp_path,
+    *,
+    body: bytes,
+    published_digest: str,
+    published_size: int,
+    final_url: str = (
+        "https://release-assets.githubusercontent.com/github-production-release-asset/"
+        "asset"
+    ),
+):
+    import json
+
+    import ztf_classifier.api.app as api_module
+
+    asset_url = (
+        "https://github.com/saeed92m/ztf-classifier/releases/download/"
+        "v3.0.0/ZTF-Classifier-Setup.exe"
+    )
+    release_payload = [{
+        "tag_name": "v3.0.0",
+        "draft": False,
+        "prerelease": False,
+        "published_at": "2026-11-27T08:00:00Z",
+        "body": "Release notes",
+        "assets": [{
+            "name": "ZTF-Classifier-Setup.exe",
+            "size": published_size,
+            "digest": published_digest,
+            "browser_download_url": asset_url,
+        }],
+    }]
+
+    class FakeResponse:
+        def __init__(self, data: bytes, url: str | None = None):
+            self.data = data
+            self.url = url
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def read(self, size: int = -1):
+            if size < 0:
+                chunk, self.data = self.data, b""
+            else:
+                chunk, self.data = self.data[:size], self.data[size:]
+            return chunk
+
+        def geturl(self):
+            return self.url
+
+    real_named_temporary_file = api_module.tempfile.NamedTemporaryFile
+
+    def named_temporary_file(*args, **kwargs):
+        kwargs["dir"] = tmp_path
+        return real_named_temporary_file(*args, **kwargs)
+
+    def fake_urlopen(request, timeout=0):
+        request_url = request.full_url
+        if request_url.startswith("https://api.github.com/"):
+            return FakeResponse(json.dumps(release_payload).encode("utf-8"))
+        if request_url == asset_url:
+            return FakeResponse(body, final_url)
+        raise AssertionError(f"Unexpected URL requested: {request_url}")
+
+    monkeypatch.setattr(api_module, "urlopen", fake_urlopen)
+    monkeypatch.setattr(
+        api_module.tempfile,
+        "NamedTemporaryFile",
+        named_temporary_file,
+    )
+    response = TestClient(create_app()).get(
+        "/v1/desktop/releases/v3.0.0/installer"
+    )
+    return response, tmp_path
+
+
+def test_desktop_installer_proxy_returns_verified_executable_and_cleans_temp_file(
+    monkeypatch, tmp_path
+) -> None:
+    import hashlib
+
+    installer = b"MZ" + b"verified-installer-payload"
+    response, temp_dir = _exercise_desktop_installer_download(
+        monkeypatch,
+        tmp_path,
+        body=installer,
+        published_digest="sha256:" + hashlib.sha256(installer).hexdigest(),
+        published_size=len(installer),
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == (
+        "application/vnd.microsoft.portable-executable"
+    )
+    assert response.content == installer
+    assert list(temp_dir.iterdir()) == []
+
+
+def test_desktop_installer_proxy_rejects_digest_mismatch_and_cleans_temp_file(
+    monkeypatch, tmp_path
+) -> None:
+    import hashlib
+
+    installer = b"MZ" + b"tampered-installer"
+    wrong_digest = "sha256:" + hashlib.sha256(b"different-bytes").hexdigest()
+    response, temp_dir = _exercise_desktop_installer_download(
+        monkeypatch,
+        tmp_path,
+        body=installer,
+        published_digest=wrong_digest,
+        published_size=len(installer),
+    )
+
+    assert response.status_code == 502
+    assert response.json()["code"] == "desktop_installer_digest_mismatch"
+    assert list(temp_dir.iterdir()) == []
+
+
+def test_desktop_installer_proxy_rejects_oversized_body_and_cleans_temp_file(
+    monkeypatch, tmp_path
+) -> None:
+    installer = b"MZ" + b"oversized"
+    response, temp_dir = _exercise_desktop_installer_download(
+        monkeypatch,
+        tmp_path,
+        body=installer,
+        published_digest="sha256:" + ("a" * 64),
+        published_size=len(installer) - 1,
+    )
+
+    assert response.status_code == 502
+    assert response.json()["code"] == "desktop_installer_size_invalid"
+    assert list(temp_dir.iterdir()) == []
+
+
+def test_desktop_installer_proxy_rejects_untrusted_redirect_and_cleans_temp_file(
+    monkeypatch, tmp_path
+) -> None:
+    installer = b"MZ" + b"installer"
+    response, temp_dir = _exercise_desktop_installer_download(
+        monkeypatch,
+        tmp_path,
+        body=installer,
+        published_digest="sha256:" + ("a" * 64),
+        published_size=len(installer),
+        final_url="https://attacker.example/installer.exe",
+    )
+
+    assert response.status_code == 502
+    assert response.json()["code"] == "desktop_installer_host_invalid"
+    assert list(temp_dir.iterdir()) == []
+
+
+def test_desktop_installer_proxy_rejects_truncated_body_and_cleans_temp_file(
+    monkeypatch, tmp_path
+) -> None:
+    installer = b"MZ" + b"short"
+    response, temp_dir = _exercise_desktop_installer_download(
+        monkeypatch,
+        tmp_path,
+        body=installer,
+        published_digest="sha256:" + ("a" * 64),
+        published_size=len(installer) + 10,
+    )
+
+    assert response.status_code == 502
+    assert response.json()["code"] == "desktop_installer_size_mismatch"
+    assert list(temp_dir.iterdir()) == []
+
+
+
+def test_desktop_installer_proxy_rejects_insecure_redirect_scheme_and_cleans_temp_file(
+    monkeypatch, tmp_path
+) -> None:
+    installer = b"MZ" + b"installer"
+    response, temp_dir = _exercise_desktop_installer_download(
+        monkeypatch,
+        tmp_path,
+        body=installer,
+        published_digest="sha256:" + ("a" * 64),
+        published_size=len(installer),
+        final_url="http://github.com/saeed92m/ztf-classifier/installer.exe",
+    )
+
+    assert response.status_code == 502
+    assert response.json()["code"] == "desktop_installer_host_invalid"
+    assert list(temp_dir.iterdir()) == []
