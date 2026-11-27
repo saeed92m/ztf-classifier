@@ -35,3 +35,5 @@ The exact source commit must pass the Windows Desktop Preview workflow. This inc
 ## Manual acceptance required
 
 Install this preview on the target Windows device. Check Light and Dark themes, all navigation pages, long-page scrolling, version comparison, download checksum verification, application restart, and user-data preservation.
+
+The Windows executable, Desktop shortcut, Start Menu shortcut, taskbar, and Workbench header branding also require visual confirmation on the target device. This acceptance item remains tracked in [issue #320](https://github.com/saeed92m/ztf-classifier/issues/320). Do not treat the automated shortcut-presence check as proof of visual icon consistency.
