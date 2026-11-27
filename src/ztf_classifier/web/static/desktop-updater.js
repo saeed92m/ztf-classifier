@@ -18,7 +18,7 @@
     return fetch(url, { ...options, headers, cache: "no-store" });
   }
   function parseVersion(value) {
-    const match = String(value || "").trim().match(/^(?:desktop-v|v)?(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?$/);
+    const match = String(value || "").trim().match(/^(?:desktop-v|v)?(\d+)\\.(\d+)\\.(\d+)(?:-([0-9A-Za-z.-]+))?$/);
     if (!match) return null;
     return { major: Number(match[1]), minor: Number(match[2]), patch: Number(match[3]),
       prerelease: match[4] ? match[4].split(".") : null };
@@ -37,7 +37,7 @@
       if (a.prerelease[i] === undefined) return -1;
       if (b.prerelease[i] === undefined) return 1;
       if (a.prerelease[i] === b.prerelease[i]) continue;
-      const an = /^\\d+$/.test(a.prerelease[i]), bn = /^\\d+$/.test(b.prerelease[i]);
+      const an = /^\d+$/.test(a.prerelease[i]), bn = /^\d+$/.test(b.prerelease[i]);
       if (an && bn) return Number(a.prerelease[i]) > Number(b.prerelease[i]) ? 1 : -1;
       if (an !== bn) return an ? -1 : 1;
       return a.prerelease[i] > b.prerelease[i] ? 1 : -1;
