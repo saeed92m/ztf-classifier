@@ -984,3 +984,43 @@ h1 { margin: 5px 0 4px; font-size: 22px; letter-spacing: -.02em; }
   background: #f3f7fb;
   border-color: #d1deea;
 }
+
+
+/* DR24 export control: legible when disabled, clear when available. */
+:root[data-desktop-preview="true"] #dr24ExportButton {
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid rgba(40, 197, 244, .55);
+  border-radius: var(--radius-sm);
+  color: #cceeff;
+  background: rgba(9, 93, 151, .30);
+  font-weight: 650;
+}
+:root[data-desktop-preview="true"] #dr24ExportButton:not(:disabled):hover {
+  color: #ffffff;
+  border-color: #42c9f5;
+  background: rgba(8, 119, 190, .72);
+}
+:root[data-desktop-preview="true"] #dr24ExportButton:disabled {
+  color: #b8c9dc;
+  border-color: rgba(110, 151, 190, .48);
+  background: rgba(70, 100, 132, .24);
+  cursor: not-allowed;
+  opacity: 1;
+}
+:root[data-desktop-preview="true"][data-theme="light"] #dr24ExportButton {
+  color: #17466d;
+  border-color: #a9c9e2;
+  background: #eaf3fb;
+}
+:root[data-desktop-preview="true"][data-theme="light"] #dr24ExportButton:not(:disabled):hover {
+  color: #ffffff;
+  border-color: #075f9e;
+  background: #087bb7;
+}
+:root[data-desktop-preview="true"][data-theme="light"] #dr24ExportButton:disabled {
+  color: #52677e;
+  border-color: #b7cde2;
+  background: #e3edf7;
+  opacity: 1;
+}
