@@ -26,20 +26,20 @@
   "measurement": {
     "metrics": {
       "correctness": {
-        "status": "NOT_MEASURED",
-        "reason": "The latest exact-head Windows run completed the HATS-backed live DR24 smoke, desktop runtime tests, JavaScript checks, Ruff checks, and PyInstaller build. The frozen application self-test then failed because pyarrow distribution metadata was absent from the bundle. The workflow now copies both pandas and pyarrow metadata; the corrected exact-head run is pending."
+        "status": "VERIFIED",
+        "reason": "The exact Preview 5 PR head passed the DR24 Batch Workbench UI Contract, JavaScript syntax, Ruff, desktop runtime tests, bounded live DR24 single- and multi-OID HATS smoke, PyInstaller build, frozen application self-test, real WebView2 GUI smoke, installer build, silent install, installed self-test, installed GUI smoke, and silent uninstall."
       },
       "reliability": {
-        "status": "NOT_MEASURED",
-        "reason": "The bounded HATS-backed DR24 smoke passed on GitHub Windows CI for three single-OID requests and one two-OID batch request, with expected epoch counts and payload hashes. The user's earlier Preview 4 HTTP 502 has not been reproduced or ruled out on the target Windows device."
+        "status": "PARTIAL",
+        "reason": "The bounded live HATS-backed DR24 smoke passed for three single-OID requests and one two-OID batch request. The user's earlier Preview 4 HTTP 502 has not been reproduced or ruled out on the target Windows device."
       },
       "reproducibility": {
-        "status": "NOT_MEASURED",
-        "reason": "No final Preview 5 installer, build manifest, or checksum has been produced. The Windows workflow stopped at the frozen application self-test before GUI smoke and installer stages."
+        "status": "PARTIAL",
+        "reason": "The Windows build, installer, install/uninstall test, build-manifest generation, and SHA-256 generation passed on the exact PR head. The PR workflow intentionally skipped artifact upload for this branch; the main-branch release workflow must upload and verify the release assets before publication."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
-        "reason": "This PR improves the display and accounting of scientific evidence. It does not provide the missing immutable benchmark manifests or benchmark reports needed to verify the scientific gate."
+        "reason": "This Preview 5 work improves acquisition diagnostics and validation reporting. It does not provide missing immutable benchmark manifests or benchmark result reports, so the scientific validation gate remains NOT_VERIFIED."
       }
     }
   },
@@ -49,25 +49,23 @@
     "blocker": "The scientific validation gate remains NOT_VERIFIED until all registered benchmark sources have immutable evidence manifests and benchmark result reports, all required checks pass, and provenance is complete. This Preview 5 UI and acquisition work does not resolve the outstanding scientific evidence gaps.",
     "evidence": [
       "PR #323 contains the Preview 5 UI, DR24 diagnostics/accounting, and scientific-gate clarity changes on an independent branch.",
-      "The DR24 Batch Workbench UI Contract workflow passed on the recorded PR head.",
-      "The Scientific Validation contract workflow passed; this does not prove that the scientific benchmark gate itself passed.",
-      "CodeQL, Product Scope Audit, and CI passed on the recorded PR head.",
-      "The Windows workflow completed dependency checks, the bounded live DR24 smoke (three single-OID requests and one two-OID batch request), desktop runtime tests, JavaScript syntax checks, Ruff checks, and the PyInstaller one-folder build.",
-      "The frozen application self-test failed because pandas' optional-dependency check could not find pyarrow distribution metadata. The Windows dependency lock pins pyarrow==26.0.1; the PyInstaller command previously copied pandas metadata only.",
-      "The Windows workflow was corrected to copy both pandas and pyarrow distribution metadata. The corrected exact-head Windows run has not yet been verified.",
-      "The PR remains open and in Draft state. No Preview 5 GitHub Release has been published.",
-      "A review edge case was identified: interrupted DR24 operations could retain oid_accounting_status=PENDING. Both interruption paths now set the state to UNKNOWN, and a restart regression test verifies the persisted manifest and operation log."
+      "The exact PR head passed DR24 Batch Workbench UI Contract, Product Scope Audit, CodeQL, Scientific Validation contract, and CI.",
+      "The CI run passed Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate.",
+      "The Windows Desktop Preview workflow passed dependency checks, bounded live DR24 smoke for three single-OID requests and one two-OID batch request, desktop runtime tests, JavaScript syntax, Ruff, PyInstaller build, frozen application self-test, real WebView2 GUI smoke, PDF generation, signed WebView2 bootstrapper verification, NSIS installation, installer build, silent install, installed executable verification, installed self-test, installed WebView2 GUI smoke, and silent uninstall.",
+      "The Windows installer workflow generated the build manifest and SHA-256 checksum successfully. Artifact upload was skipped on the PR branch by the workflow's branch policy; main-branch publication must upload and verify these artifacts.",
+      "The pyarrow metadata packaging defect was fixed by adding --copy-metadata pyarrow alongside --copy-metadata pandas.",
+      "Interrupted DR24 operations now set oid_accounting_status=UNKNOWN in both interruption paths. The restart regression test passed in CI, and the associated review thread is resolved.",
+      "The PR remains open and in Draft state at this evidence checkpoint. No Preview 5 GitHub Release has been published yet."
     ]
   },
   "failure_analysis": {
-    "status": "SUPPORTED",
+    "status": "RESOLVED_FOR_PREVIEW_BUILD",
     "root_causes": [
       "The Preview 4 screenshot records HTTP 502 during DR24 acquisition, but does not identify the underlying network or source failure.",
       "The bounded HATS-backed DR24 smoke passed on GitHub Windows CI, but this does not establish why the user's machine received HTTP 502.",
-      "The frozen application self-test failed because pyarrow distribution metadata was missing from the PyInstaller bundle. The build environment installed pyarrow, but the packaging command did not copy its distribution metadata.",
-      "The Windows workflow now includes --copy-metadata pyarrow alongside --copy-metadata pandas. A new exact-head run must verify the fix.",
-      "The CI cumulative lifecycle record is present in this PR. The latest CI workflow completed successfully.",
-      "An interrupted operation is terminal, so retaining PENDING would misstate OID accounting. Both restart and replacement interruption paths now set oid_accounting_status to UNKNOWN; the restart path has regression coverage."
+      "The frozen application self-test previously failed because pyarrow distribution metadata was missing from the PyInstaller bundle. The Windows dependency lock pins pyarrow==26.0.1; the PyInstaller command previously copied pandas metadata only.",
+      "The Windows packaging command now copies both pandas and pyarrow metadata. The exact PR-head frozen application self-test passed.",
+      "An interrupted operation is terminal, so retaining PENDING would misstate OID accounting. Both restart and replacement interruption paths now set oid_accounting_status=UNKNOWN; the restart path has regression coverage and passed CI."
     ]
   },
   "knowledge_extraction": {
@@ -81,20 +79,17 @@
     ]
   },
   "regression": {
-    "status": "NOT_VERIFIED",
+    "status": "VERIFIED",
     "open_blockers": [
-      "Rerun the exact PR head after the pyarrow metadata packaging correction.",
-      "Verify the frozen application self-test passes and records all required dependency metadata.",
-      "Complete real WebView2 GUI smoke, installer build, silent install, launch, uninstall, user-data preservation, build manifest, and SHA-256 generation.",
-      "Inspect the generated release artifacts and verify the installer and live DR24 smoke checksums.",
-      "Verify all Preview 5 UI and DR24 behaviors in the final installed application.",
-      "Publish Preview 5 only after all required product and engineering checks pass.",
+      "Merge PR #323 after confirming the exact PR-head checks remain green.",
+      "Run the main-branch Windows Preview workflow so it uploads the installer, manuals, dependency manifest, live DR24 smoke report, self-test reports, build manifest, and SHA-256 file.",
+      "Verify the main-branch release payload and checksums, then publish desktop-v0.1.0-preview.5.",
+      "After user installation, manually verify navigation order, Light/Dark control contrast, DR24 two-OID lookup/export behavior, and visual icon consistency on the target Windows device.",
       "After user installation, reproduce or rule out the DR24 HTTP 502 on the target device using the request ID and diagnostic log.",
-      "Keep scientific validation NOT_VERIFIED until all scientific evidence blockers are resolved independently.",
-      "Verify the interrupted-operation accounting regression test passes on the exact PR head."
+      "Keep scientific validation NOT_VERIFIED until all scientific evidence blockers are resolved independently."
     ]
   },
-  "decision": "REVISE",
+  "decision": "APPROVE_FOR_PREVIEW_RELEASE",
   "knowledge_carried_forward": [
     "Do not publish Preview 5 until exact-head CI and Windows packaging gates pass.",
     "Do not merge PR #323 or change main without explicit authorization.",
