@@ -8,6 +8,9 @@ import secrets
 import tempfile
 from pathlib import Path
 from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
+from urllib.request import Request as UrlRequest, urlopen
 from uuid import uuid4
 
 import pandas as pd
@@ -15,10 +18,8 @@ from alerce.core import Alerce
 from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response
-from starlette.background import BackgroundTask
-from urllib.error import HTTPError, URLError
-from urllib.request import Request as UrlRequest, urlopen
 from fastapi.staticfiles import StaticFiles
+from starlette.background import BackgroundTask
 
 from ztf_classifier.api.config import ApiSettings
 from ztf_classifier.api.errors import ApiContractError
@@ -465,7 +466,6 @@ def create_app(
                     or not isinstance(url, str)
                 ):
                     continue
-                from urllib.parse import urlsplit
                 parsed = urlsplit(url)
                 if (
                     parsed.scheme != "https"
@@ -498,7 +498,10 @@ def create_app(
     ) -> dict[str, Any]:
         """Return the newest published installer for the selected channel."""
         candidates = _desktop_release_candidates(channel)
-        return {"channel": channel, "release": candidates[0] if candidates else None}
+        release = candidates[0].copy() if candidates else None
+        if release is not None:
+            release.pop("download_url", None)
+        return {"channel": channel, "release": release}
 
     @app.get("/v1/desktop/releases/{tag}/installer", tags=["desktop-updates"])
     def download_desktop_installer(tag: str) -> FileResponse:
@@ -537,7 +540,6 @@ def create_app(
                 headers={"User-Agent": "ZTF-Classifier-Desktop-Updater"},
             )
             with urlopen(request, timeout=60) as response:
-                from urllib.parse import urlsplit
                 if urlsplit(response.geturl()).hostname not in {
                     "github.com",
                     "release-assets.githubusercontent.com",
