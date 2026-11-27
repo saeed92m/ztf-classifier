@@ -28,6 +28,8 @@ class FakeDR24Backend:
     def acquire(self, request: object) -> DR24LightcurveResult:
         objectids = tuple(request.objectids)  # type: ignore[attr-defined]
         self.calls.append(objectids)
+        if self.mode == "error":
+            raise RuntimeError("simulated HATS outage")
         record_objectids = (
             ()
             if self.mode == "empty"
@@ -297,6 +299,23 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 for record in partial_export["source_payload"]["records"]
             ] == [404]
 
+            page.locator('[data-view="dr24"]').click()
+            backend.mode = "error"
+            page.locator("#dr24ObjectIds").fill("606")
+            page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('DR24 acquisition failed')",
+                timeout=10_000,
+            )
+            assert page.locator("#dr24ExportButton").is_disabled()
+            failed_provenance = json.loads(
+                page.locator("#dr24Provenance").inner_text()
+            )
+            assert failed_provenance["status"] == "FAILED"
+            assert failed_provenance["missing_oids"] is None
+            page.locator('[data-view="desktop-export"]').click()
+            assert page.locator("#desktopDownloadJson").is_disabled()
+
             page.locator('[data-view="desktop-provenance"]').click()
             assert "requested_oids" in page.locator("#desktopProvenanceJson").inner_text()
             page.locator('[data-view="desktop-export"]').click()
@@ -306,14 +325,14 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator("#dr24ObjectIds").fill("101,101")
             page.locator("#dr24LoadButton").click()
             assert "Duplicate object IDs are not allowed" in page.locator("#dr24Status").inner_text()
-            assert backend.calls == [(101, 202), (303,), (404, 505)]
+            assert backend.calls == [(101, 202), (303,), (404, 505), (606,)]
 
             page.locator("#dr24ObjectIds").fill(
                 ",".join(str(value) for value in range(1, 12))
             )
             page.locator("#dr24LoadButton").click()
             assert "Enter between 1 and 10 object IDs." in page.locator("#dr24Status").inner_text()
-            assert backend.calls == [(101, 202), (303,), (404, 505)]
+            assert backend.calls == [(101, 202), (303,), (404, 505), (606,)]
             browser.close()
     finally:
         server.should_exit = True
