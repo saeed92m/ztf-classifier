@@ -143,8 +143,6 @@ def test_desktop_updater_uses_authenticated_local_api_and_defaults_to_stable() -
 
 def test_desktop_release_api_filters_stable_and_preview_installers(monkeypatch) -> None:
     import json
-    from io import BytesIO
-
     import ztf_classifier.api.app as api_module
 
     digest = "sha256:" + ("a" * 64)
