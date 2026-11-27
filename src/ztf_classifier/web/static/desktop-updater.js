@@ -99,7 +99,7 @@
       '<p class="muted">Check and download a verified Windows installer from the official project release channel.</p>' +
       '<label class="desktop-update-label" for="desktopUpdateChannel">Update channel</label>' +
       '<select id="desktopUpdateChannel" class="desktop-update-select"><option value="stable">Stable — recommended</option><option value="preview">Preview — early access</option></select>' +
-      '<div class="desktop-update-meta"><div><span>Installed version</span><strong id="desktopInstalledVersion">Checking…</strong></div><div><span>Latest available</span><strong id="desktopLatestVersion">Not checked</strong></div><div><span>Published</span><strong id="desktopLatestDate">—</strong></div></div>' +
+      '<div class="desktop-update-meta"><div><span>Installed version</span><strong id="desktopInstalledVersion">Not checked</strong></div><div><span>Latest available</span><strong id="desktopLatestVersion">Not checked</strong></div><div><span>Published</span><strong id="desktopLatestDate">—</strong></div></div>' +
       '<div id="desktopReleaseNotes" class="desktop-release-notes">Release notes appear after checking.</div>' +
       '<div class="desktop-update-actions"><button id="desktopCheckUpdates" class="secondary-button" type="button">Check for updates</button><button id="desktopDownloadUpdate" class="primary-button" type="button" hidden disabled>Download installer</button></div>' +
       '<p id="desktopUpdateStatus" class="muted" role="status" aria-live="polite">Select a channel and check for a published release.</p>' +
@@ -114,10 +114,13 @@
     const downloadButton = panel.querySelector("#desktopDownloadUpdate");
     const message = panel.querySelector("#desktopUpdateStatus");
     select.value = channel();
+    void installedVersion().then(version => {
+      const node = panel.querySelector("#desktopInstalledVersion");
+      if (node) node.textContent = version || "Unavailable";
+    });
 
     select.addEventListener("change", () => {
       try { localStorage.setItem(KEY, select.value); } catch { /* session-only preference */ }
-      panel.querySelector("#desktopInstalledVersion").textContent = "Checking…";
       panel.querySelector("#desktopLatestVersion").textContent = "Not checked";
       panel.querySelector("#desktopLatestDate").textContent = "—";
       panel.querySelector("#desktopReleaseNotes").textContent = "Release notes appear after checking.";
