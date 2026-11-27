@@ -125,15 +125,79 @@ def test_desktop_mission_control_dashboard_uses_live_api_evidence() -> None:
     assert "0.0%" not in script.text
 
 
-def test_desktop_updater_asset_is_served_and_has_release_channel_contract() -> None:
+def test_desktop_updater_uses_authenticated_local_api_and_defaults_to_stable() -> None:
     client = TestClient(create_app())
     page = client.get("/workbench/")
     script = client.get("/workbench/desktop-updater.js")
 
     assert page.status_code == 200
     assert 'src="./desktop-updater.js"' in page.text
+    assert "connect-src 'self'" in page.text
     assert script.status_code == 200
-    assert "api.github.com/repos/saeed92m/ztf-classifier/releases" in script.text
-    assert 'value === "stable"' in script.text
-    assert 'selected === "preview" ? item.prerelease : !item.prerelease' in script.text
+    assert "/v1/desktop/releases?channel=" in script.text
+    assert "/v1/desktop/releases/" in script.text
+    assert 'localStorage.getItem(KEY) === "preview" ? "preview" : "stable"' in script.text
+    assert "api.github.com" not in script.text
     assert 'crypto.subtle.digest("SHA-256"' in script.text
+
+
+def test_desktop_release_api_filters_stable_and_preview_installers(monkeypatch) -> None:
+    import json
+    from io import BytesIO
+
+    import ztf_classifier.api.app as api_module
+
+    digest = "sha256:" + ("a" * 64)
+    def release(tag: str, prerelease: bool, name: str = "ZTF-Classifier-Setup.exe"):
+        return {
+            "tag_name": tag,
+            "draft": False,
+            "prerelease": prerelease,
+            "published_at": "2026-11-27T08:00:00Z",
+            "body": "Release notes",
+            "assets": [{
+                "name": name,
+                "size": 1024,
+                "digest": digest,
+                "browser_download_url": (
+                    "https://github.com/saeed92m/ztf-classifier/releases/download/"
+                    + tag + "/" + name
+                ),
+            }],
+        }
+
+    payload = [
+        release("v4.0.0-preview.1", True),
+        release("v3.0.0", False),
+        release("v2.0.0", False, "ztf_classifier.whl"),
+        {**release("v1.0.0", False), "assets": [{
+            "name": "ZTF-Classifier-Setup.exe",
+            "size": 1024,
+            "browser_download_url": "https://github.com/saeed92m/ztf-classifier/releases/download/v1.0.0/setup.exe",
+        }]},
+    ]
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, *_args):
+            return None
+        def read(self):
+            return json.dumps(payload).encode("utf-8")
+
+    monkeypatch.setattr(api_module, "urlopen", lambda *_args, **_kwargs: FakeResponse())
+    client = TestClient(create_app())
+
+    stable = client.get("/v1/desktop/releases?channel=stable")
+    preview = client.get("/v1/desktop/releases?channel=preview")
+
+    assert stable.status_code == 200
+    assert stable.json()["release"]["tag_name"] == "v3.0.0"
+    assert preview.status_code == 200
+    assert preview.json()["release"]["tag_name"] == "v4.0.0-preview.1"
+
+
+def test_desktop_release_api_rejects_unknown_channel() -> None:
+    client = TestClient(create_app())
+    response = client.get("/v1/desktop/releases?channel=nightly")
+    assert response.status_code == 422
