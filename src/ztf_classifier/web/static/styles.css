@@ -927,3 +927,60 @@ h1 { margin: 5px 0 4px; font-size: 22px; letter-spacing: -.02em; }
 :root[data-desktop-preview="true"][data-theme="light"] #desktopUpdateStatus[data-kind="success"] { color: #176b48; }
 :root[data-desktop-preview="true"][data-theme="light"] #desktopUpdateStatus[data-kind="warning"] { color: #80530b; }
 :root[data-desktop-preview="true"][data-theme="light"] #desktopUpdateStatus[data-kind="error"] { color: #a32727; }
+
+
+/* High-contrast Light theme details for Mission Control data and status rows. */
+:root[data-desktop-preview="true"][data-theme="light"] .mission-chart-wrap {
+  border-bottom-color: #d3dfeb;
+}
+:root[data-desktop-preview="true"][data-theme="light"] .mission-chart-wrap .grid-lines line {
+  stroke: #cbd8e5;
+}
+:root[data-desktop-preview="true"][data-theme="light"] .mission-chart-wrap .chart-message {
+  fill: #52677e;
+}
+:root[data-desktop-preview="true"][data-theme="light"] .mission-chart-wrap .axis-label,
+:root[data-desktop-preview="true"][data-theme="light"] .mission-chart-footer {
+  color: #52677e;
+}
+:root[data-desktop-preview="true"][data-theme="light"] .mission-status-row,
+:root[data-desktop-preview="true"][data-theme="light"] .mission-health-row,
+:root[data-desktop-preview="true"][data-theme="light"] .mission-review-item {
+  color: #29445f;
+  border-bottom-color: #d5e0eb;
+}
+:root[data-desktop-preview="true"][data-theme="light"] .mission-status-value.good,
+:root[data-desktop-preview="true"][data-theme="light"] .mission-health-row strong.good { color: #176b48; }
+:root[data-desktop-preview="true"][data-theme="light"] .mission-status-value.warning,
+:root[data-desktop-preview="true"][data-theme="light"] .mission-health-row strong.warning { color: #80530b; }
+:root[data-desktop-preview="true"][data-theme="light"] .mission-status-value.danger,
+:root[data-desktop-preview="true"][data-theme="light"] .mission-health-row strong.danger { color: #a32727; }
+:root[data-desktop-preview="true"][data-theme="light"] .mission-review-item:hover {
+  color: #123b62;
+  background: #e8f2fb;
+}
+:root[data-desktop-preview="true"][data-theme="light"] .mission-review-oid { color: #075f98; }
+:root[data-desktop-preview="true"][data-theme="light"] .mission-review-class,
+:root[data-desktop-preview="true"][data-theme="light"] .mission-operation-copy strong { color: #29445f; }
+:root[data-desktop-preview="true"][data-theme="light"] .mission-review-date,
+:root[data-desktop-preview="true"][data-theme="light"] .mission-operation-copy span,
+:root[data-desktop-preview="true"][data-theme="light"] .mission-empty,
+:root[data-desktop-preview="true"][data-theme="light"] .mission-footer-note { color: #52677e; }
+:root[data-desktop-preview="true"][data-theme="light"] .mission-link-button:hover { color: #064a78; }
+:root[data-desktop-preview="true"][data-theme="light"] .mission-primary-button {
+  color: #ffffff;
+}
+:root[data-desktop-preview="true"][data-theme="light"] .mission-panel table th,
+:root[data-desktop-preview="true"][data-theme="light"] .mission-panel table td,
+:root[data-desktop-preview="true"][data-theme="light"] .panel table th,
+:root[data-desktop-preview="true"][data-theme="light"] .panel table td {
+  color: #29445f;
+  border-color: #d5e0eb;
+}
+:root[data-desktop-preview="true"][data-theme="light"] pre,
+:root[data-desktop-preview="true"][data-theme="light"] code,
+:root[data-desktop-preview="true"][data-theme="light"] .report-content {
+  color: #243f5b;
+  background: #f3f7fb;
+  border-color: #d1deea;
+}
