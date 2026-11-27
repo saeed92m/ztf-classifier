@@ -1380,8 +1380,7 @@ async function loadDR24Explorer() {
               missing_oids: [],
               payload_sha256_by_oid: {},
               error_code: error.code || "dr24_acquisition_failed",
-              error_message: error.message || "DR24 acquisition failed. No alternate source was used.",
-              request_id: error.requestId || null
+              error_message: error.message || "DR24 acquisition failed. No alternate source was used."
             })
           });
         } catch {
