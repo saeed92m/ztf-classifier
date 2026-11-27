@@ -442,7 +442,7 @@ def test_desktop_dr24_failure_and_scientific_gate_are_explicit() -> None:
     assert 'class="secondary-button dr24-export-button"' in script.text
     assert "error.requestId" in script.text
     assert "missing_oids: null" in script.text
-    assert "No conclusion about OID existence can be drawn" in script.text
+    assert "Missing OIDs are unknown" in script.text
     assert "Product validation gate" in script.text
     assert "External reproduction evidence" in script.text
     assert "product_gate" in validation.json()
