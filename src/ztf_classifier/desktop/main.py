@@ -40,6 +40,10 @@ class DesktopBridge:
         """Return the in-memory token to the local desktop WebView."""
         return self._api_token
 
+    def get_installed_version(self) -> str | None:
+        """Return the version recorded by the current user's installer."""
+        return _read_installed_version()
+
     def report_frontend_error(self, message: str) -> None:
         """Record a bounded JavaScript error from the trusted local Workbench."""
         safe_message = str(message)[:2000]
@@ -60,6 +64,30 @@ class DesktopBridge:
         }
         self._frontend_status_event.set()
         LOGGER.info("Workbench frontend status: %s", self._frontend_status)
+
+
+def _read_installed_version(
+    *,
+    platform_name: str | None = None,
+    registry_module: Any | None = None,
+) -> str | None:
+    """Read the installed product version from the current user's uninstall entry."""
+    if (platform_name or os.name) != "nt":
+        return None
+    if registry_module is None:
+        try:
+            import winreg as registry_module
+        except ImportError:
+            return None
+    key_path = r"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\ZTFClassifier"
+    try:
+        with registry_module.OpenKey(registry_module.HKEY_CURRENT_USER, key_path) as key:
+            version, _ = registry_module.QueryValueEx(key, "DisplayVersion")
+    except OSError:
+        return None
+    if not isinstance(version, str) or not version.strip() or len(version) > 64:
+        return None
+    return version.strip()
 
 
 class SplashBridge:
