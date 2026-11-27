@@ -197,6 +197,7 @@ class WorkspaceStore:
         ):
             return manifest
         operation["status"] = "INTERRUPTED"
+        operation["oid_accounting_status"] = "UNKNOWN"
         operation["completed_at_utc"] = self._now()
         operation["error_code"] = "application_restarted"
         operation["error_message"] = (
@@ -353,6 +354,7 @@ class WorkspaceStore:
                     )
                 if isinstance(current, dict) and current.get("status") == "RUNNING":
                     current["status"] = "INTERRUPTED"
+                    current["oid_accounting_status"] = "UNKNOWN"
                     current["completed_at_utc"] = self._now()
                     current["error_code"] = "operation_replaced"
                     current["error_message"] = (
