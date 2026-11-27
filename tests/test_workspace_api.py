@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -306,7 +307,7 @@ def test_restarted_workspace_operation_marks_oid_accounting_unknown(
     operation_log = (
         workspace_directory / "logs" / "operations.jsonl"
     ).read_text(encoding="utf-8").splitlines()
-    logged_operation = __import__("json").loads(operation_log[-1])
+    logged_operation = json.loads(operation_log[-1])
     assert logged_operation["status"] == "INTERRUPTED"
     assert logged_operation["oid_accounting_status"] == "UNKNOWN"
 
