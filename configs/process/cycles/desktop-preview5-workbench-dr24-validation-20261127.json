@@ -26,16 +26,16 @@
   "measurement": {
     "metrics": {
       "correctness": {
-        "status": "VERIFIED",
-        "reason": "The exact Preview 5 PR head passed the DR24 Batch Workbench UI Contract, JavaScript syntax, Ruff, desktop runtime tests, bounded live DR24 single- and multi-OID HATS smoke, PyInstaller build, frozen application self-test, real WebView2 GUI smoke, installer build, silent install, installed self-test, installed GUI smoke, and silent uninstall."
+        "status": "NOT_MEASURED",
+        "reason": "Engineering verification passed on the exact PR head: DR24 UI contract, JavaScript syntax, Ruff, desktop runtime tests, live DR24 HATS smoke, PyInstaller build, frozen self-test, WebView2 GUI smoke, installer build, silent install, installed self-test, installed GUI smoke, and silent uninstall. No before/after product metric was measured."
       },
       "reliability": {
-        "status": "PARTIAL",
-        "reason": "The bounded live HATS-backed DR24 smoke passed for three single-OID requests and one two-OID batch request. The user's earlier Preview 4 HTTP 502 has not been reproduced or ruled out on the target Windows device."
+        "status": "NOT_MEASURED",
+        "reason": "The bounded live HATS-backed DR24 smoke passed for three single-OID requests and one two-OID batch request. The user's earlier Preview 4 HTTP 502 has not been reproduced or ruled out on the target Windows device; no before/after reliability metric was measured."
       },
       "reproducibility": {
-        "status": "PARTIAL",
-        "reason": "The Windows build, installer, install/uninstall test, build-manifest generation, and SHA-256 generation passed on the exact PR head. The PR workflow intentionally skipped artifact upload for this branch; the main-branch release workflow must upload and verify the release assets before publication."
+        "status": "NOT_MEASURED",
+        "reason": "The Windows build, installer, install/uninstall test, build-manifest generation, and SHA-256 generation passed on the exact PR head. Artifact upload was skipped on this branch by workflow policy; the main-branch release workflow must upload and verify assets. No before/after reproducibility metric was measured."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
@@ -79,7 +79,7 @@
     ]
   },
   "regression": {
-    "status": "VERIFIED",
+    "status": "PASS",
     "open_blockers": [
       "Merge PR #323 after confirming the exact PR-head checks remain green.",
       "Run the main-branch Windows Preview workflow so it uploads the installer, manuals, dependency manifest, live DR24 smoke report, self-test reports, build manifest, and SHA-256 file.",
@@ -89,7 +89,7 @@
       "Keep scientific validation NOT_VERIFIED until all scientific evidence blockers are resolved independently."
     ]
   },
-  "decision": "APPROVE_FOR_PREVIEW_RELEASE",
+  "decision": "REVISE",
   "knowledge_carried_forward": [
     "Do not publish Preview 5 until exact-head CI and Windows packaging gates pass.",
     "Do not merge PR #323 or change main without explicit authorization.",
