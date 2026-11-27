@@ -123,3 +123,17 @@ def test_desktop_mission_control_dashboard_uses_live_api_evidence() -> None:
     assert "no demo data" in script.text.lower()
     assert "ZTF20aaaaaaaa" not in script.text
     assert "0.0%" not in script.text
+
+
+def test_desktop_updater_asset_is_served_and_has_release_channel_contract() -> None:
+    client = TestClient(create_app())
+    page = client.get("/workbench/")
+    script = client.get("/workbench/desktop-updater.js")
+
+    assert page.status_code == 200
+    assert 'src="./desktop-updater.js"' in page.text
+    assert script.status_code == 200
+    assert "api.github.com/repos/saeed92m/ztf-classifier/releases" in script.text
+    assert 'value === "stable"' in script.text
+    assert 'selected === "preview" ? item.prerelease : !item.prerelease' in script.text
+    assert 'crypto.subtle.digest("SHA-256"' in script.text

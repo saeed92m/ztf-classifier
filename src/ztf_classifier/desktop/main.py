@@ -355,6 +355,7 @@ def _run_self_test() -> None:
         for path in (
             "/workbench/",
             "/workbench/app.js",
+            "/workbench/desktop-updater.js",
             "/workbench/desktop-bootstrap.js",
             "/workbench/styles.css",
             "/workbench/desktop-splash.html",
