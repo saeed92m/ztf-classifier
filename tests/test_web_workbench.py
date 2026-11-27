@@ -141,6 +141,34 @@ def test_desktop_updater_uses_authenticated_local_api_and_defaults_to_stable() -
     assert 'crypto.subtle.digest("SHA-256"' in script.text
 
 
+def test_desktop_theme_and_sidebar_contracts_cover_light_mode() -> None:
+    client = TestClient(create_app())
+    styles = client.get("/workbench/styles.css")
+    script = client.get("/workbench/app.js")
+
+    assert styles.status_code == 200
+    assert '[data-theme="light"] .sidebar' in styles.text
+    assert '[data-theme="light"] .mission-panel' in styles.text
+    assert '[data-theme="light"] .catalog-table-wrap' in styles.text
+    assert "overflow-y: auto" in styles.text
+    assert "height: calc(100vh - 78px)" in styles.text
+    assert script.status_code == 200
+    assert 'window.matchMedia("(prefers-color-scheme: light)")' in script.text
+
+
+def test_desktop_updater_compares_installed_version_without_claiming_unknown_as_current() -> None:
+    client = TestClient(create_app())
+    script = client.get("/workbench/desktop-updater.js")
+
+    assert script.status_code == 200
+    assert "get_installed_version" in script.text
+    assert "compareVersions(release.tag_name, installed)" in script.text
+    assert "Update available:" in script.text
+    assert "Up to date." in script.text
+    assert "Installed version is unavailable" in script.text
+    assert "Installed-version comparison is not available" not in script.text
+
+
 def test_desktop_release_api_filters_stable_and_preview_installers(monkeypatch) -> None:
     import json
     import ztf_classifier.api.app as api_module
