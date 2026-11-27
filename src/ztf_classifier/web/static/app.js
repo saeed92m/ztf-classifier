@@ -153,7 +153,15 @@ async function fetchJson(url, options) {
     ...(options || {}),
     headers,
   });
-  if (!response.ok) { const error = new Error("HTTP " + response.status); error.status = response.status; throw error; }
+  if (!response.ok) {
+    let payload = {};
+    try { payload = await response.json(); } catch { /* Keep the HTTP status when no JSON error body exists. */ }
+    const error = new Error(payload.message || ("HTTP " + response.status));
+    error.status = response.status;
+    error.code = payload.code || "http_error";
+    error.requestId = payload.request_id || response.headers.get("X-Request-ID");
+    throw error;
+  }
   return response.json();
 }
 function clearPrediction() {
@@ -1008,33 +1016,74 @@ async function loadValidationDashboard() {
     <div class="canvas-header"><div><div class="eyebrow">RELEASE GATE</div><h1 id="viewTitle">Scientific Validation</h1>
     <p id="viewSubtitle">Independent evidence status · fail-closed release boundary</p></div></div>
     <section class="metric-grid">
-      <article class="metric-card"><span>Gate status</span><strong id="validationStatus">—</strong><small>release-blocking</small></article>
-      <article class="metric-card"><span>Benchmarks</span><strong id="validationBenchmarks">—</strong><small>registered sources</small></article>
-      <article class="metric-card"><span>Blocked checks</span><strong id="validationBlockers">—</strong><small>must reach zero for release</small></article>
-      <article class="metric-card"><span>Probe</span><strong id="validationProbe">—</strong><small>source provenance evidence</small></article>
+      <article class="metric-card"><span>Product gate</span><strong id="validationStatus">—</strong><small>release-blocking scope</small></article>
+      <article class="metric-card"><span>Product benchmarks</span><strong id="validationBenchmarks">—</strong><small>required evidence sets</small></article>
+      <article class="metric-card"><span>Blocked checks</span><strong id="validationBlockers">—</strong><small>must reach zero for product gate</small></article>
+      <article class="metric-card"><span>External reproduction</span><strong id="validationExternal">—</strong><small>historical CPVS claim</small></article>
     </section>
-    <section class="panel"><div class="panel-header"><div><div class="panel-title">Benchmark gate</div><div class="panel-subtitle">No missing evidence is silently treated as PASS</div></div></div>
-    <div class="catalog-table-wrap"><table class="metadata"><thead><tr><th>Benchmark</th><th>Role</th><th>Status</th><th>Blockers</th></tr></thead><tbody id="validationRows"></tbody></table></div></section>
-    <section class="panel"><div class="panel-header"><div><div class="panel-title">Source provenance</div><div class="panel-subtitle">Reachability is provenance evidence, not scientific validation</div></div></div>
-    <pre id="validationProbeDetails" class="report-content"></pre></section>`;
+    <section class="panel">
+      <div class="panel-header"><div><div class="panel-title">Product validation gate</div><div class="panel-subtitle">These benchmarks are release-blocking. Missing evidence remains BLOCKED.</div></div></div>
+      <div class="catalog-table-wrap"><table class="metadata"><thead><tr><th>Benchmark</th><th>Role</th><th>Status</th><th>Blockers</th></tr></thead><tbody id="validationProductRows"></tbody></table></div>
+    </section>
+    <section class="panel">
+      <div class="panel-header"><div><div class="panel-title">External reproduction evidence</div><div class="panel-subtitle">Historical CPVS reconstruction is a separate scientific claim; it does not replace product validation.</div></div></div>
+      <div class="catalog-table-wrap"><table class="metadata"><thead><tr><th>Benchmark</th><th>Role</th><th>Status</th><th>Blockers</th></tr></thead><tbody id="validationExternalRows"></tbody></table></div>
+    </section>
+    <section class="panel">
+      <div class="panel-header"><div><div class="panel-title">Evidence status and interpretation</div><div class="panel-subtitle">Source reachability is provenance evidence, not scientific validation.</div></div></div>
+      <p id="validationEvidenceNote" class="muted" role="status"></p>
+      <p class="muted">A PASS requires a valid immutable evidence manifest, a benchmark result report, all required scientific checks, and complete provenance. Downloading source data or passing a CI workflow does not satisfy these requirements by itself.</p>
+      <div class="panel-subtitle">Source provenance probe</div>
+      <div id="validationProbe" class="panel-title">—</div>
+      <pre id="validationProbeDetails" class="report-content"></pre>
+    </section>`;
   try {
     const payload = await fetchJson("/v1/scientific-validation");
-    document.getElementById("validationStatus").textContent = payload.status;
-    document.getElementById("validationBenchmarks").textContent = payload.benchmarks.length;
-    document.getElementById("validationBlockers").textContent = payload.blockers.length;
-    const probe = payload.source_probe;
-    const probeItems = probe?.sources || [];
-    const reachable = probeItems.filter(item => item.status === "REACHABLE").length;
-    document.getElementById("validationProbe").textContent = probe ? reachable + "/" + probeItems.length : "not run";
-    document.getElementById("validationRows").innerHTML = payload.benchmarks.map(item =>
+    const benchmarks = Array.isArray(payload.benchmarks) ? payload.benchmarks : [];
+    const product = payload.product_gate || {};
+    const external = payload.external_reproduction || {};
+    const productItems = benchmarks.filter(item => item.validation_scope === "product");
+    const externalItems = benchmarks.filter(item => item.validation_scope === "external_reproduction");
+    const productBlockers = Array.isArray(product.blockers) ? product.blockers :
+      (Array.isArray(payload.blockers) ? payload.blockers : []);
+    const renderRows = items => items.map(item =>
       "<tr><td>" + escapeHtml(item.benchmark_id) + "</td><td>" +
       escapeHtml(item.evaluation_role) + "</td><td>" + escapeHtml(item.status) +
-      "</td><td>" + escapeHtml(item.blockers.join("; ") || "—") + "</td></tr>"
-    ).join("");
+      "</td><td>" + escapeHtml((item.blockers || []).join("; ") || "—") + "</td></tr>"
+    ).join("") || '<tr><td colspan="4">No benchmarks are registered for this scope.</td></tr>';
+    document.getElementById("validationStatus").textContent = product.status || payload.status || "NOT_VERIFIED";
+    document.getElementById("validationBenchmarks").textContent = productItems.length;
+    document.getElementById("validationBlockers").textContent = productBlockers.length;
+    document.getElementById("validationExternal").textContent = external.status || "NOT_VERIFIED";
+    document.getElementById("validationProductRows").innerHTML = renderRows(productItems);
+    document.getElementById("validationExternalRows").innerHTML = renderRows(externalItems);
+    const missingManifest = productBlockers.some(item => item.includes("immutable evidence manifest is missing"));
+    const missingReport = productBlockers.some(item => item.includes("benchmark evidence report is missing"));
+    document.getElementById("validationEvidenceNote").textContent =
+      missingManifest || missingReport
+        ? "NOT VERIFIED — this installation does not contain all required local benchmark evidence. Source acquisition and source probes do not count as completed benchmark evaluation."
+        : productBlockers.length
+          ? "NOT VERIFIED — one or more required scientific checks or provenance conditions remain unresolved."
+          : "Product benchmark evidence is present. Review every benchmark result and required check before treating the gate as verified.";
+    const probe = payload.source_probe;
+    const probeItems = Array.isArray(probe?.sources) ? probe.sources : [];
+    const reachable = probeItems.filter(item => item.status === "REACHABLE").length;
+    document.getElementById("validationProbe").textContent =
+      probe ? reachable + "/" + probeItems.length + " sources reachable" : "not run";
     document.getElementById("validationProbeDetails").textContent =
-      JSON.stringify({ interpretation: payload.interpretation, source_probe: probe }, null, 2);
-    setConnectionState(payload.status === "PASS" ? "Scientific gate PASS" : "Scientific gate blocked", payload.status === "PASS");
-  } catch {
+      JSON.stringify({
+        interpretation: payload.interpretation,
+        product_gate: product,
+        external_reproduction: external,
+        source_probe: probe
+      }, null, 2);
+    setConnectionState(
+      product.status === "PASS" ? "Product scientific gate PASS" : "Product scientific gate NOT VERIFIED",
+      product.status === "PASS"
+    );
+  } catch (error) {
+    document.getElementById("validationEvidenceNote").textContent =
+      "Scientific validation data could not be loaded: " + (error.message || "API unavailable");
     setConnectionState("Scientific validation unavailable", false);
   }
 }
@@ -1052,7 +1101,7 @@ async function loadDR24Explorer() {
     '<textarea id="dr24ObjectIds" rows="3" placeholder="One or more OIDs, separated by commas or spaces" style="min-width:min(100%,520px)"></textarea>',
     desktopMode ? '<button class="secondary-button" id="dr24SampleButton" type="button">Tested sample OIDs</button><small class="muted">These two sample OIDs are separate records.</small>' : '',
     '<button class="primary-button" id="dr24LoadButton" type="button">Load raw light curves</button>',
-    '<button id="dr24ExportButton" type="button" disabled>Download raw JSON + QC</button>',
+    '<button class="secondary-button dr24-export-button" id="dr24ExportButton" type="button" disabled title="Available after a successful DR24 acquisition">Download raw JSON + QC</button>',
     '</div><p id="dr24Status" class="muted" role="status">No DR24 objects loaded.</p></section>',
     '<div id="dr24Results"><section class="panel muted">Enter up to 10 OIDs to inspect native DR24 records.</section></div>',
     '<section class="panel"><div class="panel-header"><div><div class="panel-title">Acquisition provenance</div>',
@@ -1328,24 +1377,43 @@ async function loadDR24Explorer() {
               status: "FAILED",
               requested_oids: objectids,
               returned_oids: [],
-              missing_oids: objectids,
+              missing_oids: [],
               payload_sha256_by_oid: {},
-              error_code: "dr24_acquisition_failed",
-              error_message: "DR24 acquisition failed. No alternate source was used."
+              error_code: error.code || "dr24_acquisition_failed",
+              error_message: error.message || "DR24 acquisition failed. No alternate source was used.",
+              request_id: error.requestId || null
             })
           });
         } catch {
           // Preserve the original acquisition error; the workspace status remains visible.
         }
       }
+      const requestId = error.requestId || null;
+      const failure = {
+        status: "FAILED",
+        source: "IRSA ZTF DR24 Lightcurves HATS",
+        requested_oids: objectids,
+        returned_oids: [],
+        missing_oids: null,
+        error: {
+          http_status: error.status || null,
+          code: error.code || "dr24_acquisition_failed",
+          message: error.message || "DR24 acquisition failed. No alternate source was used.",
+          request_id: requestId
+        },
+        interpretation: "Acquisition failed before the returned OID set could be established. Missing OIDs are unknown; no alternate source was used."
+      };
       document.getElementById("dr24Results").innerHTML =
-        '<section class="panel muted">DR24 acquisition failed. No fallback source was used.</section>';
+        '<section class="panel"><strong>DR24 acquisition failed.</strong><p class="muted">No alternate source was used. The request did not establish whether any requested OID is missing.</p></section>';
       document.getElementById("dr24Provenance").textContent =
-        desktopTranslate("Unavailable: DR24 acquisition failed.");
+        JSON.stringify(failure, null, 2);
       desktopDr24Payload = null;
       desktopRawExport = null;
       document.getElementById("dr24Status").textContent =
-        error.message || desktopTranslate("DR24 acquisition failed. No fallback source was used.");
+        "DR24 acquisition failed (" + (error.status ? "HTTP " + error.status + " · " : "") +
+        (error.code || "unknown error") + "). No alternate source was used." +
+        (requestId ? " Diagnostic ID: " + requestId + "." : "") +
+        " See %LOCALAPPDATA%\\ZTFClassifier\\logs\\desktop.log for the underlying error.";
       translateDesktopText(document.getElementById("dr24Results"));
       setConnectionState("DR24 acquisition failed", false);
     } finally {
@@ -1457,8 +1525,8 @@ if (desktopMode) {
   });
   const desktopNavigationOrder = [
     "desktop-home",
-    "dr24",
     "workspaces",
+    "dr24",
     "catalog",
     "batch",
     "sources",
