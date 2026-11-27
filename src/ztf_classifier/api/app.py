@@ -540,10 +540,17 @@ def create_app(
                 headers={"User-Agent": "ZTF-Classifier-Desktop-Updater"},
             )
             with urlopen(request, timeout=60) as response:
-                if urlsplit(response.geturl()).hostname not in {
-                    "github.com",
-                    "release-assets.githubusercontent.com",
-                }:
+                final_url = urlsplit(response.geturl())
+                if (
+                    final_url.scheme != "https"
+                    or final_url.hostname not in {
+                        "github.com",
+                        "release-assets.githubusercontent.com",
+                    }
+                    or final_url.username is not None
+                    or final_url.password is not None
+                    or final_url.port not in {None, 443}
+                ):
                     raise ApiContractError(
                         "desktop_installer_host_invalid",
                         "GitHub redirected the installer to an untrusted host.",
