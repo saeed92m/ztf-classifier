@@ -371,6 +371,16 @@ def _run_self_test() -> None:
             raise RuntimeError("The packaged pywebview module is incomplete.")
         checks["pywebview_and_webview2_runtime"] = "PASS"
 
+        try:
+            import hats
+            import lsdb
+            import s3fs
+        except ImportError as exc:
+            raise RuntimeError(
+                "The packaged DR24 runtime dependencies are incomplete."
+            ) from exc
+        checks["dr24_runtime_dependencies"] = "PASS"
+
         token = secrets.token_urlsafe(32)
         settings = build_desktop_settings(token, data_dir=user_data)
         registry_dir = settings.scientific_registry_dir
