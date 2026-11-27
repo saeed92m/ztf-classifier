@@ -127,7 +127,7 @@ jobs:
       - name: Build Windows one-folder application
         shell: pwsh
         run: |
-          pyinstaller --noconfirm --clean --onedir --windowed --name ZTFClassifier --icon "src/ztf_classifier/web/static/ztf-logo.ico" --collect-all webview --collect-all pythonnet --collect-all clr_loader --collect-all lsdb --collect-all hats --collect-all s3fs --collect-all fsspec --collect-all alerce --add-data "src/ztf_classifier/web/static;ztf_classifier/web/static" --add-data "configs/benchmarks;configs/benchmarks" src/ztf_classifier/desktop/main.py
+          pyinstaller --noconfirm --clean --onedir --windowed --name ZTFClassifier --icon "src/ztf_classifier/web/static/ztf-logo.ico" --collect-all webview --collect-all pythonnet --collect-all clr_loader --collect-all lsdb --collect-all hats --collect-all s3fs --collect-all fsspec --collect-all alerce --copy-metadata pandas --add-data "src/ztf_classifier/web/static;ztf_classifier/web/static" --add-data "configs/benchmarks;configs/benchmarks" src/ztf_classifier/desktop/main.py
           if (-not (Test-Path "dist/ZTFClassifier/ZTFClassifier.exe")) { throw "PyInstaller did not create the expected Windows executable." }
           if (-not (Test-Path "dist/ZTFClassifier/_internal/alerce/default_config.json")) { throw "The ALeRCE default configuration was not bundled." }
           python -m pip freeze --all | Out-File -Encoding utf8 "dist/desktop-windows-dependencies.txt"
