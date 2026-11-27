@@ -14,8 +14,8 @@ from urllib.request import Request as UrlRequest
 from urllib.request import urlopen
 from uuid import uuid4
 
-from alerce.core import Alerce
 import pandas as pd
+from alerce.core import Alerce
 from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response
