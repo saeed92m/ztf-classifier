@@ -8,6 +8,10 @@ def test_workbench_static_entrypoint_is_served() -> None:
     response = client.get("/workbench/")
     assert response.status_code == 200
     assert "Scientific Analysis Workbench" in response.text
+    assert 'src="./ztf-logo.svg"' in response.text
+    logo = client.get("/workbench/ztf-logo.svg")
+    assert logo.status_code == 200
+    assert "<svg" in logo.text
 
 
 def test_workbench_theme_contract_is_present() -> None:
@@ -76,3 +80,46 @@ def test_workbench_exposes_scientific_validation_dashboard() -> None:
     assert "Scientific Validation" in page.text
     assert script.status_code == 200
     assert "/v1/scientific-validation" in script.text
+
+
+def test_desktop_mission_control_opens_the_selected_saved_result() -> None:
+    client = TestClient(create_app())
+    response = client.get("/workbench/app.js")
+
+    assert response.status_code == 200
+    assert 'await showView("overview", { result: record })' in response.text
+    assert "async function showView(view, options = {})" in response.text
+    assert "const selectedResult = options.result;" in response.text
+    assert "state.survey = selectedResult.survey || state.survey;" in response.text
+    assert "renderResult(selectedResult);" in response.text
+
+
+def test_desktop_mission_control_dashboard_uses_live_api_evidence() -> None:
+    client = TestClient(create_app())
+    page = client.get("/workbench/")
+    script = client.get("/workbench/app.js")
+    styles = client.get("/workbench/styles.css")
+    banner = client.get("/workbench/mission-control-banner.svg")
+
+    assert page.status_code == 200
+    assert script.status_code == 200
+    assert styles.status_code == 200
+    assert banner.status_code == 200
+    assert "<svg" in banner.text
+    assert 'url("./mission-control-banner.svg")' in styles.text
+    assert "Scientific Mission Control" in script.text
+    assert "mission-banner" in script.text
+    assert "mission-main-grid" in styles.text
+    assert ".canvas-header h1" in styles.text
+    assert ".panel," in styles.text
+    assert "input:focus" in styles.text
+    assert 'fetchJson("/health")' in script.text
+    assert 'fetchJson("/v1/workspaces")' in script.text
+    assert 'fetchJson("/v1/workspaces/active")' in script.text
+    assert 'fetchJson("/v1/model")' in script.text
+    assert 'fetchJson("/v1/scientific-validation")' in script.text
+    assert 'fetchJson("/v1/jobs?limit=5")' in script.text
+    assert 'fetchJson("/v1/catalog/results?limit=8")' in script.text
+    assert "no demo data" in script.text.lower()
+    assert "ZTF20aaaaaaaa" not in script.text
+    assert "0.0%" not in script.text

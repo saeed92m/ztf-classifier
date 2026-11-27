@@ -118,7 +118,7 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
-            page = browser.new_page()
+            page = browser.new_page(viewport={"width": 1600, "height": 1000})
             page.add_init_script(
                 "window.pywebview = {api: {}};"
                 "window.setTimeout(() => {"
@@ -130,12 +130,44 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 "http://127.0.0.1:8766/workbench/?desktop=1",
                 wait_until="domcontentloaded",
             )
+            page.wait_for_function(
+                "() => document.querySelectorAll('#missionStatusRows .mission-status-row').length === 5",
+                timeout=10_000,
+            )
             assert page.locator("html").get_attribute("lang") == "en"
             assert page.locator("html").get_attribute("dir") == "ltr"
-            assert page.get_by_role("heading", name="Dashboard").is_visible()
-            assert page.get_by_text("Park acceptance").is_visible()
-            assert page.locator("#parkModelStatus").inner_text() == "BLOCKED"
-            assert page.locator("#parkScientificGateStatus").is_visible()
+            assert page.get_by_role("heading", name="Scientific Overview").is_visible()
+            assert page.locator(".mission-banner").is_visible()
+            assert page.locator(".mission-metrics .mission-metric").count() == 4
+            assert page.locator("#missionStatusRows .mission-status-row").count() == 5
+            assert page.locator("#missionHealthRows .mission-health-row").count() == 4
+            assert page.locator("#missionValidationStatus").inner_text() not in {"", "CHECKING"}
+            assert page.locator("#missionResultCount").inner_text() == "0"
+            assert "No saved scientific results are available yet." in page.locator(
+                "#missionReviewQueue"
+            ).inner_text()
+            assert page.get_by_text("SCIENTIFIC GATE:", exact=False).is_visible()
+            artifact_dir = Path("test-artifacts")
+            artifact_dir.mkdir(parents=True, exist_ok=True)
+            page.screenshot(
+                path=str(artifact_dir / "mission-control-dashboard.png"),
+                full_page=True,
+            )
+            page.locator('[data-view="dr24"]').click()
+            page.locator("#dr24ObjectIds").fill("101, 202")
+            page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('Create or open a workspace')",
+                timeout=5_000,
+            )
+            assert "Create or open a workspace before requesting DR24 data." in page.locator(
+                "#dr24Status"
+            ).inner_text()
+            assert "No acquisition was attempted" in page.locator("#dr24Results").inner_text()
+            assert "Create or open a workspace" in page.locator("#dr24Results").inner_text()
+            assert "NOT RUN" in page.locator("#dr24Provenance").inner_text()
+            assert page.locator("#dr24ExportButton").is_disabled()
+            assert backend.calls == []
             page.locator('[data-view="workspaces"]').click()
             page.locator("#workspaceName").fill("CI desktop workspace")
             page.locator("#workspaceCreateForm button[type=submit]").click()
@@ -146,6 +178,24 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert page.locator("#workspaceStatus").is_visible()
             assert page.locator('[data-view="validation"]').is_visible()
             assert page.locator('[data-view="classification"]').is_hidden()
+            assert page.locator('[data-view="features"]').is_hidden()
+            assert page.locator('[data-view="observations"]').is_hidden()
+            assert page.locator(".sidebar .nav-item:not([hidden])").count() == 11
+            assert page.locator(".sidebar .nav-item:not([hidden])").evaluate_all(
+                "(items) => items.map((item) => item.dataset.view)"
+            ) == [
+                "desktop-home",
+                "dr24",
+                "workspaces",
+                "catalog",
+                "batch",
+                "sources",
+                "desktop-provenance",
+                "validation",
+                "desktop-export",
+                "desktop-settings",
+                "desktop-help",
+            ]
             page.locator('[data-view="validation"]').click()
             assert page.locator("#validationStatus").is_visible()
             page.locator('[data-view="dr24"]').click()

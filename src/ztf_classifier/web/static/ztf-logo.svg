@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">ZTF Classifier</title>
+  <desc id="desc">A luminous astronomical source, orbital path and light curve over a star field.</desc>
+  <defs>
+    <radialGradient id="space" cx="50%" cy="42%" r="72%">
+      <stop offset="0" stop-color="#0b2850"/>
+      <stop offset="1" stop-color="#020817"/>
+    </radialGradient>
+    <linearGradient id="orbit" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#39e0ff"/>
+      <stop offset=".48" stop-color="#1677ed"/>
+      <stop offset="1" stop-color="#ffe3a0"/>
+    </linearGradient>
+    <linearGradient id="curve" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2ba8ff"/>
+      <stop offset=".5" stop-color="#f5fbff"/>
+      <stop offset="1" stop-color="#39b7ff"/>
+    </linearGradient>
+    <radialGradient id="star" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#fffef4"/>
+      <stop offset=".18" stop-color="#fff7c9"/>
+      <stop offset=".44" stop-color="#ffd466"/>
+      <stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="clip"><rect width="256" height="256" rx="34"/></clipPath>
+  </defs>
+  <g clip-path="url(#clip)">
+    <rect width="256" height="256" fill="url(#space)"/>
+    <g fill="#eaf8ff">
+      <circle cx="34" cy="40" r="1.7"/><circle cx="72" cy="22" r="1.1"/><circle cx="205" cy="31" r="1.4"/>
+      <circle cx="226" cy="88" r="1.4"/><circle cx="22" cy="126" r="1.2"/><circle cx="46" cy="205" r="1.6"/>
+      <circle cx="92" cy="235" r="1.1"/><circle cx="188" cy="221" r="1.3"/><circle cx="235" cy="185" r="1"/>
+      <circle cx="154" cy="15" r="1"/><circle cx="15" cy="72" r="1"/><circle cx="119" cy="190" r="1.1"/>
+    </g>
+    <g opacity=".92" transform="rotate(-27 128 108)">
+      <ellipse cx="128" cy="108" rx="105" ry="61" fill="none" stroke="url(#orbit)" stroke-width="7"/>
+    </g>
+    <path d="M12 177 C44 177 57 177 75 177 C91 177 99 161 112 137 C121 119 130 109 140 109 C151 109 159 126 169 143 C184 169 197 177 244 177"
+      fill="none" stroke="#1b9aff" stroke-width="10" opacity=".22" filter="url(#glow)"/>
+    <path d="M12 177 C44 177 57 177 75 177 C91 177 99 161 112 137 C121 119 130 109 140 109 C151 109 159 126 169 143 C184 169 197 177 244 177"
+      fill="none" stroke="url(#curve)" stroke-width="4.5" stroke-linecap="round"/>
+    <g fill="#f7fcff" filter="url(#glow)">
+      <circle cx="75" cy="177" r="5"/><circle cx="112" cy="137" r="5"/>
+      <circle cx="140" cy="109" r="6"/><circle cx="169" cy="143" r="5"/>
+      <circle cx="205" cy="177" r="5"/>
+    </g>
+    <circle cx="128" cy="79" r="35" fill="url(#star)" opacity=".9"/>
+    <g transform="translate(128 79)" filter="url(#glow)">
+      <path d="M0 -47 L4 -5 L25 0 L4 5 L0 47 L-4 5 L-25 0 L-4 -5Z" fill="#fff0bd"/>
+      <path d="M-39 0 L-5 -3 L0 0 L5 3 L39 0 L5 4 L0 0 L-5 -4Z" fill="#fff8dc" opacity=".86"/>
+      <circle r="8" fill="#fffef4"/>
+    </g>
+    <g fill="#8be8ff" filter="url(#glow)">
+      <path d="M48 51 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3Z"/>
+      <path d="M207 119 l2.5 6.5 6.5 2.5 -6.5 2.5 -2.5 6.5 -2.5 -6.5 -6.5 -2.5 6.5 -2.5Z"/>
+    </g>
+  </g>
+</svg>

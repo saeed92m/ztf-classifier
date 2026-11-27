@@ -114,3 +114,61 @@ Required panels:
 - release decision evidence.
 
 The dashboard is evidence presentation only. It must not convert reference-system agreement into ground truth or suppress unresolved scientific blockers.
+
+
+## Desktop Scientific Mission Control — UI revision
+
+The Windows desktop preview uses the Mission Control layout as its dashboard reference. The dashboard is an evidence view. It must read current application state from the versioned local API.
+
+### Mission Control banner artwork
+
+The top application header uses a local SVG banner with a restrained nebula and spiral-galaxy composition. It is static decorative artwork only. It must not display or imply a specific real astronomical observation. The file is packaged with the Workbench and checked by the frozen self-test.
+
+### Brand asset
+
+The desktop Workbench header and web favicon use the local `ztf-logo.svg` vector asset. The existing `ztf-logo.ico` remains the Windows executable/shortcut icon asset and fallback. The SVG is included in the frozen application self-test. This change does not by itself prove that the installed desktop shortcut displays the intended icon; that remains a separate visual acceptance check.
+
+### Desktop-wide visual system
+
+The visual language applies to the dashboard and all existing desktop views. It uses the same header, navigation, typography, panel treatment, form controls, buttons and color contrast. A page must not fall back to the old Workbench grey surfaces.
+
+### Dashboard composition
+
+- Header banner: product identity, current page and the exact scientific gate status.
+- Summary cards: configured primary source, active workspaces, saved scientific result records and scientific validation status.
+- Main row: a light-curve panel and a Mission Status panel.
+- Lower row: saved analysis results, recent asynchronous analysis jobs and system health.
+- Navigation order: Overview, DR24 Explorer, Workspaces, Result Catalog, Analysis Jobs, Data Sources, Provenance, Scientific Validation, Reports and Exports, Settings and Help.
+
+### DR24 workspace preflight
+
+Before a DR24 request, the desktop client must verify that a workspace is active. If none exists, show a workspace requirement, record the acquisition as NOT RUN in the UI, keep export disabled, and do not send a request to the DR24 source. If the workspace-state endpoint is unavailable, report that the preflight could not be completed. Neither case may be labelled as a DR24 acquisition failure.
+
+The Help page must explain the correct sequence: create/open a workspace, then acquire DR24 records, review raw data and diagnostic QC, inspect provenance, and export.
+
+### Data-binding rules
+
+| UI element | API source | Interpretation |
+| --- | --- | --- |
+| Local API | `GET /health` | Process liveness only; not model or scientific readiness. |
+| Active workspaces | `GET /v1/workspaces` and `GET /v1/workspaces/active` | Count only workspaces explicitly marked active. |
+| Model registry | `GET /v1/model` | Model metadata is available; this does not prove scientific acceptance. |
+| Scientific gate | `GET /v1/scientific-validation` | Display the exact fail-closed status and blocker count. |
+| Recent operations | `GET /v1/jobs?limit=5` | Display persisted asynchronous analysis jobs only. |
+| Saved results | `GET /v1/catalog/results?limit=8` | Display persisted scientific result records only. |
+| Light curve | Latest saved result with an observation array | Plot only returned observation values. Show an empty state when no result contains observations. |
+
+### Scientific and UX constraints
+
+- Do not insert sample object IDs, synthetic light-curve points, made-up probabilities, fake queue rows, fake uptime, or fabricated service health.
+- Do not describe an OOD score as a scientific anomaly.
+- Do not describe a model registry response as a passed scientific validation gate.
+- Keep the DR24 raw-data path separate from normalized observation data. Preserve the source time field and its units.
+- The dashboard must remain useful when one API call fails. Show an explicit unavailable state for that service.
+- Keep the original scientific validation screen and its fail-closed meaning.
+- The visual theme must not alter API contracts, data transformations, model behavior, or scientific thresholds.
+- The desktop splash and startup handoff are protected regression requirements.
+
+### Verification
+
+The UI contract test checks the required API bindings, Mission Control markup and style layer. The Windows preview workflow must also pass JavaScript syntax checks, packaged self-test, and real WebView2 GUI smoke tests. A CI pass alone does not prove visual fidelity; the installed application must be captured and compared with the reference screen before the UI redesign is accepted.

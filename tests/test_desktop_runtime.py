@@ -229,8 +229,9 @@ def test_desktop_workbench_uses_external_bootstrap_and_csp() -> None:
     assert "script-src 'self'" in html
     assert "connect-src 'self'" in html
     assert 'src="./desktop-bootstrap.js"' in html
-    assert 'rel="icon" href="./ztf-logo.ico"' in html
-    assert 'src="./ztf-logo.ico"' in html
+    assert 'rel="icon" href="./ztf-logo.svg" type="image/svg+xml"' in html
+    assert 'rel="alternate icon" href="./ztf-logo.ico" type="image/x-icon"' in html
+    assert 'src="./ztf-logo.svg"' in html
     assert "ZTF CLASSIFIER" in html
     assert "<script>" not in html
     assert 'document.documentElement.lang = "en"' in bootstrap

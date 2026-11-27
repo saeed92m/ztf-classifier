@@ -360,6 +360,8 @@ def _run_self_test() -> None:
             "/workbench/desktop-splash.html",
             "/workbench/ztf-splash.PNG",
             "/workbench/ztf-logo.ico",
+            "/workbench/ztf-logo.svg",
+            "/workbench/mission-control-banner.svg",
         ):
             with urlopen(f"{base_url}{path}", timeout=5) as response:
                 if response.status != 200:
