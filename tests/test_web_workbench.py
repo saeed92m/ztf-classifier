@@ -443,6 +443,10 @@ def test_desktop_dr24_failure_and_scientific_gate_are_explicit() -> None:
     assert "error.requestId" in script.text
     assert "missing_oids: null" in script.text
     assert "Missing OIDs are unknown" in script.text
+    assert "const hasReturnedRecords = records.length > 0 && returned.length > 0;" in script.text
+    assert "exportButton.disabled = !hasReturnedRecords;" in script.text
+    assert 'Boolean(desktopRawExport?.source_payload?.records?.length)' in script.text
+    assert "No returned records · export unavailable." in script.text
     assert "Product validation gate" in script.text
     assert "External reproduction evidence" in script.text
     assert "product_gate" in validation.json()
