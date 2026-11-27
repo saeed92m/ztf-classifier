@@ -270,3 +270,43 @@ def test_failed_workspace_operation_marks_oid_accounting_unknown(
     assert failed.status_code == 200
     assert failed.json()["oid_accounting_status"] == "UNKNOWN"
     assert failed.json()["missing_oids"] == []
+
+
+def test_restarted_workspace_operation_marks_oid_accounting_unknown(
+    tmp_path: Path,
+) -> None:
+    client = _client(tmp_path)
+    created = client.post(
+        "/v1/workspaces", json={"name": "Interrupted DR24 query"}
+    )
+    assert created.status_code == 200
+    workspace_directory = Path(created.json()["directory"])
+
+    running = client.post(
+        "/v1/workspaces/operations",
+        json={
+            "operation_id": "d" * 32,
+            "operation_type": "DR24_BATCH_QUERY",
+            "source": "ztf_dr24_hats",
+            "status": "RUNNING",
+            "requested_oids": [264114400013085, 264214400000912],
+        },
+    )
+    assert running.status_code == 200
+    assert running.json()["oid_accounting_status"] == "PENDING"
+
+    restarted_client = _client(tmp_path)
+    active = restarted_client.get("/v1/workspaces/active")
+    assert active.status_code == 200
+    operation = active.json()["workspace"]["last_operation"]
+    assert operation["status"] == "INTERRUPTED"
+    assert operation["oid_accounting_status"] == "UNKNOWN"
+    assert operation["missing_oids"] == []
+
+    operation_log = (
+        workspace_directory / "logs" / "operations.jsonl"
+    ).read_text(encoding="utf-8").splitlines()
+    logged_operation = __import__("json").loads(operation_log[-1])
+    assert logged_operation["status"] == "INTERRUPTED"
+    assert logged_operation["oid_accounting_status"] == "UNKNOWN"
+
