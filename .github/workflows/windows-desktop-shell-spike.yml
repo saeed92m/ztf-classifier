@@ -13,6 +13,7 @@ on:
       - "tests/test_desktop_runtime.py"
       - "tests/test_workspace_api.py"
       - "tests/integration/test_dr24_batch_workbench_ui.py"
+      - "tests/integration/test_dr24_api_live_smoke.py"
       - "packaging/windows/**"
       - "docs/desktop/**"
       - "scripts/build_desktop_pdfs.py"
@@ -31,6 +32,7 @@ on:
       - "tests/test_desktop_runtime.py"
       - "tests/test_workspace_api.py"
       - "tests/test_web_workbench.py"
+      - "tests/integration/test_dr24_api_live_smoke.py"
       - "packaging/windows/**"
       - "docs/desktop/**"
       - "docs/PARK_ACCEPTANCE_MATRIX_2026-11-24.md"
@@ -102,6 +104,12 @@ jobs:
 
       - name: Verify DR24 runtime dependencies
         run: python -c "import lsdb, s3fs; print('DR24 dependencies import successfully')"
+
+      - name: Run bounded live DR24 single- and multi-OID smoke
+        env:
+          ZTF_DR24_LIVE_TEST: "1"
+          DR24_LIVE_SMOKE_OUTPUT: "dist/dr24-live-smoke.json"
+        run: python -m pytest -q tests/integration/test_dr24_api_live_smoke.py
 
       - name: Run desktop runtime tests
         run: python -m pytest -q tests/test_desktop_runtime.py tests/test_workspace_api.py
@@ -317,6 +325,8 @@ jobs:
           $setup = "dist/ZTFClassifier-0.1.0-preview.5-Setup.exe"
           $hash = (Get-FileHash -Path $setup -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  ZTFClassifier-0.1.0-preview.5-Setup.exe" | Set-Content -Encoding ascii "dist/SHA256SUMS.txt"
+          $dr24Hash = (Get-FileHash -Path "dist/dr24-live-smoke.json" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$dr24Hash  dr24-live-smoke.json" | Add-Content -Encoding ascii "dist/SHA256SUMS.txt"
           $manifest = [ordered]@{
             schema_version = "ztf-windows-desktop-build-v1"
             desktop_version = "0.1.0-preview.5"
@@ -329,6 +339,8 @@ jobs:
             dependency_manifest = "desktop-windows-dependencies.txt"
             dependency_lock = "requirements-windows-desktop.lock"
             dependency_lock_sha256 = (Get-FileHash -Path "requirements-windows-desktop.lock" -Algorithm SHA256).Hash.ToLowerInvariant()
+            dr24_live_smoke_report = "dr24-live-smoke.json"
+            dr24_live_smoke_report_sha256 = (Get-FileHash -Path "dist/dr24-live-smoke.json" -Algorithm SHA256).Hash.ToLowerInvariant()
             self_test_report = "desktop-self-test.json"
             gui_smoke_test_build_report = "desktop-gui-smoke-test-build.json"
             gui_smoke_test_installed_report = "desktop-gui-smoke-test-installed.json"
@@ -345,6 +357,7 @@ jobs:
             dist/ZTFClassifier-0.1.0-preview.5-Setup.exe
             dist/SHA256SUMS.txt
             dist/desktop-build-manifest.json
+            dist/dr24-live-smoke.json
             dist/desktop-windows-dependencies.txt
             dist/desktop-self-test.json
             dist/desktop-gui-smoke-test-build.json
@@ -384,10 +397,16 @@ jobs:
           test -s ZTFClassifier-0.1.0-preview.5-Setup.exe
           test -s User_Manual.pdf
           test -s Quick_Start.pdf
+          test -s dr24-live-smoke.json
           python - <<'PY'
           import json, os
           from pathlib import Path
           manifest = json.loads(Path("desktop-build-manifest.json").read_text(encoding="utf-8-sig"))
+          dr24_report = json.loads(Path("dr24-live-smoke.json").read_text(encoding="utf-8"))
+          if dr24_report.get("status") != "PASS":
+              raise SystemExit("The bounded live DR24 API smoke report did not PASS.")
+          if dr24_report.get("code_revision") != os.environ["GITHUB_SHA"]:
+              raise SystemExit("The DR24 smoke report source commit does not match the release commit.")
           if manifest.get("source_commit") != os.environ["GITHUB_SHA"]:
               raise SystemExit("Build manifest source commit does not match the tagged commit.")
           if manifest.get("signature_status") != "UNSIGNED_CHECKSUMMED":
@@ -423,6 +442,7 @@ jobs:
             "release-assets/User_Manual.pdf" \
             "release-assets/Quick_Start.pdf" \
             "release-assets/SHA256SUMS.txt" \
+            "release-assets/dr24-live-smoke.json" \
             "release-assets/desktop-build-manifest.json" \
             "release-assets/desktop-windows-dependencies.txt" \
             "release-assets/desktop-self-test.json" \
