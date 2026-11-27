@@ -39,6 +39,56 @@ def test_user_data_directory_uses_explicit_windows_location(
     assert get_user_data_dir(platform_name="nt") == tmp_path / "ZTFClassifier"
 
 
+def test_installed_version_reads_current_user_uninstall_entry() -> None:
+    class FakeKey:
+        def __enter__(self) -> Self:
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+    class FakeRegistry:
+        HKEY_CURRENT_USER = "HKCU"
+
+        def __init__(self, value: str | None) -> None:
+            self.value = value
+            self.path = ""
+
+        def OpenKey(self, hive: str, subkey: str) -> FakeKey:
+            assert hive == "HKCU"
+            self.path = subkey
+            if self.value is None:
+                raise OSError("Registry value not found")
+            return FakeKey()
+
+        def QueryValueEx(self, key: FakeKey, name: str) -> tuple[str, int]:
+            assert name == "DisplayVersion"
+            return str(self.value), 1
+
+    registry = FakeRegistry("0.1.0-preview.4")
+    assert (
+        desktop_main._read_installed_version(
+            platform_name="nt", registry_module=registry
+        )
+        == "0.1.0-preview.4"
+    )
+    assert registry.path == (
+        r"Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier"
+    )
+    assert (
+        desktop_main._read_installed_version(
+            platform_name="nt", registry_module=FakeRegistry(None)
+        )
+        is None
+    )
+    assert (
+        desktop_main._read_installed_version(
+            platform_name="linux", registry_module=registry
+        )
+        is None
+    )
+
+
 def test_webview2_runtime_detection_checks_machine_and_user_registry() -> None:
     class FakeKey:
         def __init__(self, value: str) -> None:
