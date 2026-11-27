@@ -321,7 +321,7 @@ def test_desktop_installer_proxy_rejects_digest_mismatch_and_cleans_temp_file(
     )
 
     assert response.status_code == 502
-    assert response.json()["error"]["code"] == "desktop_installer_digest_mismatch"
+    assert response.json()["code"] == "desktop_installer_digest_mismatch"
     assert list(temp_dir.iterdir()) == []
 
 
@@ -338,7 +338,7 @@ def test_desktop_installer_proxy_rejects_oversized_body_and_cleans_temp_file(
     )
 
     assert response.status_code == 502
-    assert response.json()["error"]["code"] == "desktop_installer_size_invalid"
+    assert response.json()["code"] == "desktop_installer_size_invalid"
     assert list(temp_dir.iterdir()) == []
 
 
@@ -356,7 +356,7 @@ def test_desktop_installer_proxy_rejects_untrusted_redirect_and_cleans_temp_file
     )
 
     assert response.status_code == 502
-    assert response.json()["error"]["code"] == "desktop_installer_host_invalid"
+    assert response.json()["code"] == "desktop_installer_host_invalid"
     assert list(temp_dir.iterdir()) == []
 
 
@@ -373,5 +373,5 @@ def test_desktop_installer_proxy_rejects_truncated_body_and_cleans_temp_file(
     )
 
     assert response.status_code == 502
-    assert response.json()["error"]["code"] == "desktop_installer_size_mismatch"
+    assert response.json()["code"] == "desktop_installer_size_mismatch"
     assert list(temp_dir.iterdir()) == []
