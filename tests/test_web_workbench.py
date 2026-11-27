@@ -153,7 +153,7 @@ def test_desktop_theme_and_sidebar_contracts_cover_light_mode() -> None:
     assert "overflow-y: auto" in styles.text
     assert "height: calc(100vh - 78px)" in styles.text
     assert script.status_code == 200
-    assert 'window.matchMedia("(prefers-color-scheme: light)")' in script.text
+    assert 'window.matchMedia("(prefers-color-scheme: light)").addEventListener("change"' in script.text
 
 
 def test_desktop_updater_compares_installed_version_without_claiming_unknown_as_current() -> None:
@@ -167,6 +167,8 @@ def test_desktop_updater_compares_installed_version_without_claiming_unknown_as_
     assert "Up to date." in script.text
     assert "Installed version is unavailable" in script.text
     assert "Installed-version comparison is not available" not in script.text
+    assert 'id="desktopInstalledVersion">Not checked' in script.text
+    assert "void installedVersion().then(version =>" in script.text
 
 
 def test_desktop_release_api_filters_stable_and_preview_installers(monkeypatch) -> None:
