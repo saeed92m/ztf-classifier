@@ -185,8 +185,8 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 "(items) => items.map((item) => item.dataset.view)"
             ) == [
                 "desktop-home",
-                "dr24",
                 "workspaces",
+                "dr24",
                 "catalog",
                 "batch",
                 "sources",
