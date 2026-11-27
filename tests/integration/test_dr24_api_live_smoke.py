@@ -138,7 +138,7 @@ def test_live_dr24_api_matches_verified_hats_payloads(tmp_path: Path) -> None:
         },
         "total_epochs": sum(int(item["returned_epochs"]) for item in objects),
         "limitations": [
-            "This verifies the FastAPI raw acquisition route for three OIDs only.",
+            "This verifies the single-object API route for three OIDs and the batch API route for two OIDs only.",
             "No photometry normalization, color correction, HMJD conversion, or catflags filtering is applied.",
             "No OID grouping, feature generation, model inference, or scientific performance is evaluated.",
         ],
