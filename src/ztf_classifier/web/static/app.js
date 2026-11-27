@@ -26,7 +26,7 @@ function timeToMinutes(value) {
 }
 function resolveTheme(p) {
   if (["deep-space", "alpha", "light"].includes(p.theme)) return p.theme;
-  if (p.theme === "system") return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "system";
+  if (p.theme === "system") return "system";
   const minutes = new Date().getHours() * 60 + new Date().getMinutes();
   const day = timeToMinutes(p.dayStart), night = timeToMinutes(p.nightStart);
   const isDay = day < night ? minutes >= day && minutes < night : minutes >= day || minutes < night;
@@ -72,6 +72,9 @@ async function initializePreferences() {
   themeSelect.addEventListener("change", () => { preferences.theme = themeSelect.value; void persistPreferences(preferences); });
   dayStart.addEventListener("change", () => { preferences.dayStart = dayStart.value; void persistPreferences(preferences); });
   nightStart.addEventListener("change", () => { preferences.nightStart = nightStart.value; void persistPreferences(preferences); });
+  window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => {
+    if (preferences.theme === "system") applyTheme(preferences);
+  });
   setInterval(() => { if (preferences.theme === "auto") applyTheme(preferences); }, 60000);
 }
 void initializePreferences();
