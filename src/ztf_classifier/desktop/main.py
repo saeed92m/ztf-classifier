@@ -81,7 +81,9 @@ def _read_installed_version(
             return None
     key_path = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier"
     try:
-        with registry_module.OpenKey(registry_module.HKEY_CURRENT_USER, key_path) as key:
+        with registry_module.OpenKey(
+            registry_module.HKEY_CURRENT_USER, key_path
+        ) as key:
             version, _ = registry_module.QueryValueEx(key, "DisplayVersion")
     except OSError:
         return None
