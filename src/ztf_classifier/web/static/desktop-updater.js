@@ -18,7 +18,7 @@
     return fetch(url, { ...options, headers, cache: "no-store" });
   }
   function parseVersion(value) {
-    const match = String(value || "").trim().match(/^(?:desktop-v|v)?(\d+)\\.(\d+)\\.(\d+)(?:-([0-9A-Za-z.-]+))?$/);
+    const match = String(value || "").trim().match(/^(?:desktop-v|v)?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/);
     if (!match) return null;
     return { major: Number(match[1]), minor: Number(match[2]), patch: Number(match[3]),
       prerelease: match[4] ? match[4].split(".") : null };
