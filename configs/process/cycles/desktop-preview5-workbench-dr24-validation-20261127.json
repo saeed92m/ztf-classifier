@@ -27,15 +27,15 @@
     "metrics": {
       "correctness": {
         "status": "NOT_MEASURED",
-        "reason": "Preview 5 final CI is not green yet. Windows live DR24 smoke passed, but the Windows build stopped at Ruff formatting before packaging."
+        "reason": "The latest exact-head Windows run completed the HATS-backed live DR24 smoke, desktop runtime tests, JavaScript checks, Ruff checks, and PyInstaller build. The frozen application self-test then failed because pyarrow distribution metadata was absent from the bundle. The workflow now copies both pandas and pyarrow metadata; the corrected exact-head run is pending."
       },
       "reliability": {
         "status": "NOT_MEASURED",
-        "reason": "The live HATS-backed DR24 API smoke passed on GitHub Windows CI. The user's Preview 4 HTTP 502 has not yet been reproduced on the target device."
+        "reason": "The bounded HATS-backed DR24 smoke passed on GitHub Windows CI for three single-OID requests and one two-OID batch request, with expected epoch counts and payload hashes. The user's earlier Preview 4 HTTP 502 has not been reproduced or ruled out on the target Windows device."
       },
       "reproducibility": {
         "status": "NOT_MEASURED",
-        "reason": "No final Preview 5 installer, build manifest, or checksum has been produced."
+        "reason": "No final Preview 5 installer, build manifest, or checksum has been produced. The Windows workflow stopped at the frozen application self-test before GUI smoke and installer stages."
       },
       "scientific_validity": {
         "status": "NOT_MEASURED",
@@ -48,23 +48,24 @@
     "scientific_gate_affected": true,
     "blocker": "The scientific validation gate remains NOT_VERIFIED until all registered benchmark sources have immutable evidence manifests and benchmark result reports, all required checks pass, and provenance is complete. This Preview 5 UI and acquisition work does not resolve the outstanding scientific evidence gaps.",
     "evidence": [
-      "PR #323 includes the four requested UI and DR24/Scientific Validation changes on an independent branch.",
-      "The DR24 Batch Workbench UI Contract workflow passed on the exact PR head.",
-      "The Scientific Validation contract workflow passed; this is not evidence that the scientific benchmark gate itself passed.",
-      "CodeQL and Product Scope Audit passed on the exact PR head.",
-      "The Windows workflow verified HATS, LSDB and S3FS imports and completed the bounded live DR24 smoke: three single-OID requests and one two-OID batch request. The smoke verified returned epoch counts and payload hashes.",
-      "The Windows workflow then failed at Ruff formatting in src/ztf_classifier/desktop/main.py. The failure is formatting-only; the packaging and installer steps were skipped.",
-      "The CI cumulative lifecycle gate failed because this meaningful PR did not yet include a cycle record under configs/process/cycles/.",
-      "The PR remains open and in Draft state. No Preview 5 GitHub Release exists."
+      "PR #323 contains the Preview 5 UI, DR24 diagnostics/accounting, and scientific-gate clarity changes on an independent branch.",
+      "The DR24 Batch Workbench UI Contract workflow passed on the recorded PR head.",
+      "The Scientific Validation contract workflow passed; this does not prove that the scientific benchmark gate itself passed.",
+      "CodeQL, Product Scope Audit, and CI passed on the recorded PR head.",
+      "The Windows workflow completed dependency checks, the bounded live DR24 smoke (three single-OID requests and one two-OID batch request), desktop runtime tests, JavaScript syntax checks, Ruff checks, and the PyInstaller one-folder build.",
+      "The frozen application self-test failed because pandas' optional-dependency check could not find pyarrow distribution metadata. The Windows dependency lock pins pyarrow==26.0.1; the PyInstaller command previously copied pandas metadata only.",
+      "The Windows workflow was corrected to copy both pandas and pyarrow distribution metadata. The corrected exact-head Windows run has not yet been verified.",
+      "The PR remains open and in Draft state. No Preview 5 GitHub Release has been published."
     ]
   },
   "failure_analysis": {
     "status": "SUPPORTED",
     "root_causes": [
       "The Preview 4 screenshot records HTTP 502 during DR24 acquisition, but does not identify the underlying network or source failure.",
-      "The Windows CI live DR24 smoke passed for the bounded single- and multi-OID requests. This shows the tested HATS route works in that CI environment, but it does not establish why the user's machine received HTTP 502.",
-      "The Windows build stopped at Ruff formatting before the frozen application, GUI smoke, installer, and checksum stages.",
-      "The cumulative lifecycle gate requires a machine-readable cycle record for meaningful pull requests; PR #323 did not yet contain one at the time of the failed run."
+      "The bounded HATS-backed DR24 smoke passed on GitHub Windows CI, but this does not establish why the user's machine received HTTP 502.",
+      "The frozen application self-test failed because pyarrow distribution metadata was missing from the PyInstaller bundle. The build environment installed pyarrow, but the packaging command did not copy its distribution metadata.",
+      "The Windows workflow now includes --copy-metadata pyarrow alongside --copy-metadata pandas. A new exact-head run must verify the fix.",
+      "The CI cumulative lifecycle record is present in this PR. The latest CI workflow completed successfully."
     ]
   },
   "knowledge_extraction": {
@@ -80,11 +81,11 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Rerun exact-head Windows build after Ruff formatting correction.",
-      "Add and validate this cumulative lifecycle record, then rerun the CI cumulative lifecycle gate.",
-      "Complete Windows frozen build, WebView2 GUI smoke, installer, install/launch/uninstall, and checksum generation.",
-      "Verify all four requested Preview 5 changes in the final installer.",
-      "Inspect the generated release artifacts and verify the installer SHA-256.",
+      "Rerun the exact PR head after the pyarrow metadata packaging correction.",
+      "Verify the frozen application self-test passes and records all required dependency metadata.",
+      "Complete real WebView2 GUI smoke, installer build, silent install, launch, uninstall, user-data preservation, build manifest, and SHA-256 generation.",
+      "Inspect the generated release artifacts and verify the installer and live DR24 smoke checksums.",
+      "Verify all Preview 5 UI and DR24 behaviors in the final installed application.",
       "Publish Preview 5 only after all required product and engineering checks pass.",
       "After user installation, reproduce or rule out the DR24 HTTP 502 on the target device using the request ID and diagnostic log.",
       "Keep scientific validation NOT_VERIFIED until all scientific evidence blockers are resolved independently."
