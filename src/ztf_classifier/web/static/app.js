@@ -760,13 +760,18 @@ async function downloadDesktopRawExport() {
 }
 
 function renderDesktopExport() {
-  const available = Boolean(desktopRawExport);
+  const available = Boolean(desktopRawExport?.source_payload?.records?.length);
   const provenance = desktopDr24Payload?.provenance || {};
+  const availabilityMessage = available
+    ? "Ready to download"
+    : desktopDr24Payload
+      ? "No returned records · export unavailable."
+      : "NOT RUN · Retrieve DR24 data first.";
   mainCanvas.innerHTML = `
     <div class="canvas-header"><div><div class="eyebrow">EXPORT</div><h1 id="viewTitle"></h1><p id="viewSubtitle"></p></div></div>
     <section class="panel">
       <div class="panel-title">Raw JSON export</div>
-      <p class="muted">${available ? "Ready to download" : "NOT RUN · Retrieve DR24 data first."}</p>
+      <p class="muted">${availabilityMessage}</p>
       <dl class="metadata">
         <div><dt>Export schema</dt><dd>${available ? "ztf-dr24-raw-export-v0.3" : "—"}</dd></div>
         <div><dt>Requested OIDs</dt><dd>${escapeHtml((provenance.requested_oids || []).join(", ") || "—")}</dd></div>
@@ -1352,18 +1357,21 @@ async function loadDR24Explorer() {
         "Raw DR24 response received. Requested " + objectids.length +
         " · returned " + returned.length + " · missing " + missing.length +
         ". No feature generation or inference was performed.";
-      lastRawExport = {
+      const hasReturnedRecords = records.length > 0 && returned.length > 0;
+      lastRawExport = hasReturnedRecords ? {
         export_schema_version: "ztf-dr24-raw-export-v0.3",
         exported_at_utc: new Date().toISOString(),
         source_payload: payload,
         interpretation: "Raw source payload preserved. QC is diagnostic only; no epochs were filtered or grouped."
-      };
+      } : null;
       desktopDr24Payload = payload;
       desktopRawExport = lastRawExport;
       desktopRawExportPersisted = false;
       translateDesktopText(document.getElementById("dr24Status"));
-      exportButton.disabled = false;
-      setConnectionState("DR24 raw data loaded");
+      exportButton.disabled = !hasReturnedRecords;
+      setConnectionState(hasReturnedRecords
+        ? "DR24 raw data loaded"
+        : "DR24 query returned no records", hasReturnedRecords);
     } catch (error) {
       if (operationId) {
         try {
