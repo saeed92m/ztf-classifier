@@ -55,7 +55,8 @@
       "The Windows workflow completed dependency checks, the bounded live DR24 smoke (three single-OID requests and one two-OID batch request), desktop runtime tests, JavaScript syntax checks, Ruff checks, and the PyInstaller one-folder build.",
       "The frozen application self-test failed because pandas' optional-dependency check could not find pyarrow distribution metadata. The Windows dependency lock pins pyarrow==26.0.1; the PyInstaller command previously copied pandas metadata only.",
       "The Windows workflow was corrected to copy both pandas and pyarrow distribution metadata. The corrected exact-head Windows run has not yet been verified.",
-      "The PR remains open and in Draft state. No Preview 5 GitHub Release has been published."
+      "The PR remains open and in Draft state. No Preview 5 GitHub Release has been published.",
+      "A review edge case was identified: interrupted DR24 operations could retain oid_accounting_status=PENDING. Both interruption paths now set the state to UNKNOWN, and a restart regression test verifies the persisted manifest and operation log."
     ]
   },
   "failure_analysis": {
@@ -65,7 +66,8 @@
       "The bounded HATS-backed DR24 smoke passed on GitHub Windows CI, but this does not establish why the user's machine received HTTP 502.",
       "The frozen application self-test failed because pyarrow distribution metadata was missing from the PyInstaller bundle. The build environment installed pyarrow, but the packaging command did not copy its distribution metadata.",
       "The Windows workflow now includes --copy-metadata pyarrow alongside --copy-metadata pandas. A new exact-head run must verify the fix.",
-      "The CI cumulative lifecycle record is present in this PR. The latest CI workflow completed successfully."
+      "The CI cumulative lifecycle record is present in this PR. The latest CI workflow completed successfully.",
+      "An interrupted operation is terminal, so retaining PENDING would misstate OID accounting. Both restart and replacement interruption paths now set oid_accounting_status to UNKNOWN; the restart path has regression coverage."
     ]
   },
   "knowledge_extraction": {
@@ -88,7 +90,8 @@
       "Verify all Preview 5 UI and DR24 behaviors in the final installed application.",
       "Publish Preview 5 only after all required product and engineering checks pass.",
       "After user installation, reproduce or rule out the DR24 HTTP 502 on the target device using the request ID and diagnostic log.",
-      "Keep scientific validation NOT_VERIFIED until all scientific evidence blockers are resolved independently."
+      "Keep scientific validation NOT_VERIFIED until all scientific evidence blockers are resolved independently.",
+      "Verify the interrupted-operation accounting regression test passes on the exact PR head."
     ]
   },
   "decision": "REVISE",
