@@ -8,6 +8,8 @@ This preview improves DR24 acquisition diagnostics and makes the scientific rele
 
 - Move Workspaces above DR24 Explorer in the Mission Control sidebar.
 - Improve the visibility of the DR24 raw JSON + QC export control. The control remains disabled until a successful acquisition provides an exportable payload.
+- Keep export disabled when an HTTP-success response contains zero returned records. Preserve export for partial responses with returned records, and retain requested, returned, and missing OID accounting.
+- Include pandas distribution metadata in the frozen Windows application so runtime dependency version checks work after packaging.
 - Preserve the DR24 API error code and request ID in the Workbench.
 - Log the underlying DR24 acquisition exception in the local desktop log. Use the request ID to correlate the on-screen error with the log.
 - Record failed DR24 acquisition with an unknown missing-OID set. A failed query does not prove that every requested OID is missing.
@@ -26,7 +28,7 @@ This preview improves DR24 acquisition diagnostics and makes the scientific rele
 
 ## Verification
 
-The exact source commit must pass the Windows Desktop Preview workflow, CI, and Scientific Validation contract workflow. The Windows workflow verifies dependency imports, a live DR24 single- and multi-OID HATS smoke test, JavaScript syntax, desktop runtime, frozen application startup, WebView2 GUI smoke, installer creation, silent install, launch, uninstall, and SHA-256 generation. The live smoke report is included in the release assets and checksummed.
+The exact source commit must pass the Windows Desktop Preview workflow, CI, and Scientific Validation contract workflow. The deterministic offline browser contract also covers empty DR24 responses and partial responses with retained OID accounting. The Windows workflow verifies dependency imports and metadata in the frozen runtime, a live DR24 single- and multi-OID HATS smoke test, JavaScript syntax, desktop runtime, frozen application startup, WebView2 GUI smoke, installer creation, silent install, launch, uninstall, and SHA-256 generation. The live smoke report is included in the release assets and checksummed.
 
 The release must include the exact source commit, build manifest, installer checksum, self-test report, GUI smoke reports, dependency manifest, and user documentation.
 
