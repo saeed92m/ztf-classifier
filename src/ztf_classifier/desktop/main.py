@@ -375,6 +375,8 @@ def _run_self_test() -> None:
             import hats
             import lsdb
             import s3fs
+            if not all(hasattr(module, "__name__") for module in (hats, lsdb, s3fs)):
+                raise ImportError("A DR24 dependency did not load as a module.")
         except ImportError as exc:
             raise RuntimeError(
                 "The packaged DR24 runtime dependencies are incomplete."
