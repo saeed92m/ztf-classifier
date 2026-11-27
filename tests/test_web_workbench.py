@@ -375,3 +375,22 @@ def test_desktop_installer_proxy_rejects_truncated_body_and_cleans_temp_file(
     assert response.status_code == 502
     assert response.json()["code"] == "desktop_installer_size_mismatch"
     assert list(temp_dir.iterdir()) == []
+
+
+
+def test_desktop_installer_proxy_rejects_insecure_redirect_scheme_and_cleans_temp_file(
+    monkeypatch, tmp_path
+) -> None:
+    installer = b"MZ" + b"installer"
+    response, temp_dir = _exercise_desktop_installer_download(
+        monkeypatch,
+        tmp_path,
+        body=installer,
+        published_digest="sha256:" + ("a" * 64),
+        published_size=len(installer),
+        final_url="http://github.com/saeed92m/ztf-classifier/installer.exe",
+    )
+
+    assert response.status_code == 502
+    assert response.json()["code"] == "desktop_installer_host_invalid"
+    assert list(temp_dir.iterdir()) == []
