@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "v0-2-model-reconstruction-guard-20261124",
+  "objective": "Add a fail-closed, separately identified reconstruction path for the missing frozen v0.2 model artifact without replacing the original production artifact or relaxing scientific acceptance criteria.",
+  "previous_knowledge_consumed": [
+    "The original v0.2 production model binary has not been recovered from the inspected local paths, v0.2.0 tag tree, Release assets, or examined workflow artifacts.",
+    "The frozen baseline manifest confirms 150 objects, 15 classes, 42 features, and hashes for the dataset, feature schema, model config, and fold assignments.",
+    "ALeRCE labels are benchmark labels and are not independent ground truth.",
+    "The Lab Smoke artifact is not a production substitute.",
+    "A reconstructed model cannot be presumed byte-identical or prediction-equivalent to the missing original."
+  ],
+  "baseline": {
+    "revision": "main at PR #306 creation; v0.2.0 frozen baseline unchanged",
+    "description": "PR #306 adds a local-only reconstruction path. The original production artifact remains missing. The reconstruction must remain outside runs/model_baseline_v0.2_production and production_eligible=false."
+  },
+  "expected_improvement": [
+    "Reject output paths outside the project root before training starts.",
+    "Reject writes to the frozen production artifact path.",
+    "Leave an explicit IN_PROGRESS record if a local reconstruction run stops after output creation.",
+    "Check serialization parity with the production pipeline tolerance.",
+    "Add regression tests for output path containment and overwrite protection."
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      },
+      "scientific_validity": {
+        "before": null,
+        "after": null,
+        "status": "NOT_MEASURED"
+      },
+      "regression_protection_count": {
+        "before": 0,
+        "after": 4,
+        "status": "MEASURED"
+      }
+    },
+    "trade_off": "No model training or local data access was performed in CI. The additional guard tests do not establish model reconstruction or scientific validity."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "evidence": [
+      "Frozen baseline manifest reports dataset SHA-256 d08543cffe5db141d6a7e4ee429264acdaa50c6e4fd01f1b0fa2a36aa42a6a85.",
+      "Frozen baseline manifest reports feature schema SHA-256 fed07fc291070ecbdc7bbc597fad5aac6a3f4a1746feb12a9f4c2407108af329.",
+      "Frozen baseline manifest reports model config SHA-256 c01c3e9c27b4d8170082c6c755b4361d21c9706063bc83a4cc2509aff971fdd7.",
+      "Frozen baseline manifest reports fold assignment SHA-256 6289a728a597c9bb7a2ed9e06e52f66ad886a65e031f5c30c1309b0f2b65976a.",
+      "The PR branch CI push workflow completed successfully, but that run did not execute the pull_request-only cycle-record requirement.",
+      "Local Parquet inputs are not available to GitHub Actions; the reconstruction script has not been executed against the frozen data."
+    ],
+    "blocker": "The original production artifact remains unrecovered. The reconstruction script still requires local execution against the four hash-verified inputs, review of actual OOF outputs, artifact reload checks, and independent scientific validation. The CPVS membership discrepancy remains a separate unresolved scientific blocker."
+  },
+  "failure_analysis": {
+    "status": "VERIFIED",
+    "root_causes": [
+      "Code review identified that an output directory outside the project root could fail during provenance path serialization after training and artifact creation. The script now validates containment before training.",
+      "A failed or interrupted local write could leave partial outputs without an explicit reconstruction status. The script now writes an IN_PROGRESS record before artifact serialization.",
+      "The first CI run was a push event. The pull_request-specific cycle-record enforcement step was skipped because the event was not a pull_request event."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A green push-triggered CI run does not prove that pull_request-only lifecycle enforcement passed.",
+      "Output containment must be validated before expensive training and before any output is created.",
+      "An incomplete reconstruction must remain visibly marked IN_PROGRESS and production_eligible=false.",
+      "A reconstruction run is not evidence of recovery of the original model binary."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run current-head pull_request CI and confirm the cycle record is accepted.",
+      "Run the new output-path guard tests in CI.",
+      "Execute the reconstruction only after all four local input hashes pass.",
+      "Review OOF metrics and all generated artifact files before any further use.",
+      "Do not mark the model production eligible without independent scientific validation."
+    ]
+  },
+  "decision": "BLOCKED",
+  "knowledge_carried_forward": [
+    "PR #306 remains a draft and must not be merged until current-head pull_request CI, code review, and local-input execution plans are reviewed.",
+    "The reconstruction must never replace the missing original v0.2 production artifact.",
+    "No production classifications are authorized from the reconstruction.",
+    "The CPVS discrepancy remains an explicit scientific validation blocker."
+  ]
+}
