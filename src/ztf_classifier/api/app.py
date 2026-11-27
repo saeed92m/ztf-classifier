@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import secrets
 import tempfile
 from pathlib import Path
@@ -73,6 +74,7 @@ from ztf_classifier.results import ScientificResultStore
 from ztf_classifier.validation.gate import evaluate_release_gate
 
 API_VERSION = "v1"
+LOGGER = logging.getLogger(__name__)
 
 
 def _error_response(
@@ -335,6 +337,7 @@ def create_app(
     ) -> JSONResponse:
         """Apply optional API-key protection and a stable request ID boundary."""
         request_id = request.headers.get("X-Request-ID") or str(uuid4())
+        request.state.request_id = request_id
         if api_settings.api_key and request.url.path.startswith("/v1/"):
             authorization = request.headers.get("Authorization", "")
             expected = f"Bearer {api_settings.api_key}"
@@ -359,7 +362,7 @@ def create_app(
         request: Request,
         exc: ApiContractError,
     ) -> JSONResponse:
-        request_id = request.headers.get("X-Request-ID")
+        request_id = getattr(request.state, "request_id", None) or request.headers.get("X-Request-ID")
         return _error_response(exc, request_id=request_id)
 
     @app.exception_handler(Exception)
@@ -374,7 +377,7 @@ def create_app(
                 "The API could not complete the request.",
                 status_code=500,
             ),
-            request_id=request.headers.get("X-Request-ID"),
+            request_id=getattr(request.state, "request_id", None) or request.headers.get("X-Request-ID"),
         )
 
     @app.exception_handler(RequestValidationError)
@@ -397,7 +400,7 @@ def create_app(
                 status_code=422,
                 details=details,
             ),
-            request_id=request.headers.get("X-Request-ID"),
+            request_id=getattr(request.state, "request_id", None) or request.headers.get("X-Request-ID"),
         )
 
     @app.get(
@@ -873,6 +876,10 @@ def create_app(
             release_blocking=result["release_blocking"],
             benchmarks=result["benchmarks"],
             blockers=result["blockers"],
+            required_checks=result["required_checks"],
+            product_gate=result["product_gate"],
+            external_reproduction=result["external_reproduction"],
+            external_blockers=result["external_blockers"],
             source_probe=source_probe,
             interpretation=result["interpretation"],
         )
@@ -1249,6 +1256,7 @@ def create_app(
     )
     def dr24_native_lightcurves(
         payload: DR24LightcurveBatchRequest,
+        request: Request,
     ) -> dict[str, Any]:
         """Return up to ten source-native DR24 OIDs without cross-OID grouping."""
         try:
@@ -1260,6 +1268,12 @@ def create_app(
                 status_code=422,
             ) from exc
         except Exception as exc:
+            request_id = getattr(request.state, "request_id", None)
+            LOGGER.exception(
+                "DR24 batch acquisition failed; request_id=%s; requested_oids=%s",
+                request_id,
+                payload.objectids,
+            )
             raise ApiContractError(
                 "dr24_acquisition_failed",
                 "DR24 light-curve acquisition failed. No alternate source was used.",
@@ -1270,7 +1284,7 @@ def create_app(
         "/v1/dr24/objects/{objectid}/lightcurve",
         tags=["observations"],
     )
-    def dr24_native_lightcurve(objectid: int) -> dict[str, Any]:
+    def dr24_native_lightcurve(objectid: int, request: Request) -> dict[str, Any]:
         """Return source-native DR24 epochs and acquisition provenance."""
         if objectid <= 0:
             raise ApiContractError(
@@ -1281,6 +1295,12 @@ def create_app(
         try:
             return observations.get_dr24_native_lightcurve(objectid)
         except Exception as exc:
+            request_id = getattr(request.state, "request_id", None)
+            LOGGER.exception(
+                "DR24 single-object acquisition failed; request_id=%s; objectid=%s",
+                request_id,
+                objectid,
+            )
             raise ApiContractError(
                 "dr24_acquisition_failed",
                 "DR24 light-curve acquisition failed. No alternate source was used.",
