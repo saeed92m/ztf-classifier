@@ -66,18 +66,27 @@ def test_installed_version_reads_current_user_uninstall_entry() -> None:
             return str(self.value), 1
 
     registry = FakeRegistry("0.1.0-preview.4")
-    assert desktop_main._read_installed_version(
-        platform_name="nt", registry_module=registry
-    ) == "0.1.0-preview.4"
+    assert (
+        desktop_main._read_installed_version(
+            platform_name="nt", registry_module=registry
+        )
+        == "0.1.0-preview.4"
+    )
     assert registry.path == (
         r"Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier"
     )
-    assert desktop_main._read_installed_version(
-        platform_name="nt", registry_module=FakeRegistry(None)
-    ) is None
-    assert desktop_main._read_installed_version(
-        platform_name="linux", registry_module=registry
-    ) is None
+    assert (
+        desktop_main._read_installed_version(
+            platform_name="nt", registry_module=FakeRegistry(None)
+        )
+        is None
+    )
+    assert (
+        desktop_main._read_installed_version(
+            platform_name="linux", registry_module=registry
+        )
+        is None
+    )
 
 
 def test_webview2_runtime_detection_checks_machine_and_user_registry() -> None:
