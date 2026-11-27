@@ -69,4 +69,23 @@ def test_dr24_source_failure_returns_502_without_alerce_fallback(
     payload = response.json()
     assert payload["code"] == "dr24_acquisition_failed"
     assert "No alternate source was used" in payload["message"]
+    assert payload["request_id"] == response.headers["X-Request-ID"]
     assert service.requested == [987654321]
+
+
+
+def test_dr24_batch_failure_returns_request_id_and_does_not_claim_missing_oids(
+    tmp_path: Path,
+) -> None:
+    service = FakeDR24ObservationService(fail=True)
+    response = _client(tmp_path, service).post(
+        "/v1/dr24/lightcurves",
+        json={"objectids": [264114400013085, 264214400000912]},
+    )
+
+    assert response.status_code == 502
+    payload = response.json()
+    assert payload["code"] == "dr24_acquisition_failed"
+    assert payload["request_id"] == response.headers["X-Request-ID"]
+    assert "No alternate source was used" in payload["message"]
+    assert service.requested == []
