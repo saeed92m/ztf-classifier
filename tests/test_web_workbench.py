@@ -425,3 +425,26 @@ def test_desktop_installer_proxy_rejects_insecure_redirect_scheme_and_cleans_tem
     assert response.status_code == 502
     assert response.json()["code"] == "desktop_installer_host_invalid"
     assert list(temp_dir.iterdir()) == []
+
+
+
+def test_desktop_dr24_failure_and_scientific_gate_are_explicit() -> None:
+    client = TestClient(create_app())
+    script = client.get("/workbench/app.js")
+    styles = client.get("/workbench/styles.css")
+    validation = client.get("/v1/scientific-validation")
+
+    assert script.status_code == 200
+    assert styles.status_code == 200
+    assert validation.status_code == 200
+    navigation = script.text.split("const desktopNavigationOrder = [", 1)[1].split("];", 1)[0]
+    assert navigation.index('"workspaces"') < navigation.index('"dr24"')
+    assert 'class="secondary-button dr24-export-button"' in script.text
+    assert "error.requestId" in script.text
+    assert "missing_oids: null" in script.text
+    assert "No conclusion about OID existence can be drawn" in script.text
+    assert "Product validation gate" in script.text
+    assert "External reproduction evidence" in script.text
+    assert "product_gate" in validation.json()
+    assert "external_reproduction" in validation.json()
+    assert "#dr24ExportButton:disabled" in styles.text
