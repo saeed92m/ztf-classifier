@@ -257,6 +257,11 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert len(exported["source_payload"]["qc_assessments"]) == 2
             assert exported["source_payload"]["records"][0]["epochs"][2]["hmjd"] is None
 
+            page.locator('[data-view="desktop-provenance"]').click()
+            assert "requested_oids" in page.locator("#desktopProvenanceJson").inner_text()
+            page.locator('[data-view="desktop-export"]').click()
+            assert page.locator("#desktopDownloadJson").is_enabled()
+
             page.locator('[data-view="dr24"]').click()
             backend.mode = "empty"
             page.locator("#dr24ObjectIds").fill("303")
@@ -315,11 +320,6 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert failed_provenance["missing_oids"] is None
             page.locator('[data-view="desktop-export"]').click()
             assert page.locator("#desktopDownloadJson").is_disabled()
-
-            page.locator('[data-view="desktop-provenance"]').click()
-            assert "requested_oids" in page.locator("#desktopProvenanceJson").inner_text()
-            page.locator('[data-view="desktop-export"]').click()
-            assert page.locator("#desktopDownloadJson").is_enabled()
 
             page.locator('[data-view="dr24"]').click()
             page.locator("#dr24ObjectIds").fill("101,101")
