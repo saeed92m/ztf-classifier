@@ -26,7 +26,7 @@ function timeToMinutes(value) {
 }
 function resolveTheme(p) {
   if (["deep-space", "alpha", "light"].includes(p.theme)) return p.theme;
-  if (p.theme === "system") return "system";
+  if (p.theme === "system") return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "system";
   const minutes = new Date().getHours() * 60 + new Date().getMinutes();
   const day = timeToMinutes(p.dayStart), night = timeToMinutes(p.nightStart);
   const isDay = day < night ? minutes >= day && minutes < night : minutes >= day || minutes < night;
