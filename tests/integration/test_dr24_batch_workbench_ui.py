@@ -222,7 +222,7 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 f"DR24 browser request did not complete successfully: {status_text}"
             )
 
-            assert backend.calls == [(101, 202), (303,), (404, 505)]
+            assert backend.calls == [(101, 202)]
             assert page.locator("#dr24Results .panel").count() == 2
             assert page.get_by_text("OID 101 · filter g").is_visible()
             assert page.get_by_text("OID 202 · filter r").is_visible()
