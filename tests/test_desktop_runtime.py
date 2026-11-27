@@ -65,12 +65,12 @@ def test_installed_version_reads_current_user_uninstall_entry() -> None:
             assert name == "DisplayVersion"
             return str(self.value), 1
 
-    registry = FakeRegistry("0.1.0-preview.4")
+    registry = FakeRegistry("0.1.0-preview.5")
     assert (
         desktop_main._read_installed_version(
             platform_name="nt", registry_module=registry
         )
-        == "0.1.0-preview.4"
+        == "0.1.0-preview.5"
     )
     assert registry.path == (
         r"Software\Microsoft\Windows\CurrentVersion\Uninstall\ZTFClassifier"

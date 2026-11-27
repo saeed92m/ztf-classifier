@@ -197,6 +197,7 @@ class WorkspaceStore:
         ):
             return manifest
         operation["status"] = "INTERRUPTED"
+        operation["oid_accounting_status"] = "UNKNOWN"
         operation["completed_at_utc"] = self._now()
         operation["error_code"] = "application_restarted"
         operation["error_message"] = (
@@ -353,6 +354,7 @@ class WorkspaceStore:
                     )
                 if isinstance(current, dict) and current.get("status") == "RUNNING":
                     current["status"] = "INTERRUPTED"
+                    current["oid_accounting_status"] = "UNKNOWN"
                     current["completed_at_utc"] = self._now()
                     current["error_code"] = "operation_replaced"
                     current["error_message"] = (
@@ -380,6 +382,7 @@ class WorkspaceStore:
                     "requested_oids": requested,
                     "returned_oids": [],
                     "missing_oids": [],
+                    "oid_accounting_status": "PENDING",
                     "payload_sha256_by_oid": {},
                     "error_code": None,
                     "error_message": None,
@@ -450,6 +453,7 @@ class WorkspaceStore:
                         "completed_at_utc": self._now(),
                         "returned_oids": returned,
                         "missing_oids": missing,
+                        "oid_accounting_status": "COMPLETE" if status == "SUCCEEDED" else "UNKNOWN",
                         "payload_sha256_by_oid": hashes,
                         "error_code": payload.get("error_code"),
                         "error_message": payload.get("error_message"),

@@ -90,6 +90,10 @@ class ScientificValidationResponse(BaseModel):
     release_blocking: bool
     benchmarks: list[dict[str, Any]]
     blockers: list[str]
+    required_checks: list[str] = Field(default_factory=list)
+    product_gate: dict[str, Any] = Field(default_factory=dict)
+    external_reproduction: dict[str, Any] = Field(default_factory=dict)
+    external_blockers: list[str] = Field(default_factory=list)
     source_probe: dict[str, Any] | None = None
     interpretation: str
 

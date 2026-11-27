@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "desktop-preview5-workbench-dr24-validation-20261127",
+  "objective": "Deliver Preview 5 with the requested Workbench navigation and control contrast changes, diagnose DR24 multi-OID acquisition failures, and make the scientific validation status and blockers accurate without weakening scientific acceptance criteria.",
+  "previous_knowledge_consumed": [
+    "PR #323 and its Preview 5 implementation branch",
+    "Preview 4 user screenshots showing HTTP 502 and acquisition failure in DR24 Explorer",
+    "Windows live DR24 single- and multi-OID smoke evidence from run 46023952698",
+    "Scientific Validation and fail-closed release requirements in the project instructions",
+    "Existing v0.2.0 scientific baseline and its provenance constraints"
+  ],
+  "baseline": {
+    "revision": "4ac5a51aa4bf9b380140df52d642500a6330dfe9",
+    "public_repo": "saeed92m/ztf-classifier",
+    "branch": "fix/preview5-dr24-validation-20261127",
+    "pull_request": 323,
+    "planned_desktop_release": "0.1.0-preview.5",
+    "scientific_baseline": "v0.2.0 unchanged"
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility",
+    "robustness"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "status": "NOT_MEASURED",
+        "reason": "Engineering verification passed on the exact PR head: DR24 UI contract, JavaScript syntax, Ruff, desktop runtime tests, live DR24 HATS smoke, PyInstaller build, frozen self-test, WebView2 GUI smoke, installer build, silent install, installed self-test, installed GUI smoke, and silent uninstall. No before/after product metric was measured."
+      },
+      "reliability": {
+        "status": "NOT_MEASURED",
+        "reason": "The bounded live HATS-backed DR24 smoke passed for three single-OID requests and one two-OID batch request. The user's earlier Preview 4 HTTP 502 has not been reproduced or ruled out on the target Windows device; no before/after reliability metric was measured."
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "The Windows build, installer, install/uninstall test, build-manifest generation, and SHA-256 generation passed on the exact PR head. Artifact upload was skipped on this branch by workflow policy; the main-branch release workflow must upload and verify assets. No before/after reproducibility metric was measured."
+      },
+      "scientific_validity": {
+        "status": "NOT_MEASURED",
+        "reason": "This Preview 5 work improves acquisition diagnostics and validation reporting. It does not provide missing immutable benchmark manifests or benchmark result reports, so the scientific validation gate remains NOT_VERIFIED."
+      }
+    }
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": true,
+    "blocker": "The scientific validation gate remains NOT_VERIFIED until all registered benchmark sources have immutable evidence manifests and benchmark result reports, all required checks pass, and provenance is complete. This Preview 5 UI and acquisition work does not resolve the outstanding scientific evidence gaps.",
+    "evidence": [
+      "PR #323 contains the Preview 5 UI, DR24 diagnostics/accounting, and scientific-gate clarity changes on an independent branch.",
+      "The exact PR head passed DR24 Batch Workbench UI Contract, Product Scope Audit, CodeQL, Scientific Validation contract, and CI.",
+      "The CI run passed Format Check, Lint, Cumulative Lifecycle Gate, Test Suite, Runtime Smoke Tests, Build & Verify Package, Dependency Audit, and CI Gate.",
+      "The Windows Desktop Preview workflow passed dependency checks, bounded live DR24 smoke for three single-OID requests and one two-OID batch request, desktop runtime tests, JavaScript syntax, Ruff, PyInstaller build, frozen application self-test, real WebView2 GUI smoke, PDF generation, signed WebView2 bootstrapper verification, NSIS installation, installer build, silent install, installed executable verification, installed self-test, installed WebView2 GUI smoke, and silent uninstall.",
+      "The Windows installer workflow generated the build manifest and SHA-256 checksum successfully. Artifact upload was skipped on the PR branch by the workflow's branch policy; main-branch publication must upload and verify these artifacts.",
+      "The pyarrow metadata packaging defect was fixed by adding --copy-metadata pyarrow alongside --copy-metadata pandas.",
+      "Interrupted DR24 operations now set oid_accounting_status=UNKNOWN in both interruption paths. The restart regression test passed in CI, and the associated review thread is resolved.",
+      "The PR remains open and in Draft state at this evidence checkpoint. No Preview 5 GitHub Release has been published yet."
+    ]
+  },
+  "failure_analysis": {
+    "status": "RESOLVED_FOR_PREVIEW_BUILD",
+    "root_causes": [
+      "The Preview 4 screenshot records HTTP 502 during DR24 acquisition, but does not identify the underlying network or source failure.",
+      "The bounded HATS-backed DR24 smoke passed on GitHub Windows CI, but this does not establish why the user's machine received HTTP 502.",
+      "The frozen application self-test previously failed because pyarrow distribution metadata was missing from the PyInstaller bundle. The Windows dependency lock pins pyarrow==26.0.1; the PyInstaller command previously copied pandas metadata only.",
+      "The Windows packaging command now copies both pandas and pyarrow metadata. The exact PR-head frozen application self-test passed.",
+      "An interrupted operation is terminal, so retaining PENDING would misstate OID accounting. Both restart and replacement interruption paths now set oid_accounting_status=UNKNOWN; the restart path has regression coverage and passed CI."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "A live API smoke test on CI does not replace reproduction on the user's target Windows device.",
+      "Do not report requested OIDs as missing when source acquisition fails. Membership remains unknown until a successful source response supports an accounting decision.",
+      "Source reachability and API acquisition success do not establish scientific benchmark validity.",
+      "A green Scientific Validation contract workflow is not equivalent to a verified scientific release gate.",
+      "A Windows installer is not ready until the exact-head workflow passes packaging, frozen self-test, real WebView2 GUI smoke, install/uninstall, and checksum steps."
+    ]
+  },
+  "regression": {
+    "status": "PASS",
+    "open_blockers": [
+      "Merge PR #323 after confirming the exact PR-head checks remain green.",
+      "Run the main-branch Windows Preview workflow so it uploads the installer, manuals, dependency manifest, live DR24 smoke report, self-test reports, build manifest, and SHA-256 file.",
+      "Verify the main-branch release payload and checksums, then publish desktop-v0.1.0-preview.5.",
+      "After user installation, manually verify navigation order, Light/Dark control contrast, DR24 two-OID lookup/export behavior, and visual icon consistency on the target Windows device.",
+      "After user installation, reproduce or rule out the DR24 HTTP 502 on the target device using the request ID and diagnostic log.",
+      "Keep scientific validation NOT_VERIFIED until all scientific evidence blockers are resolved independently."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Do not publish Preview 5 until exact-head CI and Windows packaging gates pass.",
+    "Do not merge PR #323 or change main without explicit authorization.",
+    "Do not weaken scientific validation criteria or label missing evidence as PASS.",
+    "Do not claim the user's HTTP 502 is resolved until the target device has been tested.",
+    "Do not change the v0.2.0 model, features, taxonomy, class order, benchmark split, or scientific acceptance thresholds in this UI-focused change."
+  ]
+}

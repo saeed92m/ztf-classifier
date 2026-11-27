@@ -99,6 +99,25 @@ def test_live_dr24_api_matches_verified_hats_payloads(tmp_path: Path) -> None:
             }
         )
 
+    batch_oids = [264114400013085, 264214400000912]
+    batch_response = client.post(
+        "/v1/dr24/lightcurves",
+        json={"objectids": batch_oids},
+    )
+    assert batch_response.status_code == 200, batch_response.text
+    batch_payload = batch_response.json()
+    assert batch_payload["provenance"]["requested_oids"] == batch_oids
+    assert batch_payload["provenance"]["missing_oids"] == []
+    batch_records = {
+        int(record["objectid"]): record for record in batch_payload["records"]
+    }
+    assert set(batch_records) == set(batch_oids)
+    for objectid in batch_oids:
+        expected = EXPECTED[objectid]
+        record = batch_records[objectid]
+        assert record["payload_sha256"] == expected["payload_sha256"]
+        assert len(record["epochs"]) == expected["epochs"]
+
     report = {
         "schema_version": "ztf-dr24-api-live-smoke-v1",
         "status": "PASS",
@@ -108,9 +127,18 @@ def test_live_dr24_api_matches_verified_hats_payloads(tmp_path: Path) -> None:
         "index": "objectid",
         "retrieved_at_utc": datetime.now(UTC).isoformat(),
         "objects": objects,
+        "batch_request": {
+            "requested_oids": batch_oids,
+            "returned_oids": sorted(batch_records),
+            "missing_oids": batch_payload["provenance"]["missing_oids"],
+            "payload_sha256_by_oid": {
+                str(objectid): batch_records[objectid]["payload_sha256"]
+                for objectid in sorted(batch_records)
+            },
+        },
         "total_epochs": sum(int(item["returned_epochs"]) for item in objects),
         "limitations": [
-            "This verifies the FastAPI raw acquisition route for three OIDs only.",
+            "This verifies the single-object API route for three OIDs and the batch API route for two OIDs only.",
             "No photometry normalization, color correction, HMJD conversion, or catflags filtering is applied.",
             "No OID grouping, feature generation, model inference, or scientific performance is evaluated.",
         ],

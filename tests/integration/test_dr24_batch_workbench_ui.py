@@ -23,10 +23,20 @@ from ztf_classifier.io.dr24_lightcurve import (
 class FakeDR24Backend:
     def __init__(self) -> None:
         self.calls: list[tuple[int, ...]] = []
+        self.mode = "all"
 
     def acquire(self, request: object) -> DR24LightcurveResult:
         objectids = tuple(request.objectids)  # type: ignore[attr-defined]
         self.calls.append(objectids)
+        if self.mode == "error":
+            raise RuntimeError("simulated HATS outage")
+        record_objectids = (
+            ()
+            if self.mode == "empty"
+            else objectids[:1]
+            if self.mode == "partial"
+            else objectids
+        )
         records = tuple(
             DR24LightcurveRecord(
                 objectid=objectid,
@@ -61,16 +71,19 @@ class FakeDR24Backend:
                 ),
                 payload_sha256=f"{objectid:064x}",
             )
-            for objectid in objectids
+            for objectid in record_objectids
         )
+        returned_oids = [record.objectid for record in records]
         return DR24LightcurveResult(
             records=records,
             provenance={
                 "source": "IRSA ZTF DR24 Lightcurves HATS",
                 "query": {"index": "objectid", "objectids": list(objectids)},
                 "requested_oids": list(objectids),
-                "returned_oids": list(objectids),
-                "missing_oids": [],
+                "returned_oids": returned_oids,
+                "missing_oids": [
+                    objectid for objectid in objectids if objectid not in returned_oids
+                ],
                 "payload_sha256": {
                     str(record.objectid): record.payload_sha256 for record in records
                 },
@@ -185,8 +198,8 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 "(items) => items.map((item) => item.dataset.view)"
             ) == [
                 "desktop-home",
-                "dr24",
                 "workspaces",
+                "dr24",
                 "catalog",
                 "batch",
                 "sources",
@@ -250,17 +263,76 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert page.locator("#desktopDownloadJson").is_enabled()
 
             page.locator('[data-view="dr24"]').click()
+            backend.mode = "empty"
+            page.locator("#dr24ObjectIds").fill("303")
+            page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
+                timeout=10_000,
+            )
+            assert page.locator("#dr24ExportButton").is_disabled()
+            page.locator('[data-view="desktop-export"]').click()
+            assert page.locator("#desktopDownloadJson").is_disabled()
+            assert "No returned records" in page.locator(".panel").inner_text()
+
+            page.locator('[data-view="dr24"]').click()
+            backend.mode = "partial"
+            page.locator("#dr24ObjectIds").fill("404, 505")
+            page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
+                timeout=10_000,
+            )
+            assert page.locator("#dr24ExportButton").is_enabled()
+            partial_provenance = json.loads(
+                page.locator("#dr24Provenance").inner_text()
+            )
+            assert partial_provenance["requested_oids"] == [404, 505]
+            assert partial_provenance["returned_oids"] == [404]
+            assert partial_provenance["missing_oids"] == [505]
+            with page.expect_download(timeout=10_000) as partial_download_info:
+                page.locator("#dr24ExportButton").click()
+            partial_export = json.loads(
+                Path(partial_download_info.value.path()).read_text(encoding="utf-8")
+            )
+            assert partial_export["source_payload"]["provenance"]["requested_oids"] == [
+                404,
+                505,
+            ]
+            assert [
+                record["objectid"]
+                for record in partial_export["source_payload"]["records"]
+            ] == [404]
+
+            page.locator('[data-view="dr24"]').click()
+            backend.mode = "error"
+            page.locator("#dr24ObjectIds").fill("606")
+            page.locator("#dr24LoadButton").click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24Status')?.textContent.includes('DR24 acquisition failed')",
+                timeout=10_000,
+            )
+            assert page.locator("#dr24ExportButton").is_disabled()
+            failed_provenance = json.loads(
+                page.locator("#dr24Provenance").inner_text()
+            )
+            assert failed_provenance["status"] == "FAILED"
+            assert failed_provenance["missing_oids"] is None
+            page.locator('[data-view="desktop-export"]').click()
+            assert page.locator("#desktopDownloadJson").is_disabled()
+
+            page.locator('[data-view="dr24"]').click()
             page.locator("#dr24ObjectIds").fill("101,101")
             page.locator("#dr24LoadButton").click()
             assert "Duplicate object IDs are not allowed" in page.locator("#dr24Status").inner_text()
-            assert backend.calls == [(101, 202)]
+            assert backend.calls == [(101, 202), (303,), (404, 505), (606,)]
 
             page.locator("#dr24ObjectIds").fill(
                 ",".join(str(value) for value in range(1, 12))
             )
             page.locator("#dr24LoadButton").click()
             assert "Enter between 1 and 10 object IDs." in page.locator("#dr24Status").inner_text()
-            assert backend.calls == [(101, 202)]
+            assert backend.calls == [(101, 202), (303,), (404, 505), (606,)]
             browser.close()
     finally:
         server.should_exit = True
