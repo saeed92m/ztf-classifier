@@ -30,6 +30,21 @@ class FakeDR24ObservationService:
             },
         }
 
+    def get_dr24_native_lightcurves(self, objectids: list[int]) -> dict[str, object]:
+        self.requested.extend(objectids)
+        if self.fail:
+            raise RuntimeError("simulated HATS outage")
+        return {
+            "schema_version": "ztf-dr24-native-lightcurve-v1",
+            "records": [],
+            "provenance": {
+                "source": "IRSA ZTF DR24 Lightcurves HATS",
+                "requested_oids": objectids,
+                "returned_oids": [],
+                "missing_oids": objectids,
+            },
+        }
+
 
 def _client(tmp_path: Path, service: FakeDR24ObservationService) -> TestClient:
     settings = ApiSettings(
@@ -88,4 +103,4 @@ def test_dr24_batch_failure_returns_request_id_and_does_not_claim_missing_oids(
     assert payload["code"] == "dr24_acquisition_failed"
     assert payload["request_id"] == response.headers["X-Request-ID"]
     assert "No alternate source was used" in payload["message"]
-    assert service.requested == []
+    assert service.requested == [264114400013085, 264214400000912]
