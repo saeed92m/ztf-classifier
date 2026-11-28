@@ -444,7 +444,8 @@ def test_desktop_dr24_failure_and_scientific_gate_are_explicit() -> None:
     assert "missing_oids: null" in script.text
     assert "Missing OIDs are unknown" in script.text
     assert "const hasReturnedRecords = records.length > 0 && returned.length > 0;" in script.text
-    assert "exportButton.disabled = !hasReturnedRecords;" in script.text
+    assert "if (currentExportButton) currentExportButton.disabled = !hasReturnedRecords;" in script.text
+    assert "Previous successful result for OIDs " in script.text
     assert 'Boolean(desktopRawExport?.source_payload?.records?.length)' in script.text
     assert "No returned records · export unavailable." in script.text
     assert "Product validation gate" in script.text
@@ -462,8 +463,12 @@ def test_desktop_dr24_session_is_retained_across_navigation_and_scoped_to_worksp
     assert "const desktopDr24Sessions = new Map();" in script.text
     assert "function activateDesktopDr24Session(workspaceId)" in script.text
     assert 'await syncDesktopDr24Session();' in script.text
-    assert 'desktopDr24Session.resultsHtml = rendered.join("")' in script.text
-    assert "desktopDr24Session.provenanceText = JSON.stringify(provenance, null, 2);" in script.text
+    assert "targetSession.resultsHtml = resultsHtml;" in script.text
+    assert "targetSession.provenanceText = JSON.stringify(provenance, null, 2);" in script.text
+    assert "const targetWorkspaceId = currentWorkspaceId;" in script.text
+    assert "desktopDr24Session !== targetSession" in script.text
+    assert "targetSession.lastAttemptFailure = failure;" in script.text
+    assert "desktopDr24Session.resultsHtml = rendered.join" not in script.text
     assert "desktopDr24Session.objectIds = input.value;" in script.text
     assert "if (initialIds && !session?.payload) await loadRaw();" in script.text
 
