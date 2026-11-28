@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.1",
+  "stage_id": "desktop-workspace-session-fix-20261128",
+  "objective": "Correct DR24 workspace session ownership and retention, strengthen browser acceptance coverage, and define an evidence-based desktop UI framework evaluation without changing the scientific core.",
+  "previous_knowledge_consumed": [
+    {
+      "source": "Issue #324 — DR24 session loss across menu navigation",
+      "status": "VERIFIED",
+      "detail": "Workspace navigation must preserve OID draft, successful payload, rendered records, provenance and export state within the same process."
+    },
+    {
+      "source": "PR #325 review threads",
+      "status": "VERIFIED",
+      "detail": "Review identified an in-flight response workspace-isolation defect and stale rendered state after export restoration."
+    },
+    {
+      "source": "Preview 5 desktop implementation",
+      "status": "VERIFIED",
+      "detail": "WebView-based desktop UI and Python local API are the current implementation; Preview 5 must remain unchanged."
+    },
+    {
+      "source": "16-role ZTF think-tank charter",
+      "status": "VERIFIED",
+      "detail": "Architecture, backend, QA, UX, release and independent red-team roles must challenge assumptions; project owner retains final approval."
+    }
+  ],
+  "baseline": {
+    "revision": "d7e2062f75cda028c6ca1a97253e8e2c93a140c1",
+    "public_repo": "saeed92m/ztf-classifier",
+    "branch": "fix/desktop-workspace-session-state-20261128",
+    "pull_request": 325,
+    "desktop_baseline": "Windows Preview 5 WebView-based Workbench",
+    "scientific_baseline": "v0.2.0 unchanged"
+  },
+  "expected_improvement": [
+    "correctness",
+    "reliability",
+    "reproducibility"
+  ],
+  "measurement": {
+    "metrics": {
+      "correctness": {
+        "before": "DR24 navigation acceptance failed on an immediate post-navigation assertion; review found request results could be written to a newly active workspace.",
+        "after": "Workspace-bound request handling and asynchronous UI wait assertions added; exact-head browser result pending.",
+        "status": "NOT_MEASURED"
+      },
+      "reliability": {
+        "before": "A failed subsequent request could replace visible state; restored exports could leave stale rendered markup.",
+        "after": "Retain last successful payload and export; clear stale rendering on export restoration; exact-head verification pending.",
+        "status": "NOT_MEASURED"
+      },
+      "reproducibility": {
+        "status": "NOT_MEASURED",
+        "reason": "No exact-head workflow result is available for this cycle yet."
+      },
+      "memory": {
+        "status": "NOT_MEASURED",
+        "reason": "No controlled Qt versus WebView2 prototype measurements have been collected."
+      },
+      "startup": {
+        "status": "NOT_MEASURED",
+        "reason": "No comparative startup benchmark has been collected."
+      }
+    },
+    "trade_off": "Keep WebView2 operational. Qt Quick/QML remains a prototype candidate. Do not add Qt or .NET production dependencies or change scientific behavior."
+  },
+  "validation": {
+    "status": "NOT_VERIFIED",
+    "scientific_gate_affected": false,
+    "evidence": [
+      "PR #325 review identified two correctness risks: late DR24 responses can target the wrong workspace, and restored exports can retain stale rendered markup.",
+      "The branch now captures the request's originating workspace session and only updates visible state when that workspace remains active.",
+      "The branch now retains the last successful result and export after a failed later acquisition.",
+      "The branch now resets rendered state and records provenance/status when restoring a saved raw export.",
+      "Browser acceptance coverage now includes delayed in-flight workspace switching and failed-request retention.",
+      "Navigation tests now wait for asynchronous workspace restoration before checking the input state.",
+      "Desktop UI framework evaluation document records the current WebView2 baseline, Qt Quick/QML prototype path, and why WPF is not the primary multi-platform path."
+    ]
+  },
+  "failure_analysis": {
+    "status": "SUPPORTED",
+    "root_causes": [
+      "The asynchronous DR24 response path previously wrote to module-level state that could point to a different workspace after awaits.",
+      "Export restoration replaced payload and OIDs but did not replace the rendered result markup or provenance/status.",
+      "The browser acceptance test asserted restored OID state immediately after a navigation click, before the asynchronous active-workspace lookup had completed."
+    ]
+  },
+  "knowledge_extraction": {
+    "status": "SUPPORTED",
+    "findings": [
+      "Every asynchronous scientific acquisition must capture its workspace identity and session before network awaits.",
+      "A response may update the visible page only when its originating workspace is still active; otherwise it may update only its captured workspace session.",
+      "A failed later acquisition must not overwrite the last successful result or export.",
+      "Restored raw exports must not be paired with stale plots or stale provenance.",
+      "UI tests must wait for asynchronous view restoration before asserting state.",
+      "A UI framework replacement is not a root-cause fix for state-management defects.",
+      "Qt Quick/QML should be evaluated through a bounded, API-backed prototype; no migration decision is justified without cross-platform and resource measurements."
+    ]
+  },
+  "regression": {
+    "status": "NOT_VERIFIED",
+    "open_blockers": [
+      "Run the focused DR24 browser contract on the latest branch head.",
+      "Run the full CI workflow, including the cumulative lifecycle gate and test suite.",
+      "Run Windows desktop runtime, installer, install/launch/uninstall acceptance on the exact branch head.",
+      "Verify in-flight workspace isolation, export restoration, failed-request retention, no duplicate acquisition, and same-process workspace restoration.",
+      "Review all new code and test results before marking PR #325 ready for review.",
+      "Do not merge or publish a Preview release until all required gates pass."
+    ]
+  },
+  "decision": "REVISE",
+  "knowledge_carried_forward": [
+    "Preview 5 remains immutable.",
+    "Scientific baseline v0.2.0, model artifacts, taxonomy, 42-feature contract, QC semantics and scientific gates remain unchanged.",
+    "No Qt or .NET production dependency is approved.",
+    "Qt Quick/QML is the preferred prototype candidate; WebView2 remains the current baseline pending comparative evidence.",
+    "WPF is not the primary path for a Windows/Linux/macOS product.",
+    "Full UI migration requires a separate approved architecture decision after measured prototype results."
+  ]
+}
