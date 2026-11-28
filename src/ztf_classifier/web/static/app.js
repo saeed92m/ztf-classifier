@@ -688,6 +688,7 @@ async function renderDesktopWorkspaces() {
             const activeWorkspace = await fetchJson("/v1/workspaces/active");
             if (activeWorkspace.workspace?.workspace_id !== workspaceId) {
               await fetchJson("/v1/workspaces/" + encodeURIComponent(workspaceId) + "/open", { method: "POST" });
+              await syncDesktopDr24Session();
             }
             const restored = await fetchJson(
               "/v1/workspaces/exports/" + encodeURIComponent(button.dataset.exportFile)
@@ -701,7 +702,6 @@ async function renderDesktopWorkspaces() {
               desktopDr24Session.rawExportPersisted = true;
               desktopDr24Session.objectIds = (restored.source_payload?.provenance?.requested_oids || []).join(", ");
             }
-      if (desktopDr24Session) desktopDr24Session.rawExportPersisted = true;
             status.textContent = "Latest export restored from workspace.";
             showView("desktop-export");
           } catch (error) {
@@ -773,6 +773,7 @@ async function downloadDesktopRawExport() {
         body: JSON.stringify(desktopRawExport)
       });
       desktopRawExportPersisted = true;
+      if (desktopDr24Session) desktopDr24Session.rawExportPersisted = true;
     }
     const blob = new Blob([JSON.stringify(desktopRawExport, null, 2)], {
       type: "application/json"
