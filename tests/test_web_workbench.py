@@ -462,7 +462,7 @@ def test_desktop_dr24_session_is_retained_across_navigation_and_scoped_to_worksp
     assert "const desktopDr24Sessions = new Map();" in script.text
     assert "function activateDesktopDr24Session(workspaceId)" in script.text
     assert 'await syncDesktopDr24Session();' in script.text
-    assert "desktopDr24Session.resultsHtml = rendered.join("")" in script.text
+    assert 'desktopDr24Session.resultsHtml = rendered.join("")' in script.text
     assert "desktopDr24Session.provenanceText = JSON.stringify(provenance, null, 2);" in script.text
     assert "desktopDr24Session.objectIds = input.value;" in script.text
     assert "if (initialIds && !session?.payload) await loadRaw();" in script.text
