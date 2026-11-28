@@ -326,7 +326,8 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator("#dr24ObjectIds").fill("303")
             page.locator("#dr24LoadButton").click()
             page.wait_for_function(
-                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
+                "() => { try { const p = JSON.parse(document.querySelector('#dr24Provenance')?.textContent || '{}'); "
+                "return p.requested_oids?.[0] === 303 && p.returned_oids?.length === 0; } catch { return false; } }",
                 timeout=10_000,
             )
             assert page.locator("#dr24ExportButton").is_disabled()
@@ -339,7 +340,8 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator("#dr24ObjectIds").fill("404, 505")
             page.locator("#dr24LoadButton").click()
             page.wait_for_function(
-                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
+                "() => { try { const p = JSON.parse(document.querySelector('#dr24Provenance')?.textContent || '{}'); "
+                "return JSON.stringify(p.requested_oids) === '[404,505]'; } catch { return false; } }",
                 timeout=10_000,
             )
             assert page.locator("#dr24ExportButton").is_enabled()
@@ -368,7 +370,8 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator("#dr24ObjectIds").fill("606")
             page.locator("#dr24LoadButton").click()
             page.wait_for_function(
-                "() => document.querySelector('#dr24Status')?.textContent.includes('DR24 acquisition failed')",
+                "() => { try { const p = JSON.parse(document.querySelector('#dr24Provenance')?.textContent || '{}'); "
+                "return p.status === 'FAILED' && p.requested_oids?.[0] === 606; } catch { return false; } }",
                 timeout=10_000,
             )
             assert page.locator("#dr24ExportButton").is_enabled()
@@ -426,8 +429,12 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             original_workspace.locator("[data-open-workspace]").click()
             page.locator('[data-view="dr24"]').click()
             assert page.locator("#dr24ObjectIds").input_value() == "707"
+            page.wait_for_function(
+                "() => { try { const p = JSON.parse(document.querySelector('#dr24Provenance')?.textContent || '{}'); "
+                "return p.requested_oids?.[0] === 707 && document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received'); } catch { return false; } }",
+                timeout=10_000,
+            )
             assert page.locator("#dr24Results .panel").count() == 1
-            assert "Raw DR24 response received" in page.locator("#dr24Status").inner_text()
             assert backend.calls == [(101, 202), (303,), (404, 505), (606,), (707,)]
             browser.close()
     finally:
