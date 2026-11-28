@@ -1205,7 +1205,7 @@ async function loadDR24Explorer() {
   if (sampleButton) {
     sampleButton.addEventListener("click", () => {
       input.value = "264114400013085, 264214400000912";
-      if (desktopDr24Session) desktopDr24Session.objectIds = input.value;
+      if (session) session.objectIds = input.value;
     });
   }
 
