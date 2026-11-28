@@ -245,6 +245,46 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert provenance["returned_oids"] == [101, 202]
             assert provenance["missing_oids"] == []
 
+            # Navigating between menus must restore the active workspace session
+            # without issuing another DR24 request.
+            page.locator('[data-view="desktop-home"]').click()
+            page.locator('[data-view="workspaces"]').click()
+            page.locator('[data-view="dr24"]').click()
+            assert page.locator("#dr24ObjectIds").input_value() == "101, 202"
+            assert page.locator("#dr24Results .panel").count() == 2
+            assert page.locator("#dr24ExportButton").is_enabled()
+            assert json.loads(page.locator("#dr24Provenance").inner_text())[
+                "requested_oids"
+            ] == [101, 202]
+            assert backend.calls == [(101, 202)]
+
+            # A newly active workspace must start with an isolated empty session.
+            page.locator('[data-view="workspaces"]').click()
+            page.locator("#workspaceName").fill("Second isolated workspace")
+            page.locator("#workspaceCreateForm button[type=submit]").click()
+            page.wait_for_function(
+                "() => document.querySelector('#workspaceStatus')?.textContent.includes('active workspace:')",
+                timeout=5_000,
+            )
+            page.locator('[data-view="dr24"]').click()
+            assert page.locator("#dr24ObjectIds").input_value() == ""
+            assert "Enter up to 10 OIDs" in page.locator("#dr24Results").inner_text()
+            assert page.locator("#dr24ExportButton").is_disabled()
+            assert backend.calls == [(101, 202)]
+
+            # Re-open the original workspace during this app process and restore
+            # its own session, not the second workspace's empty state.
+            page.locator('[data-view="workspaces"]').click()
+            original_workspace = page.locator(".workspace-list-item").filter(
+                has_text="CI desktop workspace"
+            )
+            original_workspace.locator("[data-open-workspace]").click()
+            page.locator('[data-view="dr24"]').click()
+            assert page.locator("#dr24ObjectIds").input_value() == "101, 202"
+            assert page.locator("#dr24Results .panel").count() == 2
+            assert page.locator("#dr24ExportButton").is_enabled()
+            assert backend.calls == [(101, 202)]
+
             with page.expect_download(timeout=10_000) as download_info:
                 page.locator("#dr24ExportButton").click()
             download = download_info.value
