@@ -444,7 +444,8 @@ def test_desktop_dr24_failure_and_scientific_gate_are_explicit() -> None:
     assert "missing_oids: null" in script.text
     assert "Missing OIDs are unknown" in script.text
     assert "const hasReturnedRecords = records.length > 0 && returned.length > 0;" in script.text
-    assert "exportButton.disabled = !hasReturnedRecords;" in script.text
+    assert "if (currentExportButton) currentExportButton.disabled = !hasReturnedRecords;" in script.text
+    assert "Previous successful result for OIDs " in script.text
     assert 'Boolean(desktopRawExport?.source_payload?.records?.length)' in script.text
     assert "No returned records · export unavailable." in script.text
     assert "Product validation gate" in script.text
@@ -452,3 +453,38 @@ def test_desktop_dr24_failure_and_scientific_gate_are_explicit() -> None:
     assert "product_gate" in validation.json()
     assert "external_reproduction" in validation.json()
     assert "#dr24ExportButton:disabled" in styles.text
+
+
+def test_desktop_dr24_session_is_retained_across_navigation_and_scoped_to_workspace() -> None:
+    client = TestClient(create_app())
+    script = client.get("/workbench/app.js")
+
+    assert script.status_code == 200
+    assert "const desktopDr24Sessions = new Map();" in script.text
+    assert "function activateDesktopDr24Session(workspaceId)" in script.text
+    assert 'await syncDesktopDr24Session();' in script.text
+    assert "targetSession.resultsHtml = resultsHtml;" in script.text
+    assert "targetSession.provenanceText = JSON.stringify(provenance, null, 2);" in script.text
+    assert "const targetWorkspaceId = desktopActiveWorkspaceId;" in script.text
+    assert "const targetSession = session;" in script.text
+    assert "targetSession !== desktopDr24Sessions.get(targetWorkspaceId)" in script.text
+    assert "desktopDr24Session !== targetSession" in script.text
+    assert "targetSession.lastAttemptFailure = failure;" in script.text
+    assert "desktopDr24Session.resultsHtml = rendered.join" not in script.text
+    assert "if (session) session.objectIds = input.value;" in script.text
+    assert "desktopDr24Session.objectIds = input.value;" not in script.text
+    assert "if (initialIds && !session?.payload) await loadRaw();" in script.text
+    load_raw = script.text.split("async function loadRaw()", 1)[1].split(
+        "function renderRecord", 1
+    )[0]
+    assert load_raw.index("const targetWorkspaceId = desktopActiveWorkspaceId;") < load_raw.index(
+        "await fetchJson(\"/v1/workspaces/active\")"
+    )
+    assert "currentWorkspaceId !== targetWorkspaceId" in load_raw
+
+    dr24_view = script.text.split("async function loadDR24Explorer()", 1)[1].split(
+        "async function showView", 1
+    )[0]
+    assert "desktopDr24Payload = null;" not in dr24_view
+    assert "desktopRawExport = null;" not in dr24_view
+    assert "if (input.value) await loadRaw();" not in dr24_view

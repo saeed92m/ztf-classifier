@@ -24,10 +24,16 @@ class FakeDR24Backend:
     def __init__(self) -> None:
         self.calls: list[tuple[int, ...]] = []
         self.mode = "all"
+        self.started = threading.Event()
+        self.release = threading.Event()
 
     def acquire(self, request: object) -> DR24LightcurveResult:
         objectids = tuple(request.objectids)  # type: ignore[attr-defined]
         self.calls.append(objectids)
+        if self.mode == "blocked":
+            self.started.set()
+            if not self.release.wait(timeout=10):
+                raise RuntimeError("simulated delayed DR24 response timed out")
         if self.mode == "error":
             raise RuntimeError("simulated HATS outage")
         record_objectids = (
@@ -245,6 +251,59 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             assert provenance["returned_oids"] == [101, 202]
             assert provenance["missing_oids"] == []
 
+            # Navigating between menus must restore the active workspace session
+            # without issuing another DR24 request.
+            page.locator('[data-view="desktop-home"]').click()
+            page.locator('[data-view="workspaces"]').click()
+            page.locator('[data-view="dr24"]').click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24ObjectIds')?.value === '101, 202'",
+                timeout=5_000,
+            )
+            assert page.locator("#dr24ObjectIds").input_value() == "101, 202"
+            assert page.locator("#dr24Results .panel").count() == 2
+            assert page.locator("#dr24ExportButton").is_enabled()
+            assert json.loads(page.locator("#dr24Provenance").inner_text())[
+                "requested_oids"
+            ] == [101, 202]
+            assert backend.calls == [(101, 202)]
+
+            # A newly active workspace must start with an isolated empty session.
+            page.locator('[data-view="workspaces"]').click()
+            page.locator("#workspaceName").fill("Second isolated workspace")
+            page.locator("#workspaceCreateForm button[type=submit]").click()
+            page.wait_for_function(
+                "() => document.querySelector('#workspaceStatus')?.textContent.includes('active workspace:')",
+                timeout=5_000,
+            )
+            page.locator('[data-view="dr24"]').click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24ObjectIds')?.value === '' && "
+                "document.querySelector('#dr24Results')?.textContent.includes('Enter up to 10 OIDs')",
+                timeout=5_000,
+            )
+            assert page.locator("#dr24ObjectIds").input_value() == ""
+            assert "Enter up to 10 OIDs" in page.locator("#dr24Results").inner_text()
+            assert page.locator("#dr24ExportButton").is_disabled()
+            assert backend.calls == [(101, 202)]
+
+            # Re-open the original workspace during this app process and restore
+            # its own session, not the second workspace's empty state.
+            page.locator('[data-view="workspaces"]').click()
+            original_workspace = page.locator(".workspace-list-item").filter(
+                has_text="CI desktop workspace"
+            )
+            original_workspace.locator("[data-open-workspace]").click()
+            page.locator('[data-view="dr24"]').click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24ObjectIds')?.value === '101, 202'",
+                timeout=5_000,
+            )
+            assert page.locator("#dr24ObjectIds").input_value() == "101, 202"
+            assert page.locator("#dr24Results .panel").count() == 2
+            assert page.locator("#dr24ExportButton").is_enabled()
+            assert backend.calls == [(101, 202)]
+
             with page.expect_download(timeout=10_000) as download_info:
                 page.locator("#dr24ExportButton").click()
             download = download_info.value
@@ -262,12 +321,32 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator('[data-view="desktop-export"]').click()
             assert page.locator("#desktopDownloadJson").is_enabled()
 
+            # Restoring a saved export must not leave the previous rendered curves beside it.
+            page.locator('[data-view="workspaces"]').click()
+            page.wait_for_function(
+                "() => document.querySelectorAll('[data-restore-export]').length === 1",
+                timeout=5_000,
+            )
+            page.locator("[data-restore-export]").first.click()
+            page.locator('[data-view="dr24"]').click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24ObjectIds')?.value === '101, 202' && "
+                "document.querySelector('#dr24Results')?.textContent.includes('Raw export restored')",
+                timeout=5_000,
+            )
+            assert page.locator("#dr24Results .chart").count() == 0
+            assert json.loads(page.locator("#dr24Provenance").inner_text())[
+                "requested_oids"
+            ] == [101, 202]
+            assert page.locator("#dr24ExportButton").is_enabled()
+
             page.locator('[data-view="dr24"]').click()
             backend.mode = "empty"
             page.locator("#dr24ObjectIds").fill("303")
             page.locator("#dr24LoadButton").click()
             page.wait_for_function(
-                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
+                "() => { try { const p = JSON.parse(document.querySelector('#dr24Provenance')?.textContent || '{}'); "
+                "return p.requested_oids?.[0] === 303 && p.returned_oids?.length === 0; } catch { return false; } }",
                 timeout=10_000,
             )
             assert page.locator("#dr24ExportButton").is_disabled()
@@ -280,7 +359,8 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator("#dr24ObjectIds").fill("404, 505")
             page.locator("#dr24LoadButton").click()
             page.wait_for_function(
-                "() => document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received')",
+                "() => { try { const p = JSON.parse(document.querySelector('#dr24Provenance')?.textContent || '{}'); "
+                "return JSON.stringify(p.requested_oids) === '[404,505]'; } catch { return false; } }",
                 timeout=10_000,
             )
             assert page.locator("#dr24ExportButton").is_enabled()
@@ -309,17 +389,19 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator("#dr24ObjectIds").fill("606")
             page.locator("#dr24LoadButton").click()
             page.wait_for_function(
-                "() => document.querySelector('#dr24Status')?.textContent.includes('DR24 acquisition failed')",
+                "() => document.querySelector('#dr24Status')?.textContent.includes('Latest DR24 acquisition failed')",
                 timeout=10_000,
             )
-            assert page.locator("#dr24ExportButton").is_disabled()
-            failed_provenance = json.loads(
+            assert page.locator("#dr24ExportButton").is_enabled()
+            assert "Previous successful result for OIDs 404, 505 remains available." in page.locator(
+                "#dr24Status"
+            ).inner_text()
+            retained_provenance = json.loads(
                 page.locator("#dr24Provenance").inner_text()
             )
-            assert failed_provenance["status"] == "FAILED"
-            assert failed_provenance["missing_oids"] is None
+            assert retained_provenance["requested_oids"] == [404, 505]
             page.locator('[data-view="desktop-export"]').click()
-            assert page.locator("#desktopDownloadJson").is_disabled()
+            assert page.locator("#desktopDownloadJson").is_enabled()
 
             page.locator('[data-view="dr24"]').click()
             page.locator("#dr24ObjectIds").fill("101,101")
@@ -333,6 +415,49 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator("#dr24LoadButton").click()
             assert "Enter between 1 and 10 object IDs." in page.locator("#dr24Status").inner_text()
             assert backend.calls == [(101, 202), (303,), (404, 505), (606,)]
+
+            # A delayed response must remain attached to its originating workspace.
+            backend.mode = "blocked"
+            backend.started.clear()
+            backend.release.clear()
+            page.locator('[data-view="dr24"]').click()
+            page.locator("#dr24ObjectIds").fill("707")
+            page.locator("#dr24LoadButton").click()
+            assert backend.started.wait(timeout=5), "DR24 request did not reach the delayed backend"
+
+            page.locator('[data-view="workspaces"]').click()
+            page.locator("#workspaceName").fill("Third isolated workspace")
+            page.locator("#workspaceCreateForm button[type=submit]").click()
+            page.wait_for_function(
+                "() => document.querySelector('#workspaceStatus')?.textContent.includes('active workspace:')",
+                timeout=5_000,
+            )
+            backend.release.set()
+            page.wait_for_timeout(300)
+
+            page.locator('[data-view="dr24"]').click()
+            assert page.locator("#dr24ObjectIds").input_value() == ""
+            assert "Enter up to 10 OIDs" in page.locator("#dr24Results").inner_text()
+            assert page.locator("#dr24ExportButton").is_disabled()
+
+            page.locator('[data-view="workspaces"]').click()
+            original_workspace = page.locator(".workspace-list-item").filter(
+                has_text="CI desktop workspace"
+            )
+            original_workspace.locator("[data-open-workspace]").click()
+            page.locator('[data-view="dr24"]').click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24ObjectIds')?.value === '707'",
+                timeout=5_000,
+            )
+            assert page.locator("#dr24ObjectIds").input_value() == "707"
+            page.wait_for_function(
+                "() => { try { const p = JSON.parse(document.querySelector('#dr24Provenance')?.textContent || '{}'); "
+                "return p.requested_oids?.[0] === 707 && document.querySelector('#dr24Status')?.textContent.includes('Raw DR24 response received'); } catch { return false; } }",
+                timeout=10_000,
+            )
+            assert page.locator("#dr24Results .panel").count() == 1
+            assert backend.calls == [(101, 202), (303,), (404, 505), (606,), (707,)]
             browser.close()
     finally:
         server.should_exit = True
