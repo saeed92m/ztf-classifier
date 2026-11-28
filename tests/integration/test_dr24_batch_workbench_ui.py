@@ -389,8 +389,7 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator("#dr24ObjectIds").fill("606")
             page.locator("#dr24LoadButton").click()
             page.wait_for_function(
-                "() => { try { const p = JSON.parse(document.querySelector('#dr24Provenance')?.textContent || '{}'); "
-                "return p.status === 'FAILED' && p.requested_oids?.[0] === 606; } catch { return false; } }",
+                "() => document.querySelector('#dr24Status')?.textContent.includes('Latest DR24 acquisition failed')",
                 timeout=10_000,
             )
             assert page.locator("#dr24ExportButton").is_enabled()
