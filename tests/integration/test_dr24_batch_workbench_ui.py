@@ -321,6 +321,25 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator('[data-view="desktop-export"]').click()
             assert page.locator("#desktopDownloadJson").is_enabled()
 
+            # Restoring a saved export must not leave the previous rendered curves beside it.
+            page.locator('[data-view="workspaces"]').click()
+            page.wait_for_function(
+                "() => document.querySelectorAll('[data-restore-export]').length === 1",
+                timeout=5_000,
+            )
+            page.locator("[data-restore-export]").first.click()
+            page.locator('[data-view="dr24"]').click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24ObjectIds')?.value === '101, 202' && "
+                "document.querySelector('#dr24Results')?.textContent.includes('Raw export restored')",
+                timeout=5_000,
+            )
+            assert page.locator("#dr24Results .chart").count() == 0
+            assert json.loads(page.locator("#dr24Provenance").inner_text())[
+                "requested_oids"
+            ] == [101, 202]
+            assert page.locator("#dr24ExportButton").is_enabled()
+
             page.locator('[data-view="dr24"]').click()
             backend.mode = "empty"
             page.locator("#dr24ObjectIds").fill("303")
