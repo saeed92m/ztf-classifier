@@ -28,7 +28,9 @@ function activateDesktopDr24Session(workspaceId) {
       rawExportPersisted: false,
       resultsHtml: "",
       provenanceText: "",
-      statusText: "No DR24 objects loaded."
+      statusText: "No DR24 objects loaded.",
+      payloadObjectIds: "",
+      lastAttemptFailure: null
     });
   }
   desktopDr24Session = desktopDr24Sessions.get(id);
@@ -701,6 +703,15 @@ async function renderDesktopWorkspaces() {
               desktopDr24Session.payload = restored.source_payload || null;
               desktopDr24Session.rawExportPersisted = true;
               desktopDr24Session.objectIds = (restored.source_payload?.provenance?.requested_oids || []).join(", ");
+              desktopDr24Session.payloadObjectIds = desktopDr24Session.objectIds;
+              desktopDr24Session.resultsHtml =
+                '<section class="panel muted">Raw export restored. The source payload and provenance are available. Load the OIDs to rebuild the light-curve view.</section>';
+              desktopDr24Session.provenanceText = JSON.stringify(
+                restored.source_payload?.provenance || {}, null, 2
+              );
+              desktopDr24Session.statusText =
+                "Raw export restored. Load the OIDs to rebuild the light-curve view.";
+              desktopDr24Session.lastAttemptFailure = null;
             }
             status.textContent = "Latest export restored from workspace.";
             showView("desktop-export");
@@ -1349,7 +1360,12 @@ async function loadDR24Explorer() {
     if (currentWorkspaceId !== desktopActiveWorkspaceId) {
       activateDesktopDr24Session(currentWorkspaceId);
     }
-    if (desktopDr24Session) desktopDr24Session.objectIds = input.value;
+    // Bind this asynchronous request to the workspace that initiated it.
+    // A later workspace switch must never redirect its result into another session.
+    const targetWorkspaceId = currentWorkspaceId;
+    const targetSession = desktopDr24Session;
+    const requestedInputText = input.value;
+    if (targetSession) targetSession.objectIds = requestedInputText;
     let operationId = null;
     try {
       operationId = crypto.randomUUID().replace(/-/g, "");
@@ -1395,8 +1411,6 @@ async function loadDR24Explorer() {
           payload_sha256_by_oid: provenance.payload_sha256 || {}
         })
       });
-      document.getElementById("dr24Provenance").textContent =
-        JSON.stringify(provenance, null, 2);
       const rendered = records.map(record =>
         renderRecord(
           record,
@@ -1404,12 +1418,11 @@ async function loadDR24Explorer() {
           summaryByOid.get(String(record.objectid))
         )
       );
-      document.getElementById("dr24Results").innerHTML = rendered.join("") ||
+      const resultsHtml = rendered.join("") ||
         '<section class="panel muted">No catalog rows were returned. No alternate source was used.</section>';
-      translateDesktopText(document.getElementById("dr24Results"));
       const missing = provenance.missing_oids || [];
       const returned = provenance.returned_oids || records.map(record => record.objectid);
-      document.getElementById("dr24Status").textContent =
+      const statusText =
         "Raw DR24 response received. Requested " + objectids.length +
         " · returned " + returned.length + " · missing " + missing.length +
         ". No feature generation or inference was performed.";
@@ -1420,21 +1433,39 @@ async function loadDR24Explorer() {
         source_payload: payload,
         interpretation: "Raw source payload preserved. QC is diagnostic only; no epochs were filtered or grouped."
       } : null;
+
+      // Persist the completed request to its captured workspace session first.
+      if (targetSession) {
+        targetSession.payload = payload;
+        targetSession.payloadObjectIds = objectids.join(", ");
+        targetSession.rawExport = lastRawExport;
+        targetSession.rawExportPersisted = false;
+        targetSession.resultsHtml = resultsHtml;
+        targetSession.provenanceText = JSON.stringify(provenance, null, 2);
+        targetSession.statusText = statusText;
+        targetSession.lastAttemptFailure = null;
+      }
+
+      // Update the visible page only when the initiating workspace is still active.
+      if (desktopActiveWorkspaceId !== targetWorkspaceId ||
+          desktopDr24Session !== targetSession) return;
       desktopDr24Payload = payload;
       desktopRawExport = lastRawExport;
       desktopRawExportPersisted = false;
-      if (desktopDr24Session) {
-        desktopDr24Session.objectIds = input.value;
-        desktopDr24Session.payload = payload;
-        desktopDr24Session.rawExport = lastRawExport;
-        desktopDr24Session.rawExportPersisted = false;
-        desktopDr24Session.resultsHtml = rendered.join("") ||
-          '<section class="panel muted">No catalog rows were returned. No alternate source was used.</section>';
-        desktopDr24Session.provenanceText = JSON.stringify(provenance, null, 2);
-        desktopDr24Session.statusText = document.getElementById("dr24Status").textContent;
+      const currentResults = document.getElementById("dr24Results");
+      const currentProvenance = document.getElementById("dr24Provenance");
+      const currentStatus = document.getElementById("dr24Status");
+      const currentExportButton = document.getElementById("dr24ExportButton");
+      if (currentResults) {
+        currentResults.innerHTML = resultsHtml;
+        translateDesktopText(currentResults);
       }
-      translateDesktopText(document.getElementById("dr24Status"));
-      exportButton.disabled = !hasReturnedRecords;
+      if (currentProvenance) currentProvenance.textContent = JSON.stringify(provenance, null, 2);
+      if (currentStatus) {
+        currentStatus.textContent = statusText;
+        translateDesktopText(currentStatus);
+      }
+      if (currentExportButton) currentExportButton.disabled = !hasReturnedRecords;
       setConnectionState(hasReturnedRecords
         ? "DR24 raw data loaded"
         : "DR24 query returned no records", hasReturnedRecords);
@@ -1476,16 +1507,36 @@ async function loadDR24Explorer() {
         },
         interpretation: "Acquisition failed before the returned OID set could be established. Missing OIDs are unknown; no alternate source was used."
       };
-      document.getElementById("dr24Results").innerHTML =
-        '<section class="panel"><strong>DR24 acquisition failed.</strong><p class="muted">No alternate source was used. The request did not establish whether any requested OID is missing.</p></section>';
-      document.getElementById("dr24Provenance").textContent =
-        JSON.stringify(failure, null, 2);
-      document.getElementById("dr24Status").textContent =
-        "DR24 acquisition failed (" + (error.status ? "HTTP " + error.status + " · " : "") +
+      const failureStatus =
+        "Latest DR24 acquisition failed (" + (error.status ? "HTTP " + error.status + " · " : "") +
         (error.code || "unknown error") + "). No alternate source was used." +
         (requestId ? " Diagnostic ID: " + requestId + "." : "") +
+        (targetSession?.payload
+          ? " Previous successful result for OIDs " + (targetSession.payloadObjectIds || "unknown") + " remains available."
+          : "") +
         " See %LOCALAPPDATA%\\ZTFClassifier\\logs\\desktop.log for the underlying error.";
-      translateDesktopText(document.getElementById("dr24Results"));
+      if (targetSession) {
+        targetSession.lastAttemptFailure = failure;
+        targetSession.statusText = failureStatus;
+        if (!targetSession.payload) {
+          targetSession.resultsHtml =
+            '<section class="panel"><strong>DR24 acquisition failed.</strong><p class="muted">No alternate source was used. The request did not establish whether any requested OID is missing.</p></section>';
+          targetSession.provenanceText = JSON.stringify(failure, null, 2);
+        }
+      }
+      if (desktopActiveWorkspaceId === targetWorkspaceId &&
+          desktopDr24Session === targetSession) {
+        const currentResults = document.getElementById("dr24Results");
+        const currentProvenance = document.getElementById("dr24Provenance");
+        const currentStatus = document.getElementById("dr24Status");
+        const currentExportButton = document.getElementById("dr24ExportButton");
+        if (!targetSession?.payload) {
+          if (currentResults) currentResults.innerHTML = targetSession?.resultsHtml || "";
+          if (currentProvenance) currentProvenance.textContent = targetSession?.provenanceText || JSON.stringify(failure, null, 2);
+        }
+        if (currentStatus) currentStatus.textContent = failureStatus;
+        if (currentExportButton) currentExportButton.disabled = !targetSession?.rawExport;
+      }
       setConnectionState("DR24 acquisition failed", false);
     } finally {
       loadButton.disabled = false;
