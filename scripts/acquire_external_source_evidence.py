@@ -100,6 +100,33 @@ def _validate(frame: pd.DataFrame, expected: list[str], object_id: str, limit: i
         raise SourceQueryError(f"{object_id} is not deterministically sorted")
 
 
+def _normalize_and_sort_source_ids(
+    frame: pd.DataFrame,
+    object_id: str,
+) -> pd.DataFrame:
+    if object_id not in frame.columns:
+        raise SourceQueryError(f"source response missing object ID column: {object_id}")
+    if frame[object_id].isna().any():
+        raise SourceQueryError(f"{object_id} contains null values")
+
+    def normalize(value: object) -> str:
+        if isinstance(value, bytes):
+            try:
+                value = value.decode("utf-8", errors="strict")
+            except UnicodeDecodeError as exc:
+                raise SourceQueryError(
+                    f"{object_id} contains a non-UTF-8 byte identifier"
+                ) from exc
+        normalized = str(value).strip()
+        if not normalized:
+            raise SourceQueryError(f"{object_id} contains a blank identifier")
+        return normalized
+
+    normalized = frame.copy()
+    normalized[object_id] = normalized[object_id].map(normalize)
+    return normalized.sort_values(object_id, kind="mergesort").reset_index(drop=True)
+
+
 def _write_result(
     root: Path,
     benchmark_id: str,
@@ -167,6 +194,42 @@ def _fragment_range(fragment: ds.Fragment, object_id: str) -> tuple[object, obje
     return min(minima), max(maxima), metadata.num_rows
 
 
+DR24_INDEX_SAMPLE_SEED = "DR24-HATS-INDEX-SAMPLE-v1"
+
+
+def _spread_fragment_indices(fragment_count: int, sample_count: int) -> list[int]:
+    """Select stable, evenly spaced fragment indices across the ordered index."""
+    if fragment_count < 1 or sample_count < 1:
+        raise ValueError("fragment_count and sample_count must be positive")
+    if fragment_count <= sample_count:
+        return list(range(fragment_count))
+    if sample_count == 1:
+        return [fragment_count // 2]
+    return sorted(
+        {
+            round(index * (fragment_count - 1) / (sample_count - 1))
+            for index in range(sample_count)
+        }
+    )
+
+
+def _rank_index_rows(table: pa.Table, object_id: str, limit: int) -> pa.Table:
+    """Take a deterministic SHA-256-ranked subset independent of row ordering."""
+    if limit < 0:
+        raise ValueError("limit must be nonnegative")
+    if table.num_rows <= limit:
+        return table
+    ids = table[object_id].to_pylist()
+    ranked_indices = sorted(
+        range(len(ids)),
+        key=lambda index: (
+            _sha256(f"{DR24_INDEX_SAMPLE_SEED}:{ids[index]}".encode("utf-8")),
+            str(ids[index]),
+        ),
+    )
+    return table.take(pa.array(ranked_indices[:limit], type=pa.int64()))
+
+
 def _select_hats_index_rows(
     filesystem: pafs.FileSystem,
     index_root: str,
@@ -182,32 +245,58 @@ def _select_hats_index_rows(
         for fragment in fragments
     )
     previous_max: object | None = None
-    selected_fragments: list[ds.Fragment] = []
-    estimated_rows = 0
-    for minimum, maximum, rows, fragment in ranges:
+    for minimum, maximum, _, _ in ranges:
         if previous_max is not None and minimum <= previous_max:
             raise SourceQueryError("DR24 HATS OID index ranges overlap or are not strictly ordered")
         previous_max = maximum
-        selected_fragments.append(fragment)
-        estimated_rows += rows
-        if estimated_rows >= limit:
-            break
-    else:
-        raise SourceQueryError(
-            f"DR24 HATS OID index contains fewer than {limit} indexed rows"
-        )
 
-    tables = [
-        fragment.to_table(columns=[object_id, "Norder", "Npix"])
-        for fragment in selected_fragments
-    ]
-    index = pa.concat_tables(tables, promote_options="default")
-    index = index.sort_by([(object_id, "ascending")])
+    # The old selector took the first lexicographic rows, concentrating the
+    # 150-object subset in one sky partition. Spread the bounded sample across
+    # ordered HATS index fragments, then hash-rank IDs within each fragment.
+    sample_count = min(15, len(ranges))
+    selected_indices = _spread_fragment_indices(len(ranges), sample_count)
+    base_count, remainder = divmod(limit, len(selected_indices))
+    selected_tables: list[pa.Table] = []
+    selected_set: set[int] = set()
+    selected_count = 0
+
+    for position, range_index in enumerate(selected_indices):
+        _, _, _, fragment = ranges[range_index]
+        fragment_table = fragment.to_table(columns=[object_id, "Norder", "Npix"])
+        target = base_count + (1 if position < remainder else 0)
+        chosen = _rank_index_rows(fragment_table, object_id, target)
+        if chosen.num_rows:
+            selected_tables.append(chosen)
+            selected_count += chosen.num_rows
+            selected_set.add(range_index)
+
+    # If a selected fragment has fewer rows than its allocation, deterministically
+    # top up from other fragments without changing the already selected IDs.
+    if selected_count < limit:
+        for range_index, (_, _, _, fragment) in enumerate(ranges):
+            if range_index in selected_set:
+                continue
+            fragment_table = fragment.to_table(columns=[object_id, "Norder", "Npix"])
+            chosen = _rank_index_rows(
+                fragment_table, object_id, limit - selected_count
+            )
+            if chosen.num_rows:
+                selected_tables.append(chosen)
+                selected_count += chosen.num_rows
+            if selected_count >= limit:
+                break
+
+    if not selected_tables:
+        raise SourceQueryError("DR24 HATS OID index produced no sampled rows")
+    index = pa.concat_tables(selected_tables, promote_options="default")
+    sampled_ids = [str(value) for value in index[object_id].to_pylist()]
+    if len(sampled_ids) != len(set(sampled_ids)):
+        raise SourceQueryError("DR24 HATS index sample contains duplicate object IDs")
     if index.num_rows < limit:
         raise SourceQueryError(
-            f"DR24 HATS OID index produced only {index.num_rows} rows from selected ranges"
+            f"DR24 HATS OID index produced only {index.num_rows} sampled rows; expected {limit}"
         )
-    return index.slice(0, limit)
+    return index.sort_by([(object_id, "ascending")]).slice(0, limit)
 
 
 def _read_hats_objects(
@@ -274,7 +363,7 @@ def _read_hats_objects(
     frame = pd.concat(frames, ignore_index=True)
     frame.columns = [str(column).lower() for column in frame.columns]
     frame = frame.rename(columns={"oid": "oid", "ra": "ra", "dec": "dec"})
-    frame = frame.sort_values(object_id, kind="mergesort").reset_index(drop=True)
+    frame = _normalize_and_sort_source_ids(frame, object_id)
     _validate(frame, expected_columns, object_id, len(ids))
     frame.attrs["source_rows"] = source_rows
     return frame
