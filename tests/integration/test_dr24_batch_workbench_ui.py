@@ -256,6 +256,10 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             page.locator('[data-view="desktop-home"]').click()
             page.locator('[data-view="workspaces"]').click()
             page.locator('[data-view="dr24"]').click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24ObjectIds')?.value === '101, 202'",
+                timeout=5_000,
+            )
             assert page.locator("#dr24ObjectIds").input_value() == "101, 202"
             assert page.locator("#dr24Results .panel").count() == 2
             assert page.locator("#dr24ExportButton").is_enabled()
@@ -273,6 +277,11 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 timeout=5_000,
             )
             page.locator('[data-view="dr24"]').click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24ObjectIds')?.value === '' && "
+                "document.querySelector('#dr24Results')?.textContent.includes('Enter up to 10 OIDs')",
+                timeout=5_000,
+            )
             assert page.locator("#dr24ObjectIds").input_value() == ""
             assert "Enter up to 10 OIDs" in page.locator("#dr24Results").inner_text()
             assert page.locator("#dr24ExportButton").is_disabled()
@@ -286,6 +295,10 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
             )
             original_workspace.locator("[data-open-workspace]").click()
             page.locator('[data-view="dr24"]').click()
+            page.wait_for_function(
+                "() => document.querySelector('#dr24ObjectIds')?.value === '101, 202'",
+                timeout=5_000,
+            )
             assert page.locator("#dr24ObjectIds").input_value() == "101, 202"
             assert page.locator("#dr24Results .panel").count() == 2
             assert page.locator("#dr24ExportButton").is_enabled()
