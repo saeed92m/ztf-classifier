@@ -1198,7 +1198,9 @@ async function loadDR24Explorer() {
   loadButton.disabled = false;
   if (sampleButton) sampleButton.disabled = false;
   input.addEventListener("input", () => {
-    if (desktopDr24Session) desktopDr24Session.objectIds = input.value;
+    // Bind draft edits to the workspace session that hydrated this view.
+    // The global active session can change after navigation.
+    if (session) session.objectIds = input.value;
   });
   if (sampleButton) {
     sampleButton.addEventListener("click", () => {
@@ -1340,6 +1342,12 @@ async function loadDR24Explorer() {
       document.getElementById("dr24Status").textContent = desktopTranslate(error.message);
       return;
     }
+    // Capture the initiating workspace and its session before the first await.
+    // A navigation or workspace switch must not redirect this request.
+    const targetWorkspaceId = desktopActiveWorkspaceId;
+    const targetSession = session;
+    const requestedInputText = input.value;
+    if (targetSession) targetSession.objectIds = requestedInputText;
     loadButton.disabled = true;
     let activeWorkspace;
     try {
@@ -1368,15 +1376,15 @@ async function loadDR24Explorer() {
       return;
     }
     const currentWorkspaceId = activeWorkspace.workspace.workspace_id;
-    if (currentWorkspaceId !== desktopActiveWorkspaceId) {
-      activateDesktopDr24Session(currentWorkspaceId);
+    if (!targetWorkspaceId || currentWorkspaceId !== targetWorkspaceId ||
+        targetSession !== desktopDr24Sessions.get(targetWorkspaceId)) {
+      document.getElementById("dr24Status").textContent =
+        "Workspace changed before the DR24 request started. No request was sent; reopen the intended workspace and retry.";
+      loadButton.disabled = false;
+      return;
     }
-    // Bind this asynchronous request to the workspace that initiated it.
-    // A later workspace switch must never redirect its result into another session.
-    const targetWorkspaceId = currentWorkspaceId;
-    const targetSession = desktopDr24Session;
-    const requestedInputText = input.value;
-    if (targetSession) targetSession.objectIds = requestedInputText;
+    // The request remains bound to the session captured before the first await.
+    // Do not resolve its owner from mutable global state after asynchronous work.
     let operationId = null;
     try {
       operationId = crypto.randomUUID().replace(/-/g, "");
