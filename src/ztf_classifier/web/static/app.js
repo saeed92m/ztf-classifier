@@ -688,8 +688,8 @@ async function renderDesktopWorkspaces() {
             const activeWorkspace = await fetchJson("/v1/workspaces/active");
             if (activeWorkspace.workspace?.workspace_id !== workspaceId) {
               await fetchJson("/v1/workspaces/" + encodeURIComponent(workspaceId) + "/open", { method: "POST" });
-              await syncDesktopDr24Session();
             }
+            await syncDesktopDr24Session();
             const restored = await fetchJson(
               "/v1/workspaces/exports/" + encodeURIComponent(button.dataset.exportFile)
             );
@@ -1181,6 +1181,7 @@ async function loadDR24Explorer() {
   if (sampleButton) {
     sampleButton.addEventListener("click", () => {
       input.value = "264114400013085, 264214400000912";
+      if (desktopDr24Session) desktopDr24Session.objectIds = input.value;
     });
   }
 
