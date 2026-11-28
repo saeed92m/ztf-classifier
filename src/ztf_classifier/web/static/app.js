@@ -1166,15 +1166,24 @@ async function loadDR24Explorer() {
   ].join("");
   setViewHeading("dr24");
   translateDesktopText(mainCanvas);
+  const input = document.getElementById("dr24ObjectIds");
+  const loadButton = document.getElementById("dr24LoadButton");
+  const exportButton = document.getElementById("dr24ExportButton");
+  const sampleButton = document.getElementById("dr24SampleButton");
+  // Do not accept edits until the active workspace session has been resolved.
+  // Otherwise the asynchronous restore can overwrite a user's newly typed OIDs.
+  input.disabled = true;
+  loadButton.disabled = true;
+  exportButton.disabled = true;
+  if (sampleButton) sampleButton.disabled = true;
+  document.getElementById("dr24Status").textContent =
+    "Restoring the active workspace session…";
   try {
     await syncDesktopDr24Session();
   } catch {
     activateDesktopDr24Session(null);
   }
   const session = desktopDr24Session;
-  const input = document.getElementById("dr24ObjectIds");
-  const loadButton = document.getElementById("dr24LoadButton");
-  const exportButton = document.getElementById("dr24ExportButton");
   let lastRawExport = session?.rawExport || null;
   const initialIds = params.get("objectids") || params.get("objectid") || "";
   input.value = session?.objectIds || initialIds;
@@ -1182,13 +1191,15 @@ async function loadDR24Explorer() {
     document.getElementById("dr24Results").innerHTML = session.resultsHtml;
     document.getElementById("dr24Provenance").textContent = session.provenanceText;
     document.getElementById("dr24Status").textContent = session.statusText;
-    exportButton.disabled = !session.rawExport;
     translateDesktopText(document.getElementById("dr24Results"));
   }
+  exportButton.disabled = !session?.rawExport;
+  input.disabled = false;
+  loadButton.disabled = false;
+  if (sampleButton) sampleButton.disabled = false;
   input.addEventListener("input", () => {
     if (desktopDr24Session) desktopDr24Session.objectIds = input.value;
   });
-  const sampleButton = document.getElementById("dr24SampleButton");
   if (sampleButton) {
     sampleButton.addEventListener("click", () => {
       input.value = "264114400013085, 264214400000912";
