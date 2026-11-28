@@ -294,6 +294,10 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 has_text="CI desktop workspace"
             )
             original_workspace.locator("[data-open-workspace]").click()
+            page.wait_for_function(
+                "() => document.querySelector('#workspaceStatus')?.textContent.includes('Workspace opened and set as active.')",
+                timeout=5_000,
+            )
             page.locator('[data-view="dr24"]').click()
             page.wait_for_function(
                 "() => document.querySelector('#dr24ObjectIds')?.value === '101, 202'",
@@ -445,6 +449,10 @@ def test_workbench_loads_and_exports_multiple_dr24_oids(tmp_path: Path) -> None:
                 has_text="CI desktop workspace"
             )
             original_workspace.locator("[data-open-workspace]").click()
+            page.wait_for_function(
+                "() => document.querySelector('#workspaceStatus')?.textContent.includes('Workspace opened and set as active.')",
+                timeout=5_000,
+            )
             page.locator('[data-view="dr24"]').click()
             assert page.locator("#dr24ObjectIds").input_value() == "707"
             page.wait_for_function(
