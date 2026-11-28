@@ -452,3 +452,24 @@ def test_desktop_dr24_failure_and_scientific_gate_are_explicit() -> None:
     assert "product_gate" in validation.json()
     assert "external_reproduction" in validation.json()
     assert "#dr24ExportButton:disabled" in styles.text
+
+
+def test_desktop_dr24_session_is_retained_across_navigation_and_scoped_to_workspace() -> None:
+    client = TestClient(create_app())
+    script = client.get("/workbench/app.js")
+
+    assert script.status_code == 200
+    assert "const desktopDr24Sessions = new Map();" in script.text
+    assert "function activateDesktopDr24Session(workspaceId)" in script.text
+    assert 'await syncDesktopDr24Session();' in script.text
+    assert "desktopDr24Session.resultsHtml = rendered.join("")" in script.text
+    assert "desktopDr24Session.provenanceText = JSON.stringify(provenance, null, 2);" in script.text
+    assert "desktopDr24Session.objectIds = input.value;" in script.text
+    assert "if (initialIds && !session?.payload) await loadRaw();" in script.text
+
+    dr24_view = script.text.split("async function loadDR24Explorer()", 1)[1].split(
+        "async function showView", 1
+    )[0]
+    assert "desktopDr24Payload = null;" not in dr24_view
+    assert "desktopRawExport = null;" not in dr24_view
+    assert "if (input.value) await loadRaw();" not in dr24_view
