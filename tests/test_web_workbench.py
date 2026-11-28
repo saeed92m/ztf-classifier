@@ -465,12 +465,22 @@ def test_desktop_dr24_session_is_retained_across_navigation_and_scoped_to_worksp
     assert 'await syncDesktopDr24Session();' in script.text
     assert "targetSession.resultsHtml = resultsHtml;" in script.text
     assert "targetSession.provenanceText = JSON.stringify(provenance, null, 2);" in script.text
-    assert "const targetWorkspaceId = currentWorkspaceId;" in script.text
+    assert "const targetWorkspaceId = desktopActiveWorkspaceId;" in script.text
+    assert "const targetSession = session;" in script.text
+    assert "targetSession !== desktopDr24Sessions.get(targetWorkspaceId)" in script.text
     assert "desktopDr24Session !== targetSession" in script.text
     assert "targetSession.lastAttemptFailure = failure;" in script.text
     assert "desktopDr24Session.resultsHtml = rendered.join" not in script.text
-    assert "desktopDr24Session.objectIds = input.value;" in script.text
+    assert "if (session) session.objectIds = input.value;" in script.text
+    assert "desktopDr24Session.objectIds = input.value;" not in script.text
     assert "if (initialIds && !session?.payload) await loadRaw();" in script.text
+    load_raw = script.text.split("async function loadRaw()", 1)[1].split(
+        "function renderRecord", 1
+    )[0]
+    assert load_raw.index("const targetWorkspaceId = desktopActiveWorkspaceId;") < load_raw.index(
+        "await fetchJson(\"/v1/workspaces/active\")"
+    )
+    assert "currentWorkspaceId !== targetWorkspaceId" in load_raw
 
     dr24_view = script.text.split("async function loadDR24Explorer()", 1)[1].split(
         "async function showView", 1
