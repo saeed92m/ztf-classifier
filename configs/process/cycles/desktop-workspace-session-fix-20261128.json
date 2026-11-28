@@ -57,9 +57,9 @@
         "status": "NOT_MEASURED",
         "reason": "No controlled Qt versus WebView2 prototype measurements have been collected."
       },
-      "startup": {
+      "latency": {
         "status": "NOT_MEASURED",
-        "reason": "No comparative startup benchmark has been collected."
+        "reason": "No comparative application startup-latency benchmark has been collected."
       }
     },
     "trade_off": "Keep WebView2 operational. Qt Quick/QML remains a prototype candidate. Do not add Qt or .NET production dependencies or change scientific behavior."
@@ -100,7 +100,7 @@
   "regression": {
     "status": "NOT_VERIFIED",
     "open_blockers": [
-      "Run the focused DR24 browser contract on the latest branch head.",
+      "Run the focused DR24 browser contract on the latest branch head, including retention of OID draft 707 when its request is in flight during a workspace switch.",
       "Run the full CI workflow, including the cumulative lifecycle gate and test suite.",
       "Run Windows desktop runtime, installer, install/launch/uninstall acceptance on the exact branch head.",
       "Verify in-flight workspace isolation, export restoration, failed-request retention, no duplicate acquisition, and same-process workspace restoration.",
