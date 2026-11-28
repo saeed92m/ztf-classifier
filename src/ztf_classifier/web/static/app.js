@@ -636,6 +636,10 @@ async function renderDesktopWorkspaces() {
   const list = document.getElementById("workspaceList");
   const form = document.getElementById("workspaceCreateForm");
   const nameInput = document.getElementById("workspaceName");
+  const navigationItems = Array.from(document.querySelectorAll(".nav-item"));
+  const setNavigationLocked = locked => {
+    navigationItems.forEach(item => { item.disabled = locked; });
+  };
 
   async function refreshWorkspaces() {
     const payload = await fetchJson("/v1/workspaces");
@@ -671,6 +675,7 @@ async function renderDesktopWorkspaces() {
       list.querySelectorAll("[data-open-workspace]").forEach(button => {
         button.addEventListener("click", async () => {
           button.disabled = true;
+          setNavigationLocked(true);
           try {
             await fetchJson("/v1/workspaces/" + encodeURIComponent(button.dataset.openWorkspace) + "/open", { method: "POST" });
             await syncDesktopDr24Session();
@@ -679,12 +684,15 @@ async function renderDesktopWorkspaces() {
           } catch (error) {
             status.textContent = "Could not open workspace: " + (error.message || "Unknown error");
             button.disabled = false;
+          } finally {
+            setNavigationLocked(false);
           }
         });
       });
       list.querySelectorAll("[data-restore-export]").forEach(button => {
         button.addEventListener("click", async () => {
           button.disabled = true;
+          setNavigationLocked(true);
           try {
             const workspaceId = button.dataset.restoreExport;
             const activeWorkspace = await fetchJson("/v1/workspaces/active");
@@ -718,6 +726,8 @@ async function renderDesktopWorkspaces() {
           } catch (error) {
             status.textContent = "Could not restore export: " + (error.message || "Unknown error");
             button.disabled = false;
+          } finally {
+            setNavigationLocked(false);
           }
         });
       });
@@ -731,6 +741,7 @@ async function renderDesktopWorkspaces() {
     if (!name) return;
     const submit = form.querySelector("button[type=submit]");
     submit.disabled = true;
+    setNavigationLocked(true);
     try {
       await fetchJson("/v1/workspaces", {
         method: "POST",
@@ -745,6 +756,7 @@ async function renderDesktopWorkspaces() {
       status.textContent = "Could not create workspace: " + (error.message || "Unknown error");
     } finally {
       submit.disabled = false;
+      setNavigationLocked(false);
     }
   });
 
