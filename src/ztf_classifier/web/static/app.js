@@ -6,6 +6,42 @@ const desktopMode = params.get("desktop") === "1";
 let desktopDr24Payload = null;
 let desktopRawExport = null;
 let desktopRawExportPersisted = false;
+const desktopDr24Sessions = new Map();
+let desktopActiveWorkspaceId = null;
+let desktopDr24Session = null;
+
+function activateDesktopDr24Session(workspaceId) {
+  const id = workspaceId || null;
+  desktopActiveWorkspaceId = id;
+  if (!id) {
+    desktopDr24Session = null;
+    desktopDr24Payload = null;
+    desktopRawExport = null;
+    desktopRawExportPersisted = false;
+    return null;
+  }
+  if (!desktopDr24Sessions.has(id)) {
+    desktopDr24Sessions.set(id, {
+      objectIds: "",
+      payload: null,
+      rawExport: null,
+      rawExportPersisted: false,
+      resultsHtml: "",
+      provenanceText: "",
+      statusText: "No DR24 objects loaded."
+    });
+  }
+  desktopDr24Session = desktopDr24Sessions.get(id);
+  desktopDr24Payload = desktopDr24Session.payload;
+  desktopRawExport = desktopDr24Session.rawExport;
+  desktopRawExportPersisted = desktopDr24Session.rawExportPersisted;
+  return desktopDr24Session;
+}
+
+async function syncDesktopDr24Session() {
+  const active = await fetchJson("/v1/workspaces/active");
+  return activateDesktopDr24Session(active.workspace?.workspace_id || null);
+}
 function desktopTranslate(value) { return value; }
 function translateDesktopText() {}
 
@@ -635,9 +671,7 @@ async function renderDesktopWorkspaces() {
           button.disabled = true;
           try {
             await fetchJson("/v1/workspaces/" + encodeURIComponent(button.dataset.openWorkspace) + "/open", { method: "POST" });
-            desktopRawExport = null;
-            desktopDr24Payload = null;
-            desktopRawExportPersisted = false;
+            await syncDesktopDr24Session();
             status.textContent = "Workspace opened and set as active.";
             await refreshWorkspaces();
           } catch (error) {
@@ -661,6 +695,13 @@ async function renderDesktopWorkspaces() {
             desktopRawExport = restored;
             desktopDr24Payload = restored.source_payload || null;
             desktopRawExportPersisted = true;
+            if (desktopDr24Session) {
+              desktopDr24Session.rawExport = restored;
+              desktopDr24Session.payload = restored.source_payload || null;
+              desktopDr24Session.rawExportPersisted = true;
+              desktopDr24Session.objectIds = (restored.source_payload?.provenance?.requested_oids || []).join(", ");
+            }
+      if (desktopDr24Session) desktopDr24Session.rawExportPersisted = true;
             status.textContent = "Latest export restored from workspace.";
             showView("desktop-export");
           } catch (error) {
@@ -685,9 +726,7 @@ async function renderDesktopWorkspaces() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name })
       });
-      desktopRawExport = null;
-      desktopDr24Payload = null;
-      desktopRawExportPersisted = false;
+      await syncDesktopDr24Session();
       nameInput.value = "";
       status.textContent = "Workspace created.";
       await refreshWorkspaces();
@@ -1115,14 +1154,28 @@ async function loadDR24Explorer() {
   ].join("");
   setViewHeading("dr24");
   translateDesktopText(mainCanvas);
-  desktopDr24Payload = null;
-  desktopRawExport = null;
+  try {
+    await syncDesktopDr24Session();
+  } catch {
+    activateDesktopDr24Session(null);
+  }
+  const session = desktopDr24Session;
   const input = document.getElementById("dr24ObjectIds");
   const loadButton = document.getElementById("dr24LoadButton");
   const exportButton = document.getElementById("dr24ExportButton");
-  let lastRawExport = null;
+  let lastRawExport = session?.rawExport || null;
   const initialIds = params.get("objectids") || params.get("objectid") || "";
-  if (initialIds) input.value = initialIds;
+  input.value = session?.objectIds || initialIds;
+  if (session?.resultsHtml) {
+    document.getElementById("dr24Results").innerHTML = session.resultsHtml;
+    document.getElementById("dr24Provenance").textContent = session.provenanceText;
+    document.getElementById("dr24Status").textContent = session.statusText;
+    exportButton.disabled = !session.rawExport;
+    translateDesktopText(document.getElementById("dr24Results"));
+  }
+  input.addEventListener("input", () => {
+    if (desktopDr24Session) desktopDr24Session.objectIds = input.value;
+  });
   const sampleButton = document.getElementById("dr24SampleButton");
   if (sampleButton) {
     sampleButton.addEventListener("click", () => {
@@ -1256,10 +1309,6 @@ async function loadDR24Explorer() {
   }
 
   async function loadRaw() {
-    lastRawExport = null;
-    desktopDr24Payload = null;
-    desktopRawExport = null;
-    exportButton.disabled = true;
     let objectids;
     try {
       objectids = parseObjectIds(input.value.trim());
@@ -1294,6 +1343,11 @@ async function loadDR24Explorer() {
       loadButton.disabled = false;
       return;
     }
+    const currentWorkspaceId = activeWorkspace.workspace.workspace_id;
+    if (currentWorkspaceId !== desktopActiveWorkspaceId) {
+      activateDesktopDr24Session(currentWorkspaceId);
+    }
+    if (desktopDr24Session) desktopDr24Session.objectIds = input.value;
     let operationId = null;
     try {
       operationId = crypto.randomUUID().replace(/-/g, "");
@@ -1367,6 +1421,16 @@ async function loadDR24Explorer() {
       desktopDr24Payload = payload;
       desktopRawExport = lastRawExport;
       desktopRawExportPersisted = false;
+      if (desktopDr24Session) {
+        desktopDr24Session.objectIds = input.value;
+        desktopDr24Session.payload = payload;
+        desktopDr24Session.rawExport = lastRawExport;
+        desktopDr24Session.rawExportPersisted = false;
+        desktopDr24Session.resultsHtml = rendered.join("") ||
+          '<section class="panel muted">No catalog rows were returned. No alternate source was used.</section>';
+        desktopDr24Session.provenanceText = JSON.stringify(provenance, null, 2);
+        desktopDr24Session.statusText = document.getElementById("dr24Status").textContent;
+      }
       translateDesktopText(document.getElementById("dr24Status"));
       exportButton.disabled = !hasReturnedRecords;
       setConnectionState(hasReturnedRecords
@@ -1414,8 +1478,6 @@ async function loadDR24Explorer() {
         '<section class="panel"><strong>DR24 acquisition failed.</strong><p class="muted">No alternate source was used. The request did not establish whether any requested OID is missing.</p></section>';
       document.getElementById("dr24Provenance").textContent =
         JSON.stringify(failure, null, 2);
-      desktopDr24Payload = null;
-      desktopRawExport = null;
       document.getElementById("dr24Status").textContent =
         "DR24 acquisition failed (" + (error.status ? "HTTP " + error.status + " · " : "") +
         (error.code || "unknown error") + "). No alternate source was used." +
@@ -1430,7 +1492,7 @@ async function loadDR24Explorer() {
 
   loadButton.addEventListener("click", loadRaw);
   exportButton.addEventListener("click", downloadDesktopRawExport);
-  if (input.value) await loadRaw();
+  if (initialIds && !session?.payload) await loadRaw();
 }
 async function showView(view, options = {}) {
   document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
