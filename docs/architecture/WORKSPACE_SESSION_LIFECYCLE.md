@@ -48,10 +48,14 @@ This is a UI/workspace lifecycle correction only. It does not change:
 - v0.2.0 scientific baseline, taxonomy, feature schema, or acceptance criteria.
 - Preview 5 release artifacts.
 
-A failed new acquisition must not erase the last successful result in the active in-memory session.
+A failed new acquisition must not erase the last successful result in the active in-memory session. The failure status must identify the failed attempt and make clear which earlier OIDs still have a successful result.
+
+Every asynchronous DR24 request must capture its originating workspace ID and session before the acquisition awaits. The completed response must update that captured session only. It may update the visible page only when the captured workspace is still active. A late response must never write its payload or export envelope into a different workspace.
+
+Restoring a saved raw export must reset the rendered-result state. The UI must not display plots or provenance from an earlier payload beside a newly restored export. Until the light-curve view is rebuilt, show an explicit restored-export state.
 
 ## Acceptance
 
 The issue acceptance tests in #324 are authoritative. At minimum, verify navigation round trips, no duplicate acquisition, workspace isolation, return to an earlier workspace in the same process, new-workspace emptiness, and retention of the last successful payload after a failed subsequent request.
 
-The focused test suite and Windows desktop packaging workflow must pass before merge or publication of a subsequent Preview release.
+The focused test suite and Windows desktop packaging workflow must pass before merge or publication of a subsequent Preview release. The browser acceptance suite must also cover a delayed in-flight request while switching workspaces, export restoration without stale rendered state, and retention of the last successful result after a failed later request.
